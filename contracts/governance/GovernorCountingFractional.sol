@@ -226,7 +226,7 @@ abstract contract GovernorCountingFractional is Nonces, Governor {
 
     function _extractUint128(bytes memory data, uint256 pos) private pure returns (uint128 result) {
         assembly {
-            result := shr(128, mload(add(data, add(0x20, mul(0x20, pos)))))
+            result := shr(128, mload(add(data, add(0x20, mul(0x10, pos)))))
         }
     }
 }
