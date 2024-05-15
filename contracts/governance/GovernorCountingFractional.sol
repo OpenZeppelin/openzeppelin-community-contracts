@@ -73,7 +73,6 @@ abstract contract GovernorCountingFractional is Nonces, Governor {
      */
     function _quorumReached(uint256 proposalId) internal view virtual override returns (bool) {
         ProposalVote storage proposalVote = _proposalVotes[proposalId];
-
         return quorum(proposalSnapshot(proposalId)) <= proposalVote.forVotes + proposalVote.abstainVotes;
     }
 
@@ -82,14 +81,13 @@ abstract contract GovernorCountingFractional is Nonces, Governor {
      */
     function _voteSucceeded(uint256 proposalId) internal view virtual override returns (bool) {
         ProposalVote storage proposalVote = _proposalVotes[proposalId];
-
         return proposalVote.forVotes > proposalVote.againstVotes;
     }
 
     /**
      * @dev Override castVoteWithReasonAndParamsBySig to add nonce-based replay protection for fractional voting.
      *
-     * When voting using this method, the params must be 64 bytes long following the format:
+     * When doing fractional voting using this method, the params must be 64 bytes long following the format:
      *
      * `abi.encodePacked(uint128(againstVotes), uint128(forVotes), uint128(abstainVotes), uint128(nonce))`
      */
