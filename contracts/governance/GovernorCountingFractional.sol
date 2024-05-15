@@ -118,7 +118,7 @@ abstract contract GovernorCountingFractional is Nonces, Governor {
     ) internal virtual override {
         // Compute number of remaining votes. Returns 0 on overflow.
         (, uint256 remainingWeight) = totalWeight.trySub(voteWeightCast(proposalId, account));
-        if (remainingWeight > 0) {
+        if (remainingWeight == 0) {
             revert GovernorAlreadyCastVote(account);
         }
 
