@@ -6,22 +6,21 @@ import {Governor} from "@openzeppelin/contracts/governance/Governor.sol";
 import {GovernorCountingSimple} from "@openzeppelin/contracts/governance/extensions/GovernorCountingSimple.sol";
 import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 import {Nonces} from "@openzeppelin/contracts/utils/Nonces.sol";
+import {Packing} from "@openzeppelin/contracts@master/utils/Packing.sol";
 
 /**
- * @notice Extension of {Governor} for 3 option fractional vote counting. When
- * voting, a delegate may split their vote weight between Against/For/Abstain.
- * This is most useful when the delegate is itself a contract, implementing its
- * own rules for voting. By allowing a contract-delegate to split its vote
- * weight, the voting preferences of many disparate token holders can be rolled
- * up into a single vote to the Governor itself. Some example use cases include
- * voting with tokens that are held by a DeFi pool, voting from L2 with tokens
- * held by a bridge, or voting privately from a shielded pool using zero
- * knowledge proofs.
+ * @notice Extension of {Governor} for 3 option fractional vote counting. When voting, a delegate may split their vote
+ * weight between Against/For/Abstain. This is most useful when the delegate is itself a contract, implementing its
+ * own rules for voting. By allowing a contract-delegate to split its vote weight, the voting preferences of many
+ * disparate token holders can be rolled up into a single vote to the Governor itself. Some example use cases include
+ * voting with tokens that are held by a DeFi pool, voting from L2 with tokens held by a bridge, or voting privately
+ * from a shielded pool using zero knowledge proofs.
  *
  * Based on ScopeLift's https://github.com/ScopeLift/flexible-voting/blob/master/src/GovernorCountingFractional.sol
  */
 abstract contract GovernorCountingFractional is Nonces, Governor {
     using Math for *;
+    using Packing for *;
 
     struct ProposalVote {
         uint256 againstVotes;
@@ -163,17 +162,15 @@ abstract contract GovernorCountingFractional is Nonces, Governor {
      * `voteData` is expected to be four packed uint128s:
      * `abi.encodePacked(uint128(againstVotes), uint128(forVotes), uint128(abstainVotes), uint128(nonce))`
      *
-     * This function can be called multiple times for the same account and
-     * proposal, i.e. partial/rolling votes are allowed. For example, an account
-     * with total weight of 10 could call this function three times with the
+     * This function can be called multiple times for the same account and proposal, i.e. partial/rolling votes are
+     * allowed. For example, an account with total weight of 10 could call this function three times with the
      * following vote data:
      *   - against: 1, for: 0, abstain: 2
      *   - against: 3, for: 1, abstain: 0
      *   - against: 1, for: 1, abstain: 1
-     * The result of these three calls would be that the account casts 5 votes
-     * AGAINST, 2 votes FOR, and 3 votes ABSTAIN on the proposal. Though
-     * partial, votes are still final once cast and cannot be changed or
-     * overridden. Subsequent partial votes simply increment existing totals.
+     * The result of these three calls would be that the account casts 5 votes AGAINST, 2 votes FOR, and 3 votes
+     * ABSTAIN on the proposal. Though partial, votes are still final once cast and cannot be changed or overridden.
+     * Subsequent partial votes simply increment existing totals.
      *
      * Because fractional votes by signature risk being replayed, a nonce check is necessary.
      */
@@ -198,21 +195,15 @@ abstract contract GovernorCountingFractional is Nonces, Governor {
         details.usedVotes[account] += usedWeight;
     }
 
-    uint256 constant internal _MASK_HALF_WORD_RIGHT = 0xffffffffffffffffffffffffffffffff; // 128 bits of 0's, 128 bits of 1's
-
-    /**
-     * @dev Decodes three packed uint128's. Uses assembly because of a Solidity language limitation which prevents
-     * slicing bytes stored in memory, rather than calldata.
-     */
     function _decodePackedVotes(
         bytes memory voteData
-    ) internal pure returns (uint128 againstVotes, uint128 forVotes, uint128 abstainVotes, uint128 nonce) {
-        require(voteData.length >= 64, "GovernorCountingFractional: invalid voteData");
-        assembly {
-            againstVotes := shr(128, mload(add(voteData, 0x20)))
-            forVotes := and(_MASK_HALF_WORD_RIGHT, mload(add(voteData, 0x20)))
-            abstainVotes := shr(128, mload(add(voteData, 0x40)))
-            nonce := and(_MASK_HALF_WORD_RIGHT, mload(add(voteData, 0x40)))
-        }
+    ) private pure returns (uint128 againstVotes, uint128 forVotes, uint128 abstainVotes, uint128 nonce) {
+        (bytes32 block1, bytes32 block2) = abi.decode(voteData, (bytes32, bytes32));
+        return (
+            block1.asUint128x2().first(),
+            block1.asUint128x2().second(),
+            block2.asUint128x2().first(),
+            block2.asUint128x2().second()
+        );
     }
 }
