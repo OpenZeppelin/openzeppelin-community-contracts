@@ -6,7 +6,6 @@ import {Governor} from "@openzeppelin/contracts/governance/Governor.sol";
 import {GovernorCountingSimple} from "@openzeppelin/contracts/governance/extensions/GovernorCountingSimple.sol";
 import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 import {Nonces} from "@openzeppelin/contracts/utils/Nonces.sol";
-import {Packing} from "@openzeppelin/contracts@master/utils/Packing.sol";
 
 /**
  * @notice Extension of {Governor} for 3 option fractional vote counting. When voting, a delegate may split their vote
@@ -20,7 +19,6 @@ import {Packing} from "@openzeppelin/contracts@master/utils/Packing.sol";
  */
 abstract contract GovernorCountingFractional is Nonces, Governor {
     using Math for *;
-    using Packing for *;
 
     struct ProposalVote {
         uint256 againstVotes;
@@ -28,6 +26,9 @@ abstract contract GovernorCountingFractional is Nonces, Governor {
         uint256 abstainVotes;
         mapping(address voter => uint256) usedVotes;
     }
+
+    // 128 bits of 0's, 128 bits of 1's
+    uint256 constant internal _MASK_HALF_WORD_RIGHT = 0xffffffffffffffffffffffffffffffff;
 
     /**
      * @dev Mapping from proposal ID to vote tallies for that proposal.
@@ -89,6 +90,40 @@ abstract contract GovernorCountingFractional is Nonces, Governor {
     }
 
     /**
+     * @dev Override castVoteWithReasonAndParamsBySig to add nonce-based replay protection for fractional voting.
+     *
+     * When voting using this method, the params must be 64 bytes long following the format:
+     *
+     * `abi.encodePacked(uint128(againstVotes), uint128(forVotes), uint128(abstainVotes), uint128(nonce))`
+     */
+    function castVoteWithReasonAndParamsBySig(
+        uint256 proposalId,
+        uint8 support,
+        address voter,
+        string calldata reason,
+        bytes memory params,
+        bytes memory signature
+    ) public virtual override returns (uint256) {
+        if (signature.length == 0x40) {
+            // get the nonce from the voteData
+            uint128 nonce;
+            assembly {
+                nonce := and(_MASK_HALF_WORD_RIGHT, mload(add(params, 0x40)))
+            }
+            // use the nonce (revert if invalid)
+            _useCheckedNonce(voter, nonce);
+            // reduce size (remove trailing nonce)
+            assembly {
+                mstore(signature, 0x30)
+            }
+        } else if (signature.length > 0) {
+            revert GovernorInvalidParamsFormat(voter);
+        }
+
+        return super.castVoteWithReasonAndParamsBySig(proposalId, support, voter, reason, params, signature);
+    }
+
+    /**
      * @notice See {Governor-_countVote}.
      *
      * @dev Function that records the delegate's votes.
@@ -97,11 +132,11 @@ abstract contract GovernorCountingFractional is Nonces, Governor {
      * That is, it assigns the remaining weight of the delegate to the `support` parameter, which follows the
      * `VoteType` enum from Governor Bravo (as defined in {GovernorCountingSimple}).
      *
-     * If the `voteData` bytes parameter is not zero, then it _must_ be four packed uint128s, totaling 64 bytes,
-     * representing the weight the delegate assigns to Against, For, and Abstain respectively, and a nonce used to
-     * avoid replayability. This format can be produced using:
+     * If the `voteData` bytes parameter is not zero, then it _must_ be tree packed uint128s, totaling 48 bytes,
+     * representing the weight the delegate assigns to Against, For, and Abstain respectively. This format can be
+     * produced using:
      *
-     * `abi.encodePacked(uint128(againstVotes), uint128(forVotes), uint128(abstainVotes), uint128(nonce))`
+     * `abi.encodePacked(uint128(againstVotes), uint128(forVotes), uint128(abstainVotes))`
      *
      * The sum total of the three decoded vote weights _must_ be less than or equal to the delegate's remaining weight
      * on the proposal, i.e. their checkpointed total weight minus votes already cast on the proposal.
@@ -123,7 +158,7 @@ abstract contract GovernorCountingFractional is Nonces, Governor {
 
         if (voteData.length == 0) {
             _countVoteNominal(proposalId, account, support, remainingWeight);
-        } else if (voteData.length == 64) {
+        } else if (voteData.length == 0x30) {
             _countVoteFractional(proposalId, account, voteData, remainingWeight);
         } else {
             revert GovernorInvalidParamsFormat(account);
@@ -159,8 +194,8 @@ abstract contract GovernorCountingFractional is Nonces, Governor {
     /**
      * @dev Count votes with fractional weight.
      *
-     * `voteData` is expected to be four packed uint128s:
-     * `abi.encodePacked(uint128(againstVotes), uint128(forVotes), uint128(abstainVotes), uint128(nonce))`
+     * `voteData` is expected to be tree packed uint128s:
+     * `abi.encodePacked(uint128(againstVotes), uint128(forVotes), uint128(abstainVotes))`
      *
      * This function can be called multiple times for the same account and proposal, i.e. partial/rolling votes are
      * allowed. For example, an account with total weight of 10 could call this function three times with the
@@ -180,9 +215,7 @@ abstract contract GovernorCountingFractional is Nonces, Governor {
         bytes memory voteData,
         uint256 weight
     ) private {
-        (uint128 againstVotes, uint128 forVotes, uint128 abstainVotes, uint128 nonce) = _decodePackedVotes(voteData);
-        _useCheckedNonce(account, nonce);
-
+        (uint128 againstVotes, uint128 forVotes, uint128 abstainVotes) = _decodePackedVotes(voteData);
         uint256 usedWeight = againstVotes + forVotes + abstainVotes;
         if (usedWeight > weight) {
             revert GovernorUsedVotesExceedRemainingWeight(account, usedWeight, weight);
@@ -197,13 +230,11 @@ abstract contract GovernorCountingFractional is Nonces, Governor {
 
     function _decodePackedVotes(
         bytes memory voteData
-    ) private pure returns (uint128 againstVotes, uint128 forVotes, uint128 abstainVotes, uint128 nonce) {
-        (bytes32 block1, bytes32 block2) = abi.decode(voteData, (bytes32, bytes32));
-        return (
-            block1.asUint128x2().first(),
-            block1.asUint128x2().second(),
-            block2.asUint128x2().first(),
-            block2.asUint128x2().second()
-        );
+    ) private pure returns (uint128 againstVotes, uint128 forVotes, uint128 abstainVotes) {
+        assembly {
+            againstVotes := shr(128, mload(add(voteData, 0x20)))
+            forVotes := and(_MASK_HALF_WORD_RIGHT, mload(add(voteData, 0x20)))
+            abstainVotes := shr(128, mload(add(voteData, 0x40)))
+        }
     }
 }
