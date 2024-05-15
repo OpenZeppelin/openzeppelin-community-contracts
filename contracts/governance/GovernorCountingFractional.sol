@@ -27,9 +27,6 @@ abstract contract GovernorCountingFractional is Nonces, Governor {
         mapping(address voter => uint256) usedVotes;
     }
 
-    // 128 bits of 0's, 128 bits of 1's
-    uint256 constant internal _MASK_HALF_WORD_RIGHT = 0xffffffffffffffffffffffffffffffff;
-
     /**
      * @dev Mapping from proposal ID to vote tallies for that proposal.
      */
@@ -105,12 +102,8 @@ abstract contract GovernorCountingFractional is Nonces, Governor {
         bytes memory signature
     ) public virtual override returns (uint256) {
         if (signature.length == 0x40) {
-            // get the nonce from the voteData
-            uint128 nonce;
-            assembly {
-                nonce := and(_MASK_HALF_WORD_RIGHT, mload(add(params, 0x40)))
-            }
-            // use the nonce (revert if invalid)
+            // get and use the nonce from the params (revert if invalid)
+            uint128 nonce = _extractUint128(params, 3);
             _useCheckedNonce(voter, nonce);
             // reduce size (remove trailing nonce)
             assembly {
@@ -128,11 +121,11 @@ abstract contract GovernorCountingFractional is Nonces, Governor {
      *
      * @dev Function that records the delegate's votes.
      *
-     * If the `voteData` bytes parameter is empty, then this module behaves identically to {GovernorCountingSimple}.
+     * If the `params` bytes parameter is empty, then this module behaves identically to {GovernorCountingSimple}.
      * That is, it assigns the remaining weight of the delegate to the `support` parameter, which follows the
      * `VoteType` enum from Governor Bravo (as defined in {GovernorCountingSimple}).
      *
-     * If the `voteData` bytes parameter is not zero, then it _must_ be tree packed uint128s, totaling 48 bytes,
+     * If the `params` bytes parameter is not zero, then it _must_ be tree packed uint128s, totaling 48 bytes,
      * representing the weight the delegate assigns to Against, For, and Abstain respectively. This format can be
      * produced using:
      *
@@ -148,7 +141,7 @@ abstract contract GovernorCountingFractional is Nonces, Governor {
         address account,
         uint8 support,
         uint256 totalWeight,
-        bytes memory voteData
+        bytes memory params
     ) internal virtual override {
         // Compute number of remaining votes. Returns 0 on overflow.
         (, uint256 remainingWeight) = totalWeight.trySub(voteWeightCast(proposalId, account));
@@ -156,10 +149,10 @@ abstract contract GovernorCountingFractional is Nonces, Governor {
             revert GovernorAlreadyCastVote(account);
         }
 
-        if (voteData.length == 0) {
+        if (params.length == 0) {
             _countVoteNominal(proposalId, account, support, remainingWeight);
-        } else if (voteData.length == 0x30) {
-            _countVoteFractional(proposalId, account, voteData, remainingWeight);
+        } else if (params.length == 0x30) {
+            _countVoteFractional(proposalId, account, params, remainingWeight);
         } else {
             revert GovernorInvalidParamsFormat(account);
         }
@@ -194,7 +187,7 @@ abstract contract GovernorCountingFractional is Nonces, Governor {
     /**
      * @dev Count votes with fractional weight.
      *
-     * `voteData` is expected to be tree packed uint128s:
+     * `params` is expected to be tree packed uint128s:
      * `abi.encodePacked(uint128(againstVotes), uint128(forVotes), uint128(abstainVotes))`
      *
      * This function can be called multiple times for the same account and proposal, i.e. partial/rolling votes are
@@ -212,10 +205,13 @@ abstract contract GovernorCountingFractional is Nonces, Governor {
     function _countVoteFractional(
         uint256 proposalId,
         address account,
-        bytes memory voteData,
+        bytes memory params,
         uint256 weight
     ) private {
-        (uint128 againstVotes, uint128 forVotes, uint128 abstainVotes) = _decodePackedVotes(voteData);
+        uint128 againstVotes = _extractUint128(params, 0);
+        uint128 forVotes = _extractUint128(params, 1);
+        uint128 abstainVotes = _extractUint128(params, 2);
+
         uint256 usedWeight = againstVotes + forVotes + abstainVotes;
         if (usedWeight > weight) {
             revert GovernorUsedVotesExceedRemainingWeight(account, usedWeight, weight);
@@ -228,13 +224,9 @@ abstract contract GovernorCountingFractional is Nonces, Governor {
         details.usedVotes[account] += usedWeight;
     }
 
-    function _decodePackedVotes(
-        bytes memory voteData
-    ) private pure returns (uint128 againstVotes, uint128 forVotes, uint128 abstainVotes) {
+    function _extractUint128(bytes memory data, uint256 pos) private pure returns (uint128 result) {
         assembly {
-            againstVotes := shr(128, mload(add(voteData, 0x20)))
-            forVotes := and(_MASK_HALF_WORD_RIGHT, mload(add(voteData, 0x20)))
-            abstainVotes := shr(128, mload(add(voteData, 0x40)))
+            result := shr(128, mload(add(data, add(0x20, mul(0x20, pos)))))
         }
     }
 }
