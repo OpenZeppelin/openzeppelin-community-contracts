@@ -8,7 +8,7 @@ import {Address} from "@openzeppelin/contracts/utils/Address.sol";
 import {Nonces} from "@openzeppelin/contracts/utils/Nonces.sol";
 import {ERC1155Holder} from "@openzeppelin/contracts/token/ERC1155/utils/ERC1155Holder.sol";
 import {ERC721Holder} from "@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol";
-import {Errors} from "./Errors.sol";
+import {Errors} from "@openzeppelin/utils/Errors.sol";
 
 /// @dev Virtual Relayer
 ///
