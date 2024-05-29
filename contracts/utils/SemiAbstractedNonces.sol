@@ -6,7 +6,7 @@ import {Nonces} from "@openzeppelin/contracts/utils/Nonces.sol";
 /**
  * @dev Alternative to {Nonces}, that support key-ed nonces. Follows the ERC-4337's semi-abstracted nonce system.
  */
-contract SemiAbstractedNonces is Nonces {
+abstract contract SemiAbstractedNonces is Nonces {
     mapping(address => mapping(uint192 => uint64)) private _nonce;
 
     /**
