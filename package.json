@@ -1,7 +1,7 @@
 {
   "name": "@openzeppelin/contracts-experimental",
   "version": "0.0.1",
-  "description": "Secure Smart Contract library for Solidity",
+  "description": "Experimental Smart Contract library for Solidity",
   "author": "OpenZeppelin Community <maintainers@openzeppelin.org>",
   "license": "MIT",
   "files": [

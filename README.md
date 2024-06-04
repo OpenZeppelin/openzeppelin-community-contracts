@@ -2,22 +2,26 @@
 
 [![Forum](https://img.shields.io/badge/forum-%F0%9F%92%AC-yellow)](https://docs.openzeppelin.com/contracts)
 
+> [!IMPORTANT]
+> This repository includes experimental code that has not been audited and may introduce breaking changes at any time. We recommend
+> reviewing the [Security](#security) section before using any code from this repository.
+
 ## Overview
 
-This repository contains contracts and libraries in the following catogories:
+This repository contains contracts and libraries in the following categories:
 
-- extensions and modules compatible with contracts in the [@openzeppelin/contracts](https://github.com/OpenZeppelin/openzeppelin-contracts) package;
-- alternative implementation of interfaces defined in the [@openzeppelin/contracts](https://github.com/OpenZeppelin/openzeppelin-contracts) package;
-- building blocks for developpers;
-- prototypes in general.
+- Extensions and modules compatible with contracts in the [@openzeppelin/contracts](https://github.com/OpenZeppelin/openzeppelin-contracts) package
+- Alternative implementation of interfaces defined in the [@openzeppelin/contracts](https://github.com/OpenZeppelin/openzeppelin-contracts) package
+- Contracts with third-party integrations
+- General prototypes and experiments
 
-Code is provided by the openzeppelin solidity team, as well as by community contributors, for other developpers to review, discuss, itterate on, and potentially use (see [the Security section](#security)  before you do).
+Code is provided by the OpenZeppelin Contracts team, as well as by community contributors, for other developers to review, discuss, iterate on, and potentially use.
 
 ## Security
 
 Contracts and libraries in this repository are provided as is, with no particular guarantees. In particular:
 
-- Code in this repository is not audited. Maintainers will review the code to the extend that the is no obviously malicious code published, but bugs may be present in this code that may lead to priviledge escalation or loss of funds. Any code taken from this repository should be audited before being used in production.
+- Code in this repository is not audited. Maintainers will review the code to the extend that the is no obviously malicious code published, but bugs may be present in this code that may lead to privilege escalation or loss of funds. Any code taken from this repository should be audited before being used in production.
 
 - Code in this repository is NOT covered by the [OpenZeppelin bug bounty on Immunefi](https://immunefi.com/bug-bounty/openzeppelin/).
 
@@ -25,9 +29,9 @@ Contracts and libraries in this repository are provided as is, with no particula
 
 - Code in this repository may depend on un-audited and un-released features from the [OpenZeppelin Contracts repository](https://github.com/OpenZeppelin/openzeppelin-contracts). In some cases, having a versioned dependency on the OpenZeppelin contracts library may not be enough.
 
-- Code in this repository is not versionned or formally released.
+- Code in this repository is not versioned nor formally released.
 
-- Bug affecting code in this repository may not be notified through a CVE.
+- Bugs affecting code in this repository may not be notified through a CVE.
 
 ## Contribute
 
