@@ -17,7 +17,7 @@ abstract contract SemiAbstractedNonces is Nonces {
     }
 
     /**
-     * @dev Returns the next unused nonce for an address and key. Result contains the key preffix.
+     * @dev Returns the next unused nonce for an address and key. Result contains the key prefix.
      */
     function nonces(address owner, uint192 key) public view virtual returns (uint256) {
         return (uint256(key) << 64) | _nonce[owner][key];
