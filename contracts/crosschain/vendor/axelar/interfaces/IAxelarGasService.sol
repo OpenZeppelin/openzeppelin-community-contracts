@@ -2,9 +2,9 @@
 
 pragma solidity ^0.8.0;
 
-import { GasInfo } from '../types/GasEstimationTypes.sol';
-import { IInterchainGasEstimation } from './IInterchainGasEstimation.sol';
-import { IUpgradable } from './IUpgradable.sol';
+import {GasInfo} from "../types/GasEstimationTypes.sol";
+import {IInterchainGasEstimation} from "./IInterchainGasEstimation.sol";
+import {IUpgradable} from "./IUpgradable.sol";
 
 /**
  * @title IAxelarGasService Interface
@@ -353,11 +353,7 @@ interface IAxelarGasService is IInterchainGasEstimation, IUpgradable {
      * @param logIndex The log index for the cross-chain call
      * @param refundAddress The address where refunds, if any, should be sent
      */
-    function addNativeGas(
-        bytes32 txHash,
-        uint256 logIndex,
-        address refundAddress
-    ) external payable;
+    function addNativeGas(bytes32 txHash, uint256 logIndex, address refundAddress) external payable;
 
     /**
      * @notice Add additional gas payment using ERC20 tokens after initiating an express cross-chain call.
@@ -383,11 +379,7 @@ interface IAxelarGasService is IInterchainGasEstimation, IUpgradable {
      * @param logIndex The log index for the cross-chain call
      * @param refundAddress The address where refunds, if any, should be sent
      */
-    function addNativeExpressGas(
-        bytes32 txHash,
-        uint256 logIndex,
-        address refundAddress
-    ) external payable;
+    function addNativeExpressGas(bytes32 txHash, uint256 logIndex, address refundAddress) external payable;
 
     /**
      * @notice Updates the gas price for a specific chain.
@@ -404,11 +396,7 @@ interface IAxelarGasService is IInterchainGasEstimation, IUpgradable {
      * @param tokens Array of token addresses to be collected
      * @param amounts Array of amounts to be collected for each respective token address
      */
-    function collectFees(
-        address payable receiver,
-        address[] calldata tokens,
-        uint256[] calldata amounts
-    ) external;
+    function collectFees(address payable receiver, address[] calldata tokens, uint256[] calldata amounts) external;
 
     /**
      * @notice Refunds gas payment to the receiver in relation to a specific cross-chain transaction.
@@ -420,13 +408,7 @@ interface IAxelarGasService is IInterchainGasEstimation, IUpgradable {
      * @param token The token address to be refunded
      * @param amount The amount to refund
      */
-    function refund(
-        bytes32 txHash,
-        uint256 logIndex,
-        address payable receiver,
-        address token,
-        uint256 amount
-    ) external;
+    function refund(bytes32 txHash, uint256 logIndex, address payable receiver, address token, uint256 amount) external;
 
     /**
      * @notice Returns the address of the designated gas collector.

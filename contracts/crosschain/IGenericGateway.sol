@@ -33,17 +33,36 @@ interface IGenericGateway {
 
     /// @dev Perform a cross-chain call using the canonical payment method for this bridge. The provided value is
     /// passed along the request, minus anything that would be part of the canonical payment method.
-    function sendRequest(uint256 chain, address target, bytes memory data, bytes32 salt) external payable returns (bytes32);
+    function sendRequest(
+        uint256 chain,
+        address target,
+        uint256 value,
+        bytes memory data,
+        bytes32 salt
+    ) external payable returns (bytes32);
 
     /// @dev Perform a cross-chain call using the specified payment method. If feeAsset is 0, then feeValue will be
     /// deduced from the provided value to cover costs. The rest of the value is passed along the request.
-    function sendRequest(uint256 chain, address target, bytes memory data, bytes32 salt, address feeAsset, uint256 feeValue) external payable returns (bytes32);
+    function sendRequest(
+        uint256 chain,
+        address target,
+        uint256 value,
+        bytes memory data,
+        bytes32 salt,
+        address feeAsset,
+        uint256 feeValue
+    ) external payable returns (bytes32);
 
     // ================================================= 2 step mode =================================================
 
     /// @dev Register a cross-chain call that will later be forwarded using {forwardRequest}. Any value passed here
     /// will be escrowed. It will then be passed along the request be forwarding happens.
-    function createRequest(uint256 chain, address target, bytes memory data, bytes32 salt) external payable returns (bytes32);
+    function createRequest(
+        uint256 chain,
+        address target,
+        bytes memory data,
+        bytes32 salt
+    ) external payable returns (bytes32);
 
     /// @dev Forwards a cross-chain request using the canonical payment method for this bridge. Any value provided
     /// here will be used for the payment. It will not be forwarded with the cross-chain call.

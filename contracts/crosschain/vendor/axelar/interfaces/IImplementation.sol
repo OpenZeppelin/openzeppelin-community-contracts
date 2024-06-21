@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.0;
 
-import { IContractIdentifier } from './IContractIdentifier.sol';
+import {IContractIdentifier} from "./IContractIdentifier.sol";
 
 interface IImplementation is IContractIdentifier {
     error NotProxy();

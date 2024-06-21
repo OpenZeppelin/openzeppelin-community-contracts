@@ -2,8 +2,8 @@
 
 pragma solidity ^0.8.0;
 
-import { IGovernable } from './IGovernable.sol';
-import { IImplementation } from './IImplementation.sol';
+import {IGovernable} from "./IGovernable.sol";
+import {IImplementation} from "./IImplementation.sol";
 
 interface IAxelarGateway is IImplementation, IGovernable {
     /**********\
@@ -178,11 +178,7 @@ interface IAxelarGateway is IImplementation, IGovernable {
 
     function setTokenMintLimits(string[] calldata symbols, uint256[] calldata limits) external;
 
-    function upgrade(
-        address newImplementation,
-        bytes32 newImplementationCodeHash,
-        bytes calldata setupParams
-    ) external;
+    function upgrade(address newImplementation, bytes32 newImplementationCodeHash, bytes calldata setupParams) external;
 
     /**********************\
     |* External Functions *|
