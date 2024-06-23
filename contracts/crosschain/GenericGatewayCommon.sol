@@ -7,8 +7,12 @@ import {Set} from "../utils/Set.sol";
 
 import {Address} from "@openzeppelin/contracts/utils/Address.sol";
 import {IERC20, SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import {SlotDerivation} from "@openzeppelin/contracts@master/utils/SlotDerivation.sol";
+import {StorageSlot} from "@openzeppelin/contracts@master/utils/StorageSlot.sol";
 
 abstract contract GenericGatewayCommon is IGenericGateway {
+    using SlotDerivation for *;
+    using StorageSlot for *;
     using Set for Set.Bytes32Set;
 
     event RequestCreated(bytes32 id, Request req);
@@ -16,6 +20,17 @@ abstract contract GenericGatewayCommon is IGenericGateway {
     event RequestExecuted(bytes32 id);
 
     Set.Bytes32Set private _outBox;
+
+    // keccak256(abi.encode(uint256(keccak256("openzeppelin.storage.GenericGatewayCommon")) - 1)) & ~bytes32(uint256(0xff))
+    bytes32 private constant GENERIC_GATEWAY_COMMON_STORAGE =
+        0x71ab59e9fe1edd5f3d56389a2c715a90ddbb606dacc41e1c5360c10e3fe15b00;
+
+    function crossChainSender() public view returns (uint256 chainId, address sender) {
+        return (
+            GENERIC_GATEWAY_COMMON_STORAGE.offset(0).asUint256().tload(),
+            GENERIC_GATEWAY_COMMON_STORAGE.offset(1).asAddress().tload()
+        );
+    }
 
     // This must be redeclared as public so that other function can call it
     function defaultCost(Message memory /*message*/) public pure virtual returns (address, uint256);
@@ -131,9 +146,18 @@ abstract contract GenericGatewayCommon is IGenericGateway {
             });
     }
 
-    function _executeRequest(Message memory message) internal {
-        require(message.destination.chain == block.chainid);
-        (bool success, bytes memory returndata) = message.destination.instance.call{value: message.value}(message.data);
+    function _executeRequest(Request memory req) internal {
+        require(req.message.destination.chain == block.chainid);
+
+        GENERIC_GATEWAY_COMMON_STORAGE.offset(0).asUint256().tstore(req.source.chain);
+        GENERIC_GATEWAY_COMMON_STORAGE.offset(1).asAddress().tstore(req.source.instance);
+
+        (bool success, bytes memory returndata) = req.message.destination.instance.call{value: req.message.value}(
+            req.message.data
+        );
         Address.verifyCallResult(success, returndata);
+
+        GENERIC_GATEWAY_COMMON_STORAGE.offset(0).asUint256().tstore(0);
+        GENERIC_GATEWAY_COMMON_STORAGE.offset(1).asAddress().tstore(address(0));
     }
 }

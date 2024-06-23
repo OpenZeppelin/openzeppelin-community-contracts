@@ -3,6 +3,7 @@
 pragma solidity ^0.8.0;
 
 interface IGenericGateway {
+    // TODO: use uint96 chain id so that Account fit in a single word ?
     struct Account {
         uint256 chain;
         address instance;
@@ -21,6 +22,10 @@ interface IGenericGateway {
         Message message;
         bytes32 salt;
     }
+
+    // ============================================ relay instrumentation ============================================
+
+    function crossChainSender() external view returns (uint256 chainId, address sender);
 
     // =============================================== cost estimation ===============================================
 

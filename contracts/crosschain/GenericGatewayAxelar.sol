@@ -18,6 +18,7 @@ contract GenericGatewayAxelar is GenericGatewayCommon, Ownable {
         string name;
         string remote;
     }
+
     mapping(uint256 chainId => ChainDetails chainName) public chainDetails;
 
     constructor(IAxelarGateway _gateway, address _initialOwner) Ownable(_initialOwner) {
