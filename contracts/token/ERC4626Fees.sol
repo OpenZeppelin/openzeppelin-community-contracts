@@ -103,7 +103,7 @@ abstract contract ERC4626Fees is ERC4626 {
  *@dev Variant of ERC4626Fees where the fee is expressed as a fraction of the total amount paid.
  *
  * In this version if the fee is set to 20%, and a user deposits 100 assets, then 80 assets go toward the price of the
- * shares, and 20 assets go toward the payment of fees. In this case, fees correspond to 20% ot the total paid price
+ * shares, and 20 assets go toward the payment of fees. In this case, fees correspond to 20% of the total paid price
  * and 25% of the value of the shares bought.
  */
 abstract contract ERC4626FeesOnTaxed is ERC4626Fees {
@@ -126,7 +126,7 @@ abstract contract ERC4626FeesOnTaxed is ERC4626Fees {
  * @dev Variant of ERC4626Fees where the fee is expressed as a fraction of the value of value being converted.
  *
  * In this version if the fee is set to 20%, and a user deposits 100 assets, then 83.33 assets go toward the price of
- * the shares, and 16.66 assets go toward the payment of fees. In this case, fees correspond to 16.66% ot the total
+ * the shares, and 16.66 assets go toward the payment of fees. In this case, fees correspond to 16.66% of the total
  * paid price and 20% of the value of the shares bought.
  */
 abstract contract ERC4626FeesOnUntaxed is ERC4626Fees {
