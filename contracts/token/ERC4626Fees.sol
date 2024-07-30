@@ -7,11 +7,14 @@ import {ERC4626} from "@openzeppelin/contracts/token/ERC20/extensions/ERC4626.so
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 
-/// @dev ERC-4626 vault with entry/exit fees expressed in https://en.wikipedia.org/wiki/Basis_point[basis point (bp)].
+/**
+ * @dev ERC-4626 vault with entry/exit fees expressed in https://en.wikipedia.org/wiki/Basis_point[basis point (bp)].
+ *
+ * The `_feeOnRaw` and `_feeOnTotal` function are left unimplemented. See {ERC4626FeesOnTaxed} and
+ * {ERC4626FeesOnUntaxed} for possible implementations
+ */
 abstract contract ERC4626Fees is ERC4626 {
-    using Math for uint256;
-
-    uint256 private constant _BASIS_POINT_SCALE = 1e4;
+    uint256 internal constant _BASIS_POINT_SCALE = 1e4;
 
     // === Overrides ===
 
@@ -87,17 +90,57 @@ abstract contract ERC4626Fees is ERC4626 {
         return address(0); // replace with e.g. a treasury address
     }
 
-    // === Fee operations ===
+    /// @dev Calculates the fees that should be added to an amount `assets` that does not already include fees.
+    /// Used in {IERC4626-mint} and {IERC4626-withdraw} operations.
+    function _feeOnRaw(uint256 assets, uint256 feeBasisPoints) internal view virtual returns (uint256);
+
+    /// @dev Calculates the fee part of an amount `assets` that already includes fees.
+    /// Used in {IERC4626-deposit} and {IERC4626-redeem} operations.
+    function _feeOnTotal(uint256 assets, uint256 feeBasisPoints) internal view virtual returns (uint256);
+}
+
+/**
+ *@dev Variant of ERC4626Fees where the fee is expressed as a fraction of the total amount paid.
+ *
+ * In this version if the fee is set to 20%, and a user deposits 100 assets, then 80 assets go toward the price of the
+ * shares, and 20 assets go toward the payment of fees. In this case, fees correspond to 20% ot the total paid price
+ * and 25% of the value of the shares bought.
+ */
+abstract contract ERC4626FeesOnTaxed is ERC4626Fees {
+    using Math for uint256;
 
     /// @dev Calculates the fees that should be added to an amount `assets` that does not already include fees.
     /// Used in {IERC4626-mint} and {IERC4626-withdraw} operations.
-    function _feeOnRaw(uint256 assets, uint256 feeBasisPoints) private pure returns (uint256) {
+    function _feeOnRaw(uint256 assets, uint256 feeBasisPoints) internal view virtual override returns (uint256) {
+        return assets.mulDiv(feeBasisPoints, _BASIS_POINT_SCALE - feeBasisPoints, Math.Rounding.Ceil);
+    }
+
+    /// @dev Calculates the fee part of an amount `assets` that already includes fees.
+    /// Used in {IERC4626-deposit} and {IERC4626-redeem} operations.
+    function _feeOnTotal(uint256 assets, uint256 feeBasisPoints) internal view virtual override returns (uint256) {
+        return assets.mulDiv(feeBasisPoints, _BASIS_POINT_SCALE, Math.Rounding.Ceil);
+    }
+}
+
+/**
+ * @dev Variant of ERC4626Fees where the fee is expressed as a fraction of the value of value being converted.
+ *
+ * In this version if the fee is set to 20%, and a user deposits 100 assets, then 83.33 assets go toward the price of
+ * the shares, and 16.66 assets go toward the payment of fees. In this case, fees correspond to 16.66% ot the total
+ * paid price and 20% of the value of the shares bought.
+ */
+abstract contract ERC4626FeesOnUntaxed is ERC4626Fees {
+    using Math for uint256;
+
+    /// @dev Calculates the fees that should be added to an amount `assets` that does not already include fees.
+    /// Used in {IERC4626-mint} and {IERC4626-withdraw} operations.
+    function _feeOnRaw(uint256 assets, uint256 feeBasisPoints) internal view virtual override returns (uint256) {
         return assets.mulDiv(feeBasisPoints, _BASIS_POINT_SCALE, Math.Rounding.Ceil);
     }
 
     /// @dev Calculates the fee part of an amount `assets` that already includes fees.
     /// Used in {IERC4626-deposit} and {IERC4626-redeem} operations.
-    function _feeOnTotal(uint256 assets, uint256 feeBasisPoints) private pure returns (uint256) {
+    function _feeOnTotal(uint256 assets, uint256 feeBasisPoints) internal view virtual override returns (uint256) {
         return assets.mulDiv(feeBasisPoints, feeBasisPoints + _BASIS_POINT_SCALE, Math.Rounding.Ceil);
     }
 }
