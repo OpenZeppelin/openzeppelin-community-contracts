@@ -75,7 +75,7 @@ Note: This is a basic security property that all crosschain systems SHOULD have.
 
 A message's execution CAN be retried multiple time.
 
-Note: When combined with *Non-Replayability*, this property allows the message execution to be retried multiple time in case the execution failled, with the guarantee that the meesage will not be successfully exected more that once. This process can be used to achieve *eventual Liveness*.
+Note: When combined with **Non-Replayability**, this property allows the message execution to be retried multiple time in case the execution failled, with the guarantee that the meesage will not be successfully exected more that once. This process can be used to achieve **Eventual Liveness**.
 
 #### Ordered Execution
 
@@ -83,21 +83,21 @@ Messages SHOULD be executed in the same order as they were submitted
 
 Note: Most crosschain systems do NOT have this property. In general, this property may not be desirable as it could lead to DoS.
 
-Note: A system that doesn't have this property is said to supports *Out-of-order Execution*
+Note: A system that doesn't have this property is said to supports **Out-of-order Execution**
 
 #### Duplicability
 
 A requester SHOULD be able to send the same payload to the same target multiple times. Each request should be seen as a different message.
 
-Note: when combined with *Non-Replayability*, each submission will be executed at most once, meaning that a payload will be executed on the target at most N times, with N the number of times it was submitted by the requester.
+Note: when combined with **Non-Replayability**, each submission will be executed at most once, meaning that a payload will be executed on the target at most N times, with N the number of times it was submitted by the requester.
 
 #### Liveness
 
 A message that was submitted MUST be executed.
 
-A weaker version of this property is *Eventual Liveness*: A message that was sumbitted SHOULD eventually be exectued, potentially after some external intervention.
+A weaker version of this property is **Eventual Liveness**: A message that was sumbitted SHOULD eventually be exectued, potentially after some external intervention.
 
-Note: *Eventual Liveness* can be achieved through *Retriability*.
+Note: **Eventual Liveness** can be achieved through **Retriability**.
 
 #### Observability
 
