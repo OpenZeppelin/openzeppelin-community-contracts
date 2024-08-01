@@ -64,15 +64,21 @@ todo
 
 This section provides a list of properties that can be used to describe a cross-chain message-passing system. Not all systems have all the properties. In some cases, some of these properties may not be achievable or desirable.
 
+#### Identifiability
+
+> A message MUST be uniquely identifiable.
+
+**Note:** This is a fundamental property that is required for other properties, such as **Non-Replayability** to make sense. All cross-chain systems SHOULD have this property.
+
 #### Validity
 
-> A payload SHOULD only be executed on the target if the message was submitted by the requester.
+> A payload MUST only be executed on the target if the message was submitted by the requester.
 
 **Note:** This is a basic security property that all cross-chain systems SHOULD have.
 
 #### Non-Replayability
 
-> A message SHOULD be successfully executed on the target at most one time.
+> A message MUST be successfully executed on the target at most one time.
 
 **Note:** This is a basic security property that all cross-chain systems SHOULD have.
 
@@ -84,7 +90,7 @@ This section provides a list of properties that can be used to describe a cross-
 
 #### Ordered Execution
 
-> Messages SHOULD be executed in the same order as they were submitted
+> Messages MUST be executed in the same order as they were submitted
 
 **Note:** Most cross-chain systems do NOT have this property. In general, this property may not be desirable as it could lead to DoS.
 
@@ -92,9 +98,11 @@ This section provides a list of properties that can be used to describe a cross-
 
 #### Duplicability
 
-> A requester SHOULD be able to send the same payload to the same target multiple times. Each request should be seen as a different message.
+> A requester SHOULD be able to send the same payload to the same target multiple times. Each request MUST be seen as a different message.
 
 **Note:** When combined with **Non-Replayability**, each submission will be executed at most once, meaning that a payload will be executed on the target at most N times, with N the number of times it was submitted by the requester.
+
+**TODO:** find a better name for this property ?
 
 #### Liveness
 
@@ -111,6 +119,8 @@ A weaker version of this property is **Eventual Liveness**:
 > An observer SHOULD be able to track the status of a message.
 
 **Note:** This property may be available with restrictions on who the observer is. For example, a system may provide observability to off-chain observers through an API/explorer, but at the same time not provide observability to the requester if the status of the message is not tracked on the source chain.
+
+**TODO:** add more details about identifiers.
 
 ## Rationale
 
