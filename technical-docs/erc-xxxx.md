@@ -42,15 +42,15 @@ The blockchain to which the cross-chain message is intended.
 
 #### Target
 
-The account, on the destination chain, that should receive the message. In the context of an EVM source chain, this can be an EOA or a smart contract, though most usecase will target smart contracts.
+The account, on the destination chain, that should receive the message. In the context of an EVM source chain, this can be an EOA or a smart contract, though most usecases will target smart contracts.
 
 #### Payload
 
-The data that the requester is sending to the target. In the case of message-passing, this is an arbitrary buffer/string. Some cross-chain system may also support value and tokens to be part of the payload.
+The data that the requester is sending to the target. In the case of message-passing, this is an arbitrary buffer/string. Some cross-chain systems may also support value and tokens to be part of the payload.
 
 #### Message
 
-Messages are the objects that are being transmitted between chain. The message is sent by a requester, to a target, and contains a payload. The message may also contains some additional (and optional parameters).
+Messages are the objects that are being transmitted between chains. The message is sent by a requester, to a target, and contains a payload. The message may also contain some additional (and optional parameters).
 
 #### Message delivery
 
@@ -58,15 +58,15 @@ The process by which the message becomes available on the destination chain. Thi
 
 #### Message execution
 
-I a message's payload is not empty, and if the target of the message is a smart contract, then the message should be processed by the payload. This may be done in different ways. One common mechanism is to perform a call operation on the target, using the payload as calldata. We call that process message execution. As all call operations, the execution of a message can fail / revert.
+I a message's payload is not empty, and if the target of the message is a smart contract, then the message should be processed by the payload. This may be done in different ways. One common mechanism is to perform a call operation on the target, using the payload as calldata. We call that process message execution. As with all call operations, the execution of a message can fail/revert.
 
 #### Forwarder (or Relayer?)
 
-In some cross-chain systems, the transmition of the message may require the help of a forwarder to facilitate the transmission. The forwarder may provide additional parameters, or payment but shall not be able to alter the target and the payload decided by the requester.
+In some cross-chain systems, the transmission of the message may require the help of a forwarder to facilitate the transmission. The forwarder may provide additional parameters, or payment but shall not be able to alter the target and the payload decided by the requester.
 
 #### Gateway
 
-In some cross-chain systems, the creation and processing of message may involve an entry-point smart contract. We call that contract the gateway. Some systems will require gateways on both the source chain and destination chains while other systems will only use one gateway. The presence and nature of the gateway varies radically between existing cross-chain message-passing systems.
+In some cross-chain systems, the creation and delivery of messages may involve entry-point smart contracts on either chain. We call these contracts gateways. Some systems will require gateways on both the source chain and destination chains while other systems will only use one gateway. The presence and nature of the gateway varies radically between existing cross-chain message-passing systems.
 
 ### Properties
 
