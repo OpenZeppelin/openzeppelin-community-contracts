@@ -30,35 +30,43 @@ The keywords "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "SH
 
 #### Source chain
 
-todo
+The blockchain from which the cross-chain message is originating.
 
 #### Requester
 
-todo
+The account, on the source chain, that is sending the cross-chain message. In the context of an EVM source chain, this can be an EOA or a smart contract.
 
 #### Destination chain
 
-todo
+The blockchain to which the cross-chain message is intended.
 
 #### Target
 
-todo
+The account, on the destination chain, that should receive the message. In the context of an EVM source chain, this can be an EOA or a smart contract, though most usecase will target smart contracts.
 
 #### Payload
 
-todo
+The data that the requester is sending to the target. In the case of message-passing, this is an arbitrary buffer/string. Some cross-chain system may also support value and tokens to be part of the payload.
 
 #### Message
 
-todo
+Messages are the objects that are being transmitted between chain. The message is sent by a requester, to a target, and contains a payload. The message may also contains some additional (and optional parameters).
 
-#### Forwarder
+#### Message delivery
 
-todo
+The process by which the message becomes available on the destination chain. This process may include message execution.
+
+#### Message execution
+
+I a message's payload is not empty, and if the target of the message is a smart contract, then the message should be processed by the payload. This may be done in different ways. One common mechanism is to perform a call operation on the target, using the payload as calldata. We call that process message execution. As all call operations, the execution of a message can fail / revert.
+
+#### Forwarder (or Relayer?)
+
+In some cross-chain systems, the transmition of the message may require the help of a forwarder to facilitate the transmission. The forwarder may provide additional parameters, or payment but shall not be able to alter the target and the payload decided by the requester.
 
 #### Gateway
 
-todo
+In some cross-chain systems, the creation and processing of message may involve an entry-point smart contract. We call that contract the gateway. Some systems will require gateways on both the source chain and destination chains while other systems will only use one gateway. The presence and nature of the gateway varies radically between existing cross-chain message-passing systems.
 
 ### Properties
 
@@ -66,59 +74,59 @@ This section provides a list of properties that can be used to describe a cross-
 
 #### Identifiability
 
-> A message MUST be uniquely identifiable.
+> A message is uniquely identifiable.
 
-**Note:** This is a fundamental property that is required for other properties, such as **Non-Replayability** to make sense. All cross-chain systems SHOULD have this property.
+This is a fundamental property that is required for other properties, such as **Non-Replayability** to make sense. All cross-chain systems SHOULD have this property.
 
 #### Validity
 
-> A payload MUST only be executed on the target if the message was submitted by the requester.
+> A payload is only executed on the target if the message was submitted by the requester.
 
-**Note:** This is a basic security property that all cross-chain systems SHOULD have.
+This is a basic security property that all cross-chain systems SHOULD have.
 
 #### Non-Replayability
 
-> A message MUST be successfully executed on the target at most one time.
+> A message is successfully executed on the target at most one time.
 
-**Note:** This is a basic security property that all cross-chain systems SHOULD have.
+This is a basic security property that all cross-chain systems SHOULD have.
 
 #### Retriability
 
-> A message's execution CAN be retried multiple times.
+> A message's execution can be retried multiple times.
 
-**Note:** When combined with **Non-Replayability**, this property allows the message execution to be retried multiple times in case the execution fails, with the guarantee that the message will not be successfully executed more than once. This process can be used to achieve **Eventual Liveness**.
+When combined with **Non-Replayability**, this property allows the message execution to be retried multiple times in case the execution fails, with the guarantee that the message will not be successfully executed more than once. This process can be used to achieve **Eventual Liveness**.
 
 #### Ordered Execution
 
-> Messages MUST be executed in the same order as they were submitted
+> Messages are executed in the same order as they were submitted
 
-**Note:** Most cross-chain systems do NOT have this property. In general, this property may not be desirable as it could lead to DoS.
+Most cross-chain systems do NOT have this property. In general, this property may not be desirable as it could lead to DoS.
 
-**Note:** A system that doesn't have this property is said to support **Out-of-order Execution**.
+A system that doesn't have this property is said to support **Out-of-order Execution**.
 
 #### Duplicability
 
-> A requester SHOULD be able to send the same payload to the same target multiple times. Each request MUST be seen as a different message.
+> A requester is able to send the same payload to the same target multiple times. Each request is seen as a different message.
 
-**Note:** When combined with **Non-Replayability**, each submission will be executed at most once, meaning that a payload will be executed on the target at most N times, with N the number of times it was submitted by the requester.
+When combined with **Non-Replayability**, each submission will be executed at most once, meaning that a payload will be executed on the target at most N times, with N the number of times it was submitted by the requester.
 
 **TODO:** find a better name for this property ?
 
 #### Liveness
 
-> A message that was submitted MUST be executed.
+> A message that was submitted is executed.
 
 A weaker version of this property is **Eventual Liveness**:
 
-> A message that was submitted SHOULD eventually be executed, potentially after some external intervention.
+> A message that was submitted is eventually executed, potentially after some external intervention.
 
-**Note:** **Eventual Liveness** can be achieved through **Retriability**.
+**Eventual Liveness** can be achieved through **Retriability**.
 
 #### Observability
 
-> An observer SHOULD be able to track the status of a message.
+> An observer is able to track the status of a message.
 
-**Note:** This property may be available with restrictions on who the observer is. For example, a system may provide observability to off-chain observers through an API/explorer, but at the same time not provide observability to the requester if the status of the message is not tracked on the source chain.
+This property may be available with restrictions on who the observer is. For example, a system may provide observability to off-chain observers through an API/explorer, but at the same time not provide observability to the requester if the status of the message is not tracked on the source chain.
 
 **TODO:** add more details about identifiers.
 
