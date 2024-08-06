@@ -46,7 +46,7 @@ The account, on the destination chain, that should receive the message. In the c
 
 #### Payload
 
-The data that the requester is sending to the target. In the case of message-passing, this is an arbitrary buffer/string. Some cross-chain systems may also support value and tokens to be part of the payload.
+The data contents (i.e., a byte string) of the message the requester sends to the target.
 
 #### Message
 
