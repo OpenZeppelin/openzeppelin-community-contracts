@@ -52,6 +52,8 @@ The data that the requester is sending to the target. In the case of message-pas
 
 Messages are the objects that are being transmitted between chains. The message is sent by a requester, to a target, and contains a payload. The message may also contain some additional optional parameters and assets attached to it.
 
+We refer to the payload and parameters as the "message contents".
+
 #### Message delivery
 
 The process by which the message becomes available on the destination chain. This process may include message execution.
