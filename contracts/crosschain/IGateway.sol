@@ -17,8 +17,6 @@ interface IGateway {
         Account destination;
         // Native token value to be sent with the message.
         uint256 value;
-        // To dissambiguate between duplicated messages.
-        bytes32 salt;
         // Arbitrary data to be sent with the message.
         bytes payload;
         // Extra parameters to be used by the gateway specialization.
