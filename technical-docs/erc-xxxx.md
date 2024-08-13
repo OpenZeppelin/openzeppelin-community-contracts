@@ -16,63 +16,116 @@ The following standard focuses on providing an unambiguous name to the different
 
 ## Motivation
 
-Crosschain message-passing systems, also known as bridges, allow communication between smart contracts living on different blockchains. There exists a large diversity of such systems, with different degrees of decentralization. These many systems use different components, implement different interfaces, and provide different guarantees to the users. This often makes it difficult to compare them and transfer knowledge and reasoning from one system to another.
+Crosschain message-passing systems (or bridges) allow communication between smart contracts deployed on different blockchains. There is a large diversity of such systems with multiple degrees of decentralization, with various components, that implement different interfaces, and provide different guarantees to the users.
 
-The objective of this ERC is to provide a standard nomenclature for describing the actors and components involved in cross-chain communication. It also lists properties that such systems may or may not have.
+Their implementations often use protocol-specific language, which makes it challenging to transfer knowledge and reasoning from one system to another. Considering this scenario, the objective of the ERC is to provide a standard set of definitions and a list of formal properties to describe cross-chain communication protocols.
 
-The list of properties is not a wishlist of features that systems SHOULD implement. In some cases, some properties might not be desirable. Being clear about which properties are present (and how they are achieved) and which are not will help users determine which systems meet their needs.
+Properties expected in smart contract systems attempt to be an exhaustive list. As such, they shall not be considered mandatory. Some of them might not be desirable depending on the objectives of the underlying protocol. However, a clear definition will help users determine what systems meet their needs in the clearest way possible.
 
 ## Specification
 
-The keywords "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "SHOULD NOT", "RECOMMENDED",  "MAY", and "OPTIONAL" in this document are to be interpreted as described in RFC 2119.
+The keywords "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "SHOULD NOT", "RECOMMENDED", "MAY", and "OPTIONAL" in this document are to be interpreted as described in RFC 2119.
 
 ### Definitions
+
+#### Communication model
+
+A representation of the way messages are transmitted between chains. A general expectation of these chains is that they operate on their own clocks and are independent of each other. As such, the minimal secure model is that of an asynchronous message-passing system with a source account and a destination account.
+
+More sophisticated functionalities such as synchronous delivery, multi-sends, and multi-hop can be implemented on top of the base protocol.
 
 #### Source chain
 
 The blockchain from which the cross-chain message is originating.
 
-#### Requester
+#### Source account
 
-The account, on the source chain, that is sending the cross-chain message. In the context of an EVM source chain, this can be an EOA or a smart contract.
+An account (often defined by an address) on the source chain that is sending the cross-chain message. In the context of an EVM source chain, this can be an EOA or a smart contract.
 
 #### Destination chain
 
 The blockchain to which the cross-chain message is intended.
 
-#### Target
+#### Destination account
 
-The account, on the destination chain, that should receive the message. In the context of an EVM source chain, this can be an EOA or a smart contract, though most usecases will target smart contracts.
+An account (often defined by an address) on the destination chain that is receiving the cross-chain message. In the context of an EVM destination chain, this can be an EOA or a smart contract.
 
 #### Payload
 
-The data contents (i.e., a byte string) of the message the requester sends to the target.
+The data contents (i.e., a byte string) of the message the source account sends to the destination account.
 
 #### Message
 
-Messages are the objects that are being transmitted between chains. The message is sent by a requester, to a target, and contains a payload. The message may also contain some additional optional parameters and assets attached to it.
+Messages are payloads with additional information attached, such as value or execution constrains (i.e. gas limit).
 
-We refer to the payload and parameters as the "message contents".
+#### Source finality
+
+The point in the communication model at which it is no longer possible to revert the execution of the message on the source chain.
+
+#### Destination finality
+
+The last point in the communication model at which the message can no longer be reverted on the destination chain. This is also the point at which the message is final to the system.
+
+#### Processing Protocol
+
+The set of rules that govern the transmission of messages between chains. Processing sits between the source and destination chains and is responsible for ensuring that messages are delivered.
 
 #### Message delivery
 
-The process by which the message becomes available on the destination chain. This process may include message execution.
+The process by which the message becomes available for execution on the destination chain. May include message execution.
 
 #### Message execution
 
-I a message's payload is not empty, and if the target of the message is a smart contract, then the message should be processed by the payload. This may be done in different ways. One common mechanism is to perform a call operation on the target, using the payload as calldata. We call that process message execution. As with all call operations, the execution of a message can fail/revert.
+Process by which the message's payload is sent to the destination account. This generally implies executing the payload in smart contract code of the destination account.
 
-#### Forwarder (or Relayer?)
+Execution may have a cost (e.g., gas on EVM chains), and thus, may revert due to an insufficient amount of funds available to cover costs. Similarly, execution may revert in case of an error on the executed code.
 
-In some cross-chain systems, the transmission of the message may require the help of a forwarder to facilitate the transmission. The forwarder may provide additional parameters, or payment but shall not be able to alter the target and the payload decided by the requester.
+#### Relayer
+
+An account that helps with message execution by relaying a transaction to the destination chain on behalf of the source account. Generally it's not able to alter the message's payload although it may be able to add additional execution parameters.
+
+Some protocols facilitate relayers to execute message on the destination chain.
 
 #### Gateway
 
-In some cross-chain systems, the creation and delivery of messages may involve entry-point smart contracts on either chain. We call these contracts gateways. Some systems will require gateways on both the source chain and destination chains while other systems will only use one gateway. The presence and nature of the gateway varies radically between existing cross-chain message-passing systems.
+A smart contract that serves as an entry point for messages to be sent between chains.
+
+Some systems will require gateways on both the source chain and destination chains while other systems will only use one gateway. The presence and nature of the gateway varies radically between existing cross-chain message-passing systems.
+
+### Communication Model Overview
+
+```mermaid
+flowchart LR
+	EOA ==message==> SA
+
+  subgraph SC[Source chain]
+		SA[Source account]
+		SG[/Gateway/]
+		SF>Finality]
+		
+		SA ==message==> SG
+		SG -.revert.-x SG
+	end
+	
+	SG -.message.- SF -.message.-> PP
+	
+	PP{{Processing Protocol}}
+	
+  EOAR[EOA] ==message==> R
+	
+	DG <-..-> PP
+	
+	subgraph DC[Destination chain]
+		R[Relayer] ==execute==> DG ==message==> DA
+		DG -.revert.-x DG
+		DA[Destination account]
+		DG[/Gateway/]
+	end
+```
 
 ### Properties
 
-This section provides a list of properties that can be used to describe a cross-chain message-passing system. Not all systems have all the properties. In some cases, some of these properties may not be achievable or desirable.
+This section provides a list of properties that can be used to describe a cross-chain message-passing system. Not all systems have all the properties, and depending on the case, some of them may not be achievable or desirable.
 
 #### Identifiability
 
