@@ -10,6 +10,9 @@ import {IERC20, SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeE
 import {SlotDerivation} from "@openzeppelin/contracts@master/utils/SlotDerivation.sol";
 import {StorageSlot} from "@openzeppelin/contracts@master/utils/StorageSlot.sol";
 
+/**
+ * @dev Generic implementation of a Gateway contract according to ERC-XXXX definitions.
+ */
 abstract contract GenericGatewayCommon is IGenericGateway {
     using SlotDerivation for *;
     using StorageSlot for *;
