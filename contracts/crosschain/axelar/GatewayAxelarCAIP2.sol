@@ -2,10 +2,10 @@
 
 pragma solidity ^0.8.0;
 
-import {IGatewayCAIP2Equivalence} from "./ICAIP2GatewayEquivalence.sol";
-import {CAIP2} from "../utils/CAIP-2.sol";
+import {ICAIP2Equivalence} from "../ICAIP2Equivalence.sol";
+import {CAIP2} from "../../utils/CAIP-2.sol";
 
-abstract contract GatewayAxelarCAIP2 is IGatewayCAIP2Equivalence {
+abstract contract GatewayAxelarCAIP2 is ICAIP2Equivalence {
     error AlreadyRegisteredChain(CAIP2.ChainId chain);
     error UnsupportedChain(CAIP2.ChainId chain);
 

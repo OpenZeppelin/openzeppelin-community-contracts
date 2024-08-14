@@ -6,6 +6,8 @@ import {Arrays} from "@openzeppelin/contracts/utils/Arrays.sol";
 import {SafeCast} from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
 library CAIP2 {
+    bytes16 private constant HEX_DIGITS = "0123456789abcdef";
+
     // chain_id:    namespace + ":" + reference
     // namespace:   [-a-z0-9]{3,8}
     // reference:   [-_a-zA-Z0-9]{1,32}
@@ -60,5 +62,27 @@ library CAIP2 {
             }
         }
         return length;
+    }
+
+    function isCurrentEVMChain(ChainId memory chain) internal view returns (bool) {
+        return
+            chain._namespace == currentChainId() && // Chain ID must match the current chain
+            chain._reference == bytes32(bytes(string("eip155"))); // EIP-155 for EVM chains
+    }
+
+    /// @dev Returns the chain ID of the current chain.
+    /// Assumes block.chainId < type(uint64).max
+    function currentChainId() internal view returns (bytes8 _chainId) {
+        unchecked {
+            uint256 id = block.chainid;
+            while (true) {
+                _chainId = bytes8(uint64(_chainId) - 1);
+                assembly ("memory-safe") {
+                    mstore8(_chainId, byte(mod(id, 10), HEX_DIGITS))
+                }
+                id /= 10;
+                if (id == 0) break;
+            }
+        }
     }
 }

@@ -51,6 +51,10 @@ library CAIP10 {
         return string(_accountId);
     }
 
+    function getAddress(Account memory account) internal pure returns (address) {
+        return address(bytes20(bytes(account._accountId)));
+    }
+
     function _findLastSeparatorIndex(bytes memory accountBuffer) private pure returns (uint256) {
         for (uint256 i = accountBuffer.length - 1; i >= 0; i--) {
             if (accountBuffer[i] == CAIP2.SEMICOLON) {
