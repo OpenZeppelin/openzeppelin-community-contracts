@@ -41,7 +41,7 @@ abstract contract GatewaySource is IGatewaySource {
         string memory destination,
         Message memory message
     ) external payable virtual returns (bytes32) {
-        _authorizeSendingMessage(source, source, message);
+        _authorizeCreatingMessage(source, source, message);
         bytes32 id = messageId(source, destination, message);
         return _sendMessage(id, sendingStatus(id), message);
     }
@@ -52,7 +52,7 @@ abstract contract GatewaySource is IGatewaySource {
         string memory destination,
         Message memory message
     ) external payable virtual returns (bytes32) {
-        _authorizeSendingMessage(source, message);
+        _authorizeCreatingMessage(source, message);
         bytes32 id = messageId(source, destination, message);
         return _createMessage(id, sendingStatus(id), message);
     }
@@ -67,7 +67,51 @@ abstract contract GatewaySource is IGatewaySource {
         return _forwardMessage(id, sendingStatus(id), message);
     }
 
-    function _authorizeSendingMessage(string memory source, Message memory message) internal virtual {
+    function _createMessage(
+        bytes32 id,
+        string memory source,
+        string memory destination,
+        MessageSourceStatus status,
+        Message memory message
+    ) internal virtual returns (bytes32) {
+        // Check if the message was not created or sent before. NOOP otherwise.
+        if (status == MessageSourceStatus.Unknown) {
+            _createdBox.insert(id);
+            emit MessageCreated(id, message);
+        }
+        return id;
+    }
+
+    function _sendMessage(
+        bytes32 id,
+        string memory source,
+        string memory destination,
+        MessageSourceStatus status,
+        Message memory message
+    ) internal virtual returns (bytes32) {
+        /// Check if the message hwas not sent before. NOOP otherwise.
+        if (status != MessageSourceStatus.Sent) {
+            _sentBox.insert(id);
+            emit MessageSent(id, message);
+        }
+        return id;
+    }
+
+    function _forwardMessage(
+        bytes32 id,
+        string memory source,
+        string memory destination,
+        MessageSourceStatus status,
+        Message memory message
+    ) internal virtual returns (bytes32) {
+        // Check if the message was created first. NOOP otherwise.
+        if (status == MessageSourceStatus.Created) {
+            _sendMessage(id, status, message);
+        }
+        return id;
+    }
+
+    function _authorizeCreatingMessage(string memory source, Message memory message) internal virtual {
         CAIP10.Account memory sourceAccount = CAIP10.fromString(source);
 
         // Sender must match the source account
@@ -82,32 +126,6 @@ abstract contract GatewaySource is IGatewaySource {
         return
             sourceAccount._chainId._namespace == _chainId() && // Chain ID must match the current chain
             sourceAccount._chainId._reference == bytes32(bytes(string("eip155"))); // EIP-155 for EVM chains
-    }
-
-    function _createMessage(bytes32 id, MessageSourceStatus status, Message memory message) private returns (bytes32) {
-        // Check if the message was not created or sent before. NOOP otherwise.
-        if (status == MessageSourceStatus.Unknown) {
-            _createdBox.insert(id);
-            emit MessageCreated(id, message);
-        }
-        return id;
-    }
-
-    function _sendMessage(bytes32 id, MessageSourceStatus status, Message memory message) private returns (bytes32) {
-        /// Check if the message hwas not sent before. NOOP otherwise.
-        if (status != MessageSourceStatus.Sent) {
-            _sentBox.insert(id);
-            emit MessageSent(id, message);
-        }
-        return id;
-    }
-
-    function _forwardMessage(bytes32 id, MessageSourceStatus status, Message memory message) private returns (bytes32) {
-        // Check if the message was created first. NOOP otherwise.
-        if (status == MessageSourceStatus.Created) {
-            _sendMessage(id, status, message);
-        }
-        return id;
     }
 
     /// @dev Returns the chain ID of the current chain.
@@ -187,7 +205,7 @@ abstract contract GatewayDestination is IGatewayDestination {
         bytes32 id,
         MessageDestinationStatus status,
         Message memory message
-    ) private returns (bytes32) {
+    ) internal virtual returns (bytes32) {
         // Check if the message was not delivered or executed before. NOOP otherwise.
         if (status == MessageDestinationStatus.Unknown) {
             _deliveredBox.insert(id);
