@@ -55,7 +55,7 @@ contract GatewayAxelarSource is GatewaySource, GatewayAxelarCAIP2 {
 
         if (status != MessageSourceStatus.Sent) {
             AxelarChain memory details = chainDetails[CAIP10.fromString(destination)._chainId];
-            axelarGateway.callContract(details.name, details.remote, payload);
+            axelarGateway.callContract(details.destinationChain, details.contractAddress, payload);
         }
 
         return id;
