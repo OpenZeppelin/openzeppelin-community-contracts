@@ -2,7 +2,7 @@
 eip: XXXX
 title: Nomenclature and properties of cross-chain message-passing systems.
 description: todo
-author: Hadrien Croubois (@Amxx), Ernesto García (@ernestognw), Francisco Giordano (@frangio)
+author: Hadrien Croubois (@Amxx), Ernesto García (@ernestognw), Francisco Giordano (@frangio), Sergey Gorbunov (@sergeynog), CJ Cobb (@cjcobb23)
 discussions-to: toto
 status: Draft
 type: Standards Track
