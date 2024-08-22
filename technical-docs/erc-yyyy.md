@@ -94,6 +94,12 @@ TBD: Interaction between `payable` and `token/native` attribute.
 
 An Incoming Gateway is a contract that implements a protocol to validate messages sent on other chains.
 
+```solidity
+interface IGatewayIncoming {
+    event MessageExecuted(bytes32 indexed id);
+}
+```
+
 This gateway can operate in Active or Passive Mode. In both cases the destination account of a message, aka the receiver, must implement a `receiveMessage` function.
 
 ```solidity
@@ -112,9 +118,15 @@ interface IGatewayReceiver {
 
 The gateway will directly invoke `receiveMessage`, and it will only do so with valid messages. The receiver must check that the caller is a known gateway to ensure the validity of the message.
 
+The event `MessageExecuted` must be emitted before executing the message on the receiver.
+
 #### Passive Mode
 
 The gateway will not directly invoke `receiveMessage`, but provides a function `validateReceivedMessage` that checks if the message is valid and has never been executed, and otherwise reverts. Any party can invoke `receiveMessage`, and the receiver must use this function on a known gateway before accepting it as valid.
+
+The event `MessageExecuted` must be emitted if a message is valid and as yet unexecuted. If the message has already been validated and/or began to be executed the function must revert.
+
+This interface is OPTIONAL, given that a gateway may operate exclusively in active mode.
 
 ```solidity
 interface IGatewayIncomingPassive {
