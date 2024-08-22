@@ -24,12 +24,15 @@ The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "S
 
 ```solidity
 struct Message {
-    string srcChain;
-    string srcAccount;
-    string dstChain;
-    string dstAccount;
+    Account source;
+    Account destination;
     bytes payload;
     bytes attributes;
+}
+
+struct Account {
+    string chainId;
+    string account;
 }
 ```
 
