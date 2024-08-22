@@ -143,7 +143,7 @@ This is a fundamental property that is required for other properties, such as **
 
 #### Validity
 
-> A payload is only executed on the target if the message was submitted by the requester.
+> A payload is only executed on the target if the message was submitted by the requester and it reached source finality.
 
 This is a basic security property that all cross-chain systems SHOULD have.
 
