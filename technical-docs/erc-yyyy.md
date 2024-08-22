@@ -38,7 +38,7 @@ struct Account {
 
 #### `Account`
 
-CAIP-10 account identifier separated into its two components (i.e., `chainId` is CAIP-2 chain identifiers).
+CAIP-10 account identifier separated into its two components (i.e., `chainId` is a CAIP-2 chain identifier).
 
 #### `attributes`
 
