@@ -135,7 +135,7 @@ flowchart LR
 
 This section provides a list of properties that can be used to describe a cross-chain message-passing system. Not all systems have all the properties, and depending on the case, some of them may not be achievable or desirable.
 
-#### Identifiability
+#### Uniqueness
 
 > A message is uniquely identifiable.
 
