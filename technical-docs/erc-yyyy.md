@@ -36,13 +36,9 @@ struct Account {
 }
 ```
 
-#### `srcChain`, `dstChain`
+#### `Account`
 
-CAIP-2 chain identifiers.
-
-#### `srcAccount`, `dstAccount`
-
-Like the address component of CAIP-10 account identifiers.
+CAIP-10 account identifier separated into its two components (i.e., `chainId` is CAIP-2 chain identifiers).
 
 #### `attributes`
 
