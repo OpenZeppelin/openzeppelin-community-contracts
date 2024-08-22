@@ -32,7 +32,7 @@ struct Message {
 
 struct Account {
     string chainId;
-    string account;
+    string accountAddress;
 }
 ```
 
