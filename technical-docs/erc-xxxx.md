@@ -20,7 +20,7 @@ Crosschain message-passing systems (or bridges) allow communication between smar
 
 Their implementations often use protocol-specific language, which makes it challenging to transfer knowledge and reasoning from one system to another. Considering this scenario, the objective of the ERC is to provide a standard set of definitions and a list of formal properties to describe cross-chain communication protocols.
 
-Properties expected in smart contract systems attempt to be an exhaustive list. As such, they shall not be considered mandatory. Some of them might not be desirable depending on the objectives of the underlying protocol. However, a clear definition will help users determine what systems meet their needs in the clearest way possible.
+These properties are an exhaustive list. As such, they shall not be considered mandatory. Some of them might not be desirable depending on the objectives of the underlying protocol. However, a clear definition will help users determine what systems meet their needs in the clearest way possible.
 
 ## Specification
 
@@ -30,7 +30,7 @@ The keywords "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "SH
 
 #### Communication model
 
-A representation of the way messages are transmitted between chains. A general expectation of these chains is that they operate on their own clocks and are independent of each other. As such, the minimal secure model is that of an asynchronous message-passing system with a source account and a destination account.
+A representation of how messages are transmitted between chains. A general expectation of these chains is that they operate on their own clocks and are independent of each other. As such, the minimal secure model is that of an asynchronous message-passing system with a source account and a destination account.
 
 More sophisticated functionalities such as synchronous delivery, multi-sends, and multi-hop can be implemented on top of the base protocol.
 
@@ -52,15 +52,15 @@ An account (often defined by an address) on the destination chain that is receiv
 
 #### Payload
 
-The data contents (i.e., a byte string) of the message the source account sends to the destination account.
+The content of the message that is being sent. It includes source and destination (i.e. both chain and account) and the data contents (i.e. a bytes buffer).
 
 #### Message
 
-Messages are payloads with additional information attached, such as value or execution constrains (i.e. gas limit).
+Messages are payloads with additional information attached, such as value or submission constrains (i.e. gas limit).
 
 #### Source finality
 
-The point in the communication model at which it is no longer possible to revert the execution of the message on the source chain.
+The point in the communication model at which it is no longer possible to revert the submission of the message on the source chain.
 
 #### Destination finality
 
@@ -70,13 +70,21 @@ The last point in the communication model at which the message can no longer be 
 
 The set of rules that govern the transmission of messages between chains. Processing sits between the source and destination chains and is responsible for ensuring that messages are delivered.
 
+#### Message creation
+
+The process by which a message becomes available for submission on the source chain.
+
+#### Message submission
+
+Process by which the message is sent from the source chain to the processing protocol. May include message creation.
+
 #### Message delivery
 
 The process by which the message becomes available for execution on the destination chain. May include message execution.
 
 #### Message execution
 
-Process by which the message's payload is sent to the destination account. This generally implies executing the payload in smart contract code of the destination account.
+Process by which the message's payload is sent to the destination account. This generally implies executing the smart contract code at the destination account with the payload's data as input.
 
 Execution may have a cost (e.g., gas on EVM chains), and thus, may revert due to an insufficient amount of funds available to cover costs. Similarly, execution may revert in case of an error on the executed code.
 
@@ -102,19 +110,19 @@ flowchart LR
 		SA[Source account]
 		SG[/Gateway/]
 		SF>Finality]
-		
+
 		SA ==message==> SG
 		SG -.revert.-x SG
 	end
-	
+
 	SG -.message.- SF -.message.-> PP
-	
+
 	PP{{Processing Protocol}}
-	
+
   EOAR[EOA] ==message==> R
-	
+
 	DG <-..-> PP
-	
+
 	subgraph DC[Destination chain]
 		R[Relayer] ==execute==> DG ==message==> DA
 		DG -.revert.-x DG
