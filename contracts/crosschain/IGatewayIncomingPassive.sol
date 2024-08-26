@@ -3,6 +3,8 @@
 pragma solidity ^0.8.0;
 
 interface IGatewayIncomingPassive {
+    error GatewayIncomingPassiveInvalidMessage(bytes32 messageId);
+
     function validateReceivedMessage(
         bytes32 messageId,
         string calldata srcChain,

@@ -11,33 +11,32 @@ import {CAIP2} from "../../utils/CAIP-2.sol";
 import {CAIP10} from "../../utils/CAIP-10.sol";
 
 abstract contract AxelarGatewayOutgoing is IGatewayOutgoing, AxelarCAIP2Equivalence {
-    IAxelarGateway public immutable axelarGateway;
+    IAxelarGateway public immutable gateway;
 
     function sendMessage(
         string calldata destChain, // CAIP-2 chain ID
         string calldata destAccount, // i.e. address
-        bytes calldata data,
+        bytes calldata payload,
         bytes calldata attributes
     ) external payable override returns (bytes32 messageId) {
         // TODO: Handle ether (payable)
         // TODO: Validate attributes
 
         // Validate there's an equivalent chain identifier supported by the gateway
-        string memory destinationCAIP2 = CAIP2.toString(destChain);
-        if (!supported(destinationCAIP2)) revert UnsupportedChain(destinationCAIP2);
+        if (!supported(destChain)) revert UnsupportedChain(destChain);
 
         // Create a message
         Message memory message = Message(
             CAIP10.currentId(Strings.toHexString(msg.sender)),
-            CAIP10.toString(destinationCAIP2, destAccount),
-            data,
+            CAIP10.toString(destChain, destAccount),
+            payload,
             attributes
         );
         bytes32 id = keccak256(message);
         emit MessageCreated(id, message);
 
         // Send the message
-        axelarGateway.callContract(string(fromCAIP2(destination)), destAccount, data);
+        gateway.callContract(string(fromCAIP2(destChain)), destAccount, message);
         emit MessageSent(id);
 
         return id;

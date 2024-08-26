@@ -6,7 +6,7 @@ interface IGatewayOutgoing {
     struct Message {
         string source; // CAIP-10 account ID
         string destination; // CAIP-10 account ID
-        bytes data;
+        bytes payload;
         bytes attributes;
     }
 
@@ -16,7 +16,7 @@ interface IGatewayOutgoing {
     function sendMessage(
         string calldata destChain, // CAIP-2 chain ID
         string calldata destAccount, // i.e. address
-        bytes calldata data,
+        bytes calldata payload,
         bytes calldata attributes
     ) external payable returns (bytes32 messageId);
 }
