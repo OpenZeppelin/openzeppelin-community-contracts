@@ -2,10 +2,6 @@
 
 pragma solidity ^0.8.0;
 
-interface IGatewayIncoming {
-    event MessageExecuted(bytes32 indexed id);
-}
-
 interface IGatewayIncomingPassive {
     function validateReceivedMessage(
         bytes32 messageId,
