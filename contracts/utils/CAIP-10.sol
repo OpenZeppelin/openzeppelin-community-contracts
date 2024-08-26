@@ -2,20 +2,27 @@
 
 pragma solidity ^0.8.0;
 
+import {CAIP2} from "./CAIP-2.sol";
+
 // account_id:        chain_id + ":" + account_address
 // chain_id:          [-a-z0-9]{3,8}:[-_a-zA-Z0-9]{1,32} (See [CAIP-2][])
 // account_address:   [-.%a-zA-Z0-9]{1,128}
 library CAIP10 {
-    bytes1 constant SEMICOLON = ":";
+    bytes1 private constant SEMICOLON = ":";
 
-    function toString(bytes32 chainId, string memory accountId) internal pure returns (string memory) {
-        return string(abi.encodePacked(chainId, SEMICOLON, accountId));
+    function toString(string memory caip2, string memory accountId) internal pure returns (string memory) {
+        return string(abi.encodePacked(caip2, SEMICOLON, accountId));
     }
 
     function fromString(string memory accountStr) internal pure returns (string memory caip2, string memory accountId) {
         bytes memory accountBuffer = bytes(accountStr);
         uint256 lastSeparatorIndex = _findLastSeparatorIndex(accountBuffer);
         return (_extractCAIP2(accountBuffer, lastSeparatorIndex), _extractAccountId(accountBuffer, lastSeparatorIndex));
+    }
+
+    function currentId(string memory accountId) internal view returns (string memory) {
+        (bytes8 namespace, bytes32 ref) = CAIP2.currentId();
+        return toString(CAIP2.toString(namespace, ref), accountId);
     }
 
     function _extractCAIP2(

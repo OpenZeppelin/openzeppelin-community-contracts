@@ -2,7 +2,6 @@
 
 pragma solidity ^0.8.0;
 
-import {Arrays} from "@openzeppelin/contracts/utils/Arrays.sol";
 import {SafeCast} from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
 // chain_id:    namespace + ":" + reference
@@ -10,30 +9,37 @@ import {SafeCast} from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 // reference:   [-_a-zA-Z0-9]{1,32}
 library CAIP2 {
     bytes16 private constant HEX_DIGITS = "0123456789abcdef";
-    bytes1 constant SEMICOLON = ":";
+    bytes1 private constant SEMICOLON = ":";
+    bytes32 private constant EVM_REFERENCE = bytes32("eip155"); // EIP-155 for EVM chains
 
+    /// @dev Converts a namespace and reference to a CAIP2 chain identifier.
     function toString(bytes8 namespace, bytes32 ref) internal pure returns (string memory) {
         return string(abi.encodePacked(namespace, SEMICOLON, ref));
     }
 
-    /// @dev Parses a chain ID from a string by splitting it at the first semicolon.
-    /// The function parses both sides as `bytes8` and `bytes32` respectively wiothout any validation.
-    function fromString(string memory chainStr) internal pure returns (bytes8 namespace, bytes32 ref) {
-        bytes memory chainBuffer = bytes(chainStr);
+    /// @dev Parses a CAIP2 identifier from a string by splitting it at the first semicolon.
+    /// The function parses both sides as `bytes8` and `bytes32` respectively without any validation.
+    function fromString(string memory caip2) internal pure returns (bytes8 namespace, bytes32 ref) {
+        bytes memory chainBuffer = bytes(caip2);
         uint8 semicolonIndex = _findSemicolonIndex(chainBuffer);
         return (_extractNamespace(chainBuffer, semicolonIndex), _unsafeExtractReference(chainBuffer, semicolonIndex));
     }
 
-    function isCurrentEVMChain(string memory chainStr) internal view returns (bool) {
-        (bytes8 namespace, bytes32 ref) = fromString(chainStr);
-        return
-            namespace == currentChainId() && // Chain ID must match the current chain
-            ref == bytes32(bytes(string("eip155"))); // EIP-155 for EVM chains
+    /// @dev Checks if the given CAIP2 identifier is the current chain.
+    function isCurrentId(string memory caip2) internal view returns (bool) {
+        (bytes8 namespace, bytes32 ref) = fromString(caip2);
+        (bytes8 currentNamespace, bytes32 currentRef) = currentId();
+        return namespace == currentNamespace && ref == currentRef;
     }
 
-    /// @dev Returns the chain ID of the current chain.
+    /// @dev Returns the CAIP2 identifier of the current chain.
+    function currentId() internal view returns (bytes8 namespace, bytes32 ref) {
+        return (currentNamespace(), currentReference());
+    }
+
+    /// @dev Returns the CAIP2 identifier of the current chain.
     /// Assumes block.chainId < type(uint64).max
-    function currentChainId() internal view returns (bytes8 _chainId) {
+    function currentNamespace() internal view returns (bytes8 _chainId) {
         unchecked {
             uint256 id = block.chainid;
             while (true) {
@@ -45,6 +51,11 @@ library CAIP2 {
                 if (id == 0) break;
             }
         }
+    }
+
+    /// @dev Returns the reference of the current chain.
+    function currentReference() internal pure returns (bytes32) {
+        return EVM_REFERENCE;
     }
 
     /// @dev Extracts the first `semicolonIndex` bytes from the chain buffer as a bytes8 namespace.
