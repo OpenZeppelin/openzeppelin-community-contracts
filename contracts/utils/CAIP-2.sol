@@ -5,33 +5,46 @@ pragma solidity ^0.8.0;
 import {Arrays} from "@openzeppelin/contracts/utils/Arrays.sol";
 import {SafeCast} from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
+// chain_id:    namespace + ":" + reference
+// namespace:   [-a-z0-9]{3,8}
+// reference:   [-_a-zA-Z0-9]{1,32}
 library CAIP2 {
     bytes16 private constant HEX_DIGITS = "0123456789abcdef";
-
-    // chain_id:    namespace + ":" + reference
-    // namespace:   [-a-z0-9]{3,8}
-    // reference:   [-_a-zA-Z0-9]{1,32}
-    struct ChainId {
-        bytes8 _namespace;
-        bytes32 _reference;
-    }
-
     bytes1 constant SEMICOLON = ":";
 
-    error TooLongChainId();
-
-    function toString(ChainId memory chainId) internal pure returns (string memory) {
-        return string(abi.encodePacked(chainId._namespace, SEMICOLON, chainId._reference));
+    function toString(bytes8 namespace, bytes32 ref) internal pure returns (string memory) {
+        return string(abi.encodePacked(namespace, SEMICOLON, ref));
     }
 
     /// @dev Parses a chain ID from a string by splitting it at the first semicolon.
     /// The function parses both sides as `bytes8` and `bytes32` respectively wiothout any validation.
-    function fromString(string memory chainStr) internal pure returns (ChainId memory chainId) {
+    function fromString(string memory chainStr) internal pure returns (bytes8 namespace, bytes32 ref) {
         bytes memory chainBuffer = bytes(chainStr);
         uint8 semicolonIndex = _findSemicolonIndex(chainBuffer);
-        chainId._namespace = _extractNamespace(chainBuffer, semicolonIndex);
-        chainId._reference = _unsafeExtractReference(chainBuffer, semicolonIndex);
-        return chainId;
+        return (_extractNamespace(chainBuffer, semicolonIndex), _unsafeExtractReference(chainBuffer, semicolonIndex));
+    }
+
+    function isCurrentEVMChain(string memory chainStr) internal view returns (bool) {
+        (bytes8 namespace, bytes32 ref) = fromString(chainStr);
+        return
+            namespace == currentChainId() && // Chain ID must match the current chain
+            ref == bytes32(bytes(string("eip155"))); // EIP-155 for EVM chains
+    }
+
+    /// @dev Returns the chain ID of the current chain.
+    /// Assumes block.chainId < type(uint64).max
+    function currentChainId() internal view returns (bytes8 _chainId) {
+        unchecked {
+            uint256 id = block.chainid;
+            while (true) {
+                _chainId = bytes8(uint64(_chainId) - 1);
+                assembly ("memory-safe") {
+                    mstore8(_chainId, byte(mod(id, 10), HEX_DIGITS))
+                }
+                id /= 10;
+                if (id == 0) break;
+            }
+        }
     }
 
     /// @dev Extracts the first `semicolonIndex` bytes from the chain buffer as a bytes8 namespace.
@@ -62,27 +75,5 @@ library CAIP2 {
             }
         }
         return length;
-    }
-
-    function isCurrentEVMChain(ChainId memory chain) internal view returns (bool) {
-        return
-            chain._namespace == currentChainId() && // Chain ID must match the current chain
-            chain._reference == bytes32(bytes(string("eip155"))); // EIP-155 for EVM chains
-    }
-
-    /// @dev Returns the chain ID of the current chain.
-    /// Assumes block.chainId < type(uint64).max
-    function currentChainId() internal view returns (bytes8 _chainId) {
-        unchecked {
-            uint256 id = block.chainid;
-            while (true) {
-                _chainId = bytes8(uint64(_chainId) - 1);
-                assembly ("memory-safe") {
-                    mstore8(_chainId, byte(mod(id, 10), HEX_DIGITS))
-                }
-                id /= 10;
-                if (id == 0) break;
-            }
-        }
     }
 }
