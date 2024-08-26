@@ -28,8 +28,8 @@ library CAIP2 {
     /// @dev Checks if the given CAIP2 identifier is the current chain.
     function isCurrentId(string memory caip2) internal view returns (bool) {
         (bytes8 namespace, bytes32 ref) = fromString(caip2);
-        (bytes8 currentNamespace, bytes32 currentRef) = currentId();
-        return namespace == currentNamespace && ref == currentRef;
+        (bytes8 _namespace, bytes32 _ref) = currentId();
+        return namespace == _namespace && ref == _ref;
     }
 
     /// @dev Returns the CAIP2 identifier of the current chain.

@@ -32,11 +32,11 @@ abstract contract AxelarGatewayOutgoing is IGatewayOutgoing, AxelarCAIP2Equivale
             payload,
             attributes
         );
-        bytes32 id = keccak256(message);
+        bytes32 id = keccak256(abi.encode(message));
         emit MessageCreated(id, message);
 
         // Send the message
-        gateway.callContract(string(fromCAIP2(destChain)), destAccount, message);
+        gateway.callContract(string(fromCAIP2(destChain)), destAccount, payload);
         emit MessageSent(id);
 
         return id;
