@@ -3,11 +3,15 @@
 pragma solidity ^0.8.0;
 
 import {SafeCast} from "@openzeppelin/contracts/utils/math/SafeCast.sol";
+import {Bytes} from "./Bytes.sol";
 
 // chain_id:    namespace + ":" + reference
 // namespace:   [-a-z0-9]{3,8}
 // reference:   [-_a-zA-Z0-9]{1,32}
 library CAIP2 {
+    using SafeCast for uint256;
+    using Bytes for bytes;
+
     bytes16 private constant HEX_DIGITS = "0123456789abcdef";
     bytes1 private constant SEMICOLON = ":";
     bytes32 private constant EVM_REFERENCE = bytes32("eip155"); // EIP-155 for EVM chains
@@ -19,15 +23,15 @@ library CAIP2 {
 
     /// @dev Parses a CAIP2 identifier from a string by splitting it at the first semicolon.
     /// The function parses both sides as `bytes8` and `bytes32` respectively without any validation.
-    function fromString(string memory caip2) internal pure returns (bytes8 namespace, bytes32 ref) {
+    function parse(string memory caip2) internal pure returns (bytes8 namespace, bytes32 ref) {
         bytes memory chainBuffer = bytes(caip2);
-        uint8 semicolonIndex = _findSemicolonIndex(chainBuffer);
+        uint8 semicolonIndex = chainBuffer.find(SEMICOLON, 0).toUint8();
         return (_extractNamespace(chainBuffer, semicolonIndex), _unsafeExtractReference(chainBuffer, semicolonIndex));
     }
 
     /// @dev Checks if the given CAIP2 identifier is the current chain.
     function isCurrentId(string memory caip2) internal view returns (bool) {
-        (bytes8 namespace, bytes32 ref) = fromString(caip2);
+        (bytes8 namespace, bytes32 ref) = parse(caip2);
         (bytes8 _namespace, bytes32 _ref) = currentId();
         return namespace == _namespace && ref == _ref;
     }
@@ -74,17 +78,5 @@ library CAIP2 {
         assembly ("memory-safe") {
             ref := mload(add(chainBuffer, add(0x20, offset)))
         }
-    }
-
-    /// @dev Looks for the first semicolon in the chain buffer. This is the optimal way since
-    /// the namespace is shorter than the reference.
-    function _findSemicolonIndex(bytes memory chainBuffer) private pure returns (uint8) {
-        uint8 length = SafeCast.toUint8(chainBuffer.length);
-        for (uint8 i = 0; i < length; i++) {
-            if (chainBuffer[i] == SEMICOLON) {
-                return i;
-            }
-        }
-        return length;
     }
 }

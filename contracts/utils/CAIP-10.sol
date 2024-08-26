@@ -2,21 +2,27 @@
 
 pragma solidity ^0.8.0;
 
+import {SafeCast} from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import {CAIP2} from "./CAIP-2.sol";
+import {Bytes} from "./Bytes.sol";
 
 // account_id:        chain_id + ":" + account_address
 // chain_id:          [-a-z0-9]{3,8}:[-_a-zA-Z0-9]{1,32} (See [CAIP-2][])
 // account_address:   [-.%a-zA-Z0-9]{1,128}
 library CAIP10 {
+    using SafeCast for uint256;
+    using Bytes for bytes;
+
     bytes1 private constant SEMICOLON = ":";
 
     function toString(string memory caip2, string memory accountId) internal pure returns (string memory) {
         return string(abi.encodePacked(caip2, SEMICOLON, accountId));
     }
 
-    function fromString(string memory accountStr) internal pure returns (string memory caip2, string memory accountId) {
-        bytes memory accountBuffer = bytes(accountStr);
-        uint256 lastSeparatorIndex = _findLastSeparatorIndex(accountBuffer);
+    function parse(string memory caip10) internal pure returns (string memory caip2, string memory accountId) {
+        bytes memory accountBuffer = bytes(caip10);
+        uint8 firstSeparatorIndex = accountBuffer.find(SEMICOLON, 0).toUint8();
+        uint256 lastSeparatorIndex = accountBuffer.find(SEMICOLON, firstSeparatorIndex).toUint8();
         return (_extractCAIP2(accountBuffer, lastSeparatorIndex), _extractAccountId(accountBuffer, lastSeparatorIndex));
     }
 
@@ -47,14 +53,5 @@ library CAIP10 {
             _accountId[i - offset] = accountBuffer[i];
         }
         return string(_accountId);
-    }
-
-    function _findLastSeparatorIndex(bytes memory accountBuffer) private pure returns (uint256) {
-        for (uint256 i = accountBuffer.length - 1; i >= 0; i--) {
-            if (accountBuffer[i] == SEMICOLON) {
-                return i;
-            }
-        }
-        return 0;
     }
 }
