@@ -62,7 +62,7 @@ TBC
 
 ### Outgoing Gateway
 
-An Outgoing Gateway is a contract that offers a protocol to send a message to a destination on another chain.
+An Outgoing Gateway is a contract that offers a protocol to send a message to a destination on another chain. It MUST implement `IGatewayOutgoing`.
 
 ```solidity
 interface IGatewayOutgoing {
@@ -82,13 +82,21 @@ interface IGatewayOutgoing {
 
 Initiates the sending of a message.
 
-Emits a `MessageCreated` event with a unique assigned message id.
+MUST generate a unique message identifier and return it. This identifier shall be used to track the lifecycle of the message in events and to perform actions related to the message.
 
-Emits a `MessageSent` event if it is possible to immediately send the message.
+MUST emit a `MessageCreated` event.
 
-It may not be possible to immediately send the message if additional action such as payment is required. Any such additional action must be able to be performed by a party other than the sender. Once required actions are completed, the message must be sent and this must be signaled by emitting a `MessageSent` event.
+MAY emit a `MessageSent` event if it is possible to immediately send the message.
 
 TBD: Interaction between `payable` and `token/native` attribute.
+
+#### `MessageSent`
+
+It MAY not be possible for `sendMessage` to immediately send a message if additional action (such as payment) is required.
+
+The interface for such any additional action is out of scope of this ERC and MAY be proprietary, but it MUST be able to be performed by a party other than the message sender.
+
+The gateway MUST emit a `MessageSent` event with the appropriate identifier once required actions are completed and the message is ready to be delivered on the destination.
 
 ### Incoming Gateway
 
