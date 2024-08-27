@@ -118,7 +118,7 @@ interface IGatewayReceiver {
 
 The gateway will directly invoke `receiveMessage`, and it will only do so with valid messages. The receiver must check that the caller is a known gateway to ensure the validity of the message.
 
-The event `MessageExecuted` must be emitted before executing the message on the receiver.
+The event `MessageExecuted` must be emitted by the gateway before executing the message on the receiver.
 
 #### Passive Mode
 
