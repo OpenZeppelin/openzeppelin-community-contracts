@@ -94,7 +94,7 @@ TBD: Interaction between `payable` and `token/native` attribute.
 
 It MAY not be possible for `sendMessage` to immediately send a message if additional action (such as payment) is required.
 
-The interface for such any additional action is out of scope of this ERC and MAY be proprietary, but it MUST be able to be performed by a party other than the message sender.
+The interface for any such additional action is out of scope of this ERC, but it MUST be able to be performed by a party other than the message sender.
 
 The gateway MUST emit a `MessageSent` event with the appropriate identifier once required actions are completed and the message is ready to be delivered on the destination.
 
