@@ -91,7 +91,11 @@ The gateway MUST emit a `MessageSent` event with the appropriate identifier once
 
 ### Incoming Gateway
 
-An Incoming Gateway is a contract that implements a protocol to validate messages sent on other chains.
+An Incoming Gateway is a contract that implements a protocol to validate messages sent on other chains and have them received at their destination.
+
+The gateway can operate in Active or Passive Mode.
+
+In both modes, the receipt and execution of a message MUST be signaled by emitting a `MessageExecuted` event.
 
 ```solidity
 interface IGatewayIncoming {
@@ -99,7 +103,7 @@ interface IGatewayIncoming {
 }
 ```
 
-This gateway can operate in Active or Passive Mode. In both cases the destination account of a message, aka the receiver, must implement a `receiveMessage` function.
+In both modes, the destination account of a message, aka the receiver, MUST implement a `receiveMessage` function. The use of this function depends on the mode of the gateway as described in the following sections.
 
 ```solidity
 interface IGatewayReceiver {
@@ -115,17 +119,15 @@ interface IGatewayReceiver {
 
 #### Active Mode
 
-The gateway will directly invoke `receiveMessage`, and it will only do so with valid messages. The receiver must check that the caller is a known gateway to ensure the validity of the message.
+The gateway directly invokes `receiveMessage`, and only does so with valid messages. The receiver MUST assume that a message is valid if the caller is a known gateway.
 
-The event `MessageExecuted` must be emitted by the gateway before executing the message on the receiver.
+The event `MessageExecuted` must be emitted by the gateway before invoking `receiveMessage`.
 
 #### Passive Mode
 
-The gateway will not directly invoke `receiveMessage`, but provides a function `validateReceivedMessage` that checks if the message is valid and has never been executed, and otherwise reverts. Any party can invoke `receiveMessage`, and the receiver must use this function on a known gateway before accepting it as valid.
+The gateway does not directly invoke `receiveMessage`, but provides a means to validate messages. The receiver allows any party to invoke `receiveMessage`, but if the caller is not a known gateway it MUST validate the message with one before accepting it.
 
-The event `MessageExecuted` must be emitted if a message is valid and as yet unexecuted. If the message has already been validated and/or began to be executed the function must revert.
-
-This interface is OPTIONAL, given that a gateway may operate exclusively in active mode.
+A gateway acting in passive mode MUST implement `IGatewayIncomingPassive`. If a gateway operates exclusively in active mode, the implementation of this interface is OPTIONAL.
 
 ```solidity
 interface IGatewayIncomingPassive {
@@ -139,14 +141,27 @@ interface IGatewayIncomingPassive {
 }
 ```
 
+##### `validateReceivedMessage`
+
+Checks that there is a valid and as yet unexecuted message identified by `messageId`, and that its contents are exactly those passed as arguments along with the caller of the function as the destination account.
+
+MUST revert if the message is invalid or has already been executed.
+
+MUST emit a `MessageExecuted` event if it does not revert.
+
+TBD: Passing full payload or payload hash (as done by Axelar). Same question for attributes, possibly different answer depending on attribute malleability.
+
 #### Dual Mode
 
-A receiver SHOULD support both active and passive modes by first checking whether the caller of `receiveMessage` is a known gateway, and if so assuming it is one operating in active mode and thus that the message is valid; otherwise, the receiver must validate the message against a known gateway.
+A gateway MAY operate in both active and passive modes, or it MAY switch from operating exclusive in active mode to passive mode or vice versa.
+
+A receiver SHOULD support both active and passive modes for any gateway. This is accomplished by first checking whether the caller of `receiveMessage` is a known gateway, and only validating the message on a known gateway if it is not; the first case supports an active mode gateway, while the second case supports a passive mode gateway.
 
 ### TBD
 
-- Attribute support detection.
+- Detection of attributes supported by a gateway.
 - How to "reply" to a message? Duplex gateway? Getter for reverse gateway address? Necessary for some applications, e.g., recovery from token bridging failure?
+- How can a receiver support multiple known gateways, in passive mode in particular?
 
 ## Rationale
 
