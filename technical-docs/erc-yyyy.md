@@ -143,6 +143,11 @@ interface IGatewayIncomingPassive {
 
 A receiver SHOULD support both active and passive modes by first checking whether the caller of `receiveMessage` is a known gateway, and if so assuming it is one operating in active mode and thus that the message is valid; otherwise, the receiver must validate the message against a known gateway.
 
+### TBD
+
+- Attribute support detection.
+- How to "reply" to a message? Duplex gateway? Getter for reverse gateway address? Necessary for some applications, e.g., recovery from token bridging failure?
+
 ## Rationale
 
 TBD
