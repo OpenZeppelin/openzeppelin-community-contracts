@@ -24,21 +24,12 @@ The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "S
 
 ```solidity
 struct Message {
-    Account source;
-    Account destination;
+    string source; // CAIP-10 identifier
+    string destination;  // CAIP-10 identifier
     bytes payload;
-    bytes attributes;
-}
-
-struct Account {
-    string chainId;
-    string accountAddress;
+    bytes[] attributes;
 }
 ```
-
-#### `Account`
-
-CAIP-10 account identifier separated into its two components (i.e., `chainId` is a CAIP-2 chain identifier).
 
 #### `attributes`
 
@@ -70,10 +61,10 @@ interface IGatewayOutgoing {
     event MessageSent(bytes32 indexed id);
 
     function sendMessage(
-        string calldata destChain,
-        string calldata destAccount,
+        string calldata destChain, // CAIP-2 chain identifier [-a-z0-9]{3,8}:[-_a-zA-Z0-9]{1,32}
+        string calldata destAccount, // CAIP-10 account address [-.%a-zA-Z0-9]{1,128}
         bytes calldata payload,
-        bytes calldata attributes
+        bytes[] calldata attributes
     ) external payable returns (bytes32 messageId);
 }
 ```
@@ -117,7 +108,7 @@ interface IGatewayReceiver {
         string calldata srcChain,
         string calldata srcAccount,
         bytes calldata payload,
-        bytes calldata attributes
+        bytes[] calldata attributes
     ) external payable;
 }
 ```
@@ -143,7 +134,7 @@ interface IGatewayIncomingPassive {
         string calldata srcChain,
         string calldata srcAccount,
         bytes calldata payload,
-        bytes calldata attributes
+        bytes[] calldata attributes
     ) external;
 }
 ```
