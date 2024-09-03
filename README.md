@@ -24,7 +24,7 @@ Contracts and libraries in this repository are provided as is, with no particula
 
 - Code in this repository is not audited. Maintainers will review the code to the extend that the is no obviously malicious code published, but bugs may be present in this code that may lead to privilege escalation or loss of funds. Any code taken from this repository should be audited before being used in production.
 
-- Code in this repository is NOT covered by the [OpenZeppelin bug bounty on Immunefi](https://immunefi.com/bug-bounty/openzeppelin/).
+- Code in this repository is NOT covered by the [OpenZeppelin bug bounty on Immunefi](https://immunefi.com/bug-bounty/openzeppelin/) unless explicitly specified otherwise.
 
 - Code in this repository comes with no backward compatibility guarantees. Updates may change internal or external interfaces without notice. Dependencies updates may also break code present in this repository.
 
@@ -37,6 +37,10 @@ Contracts and libraries in this repository are provided as is, with no particula
 ## Contribute
 
 OpenZeppelin Contracts exists thanks to its contributors. There are many ways you can participate and help build high quality software. Check out the [contribution guide](https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/CONTRIBUTING.md)!
+
+### CODEOWNERS
+
+Contributions to this repository require approval from a code owner (see [CODEOWNERS](./.github/CODEOWNERS)). They are responsible for reviewing contributions to their respective areas of the codebase and ensuring that they meet the project's standards for quality and security.
 
 ## License
 

@@ -38,6 +38,35 @@ jobs:
       - name: Run tests and generate gas report
         run: npm run test
 
+  coverage:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up environment
+        uses: ./.github/actions/setup
+      - name: Run coverage
+        run: npm run coverage
+
+  tests-foundry:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - name: Set up environment
+        uses: ./.github/actions/setup
+      - name: Run tests
+        run: forge test -vv
+
+  slither:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up environment
+        uses: ./.github/actions/setup
+      - run: rm foundry.toml
+      - uses: crytic/slither-action@v0.4.0
+
   codespell:
     runs-on: ubuntu-latest
     steps:

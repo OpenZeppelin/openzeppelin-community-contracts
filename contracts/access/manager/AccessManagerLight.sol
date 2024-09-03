@@ -3,7 +3,7 @@
 pragma solidity ^0.8.20;
 
 import {IAuthority} from "@openzeppelin/contracts/access/manager/IAuthority.sol";
-import {Masks} from "../utils/Masks.sol";
+import {Masks} from "../../utils/Masks.sol";
 
 contract AccessManagerLight is IAuthority {
     using Masks for *;

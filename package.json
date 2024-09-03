@@ -1,7 +1,7 @@
 {
-  "name": "@openzeppelin/contracts-experimental",
+  "name": "@openzeppelin/community-contracts",
   "version": "0.0.1",
-  "description": "Experimental Smart Contract library for Solidity",
+  "description": "Solidity library of smart contracts from the OpenZeppelin Community",
   "author": "OpenZeppelin Community <maintainers@openzeppelin.org>",
   "license": "MIT",
   "files": [
@@ -13,15 +13,16 @@
     "compile": "hardhat compile",
     "lint": "prettier --log-level warn --ignore-path .gitignore '{contracts,test}/**/*.sol' --check",
     "lint:fix": "prettier --log-level warn --ignore-path .gitignore '{contracts,test}/**/*.sol' --write",
+    "coverage": "scripts/checks/coverage.sh",
     "test": "hardhat test"
   },
   "homepage": "https://openzeppelin.com/contracts/",
   "repository": {
     "type": "git",
-    "url": "https://github.com/OpenZeppelin/openzeppelin-contracts-experimental.git"
+    "url": "https://github.com/OpenZeppelin/openzeppelin-community-contracts.git"
   },
   "bugs": {
-    "url": "https://github.com/OpenZeppelin/openzeppelin-contracts-experimental/issues"
+    "url": "https://github.com/OpenZeppelin/openzeppelin-community-contracts/issues"
   },
   "keywords": [
     "solidity",
@@ -39,11 +40,14 @@
   "devDependencies": {
     "@nomicfoundation/hardhat-chai-matchers": "^2.0.6",
     "@nomicfoundation/hardhat-ethers": "^3.0.5",
+    "@nomicfoundation/hardhat-network-helpers": "^1.0.11",
     "chai": "^4.4.1",
     "ethers": "^6.12.1",
     "hardhat": "^2.22.3",
+    "hardhat-exposed": "^0.3.15",
     "prettier": "^3.2.5",
     "prettier-plugin-solidity": "^1.3.1",
+    "solidity-coverage": "^0.8.12",
     "yargs": "^17.7.2"
   }
 }

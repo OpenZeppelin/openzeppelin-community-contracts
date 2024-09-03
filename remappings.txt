@@ -1,7 +1,9 @@
-@openzeppelin/contracts@v5/=@openzeppelin/contracts/
-@openzeppelin/contracts-upgradeable@v5/=@openzeppelin/contracts-upgradeable/
+@openzeppelin/contracts@v5/=node_modules/@openzeppelin/contracts/
+@openzeppelin/contracts-upgradeable@v5/=node_modules/@openzeppelin/contracts-upgradeable/
 
 @openzeppelin/contracts@master/=lib/@openzeppelin-contracts/contracts/
 @openzeppelin/contracts-upgradeable@master/=lib/@openzeppelin-contracts-upgradeable/contracts/
+
+@openzeppelin/community-contracts/=contracts/
 
 @axelar-network/axelar-cgp-solidity/=node_modules/@axelar-network/axelar-cgp-solidity/contracts/
