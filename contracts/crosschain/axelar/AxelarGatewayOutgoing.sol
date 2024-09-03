@@ -3,8 +3,8 @@
 pragma solidity ^0.8.0;
 
 import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
-import {IAxelarGateway} from "../vendor/axelar/interfaces/IAxelarGateway.sol";
-import {IAxelarGasService} from "../vendor/axelar/interfaces/IAxelarGasService.sol";
+import {IAxelarGateway} from "@axelar-network/axelar-cgp-solidity/interfaces/IAxelarGateway.sol";
+import {IAxelarGasService} from "@axelar-network/axelar-cgp-solidity/interfaces/IAxelarGasService.sol";
 import {IGatewayOutgoing} from "../IGatewayOutgoing.sol";
 import {AxelarCAIP2Equivalence} from "./AxelarCAIP2Equivalence.sol";
 import {CAIP2} from "../../utils/CAIP-2.sol";

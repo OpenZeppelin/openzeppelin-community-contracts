@@ -2,8 +2,8 @@
 
 pragma solidity ^0.8.0;
 
-import {IAxelarGateway} from "./vendor/axelar/interfaces/IAxelarGateway.sol";
-import {IAxelarGasService} from "./vendor/axelar/interfaces/IAxelarGasService.sol";
+import {IAxelarGateway} from "@axelar-network/axelar-cgp-solidity/interfaces/IAxelarGateway.sol";
+import {IAxelarGasService} from "@axelar-network/axelar-cgp-solidity/interfaces/IAxelarGasService.sol";
 
 /// @dev Equivalence interface between CAIP-2 chain identifiers and protocol-specific chain identifiers.
 ///

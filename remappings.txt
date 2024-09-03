@@ -3,3 +3,5 @@
 
 @openzeppelin/contracts@master/=lib/@openzeppelin-contracts/contracts/
 @openzeppelin/contracts-upgradeable@master/=lib/@openzeppelin-contracts-upgradeable/contracts/
+
+@axelar-network/axelar-cgp-solidity/=node_modules/@axelar-network/axelar-cgp-solidity/contracts/

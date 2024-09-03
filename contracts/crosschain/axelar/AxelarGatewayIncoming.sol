@@ -2,12 +2,11 @@
 
 pragma solidity ^0.8.0;
 
-import {IAxelarGateway} from "../vendor/axelar/interfaces/IAxelarGateway.sol";
+import {IAxelarGateway} from "@axelar-network/axelar-cgp-solidity/interfaces/IAxelarGateway.sol";
 import {IGatewayIncomingPassive} from "../IGatewayIncomingPassive.sol";
 import {IGatewayIncoming} from "../IGatewayIncoming.sol";
-import {IGatewayReceiver} from "../IGatewayReceiver.sol";
 
-abstract contract AxelarGatewayIncoming is IGatewayIncoming, IGatewayIncomingPassive, IGatewayReceiver {
+abstract contract AxelarGatewayIncoming is IGatewayIncoming, IGatewayIncomingPassive {
     IAxelarGateway public immutable gateway;
 
     function validateReceivedMessage(
@@ -20,20 +19,7 @@ abstract contract AxelarGatewayIncoming is IGatewayIncoming, IGatewayIncomingPas
         if (!_isValidReceivedMessage(messageId, srcChain, srcAccount, payload, attributes)) {
             revert GatewayIncomingPassiveInvalidMessage(messageId);
         }
-    }
-
-    function receiveMessage(
-        bytes32 messageId,
-        string calldata srcChain,
-        string calldata srcAccount,
-        bytes calldata payload,
-        bytes calldata attributes
-    ) external payable override {
-        if (msg.sender != address(gateway)) {
-            validateReceivedMessage(messageId, srcChain, srcAccount, payload, attributes);
-        }
         emit MessageExecuted(messageId);
-        _execute(messageId, srcChain, srcAccount, payload, attributes);
     }
 
     function _isValidReceivedMessage(
@@ -52,5 +38,7 @@ abstract contract AxelarGatewayIncoming is IGatewayIncoming, IGatewayIncomingPas
         string calldata srcAccount,
         bytes calldata payload,
         bytes calldata attributes
-    ) internal virtual;
+    ) internal {
+        // messageId
+    }
 }
