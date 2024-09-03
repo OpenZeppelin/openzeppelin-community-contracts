@@ -8,6 +8,7 @@ import {IGatewayIncoming} from "../IGatewayIncoming.sol";
 import {IGatewayReceiver} from "../IGatewayReceiver.sol";
 import {AxelarCAIP2Equivalence} from "./AxelarCAIP2Equivalence.sol";
 import {AxelarExecutable} from "@axelar-network/axelar-gmp-sdk-solidity/executable/AxelarExecutable.sol";
+import {CAIP10} from "../../utils/CAIP-10.sol";
 
 abstract contract AxelarGatewayIncoming is
     AxelarExecutable,
@@ -22,25 +23,28 @@ abstract contract AxelarGatewayIncoming is
         bytes calldata payload,
         bytes calldata attributes
     ) public virtual {
-        if (!_isValidReceivedMessage(messageId, srcChain, srcAccount, payload, attributes)) {
+        address dstAccount = CAIP10.toString(msg.sender);
+        if (!_isValidReceivedMessage(messageId, srcChain, srcAccount, dstAccount, msg.sender, paylod, attributes)) {
             revert GatewayIncomingPassiveInvalidMessage(messageId);
         }
-        _execute(string(fromCAIP2(destChain)), srcAccount, payload);
+        _execute(string(fromCAIP2(destChain)), srcAccount, wrappedPayload);
     }
 
     function _isValidReceivedMessage(
         bytes32 messageId,
         string calldata srcChain, // CAIP-2 chain ID
         string calldata srcAccount, // i.e. address
-        bytes calldata payload,
-        bytes calldata /* attributes */
+        string calldata dstAccount,
+        bytes calldata paylod,
+        bytes calldata attributes
     ) internal returns (bool) {
-        return gateway.validateContractCall(messageId, srcChain, srcAccount, keccak256(payload));
+        bytes wrappedPayload = abi.encode(messageId, dstAccount, payload, attributes);
+        return gateway.validateContractCall(messageId, srcChain, srcAccount, keccak256(wrappedPayload));
     }
 
-    function _execute(string calldata srcChain, string calldata srcAccount, bytes calldata payload) internal virtual {
-        (address destination, bytes memory data) = abi.decode(payload, (address, bytes));
-        IGatewayReceiver(destination).receiveMessage(keccak256(data), sourceChain, sourceAddress, data, "");
-        emit MessageExecuted(keccak256(data)); // What to use if we can't reconstruct the message?
+    function _execute(string calldata srcChain, string calldata srcAccount, bytes calldata wrappedPayload) internal virtual {
+        (bytes32 messageId, string destAccount, bytes payload, bytes attributes) = abi.decode(wrappedPayload, (bytes32, string, bytes, bytes));
+        IGatewayReceiver(destination).receiveMessage(messageId, srcChain, srcAccount, payload, attributes);
+        emit MessageExecuted(messageId);
     }
 }
