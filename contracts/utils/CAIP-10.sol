@@ -13,16 +13,16 @@ library CAIP10 {
     using SafeCast for uint256;
     using Bytes for bytes;
 
-    bytes1 private constant SEMICOLON = ":";
+    bytes1 private constant COLON = ":";
 
     function toString(string memory caip2, string memory accountId) internal pure returns (string memory) {
-        return string(abi.encodePacked(caip2, SEMICOLON, accountId));
+        return string(abi.encodePacked(caip2, COLON, accountId));
     }
 
     function parse(string memory caip10) internal pure returns (string memory caip2, string memory accountId) {
         bytes memory accountBuffer = bytes(caip10);
-        uint8 firstSeparatorIndex = accountBuffer.find(SEMICOLON, 0).toUint8();
-        uint256 lastSeparatorIndex = accountBuffer.find(SEMICOLON, firstSeparatorIndex).toUint8();
+        uint8 firstSeparatorIndex = accountBuffer.find(COLON, 0).toUint8();
+        uint256 lastSeparatorIndex = accountBuffer.find(COLON, firstSeparatorIndex).toUint8();
         return (_extractCAIP2(accountBuffer, lastSeparatorIndex), _extractAccountId(accountBuffer, lastSeparatorIndex));
     }
 
