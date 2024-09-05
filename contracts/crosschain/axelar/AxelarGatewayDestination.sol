@@ -39,8 +39,8 @@ abstract contract AxelarGatewayDestination is
     //     bytes calldata paylod,
     //     bytes calldata attributes
     // ) internal returns (bool) {
-    //     bytes wrappedPayload = abi.encode(messageDestinationId, dstAccount, payload, attributes);
-    //     return gateway.validateContractCall(messageDestinationId, srcChain, srcAccount, keccak256(wrappedPayload));
+    //     bytes package = abi.encode(messageDestinationId, dstAccount, payload, attributes);
+    //     return gateway.validateContractCall(messageDestinationId, srcChain, srcAccount, keccak256(package));
     // }
 
     // In this function:
@@ -53,7 +53,7 @@ abstract contract AxelarGatewayDestination is
     function _execute(
         string calldata srcChain,
         string calldata srcAccount,
-        bytes calldata wrappedPayload
+        bytes calldata package
     ) internal virtual override {
         // Parse the message package
         // - message identifier (from the source, not unique ?)
@@ -67,7 +67,7 @@ abstract contract AxelarGatewayDestination is
             string memory caip10Dst,
             bytes memory payload,
             bytes memory attributes
-        ) = abi.decode(wrappedPayload, (bytes32, string, string, bytes, bytes));
+        ) = abi.decode(package, (bytes32, string, string, bytes, bytes));
 
         (string memory originChain, string memory originAccount) = CAIP10.parse(caip10Src);
         (string memory targetChain, string memory targetAccount) = CAIP10.parse(caip10Dst);
@@ -77,6 +77,7 @@ abstract contract AxelarGatewayDestination is
         // - `srcAccount` is the foreign gateway on the origin chain.
         require(Strings.equal(srcChain, fromCAIP2(originChain)), "Invalid origin chain");
         require(Strings.equal(srcAccount, getForeignGateway(originChain)), "Invalid origin gateway");
+        // This check is not required for security. That is enforced by axelar (+ source gateway)
         require(CAIP2.isCurrentId(targetChain), "Invalid tardet chain");
 
         // TODO: not available yet
@@ -85,6 +86,7 @@ abstract contract AxelarGatewayDestination is
         address destination = address(0);
 
         IGatewayReceiver(destination).receiveMessage(messageId, originChain, originAccount, payload, attributes);
+
         emit MessageExecuted(messageId);
     }
 }

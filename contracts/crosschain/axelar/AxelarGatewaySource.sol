@@ -39,6 +39,9 @@ abstract contract AxelarGatewaySource is IGatewaySource, AxelarGatewayBase {
         // Send the message
         localGateway.callContract(axelarDst, foreignGateway, package);
 
+        // TODO
+        // emit MessageSent(bytes32(0));
+
         return messageId;
     }
 }
