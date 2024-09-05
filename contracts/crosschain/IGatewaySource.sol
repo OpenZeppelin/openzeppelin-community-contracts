@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.0;
 
-interface IGatewayOutgoing {
+interface IGatewaySource {
     struct Message {
         string source; // CAIP-10 account ID
         string destination; // CAIP-10 account ID
@@ -10,8 +10,8 @@ interface IGatewayOutgoing {
         bytes attributes;
     }
 
-    event MessageCreated(bytes32 indexed id, Message message);
-    event MessageSent(bytes32 indexed id);
+    event MessageCreated(bytes32 indexed messageId, Message message);
+    event MessageSent(bytes32 indexed messageId);
 
     function sendMessage(
         string calldata destChain, // CAIP-2 chain ID

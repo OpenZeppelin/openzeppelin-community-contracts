@@ -2,17 +2,36 @@
 
 pragma solidity ^0.8.0;
 
+import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import {IAxelarGateway} from "@axelar-network/axelar-cgp-solidity/contracts/interfaces/IAxelarGateway.sol";
 import {ICAIP2Equivalence} from "../ICAIP2Equivalence.sol";
 
-abstract contract AxelarCAIP2Equivalence is ICAIP2Equivalence {
+abstract contract AxelarGatewayBase is ICAIP2Equivalence, Ownable {
+    IAxelarGateway public immutable localGateway;
+
+    mapping(string caip2 => string foreignGateway) private _foreignGateways;
     mapping(string caip2 => string destinationChain) private _equivalence;
+
+    constructor(IAxelarGateway _gateway) {
+        localGateway = _gateway;
+    }
 
     function supported(string memory caip2) public view returns (bool) {
         return bytes(_equivalence[caip2]).length != 0;
     }
 
-    function fromCAIP2(string memory caip2) public view returns (bytes memory) {
-        return bytes(_equivalence[caip2]);
+    function fromCAIP2(string memory caip2) public view returns (string memory) {
+        return _equivalence[caip2];
+    }
+
+    function registerForeignGateway(string calldata caip2, string calldata foreignGateway) public onlyOwner {
+        require(bytes(_foreignGateways[caip2]).length == 0);
+        _foreignGateways[caip2] = foreignGateway;
+        // TODO emit event
+    }
+
+    function getForeignGateway(string memory caip2) public view returns (string memory foreignGateway) {
+        return _foreignGateways[caip2];
     }
 }
 
