@@ -8,6 +8,6 @@ interface IGatewayReceiver {
         string calldata srcChain,
         string calldata srcAccount,
         bytes calldata payload,
-        bytes calldata attributes
+        bytes[] calldata attributes
     ) external payable;
 }

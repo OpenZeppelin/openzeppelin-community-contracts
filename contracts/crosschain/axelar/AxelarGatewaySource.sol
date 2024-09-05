@@ -12,7 +12,7 @@ abstract contract AxelarGatewaySource is IGatewaySource, AxelarGatewayBase {
         string calldata dstChain, // CAIP-2 chain ID
         string calldata dstAccount, // i.e. address
         bytes calldata payload,
-        bytes calldata attributes
+        bytes[] calldata attributes
     ) external payable override returns (bytes32) {
         // TODO: Handle ether (payable)
         // TODO: Validate attributes

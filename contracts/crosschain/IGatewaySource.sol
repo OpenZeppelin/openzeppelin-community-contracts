@@ -7,7 +7,7 @@ interface IGatewaySource {
         string source; // CAIP-10 account ID
         string destination; // CAIP-10 account ID
         bytes payload;
-        bytes attributes;
+        bytes[] attributes;
     }
 
     event MessageCreated(bytes32 indexed messageId, Message message);
@@ -17,6 +17,6 @@ interface IGatewaySource {
         string calldata destChain, // CAIP-2 chain ID
         string calldata destAccount, // i.e. address
         bytes calldata payload,
-        bytes calldata attributes
+        bytes[] calldata attributes
     ) external payable returns (bytes32 messageId);
 }

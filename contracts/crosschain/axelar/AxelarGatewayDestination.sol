@@ -66,8 +66,8 @@ abstract contract AxelarGatewayDestination is
             string memory caip10Src,
             string memory caip10Dst,
             bytes memory payload,
-            bytes memory attributes
-        ) = abi.decode(package, (bytes32, string, string, bytes, bytes));
+            bytes[] memory attributes
+        ) = abi.decode(package, (bytes32, string, string, bytes, bytes[]));
 
         (string memory originChain, string memory originAccount) = CAIP10.parse(caip10Src);
         (string memory targetChain, string memory targetAccount) = CAIP10.parse(caip10Dst);
