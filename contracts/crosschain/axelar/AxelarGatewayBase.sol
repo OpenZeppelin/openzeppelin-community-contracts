@@ -3,7 +3,7 @@
 pragma solidity ^0.8.0;
 
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
-import {IAxelarGateway} from "@axelar-network/axelar-cgp-solidity/contracts/interfaces/IAxelarGateway.sol";
+import {IAxelarGateway} from "@axelar-network/axelar-gmp-sdk-solidity/contracts/interfaces/IAxelarGateway.sol";
 import {ICAIP2Equivalence} from "../ICAIP2Equivalence.sol";
 
 abstract contract AxelarGatewayBase is ICAIP2Equivalence, Ownable {
