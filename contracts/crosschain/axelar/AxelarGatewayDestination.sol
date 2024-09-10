@@ -17,6 +17,8 @@ abstract contract AxelarGatewayDestination is
     AxelarGatewayBase,
     AxelarExecutable
 {
+    using Strings for string;
+
     // In this function:
     // - `srcChain` is in the Axelar format. It should not be expected to be a proper CAIP-2 format
     // - `srcAccount` is the sender of the crosschain message. That should be the remote gateway on the chain which
@@ -49,10 +51,10 @@ abstract contract AxelarGatewayDestination is
         // check message validity
         // - `srcChain` matches origin chain in the message (in caip2)
         // - `srcAccount` is the remote gateway on the origin chain.
-        require(Strings.equal(srcChain, fromCAIP2(originChain)), "Invalid origin chain");
-        require(Strings.equal(srcAccount, getRemoteGateway(originChain)), "Invalid origin gateway");
+        require(fromCAIP2(originChain).equal(srcChain), "Invalid origin chain");
+        require(getRemoteGateway(originChain).equal(srcAccount), "Invalid origin gateway");
         // This check is not required for security. That is enforced by axelar (+ source gateway)
-        require(CAIP2.isCurrentId(targetChain), "Invalid tardet chain");
+        require(CAIP2.format().equal(targetChain), "Invalid tardet chain");
 
         // TODO: not available yet
         // address destination = address(uint160(Strings.toUint(targetAccount)));
