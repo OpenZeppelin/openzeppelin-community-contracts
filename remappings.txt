@@ -6,5 +6,4 @@
 
 @openzeppelin/community-contracts/=contracts/
 
-@axelar-network/axelar-cgp-solidity/=node_modules/@axelar-network/axelar-cgp-solidity/
 @axelar-network/axelar-gmp-sdk-solidity/=node_modules/@axelar-network/axelar-gmp-sdk-solidity/

@@ -18,11 +18,11 @@ abstract contract AxelarGatewaySource is IGatewaySource, AxelarGatewayBase {
         // TODO: Validate attributes
 
         // Validate there's an equivalent chain identifier supported by the gateway
-        require(supported(dstChain), UnsupportedChain(dstChain));
+        string memory axelarDstChainId = fromCAIP2(dstChain);
+        require(bytes(axelarDstChainId).length > 0, UnsupportedChain(dstChain));
         string memory caip10Src = CAIP10.currentId(Strings.toHexString(msg.sender));
         string memory caip10Dst = CAIP10.toString(dstChain, dstAccount);
-        string memory axelarDst = fromCAIP2(dstChain);
-        string memory foreignGateway = getForeignGateway(dstChain);
+        string memory remoteGateway = getRemoteGateway(dstChain);
 
         // Create a message package
         // - message identifier (from the source, not unique ?)
@@ -37,7 +37,7 @@ abstract contract AxelarGatewaySource is IGatewaySource, AxelarGatewayBase {
         emit MessageCreated(messageId, Message(caip10Src, caip10Dst, payload, attributes));
 
         // Send the message
-        localGateway.callContract(axelarDst, foreignGateway, package);
+        localGateway.callContract(axelarDstChainId, remoteGateway, package);
 
         // TODO
         // emit MessageSent(bytes32(0));

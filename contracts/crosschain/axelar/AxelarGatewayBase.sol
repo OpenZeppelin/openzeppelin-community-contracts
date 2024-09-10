@@ -7,31 +7,36 @@ import {IAxelarGateway} from "@axelar-network/axelar-gmp-sdk-solidity/contracts/
 import {ICAIP2Equivalence} from "../ICAIP2Equivalence.sol";
 
 abstract contract AxelarGatewayBase is ICAIP2Equivalence, Ownable {
+    event RegisteredRemoteGateway(string caip2, string gatewayAddress);
+    event RegisteredCAIP2Equivalence(string caip2, string destinationChain);
+
     IAxelarGateway public immutable localGateway;
 
-    mapping(string caip2 => string foreignGateway) private _foreignGateways;
+    mapping(string caip2 => string remoteGateway) private _remoteGateways;
     mapping(string caip2 => string destinationChain) private _equivalence;
 
     constructor(IAxelarGateway _gateway) {
         localGateway = _gateway;
     }
 
-    function supported(string memory caip2) public view returns (bool) {
-        return bytes(_equivalence[caip2]).length != 0;
-    }
-
     function fromCAIP2(string memory caip2) public view returns (string memory) {
         return _equivalence[caip2];
     }
 
-    function registerForeignGateway(string calldata caip2, string calldata foreignGateway) public onlyOwner {
-        require(bytes(_foreignGateways[caip2]).length == 0);
-        _foreignGateways[caip2] = foreignGateway;
-        // TODO emit event
+    function getRemoteGateway(string memory caip2) public view returns (string memory remoteGateway) {
+        return _remoteGateways[caip2];
     }
 
-    function getForeignGateway(string memory caip2) public view returns (string memory foreignGateway) {
-        return _foreignGateways[caip2];
+    function registerCAIP2Equivalence(string calldata caip2, string calldata axelarSupported) public onlyOwner {
+        require(bytes(_equivalence[caip2]).length == 0);
+        _equivalence[caip2] = axelarSupported;
+        emit RegisteredCAIP2Equivalence(caip2, axelarSupported);
+    }
+
+    function registerRemoteGateway(string calldata caip2, string calldata remoteGateway) public onlyOwner {
+        require(bytes(_remoteGateways[caip2]).length == 0);
+        _remoteGateways[caip2] = remoteGateway;
+        emit RegisteredRemoteGateway(caip2, remoteGateway);
     }
 }
 

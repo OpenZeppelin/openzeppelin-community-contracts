@@ -33,7 +33,6 @@
     "zeppelin"
   ],
   "dependencies": {
-    "@axelar-network/axelar-cgp-solidity": "^6.3.1",
     "@axelar-network/axelar-gmp-sdk-solidity": "^5.10.0",
     "@openzeppelin/contracts": "^5.0.2",
     "@openzeppelin/contracts-upgradeable": "^5.0.2"

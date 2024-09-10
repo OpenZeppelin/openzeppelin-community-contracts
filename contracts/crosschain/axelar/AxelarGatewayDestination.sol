@@ -17,39 +17,13 @@ abstract contract AxelarGatewayDestination is
     AxelarGatewayBase,
     AxelarExecutable
 {
-    // function validateReceivedMessage(
-    //     bytes32 messageDestinationId,
-    //     string calldata srcChain, // CAIP-2 chain ID
-    //     string calldata srcAccount, // i.e. address
-    //     bytes calldata payload,
-    //     bytes calldata attributes
-    // ) public virtual {
-    //     address dstAccount = CAIP10.toString(msg.sender);
-    //     if (!_isValidReceivedMessage(messageDestinationId, srcChain, srcAccount, dstAccount, msg.sender, paylod, attributes)) {
-    //         revert GatewayDestinationPassiveInvalidMessage(messageDestinationId);
-    //     }
-    //     _execute(string(fromCAIP2(destChain)), srcAccount, wrappedPayload);
-    // }
-
-    // function _isValidReceivedMessage(
-    //     bytes32 messageDestinationId,
-    //     string calldata srcChain, // CAIP-2 chain ID
-    //     string calldata srcAccount, // i.e. address
-    //     string calldata dstAccount,
-    //     bytes calldata paylod,
-    //     bytes calldata attributes
-    // ) internal returns (bool) {
-    //     bytes package = abi.encode(messageDestinationId, dstAccount, payload, attributes);
-    //     return gateway.validateContractCall(messageDestinationId, srcChain, srcAccount, keccak256(package));
-    // }
-
     // In this function:
     // - `srcChain` is in the Axelar format. It should not be expected to be a proper CAIP-2 format
-    // - `srcAccount` is the sender of the crosschain message. That should be the foreign gateway on the chain which
+    // - `srcAccount` is the sender of the crosschain message. That should be the remote gateway on the chain which
     //   the message originates from. It is NOT the sender of the crosschain message
     //
     // Proper CAIP-10 encoding of the message sender (including the CAIP-2 name of the origin chain can be found in
-    // the mssage)
+    // the message)
     function _execute(
         string calldata srcChain,
         string calldata srcAccount,
@@ -74,9 +48,9 @@ abstract contract AxelarGatewayDestination is
 
         // check message validity
         // - `srcChain` matches origin chain in the message (in caip2)
-        // - `srcAccount` is the foreign gateway on the origin chain.
+        // - `srcAccount` is the remote gateway on the origin chain.
         require(Strings.equal(srcChain, fromCAIP2(originChain)), "Invalid origin chain");
-        require(Strings.equal(srcAccount, getForeignGateway(originChain)), "Invalid origin gateway");
+        require(Strings.equal(srcAccount, getRemoteGateway(originChain)), "Invalid origin gateway");
         // This check is not required for security. That is enforced by axelar (+ source gateway)
         require(CAIP2.isCurrentId(targetChain), "Invalid tardet chain");
 

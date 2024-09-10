@@ -8,9 +8,6 @@ pragma solidity ^0.8.0;
 interface ICAIP2Equivalence {
     error UnsupportedChain(string caip2);
 
-    /// @dev Checks if a CAIP-2 chain identifier is registered as equivalent to a protocol-specific chain identifier.
-    function supported(string memory caip2) external view returns (bool);
-
     /// @dev Retrieves the protocol-specific chain identifier equivalent to a CAIP-2 chain identifier.
     function fromCAIP2(string memory caip2) external view returns (string memory);
 }
