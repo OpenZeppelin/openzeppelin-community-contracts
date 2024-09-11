@@ -166,8 +166,6 @@ A receiver SHOULD support both active and passive modes for any gateway. This is
 
 ### TBD
 
-- Detection of attributes supported by a gateway.
-- Attribute "malleability", i.e., can attributes be changed by gateways?
 - How to "reply" to a message? Duplex gateway? Getter for reverse gateway address? Necessary for some applications, e.g., recovery from token bridging failure?
 - How can a receiver support multiple known gateways, in passive mode in particular?
 
