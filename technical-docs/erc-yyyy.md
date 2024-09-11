@@ -76,7 +76,7 @@ MUST emit a `MessageCreated` event.
 
 MAY emit a `MessageSent` event if it is possible to immediately send the message.
 
-TBD: Interaction between `payable` and `token/native` attribute.
+TBD: Meaning of `payable`. Does it translate to an attribute...?
 
 #### `MessageSent`
 
