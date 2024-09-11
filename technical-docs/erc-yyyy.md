@@ -20,36 +20,33 @@ requires: <EIP number(s)> # Only required when you reference an EIP in the `Spec
 
 The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "SHOULD NOT", "RECOMMENDED", "NOT RECOMMENDED", "MAY", and "OPTIONAL" in this document are to be interpreted as described in RFC 2119 and RFC 8174.
 
-### Message
+### Message Field Encoding
 
-```solidity
-struct Message {
-    string source; // CAIP-10 identifier
-    string destination;  // CAIP-10 identifier
-    bytes payload;
-    bytes[] attributes;
-}
-```
+A cross-chain message consists of a source, destination, payload, and list of attributes.
 
-#### `attributes`
+#### Source & Destination
 
-This field encodes a list of key-value pairs. A gateway may support any subset of standard or proprietary attributes. An empty list must always be accepted by a gateway.
+The source account (sender) and destination account (receiver) MUST be represented using CAIP-10 account identifiers.
 
-##### Encoding
+This includes a CAIP-2 chain identifier.
 
-TBD
+Note that these are ASCII-encoded strings.
 
-##### Standard attributes
+In some parts of the interface the account and the chain parts of the CAIP-10 identifier will be presented separately rather than as a single string, or the chain part will be implicit.
 
-TBC
+#### Payload
 
-| Key | Value |
-|-----|-------|
-| `token/native` | `uint256` |
-| `token/erc20` | `(address,uint256)` |
-| `token/erc721` | `(address,uint256)` |
-| `token/erc1155` | `(address,uint256,uint256)` |
-| `minGasLimit` | `uint256` |
+The payload is an opaque `bytes` value.
+
+#### Attributes
+
+This field encodes a list of key-value pairs.
+
+A gateway MAY support any set of attributes. An empty list MUST always be accepted by a gateway.
+
+Each attribute key MUST have the format of a Solidity function signature, i.e., a name followed by a list of types in parentheses. For example, `minGasLimit(uint256)`.
+
+Each key-value pair MUST be encoded like a Solidity function call, i.e., the first 4 bytes of the hash of the key followed by the ABI-encoded values.
 
 ### Outgoing Gateway
 
