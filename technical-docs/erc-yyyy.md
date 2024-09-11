@@ -48,12 +48,12 @@ Each attribute key MUST have the format of a Solidity function signature, i.e., 
 
 Each key-value pair MUST be encoded like a Solidity function call, i.e., the first 4 bytes of the hash of the key followed by the ABI-encoded values.
 
-### Outgoing Gateway
+### Source Gateway
 
-An Outgoing Gateway is a contract that offers a protocol to send a message to a destination on another chain. It MUST implement `IGatewayOutgoing`.
+An Source Gateway is a contract that offers a protocol to send a message to a destination on another chain. It MUST implement `IGatewaySource`.
 
 ```solidity
-interface IGatewayOutgoing {
+interface IGatewaySource {
     event MessageCreated(bytes32 indexed id, Message message);
     event MessageSent(bytes32 indexed id);
 
@@ -86,16 +86,16 @@ The interface for any such additional action is out of scope of this ERC, but it
 
 The gateway MUST emit a `MessageSent` event with the appropriate identifier once required actions are completed and the message is ready to be delivered on the destination.
 
-### Incoming Gateway
+### Destination Gateway
 
-An Incoming Gateway is a contract that implements a protocol to validate messages sent on other chains and have them received at their destination.
+An Destination Gateway is a contract that implements a protocol to validate messages sent on other chains and have them received at their destination.
 
 The gateway can operate in Active or Passive Mode.
 
 In both modes, the receipt and execution of a message MUST be signaled by emitting a `MessageExecuted` event.
 
 ```solidity
-interface IGatewayIncoming {
+interface IGatewayDestination {
     event MessageExecuted(bytes32 indexed id);
 }
 ```
@@ -124,10 +124,10 @@ The event `MessageExecuted` must be emitted by the gateway before invoking `rece
 
 The gateway does not directly invoke `receiveMessage`, but provides a means to validate messages. The receiver allows any party to invoke `receiveMessage`, but if the caller is not a known gateway it MUST validate the message with one before accepting it.
 
-A gateway acting in passive mode MUST implement `IGatewayIncomingPassive`. If a gateway operates exclusively in active mode, the implementation of this interface is OPTIONAL.
+A gateway acting in passive mode MUST implement `IGatewayDestinationPassive`. If a gateway operates exclusively in active mode, the implementation of this interface is OPTIONAL.
 
 ```solidity
-interface IGatewayIncomingPassive {
+interface IGatewayDestinationPassive {
     function validateReceivedMessage(
         bytes32 messageId,
         string calldata srcChain,
