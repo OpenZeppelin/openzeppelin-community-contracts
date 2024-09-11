@@ -3,8 +3,11 @@
 pragma solidity ^0.8.27;
 
 import {IGatewaySource} from "../IGatewaySource.sol";
+import {IGatewayDestination} from "../IGatewayDestination.sol";
+import {IGatewayReceiver} from "../IGatewayReceiver.sol";
 import {CAIP10} from "../../utils/CAIP-10.sol";
 import {IWormholeRelayer, VaaKey} from "wormhole-solidity-sdk/interfaces/IWormholeRelayer.sol";
+import {IWormholeReceiver} from "wormhole-solidity-sdk/interfaces/IWormholeReceiver.sol";
 import {toWormholeFormat} from "wormhole-solidity-sdk/Utils.sol";
 
 function addressFromHexString(string memory hexString) pure returns (address) {
@@ -70,6 +73,7 @@ contract WormholeGatewaySource is IGatewaySource, WormholeGatewayBase {
         PendingMessage memory pmsg = pending[outboxId];
         require(pmsg.sender != address(0));
         address dstAddress = addressFromHexString(pmsg.dstAccount);
+        // TODO: fix this, payload needs to be wrapped and sent to adapter gateway
         uint64 seq = wormholeRelayer.sendPayloadToEvm{value: msg.value}(
             pmsg.dstChain,
             dstAddress,
@@ -96,5 +100,18 @@ contract WormholeGatewaySource is IGatewaySource, WormholeGatewayBase {
             gasLimit,
             newDeliveryProvider
         );
+    }
+}
+
+contract WormholeGatewayDestination is WormholeGatewayBase, IGatewayDestination, IWormholeReceiver {
+    function receiveWormholeMessages(
+        bytes memory payload,
+        bytes[] memory additionalMessages,
+        bytes32 sourceAddress,
+        uint16 sourceChain,
+        bytes32 deliveryHash
+    ) external payable {
+        require(additionalMessages.length == 0); // unsupported
+        // TODO
     }
 }
