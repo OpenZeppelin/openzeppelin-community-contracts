@@ -160,7 +160,7 @@ TBD: Passing full payload or payload hash (as done by Axelar). Same question for
 
 #### Dual Mode
 
-A gateway MAY operate in both active and passive modes, or it MAY switch from operating exclusive in active mode to passive mode or vice versa.
+A gateway MAY operate in both active and passive modes, or it MAY switch from operating exclusively in active mode to passive mode or vice versa.
 
 A receiver SHOULD support both active and passive modes for any gateway. This is accomplished by first checking whether the caller of `receiveMessage` is a known gateway, and only validating the message on a known gateway if it is not; the first case supports an active mode gateway, while the second case supports a passive mode gateway.
 
