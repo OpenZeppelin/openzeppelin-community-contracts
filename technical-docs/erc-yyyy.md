@@ -57,6 +57,8 @@ interface IGatewaySource {
     event MessageCreated(bytes32 indexed id, Message message);
     event MessageSent(bytes32 indexed id);
 
+    function supportsAttribute(string calldata signature) external view returns (bool);
+
     function sendMessage(
         string calldata destChain, // CAIP-2 chain identifier [-a-z0-9]{3,8}:[-_a-zA-Z0-9]{1,32}
         string calldata destAccount, // CAIP-10 account address [-.%a-zA-Z0-9]{1,128}
@@ -66,11 +68,19 @@ interface IGatewaySource {
 }
 ```
 
+#### `supportsAttribute`
+
+Returns a boolean indicating whether the attribute signature is supported by the gateway.
+
+A gateway MAY be upgraded with support for additional attributes. Once present support for an attribute SHOULD NOT be removed to preserve backwards compatibility with users of the gateway.
+
 #### `sendMessage`
 
 Initiates the sending of a message.
 
 MUST generate a unique message identifier and return it. This identifier shall be used to track the lifecycle of the message in events and to perform actions related to the message.
+
+MUST revert if an unsupported attribute key is included. MAY revert if the value of an attribute is not a valid encoding for its expected type.
 
 MUST emit a `MessageCreated` event.
 
