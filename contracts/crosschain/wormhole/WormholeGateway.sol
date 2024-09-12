@@ -5,7 +5,6 @@ pragma solidity ^0.8.27;
 import {IGatewaySource} from "../IGatewaySource.sol";
 import {IGatewayDestination} from "../IGatewayDestination.sol";
 import {IGatewayReceiver} from "../IGatewayReceiver.sol";
-import {GatewayAdapterBase} from "../GatewayAdapterBase.sol";
 import {CAIP10} from "../../utils/CAIP-10.sol";
 import {IWormholeRelayer, VaaKey} from "wormhole-solidity-sdk/interfaces/IWormholeRelayer.sol";
 import {IWormholeReceiver} from "wormhole-solidity-sdk/interfaces/IWormholeReceiver.sol";
@@ -15,22 +14,22 @@ function addressFromHexString(string memory hexString) pure returns (address) {
     return address(0); // TODO
 }
 
-abstract contract WormholeGatewayBase is GatewayAdapterBase {
-    IWormholeRelayer public immutable wormholeRelayer;
-
-    constructor(IWormholeRelayer _wormholeRelayer) {
-        wormholeRelayer = _wormholeRelayer;
-    }
-
+contract WormholeGatewayBase {
     function currentChain() public view returns (uint16) {}
 
     function fromCAIP2(string memory caip2) public view returns (uint16) {
         return 0; // TODO
     }
+
+    function getRemoteGateway(string memory caip2) public view returns (string memory remoteGateway) {
+        return ""; // TODO
+    }
 }
 
 // TODO: allow non-evm destination chains via non-evm-specific finalize/retry variants
-abstract contract WormholeGatewaySource is IGatewaySource, WormholeGatewayBase {
+contract WormholeGatewaySource is IGatewaySource, WormholeGatewayBase {
+    IWormholeRelayer public immutable wormholeRelayer;
+
     struct PendingMessage {
         address sender;
         uint16 dstChain;
@@ -42,6 +41,10 @@ abstract contract WormholeGatewaySource is IGatewaySource, WormholeGatewayBase {
     uint256 nextOutboxId;
     mapping(bytes32 => PendingMessage) private pending;
     mapping(bytes32 => uint64) private sequences;
+
+    constructor(IWormholeRelayer _wormholeRelayer) {
+        wormholeRelayer = _wormholeRelayer;
+    }
 
     function supportsAttribute(string calldata) public view returns (bool) {
         return false;
@@ -102,7 +105,7 @@ abstract contract WormholeGatewaySource is IGatewaySource, WormholeGatewayBase {
     }
 }
 
-abstract contract WormholeGatewayDestination is WormholeGatewayBase, IGatewayDestination, IWormholeReceiver {
+contract WormholeGatewayDestination is WormholeGatewayBase, IGatewayDestination, IWormholeReceiver {
     function receiveWormholeMessages(
         bytes memory payload,
         bytes[] memory additionalMessages,

@@ -5,9 +5,9 @@ pragma solidity ^0.8.0;
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {IAxelarGateway} from "@axelar-network/axelar-gmp-sdk-solidity/contracts/interfaces/IAxelarGateway.sol";
 import {ICAIP2Equivalence} from "../ICAIP2Equivalence.sol";
-import {GatewayAdapterBase} from "../GatewayAdapterBase.sol";
 
-abstract contract AxelarGatewayBase is ICAIP2Equivalence, GatewayAdapterBase {
+abstract contract AxelarGatewayBase is ICAIP2Equivalence, Ownable {
+    event RegisteredRemoteGateway(string caip2, string gatewayAddress);
     event RegisteredCAIP2Equivalence(string caip2, string destinationChain);
 
     IAxelarGateway public immutable localGateway;
@@ -23,10 +23,20 @@ abstract contract AxelarGatewayBase is ICAIP2Equivalence, GatewayAdapterBase {
         return _equivalence[caip2];
     }
 
+    function getRemoteGateway(string memory caip2) public view returns (string memory remoteGateway) {
+        return _remoteGateways[caip2];
+    }
+
     function registerCAIP2Equivalence(string calldata caip2, string calldata axelarSupported) public onlyOwner {
         require(bytes(_equivalence[caip2]).length == 0);
         _equivalence[caip2] = axelarSupported;
         emit RegisteredCAIP2Equivalence(caip2, axelarSupported);
+    }
+
+    function registerRemoteGateway(string calldata caip2, string calldata remoteGateway) public onlyOwner {
+        require(bytes(_remoteGateways[caip2]).length == 0);
+        _remoteGateways[caip2] = remoteGateway;
+        emit RegisteredRemoteGateway(caip2, remoteGateway);
     }
 }
 
