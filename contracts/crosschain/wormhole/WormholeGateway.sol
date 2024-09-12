@@ -67,32 +67,35 @@ abstract contract WormholeGatewaySource is IGatewaySource, WormholeGatewayBase {
     }
 
     function finalizeEvmMessage(bytes32 outboxId, uint256 gasLimit) external payable {
-        PendingMessage memory pmsg = pending[outboxId];
+        PendingMessage storage pmsg = pending[outboxId];
+
         require(pmsg.sender != address(0));
-        address dstAddress = addressFromHexString(pmsg.dstAccount);
+
         // TODO: fix this, payload needs to be wrapped and sent to adapter gateway
-        uint64 seq = wormholeRelayer.sendPayloadToEvm{value: msg.value}(
+        sequences[outboxId] = wormholeRelayer.sendPayloadToEvm{value: msg.value}(
             pmsg.dstChain,
-            dstAddress,
+            addressFromHexString(pmsg.dstAccount),
             pmsg.payload,
             0,
             gasLimit
         );
-        sequences[outboxId] = seq;
-        delete pending[outboxId].dstAccount;
-        delete pending[outboxId].payload;
-        delete pending[outboxId].attributes;
+
+        delete pmsg.dstAccount;
+        delete pmsg.payload;
+        delete pmsg.attributes;
     }
 
     function retryEvmMessage(bytes32 outboxId, uint256 gasLimit, address newDeliveryProvider) external {
         uint64 seq = sequences[outboxId];
+
         require(seq != 0);
-        address sender = pending[outboxId].sender;
-        uint16 dstChain = pending[outboxId].dstChain;
+
+        PendingMessage storage pmsg = pending[outboxId];
+
         // TODO: check if new sequence number needs to be stored for future retries
         wormholeRelayer.resendToEvm(
-            VaaKey(currentChain(), toWormholeFormat(sender), seq),
-            dstChain,
+            VaaKey(currentChain(), toWormholeFormat(pmsg.sender), seq),
+            pmsg.dstChain,
             0,
             gasLimit,
             newDeliveryProvider
