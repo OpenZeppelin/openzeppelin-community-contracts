@@ -58,8 +58,7 @@ abstract contract WormholeGatewaySource is IGatewaySource, WormholeGatewayBase {
 
         outboxId = bytes32(nextOutboxId++);
 
-        uint16 dstChainWormhole = fromCAIP2(dstChain);
-        pending[outboxId] = PendingMessage(msg.sender, dstChainWormhole, dstAccount, payload, attributes);
+        pending[outboxId] = PendingMessage(msg.sender, fromCAIP2(dstChain), dstAccount, payload, attributes);
 
         string memory caip10Src = CAIP10.format(msg.sender);
         string memory caip10Dst = CAIP10.format(dstChain, dstAccount);
