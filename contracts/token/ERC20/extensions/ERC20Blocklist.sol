@@ -13,7 +13,9 @@ import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
  * manage the blocklist in your contract.
  */
 abstract contract ERC20Blocklist is ERC20 {
-    // Blocked status of addresses. True if blocked, False otherwise.
+    /**
+     * @dev Blocked status of addresses. True if blocked, False otherwise.
+     */
     mapping(address => bool) public blocked;
 
     /**
