@@ -33,6 +33,7 @@
     "zeppelin"
   ],
   "dependencies": {
+    "@arbitrum/nitro-contracts": "^2.1.0",
     "@axelar-network/axelar-gmp-sdk-solidity": "^5.10.0",
     "@openzeppelin/contracts": "^5.0.2",
     "@openzeppelin/contracts-upgradeable": "^5.0.2"
