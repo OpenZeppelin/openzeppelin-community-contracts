@@ -48,7 +48,7 @@ abstract contract ERC20Allowlist is ERC20 {
      *
      * - The user must not be already allowed.
      */
-    function allowUser(address user) external {
+    function _allowUser(address user) internal virtual {
         if (allowed[user]) revert UserIsAllowed();
         allowed[user] = true;
         emit UserAllowed(user);
@@ -62,7 +62,7 @@ abstract contract ERC20Allowlist is ERC20 {
      *
      * - The user must be allowed.
      */
-    function disallowUser(address user) external {
+    function _disallowUser(address user) internal virtual {
         if (!allowed[user]) revert UserIsNotAllowed();
         allowed[user] = false;
         emit UserDisallowed(user);
