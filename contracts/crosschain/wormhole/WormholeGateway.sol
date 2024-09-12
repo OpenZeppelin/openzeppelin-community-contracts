@@ -152,7 +152,10 @@ abstract contract WormholeGatewayDestination is WormholeGatewayBase, IGatewayDes
         require(sourceAddress == getRemoteGateway(sourceChainCAIP2));
         require(additionalMessages.length == 0); // unsupported
 
-        (address sender, IGatewayReceiver destination, bytes memory payload) = abi.decode(adapterPayload, (address, IGatewayReceiver, bytes));
+        (address sender, IGatewayReceiver destination, bytes memory payload) = abi.decode(
+            adapterPayload,
+            (address, IGatewayReceiver, bytes)
+        );
         destination.receiveMessage(deliveryHash, sourceChainCAIP2, sender.toHexString(), payload, new bytes[](0));
     }
 }
