@@ -32,7 +32,7 @@ contract ArbitrumGatewayL1Source is IGatewaySource {
     }
 
     uint256 private _nextOutboxId;
-    mapping (bytes32 outboxId => PendingMessage) private _pending;
+    mapping(bytes32 outboxId => PendingMessage) private _pending;
 
     function sendMessage(
         string calldata destChain,
@@ -94,13 +94,7 @@ contract ArbitrumGatewayL1Destination is IGatewayDestination, IArbitrumGatewayL2
         require(_arbSys.wasMyCallersAddressAliased());
         require(_arbSys.myCallersAddressWithoutAliasing() == _remoteGateway);
 
-        IGatewayReceiver(receiver).receiveMessage(
-            0,
-            CHAINID_ETH,
-            sender.toHexString(),
-            payload,
-            new bytes[](0)
-        );
+        IGatewayReceiver(receiver).receiveMessage(0, CHAINID_ETH, sender.toHexString(), payload, new bytes[](0));
     }
 }
 
@@ -121,13 +115,10 @@ contract ArbitrumGatewayL2Source is IGatewaySource {
 
         address receiver = addressFromHexString(destAccount);
 
-        bytes memory receiveMessage = abi.encodeCall(IGatewayReceiver.receiveMessage, (
-            0,
-            CHAINID_ARB,
-            msg.sender.toHexString(),
-            payload,
-            new bytes[](0)
-        ));
+        bytes memory receiveMessage = abi.encodeCall(
+            IGatewayReceiver.receiveMessage,
+            (0, CHAINID_ARB, msg.sender.toHexString(), payload, new bytes[](0))
+        );
 
         _arbSys.sendTxToL1(receiver, receiveMessage);
 
