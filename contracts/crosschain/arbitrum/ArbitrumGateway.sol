@@ -9,6 +9,9 @@ import {IGatewayDestination} from "../IGatewayDestination.sol";
 import {IGatewayReceiver} from "../IGatewayReceiver.sol";
 import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 
+string constant CHAINID_ETH = "eip155:1";
+string constant CHAINID_ARB = "eip155:42161";
+
 function addressFromHexString(string memory hexString) pure returns (address) {
     return address(0); // TODO
 }
@@ -17,7 +20,7 @@ interface IArbitrumGatewayL2Destination {
     function deliverMessage(address sender, address receiver, bytes calldata payload) external;
 }
 
-abstract contract ArbitrumGatewayL1Source is IGatewaySource {
+contract ArbitrumGatewayL1Source is IGatewaySource {
     IInbox private _inbox; // TODO
     address private _remoteGateway;
 
@@ -37,7 +40,7 @@ abstract contract ArbitrumGatewayL1Source is IGatewaySource {
         bytes calldata payload,
         bytes[] calldata attributes
     ) external payable override returns (bytes32 outboxId) {
-        require(Strings.equal(destChain, "eip155:42161"));
+        require(Strings.equal(destChain, CHAINID_ARB));
         require(attributes.length == 0);
 
         address receiver = addressFromHexString(destAccount);
@@ -81,7 +84,7 @@ abstract contract ArbitrumGatewayL1Source is IGatewaySource {
     }
 }
 
-abstract contract ArbitrumGatewayL1Destination is IGatewayDestination, IArbitrumGatewayL2Destination {
+contract ArbitrumGatewayL1Destination is IGatewayDestination, IArbitrumGatewayL2Destination {
     using Strings for address;
 
     ArbSys private _arbSys; // TODO
@@ -93,10 +96,41 @@ abstract contract ArbitrumGatewayL1Destination is IGatewayDestination, IArbitrum
 
         IGatewayReceiver(receiver).receiveMessage(
             0,
-            "eip155:1",
+            CHAINID_ETH,
             sender.toHexString(),
             payload,
             new bytes[](0)
         );
+    }
+}
+
+contract ArbitrumGatewayL2Source is IGatewaySource {
+    using Strings for address;
+
+    ArbSys private _arbSys; // TODO
+    address private _remoteGateway;
+
+    function sendMessage(
+        string calldata destChain,
+        string calldata destAccount,
+        bytes calldata payload,
+        bytes[] calldata attributes
+    ) external payable override returns (bytes32) {
+        require(Strings.equal(destChain, CHAINID_ETH));
+        require(attributes.length == 0);
+
+        address receiver = addressFromHexString(destAccount);
+
+        bytes memory receiveMessage = abi.encodeCall(IGatewayReceiver.receiveMessage, (
+            0,
+            CHAINID_ARB,
+            msg.sender.toHexString(),
+            payload,
+            new bytes[](0)
+        ));
+
+        _arbSys.sendTxToL1(receiver, receiveMessage);
+
+        return 0;
     }
 }
