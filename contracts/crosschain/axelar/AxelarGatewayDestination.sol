@@ -4,6 +4,7 @@ pragma solidity ^0.8.0;
 
 import {AxelarExecutable} from "@axelar-network/axelar-gmp-sdk-solidity/contracts/executable/AxelarExecutable.sol";
 import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
+import {StringsUnreleased} from "../../utils/Strings.sol";
 import {AxelarGatewayBase} from "./AxelarGatewayBase.sol";
 import {IGatewayDestination} from "../IGatewayDestination.sol";
 import {IGatewayDestinationPassive} from "../IGatewayDestinationPassive.sol";
@@ -57,10 +58,7 @@ abstract contract AxelarGatewayDestination is
         require(CAIP2.format().equal(targetChain), "Invalid tardet chain");
 
         // TODO: not available yet
-        // address destination = address(uint160(Strings.toUint(targetAccount)));
-        targetAccount;
-        address destination = address(0);
-
+        address destination = StringsUnreleased.parseAddress(targetAccount);
         IGatewayReceiver(destination).receiveMessage(messageId, originChain, originAccount, payload, attributes);
 
         emit MessageExecuted(messageId);
