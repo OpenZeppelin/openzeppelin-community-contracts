@@ -77,6 +77,8 @@ A gateway MAY be upgraded with support for additional attributes. Once present s
 
 Initiates the sending of a message.
 
+Further action MAY be required by the gateway to make the sending of the message effective, such as providing payment for gas. See Post-processing.
+
 MUST generate a unique message identifier and return it. This identifier shall be used to track the lifecycle of the message in events and to perform actions related to the message.
 
 MUST revert if an unsupported attribute key is included. MAY revert if the value of an attribute is not a valid encoding for its expected type.
@@ -87,13 +89,13 @@ MUST emit a `MessageCreated` event.
 
 MAY emit a `MessageSent` event if it is possible to immediately send the message.
 
-#### `MessageSent`
+#### Post-processing
 
-It MAY not be possible for `sendMessage` to immediately send a message if additional action (such as payment) is required.
+After a sender has invoked `sendMessage`, further action MAY be required by the gateway to make the message effective. This is called *post-processing*. For example, some payment is typically required to cover the gas of executing the message at the destination.
 
-The interface for any such additional action is out of scope of this ERC, but it MUST be able to be performed by a party other than the message sender.
+The interface for any such action is out of scope of this ERC, but it MUST be able to be performed by a party other than the message sender, and it MUST NOT be able to compromise the eventual receipt of the message.
 
-The gateway MUST emit a `MessageSent` event with the appropriate identifier once required actions are completed and the message is ready to be delivered on the destination.
+The gateway MUST emit a `MessageSent` event with the appropriate identifier once post-processing is complete and the message is ready to be delivered on the destination.
 
 ### Destination Gateway
 
