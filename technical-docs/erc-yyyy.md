@@ -103,20 +103,13 @@ An Destination Gateway is a contract that implements a protocol to validate mess
 
 The gateway can operate in Active or Passive Mode.
 
-In both modes, the receipt and execution of a message MUST be signaled by emitting a `MessageExecuted` event.
-
-```solidity
-interface IGatewayDestination {
-    event MessageExecuted(bytes32 indexed id);
-}
-```
-
 In both modes, the destination account of a message, aka the receiver, MUST implement a `receiveMessage` function. The use of this function depends on the mode of the gateway as described in the following sections.
 
 ```solidity
 interface IGatewayReceiver {
     function receiveMessage(
-        bytes32 messageId,
+        address gateway,
+        bytes calldata gatewayMessageKey,
         string calldata srcChain,
         string calldata srcAccount,
         bytes calldata payload,
@@ -129,8 +122,6 @@ interface IGatewayReceiver {
 
 The gateway directly invokes `receiveMessage`, and only does so with valid messages. The receiver MUST assume that a message is valid if the caller is a known gateway.
 
-The event `MessageExecuted` must be emitted by the gateway before invoking `receiveMessage`.
-
 #### Passive Mode
 
 The gateway does not directly invoke `receiveMessage`, but provides a means to validate messages. The receiver allows any party to invoke `receiveMessage`, but if the caller is not a known gateway it MUST validate the message with one before accepting it.
@@ -140,7 +131,7 @@ A gateway acting in passive mode MUST implement `IGatewayDestinationPassive`. If
 ```solidity
 interface IGatewayDestinationPassive {
     function validateReceivedMessage(
-        bytes32 messageId,
+        bytes calldata messageKey,
         string calldata srcChain,
         string calldata srcAccount,
         bytes calldata payload,
@@ -155,8 +146,6 @@ Checks that there is a valid and as yet unexecuted message identified by `messag
 
 MUST revert if the message is invalid or has already been executed.
 
-MUST emit a `MessageExecuted` event if it does not revert.
-
 TBD: Passing full payload or payload hash (as done by Axelar). Same question for attributes, possibly different answer depending on attribute malleability.
 
 #### Dual Mode
@@ -168,7 +157,6 @@ A receiver SHOULD support both active and passive modes for any gateway. This is
 ### TBD
 
 - How to "reply" to a message? Duplex gateway? Getter for reverse gateway address? Necessary for some applications, e.g., recovery from token bridging failure?
-- How can a receiver support multiple known gateways, in passive mode in particular?
 
 ## Rationale
 
