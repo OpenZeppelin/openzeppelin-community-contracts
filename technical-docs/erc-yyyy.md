@@ -21,17 +21,13 @@ The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "S
 
 ### Message Field Encoding
 
-A cross-chain message consists of a source, destination, payload, and list of attributes.
+A cross-chain message consists of a sender, receiver, payload, and list of attributes.
 
-#### Source & Destination
+#### Sender & Receiver
 
-The source account (sender) and destination account (receiver) MUST be represented using CAIP-10 account identifiers.
+The sender account (in the source chain) and receiver account (in the destination chain) MUST be represented using CAIP-10 account identifiers. Note that these are ASCII-encoded strings.
 
-This includes a CAIP-2 chain identifier.
-
-Note that these are ASCII-encoded strings.
-
-In some parts of the interface the account and the chain parts of the CAIP-10 identifier will be presented separately rather than as a single string, or the chain part will be implicit.
+A CAIP-10 account identifier embeds a CAIP-2 chain identifier along with an address. In some parts of the interface, the address and the chain parts will be provided separately rather than as a single string, or the chain part will be implicit.
 
 #### Payload
 
@@ -49,7 +45,7 @@ Each key-value pair MUST be encoded like a Solidity function call, i.e., the fir
 
 ### Source Gateway
 
-An Source Gateway is a contract that offers a protocol to send a message to a destination on another chain. It MUST implement `IGatewaySource`.
+An Source Gateway is a contract that offers a protocol to send a message to a receiver on another chain. It MUST implement `IGatewaySource`.
 
 ```solidity
 interface IGatewaySource {
@@ -59,8 +55,8 @@ interface IGatewaySource {
     function supportsAttribute(string calldata signature) external view returns (bool);
 
     function sendMessage(
-        string calldata destChain, // CAIP-2 chain identifier [-a-z0-9]{3,8}:[-_a-zA-Z0-9]{1,32}
-        string calldata destAccount, // CAIP-10 account address [-.%a-zA-Z0-9]{1,128}
+        string calldata destChain, // CAIP-2 chain identifier
+        string calldata receiver, // CAIP-10 account address
         bytes calldata payload,
         bytes[] calldata attributes
     ) external payable returns (bytes32 messageId);
@@ -110,8 +106,8 @@ interface IGatewayReceiver {
     function receiveMessage(
         address gateway,
         bytes calldata gatewayMessageKey,
-        string calldata srcChain,
-        string calldata srcAccount,
+        string calldata sourceChain,
+        string calldata sender,
         bytes calldata payload,
         bytes[] calldata attributes
     ) external payable;
@@ -132,8 +128,8 @@ A gateway acting in passive mode MUST implement `IGatewayDestinationPassive`. If
 interface IGatewayDestinationPassive {
     function validateReceivedMessage(
         bytes calldata messageKey,
-        string calldata srcChain,
-        string calldata srcAccount,
+        string calldata sourceChain,
+        string calldata sender,
         bytes calldata payload,
         bytes[] calldata attributes
     ) external;
