@@ -8,44 +8,23 @@ import {BitMaps} from "@openzeppelin/contracts/utils/structs/BitMaps.sol";
 import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 import {StringsUnreleased} from "../../utils/Strings.sol";
 
-contract AxelarGatewayActiveMock {
-    using Strings for address;
-
-    function callContract(
-        string calldata destinationChain,
-        string calldata destinationContractAddress,
-        bytes calldata payload
-    ) external {
-        // TODO: check that destination chain is local
-
-        emit IAxelarGateway.ContractCall(
-            msg.sender,
-            destinationChain,
-            destinationContractAddress,
-            keccak256(payload),
-            payload
-        );
-
-        // NOTE:
-        // - no commandId in this mock
-        // - source chain and destination chain are the same in this mock
-        address target = StringsUnreleased.parseAddress(destinationContractAddress);
-        IAxelarExecutable(target).execute(bytes32(0), destinationChain, msg.sender.toHexString(), payload);
-    }
-}
-
-contract AxelarGatewayPassiveMock {
+contract AxelarGatewayMock {
     using Strings for address;
     using BitMaps for BitMaps.BitMap;
 
+    bool private activeMode;
     BitMaps.BitMap private pendingCommandIds;
 
-    event NewCommandId(
+    event CommandIdPending(
         bytes32 indexed commandId,
         string destinationChain,
         string destinationContractAddress,
         bytes payload
     );
+
+    function setActive(bool enabled) public {
+        activeMode = enabled;
+    }
 
     function callContract(
         string calldata destinationChain,
@@ -69,7 +48,14 @@ contract AxelarGatewayPassiveMock {
         require(!pendingCommandIds.get(uint256(commandId)));
         pendingCommandIds.set(uint256(commandId));
 
-        emit NewCommandId(commandId, destinationChain, destinationContractAddress, payload);
+        emit CommandIdPending(commandId, destinationChain, destinationContractAddress, payload);
+
+        if (activeMode) {
+            // NOTE:
+            // - source chain and destination chain are the same in this mock
+            address target = StringsUnreleased.parseAddress(destinationContractAddress);
+            IAxelarExecutable(target).execute(commandId, destinationChain, msg.sender.toHexString(), payload);
+        }
     }
 
     function validateContractCall(
@@ -80,6 +66,8 @@ contract AxelarGatewayPassiveMock {
     ) external returns (bool) {
         if (pendingCommandIds.get(uint256(commandId))) {
             pendingCommandIds.unset(uint256(commandId));
+
+            emit IAxelarGateway.ContractCallExecuted(commandId);
 
             return
                 commandId == keccak256(abi.encode(sourceChain, sourceAddress, msg.sender.toHexString(), payloadHash));
