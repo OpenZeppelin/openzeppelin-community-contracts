@@ -124,9 +124,11 @@ interface IGatewayReceiver {
 
 The gateway directly invokes `receiveMessage`, and only does so with valid messages. The receiver MUST assume that a message is valid if the caller is a known gateway.
 
+The arguments `gateway` and `gatewayMessageKey` are unused in active mode and SHOULD be zero and empty respectively.
+
 #### Passive Mode
 
-The gateway does not directly invoke `receiveMessage`, but provides a means to validate messages. The receiver allows any party to invoke `receiveMessage`, but if the caller is not a known gateway it MUST validate the message with one before accepting it.
+The gateway does not directly invoke `receiveMessage`, but provides a means to validate messages. The receiver allows any party to invoke `receiveMessage`, but if the caller is not a known gateway it MUST check that the gateway provided as an argument is a known gateway, and it MUST validate the message against it before accepting it, forwarding the message key.
 
 A gateway acting in passive mode MUST implement `IGatewayDestinationPassive`. If a gateway operates exclusively in active mode, the implementation of this interface is OPTIONAL.
 
@@ -144,7 +146,7 @@ interface IGatewayDestinationPassive {
 
 ##### `validateReceivedMessage`
 
-Checks that there is a valid and as yet unexecuted message identified by `messageId`, and that its contents are exactly those passed as arguments along with the caller of the function as the destination account.
+Checks that there is a valid and as yet unexecuted message whose contents are exactly those passed as arguments and whose receiver is the caller of the function. The message key MAY be an identifier, or another piece of data necessary for validation.
 
 MUST revert if the message is invalid or has already been executed.
 
@@ -154,7 +156,7 @@ TBD: Passing full payload or payload hash (as done by Axelar). Same question for
 
 A gateway MAY operate in both active and passive modes, or it MAY switch from operating exclusively in active mode to passive mode or vice versa.
 
-A receiver SHOULD support both active and passive modes for any gateway. This is accomplished by first checking whether the caller of `receiveMessage` is a known gateway, and only validating the message on a known gateway if it is not; the first case supports an active mode gateway, while the second case supports a passive mode gateway.
+A receiver SHOULD support both active and passive modes for any gateway. This is accomplished by first checking whether the caller of `receiveMessage` is a known gateway, and only validating the message if it is not; the first case supports an active mode gateway, while the second case supports a passive mode gateway.
 
 ### TBD
 
