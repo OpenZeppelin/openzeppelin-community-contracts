@@ -43,6 +43,12 @@ Each attribute key MUST have the format of a Solidity function signature, i.e., 
 
 Each key-value pair MUST be encoded like a Solidity function call, i.e., the first 4 bytes of the hash of the key followed by the ABI-encoded values.
 
+##### Standard Attributes
+
+The following standard attributes MAY be supported by a gateway.
+
+- `postProcessingOwner(string)`: The address of the account that shall be in charge of message post-processing.
+
 ### Source Gateway
 
 An Source Gateway is a contract that offers a protocol to send a message to a receiver on another chain. It MUST implement `IGatewaySource`.
@@ -89,7 +95,7 @@ MAY emit a `MessageSent` event if it is possible to immediately send the message
 
 After a sender has invoked `sendMessage`, further action MAY be required by the gateway to make the message effective. This is called *post-processing*. For example, some payment is typically required to cover the gas of executing the message at the destination.
 
-The interface for any such action is out of scope of this ERC, but it MUST be able to be performed by a party other than the message sender, and it MUST NOT be able to compromise the eventual receipt of the message.
+The exact interface for any such action is out of scope of this ERC. If the `postProcessingOwner` attribute is supported and present, such actions MUST be restricted to the specified account, otherwise they MUST be able to be performed by any party in a way that MUST NOT be able to compromise the eventual receipt of the message.
 
 The gateway MUST emit a `MessageSent` event with the appropriate identifier once post-processing is complete and the message is ready to be delivered on the destination.
 
