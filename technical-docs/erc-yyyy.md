@@ -58,7 +58,7 @@ interface IGatewaySource {
     event MessageCreated(bytes32 outboxId, string sender, string receiver, bytes payload, uint256 value, bytes[] attributes);
     event MessageSent(bytes32 indexed outboxId);
 
-    function supportsAttribute(string calldata signature) external view returns (bool);
+    function supportsAttribute(bytes4 signature) external view returns (bool);
 
     function sendMessage(
         string calldata destChain, // CAIP-2 chain identifier
@@ -71,7 +71,7 @@ interface IGatewaySource {
 
 #### `supportsAttribute`
 
-Returns a boolean indicating whether the attribute signature is supported by the gateway.
+Returns a boolean indicating whether an attribute is supported by the gateway, identified by the selector computed from the attribute signature.
 
 A gateway MAY be upgraded with support for additional attributes. Once present support for an attribute SHOULD NOT be removed to preserve backwards compatibility with users of the gateway.
 
