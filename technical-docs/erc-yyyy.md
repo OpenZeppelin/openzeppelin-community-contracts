@@ -95,7 +95,7 @@ The gateway MUST emit a `MessageSent` event with the appropriate identifier once
 
 ### Destination Gateway
 
-An Destination Gateway is a contract that implements a protocol to validate messages sent on other chains and have them received at their destination.
+A Destination Gateway is a contract that implements a protocol to validate messages sent on other chains and have them received at their destination.
 
 The gateway can operate in Active or Passive Mode.
 
