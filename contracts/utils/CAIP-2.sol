@@ -25,7 +25,7 @@ library CAIP2 {
     function parse(string memory caip2) internal pure returns (string memory namespace, string memory ref) {
         bytes memory buffer = bytes(caip2);
 
-        uint256 pos = buffer.find(":");
+        uint256 pos = buffer.indexOf(":");
         return (string(buffer.slice(0, pos)), string(buffer.slice(pos + 1)));
     }
 }

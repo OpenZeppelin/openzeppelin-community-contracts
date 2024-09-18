@@ -2,7 +2,6 @@
 
 pragma solidity ^0.8.27;
 
-import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 import {AxelarGatewayBase} from "./AxelarGatewayBase.sol";
 import {IGatewaySource} from "../IGatewaySource.sol";
 import {CAIP10} from "../../utils/CAIP-10.sol";
@@ -17,31 +16,18 @@ abstract contract AxelarGatewaySource is IGatewaySource, AxelarGatewayBase {
         // TODO: Handle ether (payable)
         // TODO: Validate attributes
 
-        // Validate there's an equivalent chain identifier supported by the gateway
-        string memory axelarDstChainId = fromCAIP2(dstChain);
-        require(bytes(axelarDstChainId).length > 0, UnsupportedChain(dstChain));
-        string memory caip10Src = CAIP10.format(msg.sender);
-        string memory caip10Dst = CAIP10.format(dstChain, dstAccount);
-        string memory remoteGateway = getRemoteGateway(dstChain);
+        string memory srcCAIP10 = CAIP10.format(msg.sender);
+        string memory dstCAIP10 = CAIP10.format(dstChain, dstAccount);
 
-        // Create a message package
-        // - message identifier (from the source, not unique ?)
-        // - source account (caller of this gateway)
-        // - destination account
-        // - payload
-        // - attributes
-        bytes32 messageId = bytes32(0); // TODO: counter ?
-        bytes memory package = abi.encode(messageId, caip10Src, caip10Dst, payload, attributes);
+        // Create the package
+        bytes memory package = abi.encode(srcCAIP10, dstCAIP10, payload, attributes);
 
-        // emit event
-        emit MessageCreated(messageId, Message(caip10Src, caip10Dst, payload, attributes));
+        // Emit event
+        emit MessageCreated(0, srcCAIP10, dstCAIP10, payload, attributes);
 
         // Send the message
-        localGateway.callContract(axelarDstChainId, remoteGateway, package);
+        localGateway.callContract(fromCAIP2(dstChain), getRemoteGateway(dstChain), package);
 
-        // TODO
-        // emit MessageSent(bytes32(0));
-
-        return messageId;
+        return 0;
     }
 }

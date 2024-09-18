@@ -26,7 +26,7 @@ library CAIP10 {
     function parse(string memory caip10) internal pure returns (string memory caip2, string memory account) {
         bytes memory buffer = bytes(caip10);
 
-        uint256 pos = buffer.findLastOf(":");
+        uint256 pos = buffer.lastIndexOf(":");
         return (string(buffer.slice(0, pos)), string(buffer.slice(pos + 1)));
     }
 }

@@ -1,66 +1,87 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.27;
 
 import {AxelarExecutable} from "@axelar-network/axelar-gmp-sdk-solidity/contracts/executable/AxelarExecutable.sol";
 import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 import {StringsUnreleased} from "../../utils/Strings.sol";
 import {AxelarGatewayBase} from "./AxelarGatewayBase.sol";
-import {IGatewayDestination} from "../IGatewayDestination.sol";
 import {IGatewayDestinationPassive} from "../IGatewayDestinationPassive.sol";
 import {IGatewayReceiver} from "../IGatewayReceiver.sol";
 import {CAIP2} from "../../utils/CAIP-2.sol";
 import {CAIP10} from "../../utils/CAIP-10.sol";
 
-abstract contract AxelarGatewayDestination is
-    IGatewayDestination,
-    // IGatewayDestinationPassive, // TODO
-    AxelarGatewayBase,
-    AxelarExecutable
-{
+abstract contract AxelarGatewayDestination is IGatewayDestinationPassive, AxelarGatewayBase, AxelarExecutable {
     using Strings for string;
 
+    /// @dev Passive mode
+    function validateReceivedMessage(
+        bytes calldata gatewayData,
+        string calldata srcChain, // CAIP-2
+        string calldata srcAccount, // CAIP-10
+        bytes calldata payload,
+        bytes[] calldata attributes
+    ) external virtual override {
+        // Extract Axelar commandId
+        bytes32 commandId = abi.decode(gatewayData, (bytes32));
+
+        // Rebuild expected package
+        bytes memory package = abi.encode(
+            CAIP10.format(srcChain, srcAccount),
+            CAIP10.format(msg.sender),
+            payload,
+            attributes
+        );
+
+        // Check package was received from remote gateway on src chain
+        require(
+            gateway.validateContractCall(
+                commandId,
+                fromCAIP2(srcChain),
+                getRemoteGateway(srcChain),
+                keccak256(package)
+            ),
+            NotApprovedByGateway()
+        );
+    }
+
+    /// @dev Active mode
     // In this function:
-    // - `srcChain` is in the Axelar format. It should not be expected to be a proper CAIP-2 format
-    // - `srcAccount` is the sender of the crosschain message. That should be the remote gateway on the chain which
+    // - `remoteChain` is in the Axelar format. It should not be expected to be a proper CAIP-2 format
+    // - `remoteAccount` is the sender of the crosschain message. That should be the remote gateway on the chain which
     //   the message originates from. It is NOT the sender of the crosschain message
     //
     // Proper CAIP-10 encoding of the message sender (including the CAIP-2 name of the origin chain can be found in
     // the message)
     function _execute(
-        string calldata srcChain,
-        string calldata srcAccount,
+        string calldata remoteChain, // chain of the remote gateway - axelar format
+        string calldata remoteAccount, // address of the remote gateway
         bytes calldata package
     ) internal virtual override {
-        // Parse the message package
-        // - message identifier (from the source, not unique ?)
-        // - source account (caller of this gateway)
-        // - destination account
-        // - payload
-        // - attributes
-        (
-            bytes32 messageId,
-            string memory caip10Src,
-            string memory caip10Dst,
-            bytes memory payload,
-            bytes[] memory attributes
-        ) = abi.decode(package, (bytes32, string, string, bytes, bytes[]));
+        // Parse the package
+        (string memory srcCAIP10, string memory dstCAIP10, bytes memory payload, bytes[] memory attributes) = abi
+            .decode(package, (string, string, bytes, bytes[]));
 
-        (string memory originChain, string memory originAccount) = CAIP10.parse(caip10Src);
-        (string memory targetChain, string memory targetAccount) = CAIP10.parse(caip10Dst);
+        (string memory srcChain, string memory srcAccount) = CAIP10.parse(srcCAIP10);
+        (string memory dstChain, string memory dstAccount) = CAIP10.parse(dstCAIP10);
 
         // check message validity
-        // - `srcChain` matches origin chain in the message (in caip2)
-        // - `srcAccount` is the remote gateway on the origin chain.
-        require(fromCAIP2(originChain).equal(srcChain), "Invalid origin chain");
-        require(getRemoteGateway(originChain).equal(srcAccount), "Invalid origin gateway");
+        // - `remoteChain` matches origin chain in the message (in caip2)
+        // - `remoteAccount` is the remote gateway on the origin chain.
+        require(remoteChain.equal(fromCAIP2(srcChain)), "Invalid origin chain");
+        require(remoteAccount.equal(getRemoteGateway(srcChain)), "Invalid origin gateway");
         // This check is not required for security. That is enforced by axelar (+ source gateway)
-        require(CAIP2.format().equal(targetChain), "Invalid tardet chain");
+        require(dstChain.equal(CAIP2.format()), "Invalid tardet chain");
 
-        // TODO: not available yet
-        address destination = StringsUnreleased.parseAddress(targetAccount);
-        IGatewayReceiver(destination).receiveMessage(messageId, originChain, originAccount, payload, attributes);
-
-        emit MessageExecuted(messageId);
+        // Active mode
+        address destination = StringsUnreleased.parseAddress(dstAccount);
+        IGatewayReceiver(destination).receiveMessage(
+            address(0), // not needed in active mode
+            new bytes(0), // not needed in active mode
+            srcChain,
+            srcAccount,
+            payload,
+            attributes
+        );
     }
 }
