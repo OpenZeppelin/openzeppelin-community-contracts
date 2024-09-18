@@ -81,11 +81,11 @@ MUST generate a unique message identifier and return it. This identifier shall b
 
 MUST revert if an unsupported attribute key is included. MAY revert if the value of an attribute is not a valid encoding for its expected type.
 
+MAY accept call value (native token) to be sent with the message. MUST revert if call value is included but it is not a feature supported by the gateway. It is unspecified how this value is represented on the destination.
+
 MUST emit a `MessageCreated` event.
 
 MAY emit a `MessageSent` event if it is possible to immediately send the message.
-
-TBD: Meaning of `payable`. Does it translate to an attribute...?
 
 #### `MessageSent`
 
