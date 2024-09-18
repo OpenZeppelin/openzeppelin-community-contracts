@@ -55,8 +55,8 @@ An Source Gateway is a contract that offers a protocol to send a message to a re
 
 ```solidity
 interface IGatewaySource {
-    event MessageCreated(bytes32 indexed id, Message message);
-    event MessageSent(bytes32 indexed id);
+    event MessageCreated(bytes32 outboxId, string sender, string receiver, bytes payload, uint256 value, bytes[] attributes);
+    event MessageSent(bytes32 indexed outboxId);
 
     function supportsAttribute(string calldata signature) external view returns (bool);
 
@@ -65,7 +65,7 @@ interface IGatewaySource {
         string calldata receiver, // CAIP-10 account address
         bytes calldata payload,
         bytes[] calldata attributes
-    ) external payable returns (bytes32 messageId);
+    ) external payable returns (bytes32 outboxId);
 }
 ```
 
@@ -81,11 +81,11 @@ Initiates the sending of a message.
 
 Further action MAY be required by the gateway to make the sending of the message effective, such as providing payment for gas. See Post-processing.
 
-MUST generate a unique message identifier and return it. This identifier shall be used to track the lifecycle of the message in events and to perform actions related to the message.
-
 MUST revert if an unsupported attribute key is included. MAY revert if the value of an attribute is not a valid encoding for its expected type.
 
 MAY accept call value (native token) to be sent with the message. MUST revert if call value is included but it is not a feature supported by the gateway. It is unspecified how this value is represented on the destination.
+
+MAY generate and return a unique non-zero *outbox identifier*, otherwise returning zero. This identifier shall be used to track the lifecycle of the message in the outbox in events and for post-processing.
 
 MUST emit a `MessageCreated` event.
 
@@ -150,7 +150,7 @@ MUST revert if the message is invalid or has already been executed.
 
 TBD: Passing full payload or payload hash (as done by Axelar). Same question for attributes, possibly different answer depending on attribute malleability.
 
-#### Dual Mode
+#### Dual Active-Passive Mode
 
 A gateway MAY operate in both active and passive modes, or it MAY switch from operating exclusively in active mode to passive mode or vice versa.
 
