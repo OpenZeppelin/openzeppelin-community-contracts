@@ -2,8 +2,8 @@
 
 pragma solidity ^0.8.27;
 
-import {IGatewayDestinationPassive} from "../IGatewayDestinationPassive.sol";
-import {IGatewayReceiver} from "../IGatewayReceiver.sol";
+import {IGatewayDestinationPassive} from "../interfaces/IGatewayDestinationPassive.sol";
+import {IGatewayReceiver} from "../interfaces/IGatewayReceiver.sol";
 
 contract GatewayReceiverMock is IGatewayReceiver {
     address public immutable GATEWAY;
