@@ -37,11 +37,12 @@ abstract contract ERC20Allowlist is ERC20 {
 
     /**
      * @dev The operation failed because the user is not allowed.
+     * @param user The address of the user that is not allowed.
      */
-    error UserIsNotAllowed();
+    error UserIsNotAllowed(address user);
 
     /**
-     * @dev Allows a user.
+     * @dev Allows a user to receive and transfer tokens, including minting and burning.
      * @param user The address of the user to allow.
      *
      * Requirements:
@@ -63,18 +64,21 @@ abstract contract ERC20Allowlist is ERC20 {
      * - The user must be allowed.
      */
     function _disallowUser(address user) internal virtual {
-        if (!allowed[user]) revert UserIsNotAllowed();
+        if (!allowed[user]) revert UserIsNotAllowed(user);
         allowed[user] = false;
         emit UserDisallowed(user);
     }
 
     function _update(address from, address to, uint256 value) internal virtual override {
-        if (!allowed[from] || !allowed[to]) revert UserIsNotAllowed();
+        if (from != address(0) && !allowed[from]) revert UserIsNotAllowed(from);
+        if (to != address(0) && !allowed[to]) revert UserIsNotAllowed(to);
         super._update(from, to, value);
     }
 
     function approve(address spender, uint256 value) public virtual override returns (bool) {
-        if (!allowed[msg.sender]) revert UserIsNotAllowed();
-        return super.approve(spender, value);
+        address owner = _msgSender();
+        if (!allowed[owner]) revert UserIsNotAllowed(owner);
+        _approve(owner, spender, value);
+        return true;
     }
 }

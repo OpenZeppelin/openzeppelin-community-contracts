@@ -32,8 +32,9 @@ abstract contract ERC20Blocklist is ERC20 {
 
     /**
      * @dev The operation failed because the user is blocked.
+     * @param user The address of the user that is blocked.
      */
-    error UserIsBlocked();
+    error UserIsBlocked(address user);
 
     /**
      * @dev The operation failed because the user is not blocked.
@@ -49,7 +50,7 @@ abstract contract ERC20Blocklist is ERC20 {
      * - The user must not be blocked.
      */
     function _blockUser(address user) internal virtual {
-        if (blocked[user]) revert UserIsBlocked();
+        if (blocked[user]) revert UserIsBlocked(user);
         blocked[user] = true;
         emit UserBlocked(user);
     }
@@ -69,12 +70,15 @@ abstract contract ERC20Blocklist is ERC20 {
     }
 
     function _update(address from, address to, uint256 value) internal virtual override {
-        if (blocked[from] || blocked[to]) revert UserIsBlocked();
+        if (blocked[from]) revert UserIsBlocked(from);
+        if (blocked[to]) revert UserIsBlocked(to);
         super._update(from, to, value);
     }
 
     function approve(address spender, uint256 value) public virtual override returns (bool) {
-        if (blocked[msg.sender]) revert UserIsBlocked();
-        return super.approve(spender, value);
+        address owner = _msgSender();
+        if (blocked[owner]) revert UserIsBlocked(owner);
+        _approve(owner, spender, value);
+        return true;
     }
 }
