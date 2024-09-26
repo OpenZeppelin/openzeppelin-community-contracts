@@ -42,23 +42,19 @@ abstract contract ERC20Custodian is ERC20 {
      */
     error InsufficientFrozenBalance();
 
-    // TODO: should availableBalance be the default for `balanceOf`?
+    /**
+     * @dev Error thrown when a non-custodian account attempts to perform a custodian-only operation.
+     */
+    error NotCustodian();
 
     /**
-     * @dev Returns the available (unfrozen) balance of an account.
-     * @param account The address to query the available balance of.
-     * @return The amount of tokens available for transfer.
+     * @dev Modifier to restrict access to custodian accounts only.
+     * Reverts with a `NotCustodain` error if the caller is not a custodian.
      */
-    function availableBalance(address account) public view returns (uint256) {
-        return balanceOf(account) - frozen[account];
+    modifier onlyCustodian() {
+        if (!_isCustodian(_msgSender())) revert NotCustodian();
+        _;
     }
-
-    /**
-     * @dev Checks if the user is authorized to perform the operation.
-     * @param user The address of the user to check.
-     * @return True if the user is authorized, false otherwise.
-     */
-    function _authorized(address user) internal view virtual returns (bool) {}
 
     /**
      * @dev Freezes a specified amount of tokens for a user.
@@ -69,7 +65,7 @@ abstract contract ERC20Custodian is ERC20 {
      *
      * - The user must have sufficient unfrozen balance.
      */
-    function _freeze(address user, uint256 amount) internal virtual {
+    function freeze(address user, uint256 amount) external virtual onlyCustodian {
         if (availableBalance(user) < amount) revert InsufficientUnfrozenBalance();
         frozen[user] += amount;
         emit TokensFrozen(user, amount);
@@ -84,16 +80,30 @@ abstract contract ERC20Custodian is ERC20 {
      *
      * - The user must have sufficient frozen balance.
      */
-    function _unfreeze(address user, uint256 amount) internal virtual {
+    function unfreeze(address user, uint256 amount) external virtual onlyCustodian {
         if (frozen[user] < amount) revert InsufficientFrozenBalance();
         frozen[user] -= amount;
         emit TokensUnfrozen(user, amount);
     }
 
+    /**
+     * @dev Returns the available (unfrozen) balance of an account.
+     * @param account The address to query the available balance of.
+     * @return The amount of tokens available for transfer.
+     */
+    function availableBalance(address account) public view returns (uint256) {
+        return balanceOf(account) - frozen[account];
+    }
+
+    /**
+     * @dev Checks if the user is a custodian.
+     * @param user The address of the user to check.
+     * @return True if the user is authorized, false otherwise.
+     */
+    function _isCustodian(address user) internal view virtual returns (bool) {}
+
     function _update(address from, address to, uint256 value) internal virtual override {
-        if (from != address(0) && _authorized(msg.sender)) {
-            if (availableBalance(from) < value) revert InsufficientUnfrozenBalance();
-        }
+        if (from != address(0) && availableBalance(from) < value) revert InsufficientUnfrozenBalance();
         super._update(from, to, value);
     }
 }
