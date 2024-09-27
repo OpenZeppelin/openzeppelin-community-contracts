@@ -14,6 +14,11 @@ created: <date created on, in ISO 8601 (yyyy-mm-dd) format>
 
 ## Motivation
 
+Crosschain message-passing systems (or bridges) allow communication between smart contracts deployed on different blockchains. There is a large diversity of such systems with multiple degrees of decentralization, with various components, that implement different interfaces, and provide different guarantees to the users.
+
+Because almost every protocol implementing a different workflow, using a specific interface, portability between bridges is basically impossible. This also forbid the development of generic contracts that rely on cross chain communication.
+
+The objective of the ERC is to provide a standard interface, and a corresponding workflow, for performing cross-chain communication between contracts. Existing cross-chain communication protocols, that do not nativelly implement this interface, should be able to adopt it using adapter gateway contracts.
 
 ## Specification
 
