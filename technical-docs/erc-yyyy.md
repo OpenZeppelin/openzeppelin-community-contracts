@@ -44,7 +44,9 @@ Attributes are structured pieces of message data and/or metadata. Each attribute
 
 Some attributes are message data that must be sent to the receiver, although they can be transformed as long as their meaning is preserved. Other attributes are metadata that will be used by the intervening gateways and potentially removed before the message reaches the receiver.
 
-The set of attributes is extensible. It is RECOMMENDED to publish standardize attributes and their characteristics by publishing them as ERCs. A gateway MAY support any set of attributes. An empty attribute list MUST always be accepted by a gateway.
+The set of attributes is extensible. It is RECOMMENDED to standardize attributes and their characteristics by publishing them as ERCs.
+
+A gateway MAY support any set of attributes. An empty attribute list MUST always be accepted by a gateway.
 
 Each attribute key MUST have the format of a Solidity function signature, i.e., a name followed by a list of types in parentheses. For example, `minGasLimit(uint256)`.
 
