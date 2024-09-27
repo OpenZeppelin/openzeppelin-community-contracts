@@ -54,7 +54,7 @@ In this specification attributes are encoded as an array of `bytes` (i.e., `byte
 
 The following standard attributes MAY be supported by a gateway.
 
-- `postProcessingOwner(string)`: The address of the account that shall be in charge of message post-processing.
+- `postProcessingOwner(address)`: The address of the account that shall be in charge of message post-processing.
 
 ### Source Gateway
 
