@@ -40,13 +40,15 @@ The payload is an opaque `bytes` value.
 
 #### Attributes
 
-This field encodes a list of key-value pairs.
+Attributes are structured pieces of message data and/or metadata. Each attribute is a key-value pair, where the key determines the type and encoding of the value, as well as its meaning and behavior.
 
-A gateway MAY support any set of attributes. An empty list MUST always be accepted by a gateway.
+Some attributes are message data that must be sent to the receiver, although they can be transformed as long as their meaning is preserved. Other attributes are metadata that will be used by the intervening gateways and potentially removed before the message reaches the receiver.
+
+The set of attributes is extensible. It is RECOMMENDED to publish standardize attributes and their characteristics by publishing them as ERCs. A gateway MAY support any set of attributes. An empty attribute list MUST always be accepted by a gateway.
 
 Each attribute key MUST have the format of a Solidity function signature, i.e., a name followed by a list of types in parentheses. For example, `minGasLimit(uint256)`.
 
-Each key-value pair MUST be encoded like a Solidity function call, i.e., the first 4 bytes of the hash of the key followed by the ABI-encoded values.
+In this specification attributes are encoded as an array of `bytes` (i.e., `bytes[]`). Each element of the array MUST encode an attribute in the form of a Solidity function call, i.e., the first 4 bytes of the hash of the key followed by the ABI-encoded value.
 
 ##### Standard Attributes
 
