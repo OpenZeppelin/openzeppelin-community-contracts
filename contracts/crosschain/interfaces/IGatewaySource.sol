@@ -5,8 +5,8 @@ pragma solidity ^0.8.0;
 interface IGatewaySource {
     event MessageCreated(
         bytes32 outboxId,
-        string from, // CAIP-10 account ID
-        string to, // CAIP-10 account ID
+        string sender, // CAIP-10 account ID
+        string receiver, // CAIP-10 account ID
         bytes payload,
         bytes[] attributes
     );

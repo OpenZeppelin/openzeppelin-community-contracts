@@ -4,10 +4,14 @@ pragma solidity ^0.8.27;
 
 import {AxelarGatewayBase} from "./AxelarGatewayBase.sol";
 import {IGatewaySource} from "../interfaces/IGatewaySource.sol";
+import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
+import {CAIP2} from "../../utils/CAIP-2.sol";
 import {CAIP10} from "../../utils/CAIP-10.sol";
 
 abstract contract AxelarGatewaySource is IGatewaySource, AxelarGatewayBase {
-    function supportsAttribute(bytes4 /*signature*/) public view virtual returns (bool) {
+    using Strings for address;
+
+    function supportsAttribute(bytes4 /*selector*/) public view virtual returns (bool) {
         return false;
     }
 
@@ -20,21 +24,27 @@ abstract contract AxelarGatewaySource is IGatewaySource, AxelarGatewayBase {
         // TODO: add support for value and attributes ?
         require(msg.value == 0, "Value not supported");
         for (uint256 i = 0; i < attributes.length; ++i) {
-            bytes4 signature = bytes4(attributes[i][0:4]);
-            require(supportsAttribute(signature), UnsuportedAttribute(signature));
+            bytes4 selector = bytes4(attributes[i][0:4]);
+            require(supportsAttribute(selector), UnsuportedAttribute(selector));
         }
 
-        string memory from = CAIP10.format(msg.sender);
-        string memory to = CAIP10.format(destination, receiver);
-
         // Create the package
-        bytes memory package = abi.encode(from, to, payload, attributes);
+        string memory sender = msg.sender.toHexString();
+        bytes memory adapterPayload = abi.encode(sender, receiver, payload, attributes);
 
         // Emit event
-        emit MessageCreated(0, from, to, payload, attributes);
+        emit MessageCreated(
+            0,
+            CAIP10.format(CAIP2.format(), sender),
+            CAIP10.format(destination, receiver),
+            payload,
+            attributes
+        );
 
         // Send the message
-        localGateway.callContract(fromCAIP2(destination), getRemoteGateway(destination), package);
+        string memory axelarDestination = getEquivalentChain(destination);
+        string memory remoteGateway = getRemoteGateway(destination);
+        localGateway.callContract(axelarDestination, remoteGateway, adapterPayload);
 
         return 0;
     }

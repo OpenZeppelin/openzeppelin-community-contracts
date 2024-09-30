@@ -46,19 +46,19 @@ library Bytes {
      * NOTE: replicates the behavior of https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/lastIndexOf
      */
     function lastIndexOf(bytes memory buffer, bytes1 s) internal pure returns (uint256) {
-        return lastIndexOf(buffer, s, buffer.length);
+        return lastIndexOf(buffer, s, buffer.length - 1);
     }
 
     /**
      * @dev Backward search for `s` in `buffer` starting at position `pos`
-     * * If `s` is present in the buffer (before `pos`), returns the index of the previous instance
-     * * If `s` is not present in the buffer (before `pos`), returns the length of the buffer
+     * * If `s` is present in the buffer (at or before `pos`), returns the index of the previous instance
+     * * If `s` is not present in the buffer (at or before `pos`), returns the length of the buffer
      *
      * NOTE: replicates the behavior of https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/lastIndexOf
      */
     function lastIndexOf(bytes memory buffer, bytes1 s, uint256 pos) internal pure returns (uint256) {
         unchecked {
-            for (uint256 i = pos; i > 0; --i) {
+            for (uint256 i = pos + 1; i > 0; --i) {
                 if (buffer[i - 1] == s) {
                     return i - 1;
                 }
@@ -88,11 +88,13 @@ library Bytes {
         uint256 length = buffer.length;
         start = Math.min(start, length);
         end = Math.min(end, length);
+
         // allocate and copy
         bytes memory result = new bytes(end - start);
-        for (uint256 i = start; i < end; ++i) {
-            result[i - start] = buffer[i];
+        assembly ("memory-safe") {
+            mcopy(add(result, 0x20), add(buffer, add(start, 0x20)), sub(end, start))
         }
+
         return result;
     }
 

@@ -12,6 +12,7 @@ import {IGatewayDestinationPassive} from "../interfaces/IGatewayDestinationPassi
 import {IGatewayReceiver} from "../interfaces/IGatewayReceiver.sol";
 
 abstract contract AxelarGatewayDestination is IGatewayDestinationPassive, AxelarGatewayBase, AxelarExecutable {
+    using Strings for address;
     using Strings for string;
 
     /// @dev Passive mode
@@ -26,16 +27,21 @@ abstract contract AxelarGatewayDestination is IGatewayDestinationPassive, Axelar
         bytes32 commandId = abi.decode(messageKey, (bytes32));
 
         // Rebuild expected package
-        bytes memory package = abi.encode(
-            CAIP10.format(source, sender),
-            CAIP10.format(msg.sender),
+        bytes memory adapterPayload = abi.encode(
+            sender,
+            msg.sender.toHexString(), // receiver
             payload,
             attributes
         );
 
         // Check package was received from remote gateway on src chain
         require(
-            gateway.validateContractCall(commandId, fromCAIP2(source), getRemoteGateway(source), keccak256(package)),
+            gateway.validateContractCall(
+                commandId,
+                getEquivalentChain(source),
+                getRemoteGateway(source),
+                keccak256(adapterPayload)
+            ),
             NotApprovedByGateway()
         );
     }
@@ -51,24 +57,18 @@ abstract contract AxelarGatewayDestination is IGatewayDestinationPassive, Axelar
     function _execute(
         string calldata remoteChain, // chain of the remote gateway - axelar format
         string calldata remoteAccount, // address of the remote gateway
-        bytes calldata package
+        bytes calldata adapterPayload
     ) internal virtual override {
         // Parse the package
-        (string memory from, string memory to, bytes memory payload, bytes[] memory attributes) = abi.decode(
-            package,
+        (string memory sender, string memory receiver, bytes memory payload, bytes[] memory attributes) = abi.decode(
+            adapterPayload,
             (string, string, bytes, bytes[])
         );
-
-        (string memory source, string memory sender) = CAIP10.parse(from);
-        (string memory destination, string memory receiver) = CAIP10.parse(to);
+        string memory source = getEquivalentChain(remoteChain);
 
         // check message validity
-        // - `remoteChain` matches origin chain in the message (in caip2)
         // - `remoteAccount` is the remote gateway on the origin chain.
-        require(remoteChain.equal(fromCAIP2(source)), "Invalid origin chain");
-        require(remoteAccount.equal(getRemoteGateway(source)), "Invalid origin gateway");
-        // This check is not required for security. That is enforced by axelar (+ source gateway)
-        require(destination.equal(CAIP2.format()), "Invalid tardet chain");
+        require(getRemoteGateway(source).equal(remoteAccount), "Invalid origin gateway");
 
         // Active mode
         IGatewayReceiver(StringsUnreleased.parseAddress(receiver)).receiveMessage(

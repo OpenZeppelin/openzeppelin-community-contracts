@@ -17,8 +17,8 @@ async function fixture() {
   const dstGateway = await ethers.deployContract('$AxelarGatewayDestination', [ owner, axelar, axelar ]);
   const receiver   = await ethers.deployContract('$GatewayReceiverMock', [ dstGateway ]);
 
-  await srcGateway.registerCAIP2Equivalence(CAIP2, 'local');
-  await dstGateway.registerCAIP2Equivalence(CAIP2, 'local');
+  await srcGateway.registerChainEquivalence(CAIP2, 'local');
+  await dstGateway.registerChainEquivalence(CAIP2, 'local');
   await srcGateway.registerRemoteGateway(CAIP2, getAddress(dstGateway));
   await dstGateway.registerRemoteGateway(CAIP2, getAddress(srcGateway));
 
@@ -32,11 +32,11 @@ describe('AxelarGateway', function () {
 
   it('initial setup', async function () {
     expect(await this.srcGateway.localGateway()).to.equal(this.axelar);
-    expect(await this.srcGateway.fromCAIP2(this.CAIP2)).to.equal('local');
+    expect(await this.srcGateway.getEquivalentChain(this.CAIP2)).to.equal('local');
     expect(await this.srcGateway.getRemoteGateway(this.CAIP2)).to.equal(getAddress(this.dstGateway));
 
     expect(await this.dstGateway.localGateway()).to.equal(this.axelar);
-    expect(await this.dstGateway.fromCAIP2(this.CAIP2)).to.equal('local');
+    expect(await this.dstGateway.getEquivalentChain(this.CAIP2)).to.equal('local');
     expect(await this.dstGateway.getRemoteGateway(this.CAIP2)).to.equal(getAddress(this.srcGateway));
   });
 
@@ -50,7 +50,7 @@ describe('AxelarGateway', function () {
       const dstCAIP10  = this.asCAIP10(this.receiver);
       const payload    = ethers.randomBytes(128);
       const attributes = [];
-      const package    = ethers.AbiCoder.defaultAbiCoder().encode([ 'string', 'string', 'bytes', 'bytes[]' ], [ srcCAIP10, dstCAIP10, payload, attributes ]);
+      const package    = ethers.AbiCoder.defaultAbiCoder().encode([ 'string', 'string', 'bytes', 'bytes[]' ], [ getAddress(this.sender), getAddress(this.receiver), payload, attributes ]);
 
       const tx = await this.srcGateway.connect(this.sender).sendMessage(this.CAIP2, getAddress(this.receiver), payload, attributes);
       await expect(tx)
@@ -71,7 +71,7 @@ describe('AxelarGateway', function () {
       const dstCAIP10  = this.asCAIP10(this.receiver);
       const payload    = ethers.randomBytes(128);
       const attributes = [];
-      const package    = ethers.AbiCoder.defaultAbiCoder().encode([ 'string', 'string', 'bytes', 'bytes[]' ], [ srcCAIP10, dstCAIP10, payload, attributes ]);
+      const package    = ethers.AbiCoder.defaultAbiCoder().encode([ 'string', 'string', 'bytes', 'bytes[]' ], [ getAddress(this.sender), getAddress(this.receiver), payload, attributes ]);
 
       const tx = await this.srcGateway.connect(this.sender).sendMessage(this.CAIP2, getAddress(this.receiver), payload, attributes);
       await expect(tx)
