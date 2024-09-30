@@ -17,8 +17,8 @@ describe('CAIP utilities', function () {
   });
 
   describe('CAIP-2', function () {
-    it('format()', async function () {
-      expect(await this.caip2.$format()).to.equal(format('eip155', this.chainId));
+    it('local()', async function () {
+      expect(await this.caip2.$local()).to.equal(format('eip155', this.chainId));
     });
 
     for (const { namespace, reference, caip2 } of Object.values(CHAINS))
@@ -35,9 +35,9 @@ describe('CAIP utilities', function () {
   describe('CAIP-10', function () {
     const { address: account } = ethers.Wallet.createRandom();
 
-    it(`format(${account})`, async function () {
+    it(`local(${account})`, async function () {
       // lowercase encoding for now
-      expect(await this.caip10.$format(ethers.Typed.address(account))).to.equal(format('eip155', this.chainId, account.toLowerCase()));
+      expect(await this.caip10.$local(ethers.Typed.address(account))).to.equal(format('eip155', this.chainId, account.toLowerCase()));
     });
 
     for (const { account, caip2, caip10 } of Object.values(CHAINS))

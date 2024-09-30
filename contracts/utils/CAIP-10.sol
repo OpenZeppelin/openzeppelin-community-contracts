@@ -15,8 +15,8 @@ library CAIP10 {
     using Strings for address;
     using Bytes for bytes;
 
-    function format(address account) internal view returns (string memory) {
-        return format(CAIP2.format(), account.toHexString());
+    function local(address account) internal view returns (string memory) {
+        return format(CAIP2.local(), account.toHexString());
     }
 
     function format(string memory caip2, string memory account) internal pure returns (string memory) {

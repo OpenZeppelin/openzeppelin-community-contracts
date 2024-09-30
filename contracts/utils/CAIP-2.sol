@@ -14,7 +14,7 @@ library CAIP2 {
     using Strings for uint256;
     using Bytes for bytes;
 
-    function format() internal view returns (string memory) {
+    function local() internal view returns (string memory) {
         return format("eip155", block.chainid.toString());
     }
 

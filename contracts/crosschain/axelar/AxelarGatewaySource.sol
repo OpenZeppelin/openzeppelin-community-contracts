@@ -35,7 +35,7 @@ abstract contract AxelarGatewaySource is IGatewaySource, AxelarGatewayBase {
         // Emit event
         emit MessageCreated(
             0,
-            CAIP10.format(CAIP2.format(), sender),
+            CAIP10.format(CAIP2.local(), sender),
             CAIP10.format(destination, receiver),
             payload,
             attributes
