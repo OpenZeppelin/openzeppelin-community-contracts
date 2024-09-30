@@ -362,7 +362,7 @@ library StringsUnreleased {
         uint256 expectedLength = hasPrefix ? 42 : 40;
 
         if (end - begin == expectedLength) {
-            // length garantees that this does not overflow, and value2 is at most type(uint160).max
+            // length guarantees that this does not overflow, and value2 is at most type(uint160).max
             (bool s, uint256 v) = tryParseHex(input, begin, end);
             return (s, address(uint160(v)));
         } else {

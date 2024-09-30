@@ -68,7 +68,7 @@ library Bytes {
     }
 
     /**
-     * @dev Copies the content of `buffer`, for `start` (included) to the end of `buffer` into a new bytes object in
+     * @dev Copies the content of `buffer`, from `start` (included) to the end of `buffer` into a new bytes object in
      * memory.
      *
      * NOTE: replicates the behavior of https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/slice
@@ -78,7 +78,7 @@ library Bytes {
     }
 
     /**
-     * @dev Copies the content of `buffer`, for `start` (included) to the `end` (exluded) into a new bytes object in
+     * @dev Copies the content of `buffer`, from `start` (included) to `end` (excluded) into a new bytes object in
      * memory.
      *
      * NOTE: replicates the behavior of https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/slice
