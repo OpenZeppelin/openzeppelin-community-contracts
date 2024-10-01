@@ -3,7 +3,7 @@ const { expect } = require('chai');
 const { loadFixture } = require('@nomicfoundation/hardhat-network-helpers');
 const { anyValue } = require('@nomicfoundation/hardhat-chai-matchers/withArgs');
 
-const getAddress = account => (account.target ?? account.address ?? account).toLowerCase();
+const getAddress = account => ethers.getAddress(account.target ?? account.address ?? account);
 
 async function fixture() {
   const [owner, sender, ...accounts] = await ethers.getSigners();

@@ -5,11 +5,11 @@ pragma solidity ^0.8.27;
 import {IAxelarGateway} from "@axelar-network/axelar-gmp-sdk-solidity/contracts/interfaces/IAxelarGateway.sol";
 import {IAxelarExecutable} from "@axelar-network/axelar-gmp-sdk-solidity/contracts/interfaces/IAxelarExecutable.sol";
 import {BitMaps} from "@openzeppelin/contracts/utils/structs/BitMaps.sol";
-import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 import {StringsUnreleased} from "../../utils/Strings.sol";
 
 contract AxelarGatewayMock {
-    using Strings for address;
+    using StringsUnreleased for address;
+    using StringsUnreleased for string;
     using BitMaps for BitMaps.BitMap;
 
     bool private activeMode;
@@ -42,7 +42,12 @@ contract AxelarGatewayMock {
         );
 
         bytes32 commandId = keccak256(
-            abi.encode(destinationChain, msg.sender.toHexString(), destinationContractAddress, keccak256(payload))
+            abi.encode(
+                destinationChain,
+                msg.sender.toChecksumHexString(),
+                destinationContractAddress,
+                keccak256(payload)
+            )
         );
 
         require(!pendingCommandIds.get(uint256(commandId)));
@@ -53,8 +58,8 @@ contract AxelarGatewayMock {
         if (activeMode) {
             // NOTE:
             // - source chain and destination chain are the same in this mock
-            address target = StringsUnreleased.parseAddress(destinationContractAddress);
-            IAxelarExecutable(target).execute(commandId, destinationChain, msg.sender.toHexString(), payload);
+            address target = destinationContractAddress.parseAddress();
+            IAxelarExecutable(target).execute(commandId, destinationChain, msg.sender.toChecksumHexString(), payload);
         }
     }
 
@@ -70,7 +75,8 @@ contract AxelarGatewayMock {
             emit IAxelarGateway.ContractCallExecuted(commandId);
 
             return
-                commandId == keccak256(abi.encode(sourceChain, sourceAddress, msg.sender.toHexString(), payloadHash));
+                commandId ==
+                keccak256(abi.encode(sourceChain, sourceAddress, msg.sender.toChecksumHexString(), payloadHash));
         } else return false;
     }
 }

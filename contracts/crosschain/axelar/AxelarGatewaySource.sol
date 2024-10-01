@@ -4,12 +4,12 @@ pragma solidity ^0.8.27;
 
 import {AxelarGatewayBase} from "./AxelarGatewayBase.sol";
 import {IGatewaySource} from "../interfaces/IGatewaySource.sol";
-import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
+import {StringsUnreleased} from "../../utils/Strings.sol";
 import {CAIP2} from "../../utils/CAIP-2.sol";
 import {CAIP10} from "../../utils/CAIP-10.sol";
 
 abstract contract AxelarGatewaySource is IGatewaySource, AxelarGatewayBase {
-    using Strings for address;
+    using StringsUnreleased for address;
 
     function supportsAttribute(bytes4 /*selector*/) public view virtual returns (bool) {
         return false;
@@ -29,7 +29,7 @@ abstract contract AxelarGatewaySource is IGatewaySource, AxelarGatewayBase {
         }
 
         // Create the package
-        string memory sender = msg.sender.toHexString();
+        string memory sender = msg.sender.toChecksumHexString();
         bytes memory adapterPayload = abi.encode(sender, receiver, payload, attributes);
 
         // Emit event

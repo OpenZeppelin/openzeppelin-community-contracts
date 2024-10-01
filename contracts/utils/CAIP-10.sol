@@ -3,7 +3,7 @@
 pragma solidity ^0.8.0;
 
 import {SafeCast} from "@openzeppelin/contracts/utils/math/SafeCast.sol";
-import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
+import {StringsUnreleased} from "./Strings.sol";
 import {Bytes} from "./Bytes.sol";
 import {CAIP2} from "./CAIP-2.sol";
 
@@ -12,11 +12,11 @@ import {CAIP2} from "./CAIP-2.sol";
 // account_address:   [-.%a-zA-Z0-9]{1,128}
 library CAIP10 {
     using SafeCast for uint256;
-    using Strings for address;
+    using StringsUnreleased for address;
     using Bytes for bytes;
 
     function local(address account) internal view returns (string memory) {
-        return format(CAIP2.local(), account.toHexString());
+        return format(CAIP2.local(), account.toChecksumHexString());
     }
 
     function format(string memory caip2, string memory account) internal pure returns (string memory) {

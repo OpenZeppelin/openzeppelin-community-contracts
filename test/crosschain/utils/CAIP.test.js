@@ -37,7 +37,7 @@ describe('CAIP utilities', function () {
 
     it(`local(${account})`, async function () {
       // lowercase encoding for now
-      expect(await this.caip10.$local(ethers.Typed.address(account))).to.equal(format('eip155', this.chainId, account.toLowerCase()));
+      expect(await this.caip10.$local(ethers.Typed.address(account))).to.equal(format('eip155', this.chainId, account));
     });
 
     for (const { account, caip2, caip10 } of Object.values(CHAINS))

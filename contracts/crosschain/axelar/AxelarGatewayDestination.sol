@@ -3,7 +3,6 @@
 pragma solidity ^0.8.27;
 
 import {AxelarExecutable} from "@axelar-network/axelar-gmp-sdk-solidity/contracts/executable/AxelarExecutable.sol";
-import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 import {StringsUnreleased} from "../../utils/Strings.sol";
 import {CAIP2} from "../../utils/CAIP-2.sol";
 import {CAIP10} from "../../utils/CAIP-10.sol";
@@ -12,8 +11,8 @@ import {IGatewayDestinationPassive} from "../interfaces/IGatewayDestinationPassi
 import {IGatewayReceiver} from "../interfaces/IGatewayReceiver.sol";
 
 abstract contract AxelarGatewayDestination is IGatewayDestinationPassive, AxelarGatewayBase, AxelarExecutable {
-    using Strings for address;
-    using Strings for string;
+    using StringsUnreleased for address;
+    using StringsUnreleased for string;
 
     /// @dev Passive mode
     function validateReceivedMessage(
@@ -29,7 +28,7 @@ abstract contract AxelarGatewayDestination is IGatewayDestinationPassive, Axelar
         // Rebuild expected package
         bytes memory adapterPayload = abi.encode(
             sender,
-            msg.sender.toHexString(), // receiver
+            msg.sender.toChecksumHexString(), // receiver
             payload,
             attributes
         );
@@ -71,7 +70,7 @@ abstract contract AxelarGatewayDestination is IGatewayDestinationPassive, Axelar
         require(getRemoteGateway(source).equal(remoteAccount), "Invalid origin gateway");
 
         // Active mode
-        IGatewayReceiver(StringsUnreleased.parseAddress(receiver)).receiveMessage(
+        IGatewayReceiver(receiver.parseAddress()).receiveMessage(
             address(0), // not needed in active mode
             new bytes(0), // not needed in active mode
             source,
