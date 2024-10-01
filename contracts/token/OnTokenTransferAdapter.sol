@@ -2,12 +2,12 @@
 
 pragma solidity ^0.8.20;
 
-import "@openzeppelin/contracts/interfaces/IERC1363Receiver.sol";
+import {IERC1363Receiver} from "@openzeppelin/contracts/interfaces/IERC1363Receiver.sol";
 
 /**
- * @dev This contract exposes the 667 `onTokenTransfer` hook on top of {ERC-1363-onTransferReceived}.
+ * @dev This contract exposes the 667 `onTokenTransfer` hook on top of {IERC1363Receiver-onTransferReceived}.
  *
- * Inheriting from this adapter makes every `ERC1363Receiver` contract automatically compatible with tokens, such as
+ * Inheriting from this adapter makes your `ERC1363Receiver` contract automatically compatible with tokens, such as
  * Chainlink's Link, that implement the 667 interface for transferAndCall.
  */
 abstract contract OnTokenTransferAdapter is IERC1363Receiver {
