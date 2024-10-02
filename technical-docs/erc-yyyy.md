@@ -11,6 +11,7 @@ created: <date created on, in ISO 8601 (yyyy-mm-dd) format>
 
 ## Abstract
 
+This proposal describes an interface, and the corresponding workflow, for smart contracts to send arbitrary data through cross-chain message-passing systems. The end goal of this proposal is to have all message-passing systems expose this interface (natively or using "adapters") so that cross-chain composability becomes more natural. That would allow a new class of cross-chain native smart contracts to emerge while reducing vendor lock-in. This proposal is modular by design, allowing users to leverage bridge-specific features through attributes while providing simple "universal" access to the simple feature of "just getting a simple message through".
 
 ## Motivation
 
@@ -70,7 +71,7 @@ interface IGatewaySource {
     function supportsAttribute(bytes4 signature) external view returns (bool);
 
     function sendMessage(
-        string calldata destChain, // CAIP-2 chain identifier
+        string calldata destination, // CAIP-2 chain identifier
         string calldata receiver, // CAIP-10 account address
         bytes calldata payload,
         bytes[] calldata attributes
@@ -121,8 +122,8 @@ interface IGatewayReceiver {
     function receiveMessage(
         address gateway,
         bytes calldata gatewayMessageKey,
-        string calldata sourceChain,
-        string calldata sender,
+        string calldata source, // CAIP-2 chain identifier
+        string calldata sender, // CAIP-10 account address
         bytes calldata payload,
         bytes[] calldata attributes
     ) external payable;
@@ -145,8 +146,8 @@ A gateway acting in passive mode MUST implement `IGatewayDestinationPassive`. If
 interface IGatewayDestinationPassive {
     function validateReceivedMessage(
         bytes calldata messageKey,
-        string calldata sourceChain,
-        string calldata sender,
+        string calldata source, // CAIP-2 chain identifier
+        string calldata sender, // CAIP-10 account address
         bytes calldata payload,
         bytes[] calldata attributes
     ) external;
@@ -167,7 +168,7 @@ A gateway MAY operate in both active and passive modes, or it MAY switch from op
 
 A receiver SHOULD support both active and passive modes for any gateway. This is accomplished by first checking whether the caller of `receiveMessage` is a known gateway, and only validating the message if it is not; the first case supports an active mode gateway, while the second case supports a passive mode gateway.
 
-### TBD
+### Pending discussion
 
 - How to "reply" to a message? Duplex gateway? Getter for reverse gateway address? Necessary for some applications, e.g., recovery from token bridging failure?
 
@@ -181,7 +182,13 @@ No backward compatibility issues found.
 
 ## Security Considerations
 
+Unfortunatelly, CAIP-2 and CAIP-10 names are not unique. Using non-canonical strings may lead to undefined behavior, including message delivery failure and locked assets. While source gateways have a role to play in checking that user input are valid, we also believe that more effort should be put into standardizing and documenting what the canonical format is for each CAIP-2 namespace. This effort is beyond the scope of this ERC.
+
 Needs discussion.
+
+## References
+
+We recommand reading [Nordswap](https://twitter.com/norswap)'s [cross-chain interoperability report](https://github.com/0xFableOrg/xchain/blob/master/README.md) that describes the different caracteristics of different bridge types. Wording used in this ERC aims for consistency with this report.
 
 ## Copyright
 
