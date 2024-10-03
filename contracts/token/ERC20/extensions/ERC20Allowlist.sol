@@ -19,27 +19,23 @@ abstract contract ERC20Allowlist is ERC20 {
     mapping(address account => bool) public allowed;
 
     /**
-     * @dev Emitted when a user is allowed.
-     * @param user The address of the user that was allowed.
+     * @dev Emitted when a `user` is allowed to transfer and approve.
      */
     event UserAllowed(address indexed user);
 
     /**
      * @dev Emitted when a user is disallowed.
-     * @param user The address of the user that was disallowed.
      */
     event UserDisallowed(address indexed user);
 
     /**
      * @dev The operation failed because the user is already allowed.
      */
-    error UserIsAllowed();
 
     /**
      * @dev The operation failed because the user is not allowed.
-     * @param user The address of the user that is not allowed.
      */
-    error UserIsNotAllowed(address user);
+    error UserIsNotAllowed(address indexed user);
 
     /**
      * @dev Allows a user to receive and transfer tokens, including minting and burning.
