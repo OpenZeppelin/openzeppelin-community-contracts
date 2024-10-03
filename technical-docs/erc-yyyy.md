@@ -198,7 +198,7 @@ Some protocols gateway support doing arbitrary direct calls on the receiver. In 
 
 ## Backwards Compatibility
 
-No backward compatibility issues found.
+Existing cross-chain messaging protocols implement proprietary interfaces. We recommend that protocols natively implement the standard interface defined here, and propose the development of standard adapters for those that don't.
 
 ## Security Considerations
 
