@@ -185,6 +185,7 @@ A receiver SHOULD support both active and passive modes for any gateway. This is
 - How to "reply" to a message? Duplex gateway? Getter for reverse gateway address? Necessary for some applications, e.g., recovery from token bridging failure?
 - Should the destination and receiver inputs of `sendMessage` be kept as two separate strings, or merged as a single CAIP-10 string with a `:` separator? This has implication of the calldata length, which in some cases may be stored.
 - Do we want the gateway to have the ability to inform users of the address of the new version, similar to how `AccessManager` can update then authority trusted by an `AccessManaged`? This could be useful if a gateway is ever deprecated in favor of a new version.
+- Should data and metadata attributes be split in two? What are data attributes used for? Do we need them?
 
 ## Rationale
 
