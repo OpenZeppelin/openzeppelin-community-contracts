@@ -182,13 +182,13 @@ No backward compatibility issues found.
 
 ## Security Considerations
 
-Unfortunatelly, CAIP-2 and CAIP-10 names are not unique. Using non-canonical strings may lead to undefined behavior, including message delivery failure and locked assets. While source gateways have a role to play in checking that user input are valid, we also believe that more effort should be put into standardizing and documenting what the canonical format is for each CAIP-2 namespace. This effort is beyond the scope of this ERC.
+Unfortunately, CAIP-2 and CAIP-10 names are not unique. Using non-canonical strings may lead to undefined behavior, including message delivery failure and locked assets. While source gateways have a role to play in checking that user input are valid, we also believe that more effort should be put into standardizing and documenting what the canonical format is for each CAIP-2 namespace. This effort is beyond the scope of this ERC.
 
 Needs discussion.
 
 ## References
 
-We recommand reading [Nordswap](https://twitter.com/norswap)'s [cross-chain interoperability report](https://github.com/0xFableOrg/xchain/blob/master/README.md) that describes the different caracteristics of different bridge types. Wording used in this ERC aims for consistency with this report.
+We recommend reading [Nordswap](https://twitter.com/norswap)'s [cross-chain interoperability report](https://github.com/0xFableOrg/xchain/blob/master/README.md) that describes the properties of different bridge types. Wording used in this ERC aims for consistency with this report.
 
 ## Copyright
 
