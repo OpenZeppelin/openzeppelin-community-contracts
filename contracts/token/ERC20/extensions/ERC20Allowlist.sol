@@ -5,9 +5,12 @@ pragma solidity ^0.8.20;
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 /**
- * @dev Contract module which allows children to implement an allowlist
+ * @dev Extension of {ERC20} that allows to implement an allowlist
  * mechanism that can be managed by an authorized account.
- *
+ * The allowlist provides the guarantee to the contract owner (e.g. a DAO or a well-configured multisig)
+ * that any account won't be able to execute transfers or approvals to other entities to operate on
+ * its behalf if {_allowUser} was not called with such account as an argument. Similarly, the account
+ * will be blocked again if {_disallowedUser} is called.
  * This module is used through inheritance. It will make available the
  * functions `allowUser` and `disallowUser`, which can be used to
  * manage the allowlist in your contract.
