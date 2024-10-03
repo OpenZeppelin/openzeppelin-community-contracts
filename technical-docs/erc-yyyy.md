@@ -97,9 +97,19 @@ MAY accept call value (native token) to be sent with the message. MUST revert if
 
 MAY generate and return a unique non-zero *outbox identifier*, otherwise returning zero. This identifier shall be used to track the lifecycle of the message in the outbox in events and for post-processing.
 
-MUST emit a `MessageCreated` event.
+MUST emit a `MessageCreated` event, including the optional outbox identifier that is returned by the function.
 
-MAY emit a `MessageSent` event if it is possible to immediately send the message.
+If an outbox identifier was generated, MUST emit a `MessageSent` event if no post-processing is required.
+
+#### `MessageCreated`
+
+This event signals that a would-be sender has initiated the sending of a message.
+
+If `outboxId` is present, post-processing MAY be required to send the message through the cross-chain channel.
+
+#### `MessageSent`
+
+This event signals that no more post-processing in the source chain is required, and that the message has been sent through the cross-chain channel.
 
 #### Post-processing
 
