@@ -41,40 +41,38 @@ abstract contract ERC20Allowlist is ERC20 {
      * @dev Allows a user to receive and transfer tokens, including minting and burning.
      * @param user The address of the user to allow.
      *
-     * Requirements:
-     *
-     * - The user must not be already allowed.
      */
     function _allowUser(address user) internal virtual {
-        if (allowed[user]) revert UserIsAllowed();
-        allowed[user] = true;
-        emit UserAllowed(user);
+        if(!allowed(user)) {
+          allowed[user] = true;
+          emit UserAllowed(user);
+        }
     }
 
     /**
      * @dev Disallows a user.
-     * @param user The address of the user to disallow.
      *
-     * Requirements:
-     *
-     * - The user must be allowed.
      */
     function _disallowUser(address user) internal virtual {
-        if (!allowed[user]) revert UserIsNotAllowed(user);
-        allowed[user] = false;
-        emit UserDisallowed(user);
+        if (allowed(user)) {
+          allowed[user] = false;
+          emit UserDisallowed(user);
+        }
     }
 
     function _update(address from, address to, uint256 value) internal virtual override {
-        if (from != address(0) && !allowed[from]) revert UserIsNotAllowed(from);
-        if (to != address(0) && !allowed[to]) revert UserIsNotAllowed(to);
+        if (from != address(0) && !allowed[from]) revert ERC20Disallowed(from);
+        if (to != address(0) && !allowed[to]) revert ERC20Disallowed(to);
         super._update(from, to, value);
     }
 
-    function approve(address spender, uint256 value) public virtual override returns (bool) {
+function allowed(address account) public virtual returns (bool) {
+  return _allowed[account];
+}
+
+    function _approve(address owner, address spender, uint256 value, bool emitEvent) internal virtual override {
         address owner = _msgSender();
-        if (!allowed[owner]) revert UserIsNotAllowed(owner);
-        _approve(owner, spender, value);
-        return true;
+        if (! _allowed[owner]) revert ERC20Disallowed(owner);
+        super._approve(owner, spender, value, emitEvent);
     }
 }
