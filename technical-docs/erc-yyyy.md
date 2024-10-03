@@ -11,11 +11,11 @@ created: <date created on, in ISO 8601 (yyyy-mm-dd) format>
 
 ## Abstract
 
-This proposal describes an interface, and the corresponding workflow, for smart contracts to send arbitrary data through cross-chain message-passing systems. The end goal of this proposal is to have all message-passing systems expose this interface (natively or using "adapters") so that cross-chain composability becomes more natural. That would allow a new class of cross-chain native smart contracts to emerge while reducing vendor lock-in. This proposal is modular by design, allowing users to leverage bridge-specific features through attributes while providing simple "universal" access to the simple feature of "just getting a simple message through".
+This proposal describes an interface, and the corresponding workflow, for smart contracts to send arbitrary data through cross-chain messaging systems. The end goal of this proposal is to have all such messaging protocols accessible via this interface (natively or using "adapters") to improve their composability and interoperability. That would allow a new class of cross-chain native smart contracts to emerge while reducing vendor lock-in. This proposal is modular by design, allowing users to leverage bridge-specific features through attributes while providing simple "universal" access to the simple feature of "just getting a simple message through".
 
 ## Motivation
 
-Crosschain message-passing systems (or bridges) allow communication between smart contracts deployed on different blockchains. There is a large diversity of such systems with multiple degrees of decentralization, with various components, that implement different interfaces, and provide different guarantees to the users.
+Cross-chain messaging systems (or bridges) allow communication between smart contracts deployed on different blockchains. There is a large diversity of such systems with multiple degrees of decentralization, with various components, that implement different interfaces, and provide different guarantees to the users.
 
 Because almost every protocol implementing a different workflow, using a specific interface, portability between bridges is basically impossible. This also forbid the development of generic contracts that rely on cross chain communication.
 
