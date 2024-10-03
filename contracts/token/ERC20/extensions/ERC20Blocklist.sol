@@ -5,8 +5,13 @@ pragma solidity ^0.8.20;
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 /**
- * @dev Contract module which allows children to implement a blocklist
- * mechanism that can be managed by an authorized account.
+ * @dev Extension of {ERC20} that allows to implement a blocklist
+ * mechanism that can be managed by an authorized account through {blockUser} and {unblockUser}
+ *
+ * This implementation allows operation to every account by default except for those that were
+ * blocked by the contract owner (e.g. a DAO or a well-configured multisig). Accounts won't
+ * be able to execute transfers or approvals to other entities to operation on their behalf after
+ * {_blockUser} is called. Similarly, the account can operate again after calling {_unblockUser}.
  *
  * This module is used through inheritance. It will make available the
  * functions `_blockUser` and `_unblockUser`, which can be used to
