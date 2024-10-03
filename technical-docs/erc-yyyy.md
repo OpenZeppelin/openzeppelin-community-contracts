@@ -68,6 +68,8 @@ interface IGatewaySource {
     event MessageCreated(bytes32 outboxId, string sender, string receiver, bytes payload, uint256 value, bytes[] attributes);
     event MessageSent(bytes32 indexed outboxId);
 
+    error UnsupportedAttribute(bytes4 signature);
+
     function supportsAttribute(bytes4 signature) external view returns (bool);
 
     function sendMessage(
@@ -91,7 +93,7 @@ Initiates the sending of a message.
 
 Further action MAY be required by the gateway to make the sending of the message effective, such as providing payment for gas. See Post-processing.
 
-MUST revert if an unsupported attribute key is included. MAY revert if the value of an attribute is not a valid encoding for its expected type.
+MUST revert with `UnsupportedAttribute` if an unsupported attribute key is included. MAY revert if the value of an attribute is not a valid encoding for its expected type.
 
 MAY accept call value (native token) to be sent with the message. MUST revert if call value is included but it is not a feature supported by the gateway. It is unspecified how this value is represented on the destination.
 
