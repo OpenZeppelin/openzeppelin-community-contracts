@@ -45,8 +45,8 @@ abstract contract ERC20Blocklist is ERC20 {
      */
     function _blockUser(address user) internal virtual {
         if (!blocked[user]) {
-          blocked[user] = true;
-          emit UserBlocked(user);
+            blocked[user] = true;
+            emit UserBlocked(user);
         }
     }
 
@@ -59,8 +59,8 @@ abstract contract ERC20Blocklist is ERC20 {
      */
     function _unblockUser(address user) internal virtual {
         if (blocked[user]) {
-          blocked[user] = false;
-          emit UserUnblocked(user);
+            blocked[user] = false;
+            emit UserUnblocked(user);
         }
     }
 

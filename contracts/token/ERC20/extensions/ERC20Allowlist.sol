@@ -6,17 +6,21 @@ import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 /**
  * @dev Extension of {ERC20} that allows to implement an allowlist
- * mechanism that can be managed by an authorized account with the {disallowUser} and {allowUser} functions.
- * The allowlist provides the guarantee to the contract owner (e.g. a DAO or a well-configured multisig)
- * that any account won't be able to execute transfers or approvals to other entities to operate on
- * its behalf if {_allowUser} was not called with such account as an argument. Similarly, the account
- * will be blocked again if {_disallowedUser} is called.
+ * mechanism that can be managed by an authorized account with the
+ * {_disallowUser} and {_allowUser} functions.
+ *
+ * The allowlist provides the guarantee to the contract owner
+ * (e.g. a DAO or a well-configured multisig) that any account won't be
+ * able to execute transfers or approvals to other entities to operate
+ * on its behalf if {_allowUser} was not called with such account as an
+ * argument. Similarly, the account will be disallowed again if
+ * {_disallowUser} is called.
  */
 abstract contract ERC20Allowlist is ERC20 {
     /**
      * @dev Allowed status of addresses. True if allowed, False otherwise.
      */
-    mapping(address account => bool) public allowed;
+    mapping(address account => bool) internal _allowed;
 
     /**
      * @dev Emitted when a `user` is allowed to transfer and approve.
@@ -29,49 +33,55 @@ abstract contract ERC20Allowlist is ERC20 {
     event UserDisallowed(address indexed user);
 
     /**
-     * @dev The operation failed because the user is already allowed.
-     */
-
-    /**
      * @dev The operation failed because the user is not allowed.
      */
-    error UserIsNotAllowed(address indexed user);
+    error ERC20Disallowed(address user);
+
+    /**
+     * @dev Returns the allowed status of an account.
+     */
+    function allowed(address account) public virtual returns (bool) {
+        return _allowed[account];
+    }
 
     /**
      * @dev Allows a user to receive and transfer tokens, including minting and burning.
-     *
      */
     function _allowUser(address user) internal virtual returns (bool) {
-        if(!allowed(user)) {
-          allowed[user] = true;
-          emit UserAllowed(user);
+        if (!allowed(user)) {
+            _allowed[user] = true;
+            emit UserAllowed(user);
+            return true;
         }
+        return false;
     }
 
     /**
-     * @dev Disallows a user.
-     *
+     * @dev Disallows a user from receiving and transferring tokens, including minting and burning.
      */
     function _disallowUser(address user) internal virtual returns (bool) {
         if (allowed(user)) {
-          allowed[user] = false;
-          emit UserDisallowed(user);
+            _allowed[user] = false;
+            emit UserDisallowed(user);
+            return true;
         }
+        return false;
     }
 
+    /**
+     * @dev See {ERC20-_update}.
+     */
     function _update(address from, address to, uint256 value) internal virtual override {
-        if (from != address(0) && !allowed[from]) revert ERC20Disallowed(from);
-        if (to != address(0) && !allowed[to]) revert ERC20Disallowed(to);
+        if (from != address(0) && !allowed(from)) revert ERC20Disallowed(from);
+        if (to != address(0) && !allowed(to)) revert ERC20Disallowed(to);
         super._update(from, to, value);
     }
 
-function allowed(address account) public virtual returns (bool) {
-  return _allowed[account];
-}
-
+    /**
+     * @dev See {ERC20-_approve}.
+     */
     function _approve(address owner, address spender, uint256 value, bool emitEvent) internal virtual override {
-        address owner = _msgSender();
-        if (! _allowed[owner]) revert ERC20Disallowed(owner);
+        if (!allowed(owner)) revert ERC20Disallowed(owner);
         super._approve(owner, spender, value, emitEvent);
     }
 }
