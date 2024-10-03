@@ -46,7 +46,7 @@ describe('ERC20CustodianMock', function () {
 
                 await expect(
                     this.token.connect(this.holder).transfer(this.recipient, initialSupply),
-                ).to.be.revertedWithCustomError(this.token, 'InsufficientUnfrozenBalance');
+                ).to.be.revertedWithCustomError(this.token, 'ERC20InsufficientUnfrozenBalance');
             });
         });
 
@@ -77,7 +77,7 @@ describe('ERC20CustodianMock', function () {
 
                 await expect(
                     this.token.connect(this.approved).transferFrom(this.holder, this.recipient, allowance),
-                ).to.be.revertedWithCustomError(this.token, 'InsufficientUnfrozenBalance');
+                ).to.be.revertedWithCustomError(this.token, 'ERC20InsufficientUnfrozenBalance');
             });
         });
 
@@ -127,12 +127,12 @@ describe('ERC20CustodianMock', function () {
 
         describe('freeze', function () {
             it('revert if not enough balance to freeze', async function () {
-                await expect(this.token.freeze(this.holder, initialSupply + BigInt(1))).to.be.revertedWithCustomError(this.token, 'InsufficientUnfrozenBalance');
+                await expect(this.token.freeze(this.holder, initialSupply + BigInt(1))).to.be.revertedWithCustomError(this.token, 'ERC20InsufficientUnfrozenBalance');
             });
 
             it('revert if not enough balance to unfreeze', async function () {
                 await this.token.freeze(this.holder, initialSupply);
-                await expect(this.token.unfreeze(this.holder, initialSupply + BigInt(1))).to.be.revertedWithCustomError(this.token, 'InsufficientFrozenBalance');
+                await expect(this.token.unfreeze(this.holder, initialSupply + BigInt(1))).to.be.revertedWithCustomError(this.token, 'ERC20InsufficientFrozenBalance');
             });
         });
     });

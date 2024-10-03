@@ -46,7 +46,7 @@ describe('ERC20Blocklist', function () {
 
                 await expect(
                     this.token.connect(this.holder).transfer(this.recipient, initialSupply),
-                ).to.be.revertedWithCustomError(this.token, 'UserIsBlocked');
+                ).to.be.revertedWithCustomError(this.token, 'ERC20Blocked');
             });
         });
 
@@ -77,7 +77,7 @@ describe('ERC20Blocklist', function () {
 
                 await expect(
                     this.token.connect(this.approved).transferFrom(this.holder, this.recipient, allowance),
-                ).to.be.revertedWithCustomError(this.token, 'UserIsBlocked');
+                ).to.be.revertedWithCustomError(this.token, 'ERC20Blocked');
             });
         });
 
@@ -100,7 +100,7 @@ describe('ERC20Blocklist', function () {
 
                 await expect(this.token.$_mint(this.recipient, value)).to.be.revertedWithCustomError(
                     this.token,
-                    'UserIsBlocked',
+                    'ERC20Blocked',
                 );
             });
         });
@@ -122,7 +122,7 @@ describe('ERC20Blocklist', function () {
             it('reverts when trying to burn when blocked', async function () {
                 await this.token.$_blockUser(this.holder);
 
-                await expect(this.token.$_burn(this.holder, value)).to.be.revertedWithCustomError(this.token, 'UserIsBlocked');
+                await expect(this.token.$_burn(this.holder, value)).to.be.revertedWithCustomError(this.token, 'ERC20Blocked');
             });
         });
 
@@ -145,18 +145,7 @@ describe('ERC20Blocklist', function () {
             it('reverts when trying to approve when blocked', async function () {
                 await this.token.$_blockUser(this.holder);
 
-                await expect(this.token.connect(this.holder).approve(this.approved, allowance)).to.be.revertedWithCustomError(this.token, 'UserIsBlocked');
-            });
-        });
-
-        describe('restrict', function () {
-            it('revert if already blocked', async function () {
-                await this.token.$_blockUser(this.holder);
-                await expect(this.token.$_blockUser(this.holder)).to.be.revertedWithCustomError(this.token, 'UserIsBlocked');
-            });
-
-            it('revert if already unblocked', async function () {
-                await expect(this.token.$_unblockUser(this.holder)).to.be.revertedWithCustomError(this.token, 'UserIsNotBlocked');
+                await expect(this.token.connect(this.holder).approve(this.approved, allowance)).to.be.revertedWithCustomError(this.token, 'ERC20Blocked');
             });
         });
     });

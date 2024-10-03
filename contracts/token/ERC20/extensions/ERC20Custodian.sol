@@ -5,18 +5,24 @@ pragma solidity ^0.8.20;
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 /**
- * @dev Contract module which allows children to implement a custodian
- * mechanism that can be managed by an authorized account.
+ * @dev Extension of {ERC20} that allows to implement a custodian
+ * mechanism that can be managed by an authorized account with the
+ * {freeze} and {unfreeze} functions.
  *
- * This module is used through inheritance. It will make available the
- * functions `freeze` and `unfreeze`, which can be used to manage the
- * frozen balance of a user.
+ * This mechanism allows a custodian (e.g. a DAO or a
+ * well-configured multisig) to freeze and unfreeze the balance
+ * of a user.
+ *
+ * The frozen balance is not available for transfers or approvals
+ * to other entities to operate on its behalf if {freeze} was not
+ * called with such account as an argument. Similarly, the account
+ * will be unfrozen again if {unfreeze} is called.
  */
 abstract contract ERC20Custodian is ERC20 {
     /**
      * @dev The amount of tokens frozen by user address.
      */
-    mapping(address => uint256) public frozen;
+    mapping(address user => uint256 amount) internal _frozen;
 
     /**
      * @dev Emitted when tokens are frozen for a user.
@@ -35,25 +41,31 @@ abstract contract ERC20Custodian is ERC20 {
     /**
      * @dev The operation failed because the user has insufficient unfrozen balance.
      */
-    error InsufficientUnfrozenBalance();
+    error ERC20InsufficientUnfrozenBalance(address user);
 
     /**
      * @dev The operation failed because the user has insufficient frozen balance.
      */
-    error InsufficientFrozenBalance();
+    error ERC20InsufficientFrozenBalance(address user);
 
     /**
      * @dev Error thrown when a non-custodian account attempts to perform a custodian-only operation.
      */
-    error NotCustodian();
+    error ERC20NotCustodian();
 
     /**
      * @dev Modifier to restrict access to custodian accounts only.
-     * Reverts with a `NotCustodain` error if the caller is not a custodian.
      */
     modifier onlyCustodian() {
-        if (!_isCustodian(_msgSender())) revert NotCustodian();
+        if (!_isCustodian(_msgSender())) revert ERC20NotCustodian();
         _;
+    }
+
+    /**
+     * @dev Returns the amount of tokens frozen for a user.
+     */
+    function frozen(address user) public view virtual returns (uint256) {
+        return _frozen[user];
     }
 
     /**
@@ -66,8 +78,8 @@ abstract contract ERC20Custodian is ERC20 {
      * - The user must have sufficient unfrozen balance.
      */
     function freeze(address user, uint256 amount) external virtual onlyCustodian {
-        if (availableBalance(user) < amount) revert InsufficientUnfrozenBalance();
-        frozen[user] += amount;
+        if (availableBalance(user) < amount) revert ERC20InsufficientUnfrozenBalance(user);
+        _frozen[user] += amount;
         emit TokensFrozen(user, amount);
     }
 
@@ -81,18 +93,18 @@ abstract contract ERC20Custodian is ERC20 {
      * - The user must have sufficient frozen balance.
      */
     function unfreeze(address user, uint256 amount) external virtual onlyCustodian {
-        if (frozen[user] < amount) revert InsufficientFrozenBalance();
-        frozen[user] -= amount;
+        if (frozen(user) < amount) revert ERC20InsufficientFrozenBalance(user);
+        _frozen[user] -= amount;
         emit TokensUnfrozen(user, amount);
     }
 
     /**
      * @dev Returns the available (unfrozen) balance of an account.
      * @param account The address to query the available balance of.
-     * @return The amount of tokens available for transfer.
+     * @return available The amount of tokens available for transfer.
      */
-    function availableBalance(address account) public view returns (uint256) {
-        return balanceOf(account) - frozen[account];
+    function availableBalance(address account) public view returns (uint256 available) {
+        available = balanceOf(account) - frozen(account);
     }
 
     /**
@@ -100,10 +112,10 @@ abstract contract ERC20Custodian is ERC20 {
      * @param user The address of the user to check.
      * @return True if the user is authorized, false otherwise.
      */
-    function _isCustodian(address user) internal view virtual returns (bool) {}
+    function _isCustodian(address user) internal view virtual returns (bool);
 
     function _update(address from, address to, uint256 value) internal virtual override {
-        if (from != address(0) && availableBalance(from) < value) revert InsufficientUnfrozenBalance();
+        if (from != address(0) && availableBalance(from) < value) revert ERC20InsufficientUnfrozenBalance(from);
         super._update(from, to, value);
     }
 }

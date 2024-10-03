@@ -48,7 +48,7 @@ describe('ERC20Allowlist', function () {
 
                 await expect(
                     this.token.connect(this.holder).transfer(this.recipient, initialSupply),
-                ).to.be.revertedWithCustomError(this.token, 'UserIsNotAllowed');
+                ).to.be.revertedWithCustomError(this.token, 'ERC20Disallowed');
             });
         });
 
@@ -79,7 +79,7 @@ describe('ERC20Allowlist', function () {
 
                 await expect(
                     this.token.connect(this.approved).transferFrom(this.holder, this.recipient, allowance),
-                ).to.be.revertedWithCustomError(this.token, 'UserIsNotAllowed');
+                ).to.be.revertedWithCustomError(this.token, 'ERC20Disallowed');
             });
         });
 
@@ -102,7 +102,7 @@ describe('ERC20Allowlist', function () {
 
                 await expect(this.token.$_mint(this.recipient, value)).to.be.revertedWithCustomError(
                     this.token,
-                    'UserIsNotAllowed',
+                    'ERC20Disallowed',
                 );
             });
         });
@@ -124,7 +124,7 @@ describe('ERC20Allowlist', function () {
             it('reverts when trying to burn when disallowed', async function () {
                 await this.token.$_disallowUser(this.holder);
 
-                await expect(this.token.$_burn(this.holder, value)).to.be.revertedWithCustomError(this.token, 'UserIsNotAllowed');
+                await expect(this.token.$_burn(this.holder, value)).to.be.revertedWithCustomError(this.token, 'ERC20Disallowed');
             });
         });
 
@@ -147,18 +147,7 @@ describe('ERC20Allowlist', function () {
             it('reverts when trying to approve when disallowed', async function () {
                 await this.token.$_disallowUser(this.holder);
 
-                await expect(this.token.connect(this.holder).approve(this.approved, allowance)).to.be.revertedWithCustomError(this.token, 'UserIsNotAllowed');
-            });
-        });
-
-        describe('restrict', function () {
-            it('revert if already allowed', async function () {
-                await expect(this.token.$_allowUser(this.holder)).to.be.revertedWithCustomError(this.token, 'UserIsAllowed');
-            });
-
-            it('revert if already disallowed', async function () {
-                await this.token.$_disallowUser(this.holder);
-                await expect(this.token.$_disallowUser(this.holder)).to.be.revertedWithCustomError(this.token, 'UserIsNotAllowed');
+                await expect(this.token.connect(this.holder).approve(this.approved, allowance)).to.be.revertedWithCustomError(this.token, 'ERC20Disallowed');
             });
         });
     });

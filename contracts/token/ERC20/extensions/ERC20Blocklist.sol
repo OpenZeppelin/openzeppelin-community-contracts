@@ -6,19 +6,21 @@ import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 /**
  * @dev Extension of {ERC20} that allows to implement a blocklist
- * mechanism that can be managed by an authorized account through {blockUser} and {unblockUser}
+ * mechanism that can be managed by an authorized account with the
+ * {_blockUser} and {_unblockUser} functions.
  *
- * This implementation allows operation to every account by default except for those that were
- * blocked by the contract owner (e.g. a DAO or a well-configured multisig). Accounts won't
- * be able to execute transfers or approvals to other entities to operation on their behalf after
- * {_blockUser} is called. Similarly, the account can operate again after calling {_unblockUser}.
- *
+ * The blocklist provides the guarantee to the contract owner
+ * (e.g. a DAO or a well-configured multisig) that any account won't be
+ * able to execute transfers or approvals to other entities to operate
+ * on its behalf if {_blockUser} was not called with such account as an
+ * argument. Similarly, the account will be unblocked again if
+ * {_unblockUser} is called.
  */
 abstract contract ERC20Blocklist is ERC20 {
     /**
      * @dev Blocked status of addresses. True if blocked, False otherwise.
      */
-    mapping(address => bool) public blocked;
+    mapping(address user => bool) internal _blocked;
 
     /**
      * @dev Emitted when a user is blocked.
@@ -36,44 +38,46 @@ abstract contract ERC20Blocklist is ERC20 {
     error ERC20Blocked(address user);
 
     /**
-     * @dev The operation failed because the user is not blocked.
+     * @dev Returns the blocked status of an account.
      */
+    function blocked(address account) public virtual returns (bool) {
+        return _blocked[account];
+    }
 
     /**
-     * @dev Blocks a user.
-     *
+     * @dev Blocks a user from receiving and transferring tokens, including minting and burning.
      */
     function _blockUser(address user) internal virtual {
-        if (!blocked[user]) {
-            blocked[user] = true;
+        if (!blocked(user)) {
+            _blocked[user] = true;
             emit UserBlocked(user);
         }
     }
 
     /**
-     * @dev Unblocks a user.
-     *
-     * Requirements:
-     *
-     * - The user must be blocked.
+     * @dev Unblocks a user from receiving and transferring tokens, including minting and burning.
      */
     function _unblockUser(address user) internal virtual {
-        if (blocked[user]) {
-            blocked[user] = false;
+        if (blocked(user)) {
+            _blocked[user] = false;
             emit UserUnblocked(user);
         }
     }
 
+    /**
+     * @dev See {ERC20-_update}.
+     */
     function _update(address from, address to, uint256 value) internal virtual override {
-        if (blocked[from]) revert ERC20Blocked(from);
-        if (blocked[to]) revert ERC20Blocked(to);
+        if (blocked(from)) revert ERC20Blocked(from);
+        if (blocked(to)) revert ERC20Blocked(to);
         super._update(from, to, value);
     }
 
-    function approve(address spender, uint256 value) public virtual override returns (bool) {
-        address owner = _msgSender();
-        if (blocked[owner]) revert UserIsBlocked(owner);
-        _approve(owner, spender, value);
-        return true;
+    /**
+     * @dev See {ERC20-_approve}.
+     */
+    function _approve(address owner, address spender, uint256 value, bool emitEvent) internal virtual override {
+        if (blocked(owner)) revert ERC20Blocked(owner);
+        super._approve(owner, spender, value, emitEvent);
     }
 }
