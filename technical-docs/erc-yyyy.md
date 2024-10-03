@@ -113,11 +113,11 @@ This event signals that no more post-processing in the source chain is required,
 
 #### Post-processing
 
-After a sender has invoked `sendMessage`, further action MAY be required by the gateway to make the message effective. This is called *post-processing*. For example, some payment is typically required to cover the gas of executing the message at the destination.
+After a sender has invoked `sendMessage`, further action MAY be required by the gateways to make the message effective. This is called *post-processing*. For example, some payment is typically required to cover the gas of executing the message at the destination.
 
 The exact interface for any such action is out of scope of this ERC. If the `postProcessingOwner` attribute is supported and present, such actions MUST be restricted to the specified account, otherwise they MUST be able to be performed by any party in a way that MUST NOT be able to compromise the eventual receipt of the message.
 
-The gateway MUST emit a `MessageSent` event with the appropriate identifier once post-processing is complete and the message is ready to be delivered on the destination.
+The gateway MUST emit a `MessageSent` event with the appropriate identifier once no more post-processing is required by the source gateway. Further post-processing MAY be required in the source or destination gateways.
 
 ### Destination Gateway
 
