@@ -1,6 +1,6 @@
 ---
 title: Cross-Chain Messaging Gateway
-description: A standard interface for contracts to send and receive cross-chain messages.
+description: An interface for contracts to send and receive cross-chain messages.
 author: Francisco Giordano (@frangio), Hadrien Croubois (@Amxx), Ernesto Garcia (@ernestognw), CJ Cobb (@cjcobb23)
 discussions-to: <URL>
 status: Draft
@@ -171,10 +171,18 @@ A receiver SHOULD support both active and passive modes for any gateway. This is
 ### Pending discussion
 
 - How to "reply" to a message? Duplex gateway? Getter for reverse gateway address? Necessary for some applications, e.g., recovery from token bridging failure?
+- Should the destination and receiver inputs of `sendMessage` be kept as two separate strings, or merged as a single CAIP-10 string with a `:` separator? This has implication of the calldata length, which in some cases may be stored.
+- Do we want the gateway to have the ability to inform users of the address of the new version, similar to how `AccessManager` can update then authority trusted by an `AccessManaged`? This could be usefull if a gateway is ever deprecated in favor of a new version.
 
 ## Rationale
 
-TBD
+Attributes are designed so that gateways can expose any specific features the bridge offers without having to use a specific endpoint. Having a unique endpoint, with modularity through attributes, SHOULD allow contracts to change the gateway they use while continuing to express messages the same way. This portability offers many advantages:
+- A contract that relies on a specific gateway for sending messages is vulnerable to the gateway being paused, deprecated, or simply breaking. If the communication between the contract and the gateway is standard, an admin of the contract COULD update the address (in storage) of the gateway to use. In particular, senders to update to the new gateway when a new version is available.
+- Bridge layering SHOULD be possible. In particular, this interface should allow for a new class of bridges that routes the message through multiple independent bridges. Delivery of the message could require one or multiple of these independent bridges depending on whether improved liveness or safety is desired.
+
+As some cross-chain communication protocols require additional parameters beyond the destination and the payload, and because we want to send messages through those bridges without any knowledge of these additional parameters, a post-processing of the message MAY be required (after `sendMessage` is called, and before the message is delivered). The additional parameters MAY be supported through attributes, which would remove the need for a post-processing step. If these additional parameters are not provided through an attribute, an additional call to the gateway is REQUIRED for the message to be sent. If possible, the gateway SHOULD be designed so that anyone with an incentive for the message to be delivered can jump in. A malicious actor providing invalid parameters SHOULD NOT prevent the message from being successfully relayed by someone else.
+
+Some protocols gateway support doing arbitrary direct calls on the receiver. In that case, the receiver must detect that they are being called by the gateway to properly identify cross-chain messages. Getters are available on the gateway to figure out where the cross-chain message comes from (source chain and sender address). This approach has the downside that it allows anyone to trigger any call from the gateway to any contract. This is dangerous if the gateway ever holds any assets (ERC-20 or similar). The use of a dedicated `receiveMessage` function on the receiver protects any assets or permissions held by the gateway against such attacks. If the ability to perform direct calls is desired, this can be implemented as a wrapper on top of any gateway that implements this ERC.
 
 ## Backwards Compatibility
 
@@ -188,7 +196,7 @@ Needs discussion.
 
 ## References
 
-We recommend reading [Nordswap](https://twitter.com/norswap)'s [cross-chain interoperability report](https://github.com/0xFableOrg/xchain/blob/master/README.md) that describes the properties of different bridge types. Wording used in this ERC aims for consistency with this report.
+We recommend reading [Nordswap](https://twitter.com/norswap)'s [cross-chain interoperability report](https://github.com/0xFableOrg/xchain/blob/7789933bba24e2dd893cf515157af70474e7180b/README.md) that describes the properties of different bridge types. Wording used in this ERC aims for consistency with this report.
 
 ## Copyright
 
