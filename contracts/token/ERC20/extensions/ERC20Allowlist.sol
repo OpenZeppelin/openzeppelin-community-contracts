@@ -39,10 +39,9 @@ abstract contract ERC20Allowlist is ERC20 {
 
     /**
      * @dev Allows a user to receive and transfer tokens, including minting and burning.
-     * @param user The address of the user to allow.
      *
      */
-    function _allowUser(address user) internal virtual {
+    function _allowUser(address user) internal virtual returns (bool) {
         if(!allowed(user)) {
           allowed[user] = true;
           emit UserAllowed(user);
@@ -53,7 +52,7 @@ abstract contract ERC20Allowlist is ERC20 {
      * @dev Disallows a user.
      *
      */
-    function _disallowUser(address user) internal virtual {
+    function _disallowUser(address user) internal virtual returns (bool) {
         if (allowed(user)) {
           allowed[user] = false;
           emit UserDisallowed(user);
