@@ -208,7 +208,7 @@ Needs discussion.
 
 ## References
 
-We recommend reading [Nordswap](https://twitter.com/norswap)'s [cross-chain interoperability report](https://github.com/0xFableOrg/xchain/blob/7789933bba24e2dd893cf515157af70474e7180b/README.md) that describes the properties of different bridge types. Wording used in this ERC aims for consistency with this report.
+We recommend reading [Norswap](https://twitter.com/norswap)'s [cross-chain interoperability report](https://github.com/0xFableOrg/xchain/blob/7789933bba24e2dd893cf515157af70474e7180b/README.md) that describes the properties of different bridge types. Wording used in this ERC aims for consistency with this report.
 
 ## Copyright
 
