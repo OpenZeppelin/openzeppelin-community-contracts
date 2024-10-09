@@ -32,7 +32,7 @@ describe('ERC20CustodianMock', function () {
 
             it('allows to transfer when frozen and then unfrozen', async function () {
                 await this.token.freeze(this.holder, initialSupply);
-                await this.token.unfreeze(this.holder, initialSupply);
+                await this.token.freeze(this.holder, 0);
 
                 await expect(this.token.connect(this.holder).transfer(this.recipient, initialSupply)).to.changeTokenBalances(
                     this.token,
@@ -65,7 +65,7 @@ describe('ERC20CustodianMock', function () {
 
             it('allows to transfer when frozen and then unfrozen', async function () {
                 await this.token.freeze(this.holder, allowance);
-                await this.token.unfreeze(this.holder, allowance);
+                await this.token.freeze(this.holder, 0);
 
                 await expect(
                     this.token.connect(this.approved).transferFrom(this.holder, this.recipient, allowance),
@@ -112,7 +112,7 @@ describe('ERC20CustodianMock', function () {
 
             it('allows to approve when frozen and then unfrozen', async function () {
                 await this.token.freeze(this.holder, allowance);
-                await this.token.unfreeze(this.holder, allowance);
+                await this.token.freeze(this.holder, 0);
 
                 await this.token.connect(this.holder).approve(this.approved, allowance);
                 expect(await this.token.allowance(this.holder, this.approved)).to.equal(allowance);
@@ -128,11 +128,6 @@ describe('ERC20CustodianMock', function () {
         describe('freeze', function () {
             it('revert if not enough balance to freeze', async function () {
                 await expect(this.token.freeze(this.holder, initialSupply + BigInt(1))).to.be.revertedWithCustomError(this.token, 'ERC20InsufficientUnfrozenBalance');
-            });
-
-            it('revert if not enough balance to unfreeze', async function () {
-                await this.token.freeze(this.holder, initialSupply);
-                await expect(this.token.unfreeze(this.holder, initialSupply + BigInt(1))).to.be.revertedWithCustomError(this.token, 'ERC20InsufficientFrozenBalance');
             });
         });
     });
