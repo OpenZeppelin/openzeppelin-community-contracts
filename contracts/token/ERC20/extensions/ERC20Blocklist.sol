@@ -47,21 +47,25 @@ abstract contract ERC20Blocklist is ERC20 {
     /**
      * @dev Blocks a user from receiving and transferring tokens, including minting and burning.
      */
-    function _blockUser(address user) internal virtual {
-        if (!blocked(user)) {
+    function _blockUser(address user) internal virtual returns (bool) {
+        bool isBlocked = blocked(user);
+        if (!isBlocked) {
             _blocked[user] = true;
             emit UserBlocked(user);
         }
+        return isBlocked;
     }
 
     /**
      * @dev Unblocks a user from receiving and transferring tokens, including minting and burning.
      */
-    function _unblockUser(address user) internal virtual {
-        if (blocked(user)) {
+    function _unblockUser(address user) internal virtual returns (bool) {
+        bool isBlocked = blocked(user);
+        if (isBlocked) {
             _blocked[user] = false;
             emit UserUnblocked(user);
         }
+        return isBlocked;
     }
 
     /**
