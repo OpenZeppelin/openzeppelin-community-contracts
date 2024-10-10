@@ -18,31 +18,34 @@ abstract contract ERC20Collateral is ERC20 {
         uint256 timestamp;
     }
 
-    uint256 private immutable _minLiveness;
+    /**
+     * @dev Liveness duration of collateral, defined in seconds.
+     */
+    uint256 private immutable _liveness;
 
     /**
      * @dev Total supply cap has been exceeded.
      */
-    error ERC20ExceededCap(uint256 increasedSupply, uint256 cap);
+    error ERC20ExceededSupply(uint256 increasedSupply, uint256 cap);
 
     /**
-     * @dev Collateral cap has expired.
+     * @dev Collateral amount has expired.
      */
-    error ERC20ExpiredCap(uint256 timestamp, uint256 expiration);
+    error ERC20ExpiredCollateral(uint256 timestamp, uint256 expiration);
 
     /**
-     * @dev Sets the value of the `_minLiveness`. This value is immutable, it can only be
+     * @dev Sets the value of the `_liveness`. This value is immutable, it can only be
      * set once during construction.
      */
-    constructor(uint256 minLiveness_) {
-        _minLiveness = minLiveness_;
+    constructor(uint256 liveness_) {
+        _liveness = liveness_;
     }
 
     /**
-     * @dev Returns the minimum liveness duration of the collateral.
+     * @dev Returns the minimum liveness duration of collateral.
      */
-    function minLiveness() public view virtual returns (uint256) {
-        return _minLiveness;
+    function liveness() public view virtual returns (uint256) {
+        return _liveness;
     }
 
     /**
@@ -59,14 +62,14 @@ abstract contract ERC20Collateral is ERC20 {
         if (from == address(0)) {
             Collateral memory _collateral = collateral();
 
-            uint256 expiration = _collateral.timestamp + minLiveness();
+            uint256 expiration = _collateral.timestamp + liveness();
             if (expiration < block.timestamp) {
-                revert ERC20ExpiredCap(_collateral.timestamp, expiration);
+                revert ERC20ExpiredCollateral(_collateral.timestamp, expiration);
             }
 
             uint256 supply = totalSupply();
             if (supply > _collateral.amount) {
-                revert ERC20ExceededCap(supply, _collateral.amount);
+                revert ERC20ExceededSupply(supply, _collateral.amount);
             }
         }
     }
