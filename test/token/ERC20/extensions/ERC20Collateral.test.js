@@ -20,14 +20,16 @@ describe('ERC20Collateral', function () {
     beforeEach(async function () {
         Object.assign(this, await loadFixture(fixture));
     });
-const MAX_UINT128 = 2n ** 128n - 1n;
+
     describe('amount', function () {
+        const MAX_UINT128 = 2n ** 128n - 1n;
+
         it('mint all of collateral amount', async function () {
-            await expect(this.token.$_mint(this.holder, (2n ** 128n - 1n) - initialSupply)).to.changeTokenBalance(this.token, this.holder, (2n ** 128n - 1n) - initialSupply);
+            await expect(this.token.$_mint(this.holder, MAX_UINT128 - initialSupply)).to.changeTokenBalance(this.token, this.holder, MAX_UINT128 - initialSupply);
         });
 
         it('reverts when minting more than collateral amount', async function () {
-            await expect(this.token.$_mint(this.holder, 2n ** 128n - 1n)).to.be.revertedWithCustomError(this.token, 'ERC20ExceededSupply');
+            await expect(this.token.$_mint(this.holder, MAX_UINT128)).to.be.revertedWithCustomError(this.token, 'ERC20ExceededSupply');
         });
     });
 
