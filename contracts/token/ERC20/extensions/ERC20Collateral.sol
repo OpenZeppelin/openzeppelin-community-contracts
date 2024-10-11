@@ -3,6 +3,7 @@
 pragma solidity ^0.8.20;
 
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import {IERC6372} from "@openzeppelin/contracts/interfaces/IERC6372.sol";
 
 /**
  * @dev Extension of {ERC20} that limits the supply of tokens based
@@ -11,7 +12,7 @@ import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
  * The {collateral} function must be implemented to return the collateral
  * data. This function can call external oracles or use any local storage.
  */
-abstract contract ERC20Collateral is ERC20 {
+abstract contract ERC20Collateral is ERC20, IERC6372 {
     // Structure that stores the details of the collateral
     struct Collateral {
         uint256 amount;
@@ -21,7 +22,7 @@ abstract contract ERC20Collateral is ERC20 {
     /**
      * @dev Liveness duration of collateral, defined in seconds.
      */
-    uint256 private immutable _liveness;
+    uint48 private immutable _liveness;
 
     /**
      * @dev Total supply cap has been exceeded.
@@ -31,21 +32,35 @@ abstract contract ERC20Collateral is ERC20 {
     /**
      * @dev Collateral amount has expired.
      */
-    error ERC20ExpiredCollateral(uint256 timestamp, uint256 expiration);
+    error ERC20ExpiredCollateral(uint48 timestamp, uint48 expiration);
 
     /**
      * @dev Sets the value of the `_liveness`. This value is immutable, it can only be
      * set once during construction.
      */
-    constructor(uint256 liveness_) {
+    constructor(uint48 liveness_) {
         _liveness = liveness_;
     }
 
     /**
      * @dev Returns the minimum liveness duration of collateral.
      */
-    function liveness() public view virtual returns (uint256) {
+    function liveness() public view virtual returns (uint48) {
         return _liveness;
+    }
+
+    /**
+     * @inheritdoc IERC6372
+     */
+    function clock() public view virtual returns (uint48) {
+        return uint48(block.timestamp);
+    }
+
+    /**
+     * @inheritdoc IERC6372
+     */
+    function CLOCK_MODE() public view virtual returns (string memory) {
+        return "mode=timestamp";
     }
 
     /**
@@ -62,7 +77,7 @@ abstract contract ERC20Collateral is ERC20 {
         if (from == address(0)) {
             Collateral memory _collateral = collateral();
 
-            uint256 expiration = _collateral.timestamp + liveness();
+            uint48 expiration = _collateral.timestamp + liveness();
             if (expiration < block.timestamp) {
                 revert ERC20ExpiredCollateral(_collateral.timestamp, expiration);
             }

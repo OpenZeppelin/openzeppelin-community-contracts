@@ -8,11 +8,11 @@ abstract contract ERC20CollateralMock is ERC20Collateral {
     ERC20Collateral.Collateral private _collateral;
 
     constructor(
-        uint256 liveness_,
+        uint48 liveness_,
         string memory name_,
         string memory symbol_
     ) ERC20(name_, symbol_) ERC20Collateral(liveness_) {
-        _collateral = ERC20Collateral.Collateral({amount: type(uint128).max, timestamp: block.timestamp});
+        _collateral = ERC20Collateral.Collateral({amount: type(uint128).max, timestamp: clock()});
     }
 
     function collateral() public view override returns (ERC20Collateral.Collateral memory) {
