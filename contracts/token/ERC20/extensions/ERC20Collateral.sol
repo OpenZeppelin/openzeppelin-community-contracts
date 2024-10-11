@@ -78,7 +78,7 @@ abstract contract ERC20Collateral is ERC20, IERC6372 {
             Collateral memory _collateral = collateral();
 
             uint48 expiration = _collateral.timestamp + liveness();
-            if (expiration < block.timestamp) {
+            if (expiration < clock()) {
                 revert ERC20ExpiredCollateral(_collateral.timestamp, expiration);
             }
 
