@@ -20,7 +20,7 @@ describe('ERC20Collateral', function () {
     beforeEach(async function () {
         Object.assign(this, await loadFixture(fixture));
     });
-
+const MAX_UINT128 = 2n ** 128n - 1n;
     describe('amount', function () {
         it('mint all of collateral amount', async function () {
             await expect(this.token.$_mint(this.holder, (2n ** 128n - 1n) - initialSupply)).to.changeTokenBalance(this.token, this.holder, (2n ** 128n - 1n) - initialSupply);
