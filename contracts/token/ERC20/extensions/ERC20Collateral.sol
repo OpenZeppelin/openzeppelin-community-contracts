@@ -15,7 +15,7 @@ abstract contract ERC20Collateral is ERC20 {
     // Structure that stores the details of the collateral
     struct Collateral {
         uint256 amount;
-        uint256 timestamp;
+        uint48 timestamp;
     }
 
     /**
