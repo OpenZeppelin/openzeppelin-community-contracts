@@ -21,7 +21,6 @@ abstract contract AxelarGatewaySource is IERC7786GatewaySource, AxelarGatewayBas
         bytes calldata payload,
         bytes[] calldata attributes
     ) external payable virtual returns (bytes32) {
-        // TODO: add support for value and attributes ?
         require(msg.value == 0, "Value not supported");
         for (uint256 i = 0; i < attributes.length; ++i) {
             bytes4 selector = bytes4(attributes[i][0:4]);
