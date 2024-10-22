@@ -13,7 +13,6 @@ abstract contract AxelarGatewayBase is Ownable {
 
     IAxelarGateway public immutable localGateway;
 
-    // TODO: merge these two (and the corresponding setters?)
     mapping(string caip2 => string remoteGateway) private _remoteGateways;
     mapping(string caip2OrAxelar => string axelarOfCaip2) private _chainEquivalence;
 
