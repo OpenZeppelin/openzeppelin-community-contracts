@@ -2,14 +2,15 @@
 
 pragma solidity ^0.8.27;
 
+import {CAIP2} from "@openzeppelin/contracts@master/utils/CAIP2.sol";
+import {CAIP10} from "@openzeppelin/contracts@master/utils/CAIP10.sol";
+import {Strings} from "@openzeppelin/contracts@master/utils/Strings.sol";
 import {AxelarGatewayBase} from "./AxelarGatewayBase.sol";
-import {IGatewaySource} from "../interfaces/IGatewaySource.sol";
-import {StringsUnreleased} from "../../utils/Strings.sol";
-import {CAIP2} from "../../utils/CAIP-2.sol";
-import {CAIP10} from "../../utils/CAIP-10.sol";
+// import {IERC7786GatewaySource} from "@openzeppelin/contracts@master/interfaces/IERC7786.sol";
+import {IERC7786GatewaySource} from "../vendor/draft-IERC7786.sol";
 
-abstract contract AxelarGatewaySource is IGatewaySource, AxelarGatewayBase {
-    using StringsUnreleased for address;
+abstract contract AxelarGatewaySource is IERC7786GatewaySource, AxelarGatewayBase {
+    using Strings for address;
 
     function supportsAttribute(bytes4 /*selector*/) public view virtual returns (bool) {
         return false;
@@ -25,7 +26,7 @@ abstract contract AxelarGatewaySource is IGatewaySource, AxelarGatewayBase {
         require(msg.value == 0, "Value not supported");
         for (uint256 i = 0; i < attributes.length; ++i) {
             bytes4 selector = bytes4(attributes[i][0:4]);
-            require(supportsAttribute(selector), UnsuportedAttribute(selector));
+            require(supportsAttribute(selector), UnsupportedAttribute(selector));
         }
 
         // Create the package

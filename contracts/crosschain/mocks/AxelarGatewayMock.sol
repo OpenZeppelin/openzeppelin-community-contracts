@@ -5,11 +5,11 @@ pragma solidity ^0.8.27;
 import {IAxelarGateway} from "@axelar-network/axelar-gmp-sdk-solidity/contracts/interfaces/IAxelarGateway.sol";
 import {IAxelarExecutable} from "@axelar-network/axelar-gmp-sdk-solidity/contracts/interfaces/IAxelarExecutable.sol";
 import {BitMaps} from "@openzeppelin/contracts/utils/structs/BitMaps.sol";
-import {StringsUnreleased} from "../../utils/Strings.sol";
+import {Strings} from "@openzeppelin/contracts@master/utils/Strings.sol";
 
 contract AxelarGatewayMock {
-    using StringsUnreleased for address;
-    using StringsUnreleased for string;
+    using Strings for address;
+    using Strings for string;
     using BitMaps for BitMaps.BitMap;
 
     bool private activeMode;

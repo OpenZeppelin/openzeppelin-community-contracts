@@ -15,7 +15,7 @@ async function fixture() {
   const axelar     = await ethers.deployContract('$AxelarGatewayMock');
   const srcGateway = await ethers.deployContract('$AxelarGatewaySource', [ owner, axelar ]);
   const dstGateway = await ethers.deployContract('$AxelarGatewayDestination', [ owner, axelar, axelar ]);
-  const receiver   = await ethers.deployContract('$GatewayReceiverMock', [ dstGateway ]);
+  const receiver   = await ethers.deployContract('$ERC7786ReceiverMock', [ dstGateway ]);
 
   await srcGateway.registerChainEquivalence(CAIP2, 'local');
   await dstGateway.registerChainEquivalence(CAIP2, 'local');
@@ -57,7 +57,7 @@ describe('AxelarGateway', function () {
         .to.emit(this.srcGateway, 'MessageCreated').withArgs(ethers.ZeroHash, srcCAIP10, dstCAIP10, payload, attributes)
         .to.emit(this.axelar, 'ContractCall').withArgs(this.srcGateway, 'local', getAddress(this.dstGateway), ethers.keccak256(package), package)
         .to.emit(this.axelar, 'ContractCallExecuted').withArgs(anyValue)
-        .to.emit(this.receiver, 'MessageReceived').withArgs(anyValue, this.CAIP2, getAddress(this.sender), payload, attributes);
+        .to.emit(this.receiver, 'MessageReceived').withArgs(ethers.ZeroAddress, this.CAIP2, getAddress(this.sender), payload, attributes);
     });
   });
 
@@ -92,7 +92,7 @@ describe('AxelarGateway', function () {
         attributes,
       ))
         .to.emit(this.axelar, 'ContractCallExecuted').withArgs(commandId)
-        .to.emit(this.receiver, 'MessageReceived').withArgs(commandId, this.CAIP2, getAddress(this.sender), payload, attributes);
+        .to.emit(this.receiver, 'MessageReceived').withArgs(this.dstGateway, this.CAIP2, getAddress(this.sender), payload, attributes);
     });
   });
 });
