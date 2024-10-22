@@ -11,7 +11,7 @@ import {IERC7786GatewaySource} from "../interfaces/draft-IERC7786.sol";
 abstract contract AxelarGatewaySource is IERC7786GatewaySource, AxelarGatewayBase {
     using Strings for address;
 
-    function supportsAttribute(bytes4 /*selector*/) public view virtual returns (bool) {
+    function supportsAttribute(bytes4 /*selector*/) public pure returns (bool) {
         return false;
     }
 
@@ -20,9 +20,9 @@ abstract contract AxelarGatewaySource is IERC7786GatewaySource, AxelarGatewayBas
         string calldata receiver, // i.e. address
         bytes calldata payload,
         bytes[] calldata attributes
-    ) external payable virtual returns (bytes32) {
+    ) external payable returns (bytes32) {
         require(msg.value == 0, "Value not supported");
-        require(attributes.length == 0, UnsupportedAttribute(bytes4(attributes[0][0:4])));
+        if (attributes.length > 0) revert UnsupportedAttribute(bytes4(attributes[0][0:4]));
 
         // Create the package
         string memory sender = msg.sender.toChecksumHexString();

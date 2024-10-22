@@ -29,14 +29,12 @@ contract ERC7786GatewayMock is IERC7786GatewaySource, IERC7786GatewayDestination
         bytes calldata payload,
         bytes[] calldata attributes
     ) public payable returns (bytes32) {
-        string memory source = CAIP2.local();
-        string memory sender = msg.sender.toChecksumHexString();
+        require(msg.value == 0, "Value not supported");
+        if (attributes.length > 0) revert UnsupportedAttribute(bytes4(attributes[0][0:4]));
+        require(destination.equal(CAIP2.local()), "This mock only supports local messages");
 
-        require(destination.equal(source), "This mock only supports local messages");
-        for (uint256 i = 0; i < attributes.length; ++i) {
-            bytes4 selector = bytes4(attributes[i][0:4]);
-            if (!supportsAttribute(selector)) revert UnsupportedAttribute(selector);
-        }
+        string memory source = destination;
+        string memory sender = msg.sender.toChecksumHexString();
 
         if (_activeMode) {
             address target = Strings.parseAddress(receiver);

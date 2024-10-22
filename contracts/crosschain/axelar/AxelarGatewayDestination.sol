@@ -20,7 +20,7 @@ abstract contract AxelarGatewayDestination is IERC7786GatewayDestinationPassive,
         string calldata sender, // CAIP-10
         bytes calldata payload,
         bytes[] calldata attributes
-    ) external virtual {
+    ) external {
         // Extract Axelar commandId
         bytes32 commandId = abi.decode(messageKey, (bytes32));
 
@@ -56,7 +56,7 @@ abstract contract AxelarGatewayDestination is IERC7786GatewayDestinationPassive,
         string calldata remoteChain, // chain of the remote gateway - axelar format
         string calldata remoteAccount, // address of the remote gateway
         bytes calldata adapterPayload
-    ) internal virtual override {
+    ) internal override {
         // Parse the package
         (string memory sender, string memory receiver, bytes memory payload, bytes[] memory attributes) = abi.decode(
             adapterPayload,
