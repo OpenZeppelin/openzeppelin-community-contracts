@@ -6,9 +6,8 @@ import {AxelarExecutable} from "@axelar-network/axelar-gmp-sdk-solidity/contract
 import {CAIP2} from "@openzeppelin/contracts@master/utils/CAIP2.sol";
 import {CAIP10} from "@openzeppelin/contracts@master/utils/CAIP10.sol";
 import {Strings} from "@openzeppelin/contracts@master/utils/Strings.sol";
+import {IERC7786GatewayDestinationPassive, IERC7786Receiver} from "../interfaces/draft-IERC7786.sol";
 import {AxelarGatewayBase} from "./AxelarGatewayBase.sol";
-// import {IERC7786GatewayDestinationPassive, IERC7786Receiver} from "@openzeppelin/contracts@master/interfaces/IERC7786.sol";
-import {IERC7786GatewayDestinationPassive, IERC7786Receiver} from "../vendor/draft-IERC7786.sol";
 
 abstract contract AxelarGatewayDestination is IERC7786GatewayDestinationPassive, AxelarGatewayBase, AxelarExecutable {
     using Strings for address;

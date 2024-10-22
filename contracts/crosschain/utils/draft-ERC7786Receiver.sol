@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.0;
 
-import {IERC7786GatewayDestinationPassive, IERC7786Receiver} from "./draft-IERC7786.sol";
+import {IERC7786GatewayDestinationPassive, IERC7786Receiver} from "../interfaces/draft-IERC7786.sol";
 
 /**
  * @dev Base implementation of an ERC-7786 compliant cross-chain message receiver.

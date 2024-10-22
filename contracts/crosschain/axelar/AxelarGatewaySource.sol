@@ -6,8 +6,7 @@ import {CAIP2} from "@openzeppelin/contracts@master/utils/CAIP2.sol";
 import {CAIP10} from "@openzeppelin/contracts@master/utils/CAIP10.sol";
 import {Strings} from "@openzeppelin/contracts@master/utils/Strings.sol";
 import {AxelarGatewayBase} from "./AxelarGatewayBase.sol";
-// import {IERC7786GatewaySource} from "@openzeppelin/contracts@master/interfaces/IERC7786.sol";
-import {IERC7786GatewaySource} from "../vendor/draft-IERC7786.sol";
+import {IERC7786GatewaySource} from "../interfaces/draft-IERC7786.sol";
 
 abstract contract AxelarGatewaySource is IERC7786GatewaySource, AxelarGatewayBase {
     using Strings for address;
