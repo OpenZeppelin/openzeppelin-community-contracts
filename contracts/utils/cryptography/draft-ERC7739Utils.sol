@@ -201,14 +201,16 @@ library ERC7739Utils {
 
     function _emptyCalldataBytes() private pure returns (bytes calldata result) {
         assembly ("memory-safe") {
-            result.offset := 0
+            /// Setting both values to 0 makes Slither unhappy. Having length 0 should be enough regardless of the offset.
+            // result.offset := 0
             result.length := 0
         }
     }
 
     function _emptyCalldataString() private pure returns (string calldata result) {
         assembly ("memory-safe") {
-            result.offset := 0
+            /// Setting both values to 0 makes Slither unhappy. Having length 0 should be enough regardless of the offset.
+            // result.offset := 0
             result.length := 0
         }
     }
