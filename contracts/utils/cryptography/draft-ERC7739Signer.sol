@@ -34,7 +34,12 @@ abstract contract ERC7739Signer is EIP712, IERC1271 {
      * - As a _personal_ signature (an EIP-712 mimic of the `eth_personalSign` for a smart contract)
      */
     function isValidSignature(bytes32 hash, bytes calldata signature) public view virtual returns (bytes4 result) {
-        return _isValidSignature(hash, signature) ? IERC1271.isValidSignature.selector : bytes4(0xffffffff);
+        return
+            _isValidSignature(hash, signature)
+                ? IERC1271.isValidSignature.selector
+                : (hash == 0x7739773977397739773977397739773977397739773977397739773977397739 && signature.length == 0)
+                    ? bytes4(0x77390001)
+                    : bytes4(0xffffffff);
     }
 
     /**
@@ -70,17 +75,28 @@ abstract contract ERC7739Signer is EIP712, IERC1271 {
             string calldata contentsDescr
         ) = encodedSignature.decodeTypedDataSig();
 
-        (string memory domainType, bytes memory domainData) = _getDomainData();
+        (
+            ,
+            string memory name,
+            string memory version,
+            uint256 chainId,
+            address verifyingContract,
+            bytes32 salt,
+
+        ) = eip712Domain();
 
         // Check that contentHash and separator are correct
         // Rebuild nested hash
         return
             hash == appSeparator.toTypedDataHash(contentsHash) &&
             bytes(contentsDescr).length != 0 &&
-            bytes(domainType).length != 0 &&
             _validateSignature(
                 appSeparator.toTypedDataHash(
-                    ERC7739Utils.typedDataSignStructHash(contentsDescr, contentsHash, domainType, domainData)
+                    ERC7739Utils.typedDataSignStructHash(
+                        contentsDescr,
+                        contentsHash,
+                        abi.encode(keccak256(bytes(name)), keccak256(bytes(version)), chainId, verifyingContract, salt)
+                    )
                 ),
                 signature
             );
@@ -94,30 +110,4 @@ abstract contract ERC7739Signer is EIP712, IERC1271 {
      * using one of the signature verification libraries ({ECDSA}, {P256} or {RSA}).
      */
     function _validateSignature(bytes32 hash, bytes calldata signature) internal view virtual returns (bool);
-
-    /**
-     * @dev Helping function to rebuild the domain part of the ERC-7739 `TypedDataSign` object.
-     *
-     * NOTE: Default implementation only supports fields `0xF` (no salt, no extensions). Signer that use different
-     * fields MUST override this function to account for the differences.
-     */
-    function _getDomainData() internal view virtual returns (string memory domainDataType, bytes memory domainData) {
-        (
-            bytes1 fields,
-            string memory name,
-            string memory version,
-            uint256 chainId,
-            address verifyingContract,
-            ,
-
-        ) = eip712Domain();
-
-        return
-            fields == hex"0f"
-                ? (
-                    "string name,string version,uint256 chainId,address verifyingContract",
-                    abi.encode(keccak256(bytes(name)), keccak256(bytes(version)), chainId, verifyingContract)
-                )
-                : ("", bytes(""));
-    }
 }

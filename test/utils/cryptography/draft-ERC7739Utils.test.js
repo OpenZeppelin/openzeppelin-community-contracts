@@ -65,7 +65,7 @@ describe('ERC7739Utils', function () {
         ethers.toBeHex(contentDescr.length, 2),
       ]);
 
-      expect(await this.mock.$encodeTypedDataSig(signature, appSeparator, contentsHash, contentDescr)).to.equal(
+      expect(this.mock.$encodeTypedDataSig(signature, appSeparator, contentsHash, contentDescr)).to.eventually.equal(
         encoded,
       );
     });
@@ -85,7 +85,7 @@ describe('ERC7739Utils', function () {
         ethers.toBeHex(contentDescr.length, 2),
       ]);
 
-      expect(await this.mock.$decodeTypedDataSig(encoded)).to.deep.equal([
+      expect(this.mock.$decodeTypedDataSig(encoded)).to.eventually.deep.equal([
         ethers.hexlify(signature),
         appSeparator,
         contentsHash,
@@ -95,12 +95,22 @@ describe('ERC7739Utils', function () {
 
     it('returns default empty values if the signature is too short', async function () {
       const encoded = ethers.randomBytes(65); // DOMAIN_SEPARATOR (32 bytes) + CONTENTS (32 bytes) + CONTENTS_TYPE_LENGTH (2 bytes) - 1
-      expect(await this.mock.$decodeTypedDataSig(encoded)).to.deep.equal(['0x', ethers.ZeroHash, ethers.ZeroHash, '']);
+      expect(this.mock.$decodeTypedDataSig(encoded)).to.eventually.deep.equal([
+        '0x',
+        ethers.ZeroHash,
+        ethers.ZeroHash,
+        '',
+      ]);
     });
 
     it('returns default empty values if the length is invalid', async function () {
       const encoded = ethers.concat([ethers.randomBytes(64), '0x3f']); // Can't be less than 64 bytes
-      expect(await this.mock.$decodeTypedDataSig(encoded)).to.deep.equal(['0x', ethers.ZeroHash, ethers.ZeroHash, '']);
+      expect(this.mock.$decodeTypedDataSig(encoded)).to.eventually.deep.equal([
+        '0x',
+        ethers.ZeroHash,
+        ethers.ZeroHash,
+        '',
+      ]);
     });
   });
 
@@ -108,7 +118,7 @@ describe('ERC7739Utils', function () {
     it('should produce a personal signature EIP-712 nested type', async function () {
       const text = 'Hello, world!';
 
-      expect(await this.mock.$personalSignStructHash(ethers.hashMessage(text))).to.equal(
+      expect(this.mock.$personalSignStructHash(ethers.hashMessage(text))).to.eventually.equal(
         ethers.TypedDataEncoder.hashStruct('PersonalSign', PersonalSignHelper.types, PersonalSignHelper.prepare(text)),
       );
     });
@@ -116,37 +126,32 @@ describe('ERC7739Utils', function () {
 
   describe('typedDataSignStructHash', function () {
     it('should match the typed data nested struct hash', async function () {
-      const message = { contents: this.permit, ...this.domain };
+      const message = TypedDataSignHelper.prepare(this.permit, this.domain);
 
       const contentsHash = helper.hashStruct('Permit', message.contents);
       const hash = helper.hashStruct('TypedDataSign', message);
 
       expect(
-        await this.mock.$typedDataSignStructHash(
+        this.mock.$typedDataSignStructHash(
           helper.contentDescr,
           contentsHash,
           domainComponentsType(this.domain),
           domainComponentsBytes(this.domain),
         ),
-      ).to.equal(hash);
+      ).to.eventually.equal(hash);
     });
   });
 
   describe('typedDataSignTypehash', function () {
     it('should match', async function () {
+      const typedDataSignType = ethers.TypedDataEncoder.from(helper.allTypes).encodeType('TypedDataSign');
+
       expect(
-        await this.mock.$typedDataSignTypehash(
-          'Permit',
-          'Permit(address owner,address spender,uint256 value,uint256 nonce,uint256 deadline)',
-          'string name,string version,uint256 chainId,address verifyingContract',
+        this.mock.$typedDataSignTypehash(
+          helper.contentsTypeName,
+          typedDataSignType.slice(typedDataSignType.indexOf(')') + 1),
         ),
-      ).to.equal(
-        ethers.keccak256(
-          ethers.toUtf8Bytes(
-            'TypedDataSign(Permit contents,string name,string version,uint256 chainId,address verifyingContract)Permit(address owner,address spender,uint256 value,uint256 nonce,uint256 deadline)',
-          ),
-        ),
-      );
+      ).to.eventually.equal(ethers.keccak256(ethers.toUtf8Bytes(typedDataSignType)));
     });
   });
 
@@ -198,7 +203,7 @@ describe('ERC7739Utils', function () {
       })),
     )) {
       it(descr, async function () {
-        expect(await this.mock.$decodeContentsDescr(contentDescr)).to.deep.equal([
+        expect(this.mock.$decodeContentsDescr(contentDescr)).to.eventually.deep.equal([
           contentTypeName ?? '',
           contentTypeName ? (contentType ?? contentDescr) : '',
         ]);

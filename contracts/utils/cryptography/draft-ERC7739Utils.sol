@@ -108,18 +108,13 @@ library ERC7739Utils {
         string calldata contentsTypeName,
         string calldata contentsType,
         bytes32 contentsHash,
-        string memory domainComponentsType,
         bytes memory domainBytes
     ) internal pure returns (bytes32 result) {
         return
             bytes(contentsTypeName).length == 0
                 ? bytes32(0)
                 : keccak256(
-                    abi.encodePacked(
-                        typedDataSignTypehash(contentsTypeName, contentsType, domainComponentsType),
-                        contentsHash,
-                        domainBytes
-                    )
+                    abi.encodePacked(typedDataSignTypehash(contentsTypeName, contentsType), contentsHash, domainBytes)
                 );
     }
 
@@ -130,12 +125,11 @@ library ERC7739Utils {
     function typedDataSignStructHash(
         string calldata contentsDescr,
         bytes32 contentsHash,
-        string memory domainComponentsType,
         bytes memory domainBytes
     ) internal pure returns (bytes32 result) {
         (string calldata contentsTypeName, string calldata contentsType) = decodeContentsDescr(contentsDescr);
 
-        return typedDataSignStructHash(contentsTypeName, contentsType, contentsHash, domainComponentsType, domainBytes);
+        return typedDataSignStructHash(contentsTypeName, contentsType, contentsHash, domainBytes);
     }
 
     /**
@@ -143,17 +137,14 @@ library ERC7739Utils {
      */
     function typedDataSignTypehash(
         string calldata contentsTypeName,
-        string calldata contentsType,
-        string memory domainComponentsType
+        string calldata contentsType
     ) internal pure returns (bytes32) {
         return
             keccak256(
                 abi.encodePacked(
                     "TypedDataSign(",
                     contentsTypeName,
-                    " contents,",
-                    domainComponentsType,
-                    ")",
+                    " contents,string name,string version,uint256 chainId,address verifyingContract,bytes32 salt)",
                     contentsType
                 )
             );
