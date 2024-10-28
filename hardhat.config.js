@@ -14,7 +14,7 @@ const { argv } = require('yargs/yargs')()
 require('@nomicfoundation/hardhat-chai-matchers');
 require('@nomicfoundation/hardhat-ethers');
 require('hardhat-exposed');
-require('solidity-coverage')
+require('solidity-coverage');
 require('./hardhat/remappings');
 
 module.exports = {

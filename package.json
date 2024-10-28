@@ -11,8 +11,12 @@
   "scripts": {
     "prepare": "git config --local core.hooksPath .githooks",
     "compile": "hardhat compile",
-    "lint": "prettier --log-level warn --ignore-path .gitignore '{contracts,test}/**/*.sol' --check",
-    "lint:fix": "prettier --log-level warn --ignore-path .gitignore '{contracts,test}/**/*.sol' --write",
+    "lint": "npm run lint:js && npm run lint:sol",
+    "lint:fix": "npm run lint:js:fix && npm run lint:sol:fix",
+    "lint:js": "prettier --log-level warn --ignore-path .gitignore '**/*.{js,ts}' --check",
+    "lint:js:fix": "prettier --log-level warn --ignore-path .gitignore '**/*.{js,ts}' --write",
+    "lint:sol": "prettier --log-level warn --ignore-path .gitignore '{contracts,test}/**/*.sol' --check",
+    "lint:sol:fix": "prettier --log-level warn --ignore-path .gitignore '{contracts,test}/**/*.sol' --write",
     "coverage": "scripts/checks/coverage.sh",
     "test": "hardhat test"
   },
