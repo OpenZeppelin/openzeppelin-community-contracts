@@ -166,7 +166,7 @@ library ERC7739Utils {
      * Following ERC-7739 specifications, a `contentsTypeName` is considered invalid if it's empty or it:
      * - Contains any of the following bytes: , )\x00
      *
-     * If the `contentsType` is invalid, this returns an empty string. Otherwize, the return string has non-zero
+     * If the `contentsType` is invalid, this returns an empty string. Otherwise, the return string has non-zero
      * length.
      */
     function decodeContentsDescr(
@@ -176,7 +176,7 @@ library ERC7739Utils {
         if (buffer.length == 0) {
             // pass though (fail)
         } else if (buffer[buffer.length - 1] == bytes1(")")) {
-            // Implicit mode: read contentsTypeName for the begining, and keep the complete descr
+            // Implicit mode: read contentsTypeName for the beginning, and keep the complete descr
             for (uint256 i = 0; i < buffer.length; ++i) {
                 bytes1 current = buffer[i];
                 if (current == bytes1("(")) {

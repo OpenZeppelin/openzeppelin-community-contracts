@@ -110,7 +110,7 @@ abstract contract ERC7739Signer is EIP712, IERC1271 {
             address verifyingContract,
             ,
 
-        ) = this.eip712Domain();
+        ) = eip712Domain();
 
         return
             fields == hex"0f"
