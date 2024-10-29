@@ -199,18 +199,18 @@ library ERC7739Utils {
         return (_emptyCalldataString(), _emptyCalldataString());
     }
 
+    // slither-disable-next-line write-after-write
     function _emptyCalldataBytes() private pure returns (bytes calldata result) {
         assembly ("memory-safe") {
-            /// Setting both values to 0 makes Slither unhappy. Having length 0 should be enough regardless of the offset.
-            // result.offset := 0
+            result.offset := 0
             result.length := 0
         }
     }
 
+    // slither-disable-next-line write-after-write
     function _emptyCalldataString() private pure returns (string calldata result) {
         assembly ("memory-safe") {
-            /// Setting both values to 0 makes Slither unhappy. Having length 0 should be enough regardless of the offset.
-            // result.offset := 0
+            result.offset := 0
             result.length := 0
         }
     }
