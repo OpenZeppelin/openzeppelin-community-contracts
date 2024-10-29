@@ -8,13 +8,21 @@ import {Strings} from "@openzeppelin/contracts@master/utils/Strings.sol";
 import {AxelarGatewayBase} from "./AxelarGatewayBase.sol";
 import {IERC7786GatewaySource} from "../interfaces/draft-IERC7786.sol";
 
+/**
+ * @dev Implementation of an ERC7786 gateway source adapter for the Axelar Network.
+ *
+ * The contract provides a way to send messages to a remote chain using the Axelar Network
+ * using the {sendMessage} function.
+ */
 abstract contract AxelarGatewaySource is IERC7786GatewaySource, AxelarGatewayBase {
     using Strings for address;
 
+    /// @inheritdoc IERC7786GatewaySource
     function supportsAttribute(bytes4 /*selector*/) public pure returns (bool) {
         return false;
     }
 
+    /// @inheritdoc IERC7786GatewaySource
     function sendMessage(
         string calldata destination, // CAIP-2 chain ID
         string calldata receiver, // i.e. address
