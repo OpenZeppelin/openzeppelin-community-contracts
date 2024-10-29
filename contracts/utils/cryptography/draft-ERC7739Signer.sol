@@ -47,7 +47,7 @@ abstract contract ERC7739Signer is EIP712, IERC1271 {
      */
     function _isValidSignature(bytes32 hash, bytes calldata signature) internal view virtual returns (bool) {
         return
-            _isValidNestedPersonalSignSignature(hash, signature) || _isValidNestedTypedDataSignature(hash, signature);
+            _isValidNestedTypedDataSignature(hash, signature) || _isValidNestedPersonalSignSignature(hash, signature);
     }
 
     /**
