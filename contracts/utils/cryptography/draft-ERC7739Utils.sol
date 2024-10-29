@@ -22,7 +22,7 @@ pragma solidity ^0.8.20;
  */
 library ERC7739Utils {
     /**
-     * @dev An EIP-712 typed to represent "personal" signatures
+     * @dev An EIP-712 type to represent "personal" signatures
      * (i.e. mimic of `personal_sign` for smart contracts).
      */
     bytes32 private constant PERSONAL_SIGN_TYPEHASH = keccak256("PersonalSign(bytes prefixed)");
@@ -54,7 +54,7 @@ library ERC7739Utils {
      *
      * `signature ‖ DOMAIN_SEPARATOR ‖ contentsHash ‖ contentsDescr ‖ uint16(contentsDescr.length)`
      *
-     * - `signature` is the original signature for the nested struct hash that includes the `contents` hash
+     * - `signature` is the original signature for the nested struct hash that includes the "contents" hash
      * - `DOMAIN_SEPARATOR` is the EIP-712 {EIP712-_domainSeparatorV4} of the smart contract verifying the signature
      * - `contentsHash` is the hash of the underlying data structure or message
      * - `contentsDescr` is a descriptor of the "contents" part of the the EIP-712 type of the nested signature
@@ -100,7 +100,7 @@ library ERC7739Utils {
     }
 
     /**
-     * @dev Nest an `EIP-712` hash (`contents`) into a `TypedDataSign` EIP-712 struct, and return the corresponding
+     * @dev Nests an `EIP-712` hash (`contents`) into a `TypedDataSign` EIP-712 struct, and return the corresponding
      * struct hash. This struct hash must be combined with a domain separator, using {MessageHashUtils-toTypedDataHash}
      * before being verified/recovered.
      */
@@ -154,8 +154,8 @@ library ERC7739Utils {
      * @dev Parse the type name out of the ERC-7739 contents type description. Supports both the implicit and explicit
      * modes.
      *
-     * Following ERC-7739 specifications, a `contentsTypeName` is considered invalid if it's empty or it:
-     * - Contains any of the following bytes: , )\x00
+     * Following ERC-7739 specifications, a `contentsTypeName` is considered invalid if it's empty or it contains
+     * any of the following bytes , )\x00
      *
      * If the `contentsType` is invalid, this returns an empty string. Otherwise, the return string has non-zero
      * length.
@@ -165,7 +165,7 @@ library ERC7739Utils {
     ) internal pure returns (string calldata contentsTypeName, string calldata contentsType) {
         bytes calldata buffer = bytes(contentsDescr);
         if (buffer.length == 0) {
-            // pass though (fail)
+            // pass through (fail)
         } else if (buffer[buffer.length - 1] == bytes1(")")) {
             // Implicit mode: read contentsTypeName for the beginning, and keep the complete descr
             for (uint256 i = 0; i < buffer.length; ++i) {
