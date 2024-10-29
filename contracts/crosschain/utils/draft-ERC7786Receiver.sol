@@ -35,7 +35,7 @@ abstract contract ERC7786Receiver is IERC7786Receiver {
         } else if (_isKnownGateway(gateway)) {
             // Passive mode
             if (msg.value != 0) revert ERC7786ReceivePassiveModeValue();
-            IERC7786GatewayDestinationPassive(gateway).validateReceivedMessage(
+            IERC7786GatewayDestinationPassive(gateway).setExecutedMessage(
                 gatewayMessageKey,
                 source,
                 sender,

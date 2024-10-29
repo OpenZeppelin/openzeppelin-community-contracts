@@ -47,7 +47,7 @@ contract ERC7786GatewayMock is IERC7786GatewaySource, IERC7786GatewayDestination
         return 0;
     }
 
-    function validateReceivedMessage(
+    function setExecutedMessage(
         bytes calldata /*messageKey*/, // this mock doesn't use a messageKey
         string calldata source,
         string calldata sender,

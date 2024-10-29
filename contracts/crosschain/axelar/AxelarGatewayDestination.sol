@@ -14,7 +14,7 @@ abstract contract AxelarGatewayDestination is IERC7786GatewayDestinationPassive,
     using Strings for string;
 
     /// @dev Passive mode
-    function validateReceivedMessage(
+    function setExecutedMessage(
         bytes calldata messageKey,
         string calldata source, // CAIP-2
         string calldata sender, // CAIP-10

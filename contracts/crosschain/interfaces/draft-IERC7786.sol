@@ -68,7 +68,7 @@ interface IERC7786GatewayDestinationPassive {
      *
      * NOTE: implementing this interface is OPTIONAL. Some destination gateway MAY only support active mode.
      */
-    function validateReceivedMessage(
+    function setExecutedMessage(
         bytes calldata messageKey,
         string calldata source,
         string calldata sender,
