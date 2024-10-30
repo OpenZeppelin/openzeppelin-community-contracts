@@ -60,8 +60,8 @@ abstract contract AxelarGatewayDestination is IERC7786GatewayDestinationPassive,
      * - `remoteAccount` is the sender of the crosschain message. That should be the remote gateway on the chain which
      *   the message originates from. It is NOT the sender of the crosschain message
      *
-     * Proper CAIP-10 encoding of the message sender (including the CAIP-2 name of the origin chain can be found in
-     * the message)
+     * Proper CAIP-10 encoding of the message sender (including the CAIP-2 name of the origin chain) can be found in
+     * the message
      */
     function _execute(
         string calldata remoteChain, // chain of the remote gateway - axelar format
