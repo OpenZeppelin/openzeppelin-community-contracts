@@ -12,7 +12,7 @@ import {AxelarGatewayBase} from "./AxelarGatewayBase.sol";
 /**
  * @dev Implementation of an ERC7786 gateway destination adapter for the Axelar Network in dual mode.
  *
- * The contract provides an internal {_execute} function to be used by a child contract (active mode),
+ * The contract implements implements AxelarExecutable's {_execute} function to execute the message (active mode).
  * Alternatively, it provides a way to set a message as executed by calling the {setExecutedMessage}
  * function (passive mode).
  */
@@ -60,8 +60,8 @@ abstract contract AxelarGatewayDestination is IERC7786GatewayDestinationPassive,
      * - `remoteAccount` is the sender of the crosschain message. That should be the remote gateway on the chain which
      *   the message originates from. It is NOT the sender of the crosschain message
      *
-     * Proper CAIP-10 encoding of the message sender (including the CAIP-2 name of the origin chain) can be found in
-     * the message
+     * Proper CAIP-10 encoding of the message sender (including the CAIP-2 name of the origin chain can be found in
+     * the message)
      */
     function _execute(
         string calldata remoteChain, // chain of the remote gateway - axelar format
