@@ -31,7 +31,7 @@ describe('ERC7786Receiver', function () {
 
     it('nominal workflow', async function () {
       await expect(this.gateway.connect(this.sender).sendMessage(this.caip2, getAddress(this.receiver), payload, attributes))
-        .to.emit(this.gateway, 'MessageCreated')
+        .to.emit(this.gateway, 'MessagePosted')
         .withArgs(ethers.ZeroHash, this.toCaip10(this.sender), this.toCaip10(this.receiver), payload, attributes)
         .to.emit(this.receiver, 'MessageReceived')
         .withArgs(this.gateway, this.caip2, getAddress(this.sender), payload, attributes);
@@ -45,12 +45,12 @@ describe('ERC7786Receiver', function () {
 
     it('nominal workflow', async function () {
       await expect(this.gateway.connect(this.sender).sendMessage(this.caip2, this.receiver.target, payload, attributes))
-        .to.emit(this.gateway, 'MessageCreated')
+        .to.emit(this.gateway, 'MessagePosted')
         .withArgs(ethers.ZeroHash, this.toCaip10(this.sender), this.toCaip10(this.receiver), payload, attributes)
         .to.not.emit(this.receiver, 'MessageReceived');
 
       await expect(
-        this.receiver.receiveMessage(this.gateway, '0x', this.caip2, getAddress(this.sender), payload, attributes),
+        this.receiver.executeMessage(this.gateway, '0x', this.caip2, getAddress(this.sender), payload, attributes),
       )
         .to.emit(this.receiver, 'MessageReceived')
         .withArgs(this.gateway, this.caip2, getAddress(this.sender), payload, attributes);
@@ -62,13 +62,13 @@ describe('ERC7786Receiver', function () {
       // Altering the message (in this case, changing the sender's address)
       // Here the error is actually triggered by the gateway itself.
       await expect(
-        this.receiver.receiveMessage(this.gateway, '0x', this.caip2, getAddress(this.notAGateway), payload, attributes),
+        this.receiver.executeMessage(this.gateway, '0x', this.caip2, getAddress(this.notAGateway), payload, attributes),
       ).to.be.revertedWith('invalid message');
     });
 
     it('invalid gateway', async function () {
       await expect(
-        this.receiver.receiveMessage(this.notAGateway, '0x', this.caip2, getAddress(this.sender), payload, attributes),
+        this.receiver.executeMessage(this.notAGateway, '0x', this.caip2, getAddress(this.sender), payload, attributes),
       )
         .to.be.revertedWithCustomError(this.receiver, 'ERC7786ReceiverInvalidGateway')
         .withArgs(this.notAGateway);
@@ -76,7 +76,7 @@ describe('ERC7786Receiver', function () {
 
     it('with value', async function () {
       await expect(
-        this.receiver.receiveMessage(this.gateway, '0x', this.caip2, getAddress(this.sender), payload, attributes, {
+        this.receiver.executeMessage(this.gateway, '0x', this.caip2, getAddress(this.sender), payload, attributes, {
           value: 1n,
         }),
       ).to.be.revertedWithCustomError(this.receiver, 'ERC7786ReceivePassiveModeValue');

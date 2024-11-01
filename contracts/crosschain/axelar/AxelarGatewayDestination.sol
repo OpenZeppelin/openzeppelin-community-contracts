@@ -14,7 +14,7 @@ import {AxelarGatewayBase} from "./AxelarGatewayBase.sol";
  *
  * The contract implements implements AxelarExecutable's {_execute} function to execute the message,
  * converting Axelar's native workflow into the standard ERC7786 active mode.
- * Alternatively, it provides a way to set a message as executed by calling the {setExecutedMessage}
+ * Alternatively, it provides a way to set a message as executed by calling the {setMessageExecuted}
  * function (passive mode).
  */
 abstract contract AxelarGatewayDestination is IERC7786GatewayDestinationPassive, AxelarGatewayBase, AxelarExecutable {
@@ -22,7 +22,7 @@ abstract contract AxelarGatewayDestination is IERC7786GatewayDestinationPassive,
     using Strings for string;
 
     /// @dev Sets a message as executed so it can't be executed again. Should be called by the receiver contract.
-    function setExecutedMessage(
+    function setMessageExecuted(
         bytes calldata messageKey,
         string calldata source, // CAIP-2
         string calldata sender, // CAIP-10
@@ -81,7 +81,7 @@ abstract contract AxelarGatewayDestination is IERC7786GatewayDestinationPassive,
         require(getRemoteGateway(source).equal(remoteAccount), "Invalid origin gateway");
 
         // Active mode
-        IERC7786Receiver(receiver.parseAddress()).receiveMessage(
+        IERC7786Receiver(receiver.parseAddress()).executeMessage(
             address(0), // not needed in active mode
             new bytes(0), // not needed in active mode
             source,

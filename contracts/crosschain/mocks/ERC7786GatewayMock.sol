@@ -38,16 +38,16 @@ contract ERC7786GatewayMock is IERC7786GatewaySource, IERC7786GatewayDestination
 
         if (_activeMode) {
             address target = Strings.parseAddress(receiver);
-            IERC7786Receiver(target).receiveMessage(address(this), new bytes(0), source, sender, payload, attributes);
+            IERC7786Receiver(target).executeMessage(address(this), new bytes(0), source, sender, payload, attributes);
         } else {
             _outbox.set(uint256(keccak256(abi.encode(source, sender, receiver, payload, attributes))));
         }
 
-        emit MessageCreated(0, CAIP10.format(source, sender), CAIP10.format(source, receiver), payload, attributes);
+        emit MessagePosted(0, CAIP10.format(source, sender), CAIP10.format(source, receiver), payload, attributes);
         return 0;
     }
 
-    function setExecutedMessage(
+    function setMessageExecuted(
         bytes calldata /*messageKey*/, // this mock doesn't use a messageKey
         string calldata source,
         string calldata sender,

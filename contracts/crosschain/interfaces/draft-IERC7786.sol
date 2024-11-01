@@ -9,23 +9,16 @@ pragma solidity ^0.8.0;
  */
 interface IERC7786GatewaySource {
     /**
-     * @dev Event emitted when a message is created. If `outboxId` is zero, no further processing is necessary, and
-     * no {MessageSent} event SHOULD be expected. If `outboxId` is not zero, then further (gateway specific, and non
-     * standardized) action is required.
+     * @dev Event emitted when a message is created. If `outboxId` is zero, no further processing is necessary. If
+     * `outboxId` is not zero, then further (gateway specific, and non standardized) action is required.
      */
-    event MessageCreated(
+    event MessagePosted(
         bytes32 indexed outboxId,
         string sender, // CAIP-10 account ID
         string receiver, // CAIP-10 account ID
         bytes payload,
         bytes[] attributes
     );
-
-    /**
-     * @dev This event is emitted when a message, for which the {MessageCreated} event contains an non zero `outboxId`,
-     * received the required post processing actions, and was thus sent to the destination chain.
-     */
-    event MessageSent(bytes32 indexed outboxId);
 
     /// @dev This error is thrown when a message creation fails because of an unsupported attribute being specified.
     error UnsupportedAttribute(bytes4 selector);
@@ -39,13 +32,12 @@ interface IERC7786GatewaySource {
      * message MUST be sent and this function must return 0.
      *
      * * MUST emit a {MessageCreated} event.
-     * * SHOULD NOT emit a {MessageSent} event.
      *
      * If any of the `attributes` is not supported, this function SHOULD revert with an {UnsupportedAttribute} error.
      * Other errors SHOULD revert with errors not specified in ERC-7786.
      */
     function sendMessage(
-        string calldata destination, // CAIP-2 chain ID
+        string calldata destinationChain, // CAIP-2 chain ID
         string calldata receiver, // CAIP-10 account ID
         bytes calldata payload,
         bytes[] calldata attributes
@@ -68,9 +60,9 @@ interface IERC7786GatewayDestinationPassive {
      *
      * NOTE: implementing this interface is OPTIONAL. Some destination gateway MAY only support active mode.
      */
-    function setExecutedMessage(
+    function setMessageExecuted(
         bytes calldata messageKey,
-        string calldata source,
+        string calldata sourceChain,
         string calldata sender,
         bytes calldata payload,
         bytes[] calldata attributes
@@ -88,10 +80,10 @@ interface IERC7786Receiver {
      *
      * This function may be called directly by the gateway (active mode) or by a third party (passive mode).
      */
-    function receiveMessage(
+    function executeMessage(
         address gateway,
         bytes calldata gatewayMessageKey,
-        string calldata source,
+        string calldata sourceChain,
         string calldata sender,
         bytes calldata payload,
         bytes[] calldata attributes

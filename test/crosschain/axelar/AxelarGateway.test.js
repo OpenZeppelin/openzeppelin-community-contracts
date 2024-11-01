@@ -54,7 +54,7 @@ describe('AxelarGateway', function () {
 
       const tx = await this.srcGateway.connect(this.sender).sendMessage(this.CAIP2, getAddress(this.receiver), payload, attributes);
       await expect(tx)
-        .to.emit(this.srcGateway, 'MessageCreated').withArgs(ethers.ZeroHash, srcCAIP10, dstCAIP10, payload, attributes)
+        .to.emit(this.srcGateway, 'MessagePosted').withArgs(ethers.ZeroHash, srcCAIP10, dstCAIP10, payload, attributes)
         .to.emit(this.axelar, 'ContractCall').withArgs(this.srcGateway, 'local', getAddress(this.dstGateway), ethers.keccak256(package), package)
         .to.emit(this.axelar, 'ContractCallExecuted').withArgs(anyValue)
         .to.emit(this.receiver, 'MessageReceived').withArgs(ethers.ZeroAddress, this.CAIP2, getAddress(this.sender), payload, attributes);
@@ -75,7 +75,7 @@ describe('AxelarGateway', function () {
 
       const tx = await this.srcGateway.connect(this.sender).sendMessage(this.CAIP2, getAddress(this.receiver), payload, attributes);
       await expect(tx)
-        .to.emit(this.srcGateway, 'MessageCreated').withArgs(ethers.ZeroHash, srcCAIP10, dstCAIP10, payload, attributes)
+        .to.emit(this.srcGateway, 'MessagePosted').withArgs(ethers.ZeroHash, srcCAIP10, dstCAIP10, payload, attributes)
         .to.emit(this.axelar, 'ContractCall').withArgs(this.srcGateway, 'local', getAddress(this.dstGateway), ethers.keccak256(package), package)
         .to.emit(this.axelar, 'CommandIdPending').withArgs(anyValue, 'local', getAddress(this.dstGateway), package);
 
@@ -83,7 +83,7 @@ describe('AxelarGateway', function () {
       const commandIdEvent = logs.find(({ address, topics }) => address == this.axelar.target && topics[0] == this.axelar.interface.getEvent('CommandIdPending').topicHash);
       const [ commandId ] = this.axelar.interface.decodeEventLog('CommandIdPending', commandIdEvent.data, commandIdEvent.topics);
 
-      await expect(this.receiver.receiveMessage(
+      await expect(this.receiver.executeMessage(
         this.dstGateway,
         commandId, // bytes32 is already self-encoded
         this.CAIP2,

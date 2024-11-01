@@ -37,7 +37,7 @@ abstract contract AxelarGatewaySource is IERC7786GatewaySource, AxelarGatewayBas
         bytes memory adapterPayload = abi.encode(sender, receiver, payload, attributes);
 
         // Emit event
-        emit MessageCreated(
+        emit MessagePosted(
             0,
             CAIP10.format(CAIP2.local(), sender),
             CAIP10.format(destination, receiver),
