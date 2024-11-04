@@ -171,8 +171,8 @@ library ERC7739Utils {
             for (uint256 i = 0; i < buffer.length; ++i) {
                 bytes1 current = buffer[i];
                 if (current == bytes1("(")) {
-                    // if name is empty, or first char of name is lowercase - passthrough (fail)
-                    if (i == 0 || _isForbiddenFirstChar(buffer[0])) break;
+                    // if name is empty - passthrough (fail)
+                    if (i == 0) break;
                     // we found the end of the contentsTypeName
                     return (string(buffer[:i]), contentsDescr);
                 } else if (_isForbiddenChar(current)) {
@@ -185,9 +185,6 @@ library ERC7739Utils {
             for (uint256 i = buffer.length; i > 0; --i) {
                 bytes1 current = buffer[i - 1];
                 if (current == bytes1(")")) {
-                    // we know that i is not buffer.length
-                    // if name is empty, or first char of name is lowercase - passthrough (fail)
-                    if (_isForbiddenFirstChar(buffer[i])) break;
                     // we found the end of the contentsTypeName
                     return (string(buffer[i:]), string(buffer[:i]));
                 } else if (_isForbiddenChar(current)) {
@@ -213,10 +210,6 @@ library ERC7739Utils {
             result.offset := 0
             result.length := 0
         }
-    }
-
-    function _isForbiddenFirstChar(bytes1 char) private pure returns (bool) {
-        return char > 0x60 && char < 0x7b;
     }
 
     function _isForbiddenChar(bytes1 char) private pure returns (bool) {
