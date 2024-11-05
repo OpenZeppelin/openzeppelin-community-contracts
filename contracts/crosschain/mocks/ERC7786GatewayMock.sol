@@ -38,7 +38,17 @@ contract ERC7786GatewayMock is IERC7786GatewaySource, IERC7786GatewayDestination
 
         if (_activeMode) {
             address target = Strings.parseAddress(receiver);
-            IERC7786Receiver(target).executeMessage(address(this), new bytes(0), source, sender, payload, attributes);
+            require(
+                IERC7786Receiver(target).executeMessage(
+                    address(this),
+                    new bytes(0),
+                    source,
+                    sender,
+                    payload,
+                    attributes
+                ) == IERC7786Receiver.executeMessage.selector,
+                "Receiver error"
+            );
         } else {
             _outbox.set(uint256(keccak256(abi.encode(source, sender, receiver, payload, attributes))));
         }

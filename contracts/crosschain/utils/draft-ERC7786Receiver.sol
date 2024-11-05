@@ -28,7 +28,7 @@ abstract contract ERC7786Receiver is IERC7786Receiver {
         string calldata sender,
         bytes calldata payload,
         bytes[] calldata attributes
-    ) public payable virtual {
+    ) public payable virtual returns (bytes4) {
         if (_isKnownGateway(msg.sender)) {
             // Active mode
             // no extra check
@@ -46,6 +46,7 @@ abstract contract ERC7786Receiver is IERC7786Receiver {
             revert ERC7786ReceiverInvalidGateway(gateway);
         }
         _processMessage(gateway, source, sender, payload, attributes);
+        return IERC7786Receiver.executeMessage.selector;
     }
 
     /// @dev Virtual getter that returns whether an address in a valid ERC-7786 gateway.

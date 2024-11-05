@@ -81,7 +81,7 @@ abstract contract AxelarGatewayDestination is IERC7786GatewayDestinationPassive,
         require(getRemoteGateway(source).equal(remoteAccount), "Invalid origin gateway");
 
         // Active mode
-        IERC7786Receiver(receiver.parseAddress()).executeMessage(
+        bytes4 result = IERC7786Receiver(receiver.parseAddress()).executeMessage(
             address(0), // not needed in active mode
             new bytes(0), // not needed in active mode
             source,
@@ -89,5 +89,6 @@ abstract contract AxelarGatewayDestination is IERC7786GatewayDestinationPassive,
             payload,
             attributes
         );
+        require(result == IERC7786Receiver.executeMessage.selector, "Receiver execution failed");
     }
 }

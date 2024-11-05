@@ -87,5 +87,5 @@ interface IERC7786Receiver {
         string calldata sender,
         bytes calldata payload,
         bytes[] calldata attributes
-    ) external payable;
+    ) external payable returns (bytes4);
 }
