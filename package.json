@@ -9,7 +9,7 @@
     "!/contracts/mocks/**/*"
   ],
   "scripts": {
-    "prepare": "git config --local core.hooksPath .githooks",
+    "prepare": "scripts/prepare.sh",
     "compile": "hardhat compile",
     "lint": "prettier --log-level warn --ignore-path .gitignore '{contracts,test}/**/*.sol' --check",
     "lint:fix": "prettier --log-level warn --ignore-path .gitignore '{contracts,test}/**/*.sol' --write",
