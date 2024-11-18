@@ -13,8 +13,8 @@ async function fixture() {
   const asCAIP10 = account => `eip155:${chainId}:${getAddress(account)}`;
 
   const axelar          = await ethers.deployContract('$AxelarGatewayMock');
-  const srcGateway      = await ethers.deployContract('$AxelarGatewaySource', [ owner, axelar ]);
-  const dstGateway      = await ethers.deployContract('$AxelarGatewayDestination', [ owner, axelar, axelar ]);
+  const srcGateway      = await ethers.deployContract('AxelarGatewayDuplex', [ axelar, owner ]);
+  const dstGateway      = await ethers.deployContract('AxelarGatewayDuplex', [ axelar, owner ]);
   const receiver        = await ethers.deployContract('$ERC7786ReceiverMock', [ dstGateway ]);
   const invalidReceiver = await ethers.deployContract('$ERC7786ReceiverInvalidMock');
 
