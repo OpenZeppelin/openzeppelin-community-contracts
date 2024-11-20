@@ -10,10 +10,9 @@ import {AxelarGatewayBase} from "./AxelarGatewayBase.sol";
 /**
  * @dev Implementation of an ERC-7786 gateway destination adapter for the Axelar Network in dual mode.
  *
- * The contract implements implements AxelarExecutable's {_execute} function to execute the message,
- * converting Axelar's native workflow into the standard ERC-7786 active mode.
- * Alternatively, it provides a way to set a message as executed by calling the {setMessageExecuted}
- * function (passive mode).
+ * The contract implements AxelarExecutable's {_execute} function to execute the message, converting Axelar's native
+ * workflow into the standard ERC-7786 active mode. Alternatively, it provides a way to set a message as executed by
+ * calling the {setMessageExecuted} function (passive mode).
  */
 abstract contract AxelarGatewayDestination is IERC7786GatewayDestinationPassive, AxelarGatewayBase, AxelarExecutable {
     using Strings for address;

@@ -11,7 +11,7 @@ import {IERC7786GatewaySource} from "../interfaces/draft-IERC7786.sol";
 /**
  * @dev Implementation of an ERC-7786 gateway source adapter for the Axelar Network.
  *
- * The contract provides a way to send messages to a remote chain using the Axelar Network
+ * The contract provides a way to send messages to a remote chain via the Axelar Network
  * using the {sendMessage} function.
  */
 abstract contract AxelarGatewaySource is IERC7786GatewaySource, AxelarGatewayBase {

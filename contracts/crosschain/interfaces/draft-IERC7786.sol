@@ -10,7 +10,7 @@ pragma solidity ^0.8.0;
 interface IERC7786GatewaySource {
     /**
      * @dev Event emitted when a message is created. If `outboxId` is zero, no further processing is necessary. If
-     * `outboxId` is not zero, then further (gateway specific, and non standardized) action is required.
+     * `outboxId` is not zero, then further (gateway specific, and non-standardized) action is required.
      */
     event MessagePosted(
         bytes32 indexed outboxId,
@@ -54,7 +54,7 @@ interface IERC7786GatewayDestinationPassive {
 
     /**
      * @dev Endpoint for checking the validity of a message that is being relayed in passive mode. The message
-     * receiver is implicitly the caller of this method, which guarantees that no-one but the receiver can
+     * receiver is implicitly the caller of this method, which guarantees that no one but the receiver can
      * "consume" the message. This function MUST implement replay protection, meaning that if called multiple time
      * for same message, all but the first calls MUST revert.
      *
@@ -70,7 +70,7 @@ interface IERC7786GatewayDestinationPassive {
 }
 
 /**
- * @dev Interface for the ERC-7786 client contracts (receiver).
+ * @dev Interface for the ERC-7786 client contract (receiver).
  *
  * See ERC-7786 for more details
  */
