@@ -47,7 +47,7 @@ abstract contract AxelarGatewayBase is Ownable {
 
     /// @dev Registers a chain equivalence between a CAIP-2 chain identifier and an Axelar network identifier.
     function registerChainEquivalence(string calldata caip2, string calldata axelarSupported) public virtual onlyOwner {
-        require(bytes(_chainEquivalence[caip2]).length == 0);
+        require(bytes(_chainEquivalence[caip2]).length == 0, "Chain equivalence already registered");
         _chainEquivalence[caip2] = axelarSupported;
         _chainEquivalence[axelarSupported] = caip2;
         emit RegisteredChainEquivalence(caip2, axelarSupported);
@@ -55,7 +55,7 @@ abstract contract AxelarGatewayBase is Ownable {
 
     /// @dev Registers a remote gateway address for a given CAIP-2 chain identifier.
     function registerRemoteGateway(string calldata caip2, string calldata remoteGateway) public virtual onlyOwner {
-        require(bytes(_remoteGateways[caip2]).length == 0);
+        require(bytes(_remoteGateways[caip2]).length == 0, "Remote gateway already registered");
         _remoteGateways[caip2] = remoteGateway;
         emit RegisteredRemoteGateway(caip2, remoteGateway);
     }
