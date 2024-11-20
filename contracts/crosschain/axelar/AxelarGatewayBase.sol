@@ -36,13 +36,13 @@ abstract contract AxelarGatewayBase is Ownable {
     /// @dev Returns the equivalent chain given an id that can be either CAIP-2 or an Axelar network identifier.
     function getEquivalentChain(string memory input) public view virtual returns (string memory output) {
         output = _chainEquivalence[input];
-        require(bytes(output).length > 0, UnsupportedChain(input));
+        if (bytes(output).length == 0) revert UnsupportedChain(input);
     }
 
     /// @dev Returns the CAIP-10 account address of the remote gateway for a given CAIP-2 chain identifier.
     function getRemoteGateway(string memory caip2) public view virtual returns (string memory remoteGateway) {
         remoteGateway = _remoteGateways[caip2];
-        require(bytes(remoteGateway).length > 0, UnsupportedChain(caip2));
+        if (bytes(remoteGateway).length == 0) revert UnsupportedChain(caip2);
     }
 
     /// @dev Registers a chain equivalence between a CAIP-2 chain identifier and an Axelar network identifier.
