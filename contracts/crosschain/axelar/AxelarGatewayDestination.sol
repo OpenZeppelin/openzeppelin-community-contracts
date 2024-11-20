@@ -10,7 +10,7 @@ import {IERC7786GatewayDestinationPassive, IERC7786Receiver} from "../interfaces
 import {AxelarGatewayBase} from "./AxelarGatewayBase.sol";
 
 /**
- * @dev Implementation of an ERC7786 gateway destination adapter for the Axelar Network in dual mode.
+ * @dev Implementation of an ERC-7786 gateway destination adapter for the Axelar Network in dual mode.
  *
  * The contract implements implements AxelarExecutable's {_execute} function to execute the message,
  * converting Axelar's native workflow into the standard ERC7786 active mode.
@@ -24,8 +24,8 @@ abstract contract AxelarGatewayDestination is IERC7786GatewayDestinationPassive,
     /// @dev Sets a message as executed so it can't be executed again. Should be called by the receiver contract.
     function setMessageExecuted(
         bytes calldata messageKey,
-        string calldata source, // CAIP-2
-        string calldata sender, // CAIP-10
+        string calldata sourceChain, // CAIP-2 chain identifier
+        string calldata sender, // CAIP-10 account address (does not include the chain identifier)
         bytes calldata payload,
         bytes[] calldata attributes
     ) external {
@@ -44,8 +44,8 @@ abstract contract AxelarGatewayDestination is IERC7786GatewayDestinationPassive,
         require(
             gateway.validateContractCall(
                 commandId,
-                getEquivalentChain(source),
-                getRemoteGateway(source),
+                getEquivalentChain(sourceChain),
+                getRemoteGateway(sourceChain),
                 keccak256(adapterPayload)
             ),
             NotApprovedByGateway()

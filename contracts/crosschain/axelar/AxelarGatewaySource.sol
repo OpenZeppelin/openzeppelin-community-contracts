@@ -24,8 +24,8 @@ abstract contract AxelarGatewaySource is IERC7786GatewaySource, AxelarGatewayBas
 
     /// @inheritdoc IERC7786GatewaySource
     function sendMessage(
-        string calldata destination, // CAIP-2 chain ID
-        string calldata receiver, // i.e. address
+        string calldata destinationChain, // CAIP-2 chain identifier
+        string calldata receiver, // CAIP-10 account address (does not include the chain identifier)
         bytes calldata payload,
         bytes[] calldata attributes
     ) external payable returns (bytes32) {
@@ -40,14 +40,14 @@ abstract contract AxelarGatewaySource is IERC7786GatewaySource, AxelarGatewayBas
         emit MessagePosted(
             0,
             CAIP10.format(CAIP2.local(), sender),
-            CAIP10.format(destination, receiver),
+            CAIP10.format(destinationChain, receiver),
             payload,
             attributes
         );
 
         // Send the message
-        string memory axelarDestination = getEquivalentChain(destination);
-        string memory remoteGateway = getRemoteGateway(destination);
+        string memory axelarDestination = getEquivalentChain(destinationChain);
+        string memory remoteGateway = getRemoteGateway(destinationChain);
         localGateway.callContract(axelarDestination, remoteGateway, adapterPayload);
 
         return 0;

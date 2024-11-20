@@ -14,8 +14,8 @@ interface IERC7786GatewaySource {
      */
     event MessagePosted(
         bytes32 indexed outboxId,
-        string sender, // CAIP-10 account ID
-        string receiver, // CAIP-10 account ID
+        string sender, // CAIP-10 account identifier (chain identifier + ":" + account address)
+        string receiver, // CAIP-10 account identifier (chain identifier + ":" + account address)
         bytes payload,
         bytes[] attributes
     );
@@ -37,8 +37,8 @@ interface IERC7786GatewaySource {
      * Other errors SHOULD revert with errors not specified in ERC-7786.
      */
     function sendMessage(
-        string calldata destinationChain, // CAIP-2 chain ID
-        string calldata receiver, // CAIP-10 account ID
+        string calldata destinationChain, // CAIP-2 chain identifier
+        string calldata receiver, // CAIP-10 account address (does not include the chain identifier)
         bytes calldata payload,
         bytes[] calldata attributes
     ) external payable returns (bytes32 outboxId);
@@ -62,8 +62,8 @@ interface IERC7786GatewayDestinationPassive {
      */
     function setMessageExecuted(
         bytes calldata messageKey,
-        string calldata sourceChain,
-        string calldata sender,
+        string calldata sourceChain, // CAIP-2 chain identifier
+        string calldata sender, // CAIP-10 account address (does not include the chain identifier)
         bytes calldata payload,
         bytes[] calldata attributes
     ) external;
@@ -83,8 +83,8 @@ interface IERC7786Receiver {
     function executeMessage(
         address gateway,
         bytes calldata gatewayMessageKey,
-        string calldata sourceChain,
-        string calldata sender,
+        string calldata sourceChain, // CAIP-2 chain identifier
+        string calldata sender, // CAIP-10 account address (does not include the chain identifier)
         bytes calldata payload,
         bytes[] calldata attributes
     ) external payable returns (bytes4);
