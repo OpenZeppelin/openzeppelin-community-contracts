@@ -39,7 +39,7 @@ abstract contract AxelarGatewayBase is Ownable {
         require(bytes(output).length > 0, UnsupportedChain(input));
     }
 
-    /// @dev Returns the remote gateway address for a given chain.
+    /// @dev Returns the CAIP-10 account address of the remote gateway for a given CAIP-2 chain identifier.
     function getRemoteGateway(string memory caip2) public view virtual returns (string memory remoteGateway) {
         remoteGateway = _remoteGateways[caip2];
         require(bytes(remoteGateway).length > 0, UnsupportedChain(caip2));
@@ -53,7 +53,7 @@ abstract contract AxelarGatewayBase is Ownable {
         emit RegisteredChainEquivalence(caip2, axelarSupported);
     }
 
-    /// @dev Registers a remote gateway address for a given CAIP-2 chain identifier.
+    /// @dev Registers the CAIP-10 account address of the remote gateway for a given CAIP-2 chain identifier.
     function registerRemoteGateway(string calldata caip2, string calldata remoteGateway) public virtual onlyOwner {
         require(bytes(_remoteGateways[caip2]).length == 0, "Remote gateway already registered");
         _remoteGateways[caip2] = remoteGateway;
