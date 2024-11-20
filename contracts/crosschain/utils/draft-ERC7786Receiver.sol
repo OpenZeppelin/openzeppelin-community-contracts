@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.27;
 
 import {IERC7786GatewayDestinationPassive, IERC7786Receiver} from "../interfaces/draft-IERC7786.sol";
 
@@ -34,7 +34,7 @@ abstract contract ERC7786Receiver is IERC7786Receiver {
             // no extra check
         } else if (_isKnownGateway(gateway)) {
             // Passive mode
-            if (msg.value != 0) revert ERC7786ReceivePassiveModeValue();
+            require(msg.value == 0, ERC7786ReceivePassiveModeValue());
             IERC7786GatewayDestinationPassive(gateway).setMessageExecuted(
                 gatewayMessageKey,
                 source,

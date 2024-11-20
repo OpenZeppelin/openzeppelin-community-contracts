@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.27;
 
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {IAxelarGateway} from "@axelar-network/axelar-gmp-sdk-solidity/contracts/interfaces/IAxelarGateway.sol";
@@ -22,6 +22,9 @@ abstract contract AxelarGatewayBase is Ownable {
     /// @dev Error emitted when an unsupported chain is queried.
     error UnsupportedChain(string caip2);
 
+    error ChainEquivalenceAlreadyRegistered(string caip2);
+    error RemoteGatewayAlreadyRegistered(string caip2);
+
     /// @dev Axelar's official gateway for the current chain.
     IAxelarGateway public immutable localGateway;
 
@@ -36,18 +39,18 @@ abstract contract AxelarGatewayBase is Ownable {
     /// @dev Returns the equivalent chain given an id that can be either CAIP-2 or an Axelar network identifier.
     function getEquivalentChain(string memory input) public view virtual returns (string memory output) {
         output = _chainEquivalence[input];
-        if (bytes(output).length == 0) revert UnsupportedChain(input);
+        require(bytes(output).length > 0, UnsupportedChain(input));
     }
 
     /// @dev Returns the CAIP-10 account address of the remote gateway for a given CAIP-2 chain identifier.
     function getRemoteGateway(string memory caip2) public view virtual returns (string memory remoteGateway) {
         remoteGateway = _remoteGateways[caip2];
-        if (bytes(remoteGateway).length == 0) revert UnsupportedChain(caip2);
+        require(bytes(remoteGateway).length > 0, UnsupportedChain(caip2));
     }
 
     /// @dev Registers a chain equivalence between a CAIP-2 chain identifier and an Axelar network identifier.
     function registerChainEquivalence(string calldata caip2, string calldata axelarSupported) public virtual onlyOwner {
-        require(bytes(_chainEquivalence[caip2]).length == 0, "Chain equivalence already registered");
+        require(bytes(_chainEquivalence[caip2]).length == 0, ChainEquivalenceAlreadyRegistered(caip2));
         _chainEquivalence[caip2] = axelarSupported;
         _chainEquivalence[axelarSupported] = caip2;
         emit RegisteredChainEquivalence(caip2, axelarSupported);
@@ -55,7 +58,7 @@ abstract contract AxelarGatewayBase is Ownable {
 
     /// @dev Registers the CAIP-10 account address of the remote gateway for a given CAIP-2 chain identifier.
     function registerRemoteGateway(string calldata caip2, string calldata remoteGateway) public virtual onlyOwner {
-        require(bytes(_remoteGateways[caip2]).length == 0, "Remote gateway already registered");
+        require(bytes(_remoteGateways[caip2]).length == 0, RemoteGatewayAlreadyRegistered(caip2));
         _remoteGateways[caip2] = remoteGateway;
         emit RegisteredRemoteGateway(caip2, remoteGateway);
     }

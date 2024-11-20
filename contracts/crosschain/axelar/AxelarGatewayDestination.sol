@@ -18,6 +18,9 @@ abstract contract AxelarGatewayDestination is IERC7786GatewayDestinationPassive,
     using Strings for address;
     using Strings for string;
 
+    error InvalidOriginGateway(string sourceChain, string axelarSourceAddress);
+    error ReceiverExecutionFailed();
+
     /// @dev Sets a message as executed so it can't be executed again. Should be called by the receiver contract.
     function setMessageExecuted(
         bytes calldata messageKey,
@@ -76,7 +79,10 @@ abstract contract AxelarGatewayDestination is IERC7786GatewayDestinationPassive,
 
         // check message validity
         // - `axelarSourceAddress` is the remote gateway on the origin chain.
-        require(getRemoteGateway(sourceChain).equal(axelarSourceAddress), "Invalid origin gateway");
+        require(
+            getRemoteGateway(sourceChain).equal(axelarSourceAddress),
+            InvalidOriginGateway(sourceChain, axelarSourceAddress)
+        );
 
         // Active mode
         bytes4 result = IERC7786Receiver(receiver.parseAddress()).executeMessage(
@@ -87,6 +93,6 @@ abstract contract AxelarGatewayDestination is IERC7786GatewayDestinationPassive,
             payload,
             attributes
         );
-        require(result == IERC7786Receiver.executeMessage.selector, "Receiver execution failed");
+        require(result == IERC7786Receiver.executeMessage.selector, ReceiverExecutionFailed());
     }
 }

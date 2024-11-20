@@ -67,7 +67,7 @@ describe('AxelarGateway', function () {
         ethers.randomBytes(128),
         [],
       ))
-        .to.be.revertedWith('Receiver execution failed');
+        .to.be.revertedWithCustomError(this.dstGateway, 'ReceiverExecutionFailed');
     });
 
     it('invalid receiver - EOA', async function () {
