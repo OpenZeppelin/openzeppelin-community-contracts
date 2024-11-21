@@ -13,12 +13,6 @@ import {IERC6372} from "@openzeppelin/contracts/interfaces/IERC6372.sol";
  * data. This function can call external oracles or use any local storage.
  */
 abstract contract ERC20Collateral is ERC20, IERC6372 {
-    // Structure that stores the details of the collateral
-    struct Collateral {
-        uint256 amount;
-        uint48 timestamp;
-    }
-
     /**
      * @dev Liveness duration of collateral, defined in seconds.
      */
