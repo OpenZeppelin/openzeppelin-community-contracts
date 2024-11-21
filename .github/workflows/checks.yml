@@ -70,8 +70,8 @@ jobs:
           submodules: recursive
       - name: Set up environment
         uses: ./.github/actions/setup
-      - run: rm foundry.toml
-      - uses: crytic/slither-action@v0.4.0
+      - run: Slither
+        uses: crytic/slither-action@v0.4.0
 
   codespell:
     runs-on: ubuntu-latest
