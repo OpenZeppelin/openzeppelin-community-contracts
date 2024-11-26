@@ -1,23 +1,25 @@
-const { ethers } = require('hardhat');
-const { expect } = require('chai');
 const { loadFixture } = require('@nomicfoundation/hardhat-network-helpers');
+const { ethers } = require('hardhat');
+const { shouldBehaveLikeERC7739Signer } = require('./ERC7739Signer.behavior');
+const { ECDSASigner, P256Signer, RSASigner } = require('../../helpers/signers');
 
-const { Permit, formatType, getDomain } = require('../../../lib/@openzeppelin-contracts/test/helpers/eip712');
-const { PersonalSignHelper, TypedDataSignHelper } = require('../../helpers/erc7739');
-
-// Constant
-const MAGIC_VALUE = '0x1626ba7e';
-
-// Fixture
 async function fixture() {
-  const [signer] = await ethers.getSigners();
-  const mock = await ethers.deployContract('$ERC7739SignerMock', [signer]);
-  const domain = await getDomain(mock);
+  const ECDSA = new ECDSASigner();
+  const ECDSAMock = await ethers.deployContract('ERC7739SignerECDSA', [ECDSA.EOA.address]);
+
+  const P256 = new P256Signer();
+  const P256Mock = await ethers.deployContract('ERC7739SignerP256', [P256.publicKey.qx, P256.publicKey.qy]);
+
+  const RSA = new RSASigner();
+  const RSAMock = await ethers.deployContract('ERC7739SignerRSA', [RSA.publicKey.e, RSA.publicKey.n]);
 
   return {
-    mock,
-    domain,
-    signTypedData: signer.signTypedData.bind(signer),
+    ECDSA,
+    ECDSAMock,
+    P256,
+    P256Mock,
+    RSA,
+    RSAMock,
   };
 }
 
@@ -26,92 +28,30 @@ describe('ERC7739Signer', function () {
     Object.assign(this, await loadFixture(fixture));
   });
 
-  describe('isValidSignature', function () {
-    describe('PersonalSign', function () {
-      it('returns true for a valid personal signature', async function () {
-        const text = 'Hello, world!';
-
-        const hash = PersonalSignHelper.hash(text);
-        const signature = await PersonalSignHelper.sign(this.signTypedData, text, this.domain);
-
-        expect(this.mock.isValidSignature(hash, signature)).to.eventually.equal(MAGIC_VALUE);
-      });
-
-      it('returns false for an invalid personal signature', async function () {
-        const hash = PersonalSignHelper.hash('Message the app expects');
-        const signature = await PersonalSignHelper.sign(this.signTypedData, 'Message signed is different', this.domain);
-
-        expect(this.mock.isValidSignature(hash, signature)).to.eventually.not.equal(MAGIC_VALUE);
-      });
+  describe('for an ECDSA signer', function () {
+    beforeEach(function () {
+      this.signer = this.ECDSA;
+      this.mock = this.ECDSAMock;
     });
 
-    describe('TypedDataSign', function () {
-      beforeEach(async function () {
-        // Dummy app domain, different from the ERC7739Signer's domain
-        // Note the difference of format (signer domain doesn't include a salt, but app domain does)
-        this.appDomain = {
-          name: 'SomeApp',
-          version: '1',
-          chainId: this.domain.chainId,
-          verifyingContract: '0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512',
-          salt: '0x02cb3d8cb5e8928c9c6de41e935e16a4e28b2d54e7e7ba47e99f16071efab785',
-        };
-      });
+    shouldBehaveLikeERC7739Signer();
+  });
 
-      it('returns true for a valid typed data signature', async function () {
-        const contents = {
-          owner: '0x1ab5E417d9AF00f1ca9d159007e12c401337a4bb',
-          spender: '0xD68E96620804446c4B1faB3103A08C98d4A8F55f',
-          value: 1_000_000n,
-          nonce: 0n,
-          deadline: ethers.MaxUint256,
-        };
-        const message = TypedDataSignHelper.prepare(contents, this.domain);
-
-        const hash = ethers.TypedDataEncoder.hash(this.appDomain, { Permit }, message.contents);
-        const signature = await TypedDataSignHelper.sign(this.signTypedData, this.appDomain, { Permit }, message);
-
-        expect(this.mock.isValidSignature(hash, signature)).to.eventually.equal(MAGIC_VALUE);
-      });
-
-      it('returns true for valid typed data signature (nested types)', async function () {
-        const contentsTypes = {
-          B: formatType({ z: 'Z' }),
-          Z: formatType({ a: 'A' }),
-          A: formatType({ v: 'uint256' }),
-        };
-
-        const contents = { z: { a: { v: 1n } } };
-        const message = TypedDataSignHelper.prepare(contents, this.domain);
-
-        const hash = TypedDataSignHelper.hash(this.appDomain, contentsTypes, message.contents);
-        const signature = await TypedDataSignHelper.sign(this.signTypedData, this.appDomain, contentsTypes, message);
-
-        expect(this.mock.isValidSignature(hash, signature)).to.eventually.equal(MAGIC_VALUE);
-      });
-
-      it('returns false for an invalid typed data signature', async function () {
-        const appContents = {
-          owner: '0x1ab5E417d9AF00f1ca9d159007e12c401337a4bb',
-          spender: '0xD68E96620804446c4B1faB3103A08C98d4A8F55f',
-          value: 1_000_000n,
-          nonce: 0n,
-          deadline: ethers.MaxUint256,
-        };
-        // message signed by the user is for a lower amount.
-        const message = TypedDataSignHelper.prepare({ ...appContents, value: 1_000n }, this.domain);
-
-        const hash = ethers.TypedDataEncoder.hash(this.appDomain, { Permit }, appContents);
-        const signature = await TypedDataSignHelper.sign(this.signTypedData, this.appDomain, { Permit }, message);
-
-        expect(this.mock.isValidSignature(hash, signature)).to.eventually.not.equal(MAGIC_VALUE);
-      });
+  describe('for a P256 signer', function () {
+    beforeEach(function () {
+      this.signer = this.P256;
+      this.mock = this.P256Mock;
     });
 
-    it('support detection', function () {
-      expect(
-        this.mock.isValidSignature('0x7739773977397739773977397739773977397739773977397739773977397739', ''),
-      ).to.eventually.equal('0x77390001');
+    shouldBehaveLikeERC7739Signer();
+  });
+
+  describe('for an RSA signer', function () {
+    beforeEach(function () {
+      this.signer = this.RSA;
+      this.mock = this.RSAMock;
     });
+
+    shouldBehaveLikeERC7739Signer();
   });
 });

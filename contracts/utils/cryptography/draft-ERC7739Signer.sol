@@ -60,16 +60,23 @@ abstract contract ERC7739Signer is EIP712, IERC1271 {
         bytes32 hash,
         bytes calldata signature
     ) internal view virtual returns (bool) {
-        return _validateSignature(_domainSeparatorV4().toTypedDataHash(hash.personalSignStructHash()), signature);
+        return
+            _validateNestedEIP712Signature(
+                _domainSeparatorV4().toTypedDataHash(hash.personalSignStructHash()),
+                signature
+            );
     }
 
     /**
      * @dev Nested EIP-712 typed data verification.
+     *
+     * NOTE: Instead of overriding this function, try with {_validateNestedEIP712Signature}. It encapsulates
+     * nested EIP-712 hashes.
      */
     function _isValidNestedTypedDataSignature(
         bytes32 hash,
         bytes calldata encodedSignature
-    ) internal view virtual returns (bool) {
+    ) internal view returns (bool) {
         // decode signature
         (
             bytes calldata signature,
@@ -93,7 +100,7 @@ abstract contract ERC7739Signer is EIP712, IERC1271 {
         return
             hash == appSeparator.toTypedDataHash(contentsHash) &&
             bytes(contentsDescr).length != 0 &&
-            _validateSignature(
+            _validateNestedEIP712Signature(
                 appSeparator.toTypedDataHash(
                     ERC7739Utils.typedDataSignStructHash(
                         contentsDescr,
@@ -108,9 +115,16 @@ abstract contract ERC7739Signer is EIP712, IERC1271 {
     /**
      * @dev Signature validation algorithm.
      *
+     * To ensure there's no way to inherit from this ERC-7739 signer and still be able to sign raw messages,
+     * this function provides a nested EIP-712 hash. Developers must implement only this function to ensure
+     * no raw message signing is possible.
+     *
      * WARNING: Implementing a signature validation algorithm is a security-sensitive operation as it involves
      * cryptographic verification. It is important to review and test thoroughly before deployment. Consider
      * using one of the signature verification libraries ({ECDSA}, {P256} or {RSA}).
      */
-    function _validateSignature(bytes32 hash, bytes calldata signature) internal view virtual returns (bool);
+    function _validateNestedEIP712Signature(
+        bytes32 nestedEIP712Hash,
+        bytes calldata signature
+    ) internal view virtual returns (bool);
 }
