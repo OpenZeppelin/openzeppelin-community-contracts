@@ -15,8 +15,8 @@ import {ERC165, IERC165} from "@openzeppelin/contracts/utils/introspection/ERC16
  */
 abstract contract ERC20Bridgeable is ERC165, ERC20, IERC7802 {
     /// @dev Modifier to restrict access to the token bridge.
-    modifier onlyTokenBridge() {
-        _checkBridgeAction(msg.sender, msg.sig);
+    modifier onlyTokenBridge(address caller) {
+        _checkTokenBridge(caller);
         _;
     }
 
@@ -26,7 +26,7 @@ abstract contract ERC20Bridgeable is ERC165, ERC20, IERC7802 {
      * Developers should implement this function using an access control mechanism that allows
      * customizing the list of allowed senders. Consider using {Ownable}, {AccessControl} or {AccessManager}.
      */
-    function _checkBridgeAction(address caller, bytes4 selector) internal virtual;
+    function _checkTokenBridge(address caller) internal virtual;
 
     /// @inheritdoc ERC165
     function supportsInterface(bytes4 interfaceId) public view virtual override(ERC165, IERC165) returns (bool) {
