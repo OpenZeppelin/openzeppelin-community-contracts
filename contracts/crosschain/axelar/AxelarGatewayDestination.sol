@@ -21,11 +21,15 @@ abstract contract AxelarGatewayDestination is IERC7786GatewayDestinationPassive,
     error InvalidOriginGateway(string sourceChain, string axelarSourceAddress);
     error ReceiverExecutionFailed();
 
-    /// @dev Sets a message as executed so it can't be executed again. Should be called by the receiver contract.
+    /**
+     * @dev Sets a message as executed so it can't be executed again. Should be called by the receiver contract.
+     * @param sourceChain {CAIP2} chain identifier
+     * @param sender {CAIP10} account address (does not include the chain identifier)
+     */
     function setMessageExecuted(
         bytes calldata messageKey,
-        string calldata sourceChain, // CAIP-2 chain identifier
-        string calldata sender, // CAIP-10 account address (does not include the chain identifier)
+        string calldata sourceChain,
+        string calldata sender,
         bytes calldata payload,
         bytes[] calldata attributes
     ) external {

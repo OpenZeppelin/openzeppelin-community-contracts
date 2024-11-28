@@ -30,7 +30,7 @@ abstract contract AxelarGatewaySource is IERC7786GatewaySource, AxelarGatewayBas
         string calldata receiver, // CAIP-10 account address (does not include the chain identifier)
         bytes calldata payload,
         bytes[] calldata attributes
-    ) external payable returns (bytes32) {
+    ) external payable returns (bytes32 outboxId) {
         require(msg.value == 0, SendingValueNotSupported());
         if (attributes.length > 0)
             revert UnsupportedAttribute(attributes[0].length < 0x04 ? bytes4(0) : bytes4(attributes[0][0:4]));
@@ -40,8 +40,9 @@ abstract contract AxelarGatewaySource is IERC7786GatewaySource, AxelarGatewayBas
         bytes memory adapterPayload = abi.encode(sender, receiver, payload, attributes);
 
         // Emit event
+        outboxId = bytes32(0); // Explicitly set to 0
         emit MessagePosted(
-            0,
+            outboxId,
             CAIP10.format(CAIP2.local(), sender),
             CAIP10.format(destinationChain, receiver),
             payload,
@@ -53,6 +54,6 @@ abstract contract AxelarGatewaySource is IERC7786GatewaySource, AxelarGatewayBas
         string memory remoteGateway = getRemoteGateway(destinationChain);
         localGateway.callContract(axelarDestination, remoteGateway, adapterPayload);
 
-        return 0;
+        return outboxId;
     }
 }

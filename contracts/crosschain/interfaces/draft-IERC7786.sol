@@ -30,15 +30,17 @@ interface IERC7786GatewaySource {
      * @dev Endpoint for creating a new message. If the message requires further (gateway specific) processing before
      * it can be sent to the destination chain, then a non-zero `outboxId` must be returned. Otherwise, the
      * message MUST be sent and this function must return 0.
+     * @param destinationChain {CAIP2} chain identifier
+     * @param receiver {CAIP10} account address (does not include the chain identifier)
      *
-     * * MUST emit a {MessageCreated} event.
+     * * MUST emit a {MessagePosted} event.
      *
      * If any of the `attributes` is not supported, this function SHOULD revert with an {UnsupportedAttribute} error.
      * Other errors SHOULD revert with errors not specified in ERC-7786.
      */
     function sendMessage(
-        string calldata destinationChain, // CAIP-2 chain identifier
-        string calldata receiver, // CAIP-10 account address (does not include the chain identifier)
+        string calldata destinationChain,
+        string calldata receiver,
         bytes calldata payload,
         bytes[] calldata attributes
     ) external payable returns (bytes32 outboxId);
@@ -56,14 +58,16 @@ interface IERC7786GatewayDestinationPassive {
      * @dev Endpoint for checking the validity of a message that is being relayed in passive mode. The message
      * receiver is implicitly the caller of this method, which guarantees that no one but the receiver can
      * "consume" the message. This function MUST implement replay protection, meaning that if called multiple time
-     * for same message, all but the first calls MUST revert.
+     * for same message, all but the first calls MUST revert.'
+     * @param sourceChain {CAIP2} chain identifier
+     * @param sender {CAIP10} account address (does not include the chain identifier)
      *
      * NOTE: implementing this interface is OPTIONAL. Some destination gateway MAY only support active mode.
      */
     function setMessageExecuted(
         bytes calldata messageKey,
-        string calldata sourceChain, // CAIP-2 chain identifier
-        string calldata sender, // CAIP-10 account address (does not include the chain identifier)
+        string calldata sourceChain,
+        string calldata sender,
         bytes calldata payload,
         bytes[] calldata attributes
     ) external;
@@ -77,14 +81,16 @@ interface IERC7786GatewayDestinationPassive {
 interface IERC7786Receiver {
     /**
      * @dev Endpoint for receiving cross-chain message.
+     * @param sourceChain {CAIP2} chain identifier
+     * @param sender {CAIP10} account address (does not include the chain identifier)
      *
      * This function may be called directly by the gateway (active mode) or by a third party (passive mode).
      */
     function executeMessage(
         address gateway,
         bytes calldata gatewayMessageKey,
-        string calldata sourceChain, // CAIP-2 chain identifier
-        string calldata sender, // CAIP-10 account address (does not include the chain identifier)
+        string calldata sourceChain,
+        string calldata sender,
         bytes calldata payload,
         bytes[] calldata attributes
     ) external payable returns (bytes4);

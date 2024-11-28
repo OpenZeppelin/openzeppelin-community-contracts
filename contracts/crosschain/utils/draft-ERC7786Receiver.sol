@@ -24,8 +24,8 @@ abstract contract ERC7786Receiver is IERC7786Receiver {
     function executeMessage(
         address gateway,
         bytes calldata gatewayMessageKey,
-        string calldata source,
-        string calldata sender,
+        string calldata sourceChain, // CAIP-2 chain identifier
+        string calldata sender, // CAIP-10 account address (does not include the chain identifier)
         bytes calldata payload,
         bytes[] calldata attributes
     ) public payable virtual returns (bytes4) {
@@ -37,7 +37,7 @@ abstract contract ERC7786Receiver is IERC7786Receiver {
             require(msg.value == 0, ERC7786ReceivePassiveModeValue());
             IERC7786GatewayDestinationPassive(gateway).setMessageExecuted(
                 gatewayMessageKey,
-                source,
+                sourceChain,
                 sender,
                 payload,
                 attributes
@@ -45,7 +45,7 @@ abstract contract ERC7786Receiver is IERC7786Receiver {
         } else {
             revert ERC7786ReceiverInvalidGateway(gateway);
         }
-        _processMessage(gateway, source, sender, payload, attributes);
+        _processMessage(gateway, sourceChain, sender, payload, attributes);
         return IERC7786Receiver.executeMessage.selector;
     }
 
@@ -55,7 +55,7 @@ abstract contract ERC7786Receiver is IERC7786Receiver {
     /// @dev Virtual function that should contain the logic to execute when a cross-chain message is received.
     function _processMessage(
         address gateway,
-        string calldata source,
+        string calldata sourceChain,
         string calldata sender,
         bytes calldata payload,
         bytes[] calldata attributes
