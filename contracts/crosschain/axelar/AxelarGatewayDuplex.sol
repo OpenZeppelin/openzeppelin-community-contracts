@@ -11,7 +11,7 @@ import {AxelarGatewaySource} from "./AxelarGatewaySource.sol";
  * @dev A contract that combines the functionality of both the source and destination gateway
  * adapters for the Axelar Network. Allowing to either send or receive messages across chains.
  */
-contract AxelarGatewayDuplex is AxelarGatewaySource, AxelarGatewayDestination {
+abstract contract AxelarGatewayDuplex is AxelarGatewaySource, AxelarGatewayDestination {
     /// @dev Initializes the contract with the Axelar gateway and the initial owner.
     constructor(
         IAxelarGateway gateway,
