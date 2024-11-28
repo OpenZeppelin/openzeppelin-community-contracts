@@ -7,13 +7,21 @@ import {CAIP2} from "@openzeppelin/contracts/utils/CAIP2.sol";
 import {CAIP10} from "@openzeppelin/contracts/utils/CAIP10.sol";
 import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 import {IERC7802} from "../../../crosschain/interfaces/draft-IERC7802.sol";
-import {IERC7786GatewaySource} from "./../../../crosschain/interfaces/draft-IERC7786.sol";
 import {ERC165, IERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 
 /**
- * @dev 
+ * @dev ERC20 extension that implements the standard token interface according to
+ * https://github.com/ethereum/ERCs/blob/bcea9feb6c3f3ded391e33690056635d722b101e/ERCS/erc-7802.md[ERC-7801].
+ *
+ * The extension requires users to implement {IERC7802-crosschainMint} and {IERC7802-crosschainBurn} to allow
+ * crosschain transfers. It is recommended to implement these with an access control mechanism that allows
+ * customizing the list of allowed senders.
+ *
+ * NOTE: To implement a crosschain gateway for a chain, consider using an implementation if {IERC7786} token
+ * bridge (e.g. {AxelarGatewaySource}, {AxelarGatewayDestination}). The bridge can be an allowed sender in
+ * this contract. Consider using {Ownable}, {AccessControl} or {AccessManager} to manage the list of allowed senders.
  */
-abstract contract CrosschainERC20 is ERC165, ERC20, IERC7786GatewaySource, IERC7802 {
+abstract contract CrosschainERC20 is ERC165, ERC20, IERC7802 {
     using Strings for address;
 
     /// @dev A crosschain version of this ERC20 has been registered for a chain.
@@ -30,8 +38,22 @@ abstract contract CrosschainERC20 is ERC165, ERC20, IERC7786GatewaySource, IERC7
 
     mapping(string caip2 => string crosschainERC20) private _crosschainERC20s;
 
+    /// @dev Modifier to restrict access to the token bridge.
+    modifier onlyTokenBridge() {
+        _checkBridgeAction(msg.sender, msg.sig);
+        _;
+    }
+
+    /**
+     * @dev Checks if the caller is a trusted token bridge. MUST revert otherwise.
+     *
+     * Developers should implement this function using an access control mechanism that allows
+     * customizing the list of allowed senders. Consider using {Ownable}, {AccessControl} or {AccessManager}.
+     */
+    function _checkBridgeAction(address caller, bytes4 selector) internal virtual;
+
     /// @inheritdoc ERC165
-    function supportsInterface(bytes4 interfaceId) public view override(ERC165, IERC165) returns (bool) {
+    function supportsInterface(bytes4 interfaceId) public view virtual override(ERC165, IERC165) returns (bool) {
         return interfaceId == type(IERC7802).interfaceId || super.supportsInterface(interfaceId);
     }
 
@@ -50,8 +72,18 @@ abstract contract CrosschainERC20 is ERC165, ERC20, IERC7786GatewaySource, IERC7
     }
 
     /// @dev Getter to check whether an attribute is supported or not.
-    function supportsAttribute(bytes4 selector) external view returns (bool) {
+    function supportsAttribute(bytes4 selector) public view virtual returns (bool) {
         return selector == crosschainMintAttr || selector == crosschainBurnAttr;
+    }
+
+    /// @inheritdoc IERC7802
+    function crosschainMint(address to, uint256 value) public virtual override onlyTokenBridge {
+        _crosschainMint(to, msg.sender, value);
+    }
+
+    /// @inheritdoc IERC7802
+    function crosschainBurn(address from, uint256 value) public virtual override onlyTokenBridge {
+        _crosschainBurn(from, msg.sender, value);
     }
 
     /**
@@ -59,7 +91,7 @@ abstract contract CrosschainERC20 is ERC165, ERC20, IERC7786GatewaySource, IERC7
      *
      * Emits a {CrosschainMint} event.
      */
-    function _crosschainMint(address to, address sender, uint256 value) internal {
+    function _crosschainMint(address to, address sender, uint256 value) internal virtual {
         _mint(to, value);
         emit CrosschainMint(to, value, sender);
     }
@@ -69,7 +101,7 @@ abstract contract CrosschainERC20 is ERC165, ERC20, IERC7786GatewaySource, IERC7
      *
      * Emits a {CrosschainBurn} event.
      */
-    function _crosschainBurn(address from, address sender, uint256 value) internal {
+    function _crosschainBurn(address from, address sender, uint256 value) internal virtual {
         _burn(from, value);
         emit CrosschainBurn(from, value, sender);
     }
