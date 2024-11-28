@@ -3,7 +3,7 @@ const { argv } = require('yargs/yargs')()
   .options({
     compiler: {
       type: 'string',
-      default: '0.8.26',
+      default: '0.8.27',
     },
     hardfork: {
       type: 'string',
