@@ -17,7 +17,7 @@ import {IERC7786GatewaySource} from "../interfaces/draft-IERC7786.sol";
 abstract contract AxelarGatewaySource is IERC7786GatewaySource, AxelarGatewayBase {
     using Strings for address;
 
-    error SendingValueNotSupported();
+    error UnsupportedNativeTransfer();
 
     /// @inheritdoc IERC7786GatewaySource
     function supportsAttribute(bytes4 /*selector*/) public pure returns (bool) {
@@ -31,7 +31,7 @@ abstract contract AxelarGatewaySource is IERC7786GatewaySource, AxelarGatewayBas
         bytes calldata payload,
         bytes[] calldata attributes
     ) external payable returns (bytes32 outboxId) {
-        require(msg.value == 0, SendingValueNotSupported());
+        require(msg.value == 0, UnsupportedNativeTransfer());
         // Use of `if () revert` syntax to avoid accessing attributes[0] if it's empty
         if (attributes.length > 0)
             revert UnsupportedAttribute(attributes[0].length < 0x04 ? bytes4(0) : bytes4(attributes[0][0:4]));
