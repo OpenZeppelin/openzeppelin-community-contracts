@@ -19,3 +19,4 @@ runs:
       uses: foundry-rs/foundry-toolchain@v1
       with:
         version: nightly
+    - run: forge install
