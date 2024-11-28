@@ -125,7 +125,7 @@ describe('AxelarGateway', function () {
       );
 
       await expect(
-        this.receiver.receiveMessage(
+        this.receiver.executeMessage(
           this.dstGateway,
           commandId, // bytes32 is already self-encoded
           this.CAIP2,
