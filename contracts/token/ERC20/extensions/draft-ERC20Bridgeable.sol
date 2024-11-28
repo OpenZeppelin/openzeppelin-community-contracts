@@ -19,17 +19,8 @@ import {ERC165, IERC165} from "@openzeppelin/contracts/utils/introspection/ERC16
 abstract contract ERC20Bridgeable is ERC165, ERC20, IERC7802 {
     using Strings for address;
 
-    /// @dev A crosschain version of this ERC20 has been registered for a chain.
-    event RegisteredCrosschainERC20(string caip2, string erc20Address);
-
-    error UnsupportedNativeValue();
-    error CrosschainERC20AlreadyRegistered(string caip2);
-
     /// @dev Error emitted when an unsupported chain is queried.
     error UnsupportedChain(string caip2);
-
-    bytes4 crosschainMintAttr = bytes4(keccak256("crosschainMint(address,uint256)"));
-    bytes4 crosschainBurnAttr = bytes4(keccak256("crosschainBurn(address,uint256)"));
 
     mapping(string caip2 => string crosschainERC20) private _crosschainERC20s;
 
@@ -50,25 +41,6 @@ abstract contract ERC20Bridgeable is ERC165, ERC20, IERC7802 {
     /// @inheritdoc ERC165
     function supportsInterface(bytes4 interfaceId) public view virtual override(ERC165, IERC165) returns (bool) {
         return interfaceId == type(IERC7802).interfaceId || super.supportsInterface(interfaceId);
-    }
-
-    /// @dev Returns the address string of the crosschain gateway for a given CAIP-2 chain identifier.
-    function getCrosschainERC20(string memory caip2) public view virtual returns (string memory crosschainERC20) {
-        crosschainERC20 = _crosschainERC20s[caip2];
-        require(bytes(crosschainERC20).length > 0, UnsupportedChain(caip2));
-    }
-
-    /// @dev Registers the address string of the crosschain version of this ERC20 for a given CAIP-2 chain identifier.
-    /// Internal version without access control.
-    function _registerCrosschainERC20(string calldata caip2, string calldata crosschainERC20) internal virtual {
-        require(bytes(_crosschainERC20s[caip2]).length == 0, CrosschainERC20AlreadyRegistered(caip2));
-        _crosschainERC20s[caip2] = crosschainERC20;
-        emit RegisteredCrosschainERC20(caip2, crosschainERC20);
-    }
-
-    /// @dev Getter to check whether an attribute is supported or not.
-    function supportsAttribute(bytes4 selector) public view virtual returns (bool) {
-        return selector == crosschainMintAttr || selector == crosschainBurnAttr;
     }
 
     /// @inheritdoc IERC7802
