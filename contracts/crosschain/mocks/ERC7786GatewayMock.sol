@@ -30,6 +30,7 @@ contract ERC7786GatewayMock is IERC7786GatewaySource, IERC7786GatewayDestination
         bytes[] calldata attributes
     ) public payable returns (bytes32) {
         require(msg.value == 0, "Value not supported");
+        // Use of `if () revert` syntax to avoid accesing attributes[0] if it's empty
         if (attributes.length > 0) revert UnsupportedAttribute(bytes4(attributes[0][0:4]));
         require(destination.equal(CAIP2.local()), "This mock only supports local messages");
 
