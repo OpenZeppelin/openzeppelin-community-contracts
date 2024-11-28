@@ -4,57 +4,21 @@ pragma solidity ^0.8.27;
 
 import {AxelarExecutable} from "@axelar-network/axelar-gmp-sdk-solidity/contracts/executable/AxelarExecutable.sol";
 import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
-import {IERC7786GatewayDestinationPassive, IERC7786Receiver} from "../interfaces/draft-IERC7786.sol";
+import {IERC7786Receiver} from "../interfaces/draft-IERC7786.sol";
 import {AxelarGatewayBase} from "./AxelarGatewayBase.sol";
 
 /**
  * @dev Implementation of an ERC-7786 gateway destination adapter for the Axelar Network in dual mode.
  *
  * The contract implements AxelarExecutable's {_execute} function to execute the message, converting Axelar's native
- * workflow into the standard ERC-7786 active mode. Alternatively, it provides a way to set a message as executed by
- * calling the {setMessageExecuted} function (passive mode).
+ * workflow into the standard ERC-7786.
  */
-abstract contract AxelarGatewayDestination is IERC7786GatewayDestinationPassive, AxelarGatewayBase, AxelarExecutable {
+abstract contract AxelarGatewayDestination is AxelarGatewayBase, AxelarExecutable {
     using Strings for address;
     using Strings for string;
 
     error InvalidOriginGateway(string sourceChain, string axelarSourceAddress);
     error ReceiverExecutionFailed();
-
-    /**
-     * @dev Sets a message as executed so it can't be executed again. Should be called by the receiver contract.
-     * @param sourceChain {CAIP2} chain identifier
-     * @param sender {CAIP10} account address (does not include the chain identifier)
-     */
-    function setMessageExecuted(
-        bytes calldata messageKey,
-        string calldata sourceChain,
-        string calldata sender,
-        bytes calldata payload,
-        bytes[] calldata attributes
-    ) external {
-        // Extract Axelar commandId
-        bytes32 commandId = abi.decode(messageKey, (bytes32));
-
-        // Rebuild expected package
-        bytes memory adapterPayload = abi.encode(
-            sender,
-            msg.sender.toChecksumHexString(), // receiver
-            payload,
-            attributes
-        );
-
-        // Check package was received from remote gateway on src chain
-        require(
-            gateway.validateContractCall(
-                commandId,
-                getEquivalentChain(sourceChain),
-                getRemoteGateway(sourceChain),
-                keccak256(adapterPayload)
-            ),
-            NotApprovedByGateway()
-        );
-    }
 
     /**
      * @dev Active mode execution of a cross-chain message.
@@ -90,8 +54,6 @@ abstract contract AxelarGatewayDestination is IERC7786GatewayDestinationPassive,
 
         // Active mode
         bytes4 result = IERC7786Receiver(receiver.parseAddress()).executeMessage(
-            address(0), // not needed in active mode
-            new bytes(0), // not needed in active mode
             sourceChain,
             sender,
             payload,

@@ -2,13 +2,13 @@
 
 pragma solidity ^0.8.27;
 
-import {IERC7786GatewayDestinationPassive, IERC7786Receiver} from "../interfaces/draft-IERC7786.sol";
+import {IERC7786Receiver} from "../interfaces/draft-IERC7786.sol";
 
 /**
  * @dev Base implementation of an ERC-7786 compliant cross-chain message receiver.
  *
- * This abstract contract exposes the `executeMessage` function that is used in both active and passive mode for
- * communication with (one or multiple) destination gateways. This contract leaves two functions unimplemented:
+ * This abstract contract exposes the `executeMessage` function that is used for communication with (one or multiple)
+ * destination gateways. This contract leaves two functions unimplemented:
  *
  * {_isKnownGateway}, an internal getter used to verify whether an address is recognised by the contract as a valid
  * ERC-7786 destination gateway. One or multiple gateway can be supported. Note that any malicious address for which
@@ -22,30 +22,13 @@ abstract contract ERC7786Receiver is IERC7786Receiver {
 
     /// @inheritdoc IERC7786Receiver
     function executeMessage(
-        address gateway,
-        bytes calldata gatewayMessageKey,
-        string calldata sourceChain, // CAIP-2 chain identifier
-        string calldata sender, // CAIP-10 account address (does not include the chain identifier)
+        string calldata source,
+        string calldata sender,
         bytes calldata payload,
         bytes[] calldata attributes
     ) public payable virtual returns (bytes4) {
-        if (_isKnownGateway(msg.sender)) {
-            // Active mode
-            // no extra check
-        } else if (_isKnownGateway(gateway)) {
-            // Passive mode
-            require(msg.value == 0, ERC7786ReceivePassiveModeValue());
-            IERC7786GatewayDestinationPassive(gateway).setMessageExecuted(
-                gatewayMessageKey,
-                sourceChain,
-                sender,
-                payload,
-                attributes
-            );
-        } else {
-            revert ERC7786ReceiverInvalidGateway(gateway);
-        }
-        _processMessage(gateway, sourceChain, sender, payload, attributes);
+        require(_isKnownGateway(msg.sender), ERC7786ReceiverInvalidGateway(msg.sender));
+        _processMessage(msg.sender, source, sender, payload, attributes);
         return IERC7786Receiver.executeMessage.selector;
     }
 
