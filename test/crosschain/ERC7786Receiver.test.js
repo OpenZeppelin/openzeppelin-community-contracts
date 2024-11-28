@@ -33,7 +33,7 @@ describe('ERC7786Receiver', function () {
       await expect(
         this.gateway.connect(this.sender).sendMessage(this.caip2, getAddress(this.receiver), payload, attributes),
       )
-        .to.emit(this.gateway, 'MessageCreated')
+        .to.emit(this.gateway, 'MessagePosted')
         .withArgs(ethers.ZeroHash, this.toCaip10(this.sender), this.toCaip10(this.receiver), payload, attributes)
         .to.emit(this.receiver, 'MessageReceived')
         .withArgs(this.gateway, this.caip2, getAddress(this.sender), payload, attributes);

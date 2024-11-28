@@ -60,7 +60,7 @@ describe('AxelarGateway', function () {
         .connect(this.sender)
         .sendMessage(this.CAIP2, getAddress(this.receiver), payload, attributes);
       await expect(tx)
-        .to.emit(this.srcGateway, 'MessageCreated')
+        .to.emit(this.srcGateway, 'MessagePosted')
         .withArgs(ethers.ZeroHash, srcCAIP10, dstCAIP10, payload, attributes)
         .to.emit(this.axelar, 'ContractCall')
         .withArgs(this.srcGateway, 'local', getAddress(this.dstGateway), ethers.keccak256(package), package)
@@ -106,7 +106,7 @@ describe('AxelarGateway', function () {
         .connect(this.sender)
         .sendMessage(this.CAIP2, getAddress(this.receiver), payload, attributes);
       await expect(tx)
-        .to.emit(this.srcGateway, 'MessageCreated')
+        .to.emit(this.srcGateway, 'MessagePosted')
         .withArgs(ethers.ZeroHash, srcCAIP10, dstCAIP10, payload, attributes)
         .to.emit(this.axelar, 'ContractCall')
         .withArgs(this.srcGateway, 'local', getAddress(this.dstGateway), ethers.keccak256(package), package)
