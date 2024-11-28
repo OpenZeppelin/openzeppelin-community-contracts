@@ -20,4 +20,5 @@ runs:
       with:
         version: nightly
     - name: Install submodule dependencies
+      shell: bash
       run: forge install
