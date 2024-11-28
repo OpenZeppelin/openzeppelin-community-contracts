@@ -12,10 +12,10 @@ async function fixture() {
   const CAIP2 = `eip155:${chainId}`;
   const asCAIP10 = account => `eip155:${chainId}:${getAddress(account)}`;
 
-  const axelar          = await ethers.deployContract('$AxelarGatewayMock');
-  const srcGateway      = await ethers.deployContract('AxelarGatewayDuplex', [ axelar, owner ]);
-  const dstGateway      = await ethers.deployContract('AxelarGatewayDuplex', [ axelar, owner ]);
-  const receiver        = await ethers.deployContract('$ERC7786ReceiverMock', [ dstGateway ]);
+  const axelar = await ethers.deployContract('$AxelarGatewayMock');
+  const srcGateway = await ethers.deployContract('$AxelarGatewaySource', [owner, axelar]);
+  const dstGateway = await ethers.deployContract('$AxelarGatewayDestination', [owner, axelar, axelar]);
+  const receiver = await ethers.deployContract('$ERC7786ReceiverMock', [dstGateway]);
   const invalidReceiver = await ethers.deployContract('$ERC7786ReceiverInvalidMock');
 
   await srcGateway.registerChainEquivalence(CAIP2, 'local');
@@ -47,37 +47,43 @@ describe('AxelarGateway', function () {
     });
 
     it('workflow', async function () {
-      const srcCAIP10  = this.asCAIP10(this.sender);
-      const dstCAIP10  = this.asCAIP10(this.receiver);
-      const payload    = ethers.randomBytes(128);
+      const srcCAIP10 = this.asCAIP10(this.sender);
+      const dstCAIP10 = this.asCAIP10(this.receiver);
+      const payload = ethers.randomBytes(128);
       const attributes = [];
-      const package    = ethers.AbiCoder.defaultAbiCoder().encode([ 'string', 'string', 'bytes', 'bytes[]' ], [ getAddress(this.sender), getAddress(this.receiver), payload, attributes ]);
+      const package = ethers.AbiCoder.defaultAbiCoder().encode(
+        ['string', 'string', 'bytes', 'bytes[]'],
+        [getAddress(this.sender), getAddress(this.receiver), payload, attributes],
+      );
 
-      await expect(this.srcGateway.connect(this.sender).sendMessage(this.CAIP2, getAddress(this.receiver), payload, attributes))
-        .to.emit(this.srcGateway, 'MessagePosted').withArgs(ethers.ZeroHash, srcCAIP10, dstCAIP10, payload, attributes)
-        .to.emit(this.axelar, 'ContractCall').withArgs(this.srcGateway, 'local', getAddress(this.dstGateway), ethers.keccak256(package), package)
-        .to.emit(this.axelar, 'ContractCallExecuted').withArgs(anyValue)
-        .to.emit(this.receiver, 'MessageReceived').withArgs(ethers.ZeroAddress, this.CAIP2, getAddress(this.sender), payload, attributes);
+      const tx = await this.srcGateway
+        .connect(this.sender)
+        .sendMessage(this.CAIP2, getAddress(this.receiver), payload, attributes);
+      await expect(tx)
+        .to.emit(this.srcGateway, 'MessageCreated')
+        .withArgs(ethers.ZeroHash, srcCAIP10, dstCAIP10, payload, attributes)
+        .to.emit(this.axelar, 'ContractCall')
+        .withArgs(this.srcGateway, 'local', getAddress(this.dstGateway), ethers.keccak256(package), package)
+        .to.emit(this.axelar, 'ContractCallExecuted')
+        .withArgs(anyValue)
+        .to.emit(this.receiver, 'MessageReceived')
+        .withArgs(ethers.ZeroAddress, this.CAIP2, getAddress(this.sender), payload, attributes);
     });
 
     it('invalid receiver - bad return value', async function () {
-      await expect(this.srcGateway.connect(this.sender).sendMessage(
-        this.CAIP2,
-        getAddress(this.invalidReceiver),
-        ethers.randomBytes(128),
-        [],
-      ))
-        .to.be.revertedWithCustomError(this.dstGateway, 'ReceiverExecutionFailed');
+      await expect(
+        this.srcGateway
+          .connect(this.sender)
+          .sendMessage(this.CAIP2, getAddress(this.invalidReceiver), ethers.randomBytes(128), []),
+      ).to.be.revertedWithCustomError(this.dstGateway, 'ReceiverExecutionFailed');
     });
 
     it('invalid receiver - EOA', async function () {
-      await expect(this.srcGateway.connect(this.sender).sendMessage(
-        this.CAIP2,
-        getAddress(this.accounts[0]),
-        ethers.randomBytes(128),
-        [],
-      ))
-        .to.be.revertedWithoutReason();
+      await expect(
+        this.srcGateway
+          .connect(this.sender)
+          .sendMessage(this.CAIP2, getAddress(this.accounts[0]), ethers.randomBytes(128), []),
+      ).to.be.revertedWithoutReason();
     });
   });
 
@@ -87,32 +93,51 @@ describe('AxelarGateway', function () {
     });
 
     it('workflow', async function () {
-      const srcCAIP10  = this.asCAIP10(this.sender);
-      const dstCAIP10  = this.asCAIP10(this.receiver);
-      const payload    = ethers.randomBytes(128);
+      const srcCAIP10 = this.asCAIP10(this.sender);
+      const dstCAIP10 = this.asCAIP10(this.receiver);
+      const payload = ethers.randomBytes(128);
       const attributes = [];
-      const package    = ethers.AbiCoder.defaultAbiCoder().encode([ 'string', 'string', 'bytes', 'bytes[]' ], [ getAddress(this.sender), getAddress(this.receiver), payload, attributes ]);
+      const package = ethers.AbiCoder.defaultAbiCoder().encode(
+        ['string', 'string', 'bytes', 'bytes[]'],
+        [getAddress(this.sender), getAddress(this.receiver), payload, attributes],
+      );
 
-      const tx = await this.srcGateway.connect(this.sender).sendMessage(this.CAIP2, getAddress(this.receiver), payload, attributes);
+      const tx = await this.srcGateway
+        .connect(this.sender)
+        .sendMessage(this.CAIP2, getAddress(this.receiver), payload, attributes);
       await expect(tx)
-        .to.emit(this.srcGateway, 'MessagePosted').withArgs(ethers.ZeroHash, srcCAIP10, dstCAIP10, payload, attributes)
-        .to.emit(this.axelar, 'ContractCall').withArgs(this.srcGateway, 'local', getAddress(this.dstGateway), ethers.keccak256(package), package)
-        .to.emit(this.axelar, 'CommandIdPending').withArgs(anyValue, 'local', getAddress(this.dstGateway), package);
+        .to.emit(this.srcGateway, 'MessageCreated')
+        .withArgs(ethers.ZeroHash, srcCAIP10, dstCAIP10, payload, attributes)
+        .to.emit(this.axelar, 'ContractCall')
+        .withArgs(this.srcGateway, 'local', getAddress(this.dstGateway), ethers.keccak256(package), package)
+        .to.emit(this.axelar, 'CommandIdPending')
+        .withArgs(anyValue, 'local', getAddress(this.dstGateway), package);
 
       const { logs } = await tx.wait();
-      const commandIdEvent = logs.find(({ address, topics }) => address == this.axelar.target && topics[0] == this.axelar.interface.getEvent('CommandIdPending').topicHash);
-      const [ commandId ] = this.axelar.interface.decodeEventLog('CommandIdPending', commandIdEvent.data, commandIdEvent.topics);
+      const commandIdEvent = logs.find(
+        ({ address, topics }) =>
+          address == this.axelar.target && topics[0] == this.axelar.interface.getEvent('CommandIdPending').topicHash,
+      );
+      const [commandId] = this.axelar.interface.decodeEventLog(
+        'CommandIdPending',
+        commandIdEvent.data,
+        commandIdEvent.topics,
+      );
 
-      await expect(this.receiver.executeMessage(
-        this.dstGateway,
-        commandId, // bytes32 is already self-encoded
-        this.CAIP2,
-        getAddress(this.sender),
-        payload,
-        attributes,
-      ))
-        .to.emit(this.axelar, 'ContractCallExecuted').withArgs(commandId)
-        .to.emit(this.receiver, 'MessageReceived').withArgs(this.dstGateway, this.CAIP2, getAddress(this.sender), payload, attributes);
+      await expect(
+        this.receiver.receiveMessage(
+          this.dstGateway,
+          commandId, // bytes32 is already self-encoded
+          this.CAIP2,
+          getAddress(this.sender),
+          payload,
+          attributes,
+        ),
+      )
+        .to.emit(this.axelar, 'ContractCallExecuted')
+        .withArgs(commandId)
+        .to.emit(this.receiver, 'MessageReceived')
+        .withArgs(this.dstGateway, this.CAIP2, getAddress(this.sender), payload, attributes);
     });
   });
 });

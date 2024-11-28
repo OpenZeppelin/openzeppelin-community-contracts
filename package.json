@@ -9,11 +9,18 @@
     "!/contracts/mocks/**/*"
   ],
   "scripts": {
-    "prepare": "git config --local core.hooksPath .githooks",
     "compile": "hardhat compile",
     "clean": "hardhat clean && rimraf build contracts/build",
-    "lint": "prettier --log-level warn --ignore-path .gitignore '{contracts,test}/**/*.sol' --check",
-    "lint:fix": "prettier --log-level warn --ignore-path .gitignore '{contracts,test}/**/*.sol' --write",
+    "docs": "npm run prepare-docs && oz-docs",
+    "docs:watch": "oz-docs watch contracts docs/templates docs/config.js",
+    "prepare": "scripts/prepare.sh",
+    "prepare-docs": "scripts/prepare-docs.sh",
+    "lint": "npm run lint:js && npm run lint:sol",
+    "lint:fix": "npm run lint:js:fix && npm run lint:sol:fix",
+    "lint:js": "prettier --log-level warn --ignore-path .gitignore '**/*.{js,ts}' --check",
+    "lint:js:fix": "prettier --log-level warn --ignore-path .gitignore '**/*.{js,ts}' --write",
+    "lint:sol": "prettier --log-level warn --ignore-path .gitignore '{contracts,test}/**/*.sol' --check",
+    "lint:sol:fix": "prettier --log-level warn --ignore-path .gitignore '{contracts,test}/**/*.sol' --write",
     "coverage": "scripts/checks/coverage.sh",
     "test": "hardhat test"
   },
@@ -40,6 +47,7 @@
     "@nomicfoundation/hardhat-chai-matchers": "^2.0.6",
     "@nomicfoundation/hardhat-ethers": "^3.0.5",
     "@nomicfoundation/hardhat-network-helpers": "^1.0.11",
+    "@openzeppelin/docs-utils": "^0.1.5",
     "chai": "^4.4.1",
     "ethers": "^6.12.1",
     "hardhat": "^2.22.3",
@@ -48,6 +56,7 @@
     "prettier-plugin-solidity": "^1.3.1",
     "rimraf": "^6.0.1",
     "solidity-coverage": "^0.8.12",
+    "solidity-docgen": "^0.6.0-beta.36",
     "yargs": "^17.7.2"
   }
 }
