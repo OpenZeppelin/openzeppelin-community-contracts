@@ -13,13 +13,8 @@ import {ERC165, IERC165} from "@openzeppelin/contracts/utils/introspection/ERC16
  * @dev ERC20 extension that implements the standard token interface according to
  * https://github.com/ethereum/ERCs/blob/bcea9feb6c3f3ded391e33690056635d722b101e/ERCS/erc-7802.md[ERC-7801].
  *
- * The extension requires users to implement {IERC7802-crosschainMint} and {IERC7802-crosschainBurn} to allow
- * crosschain transfers. It is recommended to implement these with an access control mechanism that allows
- * customizing the list of allowed senders.
- *
  * NOTE: To implement a crosschain gateway for a chain, consider using an implementation if {IERC7786} token
- * bridge (e.g. {AxelarGatewaySource}, {AxelarGatewayDestination}). The bridge can be an allowed sender in
- * this contract. Consider using {Ownable}, {AccessControl} or {AccessManager} to manage the list of allowed senders.
+ * bridge (e.g. {AxelarGatewaySource}, {AxelarGatewayDestination}).
  */
 abstract contract ERC20Bridgeable is ERC165, ERC20, IERC7802 {
     using Strings for address;
