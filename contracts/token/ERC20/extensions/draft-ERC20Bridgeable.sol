@@ -3,9 +3,6 @@
 pragma solidity ^0.8.27;
 
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import {CAIP2} from "@openzeppelin/contracts/utils/CAIP2.sol";
-import {CAIP10} from "@openzeppelin/contracts/utils/CAIP10.sol";
-import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 import {IERC7802} from "../../../crosschain/interfaces/draft-IERC7802.sol";
 import {ERC165, IERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 
@@ -17,13 +14,6 @@ import {ERC165, IERC165} from "@openzeppelin/contracts/utils/introspection/ERC16
  * bridge (e.g. {AxelarGatewaySource}, {AxelarGatewayDestination}).
  */
 abstract contract ERC20Bridgeable is ERC165, ERC20, IERC7802 {
-    using Strings for address;
-
-    /// @dev Error emitted when an unsupported chain is queried.
-    error UnsupportedChain(string caip2);
-
-    mapping(string caip2 => string crosschainERC20) private _crosschainERC20s;
-
     /// @dev Modifier to restrict access to the token bridge.
     modifier onlyTokenBridge() {
         _checkBridgeAction(msg.sender, msg.sig);
