@@ -21,7 +21,7 @@ import {ERC165, IERC165} from "@openzeppelin/contracts/utils/introspection/ERC16
  * bridge (e.g. {AxelarGatewaySource}, {AxelarGatewayDestination}). The bridge can be an allowed sender in
  * this contract. Consider using {Ownable}, {AccessControl} or {AccessManager} to manage the list of allowed senders.
  */
-abstract contract CrosschainERC20 is ERC165, ERC20, IERC7802 {
+abstract contract ERC20Bridgeable is ERC165, ERC20, IERC7802 {
     using Strings for address;
 
     /// @dev A crosschain version of this ERC20 has been registered for a chain.
