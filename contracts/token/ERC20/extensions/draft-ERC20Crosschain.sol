@@ -10,6 +10,9 @@ import {IERC7802} from "../../../crosschain/interfaces/draft-IERC7802.sol";
 import {IERC7786GatewaySource} from "./../../../crosschain/interfaces/draft-IERC7786.sol";
 import {ERC165, IERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 
+/**
+ * @dev 
+ */
 abstract contract CrosschainERC20 is ERC165, ERC20, IERC7786GatewaySource, IERC7802 {
     using Strings for address;
 
@@ -56,9 +59,9 @@ abstract contract CrosschainERC20 is ERC165, ERC20, IERC7786GatewaySource, IERC7
      *
      * Emits a {CrosschainMint} event.
      */
-    function _crosschainMint(address to, uint256 value) internal {
+    function _crosschainMint(address to, address sender, uint256 value) internal {
         _mint(to, value);
-        emit CrosschainMint(to, value, msg.sender);
+        emit CrosschainMint(to, value, sender);
     }
 
     /**
@@ -68,34 +71,6 @@ abstract contract CrosschainERC20 is ERC165, ERC20, IERC7786GatewaySource, IERC7
      */
     function _crosschainBurn(address from, address sender, uint256 value) internal {
         _burn(from, value);
-        emit CrosschainBurn(from, value, msg.sender);
-    }
-
-    function crosschainTransfer(address to, uint256 amount, string calldata caip2Destination) public {
-        address from = msg.sender;
-        _transfer(from, to, amount, caip2Destination);
-    }
-
-    function _transfer(address from, address to, uint256 value, string calldata caip2Destination) internal {
-        if (from == address(0)) revert ERC20InvalidSender(address(0));
-        if (to == address(0)) revert ERC20InvalidReceiver(address(0));
-        _update(from, to, value, caip2Destination);
-    }
-
-    function _update(address from, address to, uint256 value, string calldata caip2Destination) internal {
-        bytes[] memory attributes = new bytes[](0);
-
-        // Burn tokens first
-        _burn(from, value);
-
-        // Compensate
-        if (CAIP2.local() == caip2Destination) _mint(to, value);
-        else
-            sendMessage(
-                caip2Destination,
-                getCrosschainERC20(caip2Destination),
-                abi.encodeCall(IERC7802.crosschainMint, (to, value)),
-                attributes
-            ); // Send message if destination is another chain
+        emit CrosschainBurn(from, value, sender);
     }
 }
