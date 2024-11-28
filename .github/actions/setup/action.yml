@@ -19,3 +19,6 @@ runs:
       uses: foundry-rs/foundry-toolchain@v1
       with:
         version: nightly
+    - name: Install submodule dependencies
+      shell: bash
+      run: forge install

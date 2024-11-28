@@ -11,7 +11,7 @@ task(TASK_COMPILE_GET_REMAPPINGS).setAction((taskArgs, env, runSuper) =>
           .readFileSync('remappings.txt', 'utf-8')
           .split('\n')
           .filter(Boolean)
-          .filter(line => !line.startsWith("#"))
+          .filter(line => !line.startsWith('#'))
           .map(line => line.trim().split('=')),
       ),
     ),
