@@ -1,7 +1,5 @@
 :github-icon: pass:[<svg class="icon"><use href="#github-icon"/></svg>]
 :HybridProxy: pass:normal[xref:proxy.adoc#HybridProxy[`HybridProxy`]]
-:xref-HybridProxy-constructor-address-bytes-: xref:proxy.adoc#HybridProxy-constructor-address-bytes-
-:xref-HybridProxy-_implementation--: xref:proxy.adoc#HybridProxy-_implementation--
 = Utilities
 
 [.readme-notice]
@@ -37,14 +35,14 @@ the returned address will be used as this proxy's implementation.
 [.contract-index]
 .Functions
 --
-* {xref-HybridProxy-constructor-address-bytes-}[`++constructor(implementation, data)++`]
-* {xref-HybridProxy-_implementation--}[`++_implementation()++`]
+* `++constructor(implementation, data)++`
+* `++_implementation()++`
 
 [.contract-subindex-inherited]
 .Proxy
-* {xref-Proxy-_delegate-address-}[`++_delegate(implementation)++`]
-* {xref-Proxy-_fallback--}[`++_fallback()++`]
-* {xref-Proxy-fallback--}[`++fallback()++`]
+* `++_delegate(implementation)++`
+* `++_fallback()++`
+* `++fallback()++`
 
 --
 

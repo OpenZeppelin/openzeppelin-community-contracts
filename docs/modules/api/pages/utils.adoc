@@ -3,28 +3,6 @@
 :ERC7739Utils: pass:normal[xref:utils.adoc#ERC7739Utils[`ERC7739Utils`]]
 :ERC7739Signer: pass:normal[xref:utils.adoc#ERC7739Signer[`ERC7739Signer`]]
 :ERC7739Utils: pass:normal[xref:utils.adoc#ERC7739Utils[`ERC7739Utils`]]
-:xref-ERC7739Signer-isValidSignature-bytes32-bytes-: xref:utils.adoc#ERC7739Signer-isValidSignature-bytes32-bytes-
-:xref-ERC7739Signer-_isValidSignature-bytes32-bytes-: xref:utils.adoc#ERC7739Signer-_isValidSignature-bytes32-bytes-
-:xref-ERC7739Signer-_isValidNestedPersonalSignSignature-bytes32-bytes-: xref:utils.adoc#ERC7739Signer-_isValidNestedPersonalSignSignature-bytes32-bytes-
-:xref-ERC7739Signer-_isValidNestedTypedDataSignature-bytes32-bytes-: xref:utils.adoc#ERC7739Signer-_isValidNestedTypedDataSignature-bytes32-bytes-
-:xref-ERC7739Signer-_validateSignature-bytes32-bytes-: xref:utils.adoc#ERC7739Signer-_validateSignature-bytes32-bytes-
-:xref-ERC7739Utils-encodeTypedDataSig-bytes-bytes32-bytes32-string-: xref:utils.adoc#ERC7739Utils-encodeTypedDataSig-bytes-bytes32-bytes32-string-
-:xref-ERC7739Utils-decodeTypedDataSig-bytes-: xref:utils.adoc#ERC7739Utils-decodeTypedDataSig-bytes-
-:xref-ERC7739Utils-personalSignStructHash-bytes32-: xref:utils.adoc#ERC7739Utils-personalSignStructHash-bytes32-
-:xref-ERC7739Utils-typedDataSignStructHash-string-string-bytes32-bytes-: xref:utils.adoc#ERC7739Utils-typedDataSignStructHash-string-string-bytes32-bytes-
-:xref-ERC7739Utils-typedDataSignStructHash-string-bytes32-bytes-: xref:utils.adoc#ERC7739Utils-typedDataSignStructHash-string-bytes32-bytes-
-:xref-ERC7739Utils-typedDataSignTypehash-string-string-: xref:utils.adoc#ERC7739Utils-typedDataSignTypehash-string-string-
-:xref-ERC7739Utils-decodeContentsDescr-string-: xref:utils.adoc#ERC7739Utils-decodeContentsDescr-string-
-:xref-ERC7739Utils-InvalidContentsType--: xref:utils.adoc#ERC7739Utils-InvalidContentsType--
-:xref-Masks-toMask-uint8-: xref:utils.adoc#Masks-toMask-uint8-
-:xref-Masks-toMask-uint8---: xref:utils.adoc#Masks-toMask-uint8---
-:xref-Masks-get-Masks-Mask-uint8-: xref:utils.adoc#Masks-get-Masks-Mask-uint8-
-:xref-Masks-isEmpty-Masks-Mask-: xref:utils.adoc#Masks-isEmpty-Masks-Mask-
-:xref-Masks-complement-Masks-Mask-: xref:utils.adoc#Masks-complement-Masks-Mask-
-:xref-Masks-union-Masks-Mask-Masks-Mask-: xref:utils.adoc#Masks-union-Masks-Mask-Masks-Mask-
-:xref-Masks-intersection-Masks-Mask-Masks-Mask-: xref:utils.adoc#Masks-intersection-Masks-Mask-Masks-Mask-
-:xref-Masks-difference-Masks-Mask-Masks-Mask-: xref:utils.adoc#Masks-difference-Masks-Mask-Masks-Mask-
-:xref-Masks-symmetric_difference-Masks-Mask-Masks-Mask-: xref:utils.adoc#Masks-symmetric_difference-Masks-Mask-Masks-Mask-
 = Utilities
 
 [.readme-notice]
@@ -68,22 +46,22 @@ be used within the ERC-4337 validation phase (due to ERC-7562 storage access rul
 [.contract-index]
 .Functions
 --
-* {xref-ERC7739Signer-isValidSignature-bytes32-bytes-}[`++isValidSignature(hash, signature)++`]
-* {xref-ERC7739Signer-_isValidSignature-bytes32-bytes-}[`++_isValidSignature(hash, signature)++`]
-* {xref-ERC7739Signer-_isValidNestedPersonalSignSignature-bytes32-bytes-}[`++_isValidNestedPersonalSignSignature(hash, signature)++`]
-* {xref-ERC7739Signer-_isValidNestedTypedDataSignature-bytes32-bytes-}[`++_isValidNestedTypedDataSignature(hash, encodedSignature)++`]
-* {xref-ERC7739Signer-_validateSignature-bytes32-bytes-}[`++_validateSignature(hash, signature)++`]
+* `++isValidSignature(hash, signature)++`
+* `++_isValidSignature(hash, signature)++`
+* `++_isValidNestedPersonalSignSignature(hash, signature)++`
+* `++_isValidNestedTypedDataSignature(hash, encodedSignature)++`
+* `++_validateSignature(hash, signature)++`
 
 [.contract-subindex-inherited]
 .IERC1271
 
 [.contract-subindex-inherited]
 .EIP712
-* {xref-EIP712-_domainSeparatorV4--}[`++_domainSeparatorV4()++`]
-* {xref-EIP712-_hashTypedDataV4-bytes32-}[`++_hashTypedDataV4(structHash)++`]
-* {xref-EIP712-eip712Domain--}[`++eip712Domain()++`]
-* {xref-EIP712-_EIP712Name--}[`++_EIP712Name()++`]
-* {xref-EIP712-_EIP712Version--}[`++_EIP712Version()++`]
+* `++_domainSeparatorV4()++`
+* `++_hashTypedDataV4(structHash)++`
+* `++eip712Domain()++`
+* `++_EIP712Name()++`
+* `++_EIP712Version()++`
 
 [.contract-subindex-inherited]
 .IERC5267
@@ -102,7 +80,7 @@ be used within the ERC-4337 validation phase (due to ERC-7562 storage access rul
 
 [.contract-subindex-inherited]
 .IERC5267
-* {xref-IERC5267-EIP712DomainChanged--}[`++EIP712DomainChanged()++`]
+* `++EIP712DomainChanged()++`
 
 --
 
@@ -183,20 +161,20 @@ of an {ECDSA} signature, as is for example specified for {EIP712}.
 [.contract-index]
 .Functions
 --
-* {xref-ERC7739Utils-encodeTypedDataSig-bytes-bytes32-bytes32-string-}[`++encodeTypedDataSig(signature, appSeparator, contentsHash, contentsDescr)++`]
-* {xref-ERC7739Utils-decodeTypedDataSig-bytes-}[`++decodeTypedDataSig(encodedSignature)++`]
-* {xref-ERC7739Utils-personalSignStructHash-bytes32-}[`++personalSignStructHash(contents)++`]
-* {xref-ERC7739Utils-typedDataSignStructHash-string-string-bytes32-bytes-}[`++typedDataSignStructHash(contentsTypeName, contentsType, contentsHash, domainBytes)++`]
-* {xref-ERC7739Utils-typedDataSignStructHash-string-bytes32-bytes-}[`++typedDataSignStructHash(contentsDescr, contentsHash, domainBytes)++`]
-* {xref-ERC7739Utils-typedDataSignTypehash-string-string-}[`++typedDataSignTypehash(contentsTypeName, contentsType)++`]
-* {xref-ERC7739Utils-decodeContentsDescr-string-}[`++decodeContentsDescr(contentsDescr)++`]
+* `++encodeTypedDataSig(signature, appSeparator, contentsHash, contentsDescr)++`
+* `++decodeTypedDataSig(encodedSignature)++`
+* `++personalSignStructHash(contents)++`
+* `++typedDataSignStructHash(contentsTypeName, contentsType, contentsHash, domainBytes)++`
+* `++typedDataSignStructHash(contentsDescr, contentsHash, domainBytes)++`
+* `++typedDataSignTypehash(contentsTypeName, contentsType)++`
+* `++decodeContentsDescr(contentsDescr)++`
 
 --
 
 [.contract-index]
 .Errors
 --
-* {xref-ERC7739Utils-InvalidContentsType--}[`++InvalidContentsType()++`]
+* `++InvalidContentsType()++`
 
 --
 
@@ -300,15 +278,15 @@ Library for handling bit masks
 [.contract-index]
 .Functions
 --
-* {xref-Masks-toMask-uint8-}[`++toMask(group)++`]
-* {xref-Masks-toMask-uint8---}[`++toMask(groups)++`]
-* {xref-Masks-get-Masks-Mask-uint8-}[`++get(self, group)++`]
-* {xref-Masks-isEmpty-Masks-Mask-}[`++isEmpty(self)++`]
-* {xref-Masks-complement-Masks-Mask-}[`++complement(m1)++`]
-* {xref-Masks-union-Masks-Mask-Masks-Mask-}[`++union(m1, m2)++`]
-* {xref-Masks-intersection-Masks-Mask-Masks-Mask-}[`++intersection(m1, m2)++`]
-* {xref-Masks-difference-Masks-Mask-Masks-Mask-}[`++difference(m1, m2)++`]
-* {xref-Masks-symmetric_difference-Masks-Mask-Masks-Mask-}[`++symmetric_difference(m1, m2)++`]
+* `++toMask(group)++`
+* `++toMask(groups)++`
+* `++get(self, group)++`
+* `++isEmpty(self)++`
+* `++complement(m1)++`
+* `++union(m1, m2)++`
+* `++intersection(m1, m2)++`
+* `++difference(m1, m2)++`
+* `++symmetric_difference(m1, m2)++`
 
 --
 

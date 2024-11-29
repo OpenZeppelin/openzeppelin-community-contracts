@@ -5,43 +5,6 @@
 :ERC20Collateral: pass:normal[xref:token.adoc#ERC20Collateral[`ERC20Collateral`]]
 :ERC20Custodian: pass:normal[xref:token.adoc#ERC20Custodian[`ERC20Custodian`]]
 :ERC4626Fees: pass:normal[xref:token.adoc#ERC4626Fees[`ERC4626Fees`]]
-:xref-OnTokenTransferAdapter-onTokenTransfer-address-uint256-bytes-: xref:token.adoc#OnTokenTransferAdapter-onTokenTransfer-address-uint256-bytes-
-:xref-ERC20Allowlist-allowed-address-: xref:token.adoc#ERC20Allowlist-allowed-address-
-:xref-ERC20Allowlist-_allowUser-address-: xref:token.adoc#ERC20Allowlist-_allowUser-address-
-:xref-ERC20Allowlist-_disallowUser-address-: xref:token.adoc#ERC20Allowlist-_disallowUser-address-
-:xref-ERC20Allowlist-_update-address-address-uint256-: xref:token.adoc#ERC20Allowlist-_update-address-address-uint256-
-:xref-ERC20Allowlist-_approve-address-address-uint256-bool-: xref:token.adoc#ERC20Allowlist-_approve-address-address-uint256-bool-
-:xref-ERC20Allowlist-UserAllowed-address-: xref:token.adoc#ERC20Allowlist-UserAllowed-address-
-:xref-ERC20Allowlist-UserDisallowed-address-: xref:token.adoc#ERC20Allowlist-UserDisallowed-address-
-:xref-ERC20Allowlist-ERC20Disallowed-address-: xref:token.adoc#ERC20Allowlist-ERC20Disallowed-address-
-:xref-ERC20Allowlist-_allowed-mapping-address----bool-: xref:token.adoc#ERC20Allowlist-_allowed-mapping-address----bool-
-:xref-ERC20Blocklist-blocked-address-: xref:token.adoc#ERC20Blocklist-blocked-address-
-:xref-ERC20Blocklist-_blockUser-address-: xref:token.adoc#ERC20Blocklist-_blockUser-address-
-:xref-ERC20Blocklist-_unblockUser-address-: xref:token.adoc#ERC20Blocklist-_unblockUser-address-
-:xref-ERC20Blocklist-_update-address-address-uint256-: xref:token.adoc#ERC20Blocklist-_update-address-address-uint256-
-:xref-ERC20Blocklist-_approve-address-address-uint256-bool-: xref:token.adoc#ERC20Blocklist-_approve-address-address-uint256-bool-
-:xref-ERC20Blocklist-UserBlocked-address-: xref:token.adoc#ERC20Blocklist-UserBlocked-address-
-:xref-ERC20Blocklist-UserUnblocked-address-: xref:token.adoc#ERC20Blocklist-UserUnblocked-address-
-:xref-ERC20Blocklist-ERC20Blocked-address-: xref:token.adoc#ERC20Blocklist-ERC20Blocked-address-
-:xref-ERC20Blocklist-_blocked-mapping-address----bool-: xref:token.adoc#ERC20Blocklist-_blocked-mapping-address----bool-
-:xref-ERC20Collateral-constructor-uint48-: xref:token.adoc#ERC20Collateral-constructor-uint48-
-:xref-ERC20Collateral-liveness--: xref:token.adoc#ERC20Collateral-liveness--
-:xref-ERC20Collateral-clock--: xref:token.adoc#ERC20Collateral-clock--
-:xref-ERC20Collateral-CLOCK_MODE--: xref:token.adoc#ERC20Collateral-CLOCK_MODE--
-:xref-ERC20Collateral-collateral--: xref:token.adoc#ERC20Collateral-collateral--
-:xref-ERC20Collateral-_update-address-address-uint256-: xref:token.adoc#ERC20Collateral-_update-address-address-uint256-
-:xref-ERC20Collateral-ERC20ExceededSupply-uint256-uint256-: xref:token.adoc#ERC20Collateral-ERC20ExceededSupply-uint256-uint256-
-:xref-ERC20Collateral-ERC20ExpiredCollateral-uint48-uint48-: xref:token.adoc#ERC20Collateral-ERC20ExpiredCollateral-uint48-uint48-
-:xref-ERC4626Fees-previewDeposit-uint256-: xref:token.adoc#ERC4626Fees-previewDeposit-uint256-
-:xref-ERC4626Fees-previewMint-uint256-: xref:token.adoc#ERC4626Fees-previewMint-uint256-
-:xref-ERC4626Fees-previewWithdraw-uint256-: xref:token.adoc#ERC4626Fees-previewWithdraw-uint256-
-:xref-ERC4626Fees-previewRedeem-uint256-: xref:token.adoc#ERC4626Fees-previewRedeem-uint256-
-:xref-ERC4626Fees-_deposit-address-address-uint256-uint256-: xref:token.adoc#ERC4626Fees-_deposit-address-address-uint256-uint256-
-:xref-ERC4626Fees-_withdraw-address-address-address-uint256-uint256-: xref:token.adoc#ERC4626Fees-_withdraw-address-address-address-uint256-uint256-
-:xref-ERC4626Fees-_entryFeeBasisPoints--: xref:token.adoc#ERC4626Fees-_entryFeeBasisPoints--
-:xref-ERC4626Fees-_exitFeeBasisPoints--: xref:token.adoc#ERC4626Fees-_exitFeeBasisPoints--
-:xref-ERC4626Fees-_entryFeeRecipient--: xref:token.adoc#ERC4626Fees-_entryFeeRecipient--
-:xref-ERC4626Fees-_exitFeeRecipient--: xref:token.adoc#ERC4626Fees-_exitFeeRecipient--
 = Utilities
 
 [.readme-notice]
@@ -77,11 +40,11 @@ Chainlink's Link, that implement the 667 interface for transferAndCall.
 [.contract-index]
 .Functions
 --
-* {xref-OnTokenTransferAdapter-onTokenTransfer-address-uint256-bytes-}[`++onTokenTransfer(from, amount, data)++`]
+* `++onTokenTransfer(from, amount, data)++`
 
 [.contract-subindex-inherited]
 .IERC1363Receiver
-* {xref-IERC1363Receiver-onTransferReceived-address-address-uint256-bytes-}[`++onTransferReceived(operator, from, value, data)++`]
+* `++onTransferReceived(operator, from, value, data)++`
 
 --
 
@@ -124,28 +87,28 @@ argument. Similarly, the account will be disallowed again if
 [.contract-index]
 .Functions
 --
-* {xref-ERC20Allowlist-allowed-address-}[`++allowed(account)++`]
-* {xref-ERC20Allowlist-_allowUser-address-}[`++_allowUser(user)++`]
-* {xref-ERC20Allowlist-_disallowUser-address-}[`++_disallowUser(user)++`]
-* {xref-ERC20Allowlist-_update-address-address-uint256-}[`++_update(from, to, value)++`]
-* {xref-ERC20Allowlist-_approve-address-address-uint256-bool-}[`++_approve(owner, spender, value, emitEvent)++`]
+* `++allowed(account)++`
+* `++_allowUser(user)++`
+* `++_disallowUser(user)++`
+* `++_update(from, to, value)++`
+* `++_approve(owner, spender, value, emitEvent)++`
 
 [.contract-subindex-inherited]
 .ERC20
-* {xref-ERC20-name--}[`++name()++`]
-* {xref-ERC20-symbol--}[`++symbol()++`]
-* {xref-ERC20-decimals--}[`++decimals()++`]
-* {xref-ERC20-totalSupply--}[`++totalSupply()++`]
-* {xref-ERC20-balanceOf-address-}[`++balanceOf(account)++`]
-* {xref-ERC20-transfer-address-uint256-}[`++transfer(to, value)++`]
-* {xref-ERC20-allowance-address-address-}[`++allowance(owner, spender)++`]
-* {xref-ERC20-approve-address-uint256-}[`++approve(spender, value)++`]
-* {xref-ERC20-transferFrom-address-address-uint256-}[`++transferFrom(from, to, value)++`]
-* {xref-ERC20-_transfer-address-address-uint256-}[`++_transfer(from, to, value)++`]
-* {xref-ERC20-_mint-address-uint256-}[`++_mint(account, value)++`]
-* {xref-ERC20-_burn-address-uint256-}[`++_burn(account, value)++`]
-* {xref-ERC20-_approve-address-address-uint256-}[`++_approve(owner, spender, value)++`]
-* {xref-ERC20-_spendAllowance-address-address-uint256-}[`++_spendAllowance(owner, spender, value)++`]
+* `++name()++`
+* `++symbol()++`
+* `++decimals()++`
+* `++totalSupply()++`
+* `++balanceOf(account)++`
+* `++transfer(to, value)++`
+* `++allowance(owner, spender)++`
+* `++approve(spender, value)++`
+* `++transferFrom(from, to, value)++`
+* `++_transfer(from, to, value)++`
+* `++_mint(account, value)++`
+* `++_burn(account, value)++`
+* `++_approve(owner, spender, value)++`
+* `++_spendAllowance(owner, spender, value)++`
 
 [.contract-subindex-inherited]
 .IERC20Errors
@@ -161,8 +124,8 @@ argument. Similarly, the account will be disallowed again if
 [.contract-index]
 .Events
 --
-* {xref-ERC20Allowlist-UserAllowed-address-}[`++UserAllowed(user)++`]
-* {xref-ERC20Allowlist-UserDisallowed-address-}[`++UserDisallowed(user)++`]
+* `++UserAllowed(user)++`
+* `++UserDisallowed(user)++`
 
 [.contract-subindex-inherited]
 .ERC20
@@ -175,27 +138,27 @@ argument. Similarly, the account will be disallowed again if
 
 [.contract-subindex-inherited]
 .IERC20
-* {xref-IERC20-Transfer-address-address-uint256-}[`++Transfer(from, to, value)++`]
-* {xref-IERC20-Approval-address-address-uint256-}[`++Approval(owner, spender, value)++`]
+* `++Transfer(from, to, value)++`
+* `++Approval(owner, spender, value)++`
 
 --
 
 [.contract-index]
 .Errors
 --
-* {xref-ERC20Allowlist-ERC20Disallowed-address-}[`++ERC20Disallowed(user)++`]
+* `++ERC20Disallowed(user)++`
 
 [.contract-subindex-inherited]
 .ERC20
 
 [.contract-subindex-inherited]
 .IERC20Errors
-* {xref-IERC20Errors-ERC20InsufficientBalance-address-uint256-uint256-}[`++ERC20InsufficientBalance(sender, balance, needed)++`]
-* {xref-IERC20Errors-ERC20InvalidSender-address-}[`++ERC20InvalidSender(sender)++`]
-* {xref-IERC20Errors-ERC20InvalidReceiver-address-}[`++ERC20InvalidReceiver(receiver)++`]
-* {xref-IERC20Errors-ERC20InsufficientAllowance-address-uint256-uint256-}[`++ERC20InsufficientAllowance(spender, allowance, needed)++`]
-* {xref-IERC20Errors-ERC20InvalidApprover-address-}[`++ERC20InvalidApprover(approver)++`]
-* {xref-IERC20Errors-ERC20InvalidSpender-address-}[`++ERC20InvalidSpender(spender)++`]
+* `++ERC20InsufficientBalance(sender, balance, needed)++`
+* `++ERC20InvalidSender(sender)++`
+* `++ERC20InvalidReceiver(receiver)++`
+* `++ERC20InsufficientAllowance(spender, allowance, needed)++`
+* `++ERC20InvalidApprover(approver)++`
+* `++ERC20InvalidSpender(spender)++`
 
 [.contract-subindex-inherited]
 .IERC20Metadata
@@ -208,7 +171,7 @@ argument. Similarly, the account will be disallowed again if
 [.contract-index]
 .Internal Variables
 --
-* {xref-ERC20Allowlist-_allowed-mapping-address----bool-}[`++mapping(address &#x3D;&gt; bool)  _allowed++`]
+* `++mapping(address &#x3D;&gt; bool)  _allowed++`
 
 [.contract-subindex-inherited]
 .ERC20
@@ -311,28 +274,28 @@ argument. Similarly, the account will be unblocked again if
 [.contract-index]
 .Functions
 --
-* {xref-ERC20Blocklist-blocked-address-}[`++blocked(account)++`]
-* {xref-ERC20Blocklist-_blockUser-address-}[`++_blockUser(user)++`]
-* {xref-ERC20Blocklist-_unblockUser-address-}[`++_unblockUser(user)++`]
-* {xref-ERC20Blocklist-_update-address-address-uint256-}[`++_update(from, to, value)++`]
-* {xref-ERC20Blocklist-_approve-address-address-uint256-bool-}[`++_approve(owner, spender, value, emitEvent)++`]
+* `++blocked(account)++`
+* `++_blockUser(user)++`
+* `++_unblockUser(user)++`
+* `++_update(from, to, value)++`
+* `++_approve(owner, spender, value, emitEvent)++`
 
 [.contract-subindex-inherited]
 .ERC20
-* {xref-ERC20-name--}[`++name()++`]
-* {xref-ERC20-symbol--}[`++symbol()++`]
-* {xref-ERC20-decimals--}[`++decimals()++`]
-* {xref-ERC20-totalSupply--}[`++totalSupply()++`]
-* {xref-ERC20-balanceOf-address-}[`++balanceOf(account)++`]
-* {xref-ERC20-transfer-address-uint256-}[`++transfer(to, value)++`]
-* {xref-ERC20-allowance-address-address-}[`++allowance(owner, spender)++`]
-* {xref-ERC20-approve-address-uint256-}[`++approve(spender, value)++`]
-* {xref-ERC20-transferFrom-address-address-uint256-}[`++transferFrom(from, to, value)++`]
-* {xref-ERC20-_transfer-address-address-uint256-}[`++_transfer(from, to, value)++`]
-* {xref-ERC20-_mint-address-uint256-}[`++_mint(account, value)++`]
-* {xref-ERC20-_burn-address-uint256-}[`++_burn(account, value)++`]
-* {xref-ERC20-_approve-address-address-uint256-}[`++_approve(owner, spender, value)++`]
-* {xref-ERC20-_spendAllowance-address-address-uint256-}[`++_spendAllowance(owner, spender, value)++`]
+* `++name()++`
+* `++symbol()++`
+* `++decimals()++`
+* `++totalSupply()++`
+* `++balanceOf(account)++`
+* `++transfer(to, value)++`
+* `++allowance(owner, spender)++`
+* `++approve(spender, value)++`
+* `++transferFrom(from, to, value)++`
+* `++_transfer(from, to, value)++`
+* `++_mint(account, value)++`
+* `++_burn(account, value)++`
+* `++_approve(owner, spender, value)++`
+* `++_spendAllowance(owner, spender, value)++`
 
 [.contract-subindex-inherited]
 .IERC20Errors
@@ -348,8 +311,8 @@ argument. Similarly, the account will be unblocked again if
 [.contract-index]
 .Events
 --
-* {xref-ERC20Blocklist-UserBlocked-address-}[`++UserBlocked(user)++`]
-* {xref-ERC20Blocklist-UserUnblocked-address-}[`++UserUnblocked(user)++`]
+* `++UserBlocked(user)++`
+* `++UserUnblocked(user)++`
 
 [.contract-subindex-inherited]
 .ERC20
@@ -362,27 +325,27 @@ argument. Similarly, the account will be unblocked again if
 
 [.contract-subindex-inherited]
 .IERC20
-* {xref-IERC20-Transfer-address-address-uint256-}[`++Transfer(from, to, value)++`]
-* {xref-IERC20-Approval-address-address-uint256-}[`++Approval(owner, spender, value)++`]
+* `++Transfer(from, to, value)++`
+* `++Approval(owner, spender, value)++`
 
 --
 
 [.contract-index]
 .Errors
 --
-* {xref-ERC20Blocklist-ERC20Blocked-address-}[`++ERC20Blocked(user)++`]
+* `++ERC20Blocked(user)++`
 
 [.contract-subindex-inherited]
 .ERC20
 
 [.contract-subindex-inherited]
 .IERC20Errors
-* {xref-IERC20Errors-ERC20InsufficientBalance-address-uint256-uint256-}[`++ERC20InsufficientBalance(sender, balance, needed)++`]
-* {xref-IERC20Errors-ERC20InvalidSender-address-}[`++ERC20InvalidSender(sender)++`]
-* {xref-IERC20Errors-ERC20InvalidReceiver-address-}[`++ERC20InvalidReceiver(receiver)++`]
-* {xref-IERC20Errors-ERC20InsufficientAllowance-address-uint256-uint256-}[`++ERC20InsufficientAllowance(spender, allowance, needed)++`]
-* {xref-IERC20Errors-ERC20InvalidApprover-address-}[`++ERC20InvalidApprover(approver)++`]
-* {xref-IERC20Errors-ERC20InvalidSpender-address-}[`++ERC20InvalidSpender(spender)++`]
+* `++ERC20InsufficientBalance(sender, balance, needed)++`
+* `++ERC20InvalidSender(sender)++`
+* `++ERC20InvalidReceiver(receiver)++`
+* `++ERC20InsufficientAllowance(spender, allowance, needed)++`
+* `++ERC20InvalidApprover(approver)++`
+* `++ERC20InvalidSpender(spender)++`
 
 [.contract-subindex-inherited]
 .IERC20Metadata
@@ -395,7 +358,7 @@ argument. Similarly, the account will be unblocked again if
 [.contract-index]
 .Internal Variables
 --
-* {xref-ERC20Blocklist-_blocked-mapping-address----bool-}[`++mapping(address &#x3D;&gt; bool)  _blocked++`]
+* `++mapping(address &#x3D;&gt; bool)  _blocked++`
 
 [.contract-subindex-inherited]
 .ERC20
@@ -492,33 +455,33 @@ data. This function can call external oracles or use any local storage.
 [.contract-index]
 .Functions
 --
-* {xref-ERC20Collateral-constructor-uint48-}[`++constructor(liveness_)++`]
-* {xref-ERC20Collateral-liveness--}[`++liveness()++`]
-* {xref-ERC20Collateral-clock--}[`++clock()++`]
-* {xref-ERC20Collateral-CLOCK_MODE--}[`++CLOCK_MODE()++`]
-* {xref-ERC20Collateral-collateral--}[`++collateral()++`]
-* {xref-ERC20Collateral-_update-address-address-uint256-}[`++_update(from, to, value)++`]
+* `++constructor(liveness_)++`
+* `++liveness()++`
+* `++clock()++`
+* `++CLOCK_MODE()++`
+* `++collateral()++`
+* `++_update(from, to, value)++`
 
 [.contract-subindex-inherited]
 .IERC6372
 
 [.contract-subindex-inherited]
 .ERC20
-* {xref-ERC20-name--}[`++name()++`]
-* {xref-ERC20-symbol--}[`++symbol()++`]
-* {xref-ERC20-decimals--}[`++decimals()++`]
-* {xref-ERC20-totalSupply--}[`++totalSupply()++`]
-* {xref-ERC20-balanceOf-address-}[`++balanceOf(account)++`]
-* {xref-ERC20-transfer-address-uint256-}[`++transfer(to, value)++`]
-* {xref-ERC20-allowance-address-address-}[`++allowance(owner, spender)++`]
-* {xref-ERC20-approve-address-uint256-}[`++approve(spender, value)++`]
-* {xref-ERC20-transferFrom-address-address-uint256-}[`++transferFrom(from, to, value)++`]
-* {xref-ERC20-_transfer-address-address-uint256-}[`++_transfer(from, to, value)++`]
-* {xref-ERC20-_mint-address-uint256-}[`++_mint(account, value)++`]
-* {xref-ERC20-_burn-address-uint256-}[`++_burn(account, value)++`]
-* {xref-ERC20-_approve-address-address-uint256-}[`++_approve(owner, spender, value)++`]
-* {xref-ERC20-_approve-address-address-uint256-bool-}[`++_approve(owner, spender, value, emitEvent)++`]
-* {xref-ERC20-_spendAllowance-address-address-uint256-}[`++_spendAllowance(owner, spender, value)++`]
+* `++name()++`
+* `++symbol()++`
+* `++decimals()++`
+* `++totalSupply()++`
+* `++balanceOf(account)++`
+* `++transfer(to, value)++`
+* `++allowance(owner, spender)++`
+* `++approve(spender, value)++`
+* `++transferFrom(from, to, value)++`
+* `++_transfer(from, to, value)++`
+* `++_mint(account, value)++`
+* `++_burn(account, value)++`
+* `++_approve(owner, spender, value)++`
+* `++_approve(owner, spender, value, emitEvent)++`
+* `++_spendAllowance(owner, spender, value)++`
 
 [.contract-subindex-inherited]
 .IERC20Errors
@@ -549,16 +512,16 @@ data. This function can call external oracles or use any local storage.
 
 [.contract-subindex-inherited]
 .IERC20
-* {xref-IERC20-Transfer-address-address-uint256-}[`++Transfer(from, to, value)++`]
-* {xref-IERC20-Approval-address-address-uint256-}[`++Approval(owner, spender, value)++`]
+* `++Transfer(from, to, value)++`
+* `++Approval(owner, spender, value)++`
 
 --
 
 [.contract-index]
 .Errors
 --
-* {xref-ERC20Collateral-ERC20ExceededSupply-uint256-uint256-}[`++ERC20ExceededSupply(increasedSupply, cap)++`]
-* {xref-ERC20Collateral-ERC20ExpiredCollateral-uint48-uint48-}[`++ERC20ExpiredCollateral(timestamp, expiration)++`]
+* `++ERC20ExceededSupply(increasedSupply, cap)++`
+* `++ERC20ExpiredCollateral(timestamp, expiration)++`
 
 [.contract-subindex-inherited]
 .IERC6372
@@ -568,12 +531,12 @@ data. This function can call external oracles or use any local storage.
 
 [.contract-subindex-inherited]
 .IERC20Errors
-* {xref-IERC20Errors-ERC20InsufficientBalance-address-uint256-uint256-}[`++ERC20InsufficientBalance(sender, balance, needed)++`]
-* {xref-IERC20Errors-ERC20InvalidSender-address-}[`++ERC20InvalidSender(sender)++`]
-* {xref-IERC20Errors-ERC20InvalidReceiver-address-}[`++ERC20InvalidReceiver(receiver)++`]
-* {xref-IERC20Errors-ERC20InsufficientAllowance-address-uint256-uint256-}[`++ERC20InsufficientAllowance(spender, allowance, needed)++`]
-* {xref-IERC20Errors-ERC20InvalidApprover-address-}[`++ERC20InvalidApprover(approver)++`]
-* {xref-IERC20Errors-ERC20InvalidSpender-address-}[`++ERC20InvalidSpender(spender)++`]
+* `++ERC20InsufficientBalance(sender, balance, needed)++`
+* `++ERC20InvalidSender(sender)++`
+* `++ERC20InvalidReceiver(receiver)++`
+* `++ERC20InsufficientAllowance(spender, allowance, needed)++`
+* `++ERC20InvalidApprover(approver)++`
+* `++ERC20InvalidSpender(spender)++`
 
 [.contract-subindex-inherited]
 .IERC20Metadata
@@ -657,56 +620,56 @@ ERC-4626 vault with entry/exit fees expressed in https://en.wikipedia.org/wiki/B
 [.contract-index]
 .Functions
 --
-* {xref-ERC4626Fees-previewDeposit-uint256-}[`++previewDeposit(assets)++`]
-* {xref-ERC4626Fees-previewMint-uint256-}[`++previewMint(shares)++`]
-* {xref-ERC4626Fees-previewWithdraw-uint256-}[`++previewWithdraw(assets)++`]
-* {xref-ERC4626Fees-previewRedeem-uint256-}[`++previewRedeem(shares)++`]
-* {xref-ERC4626Fees-_deposit-address-address-uint256-uint256-}[`++_deposit(caller, receiver, assets, shares)++`]
-* {xref-ERC4626Fees-_withdraw-address-address-address-uint256-uint256-}[`++_withdraw(caller, receiver, owner, assets, shares)++`]
-* {xref-ERC4626Fees-_entryFeeBasisPoints--}[`++_entryFeeBasisPoints()++`]
-* {xref-ERC4626Fees-_exitFeeBasisPoints--}[`++_exitFeeBasisPoints()++`]
-* {xref-ERC4626Fees-_entryFeeRecipient--}[`++_entryFeeRecipient()++`]
-* {xref-ERC4626Fees-_exitFeeRecipient--}[`++_exitFeeRecipient()++`]
+* `++previewDeposit(assets)++`
+* `++previewMint(shares)++`
+* `++previewWithdraw(assets)++`
+* `++previewRedeem(shares)++`
+* `++_deposit(caller, receiver, assets, shares)++`
+* `++_withdraw(caller, receiver, owner, assets, shares)++`
+* `++_entryFeeBasisPoints()++`
+* `++_exitFeeBasisPoints()++`
+* `++_entryFeeRecipient()++`
+* `++_exitFeeRecipient()++`
 
 [.contract-subindex-inherited]
 .ERC4626
-* {xref-ERC4626-decimals--}[`++decimals()++`]
-* {xref-ERC4626-asset--}[`++asset()++`]
-* {xref-ERC4626-totalAssets--}[`++totalAssets()++`]
-* {xref-ERC4626-convertToShares-uint256-}[`++convertToShares(assets)++`]
-* {xref-ERC4626-convertToAssets-uint256-}[`++convertToAssets(shares)++`]
-* {xref-ERC4626-maxDeposit-address-}[`++maxDeposit()++`]
-* {xref-ERC4626-maxMint-address-}[`++maxMint()++`]
-* {xref-ERC4626-maxWithdraw-address-}[`++maxWithdraw(owner)++`]
-* {xref-ERC4626-maxRedeem-address-}[`++maxRedeem(owner)++`]
-* {xref-ERC4626-deposit-uint256-address-}[`++deposit(assets, receiver)++`]
-* {xref-ERC4626-mint-uint256-address-}[`++mint(shares, receiver)++`]
-* {xref-ERC4626-withdraw-uint256-address-address-}[`++withdraw(assets, receiver, owner)++`]
-* {xref-ERC4626-redeem-uint256-address-address-}[`++redeem(shares, receiver, owner)++`]
-* {xref-ERC4626-_convertToShares-uint256-enum-Math-Rounding-}[`++_convertToShares(assets, rounding)++`]
-* {xref-ERC4626-_convertToAssets-uint256-enum-Math-Rounding-}[`++_convertToAssets(shares, rounding)++`]
-* {xref-ERC4626-_decimalsOffset--}[`++_decimalsOffset()++`]
+* `++decimals()++`
+* `++asset()++`
+* `++totalAssets()++`
+* `++convertToShares(assets)++`
+* `++convertToAssets(shares)++`
+* `++maxDeposit()++`
+* `++maxMint()++`
+* `++maxWithdraw(owner)++`
+* `++maxRedeem(owner)++`
+* `++deposit(assets, receiver)++`
+* `++mint(shares, receiver)++`
+* `++withdraw(assets, receiver, owner)++`
+* `++redeem(shares, receiver, owner)++`
+* `++_convertToShares(assets, rounding)++`
+* `++_convertToAssets(shares, rounding)++`
+* `++_decimalsOffset()++`
 
 [.contract-subindex-inherited]
 .IERC4626
 
 [.contract-subindex-inherited]
 .ERC20
-* {xref-ERC20-name--}[`++name()++`]
-* {xref-ERC20-symbol--}[`++symbol()++`]
-* {xref-ERC20-totalSupply--}[`++totalSupply()++`]
-* {xref-ERC20-balanceOf-address-}[`++balanceOf(account)++`]
-* {xref-ERC20-transfer-address-uint256-}[`++transfer(to, value)++`]
-* {xref-ERC20-allowance-address-address-}[`++allowance(owner, spender)++`]
-* {xref-ERC20-approve-address-uint256-}[`++approve(spender, value)++`]
-* {xref-ERC20-transferFrom-address-address-uint256-}[`++transferFrom(from, to, value)++`]
-* {xref-ERC20-_transfer-address-address-uint256-}[`++_transfer(from, to, value)++`]
-* {xref-ERC20-_update-address-address-uint256-}[`++_update(from, to, value)++`]
-* {xref-ERC20-_mint-address-uint256-}[`++_mint(account, value)++`]
-* {xref-ERC20-_burn-address-uint256-}[`++_burn(account, value)++`]
-* {xref-ERC20-_approve-address-address-uint256-}[`++_approve(owner, spender, value)++`]
-* {xref-ERC20-_approve-address-address-uint256-bool-}[`++_approve(owner, spender, value, emitEvent)++`]
-* {xref-ERC20-_spendAllowance-address-address-uint256-}[`++_spendAllowance(owner, spender, value)++`]
+* `++name()++`
+* `++symbol()++`
+* `++totalSupply()++`
+* `++balanceOf(account)++`
+* `++transfer(to, value)++`
+* `++allowance(owner, spender)++`
+* `++approve(spender, value)++`
+* `++transferFrom(from, to, value)++`
+* `++_transfer(from, to, value)++`
+* `++_update(from, to, value)++`
+* `++_mint(account, value)++`
+* `++_burn(account, value)++`
+* `++_approve(owner, spender, value)++`
+* `++_approve(owner, spender, value, emitEvent)++`
+* `++_spendAllowance(owner, spender, value)++`
 
 [.contract-subindex-inherited]
 .IERC20Errors
@@ -728,8 +691,8 @@ ERC-4626 vault with entry/exit fees expressed in https://en.wikipedia.org/wiki/B
 
 [.contract-subindex-inherited]
 .IERC4626
-* {xref-IERC4626-Deposit-address-address-uint256-uint256-}[`++Deposit(sender, owner, assets, shares)++`]
-* {xref-IERC4626-Withdraw-address-address-address-uint256-uint256-}[`++Withdraw(sender, receiver, owner, assets, shares)++`]
+* `++Deposit(sender, owner, assets, shares)++`
+* `++Withdraw(sender, receiver, owner, assets, shares)++`
 
 [.contract-subindex-inherited]
 .ERC20
@@ -742,8 +705,8 @@ ERC-4626 vault with entry/exit fees expressed in https://en.wikipedia.org/wiki/B
 
 [.contract-subindex-inherited]
 .IERC20
-* {xref-IERC20-Transfer-address-address-uint256-}[`++Transfer(from, to, value)++`]
-* {xref-IERC20-Approval-address-address-uint256-}[`++Approval(owner, spender, value)++`]
+* `++Transfer(from, to, value)++`
+* `++Approval(owner, spender, value)++`
 
 --
 
@@ -753,10 +716,10 @@ ERC-4626 vault with entry/exit fees expressed in https://en.wikipedia.org/wiki/B
 
 [.contract-subindex-inherited]
 .ERC4626
-* {xref-ERC4626-ERC4626ExceededMaxDeposit-address-uint256-uint256-}[`++ERC4626ExceededMaxDeposit(receiver, assets, max)++`]
-* {xref-ERC4626-ERC4626ExceededMaxMint-address-uint256-uint256-}[`++ERC4626ExceededMaxMint(receiver, shares, max)++`]
-* {xref-ERC4626-ERC4626ExceededMaxWithdraw-address-uint256-uint256-}[`++ERC4626ExceededMaxWithdraw(owner, assets, max)++`]
-* {xref-ERC4626-ERC4626ExceededMaxRedeem-address-uint256-uint256-}[`++ERC4626ExceededMaxRedeem(owner, shares, max)++`]
+* `++ERC4626ExceededMaxDeposit(receiver, assets, max)++`
+* `++ERC4626ExceededMaxMint(receiver, shares, max)++`
+* `++ERC4626ExceededMaxWithdraw(owner, assets, max)++`
+* `++ERC4626ExceededMaxRedeem(owner, shares, max)++`
 
 [.contract-subindex-inherited]
 .IERC4626
@@ -766,12 +729,12 @@ ERC-4626 vault with entry/exit fees expressed in https://en.wikipedia.org/wiki/B
 
 [.contract-subindex-inherited]
 .IERC20Errors
-* {xref-IERC20Errors-ERC20InsufficientBalance-address-uint256-uint256-}[`++ERC20InsufficientBalance(sender, balance, needed)++`]
-* {xref-IERC20Errors-ERC20InvalidSender-address-}[`++ERC20InvalidSender(sender)++`]
-* {xref-IERC20Errors-ERC20InvalidReceiver-address-}[`++ERC20InvalidReceiver(receiver)++`]
-* {xref-IERC20Errors-ERC20InsufficientAllowance-address-uint256-uint256-}[`++ERC20InsufficientAllowance(spender, allowance, needed)++`]
-* {xref-IERC20Errors-ERC20InvalidApprover-address-}[`++ERC20InvalidApprover(approver)++`]
-* {xref-IERC20Errors-ERC20InvalidSpender-address-}[`++ERC20InvalidSpender(spender)++`]
+* `++ERC20InsufficientBalance(sender, balance, needed)++`
+* `++ERC20InvalidSender(sender)++`
+* `++ERC20InvalidReceiver(receiver)++`
+* `++ERC20InsufficientAllowance(spender, allowance, needed)++`
+* `++ERC20InvalidApprover(approver)++`
+* `++ERC20InvalidSpender(spender)++`
 
 [.contract-subindex-inherited]
 .IERC20Metadata

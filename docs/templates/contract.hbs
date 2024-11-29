@@ -18,7 +18,7 @@ import "@openzeppelin/{{__item_context.file.absolutePath}}";
 .Modifiers
 --
 {{#each modifiers}}
-* {xref-{{anchor~}} }[`++{{name}}({{names params}})++`]
+* `++{{name}}({{names params}})++`
 {{/each}}
 --
 {{/if}}
@@ -33,7 +33,7 @@ import "@openzeppelin/{{__item_context.file.absolutePath}}";
 .{{contract.name}}
 {{/unless}}
 {{#each functions}}
-* {xref-{{anchor~}} }[`++{{name}}({{names params}})++`]
+* `++{{name}}({{names params}})++`
 {{/each}}
 
 {{/each}}
@@ -50,7 +50,7 @@ import "@openzeppelin/{{__item_context.file.absolutePath}}";
 .{{name}}
 {{/unless}}
 {{#each events}}
-* {xref-{{anchor~}} }[`++{{name}}({{names params}})++`]
+* `++{{name}}({{names params}})++`
 {{/each}}
 
 {{/each}}
@@ -67,7 +67,7 @@ import "@openzeppelin/{{__item_context.file.absolutePath}}";
 .{{name}}
 {{/unless}}
 {{#each errors}}
-* {xref-{{anchor~}} }[`++{{name}}({{names params}})++`]
+* `++{{name}}({{names params}})++`
 {{/each}}
 
 {{/each}}
@@ -84,7 +84,7 @@ import "@openzeppelin/{{__item_context.file.absolutePath}}";
 .{{name}}
 {{/unless}}
 {{#each internal-variables}}
-* {xref-{{anchor~}} }[`++{{typeDescriptions.typeString}} {{#if constant}}constant{{/if}} {{name}}++`]
+* `++{{typeDescriptions.typeString}} {{#if constant}}constant{{/if}} {{name}}++`
 {{/each}}
 
 {{/each}}

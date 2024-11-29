@@ -32,7 +32,8 @@ if (pkgVersion.includes('-') && !pkgVersion.includes('.0.0-')) {
 }
 
 const current = match.groups;
-const docsBranch = `docs-v${current?.major ?? pkgVersion.split('.')[0]}.x`;
+const major = current?.major ?? pkgVersion.split('.')[0];
+const docsBranch = `docs-v${major}.x`;
 
 // Fetch remotes and find the docs branch if it exists
 run('git fetch --all --no-tags');
@@ -52,7 +53,7 @@ if (!matchingDocsBranches) {
   }
   const publishedVersion = JSON.parse(read(`git show ${publishedRef}:package.json`)).version;
   const publishedMinor = publishedVersion.match(/\d+\.(?<minor>\d+)\.\d+/).groups.minor;
-  if (current.minor < publishedMinor) {
+  if (major < publishedMinor) {
     console.error('Refusing to update docs: newer version is published');
     process.exit(0);
   }

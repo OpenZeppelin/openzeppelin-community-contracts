@@ -1,28 +1,5 @@
 :github-icon: pass:[<svg class="icon"><use href="#github-icon"/></svg>]
 :AccessManagerLight: pass:normal[xref:access.adoc#AccessManagerLight[`AccessManagerLight`]]
-:xref-AccessManagerLight-onlyRole-Masks-Mask-: xref:access.adoc#AccessManagerLight-onlyRole-Masks-Mask-
-:xref-AccessManagerLight-constructor-address-: xref:access.adoc#AccessManagerLight-constructor-address-
-:xref-AccessManagerLight-canCall-address-address-bytes4-: xref:access.adoc#AccessManagerLight-canCall-address-address-bytes4-
-:xref-AccessManagerLight-getGroups-address-: xref:access.adoc#AccessManagerLight-getGroups-address-
-:xref-AccessManagerLight-getGroupAdmins-uint8-: xref:access.adoc#AccessManagerLight-getGroupAdmins-uint8-
-:xref-AccessManagerLight-getRequirements-address-bytes4-: xref:access.adoc#AccessManagerLight-getRequirements-address-bytes4-
-:xref-AccessManagerLight-addGroup-address-uint8-: xref:access.adoc#AccessManagerLight-addGroup-address-uint8-
-:xref-AccessManagerLight-remGroup-address-uint8-: xref:access.adoc#AccessManagerLight-remGroup-address-uint8-
-:xref-AccessManagerLight-_addGroup-address-uint8-: xref:access.adoc#AccessManagerLight-_addGroup-address-uint8-
-:xref-AccessManagerLight-_remGroup-address-uint8-: xref:access.adoc#AccessManagerLight-_remGroup-address-uint8-
-:xref-AccessManagerLight-setGroupAdmins-uint8-uint8---: xref:access.adoc#AccessManagerLight-setGroupAdmins-uint8-uint8---
-:xref-AccessManagerLight-_setGroupAdmins-uint8-Masks-Mask-: xref:access.adoc#AccessManagerLight-_setGroupAdmins-uint8-Masks-Mask-
-:xref-AccessManagerLight-setRequirements-address-bytes4---uint8---: xref:access.adoc#AccessManagerLight-setRequirements-address-bytes4---uint8---
-:xref-AccessManagerLight-_setRequirements-address-bytes4-Masks-Mask-: xref:access.adoc#AccessManagerLight-_setRequirements-address-bytes4-Masks-Mask-
-:xref-AccessManagerLight-ADMIN_ROLE-uint8: xref:access.adoc#AccessManagerLight-ADMIN_ROLE-uint8
-:xref-AccessManagerLight-PUBLIC_ROLE-uint8: xref:access.adoc#AccessManagerLight-PUBLIC_ROLE-uint8
-:xref-AccessManagerLight-ADMIN_MASK-Masks-Mask: xref:access.adoc#AccessManagerLight-ADMIN_MASK-Masks-Mask
-:xref-AccessManagerLight-PUBLIC_MASK-Masks-Mask: xref:access.adoc#AccessManagerLight-PUBLIC_MASK-Masks-Mask
-:xref-AccessManagerLight-GroupAdded-address-uint8-: xref:access.adoc#AccessManagerLight-GroupAdded-address-uint8-
-:xref-AccessManagerLight-GroupRemoved-address-uint8-: xref:access.adoc#AccessManagerLight-GroupRemoved-address-uint8-
-:xref-AccessManagerLight-GroupAdmins-uint8-Masks-Mask-: xref:access.adoc#AccessManagerLight-GroupAdmins-uint8-Masks-Mask-
-:xref-AccessManagerLight-RequirementsSet-address-bytes4-Masks-Mask-: xref:access.adoc#AccessManagerLight-RequirementsSet-address-bytes4-Masks-Mask-
-:xref-AccessManagerLight-MissingPermissions-address-Masks-Mask-Masks-Mask-: xref:access.adoc#AccessManagerLight-MissingPermissions-address-Masks-Mask-Masks-Mask-
 = Utilities
 
 [.readme-notice]
@@ -80,29 +57,29 @@ manage the roles of other users.
 [.contract-index]
 .Modifiers
 --
-* {xref-AccessManagerLight-onlyRole-Masks-Mask-}[`++onlyRole(requirement)++`]
+* `++onlyRole(requirement)++`
 --
 
 [.contract-index]
 .Functions
 --
-* {xref-AccessManagerLight-constructor-address-}[`++constructor(admin)++`]
-* {xref-AccessManagerLight-canCall-address-address-bytes4-}[`++canCall(caller, target, selector)++`]
-* {xref-AccessManagerLight-getGroups-address-}[`++getGroups(user)++`]
-* {xref-AccessManagerLight-getGroupAdmins-uint8-}[`++getGroupAdmins(group)++`]
-* {xref-AccessManagerLight-getRequirements-address-bytes4-}[`++getRequirements(target, selector)++`]
-* {xref-AccessManagerLight-addGroup-address-uint8-}[`++addGroup(user, group)++`]
-* {xref-AccessManagerLight-remGroup-address-uint8-}[`++remGroup(user, group)++`]
-* {xref-AccessManagerLight-_addGroup-address-uint8-}[`++_addGroup(user, group)++`]
-* {xref-AccessManagerLight-_remGroup-address-uint8-}[`++_remGroup(user, group)++`]
-* {xref-AccessManagerLight-setGroupAdmins-uint8-uint8---}[`++setGroupAdmins(group, admins)++`]
-* {xref-AccessManagerLight-_setGroupAdmins-uint8-Masks-Mask-}[`++_setGroupAdmins(group, admins)++`]
-* {xref-AccessManagerLight-setRequirements-address-bytes4---uint8---}[`++setRequirements(target, selectors, groups)++`]
-* {xref-AccessManagerLight-_setRequirements-address-bytes4-Masks-Mask-}[`++_setRequirements(target, selector, groups)++`]
-* {xref-AccessManagerLight-ADMIN_ROLE-uint8}[`++ADMIN_ROLE()++`]
-* {xref-AccessManagerLight-PUBLIC_ROLE-uint8}[`++PUBLIC_ROLE()++`]
-* {xref-AccessManagerLight-ADMIN_MASK-Masks-Mask}[`++ADMIN_MASK()++`]
-* {xref-AccessManagerLight-PUBLIC_MASK-Masks-Mask}[`++PUBLIC_MASK()++`]
+* `++constructor(admin)++`
+* `++canCall(caller, target, selector)++`
+* `++getGroups(user)++`
+* `++getGroupAdmins(group)++`
+* `++getRequirements(target, selector)++`
+* `++addGroup(user, group)++`
+* `++remGroup(user, group)++`
+* `++_addGroup(user, group)++`
+* `++_remGroup(user, group)++`
+* `++setGroupAdmins(group, admins)++`
+* `++_setGroupAdmins(group, admins)++`
+* `++setRequirements(target, selectors, groups)++`
+* `++_setRequirements(target, selector, groups)++`
+* `++ADMIN_ROLE()++`
+* `++PUBLIC_ROLE()++`
+* `++ADMIN_MASK()++`
+* `++PUBLIC_MASK()++`
 
 [.contract-subindex-inherited]
 .IAuthority
@@ -112,10 +89,10 @@ manage the roles of other users.
 [.contract-index]
 .Events
 --
-* {xref-AccessManagerLight-GroupAdded-address-uint8-}[`++GroupAdded(user, group)++`]
-* {xref-AccessManagerLight-GroupRemoved-address-uint8-}[`++GroupRemoved(user, group)++`]
-* {xref-AccessManagerLight-GroupAdmins-uint8-Masks-Mask-}[`++GroupAdmins(group, admins)++`]
-* {xref-AccessManagerLight-RequirementsSet-address-bytes4-Masks-Mask-}[`++RequirementsSet(target, selector, groups)++`]
+* `++GroupAdded(user, group)++`
+* `++GroupRemoved(user, group)++`
+* `++GroupAdmins(group, admins)++`
+* `++RequirementsSet(target, selector, groups)++`
 
 [.contract-subindex-inherited]
 .IAuthority
@@ -125,7 +102,7 @@ manage the roles of other users.
 [.contract-index]
 .Errors
 --
-* {xref-AccessManagerLight-MissingPermissions-address-Masks-Mask-Masks-Mask-}[`++MissingPermissions(user, permissions, requirement)++`]
+* `++MissingPermissions(user, permissions, requirement)++`
 
 [.contract-subindex-inherited]
 .IAuthority

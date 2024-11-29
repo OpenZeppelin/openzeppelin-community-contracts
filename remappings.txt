@@ -1,3 +1,4 @@
 @openzeppelin/contracts/=lib/@openzeppelin-contracts/contracts/
 @openzeppelin/contracts-upgradeable/=lib/@openzeppelin-contracts-upgradeable/contracts/
 @openzeppelin/community-contracts/=contracts/
+@axelar-network/axelar-gmp-sdk-solidity/=node_modules/@axelar-network/axelar-gmp-sdk-solidity/
