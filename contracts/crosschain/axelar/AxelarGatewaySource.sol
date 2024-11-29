@@ -2,9 +2,9 @@
 
 pragma solidity ^0.8.27;
 
-import {CAIP2} from "@openzeppelin/contracts@master/utils/CAIP2.sol";
-import {CAIP10} from "@openzeppelin/contracts@master/utils/CAIP10.sol";
-import {Strings} from "@openzeppelin/contracts@master/utils/Strings.sol";
+import {CAIP2} from "@openzeppelin/contracts/utils/CAIP2.sol";
+import {CAIP10} from "@openzeppelin/contracts/utils/CAIP10.sol";
+import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 import {AxelarGatewayBase} from "./AxelarGatewayBase.sol";
 import {IERC7786GatewaySource} from "../interfaces/draft-IERC7786.sol";
 

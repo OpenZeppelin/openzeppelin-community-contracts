@@ -2,10 +2,10 @@
 
 pragma solidity ^0.8.24;
 
-import {BitMaps} from "@openzeppelin/contracts@master/utils/structs/BitMaps.sol";
-import {Strings} from "@openzeppelin/contracts@master/utils/Strings.sol";
-import {CAIP2} from "@openzeppelin/contracts@master/utils/CAIP2.sol";
-import {CAIP10} from "@openzeppelin/contracts@master/utils/CAIP10.sol";
+import {BitMaps} from "@openzeppelin/contracts/utils/structs/BitMaps.sol";
+import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
+import {CAIP2} from "@openzeppelin/contracts/utils/CAIP2.sol";
+import {CAIP10} from "@openzeppelin/contracts/utils/CAIP10.sol";
 import {IERC7786GatewaySource, IERC7786GatewayDestinationPassive, IERC7786Receiver} from "../interfaces/draft-IERC7786.sol";
 
 contract ERC7786GatewayMock is IERC7786GatewaySource, IERC7786GatewayDestinationPassive {
