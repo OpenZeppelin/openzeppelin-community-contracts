@@ -1,0 +1,67 @@
+:github-icon: pass:[<svg class="icon"><use href="#github-icon"/></svg>]
+:HybridProxy: pass:normal[xref:proxy.adoc#HybridProxy[`HybridProxy`]]
+:xref-HybridProxy-constructor-address-bytes-: xref:proxy.adoc#HybridProxy-constructor-address-bytes-
+:xref-HybridProxy-_implementation--: xref:proxy.adoc#HybridProxy-_implementation--
+= Utilities
+
+[.readme-notice]
+NOTE: This document is better viewed at https://docs.openzeppelin.com/community-contracts/proxy
+
+Variants of proxy patterns, which are contracts that allow to forward a call to an implementation contract by using `delegatecall`. This contracts include:
+
+ * {HybridProxy}: An ERC-1967 proxy that uses the implementation slot as a beacon in a way that a user can upgrade to an implementation of their choice.
+
+== General
+
+:constructor: pass:normal[xref:#HybridProxy-constructor-address-bytes-[`++constructor++`]]
+:_implementation: pass:normal[xref:#HybridProxy-_implementation--[`++_implementation++`]]
+
+[.contract]
+[[HybridProxy]]
+=== `++HybridProxy++` link:https://github.com/OpenZeppelin/openzeppelin-contracts/blob/v0.0.1/contracts/proxy/HybridProxy.sol[{github-icon},role=heading-link]
+
+[.hljs-theme-light.nopadding]
+```solidity
+import "@openzeppelin/contracts/proxy/HybridProxy.sol";
+```
+
+A version of an ERC-1967 proxy that uses the address stored in the implementation slot as a beacon.
+
+The design allows to set an initial beacon that the contract may quit by upgrading to its own implementation
+afterwards.
+
+WARNING: The fallback mechanism relies on the implementation not to define the {IBeacon-implementation} function.
+Consider that if your implementation has this function, it'll be assumed as the beacon address, meaning that
+the returned address will be used as this proxy's implementation.
+
+[.contract-index]
+.Functions
+--
+* {xref-HybridProxy-constructor-address-bytes-}[`++constructor(implementation, data)++`]
+* {xref-HybridProxy-_implementation--}[`++_implementation()++`]
+
+[.contract-subindex-inherited]
+.Proxy
+* {xref-Proxy-_delegate-address-}[`++_delegate(implementation)++`]
+* {xref-Proxy-_fallback--}[`++_fallback()++`]
+* {xref-Proxy-fallback--}[`++fallback()++`]
+
+--
+
+[.contract-item]
+[[HybridProxy-constructor-address-bytes-]]
+==== `[.contract-item-name]#++constructor++#++(address implementation, bytes data)++` [.item-kind]#public#
+
+Initializes the proxy with an initial implementation. If data is present, it will be used to initialize the
+implementation using a delegate call.
+
+[.contract-item]
+[[HybridProxy-_implementation--]]
+==== `[.contract-item-name]#++_implementation++#++() → address++` [.item-kind]#internal#
+
+Returns the current implementation address according to ERC-1967's implementation slot.
+
+IMPORTANT: The way this function identifies whether the implementation is a beacon, is by checking
+if it implements the {IBeacon-implementation} function. Consider that an actual implementation could
+define this function, mistakenly identifying it as a beacon.
+

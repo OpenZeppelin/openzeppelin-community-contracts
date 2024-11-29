@@ -1,0 +1,21 @@
+= Utilities
+
+[.readme-notice]
+NOTE: This document is better viewed at https://docs.openzeppelin.com/community-contracts/utils
+
+Miscellaneous contracts and libraries containing utility functions you can use to improve security, work with new data types, or safely use low-level primitives.
+
+ * {Masks}: Library to handle `bytes32` masks.
+ * {ERC7739Utils}: Utilities library that implements a defensive rehashing mechanism to prevent replayability of smart contract signatures based on ERC-7739.
+ * {ERC7739Signer}: An abstract contract to validate signatures following the rehashing scheme from `ERC7739Utils`.
+
+== Cryptography
+
+{{ERC7739Signer}}
+
+{{ERC7739Utils}}
+
+== Libraries
+
+{{Masks}}
+

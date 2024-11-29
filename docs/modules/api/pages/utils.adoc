@@ -1,0 +1,368 @@
+:github-icon: pass:[<svg class="icon"><use href="#github-icon"/></svg>]
+:Masks: pass:normal[xref:utils.adoc#Masks[`Masks`]]
+:ERC7739Utils: pass:normal[xref:utils.adoc#ERC7739Utils[`ERC7739Utils`]]
+:ERC7739Signer: pass:normal[xref:utils.adoc#ERC7739Signer[`ERC7739Signer`]]
+:ERC7739Utils: pass:normal[xref:utils.adoc#ERC7739Utils[`ERC7739Utils`]]
+:xref-ERC7739Signer-isValidSignature-bytes32-bytes-: xref:utils.adoc#ERC7739Signer-isValidSignature-bytes32-bytes-
+:xref-ERC7739Signer-_isValidSignature-bytes32-bytes-: xref:utils.adoc#ERC7739Signer-_isValidSignature-bytes32-bytes-
+:xref-ERC7739Signer-_isValidNestedPersonalSignSignature-bytes32-bytes-: xref:utils.adoc#ERC7739Signer-_isValidNestedPersonalSignSignature-bytes32-bytes-
+:xref-ERC7739Signer-_isValidNestedTypedDataSignature-bytes32-bytes-: xref:utils.adoc#ERC7739Signer-_isValidNestedTypedDataSignature-bytes32-bytes-
+:xref-ERC7739Signer-_validateSignature-bytes32-bytes-: xref:utils.adoc#ERC7739Signer-_validateSignature-bytes32-bytes-
+:xref-ERC7739Utils-encodeTypedDataSig-bytes-bytes32-bytes32-string-: xref:utils.adoc#ERC7739Utils-encodeTypedDataSig-bytes-bytes32-bytes32-string-
+:xref-ERC7739Utils-decodeTypedDataSig-bytes-: xref:utils.adoc#ERC7739Utils-decodeTypedDataSig-bytes-
+:xref-ERC7739Utils-personalSignStructHash-bytes32-: xref:utils.adoc#ERC7739Utils-personalSignStructHash-bytes32-
+:xref-ERC7739Utils-typedDataSignStructHash-string-string-bytes32-bytes-: xref:utils.adoc#ERC7739Utils-typedDataSignStructHash-string-string-bytes32-bytes-
+:xref-ERC7739Utils-typedDataSignStructHash-string-bytes32-bytes-: xref:utils.adoc#ERC7739Utils-typedDataSignStructHash-string-bytes32-bytes-
+:xref-ERC7739Utils-typedDataSignTypehash-string-string-: xref:utils.adoc#ERC7739Utils-typedDataSignTypehash-string-string-
+:xref-ERC7739Utils-decodeContentsDescr-string-: xref:utils.adoc#ERC7739Utils-decodeContentsDescr-string-
+:xref-ERC7739Utils-InvalidContentsType--: xref:utils.adoc#ERC7739Utils-InvalidContentsType--
+:xref-Masks-toMask-uint8-: xref:utils.adoc#Masks-toMask-uint8-
+:xref-Masks-toMask-uint8---: xref:utils.adoc#Masks-toMask-uint8---
+:xref-Masks-get-Masks-Mask-uint8-: xref:utils.adoc#Masks-get-Masks-Mask-uint8-
+:xref-Masks-isEmpty-Masks-Mask-: xref:utils.adoc#Masks-isEmpty-Masks-Mask-
+:xref-Masks-complement-Masks-Mask-: xref:utils.adoc#Masks-complement-Masks-Mask-
+:xref-Masks-union-Masks-Mask-Masks-Mask-: xref:utils.adoc#Masks-union-Masks-Mask-Masks-Mask-
+:xref-Masks-intersection-Masks-Mask-Masks-Mask-: xref:utils.adoc#Masks-intersection-Masks-Mask-Masks-Mask-
+:xref-Masks-difference-Masks-Mask-Masks-Mask-: xref:utils.adoc#Masks-difference-Masks-Mask-Masks-Mask-
+:xref-Masks-symmetric_difference-Masks-Mask-Masks-Mask-: xref:utils.adoc#Masks-symmetric_difference-Masks-Mask-Masks-Mask-
+= Utilities
+
+[.readme-notice]
+NOTE: This document is better viewed at https://docs.openzeppelin.com/community-contracts/utils
+
+Miscellaneous contracts and libraries containing utility functions you can use to improve security, work with new data types, or safely use low-level primitives.
+
+ * {Masks}: Library to handle `bytes32` masks.
+ * {ERC7739Utils}: Utilities library that implements a defensive rehashing mechanism to prevent replayability of smart contract signatures based on ERC-7739.
+ * {ERC7739Signer}: An abstract contract to validate signatures following the rehashing scheme from `ERC7739Utils`.
+
+== Cryptography
+
+:isValidSignature: pass:normal[xref:#ERC7739Signer-isValidSignature-bytes32-bytes-[`++isValidSignature++`]]
+:_isValidSignature: pass:normal[xref:#ERC7739Signer-_isValidSignature-bytes32-bytes-[`++_isValidSignature++`]]
+:_isValidNestedPersonalSignSignature: pass:normal[xref:#ERC7739Signer-_isValidNestedPersonalSignSignature-bytes32-bytes-[`++_isValidNestedPersonalSignSignature++`]]
+:_isValidNestedTypedDataSignature: pass:normal[xref:#ERC7739Signer-_isValidNestedTypedDataSignature-bytes32-bytes-[`++_isValidNestedTypedDataSignature++`]]
+:_validateSignature: pass:normal[xref:#ERC7739Signer-_validateSignature-bytes32-bytes-[`++_validateSignature++`]]
+
+[.contract]
+[[ERC7739Signer]]
+=== `++ERC7739Signer++` link:https://github.com/OpenZeppelin/openzeppelin-contracts/blob/v0.0.1/contracts/utils/cryptography/draft-ERC7739Signer.sol[{github-icon},role=heading-link]
+
+[.hljs-theme-light.nopadding]
+```solidity
+import "@openzeppelin/contracts/utils/cryptography/draft-ERC7739Signer.sol";
+```
+
+Validates signatures wrapping the message hash in a nested EIP712 type. See {ERC7739Utils}.
+
+Linking the signature to the EIP-712 domain separator is a security measure to prevent signature replay across different
+EIP-712 domains (e.g. a single offchain owner of multiple contracts).
+
+This contract requires implementing the {_validateSignature} function, which passes the wrapped message hash,
+which may be either an typed data or a personal sign nested type.
+
+NOTE: {EIP712} uses {ShortStrings} to optimize gas costs for short strings (up to 31 characters).
+Consider that strings longer than that will use storage, which may limit the ability of the signer to
+be used within the ERC-4337 validation phase (due to ERC-7562 storage access rules).
+
+[.contract-index]
+.Functions
+--
+* {xref-ERC7739Signer-isValidSignature-bytes32-bytes-}[`++isValidSignature(hash, signature)++`]
+* {xref-ERC7739Signer-_isValidSignature-bytes32-bytes-}[`++_isValidSignature(hash, signature)++`]
+* {xref-ERC7739Signer-_isValidNestedPersonalSignSignature-bytes32-bytes-}[`++_isValidNestedPersonalSignSignature(hash, signature)++`]
+* {xref-ERC7739Signer-_isValidNestedTypedDataSignature-bytes32-bytes-}[`++_isValidNestedTypedDataSignature(hash, encodedSignature)++`]
+* {xref-ERC7739Signer-_validateSignature-bytes32-bytes-}[`++_validateSignature(hash, signature)++`]
+
+[.contract-subindex-inherited]
+.IERC1271
+
+[.contract-subindex-inherited]
+.EIP712
+* {xref-EIP712-_domainSeparatorV4--}[`++_domainSeparatorV4()++`]
+* {xref-EIP712-_hashTypedDataV4-bytes32-}[`++_hashTypedDataV4(structHash)++`]
+* {xref-EIP712-eip712Domain--}[`++eip712Domain()++`]
+* {xref-EIP712-_EIP712Name--}[`++_EIP712Name()++`]
+* {xref-EIP712-_EIP712Version--}[`++_EIP712Version()++`]
+
+[.contract-subindex-inherited]
+.IERC5267
+
+--
+
+[.contract-index]
+.Events
+--
+
+[.contract-subindex-inherited]
+.IERC1271
+
+[.contract-subindex-inherited]
+.EIP712
+
+[.contract-subindex-inherited]
+.IERC5267
+* {xref-IERC5267-EIP712DomainChanged--}[`++EIP712DomainChanged()++`]
+
+--
+
+[.contract-item]
+[[ERC7739Signer-isValidSignature-bytes32-bytes-]]
+==== `[.contract-item-name]#++isValidSignature++#++(bytes32 hash, bytes signature) → bytes4 result++` [.item-kind]#public#
+
+Attempts validating the signature in a nested EIP-712 type.
+
+A nested EIP-712 type might be presented in 2 different ways:
+
+- As a nested EIP-712 typed data
+- As a _personal_ signature (an EIP-712 mimic of the `eth_personalSign` for a smart contract)
+
+[.contract-item]
+[[ERC7739Signer-_isValidSignature-bytes32-bytes-]]
+==== `[.contract-item-name]#++_isValidSignature++#++(bytes32 hash, bytes signature) → bool++` [.item-kind]#internal#
+
+Internal version of {isValidSignature} that returns a boolean.
+
+[.contract-item]
+[[ERC7739Signer-_isValidNestedPersonalSignSignature-bytes32-bytes-]]
+==== `[.contract-item-name]#++_isValidNestedPersonalSignSignature++#++(bytes32 hash, bytes signature) → bool++` [.item-kind]#internal#
+
+Nested personal signature verification.
+
+[.contract-item]
+[[ERC7739Signer-_isValidNestedTypedDataSignature-bytes32-bytes-]]
+==== `[.contract-item-name]#++_isValidNestedTypedDataSignature++#++(bytes32 hash, bytes encodedSignature) → bool++` [.item-kind]#internal#
+
+Nested EIP-712 typed data verification.
+
+[.contract-item]
+[[ERC7739Signer-_validateSignature-bytes32-bytes-]]
+==== `[.contract-item-name]#++_validateSignature++#++(bytes32 hash, bytes signature) → bool++` [.item-kind]#internal#
+
+Signature validation algorithm.
+
+WARNING: Implementing a signature validation algorithm is a security-sensitive operation as it involves
+cryptographic verification. It is important to review and test thoroughly before deployment. Consider
+using one of the signature verification libraries ({ECDSA}, {P256} or {RSA}).
+
+:InvalidContentsType: pass:normal[xref:#ERC7739Utils-InvalidContentsType--[`++InvalidContentsType++`]]
+:encodeTypedDataSig: pass:normal[xref:#ERC7739Utils-encodeTypedDataSig-bytes-bytes32-bytes32-string-[`++encodeTypedDataSig++`]]
+:decodeTypedDataSig: pass:normal[xref:#ERC7739Utils-decodeTypedDataSig-bytes-[`++decodeTypedDataSig++`]]
+:personalSignStructHash: pass:normal[xref:#ERC7739Utils-personalSignStructHash-bytes32-[`++personalSignStructHash++`]]
+:typedDataSignStructHash: pass:normal[xref:#ERC7739Utils-typedDataSignStructHash-string-string-bytes32-bytes-[`++typedDataSignStructHash++`]]
+:typedDataSignStructHash: pass:normal[xref:#ERC7739Utils-typedDataSignStructHash-string-bytes32-bytes-[`++typedDataSignStructHash++`]]
+:typedDataSignTypehash: pass:normal[xref:#ERC7739Utils-typedDataSignTypehash-string-string-[`++typedDataSignTypehash++`]]
+:decodeContentsDescr: pass:normal[xref:#ERC7739Utils-decodeContentsDescr-string-[`++decodeContentsDescr++`]]
+
+[.contract]
+[[ERC7739Utils]]
+=== `++ERC7739Utils++` link:https://github.com/OpenZeppelin/openzeppelin-contracts/blob/v0.0.1/contracts/utils/cryptography/draft-ERC7739Utils.sol[{github-icon},role=heading-link]
+
+[.hljs-theme-light.nopadding]
+```solidity
+import "@openzeppelin/contracts/utils/cryptography/draft-ERC7739Utils.sol";
+```
+
+Utilities to process https://ercs.ethereum.org/ERCS/erc-7739[ERC-7739] typed data signatures
+that are specific to an EIP-712 domain.
+
+This library provides methods to wrap, unwrap and operate over typed data signatures with a defensive
+rehashing mechanism that includes the application's {EIP712-_domainSeparatorV4} and preserves
+readability of the signed content using an EIP-712 nested approach.
+
+A smart contract domain can validate a signature for a typed data structure in two ways:
+
+- As an application validating a typed data signature. See {toNestedTypedDataHash}.
+- As a smart contract validating a raw message signature. See {toNestedPersonalSignHash}.
+
+NOTE: A provider for a smart contract wallet would need to return this signature as the
+result of a call to `personal_sign` or `eth_signTypedData`, and this may be unsupported by
+API clients that expect a return value of 129 bytes, or specifically the `r,s,v` parameters
+of an {ECDSA} signature, as is for example specified for {EIP712}.
+
+[.contract-index]
+.Functions
+--
+* {xref-ERC7739Utils-encodeTypedDataSig-bytes-bytes32-bytes32-string-}[`++encodeTypedDataSig(signature, appSeparator, contentsHash, contentsDescr)++`]
+* {xref-ERC7739Utils-decodeTypedDataSig-bytes-}[`++decodeTypedDataSig(encodedSignature)++`]
+* {xref-ERC7739Utils-personalSignStructHash-bytes32-}[`++personalSignStructHash(contents)++`]
+* {xref-ERC7739Utils-typedDataSignStructHash-string-string-bytes32-bytes-}[`++typedDataSignStructHash(contentsTypeName, contentsType, contentsHash, domainBytes)++`]
+* {xref-ERC7739Utils-typedDataSignStructHash-string-bytes32-bytes-}[`++typedDataSignStructHash(contentsDescr, contentsHash, domainBytes)++`]
+* {xref-ERC7739Utils-typedDataSignTypehash-string-string-}[`++typedDataSignTypehash(contentsTypeName, contentsType)++`]
+* {xref-ERC7739Utils-decodeContentsDescr-string-}[`++decodeContentsDescr(contentsDescr)++`]
+
+--
+
+[.contract-index]
+.Errors
+--
+* {xref-ERC7739Utils-InvalidContentsType--}[`++InvalidContentsType()++`]
+
+--
+
+[.contract-item]
+[[ERC7739Utils-encodeTypedDataSig-bytes-bytes32-bytes32-string-]]
+==== `[.contract-item-name]#++encodeTypedDataSig++#++(bytes signature, bytes32 appSeparator, bytes32 contentsHash, string contentsDescr) → bytes++` [.item-kind]#internal#
+
+Nest a signature for a given EIP-712 type into a nested signature for the domain of the app.
+
+Counterpart of {decodeTypedDataSig} to extract the original signature and the nested components.
+
+[.contract-item]
+[[ERC7739Utils-decodeTypedDataSig-bytes-]]
+==== `[.contract-item-name]#++decodeTypedDataSig++#++(bytes encodedSignature) → bytes signature, bytes32 appSeparator, bytes32 contentsHash, string contentsDescr++` [.item-kind]#internal#
+
+Parses a nested signature into its components.
+
+Constructed as follows:
+
+`signature ‖ DOMAIN_SEPARATOR ‖ contentsHash ‖ contentsDescr ‖ uint16(contentsDescr.length)`
+
+- `signature` is the original signature for the nested struct hash that includes the "contents" hash
+- `DOMAIN_SEPARATOR` is the EIP-712 {EIP712-_domainSeparatorV4} of the smart contract verifying the signature
+- `contentsHash` is the hash of the underlying data structure or message
+- `contentsDescr` is a descriptor of the "contents" part of the the EIP-712 type of the nested signature
+
+[.contract-item]
+[[ERC7739Utils-personalSignStructHash-bytes32-]]
+==== `[.contract-item-name]#++personalSignStructHash++#++(bytes32 contents) → bytes32++` [.item-kind]#internal#
+
+Nests an `ERC-191` digest into a `PersonalSign` EIP-712 struct, and return the corresponding struct hash.
+This struct hash must be combined with a domain separator, using {MessageHashUtils-toTypedDataHash} before
+being verified/recovered.
+
+This is used to simulates the `personal_sign` RPC method in the context of smart contracts.
+
+[.contract-item]
+[[ERC7739Utils-typedDataSignStructHash-string-string-bytes32-bytes-]]
+==== `[.contract-item-name]#++typedDataSignStructHash++#++(string contentsTypeName, string contentsType, bytes32 contentsHash, bytes domainBytes) → bytes32 result++` [.item-kind]#internal#
+
+Nests an `EIP-712` hash (`contents`) into a `TypedDataSign` EIP-712 struct, and return the corresponding
+struct hash. This struct hash must be combined with a domain separator, using {MessageHashUtils-toTypedDataHash}
+before being verified/recovered.
+
+[.contract-item]
+[[ERC7739Utils-typedDataSignStructHash-string-bytes32-bytes-]]
+==== `[.contract-item-name]#++typedDataSignStructHash++#++(string contentsDescr, bytes32 contentsHash, bytes domainBytes) → bytes32 result++` [.item-kind]#internal#
+
+Variant of {typedDataSignStructHash-string-string-bytes32-string-bytes} that takes a content descriptor
+and decodes the `contentsTypeName` and `contentsType` out of it.
+
+[.contract-item]
+[[ERC7739Utils-typedDataSignTypehash-string-string-]]
+==== `[.contract-item-name]#++typedDataSignTypehash++#++(string contentsTypeName, string contentsType) → bytes32++` [.item-kind]#internal#
+
+Compute the EIP-712 typehash of the `TypedDataSign` structure for a given type (and typename).
+
+[.contract-item]
+[[ERC7739Utils-decodeContentsDescr-string-]]
+==== `[.contract-item-name]#++decodeContentsDescr++#++(string contentsDescr) → string contentsTypeName, string contentsType++` [.item-kind]#internal#
+
+Parse the type name out of the ERC-7739 contents type description. Supports both the implicit and explicit
+modes.
+
+Following ERC-7739 specifications, a `contentsTypeName` is considered invalid if it's empty or it contains
+any of the following bytes , )\x00
+
+If the `contentsType` is invalid, this returns an empty string. Otherwise, the return string has non-zero
+length.
+
+[.contract-item]
+[[ERC7739Utils-InvalidContentsType--]]
+==== `[.contract-item-name]#++InvalidContentsType++#++()++` [.item-kind]#error#
+
+Error when the contents type is invalid. See {tryValidateContentsType}.
+
+== Libraries
+
+:Mask: pass:normal[xref:#Masks-Mask[`++Mask++`]]
+:toMask: pass:normal[xref:#Masks-toMask-uint8-[`++toMask++`]]
+:toMask: pass:normal[xref:#Masks-toMask-uint8---[`++toMask++`]]
+:get: pass:normal[xref:#Masks-get-Masks-Mask-uint8-[`++get++`]]
+:isEmpty: pass:normal[xref:#Masks-isEmpty-Masks-Mask-[`++isEmpty++`]]
+:complement: pass:normal[xref:#Masks-complement-Masks-Mask-[`++complement++`]]
+:union: pass:normal[xref:#Masks-union-Masks-Mask-Masks-Mask-[`++union++`]]
+:intersection: pass:normal[xref:#Masks-intersection-Masks-Mask-Masks-Mask-[`++intersection++`]]
+:difference: pass:normal[xref:#Masks-difference-Masks-Mask-Masks-Mask-[`++difference++`]]
+:symmetric_difference: pass:normal[xref:#Masks-symmetric_difference-Masks-Mask-Masks-Mask-[`++symmetric_difference++`]]
+
+[.contract]
+[[Masks]]
+=== `++Masks++` link:https://github.com/OpenZeppelin/openzeppelin-contracts/blob/v0.0.1/contracts/utils/Masks.sol[{github-icon},role=heading-link]
+
+[.hljs-theme-light.nopadding]
+```solidity
+import "@openzeppelin/contracts/utils/Masks.sol";
+```
+
+Library for handling bit masks
+
+[.contract-index]
+.Functions
+--
+* {xref-Masks-toMask-uint8-}[`++toMask(group)++`]
+* {xref-Masks-toMask-uint8---}[`++toMask(groups)++`]
+* {xref-Masks-get-Masks-Mask-uint8-}[`++get(self, group)++`]
+* {xref-Masks-isEmpty-Masks-Mask-}[`++isEmpty(self)++`]
+* {xref-Masks-complement-Masks-Mask-}[`++complement(m1)++`]
+* {xref-Masks-union-Masks-Mask-Masks-Mask-}[`++union(m1, m2)++`]
+* {xref-Masks-intersection-Masks-Mask-Masks-Mask-}[`++intersection(m1, m2)++`]
+* {xref-Masks-difference-Masks-Mask-Masks-Mask-}[`++difference(m1, m2)++`]
+* {xref-Masks-symmetric_difference-Masks-Mask-Masks-Mask-}[`++symmetric_difference(m1, m2)++`]
+
+--
+
+[.contract-item]
+[[Masks-toMask-uint8-]]
+==== `[.contract-item-name]#++toMask++#++(uint8 group) → Masks.Mask++` [.item-kind]#internal#
+
+Returns a new mask with the bit at `group` index set to 1.
+
+[.contract-item]
+[[Masks-toMask-uint8---]]
+==== `[.contract-item-name]#++toMask++#++(uint8[] groups) → Masks.Mask++` [.item-kind]#internal#
+
+Returns a new mask with the bits at `groups` indices set to 1.
+
+[.contract-item]
+[[Masks-get-Masks-Mask-uint8-]]
+==== `[.contract-item-name]#++get++#++(Masks.Mask self, uint8 group) → bool++` [.item-kind]#internal#
+
+Get value of the mask at `group` index
+
+[.contract-item]
+[[Masks-isEmpty-Masks-Mask-]]
+==== `[.contract-item-name]#++isEmpty++#++(Masks.Mask self) → bool++` [.item-kind]#internal#
+
+Whether the mask is `bytes32(0)`
+
+[.contract-item]
+[[Masks-complement-Masks-Mask-]]
+==== `[.contract-item-name]#++complement++#++(Masks.Mask m1) → Masks.Mask++` [.item-kind]#internal#
+
+Invert the bits of a mask
+
+[.contract-item]
+[[Masks-union-Masks-Mask-Masks-Mask-]]
+==== `[.contract-item-name]#++union++#++(Masks.Mask m1, Masks.Mask m2) → Masks.Mask++` [.item-kind]#internal#
+
+Perform a bitwise OR operation on two masks
+
+[.contract-item]
+[[Masks-intersection-Masks-Mask-Masks-Mask-]]
+==== `[.contract-item-name]#++intersection++#++(Masks.Mask m1, Masks.Mask m2) → Masks.Mask++` [.item-kind]#internal#
+
+Perform a bitwise AND operation on two masks
+
+[.contract-item]
+[[Masks-difference-Masks-Mask-Masks-Mask-]]
+==== `[.contract-item-name]#++difference++#++(Masks.Mask m1, Masks.Mask m2) → Masks.Mask++` [.item-kind]#internal#
+
+Perform a bitwise difference operation on two masks (m1 - m2)
+
+[.contract-item]
+[[Masks-symmetric_difference-Masks-Mask-Masks-Mask-]]
+==== `[.contract-item-name]#++symmetric_difference++#++(Masks.Mask m1, Masks.Mask m2) → Masks.Mask++` [.item-kind]#internal#
+
+Returns the symmetric difference (∆) of two masks, also known as disjunctive union or exclusive OR (XOR)
+

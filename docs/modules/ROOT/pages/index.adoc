@@ -1,0 +1,47 @@
+= Community Contracts
+
+*A community-driven extension of our https://docs.openzeppelin.com/contracts[Solidity library]*: the gold-standard of smart contract development. This library includes:
+
+* Extensions and modules compatible with contracts in the original package
+* Alternative implementation of interfaces defined in the original package
+* Contracts with third-party integrations
+* Contracts built by community members, that align with OpenZeppelin offerings
+* General prototypes and experiments
+
+Code is provided by the OpenZeppelin Contracts team, as well as by community contributors, for other developers to review, discuss, iterate on, and potentially use.
+
+== Overview
+
+[[install]]
+=== Installation
+
+Given this extension is intended for more experimental use cases and therefore the development process is more flexible. For such reason, the library can only be installed with Foundry using gitmodules.
+
+==== Foundry (git)
+
+```console
+$ forge install OpenZeppelin/openzeppelin-community-contracts
+```
+
+NOTE: Make sure to add `@openzeppelin/community-contracts/=lib/openzeppelin-community-contracts/contracts/` in `remappings.txt.` 
+
+[[usage]]
+=== Usage
+
+Once installed, you can use the contracts in the library by importing them:
+
+[source,solidity]
+----
+include::api:example$MyStablecoinAllowlist.sol[]
+----
+
+To keep your system secure, you should **always** use the installed code as-is, and neither copy-paste it from online sources, nor modify it yourself. The library is designed so that only the contracts and functions you use are deployed, so you don't need to worry about it needlessly increasing gas costs.
+
+[[security]]
+== Security
+
+Contracts in the community library are provided as is, with no particular guarantees. Given changes in this repository are more frequent, the code is not formally audited and not covered by the https://www.immunefi.com/bounty/openzeppelin[bug bounty program on Immunefi].
+
+Similarly, the code has no backward compatibility guarantees.
+
+We kindly ask to report any issue directly to our security mailto:security@openzeppelin.org[contact]. The team will do its best to assist and mitigate any potential misuses of the library. However, keep in mind the flexibility assumed for this repository may relax our assessment.

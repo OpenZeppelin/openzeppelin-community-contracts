@@ -1,0 +1,254 @@
+:github-icon: pass:[<svg class="icon"><use href="#github-icon"/></svg>]
+:AccessManagerLight: pass:normal[xref:access.adoc#AccessManagerLight[`AccessManagerLight`]]
+:xref-AccessManagerLight-onlyRole-Masks-Mask-: xref:access.adoc#AccessManagerLight-onlyRole-Masks-Mask-
+:xref-AccessManagerLight-constructor-address-: xref:access.adoc#AccessManagerLight-constructor-address-
+:xref-AccessManagerLight-canCall-address-address-bytes4-: xref:access.adoc#AccessManagerLight-canCall-address-address-bytes4-
+:xref-AccessManagerLight-getGroups-address-: xref:access.adoc#AccessManagerLight-getGroups-address-
+:xref-AccessManagerLight-getGroupAdmins-uint8-: xref:access.adoc#AccessManagerLight-getGroupAdmins-uint8-
+:xref-AccessManagerLight-getRequirements-address-bytes4-: xref:access.adoc#AccessManagerLight-getRequirements-address-bytes4-
+:xref-AccessManagerLight-addGroup-address-uint8-: xref:access.adoc#AccessManagerLight-addGroup-address-uint8-
+:xref-AccessManagerLight-remGroup-address-uint8-: xref:access.adoc#AccessManagerLight-remGroup-address-uint8-
+:xref-AccessManagerLight-_addGroup-address-uint8-: xref:access.adoc#AccessManagerLight-_addGroup-address-uint8-
+:xref-AccessManagerLight-_remGroup-address-uint8-: xref:access.adoc#AccessManagerLight-_remGroup-address-uint8-
+:xref-AccessManagerLight-setGroupAdmins-uint8-uint8---: xref:access.adoc#AccessManagerLight-setGroupAdmins-uint8-uint8---
+:xref-AccessManagerLight-_setGroupAdmins-uint8-Masks-Mask-: xref:access.adoc#AccessManagerLight-_setGroupAdmins-uint8-Masks-Mask-
+:xref-AccessManagerLight-setRequirements-address-bytes4---uint8---: xref:access.adoc#AccessManagerLight-setRequirements-address-bytes4---uint8---
+:xref-AccessManagerLight-_setRequirements-address-bytes4-Masks-Mask-: xref:access.adoc#AccessManagerLight-_setRequirements-address-bytes4-Masks-Mask-
+:xref-AccessManagerLight-ADMIN_ROLE-uint8: xref:access.adoc#AccessManagerLight-ADMIN_ROLE-uint8
+:xref-AccessManagerLight-PUBLIC_ROLE-uint8: xref:access.adoc#AccessManagerLight-PUBLIC_ROLE-uint8
+:xref-AccessManagerLight-ADMIN_MASK-Masks-Mask: xref:access.adoc#AccessManagerLight-ADMIN_MASK-Masks-Mask
+:xref-AccessManagerLight-PUBLIC_MASK-Masks-Mask: xref:access.adoc#AccessManagerLight-PUBLIC_MASK-Masks-Mask
+:xref-AccessManagerLight-GroupAdded-address-uint8-: xref:access.adoc#AccessManagerLight-GroupAdded-address-uint8-
+:xref-AccessManagerLight-GroupRemoved-address-uint8-: xref:access.adoc#AccessManagerLight-GroupRemoved-address-uint8-
+:xref-AccessManagerLight-GroupAdmins-uint8-Masks-Mask-: xref:access.adoc#AccessManagerLight-GroupAdmins-uint8-Masks-Mask-
+:xref-AccessManagerLight-RequirementsSet-address-bytes4-Masks-Mask-: xref:access.adoc#AccessManagerLight-RequirementsSet-address-bytes4-Masks-Mask-
+:xref-AccessManagerLight-MissingPermissions-address-Masks-Mask-Masks-Mask-: xref:access.adoc#AccessManagerLight-MissingPermissions-address-Masks-Mask-Masks-Mask-
+= Utilities
+
+[.readme-notice]
+NOTE: This document is better viewed at https://docs.openzeppelin.com/community-contracts/proxy
+
+This directory contains utility contracts to restrict access control in smart contracts. These include:
+
+ * {AccessManagerLight}: A simpler version of an AccessManager that uses `bytes8` roles to allow function calls identified by their 4-bytes selector.
+
+== AccessManager
+
+:ADMIN_ROLE: pass:normal[xref:#AccessManagerLight-ADMIN_ROLE-uint8[`++ADMIN_ROLE++`]]
+:PUBLIC_ROLE: pass:normal[xref:#AccessManagerLight-PUBLIC_ROLE-uint8[`++PUBLIC_ROLE++`]]
+:ADMIN_MASK: pass:normal[xref:#AccessManagerLight-ADMIN_MASK-Masks-Mask[`++ADMIN_MASK++`]]
+:PUBLIC_MASK: pass:normal[xref:#AccessManagerLight-PUBLIC_MASK-Masks-Mask[`++PUBLIC_MASK++`]]
+:GroupAdded: pass:normal[xref:#AccessManagerLight-GroupAdded-address-uint8-[`++GroupAdded++`]]
+:GroupRemoved: pass:normal[xref:#AccessManagerLight-GroupRemoved-address-uint8-[`++GroupRemoved++`]]
+:GroupAdmins: pass:normal[xref:#AccessManagerLight-GroupAdmins-uint8-Masks-Mask-[`++GroupAdmins++`]]
+:RequirementsSet: pass:normal[xref:#AccessManagerLight-RequirementsSet-address-bytes4-Masks-Mask-[`++RequirementsSet++`]]
+:MissingPermissions: pass:normal[xref:#AccessManagerLight-MissingPermissions-address-Masks-Mask-Masks-Mask-[`++MissingPermissions++`]]
+:onlyRole: pass:normal[xref:#AccessManagerLight-onlyRole-Masks-Mask-[`++onlyRole++`]]
+:constructor: pass:normal[xref:#AccessManagerLight-constructor-address-[`++constructor++`]]
+:canCall: pass:normal[xref:#AccessManagerLight-canCall-address-address-bytes4-[`++canCall++`]]
+:getGroups: pass:normal[xref:#AccessManagerLight-getGroups-address-[`++getGroups++`]]
+:getGroupAdmins: pass:normal[xref:#AccessManagerLight-getGroupAdmins-uint8-[`++getGroupAdmins++`]]
+:getRequirements: pass:normal[xref:#AccessManagerLight-getRequirements-address-bytes4-[`++getRequirements++`]]
+:addGroup: pass:normal[xref:#AccessManagerLight-addGroup-address-uint8-[`++addGroup++`]]
+:remGroup: pass:normal[xref:#AccessManagerLight-remGroup-address-uint8-[`++remGroup++`]]
+:_addGroup: pass:normal[xref:#AccessManagerLight-_addGroup-address-uint8-[`++_addGroup++`]]
+:_remGroup: pass:normal[xref:#AccessManagerLight-_remGroup-address-uint8-[`++_remGroup++`]]
+:setGroupAdmins: pass:normal[xref:#AccessManagerLight-setGroupAdmins-uint8-uint8---[`++setGroupAdmins++`]]
+:_setGroupAdmins: pass:normal[xref:#AccessManagerLight-_setGroupAdmins-uint8-Masks-Mask-[`++_setGroupAdmins++`]]
+:setRequirements: pass:normal[xref:#AccessManagerLight-setRequirements-address-bytes4---uint8---[`++setRequirements++`]]
+:_setRequirements: pass:normal[xref:#AccessManagerLight-_setRequirements-address-bytes4-Masks-Mask-[`++_setRequirements++`]]
+
+[.contract]
+[[AccessManagerLight]]
+=== `++AccessManagerLight++` link:https://github.com/OpenZeppelin/openzeppelin-contracts/blob/v0.0.1/contracts/access/manager/AccessManagerLight.sol[{github-icon},role=heading-link]
+
+[.hljs-theme-light.nopadding]
+```solidity
+import "@openzeppelin/contracts/access/manager/AccessManagerLight.sol";
+```
+
+Light version of an AccessManager contract that defines `bytes8` roles
+that are stored as requirements (see {getRequirements}) for each function.
+
+Each requirement is a bitmask of roles that are allowed to call a function
+identified by its `bytes4` selector. Users have their permissioned stored
+as a bitmask of roles they belong to.
+
+The admin role is a special role that has access to all functions and can
+manage the roles of other users.
+
+[.contract-index]
+.Modifiers
+--
+* {xref-AccessManagerLight-onlyRole-Masks-Mask-}[`++onlyRole(requirement)++`]
+--
+
+[.contract-index]
+.Functions
+--
+* {xref-AccessManagerLight-constructor-address-}[`++constructor(admin)++`]
+* {xref-AccessManagerLight-canCall-address-address-bytes4-}[`++canCall(caller, target, selector)++`]
+* {xref-AccessManagerLight-getGroups-address-}[`++getGroups(user)++`]
+* {xref-AccessManagerLight-getGroupAdmins-uint8-}[`++getGroupAdmins(group)++`]
+* {xref-AccessManagerLight-getRequirements-address-bytes4-}[`++getRequirements(target, selector)++`]
+* {xref-AccessManagerLight-addGroup-address-uint8-}[`++addGroup(user, group)++`]
+* {xref-AccessManagerLight-remGroup-address-uint8-}[`++remGroup(user, group)++`]
+* {xref-AccessManagerLight-_addGroup-address-uint8-}[`++_addGroup(user, group)++`]
+* {xref-AccessManagerLight-_remGroup-address-uint8-}[`++_remGroup(user, group)++`]
+* {xref-AccessManagerLight-setGroupAdmins-uint8-uint8---}[`++setGroupAdmins(group, admins)++`]
+* {xref-AccessManagerLight-_setGroupAdmins-uint8-Masks-Mask-}[`++_setGroupAdmins(group, admins)++`]
+* {xref-AccessManagerLight-setRequirements-address-bytes4---uint8---}[`++setRequirements(target, selectors, groups)++`]
+* {xref-AccessManagerLight-_setRequirements-address-bytes4-Masks-Mask-}[`++_setRequirements(target, selector, groups)++`]
+* {xref-AccessManagerLight-ADMIN_ROLE-uint8}[`++ADMIN_ROLE()++`]
+* {xref-AccessManagerLight-PUBLIC_ROLE-uint8}[`++PUBLIC_ROLE()++`]
+* {xref-AccessManagerLight-ADMIN_MASK-Masks-Mask}[`++ADMIN_MASK()++`]
+* {xref-AccessManagerLight-PUBLIC_MASK-Masks-Mask}[`++PUBLIC_MASK()++`]
+
+[.contract-subindex-inherited]
+.IAuthority
+
+--
+
+[.contract-index]
+.Events
+--
+* {xref-AccessManagerLight-GroupAdded-address-uint8-}[`++GroupAdded(user, group)++`]
+* {xref-AccessManagerLight-GroupRemoved-address-uint8-}[`++GroupRemoved(user, group)++`]
+* {xref-AccessManagerLight-GroupAdmins-uint8-Masks-Mask-}[`++GroupAdmins(group, admins)++`]
+* {xref-AccessManagerLight-RequirementsSet-address-bytes4-Masks-Mask-}[`++RequirementsSet(target, selector, groups)++`]
+
+[.contract-subindex-inherited]
+.IAuthority
+
+--
+
+[.contract-index]
+.Errors
+--
+* {xref-AccessManagerLight-MissingPermissions-address-Masks-Mask-Masks-Mask-}[`++MissingPermissions(user, permissions, requirement)++`]
+
+[.contract-subindex-inherited]
+.IAuthority
+
+--
+
+[.contract-item]
+[[AccessManagerLight-onlyRole-Masks-Mask-]]
+==== `[.contract-item-name]#++onlyRole++#++(Masks.Mask requirement)++` [.item-kind]#modifier#
+
+Throws if the specified requirement is not met by the caller's permissions (see {getGroups}).
+
+[.contract-item]
+[[AccessManagerLight-constructor-address-]]
+==== `[.contract-item-name]#++constructor++#++(address admin)++` [.item-kind]#public#
+
+Initializes the contract with the `admin` as the first member of the admin group.
+
+[.contract-item]
+[[AccessManagerLight-canCall-address-address-bytes4-]]
+==== `[.contract-item-name]#++canCall++#++(address caller, address target, bytes4 selector) → bool++` [.item-kind]#public#
+
+Returns whether the `caller` has the required permissions to call the `target` with the `selector`.
+
+[.contract-item]
+[[AccessManagerLight-getGroups-address-]]
+==== `[.contract-item-name]#++getGroups++#++(address user) → Masks.Mask++` [.item-kind]#public#
+
+Returns the groups that the `user` belongs to.
+
+[.contract-item]
+[[AccessManagerLight-getGroupAdmins-uint8-]]
+==== `[.contract-item-name]#++getGroupAdmins++#++(uint8 group) → Masks.Mask++` [.item-kind]#public#
+
+Returns the admins of the `group`.
+
+[.contract-item]
+[[AccessManagerLight-getRequirements-address-bytes4-]]
+==== `[.contract-item-name]#++getRequirements++#++(address target, bytes4 selector) → Masks.Mask++` [.item-kind]#public#
+
+Returns the requirements for the `target` and `selector`.
+
+[.contract-item]
+[[AccessManagerLight-addGroup-address-uint8-]]
+==== `[.contract-item-name]#++addGroup++#++(address user, uint8 group)++` [.item-kind]#public#
+
+Adds the `user` to the `group`. Emits {GroupAdded} event.
+
+[.contract-item]
+[[AccessManagerLight-remGroup-address-uint8-]]
+==== `[.contract-item-name]#++remGroup++#++(address user, uint8 group)++` [.item-kind]#public#
+
+Removes the `user` from the `group`. Emits {GroupRemoved} event.
+
+[.contract-item]
+[[AccessManagerLight-_addGroup-address-uint8-]]
+==== `[.contract-item-name]#++_addGroup++#++(address user, uint8 group)++` [.item-kind]#internal#
+
+Internal version of {addGroup} without access control.
+
+[.contract-item]
+[[AccessManagerLight-_remGroup-address-uint8-]]
+==== `[.contract-item-name]#++_remGroup++#++(address user, uint8 group)++` [.item-kind]#internal#
+
+Internal version of {remGroup} without access control.
+
+[.contract-item]
+[[AccessManagerLight-setGroupAdmins-uint8-uint8---]]
+==== `[.contract-item-name]#++setGroupAdmins++#++(uint8 group, uint8[] admins)++` [.item-kind]#public#
+
+Sets the `admins` of the `group`. Emits {GroupAdmins} event.
+
+[.contract-item]
+[[AccessManagerLight-_setGroupAdmins-uint8-Masks-Mask-]]
+==== `[.contract-item-name]#++_setGroupAdmins++#++(uint8 group, Masks.Mask admins)++` [.item-kind]#internal#
+
+Internal version of {_setGroupAdmins} without access control.
+
+[.contract-item]
+[[AccessManagerLight-setRequirements-address-bytes4---uint8---]]
+==== `[.contract-item-name]#++setRequirements++#++(address target, bytes4[] selectors, uint8[] groups)++` [.item-kind]#public#
+
+Sets the `groups` requirements for the `selectors` of the `target`.
+
+[.contract-item]
+[[AccessManagerLight-_setRequirements-address-bytes4-Masks-Mask-]]
+==== `[.contract-item-name]#++_setRequirements++#++(address target, bytes4 selector, Masks.Mask groups)++` [.item-kind]#internal#
+
+Internal version of {_setRequirements} without access control.
+
+[.contract-item]
+[[AccessManagerLight-ADMIN_ROLE-uint8]]
+==== `[.contract-item-name]#++ADMIN_ROLE++#++() → uint8++` [.item-kind]#public#
+
+[.contract-item]
+[[AccessManagerLight-PUBLIC_ROLE-uint8]]
+==== `[.contract-item-name]#++PUBLIC_ROLE++#++() → uint8++` [.item-kind]#public#
+
+[.contract-item]
+[[AccessManagerLight-ADMIN_MASK-Masks-Mask]]
+==== `[.contract-item-name]#++ADMIN_MASK++#++() → Masks.Mask++` [.item-kind]#public#
+
+[.contract-item]
+[[AccessManagerLight-PUBLIC_MASK-Masks-Mask]]
+==== `[.contract-item-name]#++PUBLIC_MASK++#++() → Masks.Mask++` [.item-kind]#public#
+
+[.contract-item]
+[[AccessManagerLight-GroupAdded-address-uint8-]]
+==== `[.contract-item-name]#++GroupAdded++#++(address indexed user, uint8 indexed group)++` [.item-kind]#event#
+
+[.contract-item]
+[[AccessManagerLight-GroupRemoved-address-uint8-]]
+==== `[.contract-item-name]#++GroupRemoved++#++(address indexed user, uint8 indexed group)++` [.item-kind]#event#
+
+[.contract-item]
+[[AccessManagerLight-GroupAdmins-uint8-Masks-Mask-]]
+==== `[.contract-item-name]#++GroupAdmins++#++(uint8 indexed group, Masks.Mask admins)++` [.item-kind]#event#
+
+[.contract-item]
+[[AccessManagerLight-RequirementsSet-address-bytes4-Masks-Mask-]]
+==== `[.contract-item-name]#++RequirementsSet++#++(address indexed target, bytes4 indexed selector, Masks.Mask groups)++` [.item-kind]#event#
+
+[.contract-item]
+[[AccessManagerLight-MissingPermissions-address-Masks-Mask-Masks-Mask-]]
+==== `[.contract-item-name]#++MissingPermissions++#++(address user, Masks.Mask permissions, Masks.Mask requirement)++` [.item-kind]#error#
+
