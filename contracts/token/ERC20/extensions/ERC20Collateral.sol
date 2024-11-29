@@ -13,12 +13,6 @@ import {IERC6372} from "@openzeppelin/contracts/interfaces/IERC6372.sol";
  * data. This function can call external oracles or use any local storage.
  */
 abstract contract ERC20Collateral is ERC20, IERC6372 {
-    // Structure that stores the details of the collateral
-    struct Collateral {
-        uint256 amount;
-        uint48 timestamp;
-    }
-
     /**
      * @dev Liveness duration of collateral, defined in seconds.
      */
@@ -66,7 +60,7 @@ abstract contract ERC20Collateral is ERC20, IERC6372 {
     /**
      * @dev Returns the collateral data of the token.
      */
-    function collateral() public view virtual returns (Collateral memory);
+    function collateral() public view virtual returns (uint256 amount, uint48 timestamp);
 
     /**
      * @dev See {ERC20-_update}.
@@ -75,16 +69,16 @@ abstract contract ERC20Collateral is ERC20, IERC6372 {
         super._update(from, to, value);
 
         if (from == address(0)) {
-            Collateral memory _collateral = collateral();
+            (uint256 amount, uint48 timestamp) = collateral();
 
-            uint48 expiration = _collateral.timestamp + liveness();
+            uint48 expiration = timestamp + liveness();
             if (expiration < clock()) {
-                revert ERC20ExpiredCollateral(_collateral.timestamp, expiration);
+                revert ERC20ExpiredCollateral(timestamp, expiration);
             }
 
             uint256 supply = totalSupply();
-            if (supply > _collateral.amount) {
-                revert ERC20ExceededSupply(supply, _collateral.amount);
+            if (supply > amount) {
+                revert ERC20ExceededSupply(supply, amount);
             }
         }
     }

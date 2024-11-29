@@ -3,7 +3,7 @@ const { argv } = require('yargs/yargs')()
   .options({
     compiler: {
       type: 'string',
-      default: '0.8.26',
+      default: '0.8.27',
     },
     hardfork: {
       type: 'string',
@@ -15,6 +15,7 @@ require('@nomicfoundation/hardhat-chai-matchers');
 require('@nomicfoundation/hardhat-ethers');
 require('hardhat-exposed');
 require('solidity-coverage');
+require('solidity-docgen');
 require('./hardhat/remappings');
 
 module.exports = {
@@ -33,4 +34,8 @@ module.exports = {
       hardfork: argv.hardfork,
     },
   },
+  exposed: {
+    exclude: ['@axelar-network/**/*'],
+  },
+  docgen: require('./docs/config'),
 };
