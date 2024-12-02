@@ -47,33 +47,6 @@ interface IERC7786GatewaySource {
 }
 
 /**
- * @dev Interface for ERC-7786 destination gateways operating in passive mode.
- *
- * See ERC-7786 for more details
- */
-interface IERC7786GatewayDestinationPassive {
-    error InvalidMessageKey(bytes messageKey);
-
-    /**
-     * @dev Endpoint for checking the validity of a message that is being relayed in passive mode. The message
-     * receiver is implicitly the caller of this method, which guarantees that no one but the receiver can
-     * "consume" the message. This function MUST implement replay protection, meaning that if called multiple time
-     * for same message, all but the first calls MUST revert.'
-     * @param sourceChain {CAIP2} chain identifier
-     * @param sender {CAIP10} account address (does not include the chain identifier)
-     *
-     * NOTE: implementing this interface is OPTIONAL. Some destination gateway MAY only support active mode.
-     */
-    function setMessageExecuted(
-        bytes calldata messageKey,
-        string calldata sourceChain,
-        string calldata sender,
-        bytes calldata payload,
-        bytes[] calldata attributes
-    ) external;
-}
-
-/**
  * @dev Interface for the ERC-7786 client contract (receiver).
  *
  * See ERC-7786 for more details
@@ -84,13 +57,11 @@ interface IERC7786Receiver {
      * @param sourceChain {CAIP2} chain identifier
      * @param sender {CAIP10} account address (does not include the chain identifier)
      *
-     * This function may be called directly by the gateway (active mode) or by a third party (passive mode).
+     * This function may be called directly by the gateway.
      */
     function executeMessage(
-        address gateway,
-        bytes calldata gatewayMessageKey,
-        string calldata sourceChain,
-        string calldata sender,
+        string calldata sourceChain, // CAIP-2 chain identifier
+        string calldata sender, // CAIP-10 account address (does not include the chain identifier)
         bytes calldata payload,
         bytes[] calldata attributes
     ) external payable returns (bytes4);

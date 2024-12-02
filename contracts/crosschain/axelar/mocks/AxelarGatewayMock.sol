@@ -12,7 +12,6 @@ contract AxelarGatewayMock {
     using Strings for string;
     using BitMaps for BitMaps.BitMap;
 
-    bool private activeMode;
     BitMaps.BitMap private pendingCommandIds;
 
     event CommandIdPending(
@@ -21,10 +20,6 @@ contract AxelarGatewayMock {
         string destinationContractAddress,
         bytes payload
     );
-
-    function setActive(bool enabled) public {
-        activeMode = enabled;
-    }
 
     function callContract(
         string calldata destinationChain,
@@ -55,12 +50,9 @@ contract AxelarGatewayMock {
 
         emit CommandIdPending(commandId, destinationChain, destinationContractAddress, payload);
 
-        if (activeMode) {
-            // NOTE:
-            // - source chain and destination chain are the same in this mock
-            address target = destinationContractAddress.parseAddress();
-            IAxelarExecutable(target).execute(commandId, destinationChain, msg.sender.toChecksumHexString(), payload);
-        }
+        // NOTE: source chain and destination chain are the same in this mock
+        address target = destinationContractAddress.parseAddress();
+        IAxelarExecutable(target).execute(commandId, destinationChain, msg.sender.toChecksumHexString(), payload);
     }
 
     function validateContractCall(

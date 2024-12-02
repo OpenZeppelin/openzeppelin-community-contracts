@@ -12,7 +12,7 @@ import {AxelarGatewaySource} from "./AxelarGatewaySource.sol";
  * adapters for the Axelar Network. Allowing to either send or receive messages across chains.
  */
 // slither-disable-next-line locked-ether
-abstract contract AxelarGatewayDuplex is AxelarGatewaySource, AxelarGatewayDestination {
+contract AxelarGatewayDuplex is AxelarGatewaySource, AxelarGatewayDestination {
     /// @dev Initializes the contract with the Axelar gateway and the initial owner.
     constructor(
         IAxelarGateway gateway,

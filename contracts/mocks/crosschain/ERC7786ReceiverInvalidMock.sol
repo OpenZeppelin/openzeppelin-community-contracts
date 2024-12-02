@@ -6,8 +6,6 @@ import {IERC7786Receiver} from "../../crosschain/interfaces/draft-IERC7786.sol";
 
 contract ERC7786ReceiverInvalidMock is IERC7786Receiver {
     function executeMessage(
-        address,
-        bytes calldata,
         string calldata,
         string calldata,
         bytes calldata,
