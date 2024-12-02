@@ -21,7 +21,7 @@ abstract contract AxelarGatewayDestination is AxelarGatewayBase, AxelarExecutabl
     error ReceiverExecutionFailed();
 
     /**
-     * @dev Active mode execution of a cross-chain message.
+     * @dev Execution of a cross-chain message.
      *
      * In this function:
      *
@@ -52,7 +52,6 @@ abstract contract AxelarGatewayDestination is AxelarGatewayBase, AxelarExecutabl
             InvalidOriginGateway(sourceChain, axelarSourceAddress)
         );
 
-        // Active mode
         bytes4 result = IERC7786Receiver(receiver.parseAddress()).executeMessage(
             sourceChain,
             sender,

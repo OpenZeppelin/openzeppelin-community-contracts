@@ -5,7 +5,7 @@
 :ERC20Collateral: pass:normal[xref:token.adoc#ERC20Collateral[`ERC20Collateral`]]
 :ERC20Custodian: pass:normal[xref:token.adoc#ERC20Custodian[`ERC20Custodian`]]
 :ERC4626Fees: pass:normal[xref:token.adoc#ERC4626Fees[`ERC4626Fees`]]
-= Utilities
+= Tokens
 
 [.readme-notice]
 NOTE: This document is better viewed at https://docs.openzeppelin.com/community-contracts/token

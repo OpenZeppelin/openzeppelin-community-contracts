@@ -1,6 +1,6 @@
 :github-icon: pass:[<svg class="icon"><use href="#github-icon"/></svg>]
 :HybridProxy: pass:normal[xref:proxy.adoc#HybridProxy[`HybridProxy`]]
-= Utilities
+= Proxy
 
 [.readme-notice]
 NOTE: This document is better viewed at https://docs.openzeppelin.com/community-contracts/proxy
