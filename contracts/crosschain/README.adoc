@@ -1,7 +1,7 @@
 = Crosschain
 
 [.readme-notice]
-NOTE: This document is better viewed at https://docs.openzeppelin.com/community-contracts/proxy
+NOTE: This document is better viewed at https://docs.openzeppelin.com/community-contracts/crosschain
 
 Gateways are contracts that enable cross-chain communication. These can either be a message source or a destination according to ERC-7786, which defines the following interfaces:
 
