@@ -49,7 +49,7 @@ include::api:example$crosschain/MyCustomAxelarGatewaySource.sol[]
 
 == Receiving a message
 
-To sucessfully process a message on the destination chain, a destination gateway is required. Although ERC-7786 doesn't define a standard interface for the destination gateway, it requires that it calls the `executeMessage` upon message reception.
+To successfully process a message on the destination chain, a destination gateway is required. Although ERC-7786 doesn't define a standard interface for the destination gateway, it requires that it calls the `executeMessage` upon message reception.
 
 Every cross-chain message protocol already offers a way to receive the message either through a canonical bridge or an intermediate contract. Developers can easily wrap the receiving contract into a gateway that calls the `executeMessage` function as mandated by the ERC.
 
