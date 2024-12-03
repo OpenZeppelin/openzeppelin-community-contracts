@@ -14,7 +14,7 @@ The library provides an implementation of an ERC-7786 receiver contract as a bui
 
 Given ERC-7786 could be enabled natively or via adapters. Developers can access interoperability protocols through gateway adapters. The library includes the following gateway adapters:
 
- * {AxelarGatewayBase}: Gateway adapter implementation for the https://www.axelar.network/[Axelar Network].
+ * {AxelarGatewayBase}: Core gateway logic for the https://www.axelar.network/[Axelar] adapter.
  * {AxelarGatewaySource}: ERC-7786 sender gateway. It sends a cross-chain message through Axelar.
  * {AxelarGatewayDestination}: ERC-7786 destination gateway. It executes a cross-chain message from Axelar.
  * {AxelarGatewayDuplex}: ERC-7786 gateway that operates in both directions (i.e. send and receive messages) using the Axelar network.
