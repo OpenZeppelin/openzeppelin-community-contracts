@@ -1,0 +1,72 @@
+= Cross-chain messaging
+
+Developers building contracts may require cross-chain functionality. To accomplish it, multiple protocols have implemented their own ways to process operations across chains.
+
+The variety of these bridges is outlined in https://x.com/norswap[@norswap]'s https://github.com/0xFableOrg/xchain/blob/master/README.md[Cross-Chain Interoperability Report] that proposes https://github.com/0xFableOrg/xchain/blob/master/README.md#bridge-taxonomy[a taxonomy of 7 bridge categories]. This diversity makes it difficult for developers to design cross-chain applications given the lack of portability.
+
+This guide will teach you how to follow ERC-7786 to establish messaging gateways across chains regardless of the underlying bridge. Developers can implement gateway contracts that process cross-chain messages and connect any crosschain protocol they want (or implement themselves).
+
+== ERC-7786 gateway
+
+To address the lack of composability in a simple and unopinionated way, ERC-7786 proposes a standard to implement a gateway that relays messages to other chains. This generalized approach is expressive enough to enable new types of applications and can be adapted to any bridge taxonomy or specific bridge interface with standardized attributes.
+
+=== Message passing overview
+
+The ERC defines a source and a destination gateway. Both are contracts that implement a protocol to send a message and process its reception respectively. These two processes are identified explicitly by the ERC-7786 specification since they define the minimal requirements for both gateways.
+
+* On the **source chain**, the contract implements a standard xref:api:crosschain.adoc#IERC7786GatewaySource#sendMessage[`sendMessage`] function and emits a xref:api:crosschain.adoc#IERC7786GatewaySource#MessagePosted[`MessagePosted`] event to signal that the message should be relayed by the underlying protocol.
+
+* On the **destination chain**, the gateway that receives the message and passes it to the contract receiver by calling the xref:api:crosschain.adoc#IERC7786Receiver#executeMessage[`executeMessage`] function.
+
+Smart contract developers only need to worry about implementing the xref:api:crosschain.adoc#IERC7786GatewaySource[IERC7786GatewaySource] interface to send a message on the source chain and the xref:api:crosschain.adoc#IERC7786GatewaySource[IERC7786GatewaySource] and xref:api:crosschain.adoc#IERC7786Receiver[IERC7786Receiver] interface to receive such message on the destination chain.
+
+== Sending a message
+
+The interface for a source gateway is general enough that it allows wrapping a custom protocol to authenticate messages. Depending on the use case, developers can implement any offchain mechanism to read the standard xref:api:crosschain.adoc#IERC7786GatewaySource#MessagePosted[`MessagePosted`] event and deliver it to the receiver on the destination chain.
+
+[source,solidity]
+----
+include::api:example$crosschain/MyERC7786GatewaySource.sol[]
+----
+
+NOTE: The standard defines the chains in https://github.com/ChainAgnostic/CAIPs/blob/main/CAIPs/caip-2.md[CAIP-2] identifiers and the accounts https://github.com/ChainAgnostic/CAIPs/blob/main/CAIPs/caip-2.md[CAIP-10] identifiers for increased interoperability with non-EVM chains. Consider using the Strings library in the contracts library to process these identifiers.
+
+=== Axelar Network
+
+The library offers an implementation of the xref:api:crosschain.adoc#IERC7786GatewaySource[IERC7786GatewaySource] interface called xref:api:crosschain.adoc#AxelarGatewaySource[AxelarGatewaySource] that works as an adapter for ERC-7786.
+
+The implementation takes a local gateway address that MUST correspond to https://axelarscan.io/resources/chains?type=evm[Axelar's native gateways] and has mechanisms to:
+
+* Keep track of equivalences between Axelar chain names and CAIP-2 identifiers
+* Record a destination gateway per network using their CAIP-2 identifier
+
+The xref:api:crosschain.adoc#AxelarGatewaySource[AxelarGatewaySource] implementation can be used out of the box
+
+[source,solidity]
+----
+include::api:example$crosschain/MyCustomAxelarGatewaySource.sol[]
+----
+
+== Receiving a message
+
+To sucessfully process a message on the destination chain, a destination gateway is required. Although ERC-7786 doesn't define a standard interface for the destination gateway, it requires that it calls the `executeMessage` upon message reception.
+
+Every cross-chain message protocol already offers a way to receive the message either through a canonical bridge or an intermediate contract. Developers can easily wrap the receiving contract into a gateway that calls the `executeMessage` function as mandated by the ERC.
+
+To receive a message on a custom smart contract, OpenZeppelin Community Contracts provide an xref:api:crosschain.adoc#ERC7786Receiver[ERC7786Receiver] implementation for developers to inherit. This way your contracts can receive a cross-chain message relayed through a known destination gateway gateway.
+
+[source,solidity]
+----
+include::api:example$crosschain/MyERC7786ReceiverContract.sol[]
+----
+
+The standard receiving interface abstracts away the underlying protocol. This way, it is possible for a contract to send a message through an ERC-7786 compliant gateway (or through an adapter) and get it received on the destination chain without worrying about the protocol implementation details.
+
+=== Axelar Network
+
+To solve the requirement of a destination gateway, the library provides an adapter of the `AxelarExecutable` interface to receive messages and relay them to an xref:api:crosschain.adoc#IERC7786Receiver[IERC7786Receiver].
+
+[source,solidity]
+----
+include::api:example$crosschain/MyCustomAxelarGatewayDestination.sol[]
+----
