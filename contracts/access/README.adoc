@@ -1,4 +1,4 @@
-= Utilities
+= Access
 
 [.readme-notice]
 NOTE: This document is better viewed at https://docs.openzeppelin.com/community-contracts/proxy
@@ -10,6 +10,3 @@ This directory contains utility contracts to restrict access control in smart co
 == AccessManager
 
 {{AccessManagerLight}}
-
-
-

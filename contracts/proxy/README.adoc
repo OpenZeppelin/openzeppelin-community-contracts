@@ -1,4 +1,4 @@
-= Utilities
+= Proxy
 
 [.readme-notice]
 NOTE: This document is better viewed at https://docs.openzeppelin.com/community-contracts/proxy
@@ -10,6 +10,3 @@ Variants of proxy patterns, which are contracts that allow to forward a call to 
 == General
 
 {{HybridProxy}}
-
-
-
