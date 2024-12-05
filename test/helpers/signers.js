@@ -2,6 +2,7 @@ const { ethers } = require('hardhat');
 const { secp256k1 } = require('@noble/curves/secp256k1');
 const { secp256r1 } = require('@noble/curves/p256');
 const { generateKeyPairSync, privateEncrypt } = require('crypto');
+const { hashTypedData } = require('../../lib/@openzeppelin-contracts/test/helpers/eip712');
 
 const ensureLowerOrderS = (N, { s, recovery, ...rest }) => {
   if (s > N / 2n) {
@@ -12,38 +13,16 @@ const ensureLowerOrderS = (N, { s, recovery, ...rest }) => {
 };
 
 class BooleanSigner {
-  signPersonal() {
-    return '0x01';
-  }
-
-  signNestedTypedData() {
+  signTypedData() {
     return '0x01';
   }
 }
 
 class ERC7739Signer {
-  signPersonal(domain, contents) {
-    return this._signRaw(
-      hashTypedData(
-        domain,
-        ethers.solidityPackedKeccak256(
-          ['bytes32', 'bytes32'],
-          [
-            ethers.solidityPackedKeccak256(['string'], ['PersonalSign(bytes prefixed)']),
-            ethers.solidityPackedKeccak256(['string', 'bytes32'], ['\x19Ethereum Signed Message:\n32', contents]),
-          ],
-        ),
-      ),
-    );
-  }
-
-  signNestedTypedData(localDomain, appDomain, contents, contentsType) {
-    return this._signRaw(hashTypedData(appDomain, hashNestedTypedDataStruct(localDomain, contents, contentsType)));
-  }
-
-  wrapTypedDataSig(originalSig, appSeparator, contents, contentsType) {
-    const contentsTypeLength = ethers.toBeHex(ethers.dataLength(contentsType), 2);
-    return ethers.concat([originalSig, appSeparator, contents, contentsType, contentsTypeLength]);
+  signTypedData(domain, types, contents) {
+    const encoder = ethers.TypedDataEncoder.from(types);
+    console.log(this);
+    return this._signRaw(hashTypedData(domain, encoder.hash(contents)));
   }
 }
 

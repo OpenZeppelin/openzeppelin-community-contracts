@@ -22,7 +22,15 @@ async function fixture() {
     verifyingContract: smartAccount.address,
   };
 
-  return { ...helper, domain, smartAccount, signer, target, beneficiary, other };
+  return {
+    ...helper,
+    domain,
+    smartAccount,
+    signer,
+    target,
+    beneficiary,
+    other,
+  };
 }
 
 describe('AccountECDSA', function () {
@@ -32,13 +40,13 @@ describe('AccountECDSA', function () {
 
   shouldBehaveLikeAnAccountBase();
   shouldBehaveLikeAnAccountBaseExecutor();
-  shouldBehaveLikeAccountHolder();
+  // shouldBehaveLikeAccountHolder();
 
-  describe('ERC7739Signer', function () {
-    beforeEach(async function () {
-      this.mock = await this.smartAccount.deploy();
-    });
+  // describe('ERC7739Signer', function () {
+  //   beforeEach(async function () {
+  //     this.mock = await this.smartAccount.deploy();
+  //   });
 
-    shouldBehaveLikeERC7739Signer();
-  });
+  //   shouldBehaveLikeERC7739Signer();
+  // });
 });

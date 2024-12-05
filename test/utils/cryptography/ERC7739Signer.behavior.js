@@ -1,6 +1,6 @@
 const { ethers } = require('hardhat');
 const { expect } = require('chai');
-const { Permit, formatType, getDomain } = require('../../../lib/@openzeppelin-contracts/test/helpers/eip712');
+const { Permit, formatType } = require('../../../lib/@openzeppelin-contracts/test/helpers/eip712');
 const { PersonalSignHelper, TypedDataSignHelper } = require('../../helpers/erc7739');
 
 function shouldBehaveLikeERC7739Signer() {
