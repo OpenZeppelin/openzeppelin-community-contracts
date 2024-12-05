@@ -40,13 +40,14 @@ describe('AccountECDSA', function () {
 
   shouldBehaveLikeAnAccountBase();
   shouldBehaveLikeAnAccountBaseExecutor();
-  // shouldBehaveLikeAccountHolder();
+  shouldBehaveLikeAccountHolder();
 
-  // describe('ERC7739Signer', function () {
-  //   beforeEach(async function () {
-  //     this.mock = await this.smartAccount.deploy();
-  //   });
+  describe('ERC7739Signer', function () {
+    beforeEach(async function () {
+      this.mock = await this.smartAccount.deploy();
+      this.signTypedData = this.signer.signTypedData.bind(this.signer);
+    });
 
-  //   shouldBehaveLikeERC7739Signer();
-  // });
+    shouldBehaveLikeERC7739Signer();
+  });
 });

@@ -21,7 +21,6 @@ class BooleanSigner {
 class ERC7739Signer {
   signTypedData(domain, types, contents) {
     const encoder = ethers.TypedDataEncoder.from(types);
-    console.log(this);
     return this._signRaw(hashTypedData(domain, encoder.hash(contents)));
   }
 }

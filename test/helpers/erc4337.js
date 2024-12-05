@@ -93,7 +93,7 @@ class UserOperation extends UserOperationVanilla {
 
   async sign(domain, signer) {
     this.signature = await PersonalSignHelper.sign(
-      signer.signTypedData,
+      signer.signTypedData.bind(signer),
       this.hash(this.context.entrypoint.target, this.context.chainId),
       domain,
     );
