@@ -42,7 +42,7 @@ abstract contract AccountECDSA is ERC165, ERC7739Signer, ERC721Holder, ERC1155Ho
         bytes32 userOpHash
     ) internal view override returns (uint256) {
         return
-            _validateNestedEIP712Signature(userOpHash, userOp.signature)
+            _isValidSignature(userOpHash, userOp.signature)
                 ? ERC4337Utils.SIG_VALIDATION_SUCCESS
                 : ERC4337Utils.SIG_VALIDATION_FAILED;
     }
