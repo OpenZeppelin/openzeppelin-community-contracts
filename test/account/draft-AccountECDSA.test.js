@@ -11,7 +11,7 @@ const { shouldBehaveLikeERC7739Signer } = require('../utils/cryptography/ERC7739
 
 async function fixture() {
   const [beneficiary, other] = await ethers.getSigners();
-  const target = await ethers.deployContract('CallReceiverMock');
+  const target = await ethers.deployContract('CallReceiverMockExtended');
   const signer = new ECDSASigner();
   const helper = new ERC4337Helper('$AccountECDSA');
   const smartAccount = await helper.newAccount(['AccountECDSA', '1', signer.EOA.address]);

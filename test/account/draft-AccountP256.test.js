@@ -11,7 +11,7 @@ const { shouldBehaveLikeERC7739Signer } = require('../utils/cryptography/ERC7739
 
 async function fixture() {
   const [beneficiary, other] = await ethers.getSigners();
-  const target = await ethers.deployContract('CallReceiverMock');
+  const target = await ethers.deployContract('CallReceiverMockExtended');
   const signer = new P256Signer();
   const helper = new ERC4337Helper('$AccountP256');
   const smartAccount = await helper.newAccount(['AccountP256', '1', signer.publicKey.qx, signer.publicKey.qy]);

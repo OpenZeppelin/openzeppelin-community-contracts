@@ -6,7 +6,7 @@ const { BooleanSigner } = require('../helpers/signers');
 
 async function fixture() {
   const [beneficiary, other] = await ethers.getSigners();
-  const target = await ethers.deployContract('CallReceiverMock');
+  const target = await ethers.deployContract('CallReceiverMockExtended');
   const signer = new BooleanSigner();
   const helper = new ERC4337Helper('$AccountBaseMock');
   const smartAccount = await helper.newAccount();

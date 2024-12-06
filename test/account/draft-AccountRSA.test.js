@@ -11,7 +11,7 @@ const { shouldBehaveLikeERC7739Signer } = require('../utils/cryptography/ERC7739
 
 async function fixture() {
   const [beneficiary, other] = await ethers.getSigners();
-  const target = await ethers.deployContract('CallReceiverMock');
+  const target = await ethers.deployContract('CallReceiverMockExtended');
   const signer = new RSASigner();
   const helper = new ERC4337Helper('$AccountRSA');
   const smartAccount = await helper.newAccount(['AccountRSA', '1', signer.publicKey.e, signer.publicKey.n]);
