@@ -25,7 +25,7 @@ async function fixture() {
   return {
     ...helper,
     domain,
-    smartAccount,
+    mock: smartAccount,
     signer,
     target,
     beneficiary,
@@ -44,7 +44,7 @@ describe('AccountECDSA', function () {
 
   describe('ERC7739Signer', function () {
     beforeEach(async function () {
-      this.mock = await this.smartAccount.deploy();
+      this.mock = await this.mock.deploy();
       this.signTypedData = this.signer.signTypedData.bind(this.signer);
     });
 

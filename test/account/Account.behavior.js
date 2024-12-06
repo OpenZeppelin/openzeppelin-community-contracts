@@ -13,20 +13,20 @@ const {
 function shouldBehaveLikeAnAccountBase() {
   describe('entryPoint', function () {
     it('should return the canonical entrypoint', async function () {
-      await this.smartAccount.deploy();
-      expect(await this.smartAccount.entryPoint()).to.equal(this.entrypoint.target);
+      await this.mock.deploy();
+      expect(await this.mock.entryPoint()).to.equal(this.entrypoint.target);
     });
   });
 
   describe('validateUserOp', function () {
     beforeEach(async function () {
-      await setBalance(this.smartAccount.target, ethers.parseEther('1'));
-      await this.smartAccount.deploy();
+      await setBalance(this.mock.target, ethers.parseEther('1'));
+      await this.mock.deploy();
     });
 
     it('should revert if the caller is not the canonical entrypoint', async function () {
-      const selector = this.smartAccount.interface.getFunction('executeUserOp').selector;
-      const operation = await this.smartAccount
+      const selector = this.mock.interface.getFunction('executeUserOp').selector;
+      const operation = await this.mock
         .createOp({
           callData: ethers.concat([
             selector,
@@ -38,7 +38,7 @@ function shouldBehaveLikeAnAccountBase() {
         })
         .then(op => op.sign(this.domain, this.signer));
       await expect(
-        this.smartAccount
+        this.mock
           .connect(this.other)
           .validateUserOp(
             operation.packed,
@@ -46,7 +46,7 @@ function shouldBehaveLikeAnAccountBase() {
             0,
           ),
       )
-        .to.be.revertedWithCustomError(this.smartAccount, 'AccountUnauthorized')
+        .to.be.revertedWithCustomError(this.mock, 'AccountUnauthorized')
         .withArgs(this.other);
     });
 
@@ -56,8 +56,8 @@ function shouldBehaveLikeAnAccountBase() {
       });
 
       it('should return SIG_VALIDATION_SUCCESS if the signature is valid', async function () {
-        const selector = this.smartAccount.interface.getFunction('executeUserOp').selector;
-        const operation = await this.smartAccount
+        const selector = this.mock.interface.getFunction('executeUserOp').selector;
+        const operation = await this.mock
           .createOp({
             callData: ethers.concat([
               selector,
@@ -70,7 +70,7 @@ function shouldBehaveLikeAnAccountBase() {
           .then(op => op.sign(this.domain, this.signer));
 
         expect(
-          await this.smartAccount
+          await this.mock
             .connect(this.entrypointAsSigner)
             .validateUserOp.staticCall(
               operation.packed,
@@ -81,8 +81,8 @@ function shouldBehaveLikeAnAccountBase() {
       });
 
       it('should return SIG_VALIDATION_FAILURE if the signature is invalid', async function () {
-        const selector = this.smartAccount.interface.getFunction('executeUserOp').selector;
-        const operation = await this.smartAccount.createOp({
+        const selector = this.mock.interface.getFunction('executeUserOp').selector;
+        const operation = await this.mock.createOp({
           callData: ethers.concat([
             selector,
             ethers.AbiCoder.defaultAbiCoder().encode(
@@ -95,7 +95,7 @@ function shouldBehaveLikeAnAccountBase() {
         operation.signature = '0x00';
 
         expect(
-          await this.smartAccount
+          await this.mock
             .connect(this.entrypointAsSigner)
             .validateUserOp.staticCall(
               operation.packed,
@@ -106,8 +106,8 @@ function shouldBehaveLikeAnAccountBase() {
       });
 
       it('should pay missing account funds for execution', async function () {
-        const selector = this.smartAccount.interface.getFunction('executeUserOp').selector;
-        const operation = await this.smartAccount
+        const selector = this.mock.interface.getFunction('executeUserOp').selector;
+        const operation = await this.mock
           .createOp({
             callData: ethers.concat([
               selector,
@@ -119,11 +119,11 @@ function shouldBehaveLikeAnAccountBase() {
           })
           .then(op => op.sign(this.domain, this.signer));
 
-        const prevAccountBalance = await ethers.provider.getBalance(this.smartAccount.target);
+        const prevAccountBalance = await ethers.provider.getBalance(this.mock.target);
         const prevEntrypointBalance = await ethers.provider.getBalance(this.entrypoint.target);
         const amount = ethers.parseEther('0.1');
 
-        const tx = await this.smartAccount
+        const tx = await this.mock
           .connect(this.entrypointAsSigner)
           .validateUserOp(
             operation.packed,
@@ -134,7 +134,7 @@ function shouldBehaveLikeAnAccountBase() {
         const receipt = await tx.wait();
         const callerFees = receipt.gasUsed * tx.gasPrice;
 
-        expect(await ethers.provider.getBalance(this.smartAccount.target)).to.equal(prevAccountBalance - amount);
+        expect(await ethers.provider.getBalance(this.mock.target)).to.equal(prevAccountBalance - amount);
         expect(await ethers.provider.getBalance(this.entrypoint.target)).to.equal(
           prevEntrypointBalance + amount - callerFees,
         );
@@ -144,14 +144,14 @@ function shouldBehaveLikeAnAccountBase() {
 
   describe('fallback', function () {
     it('should receive ether', async function () {
-      await this.smartAccount.deploy();
+      await this.mock.deploy();
       await setBalance(this.other.address, ethers.parseEther('1'));
 
-      const prevBalance = await ethers.provider.getBalance(this.smartAccount.target);
+      const prevBalance = await ethers.provider.getBalance(this.mock.target);
       const amount = ethers.parseEther('0.1');
-      await this.other.sendTransaction({ to: this.smartAccount.target, value: amount });
+      await this.other.sendTransaction({ to: this.mock.target, value: amount });
 
-      expect(await ethers.provider.getBalance(this.smartAccount.target)).to.equal(prevBalance + amount);
+      expect(await ethers.provider.getBalance(this.mock.target)).to.equal(prevBalance + amount);
     });
   });
 }
@@ -159,7 +159,7 @@ function shouldBehaveLikeAnAccountBase() {
 function shouldBehaveLikeAccountHolder() {
   describe('onReceived', function () {
     beforeEach(async function () {
-      await this.smartAccount.deploy();
+      await this.mock.deploy();
     });
 
     shouldSupportInterfaces(['ERC1155Receiver']);
@@ -176,24 +176,24 @@ function shouldBehaveLikeAccountHolder() {
       });
 
       it('receives ERC1155 tokens from a single ID', async function () {
-        await this.token.connect(this.owner).safeTransferFrom(this.owner, this.smartAccount, ids[0], values[0], data);
-        expect(await this.token.balanceOf(this.smartAccount, ids[0])).to.equal(values[0]);
+        await this.token.connect(this.owner).safeTransferFrom(this.owner, this.mock, ids[0], values[0], data);
+        expect(await this.token.balanceOf(this.mock, ids[0])).to.equal(values[0]);
         for (let i = 1; i < ids.length; i++) {
-          expect(await this.token.balanceOf(this.smartAccount, ids[i])).to.equal(0n);
+          expect(await this.token.balanceOf(this.mock, ids[i])).to.equal(0n);
         }
       });
 
       it('receives ERC1155 tokens from a multiple IDs', async function () {
         expect(
           await this.token.balanceOfBatch(
-            ids.map(() => this.smartAccount),
+            ids.map(() => this.mock),
             ids,
           ),
         ).to.deep.equal(ids.map(() => 0n));
-        await this.token.connect(this.owner).safeBatchTransferFrom(this.owner, this.smartAccount, ids, values, data);
+        await this.token.connect(this.owner).safeBatchTransferFrom(this.owner, this.mock, ids, values, data);
         expect(
           await this.token.balanceOfBatch(
-            ids.map(() => this.smartAccount),
+            ids.map(() => this.mock),
             ids,
           ),
         ).to.deep.equal(values);
@@ -211,9 +211,9 @@ function shouldBehaveLikeAccountHolder() {
         const token = await ethers.deployContract('ERC721Mock', [name, symbol]);
         await token.$mint(owner, tokenId);
 
-        await token.connect(owner).safeTransferFrom(owner, this.smartAccount, tokenId);
+        await token.connect(owner).safeTransferFrom(owner, this.mock, tokenId);
 
-        expect(await token.ownerOf(tokenId)).to.equal(this.smartAccount.target);
+        expect(await token.ownerOf(tokenId)).to.equal(this.mock.target);
       });
     });
   });
@@ -222,16 +222,16 @@ function shouldBehaveLikeAccountHolder() {
 function shouldBehaveLikeAnAccountBaseExecutor({ deployable = true } = {}) {
   describe('executeUserOp', function () {
     beforeEach(async function () {
-      await setBalance(this.smartAccount.target, ethers.parseEther('1'));
-      expect(await ethers.provider.getCode(this.smartAccount.target)).to.equal('0x');
+      await setBalance(this.mock.target, ethers.parseEther('1'));
+      expect(await ethers.provider.getCode(this.mock.target)).to.equal('0x');
       this.entrypointAsSigner = await impersonate(this.entrypoint.target);
     });
 
     it('should revert if the caller is not the canonical entrypoint or the account itself', async function () {
-      await this.smartAccount.deploy();
+      await this.mock.deploy();
 
-      const selector = this.smartAccount.interface.getFunction('executeUserOp').selector;
-      const operation = await this.smartAccount
+      const selector = this.mock.interface.getFunction('executeUserOp').selector;
+      const operation = await this.mock
         .createOp({
           callData: ethers.concat([
             selector,
@@ -244,22 +244,24 @@ function shouldBehaveLikeAnAccountBaseExecutor({ deployable = true } = {}) {
         .then(op => op.sign(this.domain, this.signer));
 
       await expect(
-        this.smartAccount
+        this.mock
           .connect(this.other)
           .executeUserOp(
             operation.packed,
             operation.hash(operation.context.entrypoint.target, operation.context.chainId),
           ),
       )
-        .to.be.revertedWithCustomError(this.smartAccount, 'AccountUnauthorized')
+        .to.be.revertedWithCustomError(this.mock, 'AccountUnauthorized')
         .withArgs(this.other);
     });
 
     if (deployable) {
       describe('when not deployed', function () {
         it('should be created with handleOps and increase nonce', async function () {
-          const selector = this.smartAccount.interface.getFunction('executeUserOp').selector;
-          const operation = await this.smartAccount
+          await this.mock.deploy();
+
+          const selector = this.mock.interface.getFunction('executeUserOp').selector;
+          const operation = await this.mock
             .createOp({
               callData: ethers.concat([
                 selector,
@@ -276,18 +278,18 @@ function shouldBehaveLikeAnAccountBaseExecutor({ deployable = true } = {}) {
             // .to.emit(this.entrypoint, 'AccountDeployed')
             // .withArgs(
             //   operation.hash(operation.context.entrypoint.target, operation.context.chainId),
-            //   this.smartAccount,
+            //   this.mock,
             //   this.factory,
             //   ethers.ZeroAddress,
             // )
             .to.emit(this.target, 'MockFunctionCalledExtra')
-            .withArgs(this.smartAccount, 17);
-          expect(await this.smartAccount.getNonce()).to.equal(1);
+            .withArgs(this.mock, 17);
+          expect(await this.mock.getNonce()).to.equal(1);
         });
 
         it('should revert if the signature is invalid', async function () {
-          const selector = this.smartAccount.interface.getFunction('executeUserOp').selector;
-          const operation = await this.smartAccount
+          const selector = this.mock.interface.getFunction('executeUserOp').selector;
+          const operation = await this.mock
             .createOp({
               callData: ethers.concat([
                 selector,
@@ -309,12 +311,12 @@ function shouldBehaveLikeAnAccountBaseExecutor({ deployable = true } = {}) {
 
     describe('when deployed', function () {
       beforeEach(async function () {
-        await this.smartAccount.deploy();
+        await this.mock.deploy();
       });
 
       it('should increase nonce and call target', async function () {
-        const selector = this.smartAccount.interface.getFunction('executeUserOp').selector;
-        const operation = await this.smartAccount
+        const selector = this.mock.interface.getFunction('executeUserOp').selector;
+        const operation = await this.mock
           .createOp({
             callData: ethers.concat([
               selector,
@@ -326,11 +328,11 @@ function shouldBehaveLikeAnAccountBaseExecutor({ deployable = true } = {}) {
           })
           .then(op => op.sign(this.domain, this.signer));
 
-        expect(await this.smartAccount.getNonce()).to.equal(0);
+        expect(await this.mock.getNonce()).to.equal(0);
         await expect(this.entrypoint.connect(this.entrypointAsSigner).handleOps([operation.packed], this.beneficiary))
           .to.emit(this.target, 'MockFunctionCalledExtra')
-          .withArgs(this.smartAccount, 42);
-        expect(await this.smartAccount.getNonce()).to.equal(1);
+          .withArgs(this.mock, 42);
+        expect(await this.mock.getNonce()).to.equal(1);
       });
     });
   });

@@ -22,7 +22,7 @@ async function fixture() {
     verifyingContract: smartAccount.address,
   };
 
-  return { ...helper, domain, smartAccount, signer, target, beneficiary, other };
+  return { ...helper, domain, mock: smartAccount, signer, target, beneficiary, other };
 }
 
 describe('AccountP256', function () {
@@ -36,7 +36,7 @@ describe('AccountP256', function () {
 
   describe('ERC7739Signer', function () {
     beforeEach(async function () {
-      this.mock = await this.smartAccount.deploy();
+      this.mock = await this.mock.deploy();
       this.signTypedData = this.signer.signTypedData.bind(this.signer);
     });
 
