@@ -258,8 +258,6 @@ function shouldBehaveLikeAnAccountBaseExecutor({ deployable = true } = {}) {
     if (deployable) {
       describe('when not deployed', function () {
         it('should be created with handleOps and increase nonce', async function () {
-          await this.mock.deploy();
-
           const selector = this.mock.interface.getFunction('executeUserOp').selector;
           const operation = await this.mock
             .createOp({
@@ -275,13 +273,13 @@ function shouldBehaveLikeAnAccountBaseExecutor({ deployable = true } = {}) {
             .then(op => op.sign(this.domain, this.signer));
 
           await expect(this.entrypoint.connect(this.entrypointAsSigner).handleOps([operation.packed], this.beneficiary))
-            // .to.emit(this.entrypoint, 'AccountDeployed')
-            // .withArgs(
-            //   operation.hash(operation.context.entrypoint.target, operation.context.chainId),
-            //   this.mock,
-            //   this.factory,
-            //   ethers.ZeroAddress,
-            // )
+            .to.emit(this.entrypoint, 'AccountDeployed')
+            .withArgs(
+              operation.hash(operation.context.entrypoint.target, operation.context.chainId),
+              this.mock,
+              this.factory,
+              ethers.ZeroAddress,
+            )
             .to.emit(this.target, 'MockFunctionCalledExtra')
             .withArgs(this.mock, 17);
           expect(await this.mock.getNonce()).to.equal(1);

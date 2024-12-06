@@ -48,13 +48,15 @@ class SmartAccount extends ethers.BaseContract {
     super(instance.target, instance.interface, instance.runner, instance.deployTx);
     this.address = instance.target;
     this.initCode = initCode;
+    this.factory = '0x' + initCode.replace(/0x/, '').slice(0, 40);
+    this.factoryData = '0x' + initCode.replace(/0x/, '').slice(40);
     this.context = context;
   }
 
   async deploy(account = this.runner) {
     this.deployTx = await account.sendTransaction({
-      to: '0x' + this.initCode.replace(/0x/, '').slice(0, 40),
-      data: '0x' + this.initCode.replace(/0x/, '').slice(40),
+      to: this.factory,
+      data: this.factoryData,
     });
     return this;
   }
@@ -83,11 +85,13 @@ class UserOperation extends UserOperationVanilla {
   constructor(params) {
     super(params);
     this.context = params.sender.context;
-    this.senderInitCode = params.sender.initCode;
+    this.senderFactory = params.sender.factory;
+    this.senderFactoryData = params.sender.factoryData;
   }
 
   addInitCode() {
-    this.initCode = this.senderInitCode;
+    this.factory = this.senderFactory;
+    this.factoryData = this.senderFactoryData;
     return this;
   }
 

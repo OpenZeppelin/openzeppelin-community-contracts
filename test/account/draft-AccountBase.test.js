@@ -11,7 +11,7 @@ async function fixture() {
   const helper = new ERC4337Helper('$AccountBaseMock');
   const smartAccount = await helper.newAccount();
 
-  return { ...helper, smartAccount, signer, target, beneficiary, other };
+  return { ...helper, mock: smartAccount, signer, target, beneficiary, other };
 }
 
 describe('AccountBase', function () {
