@@ -20,8 +20,7 @@ class BooleanSigner {
 
 class ERC7739Signer {
   signTypedData(domain, types, contents) {
-    const encoder = ethers.TypedDataEncoder.from(types);
-    return this._signRaw(hashTypedData(domain, encoder.hash(contents)));
+    return this._signRaw(hashTypedData(domain, ethers.TypedDataEncoder.from(types).hash(contents)));
   }
 }
 

@@ -9,6 +9,7 @@ import {ERC1155HolderLean, IERC1155Receiver} from "../token/ERC1155/utils/ERC115
 import {ERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import {P256} from "@openzeppelin/contracts/utils/cryptography/P256.sol";
+import {MessageHashUtils} from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
 import {AccountBase} from "./draft-AccountBase.sol";
 import {ERC7739Signer} from "../utils/cryptography/draft-ERC7739Signer.sol";
 
@@ -16,6 +17,8 @@ import {ERC7739Signer} from "../utils/cryptography/draft-ERC7739Signer.sol";
  * @dev Account implementation using {P256} signatures and {ERC7739Signer} for replay protection.
  */
 abstract contract AccountP256 is ERC165, ERC7739Signer, ERC721Holder, ERC1155HolderLean, AccountBase {
+    using MessageHashUtils for bytes32;
+
     bytes32 private immutable _qx;
     bytes32 private immutable _qy;
 
@@ -42,9 +45,9 @@ abstract contract AccountP256 is ERC165, ERC7739Signer, ERC721Holder, ERC1155Hol
     function _validateUserOp(
         PackedUserOperation calldata userOp,
         bytes32 userOpHash
-    ) internal view override returns (uint256) {
+    ) internal view virtual override returns (uint256) {
         return
-            _isValidSignature(userOpHash, userOp.signature)
+            _isValidSignature(userOpHash.toEthSignedMessageHash(), userOp.signature)
                 ? ERC4337Utils.SIG_VALIDATION_SUCCESS
                 : ERC4337Utils.SIG_VALIDATION_FAILED;
     }

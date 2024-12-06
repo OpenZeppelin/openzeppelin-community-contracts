@@ -37,15 +37,7 @@ function shouldBehaveLikeAnAccountBase() {
           ]),
         })
         .then(op => op.sign(this.domain, this.signer));
-      await expect(
-        this.mock
-          .connect(this.other)
-          .validateUserOp(
-            operation.packed,
-            operation.hash(operation.context.entrypoint.target, operation.context.chainId),
-            0,
-          ),
-      )
+      await expect(this.mock.connect(this.other).validateUserOp(operation.packed, operation.hash(), 0))
         .to.be.revertedWithCustomError(this.mock, 'AccountUnauthorized')
         .withArgs(this.other);
     });
@@ -72,11 +64,7 @@ function shouldBehaveLikeAnAccountBase() {
         expect(
           await this.mock
             .connect(this.entrypointAsSigner)
-            .validateUserOp.staticCall(
-              operation.packed,
-              operation.hash(operation.context.entrypoint.target, operation.context.chainId),
-              0,
-            ),
+            .validateUserOp.staticCall(operation.packed, operation.hash(), 0),
         ).to.eq(SIG_VALIDATION_SUCCESS);
       });
 
@@ -97,11 +85,7 @@ function shouldBehaveLikeAnAccountBase() {
         expect(
           await this.mock
             .connect(this.entrypointAsSigner)
-            .validateUserOp.staticCall(
-              operation.packed,
-              operation.hash(operation.context.entrypoint.target, operation.context.chainId),
-              0,
-            ),
+            .validateUserOp.staticCall(operation.packed, operation.hash(), 0),
         ).to.eq(SIG_VALIDATION_FAILURE);
       });
 
@@ -125,11 +109,7 @@ function shouldBehaveLikeAnAccountBase() {
 
         const tx = await this.mock
           .connect(this.entrypointAsSigner)
-          .validateUserOp(
-            operation.packed,
-            operation.hash(operation.context.entrypoint.target, operation.context.chainId),
-            amount,
-          );
+          .validateUserOp(operation.packed, operation.hash(), amount);
 
         const receipt = await tx.wait();
         const callerFees = receipt.gasUsed * tx.gasPrice;
@@ -243,14 +223,7 @@ function shouldBehaveLikeAnAccountBaseExecutor({ deployable = true } = {}) {
         })
         .then(op => op.sign(this.domain, this.signer));
 
-      await expect(
-        this.mock
-          .connect(this.other)
-          .executeUserOp(
-            operation.packed,
-            operation.hash(operation.context.entrypoint.target, operation.context.chainId),
-          ),
-      )
+      await expect(this.mock.connect(this.other).executeUserOp(operation.packed, operation.hash()))
         .to.be.revertedWithCustomError(this.mock, 'AccountUnauthorized')
         .withArgs(this.other);
     });
@@ -274,12 +247,7 @@ function shouldBehaveLikeAnAccountBaseExecutor({ deployable = true } = {}) {
 
           await expect(this.entrypoint.connect(this.entrypointAsSigner).handleOps([operation.packed], this.beneficiary))
             .to.emit(this.entrypoint, 'AccountDeployed')
-            .withArgs(
-              operation.hash(operation.context.entrypoint.target, operation.context.chainId),
-              this.mock,
-              this.factory,
-              ethers.ZeroAddress,
-            )
+            .withArgs(operation.hash(), this.mock, this.factory, ethers.ZeroAddress)
             .to.emit(this.target, 'MockFunctionCalledExtra')
             .withArgs(this.mock, 17);
           expect(await this.mock.getNonce()).to.equal(1);

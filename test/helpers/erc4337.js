@@ -95,13 +95,16 @@ class UserOperation extends UserOperationVanilla {
     return this;
   }
 
+  hash() {
+    return super.hash(this.context.entrypoint.target, this.context.chainId);
+  }
+
   async sign(domain, signer) {
     this.signature = await PersonalSignHelper.sign(
       signer.signTypedData.bind(signer),
-      this.hash(this.context.entrypoint.target, this.context.chainId),
+      ethers.getBytes(this.hash()),
       domain,
     );
-
     return this;
   }
 }
