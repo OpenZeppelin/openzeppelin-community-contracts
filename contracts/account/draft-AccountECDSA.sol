@@ -16,6 +16,12 @@ import {Initializable} from "@openzeppelin/contracts/proxy/utils/Initializable.s
 
 /**
  * @dev Account implementation using {ECDSA} signatures and {ERC7739Signer} for replay protection.
+ *
+ * An {_initializeSigner} function is provided to set the account's signer address. Doing so it's
+ * easier for a factory, whose likely to use initializable clones of this contract.
+ *
+ * IMPORTANT: Avoiding to call {_initializeSigner} either during construction (if used standalone)
+ * or during initialization (if used as a clone) may leave the account unusable.
  */
 abstract contract AccountECDSA is ERC165, ERC7739Signer, ERC721Holder, ERC1155HolderLean, AccountBase {
     using MessageHashUtils for bytes32;
@@ -28,7 +34,7 @@ abstract contract AccountECDSA is ERC165, ERC7739Signer, ERC721Holder, ERC1155Ho
     address private _signer;
 
     /**
-     * @dev Initializes the account with the address of the native signer.
+     * @dev Initializes the account with the address of the native signer. This function is called only once.
      */
     function _initializeSigner(address signerAddr) internal {
         if (_signer != address(0)) revert AccountECDSAUninitializedSigner(signerAddr);

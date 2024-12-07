@@ -103,7 +103,7 @@ abstract contract AccountBase is IAccount, IAccountExecute {
     function _validateUserOp(
         PackedUserOperation calldata userOp,
         bytes32 userOpSignedHash
-    ) internal virtual returns (uint256 validationData);
+    ) internal view virtual returns (uint256 validationData);
 
     /**
      * @dev Sends the missing funds for executing the user operation to the {entrypoint}.

@@ -15,6 +15,12 @@ import {ERC7739Signer} from "../utils/cryptography/draft-ERC7739Signer.sol";
 
 /**
  * @dev Account implementation using {P256} signatures and {ERC7739Signer} for replay protection.
+ *
+ * An {_initializeSigner} function is provided to set the account's signer address. Doing so it's
+ * easier for a factory, whose likely to use initializable clones of this contract.
+ *
+ * IMPORTANT: Avoiding to call {_initializeSigner} either during construction (if used standalone)
+ * or during initialization (if used as a clone) may leave the account unusable.
  */
 abstract contract AccountP256 is ERC165, ERC7739Signer, ERC721Holder, ERC1155HolderLean, AccountBase {
     using MessageHashUtils for bytes32;

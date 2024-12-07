@@ -17,11 +17,4 @@ contract AccountBaseMock is AccountBase {
                 ? ERC4337Utils.SIG_VALIDATION_SUCCESS
                 : ERC4337Utils.SIG_VALIDATION_FAILED;
     }
-
-    function _userOpSignedHash(
-        PackedUserOperation calldata /* userOp */,
-        bytes32 userOpHash
-    ) internal pure override returns (bytes32) {
-        return userOpHash;
-    }
 }

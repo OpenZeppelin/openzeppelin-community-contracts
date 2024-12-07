@@ -16,10 +16,11 @@ import {ERC7739Signer} from "../utils/cryptography/draft-ERC7739Signer.sol";
 /**
  * @dev Account implementation using {RSA} signatures and {ERC7739Signer} for replay protection.
  *
- * NOTE: Storing `_e` and `_n` in regular storage violate ERC-7562 validation rules if the contract
- * is used as an ERC-1271 signer during the validation phase of a different account contract.
- * Consider deploying this contract through a factory that sets `_e` and `_n` as immutable arguments
- * (see {Clones-cloneDeterministicWithImmutableArgs}).
+ * An {_initializeSigner} function is provided to set the account's signer address. Doing so it's
+ * easier for a factory, whose likely to use initializable clones of this contract.
+ *
+ * IMPORTANT: Avoiding to call {_initializeSigner} either during construction (if used standalone)
+ * or during initialization (if used as a clone) may leave the account unusable.
  */
 abstract contract AccountRSA is ERC165, ERC7739Signer, ERC721Holder, ERC1155HolderLean, AccountBase {
     using MessageHashUtils for bytes32;
