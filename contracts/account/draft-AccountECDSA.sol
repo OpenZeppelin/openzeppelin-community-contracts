@@ -36,16 +36,28 @@ abstract contract AccountECDSA is ERC165, ERC7739Signer, ERC721Holder, ERC1155Ho
     }
 
     /**
+     * @dev Returns the ERC-191 signed `userOpHash` hashed with keccak256 using `personal_sign`.
+     */
+    function _userOpSignedHash(
+        PackedUserOperation calldata /* userOp */,
+        bytes32 userOpHash
+    ) internal view virtual override returns (bytes32) {
+        return userOpHash.toEthSignedMessageHash();
+    }
+
+    /**
      * @dev Internal version of {validateUserOp} that relies on {_validateNestedEIP712Signature}.
+     *
+     * The `userOpSignedHash` is the digest from {_userOpSignedHash}.
      *
      * NOTE: To override the signature functionality, try overriding {_validateNestedEIP712Signature} instead.
      */
     function _validateUserOp(
         PackedUserOperation calldata userOp,
-        bytes32 userOpHash
+        bytes32 userOpSignedHash
     ) internal view virtual override returns (uint256) {
         return
-            _isValidSignature(userOpHash.toEthSignedMessageHash(), userOp.signature)
+            _isValidSignature(userOpSignedHash, userOp.signature)
                 ? ERC4337Utils.SIG_VALIDATION_SUCCESS
                 : ERC4337Utils.SIG_VALIDATION_FAILED;
     }

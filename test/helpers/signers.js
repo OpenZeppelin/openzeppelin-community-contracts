@@ -100,9 +100,16 @@ class RSASigner extends ERC7739Signer {
   }
 }
 
+class RSASignerSHA256 extends RSASigner {
+  _signRaw(messageHash) {
+    return super._signRaw(ethers.sha256(ethers.solidityPacked(['bytes32'], [messageHash])));
+  }
+}
+
 module.exports = {
   BooleanSigner,
   ECDSASigner,
   P256Signer,
   RSASigner,
+  RSASignerSHA256,
 };

@@ -55,6 +55,21 @@ abstract contract AccountBase is IAccount, IAccountExecute {
     }
 
     /**
+     * @dev Returns the digest the offchain signer signed instead of the opaque `userOpHash`.
+     *
+     * Given the `userOpHash` calculation is defined by ERC-4337, offchain signers
+     * may need to sign again this hash by rehashing it with other schemes.
+     *
+     * Returns the `userOpHash` by default.
+     */
+    function _userOpSignedHash(
+        PackedUserOperation calldata /* userOp */,
+        bytes32 userOpHash
+    ) internal view virtual returns (bytes32) {
+        return userOpHash;
+    }
+
+    /**
      * @inheritdoc IAccount
      */
     function validateUserOp(
@@ -62,7 +77,7 @@ abstract contract AccountBase is IAccount, IAccountExecute {
         bytes32 userOpHash,
         uint256 missingAccountFunds
     ) public virtual onlyEntryPoint returns (uint256) {
-        uint256 validationData = _validateUserOp(userOp, userOpHash);
+        uint256 validationData = _validateUserOp(userOp, _userOpSignedHash(userOp, userOpHash));
         _payPrefund(missingAccountFunds);
         return validationData;
     }
@@ -79,7 +94,7 @@ abstract contract AccountBase is IAccount, IAccountExecute {
     }
 
     /**
-     * @dev Validation logic for {validateUserOp}.
+     * @dev Validation logic for {validateUserOp}. The `userOpSignedHash` is the digest from {_userOpSignedHash}.
      *
      * IMPORTANT: Implementing a mechanism to validate user operations is a security-sensitive operation
      * as it may allow an attacker to bypass the account's security measures. Check out {AccountECDSA},
@@ -87,7 +102,7 @@ abstract contract AccountBase is IAccount, IAccountExecute {
      */
     function _validateUserOp(
         PackedUserOperation calldata userOp,
-        bytes32 userOpHash
+        bytes32 userOpSignedHash
     ) internal virtual returns (uint256 validationData);
 
     /**
