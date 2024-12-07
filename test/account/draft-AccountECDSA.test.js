@@ -13,7 +13,7 @@ async function fixture() {
   const [beneficiary, other] = await ethers.getSigners();
   const target = await ethers.deployContract('CallReceiverMockExtended');
   const signer = new ECDSASigner();
-  const helper = new ERC4337Helper('$AccountECDSA');
+  const helper = new ERC4337Helper('$AccountECDSAMock');
   const smartAccount = await helper.newAccount(['AccountECDSA', '1', signer.EOA.address]);
   const domain = {
     name: 'AccountECDSA',

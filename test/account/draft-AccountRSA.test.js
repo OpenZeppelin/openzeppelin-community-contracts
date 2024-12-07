@@ -13,7 +13,7 @@ async function fixture() {
   const [beneficiary, other] = await ethers.getSigners();
   const target = await ethers.deployContract('CallReceiverMockExtended');
   const signer = new RSASignerSHA256();
-  const helper = new ERC4337Helper('$AccountRSA');
+  const helper = new ERC4337Helper('$AccountRSAMock');
   const smartAccount = await helper.newAccount(['AccountRSA', '1', signer.publicKey.e, signer.publicKey.n]);
   const domain = {
     name: 'AccountRSA',

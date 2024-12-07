@@ -11,7 +11,8 @@ import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import {MessageHashUtils} from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
 import {AccountBase} from "./draft-AccountBase.sol";
-import {ERC7739Signer} from "../utils/cryptography/draft-ERC7739Signer.sol";
+import {ERC7739Signer, EIP712} from "../utils/cryptography/draft-ERC7739Signer.sol";
+import {Initializable} from "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 
 /**
  * @dev Account implementation using {ECDSA} signatures and {ERC7739Signer} for replay protection.
@@ -19,12 +20,18 @@ import {ERC7739Signer} from "../utils/cryptography/draft-ERC7739Signer.sol";
 abstract contract AccountECDSA is ERC165, ERC7739Signer, ERC721Holder, ERC1155HolderLean, AccountBase {
     using MessageHashUtils for bytes32;
 
-    address private immutable _signer;
+    /**
+     * @dev The {signer} is already initialized.
+     */
+    error AccountECDSAUninitializedSigner(address signer);
+
+    address private _signer;
 
     /**
      * @dev Initializes the account with the address of the native signer.
      */
-    constructor(address signerAddr) {
+    function _initializeSigner(address signerAddr) internal {
+        if (_signer != address(0)) revert AccountECDSAUninitializedSigner(signerAddr);
         _signer = signerAddr;
     }
 

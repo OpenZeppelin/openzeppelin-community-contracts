@@ -24,13 +24,19 @@ import {ERC7739Signer} from "../utils/cryptography/draft-ERC7739Signer.sol";
 abstract contract AccountRSA is ERC165, ERC7739Signer, ERC721Holder, ERC1155HolderLean, AccountBase {
     using MessageHashUtils for bytes32;
 
+    /**
+     * @dev The {signer} is already initialized.
+     */
+    error AccountP256UninitializedSigner(bytes e, bytes n);
+
     bytes private _e;
     bytes private _n;
 
     /**
      * @dev Initializes the account with the RSA public key.
      */
-    constructor(bytes memory e, bytes memory n) {
+    function _initializeSigner(bytes memory e, bytes memory n) internal {
+        if (_e.length != 0 || _n.length != 0) revert AccountP256UninitializedSigner(e, n);
         _e = e;
         _n = n;
     }

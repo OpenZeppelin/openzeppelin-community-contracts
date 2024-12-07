@@ -19,13 +19,19 @@ import {ERC7739Signer} from "../utils/cryptography/draft-ERC7739Signer.sol";
 abstract contract AccountP256 is ERC165, ERC7739Signer, ERC721Holder, ERC1155HolderLean, AccountBase {
     using MessageHashUtils for bytes32;
 
-    bytes32 private immutable _qx;
-    bytes32 private immutable _qy;
+    /**
+     * @dev The {signer} is already initialized.
+     */
+    error AccountP256UninitializedSigner(bytes32 qx, bytes32 qy);
+
+    bytes32 private _qx;
+    bytes32 private _qy;
 
     /**
      * @dev Initializes the account with the P256 public key.
      */
-    constructor(bytes32 qx, bytes32 qy) {
+    function _initializeSigner(bytes32 qx, bytes32 qy) internal {
+        if (_qx != 0 || _qy != 0) revert AccountP256UninitializedSigner(qx, qy);
         _qx = qx;
         _qy = qy;
     }

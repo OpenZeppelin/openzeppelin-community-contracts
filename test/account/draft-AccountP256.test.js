@@ -13,7 +13,7 @@ async function fixture() {
   const [beneficiary, other] = await ethers.getSigners();
   const target = await ethers.deployContract('CallReceiverMockExtended');
   const signer = new P256Signer();
-  const helper = new ERC4337Helper('$AccountP256');
+  const helper = new ERC4337Helper('$AccountP256Mock');
   const smartAccount = await helper.newAccount(['AccountP256', '1', signer.publicKey.qx, signer.publicKey.qy]);
   const domain = {
     name: 'AccountP256',
