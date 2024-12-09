@@ -4,7 +4,6 @@
 pragma solidity ^0.8.20;
 
 import {Clones} from "@openzeppelin/contracts/proxy/Clones.sol";
-import {Address} from "@openzeppelin/contracts/utils/Address.sol";
 import {MyAccountECDSA} from "./MyAccountECDSA.sol";
 
 /**
@@ -30,7 +29,7 @@ contract MyFactoryAccountECDSA {
         address predicted = predictAddress(salt);
         if (predicted.code.length == 0) {
             _impl.cloneDeterministic(salt);
-            Address.functionCall(predicted, abi.encodeCall(MyAccountECDSA.initializeSigner, (signer)));
+            MyAccountECDSA(payable(predicted)).initializeSigner(signer);
         }
         return predicted;
     }
