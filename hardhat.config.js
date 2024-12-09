@@ -34,8 +34,5 @@ module.exports = {
       hardfork: argv.hardfork,
     },
   },
-  exposed: {
-    exclude: ['@axelar-network/**/*'],
-  },
   docgen: require('./docs/config'),
 };
