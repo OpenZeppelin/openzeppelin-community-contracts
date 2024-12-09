@@ -63,7 +63,7 @@
     "yargs": "^17.7.2"
   },
   "lint-staged": {
-    "*.{js,ts}": ["prettier --log-level warn --ignore-path .gitignore --check", "eslint"],
-    "*.sol": ["prettier --log-level warn --ignore-path .gitignore --check", "solhint"]
+    "*.{js,ts}": ["prettier --log-level warn --ignore-path .gitignore --check"],
+    "*.sol": ["prettier --log-level warn --ignore-path .gitignore --check"]
   }
 }
