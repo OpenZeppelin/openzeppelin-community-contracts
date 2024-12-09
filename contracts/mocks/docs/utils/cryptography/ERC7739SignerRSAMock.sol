@@ -15,7 +15,7 @@ contract ERC7739SignerRSAMock is ERC7739Signer {
         _n = n;
     }
 
-    function _validateNestedEIP712Signature(
+    function _validateSignature(
         bytes32 hash,
         bytes calldata signature
     ) internal view virtual override returns (bool) {

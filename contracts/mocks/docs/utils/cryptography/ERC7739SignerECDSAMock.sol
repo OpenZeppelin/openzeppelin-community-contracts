@@ -13,7 +13,7 @@ contract ERC7739SignerECDSAMock is ERC7739Signer {
         _signer = signerAddr;
     }
 
-    function _validateNestedEIP712Signature(
+    function _validateSignature(
         bytes32 hash,
         bytes calldata signature
     ) internal view virtual override returns (bool) {

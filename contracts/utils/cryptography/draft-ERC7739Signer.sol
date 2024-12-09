@@ -56,12 +56,12 @@ abstract contract ERC7739Signer is EIP712, IERC1271 {
     /**
      * @dev Nested personal signature verification.
      *
-     * NOTE: Instead of overriding this function, try with {_validateNestedEIP712Signature}. It encapsulates
+     * NOTE: Instead of overriding this function, try with {_validateSignature}. It encapsulates
      * nested EIP-712 hashes.
      */
     function _isValidNestedPersonalSignSignature(bytes32 hash, bytes calldata signature) internal view returns (bool) {
         return
-            _validateNestedEIP712Signature(
+            _validateSignature(
                 _domainSeparatorV4().toTypedDataHash(hash.personalSignStructHash()),
                 signature
             );
@@ -70,7 +70,7 @@ abstract contract ERC7739Signer is EIP712, IERC1271 {
     /**
      * @dev Nested EIP-712 typed data verification.
      *
-     * NOTE: Instead of overriding this function, try with {_validateNestedEIP712Signature}. It encapsulates
+     * NOTE: Instead of overriding this function, try with {_validateSignature}. It encapsulates
      * nested EIP-712 hashes.
      */
     function _isValidNestedTypedDataSignature(
@@ -100,7 +100,7 @@ abstract contract ERC7739Signer is EIP712, IERC1271 {
         return
             hash == appSeparator.toTypedDataHash(contentsHash) &&
             bytes(contentsDescr).length != 0 &&
-            _validateNestedEIP712Signature(
+            _validateSignature(
                 appSeparator.toTypedDataHash(
                     ERC7739Utils.typedDataSignStructHash(
                         contentsDescr,
@@ -123,7 +123,7 @@ abstract contract ERC7739Signer is EIP712, IERC1271 {
      * cryptographic verification. It is important to review and test thoroughly before deployment. Consider
      * using one of the signature verification libraries ({ECDSA}, {P256} or {RSA}).
      */
-    function _validateNestedEIP712Signature(
+    function _validateSignature(
         bytes32 nestedEIP712Hash,
         bytes calldata signature
     ) internal view virtual returns (bool);

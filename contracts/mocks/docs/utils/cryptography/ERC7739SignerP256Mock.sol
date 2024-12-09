@@ -15,7 +15,7 @@ contract ERC7739SignerP256Mock is ERC7739Signer {
         _qy = qy;
     }
 
-    function _validateNestedEIP712Signature(
+    function _validateSignature(
         bytes32 hash,
         bytes calldata signature
     ) internal view virtual override returns (bool) {

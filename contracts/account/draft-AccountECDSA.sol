@@ -59,11 +59,11 @@ abstract contract AccountECDSA is ERC165, ERC7739Signer, ERC721Holder, ERC1155Ho
     }
 
     /**
-     * @dev Internal version of {validateUserOp} that relies on {_validateNestedEIP712Signature}.
+     * @dev Internal version of {validateUserOp} that relies on {_validateSignature}.
      *
      * The `userOpSignedHash` is the digest from {_userOpSignedHash}.
      *
-     * NOTE: To override the signature functionality, try overriding {_validateNestedEIP712Signature} instead.
+     * NOTE: To override the signature functionality, try overriding {_validateSignature} instead.
      */
     function _validateUserOp(
         PackedUserOperation calldata userOp,
@@ -81,7 +81,7 @@ abstract contract AccountECDSA is ERC165, ERC7739Signer, ERC721Holder, ERC1155Ho
      * This function provides a nested EIP-712 hash. Developers must override only this
      * function to ensure no raw message signing is possible.
      */
-    function _validateNestedEIP712Signature(
+    function _validateSignature(
         bytes32 nestedEIP712Hash,
         bytes calldata signature
     ) internal view virtual override returns (bool) {
