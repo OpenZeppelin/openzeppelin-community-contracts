@@ -1,115 +1,168 @@
-const { ethers } = require('hardhat');
-const { secp256k1 } = require('@noble/curves/secp256k1');
+const {
+  AbstractSigner,
+  Signature,
+  TypedDataEncoder,
+  assert,
+  assertArgument,
+  concat,
+  dataLength,
+  decodeBase64,
+  getBytes,
+  getBytesCopy,
+  hashMessage,
+  hexlify,
+  sha256,
+  toBeHex,
+} = require('ethers');
 const { secp256r1 } = require('@noble/curves/p256');
 const { generateKeyPairSync, privateEncrypt } = require('crypto');
-const { hashTypedData } = require('../../lib/@openzeppelin-contracts/test/helpers/eip712');
 
-const ensureLowerOrderS = (N, { s, recovery, ...rest }) => {
-  if (s > N / 2n) {
-    s = N - s;
-    recovery = 1 - recovery;
+// Lightweight version of BaseWallet
+class NonNativeSigner extends AbstractSigner {
+  #signingKey;
+
+  constructor(privateKey, provider) {
+    super(provider);
+    assertArgument(
+      privateKey && typeof privateKey.sign === 'function',
+      'invalid private key',
+      'privateKey',
+      '[ REDACTED ]',
+    );
+    this.#signingKey = privateKey;
   }
-  return { s, recovery, ...rest };
-};
 
-class BooleanSigner {
-  signTypedData() {
-    return '0x01';
+  get signingKey() {
+    return this.#signingKey;
+  }
+  get privateKey() {
+    return this.signingKey.privateKey;
+  }
+
+  async getAddress() {
+    throw new Error("NonNativeSigner doesn't have an address");
+  }
+
+  connect(provider) {
+    return new NonNativeSigner(this.#signingKey, provider);
+  }
+
+  async signTransaction(/*tx: TransactionRequest*/) {
+    throw new Error('NonNativeSigner cannot send transactions');
+  }
+
+  async signMessage(message /*: string | Uint8Array*/) /*: Promise<string>*/ {
+    return this.signingKey.sign(hashMessage(message)).serialized;
+  }
+
+  async signTypedData(
+    domain /*: TypedDataDomain*/,
+    types /*: Record<string, Array<TypedDataField>>*/,
+    value /*: Record<string, any>*/,
+  ) /*: Promise<string>*/ {
+    // Populate any ENS names
+    const populated = await TypedDataEncoder.resolveNames(domain, types, value, async name => {
+      assert(this.provider != null, 'cannot resolve ENS names without a provider', 'UNSUPPORTED_OPERATION', {
+        operation: 'resolveName',
+        info: { name },
+      });
+      const address = await this.provider.resolveName(name);
+      assert(address != null, 'unconfigured ENS name', 'UNCONFIGURED_NAME', { value: name });
+      return address;
+    });
+
+    return this.signingKey.sign(TypedDataEncoder.hash(populated.domain, types, populated.value)).serialized;
   }
 }
 
-class ERC7739Signer {
-  signTypedData(domain, types, contents) {
-    return this._signRaw(hashTypedData(domain, ethers.TypedDataEncoder.from(types).hash(contents)));
-  }
-}
+class P256SigningKey {
+  #privateKey;
 
-class ECDSASigner extends ERC7739Signer {
-  N = 0xfffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141n;
-
-  constructor() {
-    super();
-    this._privateKey = secp256k1.utils.randomPrivateKey();
-    this.publicKey = secp256k1.getPublicKey(this._privateKey, false);
+  constructor(privateKey) {
+    this.#privateKey = getBytes(privateKey);
   }
 
-  _signRaw(messageHash) {
-    const sig = this._ensureLowerOrderS(secp256k1.sign(messageHash.replace(/0x/, ''), this._privateKey));
-    return ethers.Signature.from({
-      r: sig.r,
-      v: sig.recovery + 27,
-      s: sig.s,
-    }).serialized;
+  static random() {
+    return new P256SigningKey(secp256r1.utils.randomPrivateKey());
   }
 
-  get EOA() {
-    return new ethers.Wallet(ethers.hexlify(this._privateKey));
+  get privateKey() {
+    return hexlify(this.#privateKey);
   }
 
-  _ensureLowerOrderS({ s, recovery, ...rest }) {
-    return ensureLowerOrderS(this.N, { s, recovery, ...rest });
-  }
-}
-
-class P256Signer extends ERC7739Signer {
-  N = 0xffffffff00000000ffffffffffffffffbce6faada7179e84f3b9cac2fc632551n;
-
-  constructor() {
-    super();
-    this._privateKey = secp256r1.utils.randomPrivateKey();
-    const [qx, qy] = [
-      secp256r1.getPublicKey(this._privateKey, false).slice(0x01, 0x21),
-      secp256r1.getPublicKey(this._privateKey, false).slice(0x21, 0x41),
-    ].map(ethers.hexlify);
-    this.publicKey = {
-      qx,
-      qy,
+  get publicKey() {
+    const publicKeyBytes = secp256r1.getPublicKey(this.#privateKey, false);
+    return {
+      qx: hexlify(publicKeyBytes.slice(0x01, 0x21)),
+      qy: hexlify(publicKeyBytes.slice(0x21, 0x41)),
     };
   }
 
-  _signRaw(messageHash) {
-    const sig = this._ensureLowerOrderS(secp256r1.sign(messageHash.replace(/0x/, ''), this._privateKey));
-    return ethers.Signature.from({
-      r: sig.r,
-      v: sig.recovery + 27,
-      s: sig.s,
-    }).serialized;
-  }
+  sign(digest /*: BytesLike*/) /*: Signature*/ {
+    assertArgument(dataLength(digest) === 32, 'invalid digest length', 'digest', digest);
 
-  _ensureLowerOrderS({ s, recovery, ...rest }) {
-    return ensureLowerOrderS(this.N, { s, recovery, ...rest });
-  }
-}
-
-class RSASigner extends ERC7739Signer {
-  constructor() {
-    super();
-    const keyPair = generateKeyPairSync('rsa', {
-      modulusLength: 2048,
+    const sig = secp256r1.sign(getBytesCopy(digest), getBytesCopy(this.#privateKey), {
+      lowS: true,
     });
-    const jwk = keyPair.publicKey.export({ format: 'jwk' });
-    const [e, n] = [jwk.e, jwk.n].map(ethers.decodeBase64);
-    this._privateKey = keyPair.privateKey;
-    this.publicKey = { e, n };
-  }
 
-  _signRaw(messageHash) {
-    // SHA256 OID = 608648016503040201 (9 bytes) | NULL = 0500 (2 bytes) (explicit) | OCTET_STRING length (0x20) = 0420 (2 bytes)
-    const dataToSign = ethers.concat(['0x3031300d060960864801650304020105000420', messageHash]);
-    return '0x' + privateEncrypt(this._privateKey, ethers.getBytes(dataToSign)).toString('hex');
+    return Signature.from({
+      r: toBeHex(sig.r, 32),
+      s: toBeHex(sig.s, 32),
+      v: sig.recovery ? 0x1c : 0x1b,
+    });
   }
 }
 
-class RSASignerSHA256 extends RSASigner {
-  _signRaw(messageHash) {
-    return super._signRaw(ethers.sha256(ethers.solidityPacked(['bytes32'], [messageHash])));
+class RSASigningKey {
+  #privateKey;
+  #publicKey;
+
+  constructor(keyPair) {
+    const jwk = keyPair.publicKey.export({ format: 'jwk' });
+    this.#privateKey = keyPair.privateKey;
+    this.#publicKey = { e: decodeBase64(jwk.e), n: decodeBase64(jwk.n) };
+  }
+
+  static random(modulusLength = 2048) {
+    return new RSASigningKey(generateKeyPairSync('rsa', { modulusLength }));
+  }
+
+  get privateKey() {
+    return hexlify(this.#privateKey);
+  }
+
+  get publicKey() {
+    return {
+      e: hexlify(this.#publicKey.e),
+      n: hexlify(this.#publicKey.n),
+    };
+  }
+
+  sign(digest /*: BytesLike*/) /*: Signature*/ {
+    assertArgument(dataLength(digest) === 32, 'invalid digest length', 'digest', digest);
+    // SHA256 OID = 608648016503040201 (9 bytes) | NULL = 0500 (2 bytes) (explicit) | OCTET_STRING length (0x20) = 0420 (2 bytes)
+    return {
+      serialized: hexlify(
+        privateEncrypt(this.#privateKey, getBytes(concat(['0x3031300d060960864801650304020105000420', digest]))),
+      ),
+    };
+  }
+}
+
+class RSASHA256SigningKey extends RSASigningKey {
+  static random(modulusLength = 2048) {
+    return new RSASHA256SigningKey(generateKeyPairSync('rsa', { modulusLength }));
+  }
+
+  sign(digest /*: BytesLike*/) /*: Signature*/ {
+    assertArgument(dataLength(digest) === 32, 'invalid digest length', 'digest', digest);
+    return super.sign(sha256(getBytes(digest)));
   }
 }
 
 module.exports = {
-  BooleanSigner,
-  ECDSASigner,
-  P256Signer,
-  RSASigner,
-  RSASignerSHA256,
+  NonNativeSigner,
+  P256SigningKey,
+  RSASigningKey,
+  RSASHA256SigningKey,
 };

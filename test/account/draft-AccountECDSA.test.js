@@ -6,15 +6,14 @@ const {
 } = require('./Account.behavior');
 const { loadFixture } = require('@nomicfoundation/hardhat-network-helpers');
 const { ERC4337Helper } = require('../helpers/erc4337');
-const { ECDSASigner } = require('../helpers/signers');
 const { shouldBehaveLikeERC7739Signer } = require('../utils/cryptography/ERC7739Signer.behavior');
 
 async function fixture() {
   const [beneficiary, other] = await ethers.getSigners();
   const target = await ethers.deployContract('CallReceiverMockExtended');
-  const signer = new ECDSASigner();
+  const signer = ethers.Wallet.createRandom();
   const helper = new ERC4337Helper('$AccountECDSAMock');
-  const smartAccount = await helper.newAccount(['AccountECDSA', '1', signer.EOA.address]);
+  const smartAccount = await helper.newAccount(['AccountECDSA', '1', signer.address]);
   const domain = {
     name: 'AccountECDSA',
     version: '1',

@@ -1,12 +1,17 @@
 const { ethers } = require('hardhat');
 const { expect } = require('chai');
-const { Permit, formatType } = require('../../../lib/@openzeppelin-contracts/test/helpers/eip712');
+const { Permit, formatType, getDomain } = require('../../../lib/@openzeppelin-contracts/test/helpers/eip712');
 const { PersonalSignHelper, TypedDataSignHelper } = require('../../helpers/erc7739');
 
 function shouldBehaveLikeERC7739Signer() {
   const MAGIC_VALUE = '0x1626ba7e';
 
   describe('isValidSignature', function () {
+    beforeEach(async function () {
+      this.signTypedData ??= this.signer.signTypedData.bind(this.signer);
+      this.domain ??= await getDomain(this.mock);
+    });
+
     describe('PersonalSign', function () {
       it('returns true for a valid personal signature', async function () {
         const text = 'Hello, world!';
