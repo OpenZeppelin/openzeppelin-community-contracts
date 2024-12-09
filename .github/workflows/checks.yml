@@ -37,6 +37,8 @@ jobs:
         uses: ./.github/actions/setup
       - name: Run tests and generate gas report
         run: npm run test
+      - name: Check linearisation of the inheritance graph
+        run: npm run test:inheritance
 
   coverage:
     runs-on: ubuntu-latest
