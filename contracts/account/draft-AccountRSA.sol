@@ -82,10 +82,7 @@ abstract contract AccountRSA is ERC165, ERC7739Signer, ERC721Holder, ERC1155Hold
      * This function provides a nested EIP-712 hash. Developers must override only this
      * function to ensure no raw message signing is possible.
      */
-    function _validateSignature(
-        bytes32 hash,
-        bytes calldata signature
-    ) internal view virtual override returns (bool) {
+    function _validateSignature(bytes32 hash, bytes calldata signature) internal view virtual override returns (bool) {
         (bytes memory e, bytes memory n) = signer();
         return RSA.pkcs1Sha256(abi.encodePacked(hash), signature, e, n);
     }

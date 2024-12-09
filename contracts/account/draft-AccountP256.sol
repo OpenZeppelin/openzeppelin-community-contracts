@@ -82,10 +82,7 @@ abstract contract AccountP256 is ERC165, ERC7739Signer, ERC721Holder, ERC1155Hol
      * This function provides a nested EIP-712 hash. Developers must override only this
      * function to ensure no raw message signing is possible.
      */
-    function _validateSignature(
-        bytes32 hash,
-        bytes calldata signature
-    ) internal view virtual override returns (bool) {
+    function _validateSignature(bytes32 hash, bytes calldata signature) internal view virtual override returns (bool) {
         if (signature.length < 0x40) return false;
         bytes32 r = bytes32(signature[0x00:0x20]);
         bytes32 s = bytes32(signature[0x20:0x40]);
