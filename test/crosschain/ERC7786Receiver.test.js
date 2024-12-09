@@ -2,8 +2,8 @@ const { ethers } = require('hardhat');
 const { expect } = require('chai');
 const { loadFixture } = require('@nomicfoundation/hardhat-network-helpers');
 
-const { getLocalCAIP } = require('../helpers/chains');
-const payload = require('../helpers/random').generators.hexBytes(128);
+const { getLocalCAIP } = require('../../lib/@openzeppelin-contracts/test/helpers/chains');
+const payload = require('../../lib/@openzeppelin-contracts/test/helpers/random').generators.hexBytes(128);
 const attributes = [];
 
 const getAddress = account => ethers.getAddress(account.target ?? account.address ?? account);
