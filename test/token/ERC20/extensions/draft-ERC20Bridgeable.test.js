@@ -14,7 +14,7 @@ async function fixture() {
   const [other, bridge, ...accounts] = await ethers.getSigners();
 
   const token = await ethers.deployContract('$ERC20BridgeableMock', [name, symbol, bridge]);
-  await token.$_mint(accounts[0].address, initialSupply);
+  await token.$_mint(accounts[0], initialSupply);
 
   return { bridge, other, accounts, token };
 }
@@ -38,7 +38,7 @@ describe('ERC20Bridgeable', function () {
 
   describe('crosschainMint', function () {
     it('reverts when called by non-bridge', async function () {
-      await expect(this.token.crosschainMint(this.other.address, 100n)).to.be.revertedWithCustomError(
+      await expect(this.token.crosschainMint(this.other, 100n)).to.be.revertedWithCustomError(
         this.token,
         'OnlyTokenBridge',
       );
@@ -46,19 +46,19 @@ describe('ERC20Bridgeable', function () {
 
     it('mints amount provided by the bridge when calling crosschainMint', async function () {
       const amount = 100n;
-      await expect(this.token.connect(this.bridge).crosschainMint(this.other.address, amount))
+      await expect(this.token.connect(this.bridge).crosschainMint(this.other, amount))
         .to.emit(this.token, 'CrosschainMint')
-        .withArgs(this.other.address, amount, this.bridge.address)
+        .withArgs(this.other, amount, this.bridge)
         .to.emit(this.token, 'Transfer')
-        .withArgs(ethers.ZeroAddress, this.other.address, amount);
+        .withArgs(ethers.ZeroAddress, this.other, amount);
 
-      expect(await this.token.balanceOf(this.other.address)).to.equal(amount);
+      expect(await this.token.balanceOf(this.other)).to.equal(amount);
     });
   });
 
   describe('crosschainBurn', function () {
     it('reverts when called by non-bridge', async function () {
-      await expect(this.token.crosschainBurn(this.other.address, 100n)).to.be.revertedWithCustomError(
+      await expect(this.token.crosschainBurn(this.other, 100n)).to.be.revertedWithCustomError(
         this.token,
         'OnlyTokenBridge',
       );
@@ -66,15 +66,15 @@ describe('ERC20Bridgeable', function () {
 
     it('burns amount provided by the bridge when calling crosschainBurn', async function () {
       const amount = 100n;
-      await this.token.$_mint(this.other.address, amount);
+      await this.token.$_mint(this.other, amount);
 
-      await expect(this.token.connect(this.bridge).crosschainBurn(this.other.address, amount))
+      await expect(this.token.connect(this.bridge).crosschainBurn(this.other, amount))
         .to.emit(this.token, 'CrosschainBurn')
-        .withArgs(this.other.address, amount, this.bridge.address)
+        .withArgs(this.other, amount, this.bridge)
         .to.emit(this.token, 'Transfer')
-        .withArgs(this.other.address, ethers.ZeroAddress, amount);
+        .withArgs(this.other, ethers.ZeroAddress, amount);
 
-      expect(await this.token.balanceOf(this.other.address)).to.equal(0);
+      expect(await this.token.balanceOf(this.other)).to.equal(0);
     });
   });
 
