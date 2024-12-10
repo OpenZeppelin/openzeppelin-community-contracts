@@ -11,7 +11,7 @@ abstract contract ERC20BridgeableMock is ERC20Bridgeable {
 
     event OnlyTokenBridgeFnCalled(address caller);
 
-    constructor(address bridge_, string memory name_, string memory symbol_) ERC20(name_, symbol_) ERC20Bridgeable() {
+    constructor(address bridge_) {
         bridge = bridge_;
     }
 

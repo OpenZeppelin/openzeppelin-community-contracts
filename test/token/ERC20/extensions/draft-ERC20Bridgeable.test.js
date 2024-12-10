@@ -13,7 +13,7 @@ const initialSupply = 100n;
 async function fixture() {
   const [other, bridge, ...accounts] = await ethers.getSigners();
 
-  const token = await ethers.deployContract('$ERC20BridgeableMock', [bridge, name, symbol]);
+  const token = await ethers.deployContract('$ERC20BridgeableMock', [name, symbol, bridge]);
   await token.$_mint(accounts[0].address, initialSupply);
 
   return { bridge, other, accounts, token };
