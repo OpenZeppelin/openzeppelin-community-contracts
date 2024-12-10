@@ -20,14 +20,6 @@ abstract contract ERC20Bridgeable is ERC165, ERC20, IERC7802 {
         _;
     }
 
-    /**
-     * @dev Checks if the caller is a trusted token bridge. MUST revert otherwise.
-     *
-     * Developers should implement this function using an access control mechanism that allows
-     * customizing the list of allowed senders. Consider using {Ownable}, {AccessControl} or {AccessManager}.
-     */
-    function _checkTokenBridge(address caller) internal virtual;
-
     /// @inheritdoc ERC165
     function supportsInterface(bytes4 interfaceId) public view virtual override(ERC165, IERC165) returns (bool) {
         return interfaceId == type(IERC7802).interfaceId || super.supportsInterface(interfaceId);
@@ -48,4 +40,12 @@ abstract contract ERC20Bridgeable is ERC165, ERC20, IERC7802 {
         _burn(from, value);
         emit CrosschainBurn(from, value, msg.sender);
     }
+
+    /**
+     * @dev Checks if the caller is a trusted token bridge. MUST revert otherwise.
+     *
+     * Developers should implement this function using an access control mechanism that allows
+     * customizing the list of allowed senders. Consider using {Ownable}, {AccessControl} or {AccessManager}.
+     */
+    function _checkTokenBridge(address caller) internal virtual;
 }
