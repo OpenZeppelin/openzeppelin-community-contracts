@@ -2,20 +2,16 @@
 
 pragma solidity ^0.8.20;
 
-import {IERC5267} from "@openzeppelin/contracts/interfaces/IERC5267.sol";
 import {PackedUserOperation} from "@openzeppelin/contracts/interfaces/draft-IERC4337.sol";
-import {ERC4337Utils} from "@openzeppelin/contracts/account/utils/draft-ERC4337Utils.sol";
-import {ERC721Holder} from "@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol";
-import {ERC1155Holder, IERC1155Receiver} from "@openzeppelin/contracts/token/ERC1155/utils/ERC1155Holder.sol";
 import {ERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
-import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import {P256} from "@openzeppelin/contracts/utils/cryptography/P256.sol";
 import {MessageHashUtils} from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
-import {AccountBase} from "./draft-AccountBase.sol";
-import {ERC7739Signer, EIP712} from "../utils/cryptography/draft-ERC7739Signer.sol";
+import {ERC721Holder} from "@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol";
+import {ERC1155Holder} from "@openzeppelin/contracts/token/ERC1155/utils/ERC1155Holder.sol";
+import {AccountSignerDomain} from "./extensions/draft-AccountSignerDomain.sol";
 
 /**
- * @dev Account implementation using {P256} signatures and {ERC7739Signer} for replay protection.
+ * @dev Account implementation using {P256} signatures and {AccountSignerDomain} for replay protection.
  *
  * An {_initializeSigner} function is provided to set the account's signer address. Doing so it's
  * easier for a factory, whose likely to use initializable clones of this contract.
@@ -23,7 +19,7 @@ import {ERC7739Signer, EIP712} from "../utils/cryptography/draft-ERC7739Signer.s
  * IMPORTANT: Avoiding to call {_initializeSigner} either during construction (if used standalone)
  * or during initialization (if used as a clone) may leave the account unusable.
  */
-abstract contract AccountP256 is ERC165, IERC5267, AccountBase, ERC7739Signer, ERC721Holder, ERC1155Holder {
+abstract contract AccountP256 is AccountSignerDomain, ERC721Holder, ERC1155Holder {
     using MessageHashUtils for bytes32;
 
     /**
@@ -58,23 +54,6 @@ abstract contract AccountP256 is ERC165, IERC5267, AccountBase, ERC7739Signer, E
         bytes32 userOpHash
     ) internal view virtual override returns (bytes32) {
         return userOpHash.toEthSignedMessageHash();
-    }
-
-    /**
-     * @dev Internal version of {validateUserOp} that relies on {_validateSignature}.
-     *
-     * The `userOpSignedHash` is the digest from {_userOpSignedHash}.
-     *
-     * NOTE: To override the signature functionality, try overriding {_validateSignature} instead.
-     */
-    function _validateUserOp(
-        PackedUserOperation calldata userOp,
-        bytes32 userOpSignedHash
-    ) internal view virtual override returns (uint256) {
-        return
-            _isValidSignature(userOpSignedHash, userOp.signature)
-                ? ERC4337Utils.SIG_VALIDATION_SUCCESS
-                : ERC4337Utils.SIG_VALIDATION_FAILED;
     }
 
     /**
