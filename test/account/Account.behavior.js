@@ -188,8 +188,8 @@ function shouldBehaveLikeAccountHolder() {
 
         const [owner] = await ethers.getSigners();
 
-        const token = await ethers.deployContract('ERC721Mock', [name, symbol]);
-        await token.$mint(owner, tokenId);
+        const token = await ethers.deployContract('$ERC721Mock', [name, symbol]);
+        await token.$_mint(owner, tokenId);
 
         await token.connect(owner).safeTransferFrom(owner, this.mock, tokenId);
 
