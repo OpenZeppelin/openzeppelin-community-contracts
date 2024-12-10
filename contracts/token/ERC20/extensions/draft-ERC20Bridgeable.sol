@@ -15,8 +15,8 @@ import {ERC165, IERC165} from "@openzeppelin/contracts/utils/introspection/ERC16
  */
 abstract contract ERC20Bridgeable is ERC165, ERC20, IERC7802 {
     /// @dev Modifier to restrict access to the token bridge.
-    modifier onlyTokenBridge(address caller) {
-        _checkTokenBridge(caller);
+    modifier onlyTokenBridge() {
+        _checkTokenBridge(msg.sender);
         _;
     }
 
@@ -33,33 +33,19 @@ abstract contract ERC20Bridgeable is ERC165, ERC20, IERC7802 {
         return interfaceId == type(IERC7802).interfaceId || super.supportsInterface(interfaceId);
     }
 
-    /// @inheritdoc IERC7802
-    function crosschainMint(address to, uint256 value) public virtual override onlyTokenBridge(msg.sender) {
-        _crosschainMint(to, msg.sender, value);
-    }
-
-    /// @inheritdoc IERC7802
-    function crosschainBurn(address from, uint256 value) public virtual override onlyTokenBridge(msg.sender) {
-        _crosschainBurn(from, msg.sender, value);
-    }
-
     /**
-     * @dev Internal version of {crosschainMint} without access control.
-     *
-     * Emits a {CrosschainMint} event.
+     * @dev See {IERC7802-crosschainMint}. Emits a {CrosschainMint} event.
      */
-    function _crosschainMint(address to, address sender, uint256 value) internal virtual {
+    function crosschainMint(address to, uint256 value) public virtual override onlyTokenBridge {
         _mint(to, value);
-        emit CrosschainMint(to, value, sender);
+        emit CrosschainMint(to, value, msg.sender);
     }
 
     /**
-     * @dev Internal version of {crosschainBurn} without access control.
-     *
-     * Emits a {CrosschainBurn} event.
+     * @dev See {IERC7802-crosschainBurn}. Emits a {CrosschainBurn} event.
      */
-    function _crosschainBurn(address from, address sender, uint256 value) internal virtual {
+    function crosschainBurn(address from, uint256 value) public virtual override onlyTokenBridge {
         _burn(from, value);
-        emit CrosschainBurn(from, value, sender);
+        emit CrosschainBurn(from, value, msg.sender);
     }
 }

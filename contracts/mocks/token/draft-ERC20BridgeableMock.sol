@@ -15,7 +15,7 @@ abstract contract ERC20BridgeableMock is ERC20Bridgeable {
         bridge = bridge_;
     }
 
-    function onlyTokenBridgeFn() external onlyTokenBridge(msg.sender) {
+    function onlyTokenBridgeFn() external onlyTokenBridge {
         emit OnlyTokenBridgeFnCalled(msg.sender);
     }
 
