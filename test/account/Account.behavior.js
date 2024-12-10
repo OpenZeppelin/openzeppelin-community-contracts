@@ -151,8 +151,8 @@ function shouldBehaveLikeAccountHolder() {
 
       beforeEach(async function () {
         [this.owner] = await ethers.getSigners();
-        this.token = await ethers.deployContract('ERC1155Mock', ['https://somedomain.com/{id}.json']);
-        await this.token.$mintBatch(this.owner, ids, values, '0x');
+        this.token = await ethers.deployContract('$ERC1155Mock', ['https://somedomain.com/{id}.json']);
+        await this.token.$_mintBatch(this.owner, ids, values, '0x');
       });
 
       it('receives ERC1155 tokens from a single ID', async function () {
