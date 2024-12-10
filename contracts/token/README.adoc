@@ -1,4 +1,4 @@
-= Utilities
+= Tokens
 
 [.readme-notice]
 NOTE: This document is better viewed at https://docs.openzeppelin.com/community-contracts/token
@@ -27,6 +27,3 @@ Set of extensions and utilities for tokens (e.g ERC-20, ERC-721, ERC-1155) and d
 {{ERC20Custodial}}
 
 {{ERC4626Fees}}
-
-
-

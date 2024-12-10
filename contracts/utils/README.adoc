@@ -18,4 +18,3 @@ Miscellaneous contracts and libraries containing utility functions you can use t
 == Libraries
 
 {{Masks}}
-
