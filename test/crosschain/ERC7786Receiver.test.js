@@ -2,8 +2,8 @@ const { ethers } = require('hardhat');
 const { expect } = require('chai');
 const { loadFixture } = require('@nomicfoundation/hardhat-network-helpers');
 
-const { getLocalCAIP } = require('@openzeppelin/contracts-helpers/chains');
-const { generators } = require('@openzeppelin/contracts-helpers/random');
+const { getLocalCAIP } = require('@openzeppelin/contracts/test/helpers/chains');
+const { generators } = require('@openzeppelin/contracts/test/helpers/random');
 
 const payload = generators.hexBytes(128);
 const attributes = [];

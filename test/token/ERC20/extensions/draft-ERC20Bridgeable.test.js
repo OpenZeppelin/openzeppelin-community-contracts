@@ -1,10 +1,10 @@
 const { ethers } = require('hardhat');
 const { expect } = require('chai');
 const { loadFixture } = require('@nomicfoundation/hardhat-network-helpers');
-const { shouldBehaveLikeERC20 } = require('../../../../lib/@openzeppelin-contracts/test/token/ERC20/ERC20.behavior');
+const { shouldBehaveLikeERC20 } = require('@openzeppelin/contracts/test/token/ERC20/ERC20.behavior');
 const {
   shouldSupportInterfaces,
-} = require('../../../../lib/@openzeppelin-contracts/test/utils/introspection/SupportsInterface.behavior');
+} = require('@openzeppelin/contracts/test/utils/introspection/SupportsInterface.behavior');
 
 const name = 'My Token';
 const symbol = 'MTKN';
