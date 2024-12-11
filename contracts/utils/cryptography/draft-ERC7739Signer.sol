@@ -55,6 +55,9 @@ abstract contract ERC7739Signer is EIP712, IERC1271 {
 
     /**
      * @dev Nested personal signature verification.
+     *
+     * NOTE: Instead of overriding this function, try with {_validateSignature}. It encapsulates
+     * nested EIP-712 hashes.
      */
     function _isValidNestedPersonalSignSignature(
         bytes32 hash,
@@ -65,6 +68,9 @@ abstract contract ERC7739Signer is EIP712, IERC1271 {
 
     /**
      * @dev Nested EIP-712 typed data verification.
+     *
+     * NOTE: Instead of overriding this function, try with {_validateSignature}. It encapsulates
+     * nested EIP-712 hashes.
      */
     function _isValidNestedTypedDataSignature(
         bytes32 hash,
@@ -108,9 +114,16 @@ abstract contract ERC7739Signer is EIP712, IERC1271 {
     /**
      * @dev Signature validation algorithm.
      *
+     * To ensure there's no way to inherit from this ERC-7739 signer and still be able to sign raw messages,
+     * this function provides a nested EIP-712 hash. Developers must implement only this function to ensure
+     * no raw message signing is possible.
+     *
      * WARNING: Implementing a signature validation algorithm is a security-sensitive operation as it involves
      * cryptographic verification. It is important to review and test thoroughly before deployment. Consider
      * using one of the signature verification libraries ({ECDSA}, {P256} or {RSA}).
      */
-    function _validateSignature(bytes32 hash, bytes calldata signature) internal view virtual returns (bool);
+    function _validateSignature(
+        bytes32 nestedEIP712Hash,
+        bytes calldata signature
+    ) internal view virtual returns (bool);
 }

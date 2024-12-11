@@ -1,3 +1,8 @@
+## XX-XX-2024
+
+- `AccountECDSA`, `AccountP256` and `AccountRSA`: Add implementations of `AccountBase` based on the available signature schemes (i.e. ECDSA, P256, RSA).
+- `AccountBase`: Added a simple ERC-4337 account implementation with the minimal logic to process user operations.
+
 ## 06-11-2024
 
 - `ERC7739Utils`: Add a library that implements a defensive rehashing mechanism to prevent replayability of smart contract signatures based on the ERC-7739.
