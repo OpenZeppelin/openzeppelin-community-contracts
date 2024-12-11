@@ -79,7 +79,7 @@ describe('ERC20Bridgeable', function () {
   });
 
   describe('ERC165', function () {
-    shouldSupportInterfaces(['ERC7802'], {
+    shouldSupportInterfaces({
       ERC7802: ['crosschainMint(address,uint256)', 'crosschainBurn(address,uint256)'],
     });
   });
