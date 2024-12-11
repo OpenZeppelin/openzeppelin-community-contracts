@@ -8,10 +8,10 @@ import {P256} from "@openzeppelin/contracts/utils/cryptography/P256.sol";
 import {MessageHashUtils} from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
 import {ERC721Holder} from "@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol";
 import {ERC1155Holder} from "@openzeppelin/contracts/token/ERC1155/utils/ERC1155Holder.sol";
-import {AccountSignerDomain} from "./extensions/draft-AccountSignerDomain.sol";
+import {AccountERC7739} from "./extensions/draft-AccountERC7739.sol";
 
 /**
- * @dev Account implementation using {P256} signatures and {AccountSignerDomain} for replay protection.
+ * @dev Account implementation using {P256} signatures and {AccountERC7739} for replay protection.
  *
  * An {_initializeSigner} function is provided to set the account's signer address. Doing so it's
  * easier for a factory, whose likely to use initializable clones of this contract.
@@ -19,7 +19,7 @@ import {AccountSignerDomain} from "./extensions/draft-AccountSignerDomain.sol";
  * IMPORTANT: Avoiding to call {_initializeSigner} either during construction (if used standalone)
  * or during initialization (if used as a clone) may leave the account unusable.
  */
-abstract contract AccountP256 is AccountSignerDomain, ERC721Holder, ERC1155Holder {
+abstract contract AccountP256 is AccountERC7739, ERC721Holder, ERC1155Holder {
     using MessageHashUtils for bytes32;
 
     /**
@@ -49,11 +49,11 @@ abstract contract AccountP256 is AccountSignerDomain, ERC721Holder, ERC1155Holde
     /**
      * @dev Returns the ERC-191 signed `userOpHash` hashed with keccak256 using `personal_sign`.
      */
-    function _userOpSignedHash(
-        PackedUserOperation calldata /* userOp */,
+    function _validateUserOp(
+        PackedUserOperation calldata userOp,
         bytes32 userOpHash
-    ) internal view virtual override returns (bytes32) {
-        return userOpHash.toEthSignedMessageHash();
+    ) internal view virtual override returns (uint256) {
+        return super._validateUserOp(userOp, userOpHash.toEthSignedMessageHash());
     }
 
     /**

@@ -12,20 +12,18 @@ import {AccountBase} from "../draft-AccountBase.sol";
 /**
  * @dev An ERC-4337 account implementation that validates domain-specific signatures following ERC-7739.
  */
-abstract contract AccountSignerDomain is ERC165, IERC5267, ERC7739Signer, AccountBase {
+abstract contract AccountERC7739 is ERC165, IERC5267, ERC7739Signer, AccountBase {
     /**
      * @dev Internal version of {validateUserOp} that relies on {_validateSignature}.
-     *
-     * The `userOpSignedHash` is the digest from {_userOpSignedHash}.
      *
      * NOTE: To override the signature functionality, try overriding {_validateSignature} instead.
      */
     function _validateUserOp(
         PackedUserOperation calldata userOp,
-        bytes32 userOpSignedHash
+        bytes32 userOpHash
     ) internal view virtual override returns (uint256) {
         return
-            _isValidSignature(userOpSignedHash, userOp.signature)
+            _isValidSignature(userOpHash, userOp.signature)
                 ? ERC4337Utils.SIG_VALIDATION_SUCCESS
                 : ERC4337Utils.SIG_VALIDATION_FAILED;
     }

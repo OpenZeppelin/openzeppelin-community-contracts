@@ -23,13 +23,13 @@ contract MyAccountCustom is ERC7739Signer, AccountBase, Initializable {
         // Custom initialization logic
     }
 
-    /// @dev Receives an `userOpSignedHash` to validate. See {_userOpSignedHash}.
+    /// @inheritdoc AccountBase
     function _validateUserOp(
         PackedUserOperation calldata userOp,
-        bytes32 userOpSignedHash
+        bytes32 userOpHash
     ) internal view virtual override returns (uint256) {
         return
-            _isValidSignature(userOpSignedHash, userOp.signature)
+            _isValidSignature(userOpHash, userOp.signature)
                 ? ERC4337Utils.SIG_VALIDATION_SUCCESS
                 : ERC4337Utils.SIG_VALIDATION_FAILED;
     }
