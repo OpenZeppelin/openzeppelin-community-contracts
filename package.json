@@ -23,7 +23,8 @@
     "lint:sol": "prettier --log-level warn --ignore-path .gitignore '{contracts,test}/!(vendor)/**/*.sol' --check",
     "lint:sol:fix": "prettier --log-level warn --ignore-path .gitignore '{contracts,test}/!(vendor)/**/*.sol' --write",
     "coverage": "scripts/checks/coverage.sh",
-    "test": "hardhat test"
+    "test": "hardhat test",
+    "test:inheritance": "scripts/checks/inheritance-ordering.js artifacts/build-info/*"
   },
   "homepage": "https://openzeppelin.com/contracts/",
   "repository": {
