@@ -13,7 +13,7 @@ import {ERC165, IERC165} from "@openzeppelin/contracts/utils/introspection/ERC16
  * NOTE: To implement a crosschain gateway for a chain, consider using an implementation if {IERC7786} token
  * bridge (e.g. {AxelarGatewaySource}, {AxelarGatewayDestination}).
  */
-abstract contract ERC20Bridgeable is ERC165, ERC20, IERC7802 {
+abstract contract ERC20Bridgeable is ERC20, ERC165, IERC7802 {
     /// @dev Modifier to restrict access to the token bridge.
     modifier onlyTokenBridge() {
         _checkTokenBridge(msg.sender);
