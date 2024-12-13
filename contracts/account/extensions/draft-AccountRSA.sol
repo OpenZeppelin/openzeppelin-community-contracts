@@ -38,7 +38,7 @@ abstract contract AccountRSA is AccountBase, ERC721Holder, ERC1155Holder {
     /**
      * @dev The {signer} is already initialized.
      */
-    error AccountP256UninitializedSigner(bytes e, bytes n);
+    error AccountRSAUninitializedSigner(bytes e, bytes n);
 
     bytes private _e;
     bytes private _n;
@@ -47,7 +47,7 @@ abstract contract AccountRSA is AccountBase, ERC721Holder, ERC1155Holder {
      * @dev Initializes the account with the RSA public key. This function can be called only once.
      */
     function _initializeSigner(bytes memory e, bytes memory n) internal {
-        if (_e.length != 0 || _n.length != 0) revert AccountP256UninitializedSigner(e, n);
+        if (_e.length != 0 || _n.length != 0) revert AccountRSAUninitializedSigner(e, n);
         _e = e;
         _n = n;
     }
