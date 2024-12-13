@@ -23,7 +23,10 @@ contract MyAccountCustom is AccountBase, Initializable {
     }
 
     /// @dev Receives a hash wrapped in an EIP-712 domain separator.
-    function _validateSignature(bytes32 hash, bytes calldata signature) internal view virtual override returns (bool) {
+    function _rawSignatureValidation(
+        bytes32 hash,
+        bytes calldata signature
+    ) internal view virtual override returns (bool) {
         // Custom signing logic
     }
 }

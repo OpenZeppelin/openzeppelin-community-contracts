@@ -36,7 +36,7 @@ function shouldBehaveLikeAnAccountBase() {
             ),
           ]),
         })
-        .then(op => op.sign(this.domain, this.signer));
+        .then(op => op.sign(this.signer));
       await expect(this.mock.connect(this.other).validateUserOp(operation.packed, operation.hash(), 0))
         .to.be.revertedWithCustomError(this.mock, 'AccountUnauthorized')
         .withArgs(this.other);
@@ -59,7 +59,7 @@ function shouldBehaveLikeAnAccountBase() {
               ),
             ]),
           })
-          .then(op => op.sign(this.domain, this.signer));
+          .then(op => op.sign(this.signer));
 
         expect(
           await this.mock
@@ -101,7 +101,7 @@ function shouldBehaveLikeAnAccountBase() {
               ),
             ]),
           })
-          .then(op => op.sign(this.domain, this.signer));
+          .then(op => op.sign(this.signer));
 
         const prevAccountBalance = await ethers.provider.getBalance(this.mock.target);
         const prevEntrypointBalance = await ethers.provider.getBalance(this.entrypoint.target);
@@ -221,7 +221,7 @@ function shouldBehaveLikeAnAccountBaseExecutor({ deployable = true } = {}) {
             ),
           ]),
         })
-        .then(op => op.sign(this.domain, this.signer));
+        .then(op => op.sign(this.signer));
 
       await expect(this.mock.connect(this.other).executeUserOp(operation.packed, operation.hash()))
         .to.be.revertedWithCustomError(this.mock, 'AccountUnauthorized')
@@ -243,7 +243,7 @@ function shouldBehaveLikeAnAccountBaseExecutor({ deployable = true } = {}) {
               ]),
             })
             .then(op => op.addInitCode())
-            .then(op => op.sign(this.domain, this.signer));
+            .then(op => op.sign(this.signer));
 
           await expect(this.entrypoint.connect(this.entrypointAsSigner).handleOps([operation.packed], this.beneficiary))
             .to.emit(this.entrypoint, 'AccountDeployed')
@@ -292,7 +292,7 @@ function shouldBehaveLikeAnAccountBaseExecutor({ deployable = true } = {}) {
               ),
             ]),
           })
-          .then(op => op.sign(this.domain, this.signer));
+          .then(op => op.sign(this.signer));
 
         expect(await this.mock.getNonce()).to.equal(0);
         await expect(this.entrypoint.connect(this.entrypointAsSigner).handleOps([operation.packed], this.beneficiary))

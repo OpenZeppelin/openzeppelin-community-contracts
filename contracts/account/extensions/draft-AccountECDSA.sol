@@ -58,22 +58,12 @@ abstract contract AccountECDSA is AccountBase, ERC721Holder, ERC1155Holder {
     }
 
     /**
-     * @dev Returns the ERC-191 signed `userOpHash` hashed with keccak256 using `personal_sign`.
-     */
-    function _validateUserOp(
-        PackedUserOperation calldata userOp,
-        bytes32 userOpHash
-    ) internal virtual override returns (uint256) {
-        return super._validateUserOp(userOp, userOpHash.toEthSignedMessageHash());
-    }
-
-    /**
      * @dev Validates the signature using the account's signer.
-     *
-     * This function provides a nested EIP-712 hash. Developers must override only this
-     * function to ensure no raw message signing is possible.
      */
-    function _validateSignature(bytes32 hash, bytes calldata signature) internal view virtual override returns (bool) {
+    function _rawSignatureValidation(
+        bytes32 hash,
+        bytes calldata signature
+    ) internal view virtual override returns (bool) {
         (address recovered, ECDSA.RecoverError err, ) = ECDSA.tryRecover(hash, signature);
         return signer() == recovered && err == ECDSA.RecoverError.NoError;
     }

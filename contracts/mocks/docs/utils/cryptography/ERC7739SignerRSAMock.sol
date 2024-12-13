@@ -15,7 +15,10 @@ contract ERC7739SignerRSAMock is ERC7739Signer {
         _n = n;
     }
 
-    function _validateSignature(bytes32 hash, bytes calldata signature) internal view virtual override returns (bool) {
+    function _rawSignatureValidation(
+        bytes32 hash,
+        bytes calldata signature
+    ) internal view virtual override returns (bool) {
         return RSA.pkcs1Sha256(hash, signature, _e, _n);
     }
 }

@@ -8,8 +8,8 @@ import {AccountBase} from "../../account/draft-AccountBase.sol";
 
 abstract contract AccountBaseMock is AccountBase {
     /// Validates a user operation with a boolean signature.
-    function _validateSignature(
-        bytes32 nestedEIP712Hash,
+    function _rawSignatureValidation(
+        bytes32 /* userOpHash */,
         bytes calldata signature
     ) internal pure override returns (bool) {
         return bytes1(signature[0:1]) == bytes1(0x01);
