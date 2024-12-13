@@ -1,3 +1,2 @@
 * xref:index.adoc[Overview]
-* xref:account-abstraction.adoc[Account Abstraction]
 * xref:utilities.adoc[Utilities]
