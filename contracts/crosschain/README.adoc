@@ -23,11 +23,15 @@ Given ERC-7786 could be enabled natively or via adapters. Developers can access 
 
 {{IERC7786GatewaySource}}
 
+== Clients
+
 {{IERC7786Receiver}}
 
 {{ERC7786Receiver}}
 
-== Axelar Adapters
+== Adapters
+
+=== Axelar
 
 {{AxelarGatewayBase}}
 
