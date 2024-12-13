@@ -1,7 +1,6 @@
 const { setCode } = require('@nomicfoundation/hardhat-network-helpers');
 const { ethers } = require('hardhat');
 const { UserOperation: UserOperationVanilla } = require('../../lib/@openzeppelin-contracts/test/helpers/erc4337');
-const { PersonalSignHelper } = require('./erc7739');
 
 const CANONICAL_ENTRYPOINT = '0x0000000071727De22E5E9d8BAf0edAc6f37da032';
 
@@ -97,15 +96,6 @@ class UserOperation extends UserOperationVanilla {
 
   hash() {
     return super.hash(this.context.entrypoint.target, this.context.chainId);
-  }
-
-  async sign(domain, signer) {
-    this.signature = await PersonalSignHelper.sign(
-      signer.signTypedData.bind(signer),
-      ethers.getBytes(this.hash()),
-      domain,
-    );
-    return this;
   }
 }
 

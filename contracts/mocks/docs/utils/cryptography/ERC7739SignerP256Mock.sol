@@ -15,7 +15,10 @@ contract ERC7739SignerP256Mock is ERC7739Signer {
         _qy = qy;
     }
 
-    function _validateSignature(bytes32 hash, bytes calldata signature) internal view virtual override returns (bool) {
+    function _rawSignatureValidation(
+        bytes32 hash,
+        bytes calldata signature
+    ) internal view virtual override returns (bool) {
         bytes32 r = bytes32(signature[0x00:0x20]);
         bytes32 s = bytes32(signature[0x20:0x40]);
         return P256.verify(hash, r, s, _qx, _qy);

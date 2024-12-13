@@ -13,7 +13,10 @@ contract ERC7739SignerECDSAMock is ERC7739Signer {
         _signer = signerAddr;
     }
 
-    function _validateSignature(bytes32 hash, bytes calldata signature) internal view virtual override returns (bool) {
+    function _rawSignatureValidation(
+        bytes32 hash,
+        bytes calldata signature
+    ) internal view virtual override returns (bool) {
         (address recovered, ECDSA.RecoverError err, ) = ECDSA.tryRecover(hash, signature);
         return _signer == recovered && err == ECDSA.RecoverError.NoError;
     }

@@ -3,15 +3,24 @@
 pragma solidity ^0.8.20;
 
 import {PackedUserOperation, IAccount, IEntryPoint, IAccountExecute} from "@openzeppelin/contracts/interfaces/draft-IERC4337.sol";
+import {ERC4337Utils} from "@openzeppelin/contracts/account/utils/draft-ERC4337Utils.sol";
 import {Address} from "@openzeppelin/contracts/utils/Address.sol";
+import {MessageHashUtils} from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
+import {ERC7739Signer} from "../utils/cryptography/draft-ERC7739Signer.sol";
 
 /**
- * @dev A simple ERC4337 account implementation.
+ * @dev A simple ERC4337 account implementation. This base implementation only includes the minimal logic to process
+ * user operations.
  *
- * This base implementation only includes the minimal logic to process user operations.
- * Developers must implement the {_validateUserOp} function to define the account's validation logic.
+ * Developers must implement the {_rawSignatureValidation} function to define the account's validation logic.
+ *
+ * IMPORTANT: Implementing a mechanism to validate signatures is a security-sensitive operation as it may allow an
+ * attacker to bypass the account's security measures. Check out {AccountECDSA}, {AccountP256}, or {AccountRSA} for
+ * digital signature validation implementations.
  */
-abstract contract AccountBase is IAccount, IAccountExecute {
+abstract contract AccountBase is IAccount, IAccountExecute, ERC7739Signer {
+    using MessageHashUtils for bytes32;
+
     /**
      * @dev Unauthorized call to the account.
      */
@@ -62,7 +71,9 @@ abstract contract AccountBase is IAccount, IAccountExecute {
         bytes32 userOpHash,
         uint256 missingAccountFunds
     ) public virtual onlyEntryPoint returns (uint256) {
-        uint256 validationData = _validateUserOp(userOp, userOpHash);
+        uint256 validationData = _rawSignatureValidation(_signableUserOpHash(userOp, userOpHash), userOp.signature)
+            ? ERC4337Utils.SIG_VALIDATION_SUCCESS
+            : ERC4337Utils.SIG_VALIDATION_FAILED;
         _payPrefund(missingAccountFunds);
         return validationData;
     }
@@ -79,19 +90,19 @@ abstract contract AccountBase is IAccount, IAccountExecute {
     }
 
     /**
-     * @dev Validation logic for {validateUserOp}.
+     * @dev Returns the digest used by an offchain sigenr instead of the opaque `userOpHash`.
      *
      * Given the `userOpHash` calculation is defined by ERC-4337, offchain signers
-     * may need to sign this hash by wrapping it in other schemes (e.g. ERC-191)
+     * may need to sign again this hash by rehashing it with other schemes (e.g. ERC-191).
      *
-     * IMPORTANT: Implementing a mechanism to validate user operations is a security-sensitive operation
-     * as it may allow an attacker to bypass the account's security measures. Check out {AccountECDSA},
-     * {AccountP256}, or {AccountRSA} for digital signature validation implementations.
+     * Returns the `userOpHash` by default.
      */
-    function _validateUserOp(
-        PackedUserOperation calldata userOp,
+    function _signableUserOpHash(
+        PackedUserOperation calldata /* userOp */,
         bytes32 userOpHash
-    ) internal virtual returns (uint256 validationData);
+    ) internal view virtual returns (bytes32) {
+        return userOpHash;
+    }
 
     /**
      * @dev Sends the missing funds for executing the user operation to the {entrypoint}.
