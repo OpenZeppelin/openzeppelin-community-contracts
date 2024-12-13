@@ -5,7 +5,6 @@ pragma solidity ^0.8.20;
 import {PackedUserOperation} from "@openzeppelin/contracts/interfaces/draft-IERC4337.sol";
 import {ERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
-import {MessageHashUtils} from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
 import {ERC721Holder} from "@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol";
 import {ERC1155Holder} from "@openzeppelin/contracts/token/ERC1155/utils/ERC1155Holder.sol";
 import {AccountBase} from "../draft-AccountBase.sol";
@@ -33,7 +32,10 @@ import {AccountBase} from "../draft-AccountBase.sol";
  * or during initialization (if used as a clone) may leave the account either front-runnable or unusable.
  */
 abstract contract AccountECDSA is AccountBase, ERC721Holder, ERC1155Holder {
-    using MessageHashUtils for bytes32;
+    bytes32 internal constant _PACKED_USER_OPERATION =
+        keccak256(
+            "PackedUserOperation(address sender,uint256 nonce,bytes initCode,bytes callData,bytes32 accountGasLimits,uint256 preVerificationGas,bytes32 gasFees,bytes paymasterAndData,address entrypoint)"
+        );
 
     /**
      * @dev The {signer} is already initialized.
@@ -55,6 +57,34 @@ abstract contract AccountECDSA is AccountBase, ERC721Holder, ERC1155Holder {
      */
     function signer() public view virtual returns (address) {
         return _signer;
+    }
+
+    /**
+     * @dev Customize the user operation hash to sign. See {AccountBase-_signableUserOpHash}.
+     *
+     * This implementation uses the EIP-712 typed data hashing mechanism for readability.
+     */
+    function _signableUserOpHash(
+        PackedUserOperation calldata userOp,
+        bytes32 /* userOpHash */
+    ) internal view virtual override returns (bytes32) {
+        return
+            _hashTypedDataV4(
+                keccak256(
+                    abi.encode(
+                        _PACKED_USER_OPERATION,
+                        userOp.sender,
+                        userOp.nonce,
+                        keccak256(userOp.initCode),
+                        keccak256(userOp.callData),
+                        userOp.accountGasLimits,
+                        userOp.preVerificationGas,
+                        userOp.gasFees,
+                        keccak256(userOp.paymasterAndData),
+                        msg.sender
+                    )
+                )
+            );
     }
 
     /**

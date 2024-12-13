@@ -101,7 +101,7 @@ abstract contract AccountBase is IAccount, IAccountExecute, ERC7739Signer {
         PackedUserOperation calldata /* userOp */,
         bytes32 userOpHash
     ) internal view virtual returns (bytes32) {
-        return userOpHash.toEthSignedMessageHash();
+        return userOpHash;
     }
 
     /**
