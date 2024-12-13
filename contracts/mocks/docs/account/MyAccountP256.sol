@@ -5,7 +5,7 @@ pragma solidity ^0.8.20;
 
 import {EIP712} from "@openzeppelin/contracts/utils/cryptography/EIP712.sol";
 import {Initializable} from "@openzeppelin/contracts/proxy/utils/Initializable.sol";
-import {AccountP256} from "../../../account/draft-AccountP256.sol";
+import {AccountP256} from "../../../account/extensions/draft-AccountP256.sol";
 
 contract MyAccountP256 is AccountP256, Initializable {
     /**

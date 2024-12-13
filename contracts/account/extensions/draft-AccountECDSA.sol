@@ -8,10 +8,10 @@ import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import {MessageHashUtils} from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
 import {ERC721Holder} from "@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol";
 import {ERC1155Holder} from "@openzeppelin/contracts/token/ERC1155/utils/ERC1155Holder.sol";
-import {AccountERC7739} from "./extensions/draft-AccountERC7739.sol";
+import {AccountBase} from "../draft-AccountBase.sol";
 
 /**
- * @dev Account implementation using {ECDSA} signatures and {AccountERC7739} for replay protection.
+ * @dev Account implementation using {ECDSA} signatures and {AccountBase} for replay protection.
  *
  * An {_initializeSigner} function is provided to set the account's signer address. Doing so it's
  * easier for a factory, whose likely to use initializable clones of this contract.
@@ -32,7 +32,7 @@ import {AccountERC7739} from "./extensions/draft-AccountERC7739.sol";
  * IMPORTANT: Avoiding to call {_initializeSigner} either during construction (if used standalone)
  * or during initialization (if used as a clone) may leave the account either front-runnable or unusable.
  */
-abstract contract AccountECDSA is AccountERC7739, ERC721Holder, ERC1155Holder {
+abstract contract AccountECDSA is AccountBase, ERC721Holder, ERC1155Holder {
     using MessageHashUtils for bytes32;
 
     /**
@@ -63,7 +63,7 @@ abstract contract AccountECDSA is AccountERC7739, ERC721Holder, ERC1155Holder {
     function _validateUserOp(
         PackedUserOperation calldata userOp,
         bytes32 userOpHash
-    ) internal view virtual override returns (uint256) {
+    ) internal virtual override returns (uint256) {
         return super._validateUserOp(userOp, userOpHash.toEthSignedMessageHash());
     }
 
@@ -76,10 +76,5 @@ abstract contract AccountECDSA is AccountERC7739, ERC721Holder, ERC1155Holder {
     function _validateSignature(bytes32 hash, bytes calldata signature) internal view virtual override returns (bool) {
         (address recovered, ECDSA.RecoverError err, ) = ECDSA.tryRecover(hash, signature);
         return signer() == recovered && err == ECDSA.RecoverError.NoError;
-    }
-
-    /// @inheritdoc ERC165
-    function supportsInterface(bytes4 interfaceId) public view virtual override(ERC165, ERC1155Holder) returns (bool) {
-        return super.supportsInterface(interfaceId);
     }
 }

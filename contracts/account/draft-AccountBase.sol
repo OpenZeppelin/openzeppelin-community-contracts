@@ -3,7 +3,9 @@
 pragma solidity ^0.8.20;
 
 import {PackedUserOperation, IAccount, IEntryPoint, IAccountExecute} from "@openzeppelin/contracts/interfaces/draft-IERC4337.sol";
+import {ERC4337Utils} from "@openzeppelin/contracts/account/utils/draft-ERC4337Utils.sol";
 import {Address} from "@openzeppelin/contracts/utils/Address.sol";
+import {ERC7739Signer} from "../utils/cryptography/draft-ERC7739Signer.sol";
 
 /**
  * @dev A simple ERC4337 account implementation.
@@ -11,7 +13,7 @@ import {Address} from "@openzeppelin/contracts/utils/Address.sol";
  * This base implementation only includes the minimal logic to process user operations.
  * Developers must implement the {_validateUserOp} function to define the account's validation logic.
  */
-abstract contract AccountBase is IAccount, IAccountExecute {
+abstract contract AccountBase is IAccount, IAccountExecute, ERC7739Signer {
     /**
      * @dev Unauthorized call to the account.
      */
@@ -91,7 +93,12 @@ abstract contract AccountBase is IAccount, IAccountExecute {
     function _validateUserOp(
         PackedUserOperation calldata userOp,
         bytes32 userOpHash
-    ) internal virtual returns (uint256 validationData);
+    ) internal virtual returns (uint256 validationData) {
+        return
+            _isValidSignature(userOpHash, userOp.signature)
+                ? ERC4337Utils.SIG_VALIDATION_SUCCESS
+                : ERC4337Utils.SIG_VALIDATION_FAILED;
+    }
 
     /**
      * @dev Sends the missing funds for executing the user operation to the {entrypoint}.
