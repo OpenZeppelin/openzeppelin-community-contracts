@@ -1,5 +1,5 @@
 const { ethers } = require('hardhat');
-const { formatType } = require('../../lib/@openzeppelin-contracts/test/helpers/eip712');
+const { formatType } = require('@openzeppelin/contracts/test/helpers/eip712');
 
 const DEFAULT_DOMAIN = {
   name: '',

@@ -2,7 +2,7 @@ const { expect } = require('chai');
 const { ethers } = require('hardhat');
 const { loadFixture } = require('@nomicfoundation/hardhat-network-helpers');
 
-const { Permit, domainType } = require('../../../lib/@openzeppelin-contracts/test/helpers/eip712');
+const { Permit, domainType } = require('@openzeppelin/contracts/test/helpers/eip712');
 const { PersonalSignHelper, TypedDataSignHelper } = require('../../helpers/erc7739');
 
 // Helper for ERC20Permit applications
