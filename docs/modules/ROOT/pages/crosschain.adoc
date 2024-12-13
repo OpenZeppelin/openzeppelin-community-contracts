@@ -29,7 +29,7 @@ The interface for a source gateway is general enough that it allows wrapping a c
 include::api:example$crosschain/MyERC7786GatewaySource.sol[]
 ----
 
-NOTE: The standard defines the chains in https://github.com/ChainAgnostic/CAIPs/blob/main/CAIPs/caip-2.md[CAIP-2] identifiers and the accounts https://github.com/ChainAgnostic/CAIPs/blob/main/CAIPs/caip-2.md[CAIP-10] identifiers for increased interoperability with non-EVM chains. Consider using the Strings library in the contracts library to process these identifiers.
+NOTE: The standard represents chains using https://github.com/ChainAgnostic/CAIPs/blob/main/CAIPs/caip-2.md[CAIP-2] identifiers and accounts using https://github.com/ChainAgnostic/CAIPs/blob/main/CAIPs/caip-2.md[CAIP-10] identifiers for increased interoperability with non-EVM chains. Consider using the Strings library in the contracts library to process these identifiers.
 
 === Axelar Network
 
