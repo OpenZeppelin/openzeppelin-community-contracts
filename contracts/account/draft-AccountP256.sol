@@ -16,8 +16,21 @@ import {AccountERC7739} from "./extensions/draft-AccountERC7739.sol";
  * An {_initializeSigner} function is provided to set the account's signer address. Doing so it's
  * easier for a factory, whose likely to use initializable clones of this contract.
  *
+ * Example of usage:
+ *
+ * ```solidity
+ * contract MyAccountP256 is AccountP256 {
+ *     constructor() EIP712("MyAccountP256", "1") {}
+ *
+ *     function initializeSigner(bytes32 qx, bytes32 qy) public virtual initializer {
+ *       // Will revert if the signer is already initialized
+ *       _initializeSigner(qx, qy);
+ *     }
+ * }
+ * ```
+ *
  * IMPORTANT: Avoiding to call {_initializeSigner} either during construction (if used standalone)
- * or during initialization (if used as a clone) may leave the account unusable.
+ * or during initialization (if used as a clone) may leave the account either front-runnable or unusable.
  */
 abstract contract AccountP256 is AccountERC7739, ERC721Holder, ERC1155Holder {
     using MessageHashUtils for bytes32;
@@ -31,7 +44,7 @@ abstract contract AccountP256 is AccountERC7739, ERC721Holder, ERC1155Holder {
     bytes32 private _qy;
 
     /**
-     * @dev Initializes the account with the P256 public key.
+     * @dev Initializes the account with the P256 public key. This function can be called only once.
      */
     function _initializeSigner(bytes32 qx, bytes32 qy) internal {
         if (_qx != 0 || _qy != 0) revert AccountP256UninitializedSigner(qx, qy);
