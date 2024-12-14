@@ -6,6 +6,7 @@ import {PackedUserOperation, IAccount, IEntryPoint, IAccountExecute} from "@open
 import {ERC4337Utils} from "@openzeppelin/contracts/account/utils/draft-ERC4337Utils.sol";
 import {Address} from "@openzeppelin/contracts/utils/Address.sol";
 import {MessageHashUtils} from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
+import {EIP712} from "@openzeppelin/contracts/utils/cryptography/EIP712.sol";
 
 /**
  * @dev A simple ERC4337 account implementation. This base implementation only includes the minimal logic to process
@@ -17,8 +18,13 @@ import {MessageHashUtils} from "@openzeppelin/contracts/utils/cryptography/Messa
  * attacker to bypass the account's security measures. Check out {AccountECDSA}, {AccountP256}, or {AccountRSA} for
  * digital signature validation implementations.
  */
-abstract contract AccountBase is IAccount, IAccountExecute {
+abstract contract AccountBase is EIP712, IAccount, IAccountExecute {
     using MessageHashUtils for bytes32;
+
+    bytes32 internal constant _PACKED_USER_OPERATION =
+        keccak256(
+            "PackedUserOperation(address sender,uint256 nonce,bytes initCode,bytes callData,bytes32 accountGasLimits,uint256 preVerificationGas,bytes32 gasFees,bytes paymasterAndData,address entrypoint)"
+        );
 
     /**
      * @dev Unauthorized call to the account.
@@ -94,13 +100,29 @@ abstract contract AccountBase is IAccount, IAccountExecute {
      * Given the `userOpHash` calculation is defined by ERC-4337, offchain signers
      * may need to sign again this hash by rehashing it with other schemes (e.g. ERC-191).
      *
-     * Returns the `userOpHash` by default.
+     * Returns a typehash following EIP-712 typed data hashing for readability.
      */
     function _signableUserOpHash(
-        PackedUserOperation calldata /* userOp */,
-        bytes32 userOpHash
+        PackedUserOperation calldata userOp,
+        bytes32 /* userOpHash */
     ) internal view virtual returns (bytes32) {
-        return userOpHash;
+        return
+            _hashTypedDataV4(
+                keccak256(
+                    abi.encode(
+                        _PACKED_USER_OPERATION,
+                        userOp.sender,
+                        userOp.nonce,
+                        keccak256(userOp.initCode),
+                        keccak256(userOp.callData),
+                        userOp.accountGasLimits,
+                        userOp.preVerificationGas,
+                        userOp.gasFees,
+                        keccak256(userOp.paymasterAndData),
+                        msg.sender // entrypoint
+                    )
+                )
+            );
     }
 
     /**
