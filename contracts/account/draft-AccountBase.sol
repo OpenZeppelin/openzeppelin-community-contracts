@@ -6,7 +6,6 @@ import {PackedUserOperation, IAccount, IEntryPoint, IAccountExecute} from "@open
 import {ERC4337Utils} from "@openzeppelin/contracts/account/utils/draft-ERC4337Utils.sol";
 import {Address} from "@openzeppelin/contracts/utils/Address.sol";
 import {MessageHashUtils} from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
-import {ERC7739Signer} from "../utils/cryptography/draft-ERC7739Signer.sol";
 
 /**
  * @dev A simple ERC4337 account implementation. This base implementation only includes the minimal logic to process
@@ -18,7 +17,7 @@ import {ERC7739Signer} from "../utils/cryptography/draft-ERC7739Signer.sol";
  * attacker to bypass the account's security measures. Check out {AccountECDSA}, {AccountP256}, or {AccountRSA} for
  * digital signature validation implementations.
  */
-abstract contract AccountBase is IAccount, IAccountExecute, ERC7739Signer {
+abstract contract AccountBase is IAccount, IAccountExecute {
     using MessageHashUtils for bytes32;
 
     /**
@@ -134,6 +133,11 @@ abstract contract AccountBase is IAccount, IAccountExecute, ERC7739Signer {
             revert AccountUnauthorized(sender);
         }
     }
+
+    /**
+     * @dev Signature validation algorithm.
+     */
+    function _rawSignatureValidation(bytes32 hash, bytes calldata signature) internal view virtual returns (bool);
 
     /**
      * @dev Receive Ether.

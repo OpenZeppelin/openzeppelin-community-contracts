@@ -9,7 +9,7 @@ async function fixture() {
   const target = await ethers.deployContract('CallReceiverMockExtended');
   const signer = new NonNativeSigner({ sign: () => ({ serialized: '0x01' }) });
   const helper = new ERC4337Helper('$AccountBaseMock');
-  const smartAccount = await helper.newAccount(['AccountBase', '1']);
+  const smartAccount = await helper.newAccount();
   const signUserOp = async userOp => {
     userOp.signature = await signer.signMessage(userOp.hash());
     return userOp;
