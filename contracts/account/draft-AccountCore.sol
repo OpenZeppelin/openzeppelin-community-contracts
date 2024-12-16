@@ -95,7 +95,7 @@ abstract contract AccountCore is EIP712, IAccount, IAccountExecute {
     }
 
     /**
-     * @dev Returns the digest used by an offchain sigenr instead of the opaque `userOpHash`.
+     * @dev Returns the digest used by an offchain signer instead of the opaque `userOpHash`.
      *
      * Given the `userOpHash` calculation is defined by ERC-4337, offchain signers
      * may need to sign again this hash by rehashing it with other schemes (e.g. ERC-191).
@@ -119,7 +119,7 @@ abstract contract AccountCore is EIP712, IAccount, IAccountExecute {
                         userOp.preVerificationGas,
                         userOp.gasFees,
                         keccak256(userOp.paymasterAndData),
-                        msg.sender // entrypoint
+                        entryPoint()
                     )
                 )
             );
