@@ -6,8 +6,7 @@ import {RSA} from "@openzeppelin/contracts/utils/cryptography/RSA.sol";
 import {AbstractSigner} from "./AbstractSigner.sol";
 
 /**
- * @dev Account implementation using {RSA} signatures and {ERC7739Signer} for replay protection with
- * {ERC721Holder} and {ERC1155Holder} support.
+ * @dev Implementation of {AbstractSigner} using {RSA} signatures.
  *
  * An {_initializeSigner} function is provided to set the account's signer address. Doing so it's
  * easier for a factory, whose likely to use initializable clones of this contract.
@@ -15,7 +14,7 @@ import {AbstractSigner} from "./AbstractSigner.sol";
  * Example of usage:
  *
  * ```solidity
- * contract MyAccountRSA is AccountRSA {
+ * contract MyAccountRSA is Account, SignerRSA {
  *     constructor() EIP712("MyAccountRSA", "1") {}
  *
  *     function initializeSigner(bytes memory e, bytes memory n) external {

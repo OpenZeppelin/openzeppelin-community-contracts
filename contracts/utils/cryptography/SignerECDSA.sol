@@ -6,8 +6,7 @@ import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import {AbstractSigner} from "./AbstractSigner.sol";
 
 /**
- * @dev Account implementation using {ECDSA} signatures and {ERC7739Signer} for replay protection with
- * {ERC721Holder} and {ERC1155Holder} support.
+ * @dev Implementation of {AbstractSigner} using {ECDSA} signatures.
  *
  * An {_initializeSigner} function is provided to set the account's signer address. Doing so it's
  * easier for a factory, whose likely to use initializable clones of this contract.
@@ -15,7 +14,7 @@ import {AbstractSigner} from "./AbstractSigner.sol";
  * Example of usage:
  *
  * ```solidity
- * contract MyAccountECDSA is AccountECDSA {
+ * contract MyAccountECDSA is Account, SignerECDSA {
  *     constructor() EIP712("MyAccountECDSA", "1") {}
  *
  *     function initializeSigner(address signerAddr) public virtual initializer {

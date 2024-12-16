@@ -6,8 +6,7 @@ import {P256} from "@openzeppelin/contracts/utils/cryptography/P256.sol";
 import {AbstractSigner} from "./AbstractSigner.sol";
 
 /**
- * @dev Account implementation using {P256} signatures and {ERC7739Signer} for replay protection with
- * {ERC721Holder} and {ERC1155Holder} support.
+ * @dev Implementation of {AbstractSigner} using {P256} signatures.
  *
  * An {_initializeSigner} function is provided to set the account's signer address. Doing so it's
  * easier for a factory, whose likely to use initializable clones of this contract.
@@ -15,7 +14,7 @@ import {AbstractSigner} from "./AbstractSigner.sol";
  * Example of usage:
  *
  * ```solidity
- * contract MyAccountP256 is AccountP256 {
+ * contract MyAccountP256 is Account, SignerP256 {
  *     constructor() EIP712("MyAccountP256", "1") {}
  *
  *     function initializeSigner(bytes32 qx, bytes32 qy) public virtual initializer {
