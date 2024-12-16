@@ -8,7 +8,7 @@ import {ERC7739Signer} from "../utils/cryptography/draft-ERC7739Signer.sol";
 import {AccountCore} from "./draft-AccountCore.sol";
 
 /**
- * @dev Extention of {AccountCore} with recommanded feature that most account abstraction implementation will want:
+ * @dev Extension of {AccountCore} with recommended feature that most account abstraction implementation will want:
  *
  * * {ERC721Holder} for ERC-721 token handling
  * * {ERC1155Holder} for ERC-1155 token handling
