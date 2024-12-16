@@ -3,7 +3,7 @@
 pragma solidity ^0.8.20;
 
 import {P256} from "@openzeppelin/contracts/utils/cryptography/P256.sol";
-import {AccountCore} from "../draft-AccountCore.sol";
+import {AbstractSigner} from "./AbstractSigner.sol";
 
 /**
  * @dev Account implementation using {P256} signatures and {ERC7739Signer} for replay protection with
@@ -28,7 +28,7 @@ import {AccountCore} from "../draft-AccountCore.sol";
  * IMPORTANT: Avoiding to call {_initializeSigner} either during construction (if used standalone)
  * or during initialization (if used as a clone) may leave the account either front-runnable or unusable.
  */
-abstract contract AccountP256 is AccountCore {
+abstract contract SignerP256 is AbstractSigner {
     /**
      * @dev The {signer} is already initialized.
      */

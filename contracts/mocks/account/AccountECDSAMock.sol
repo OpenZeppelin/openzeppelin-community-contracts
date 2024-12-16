@@ -3,17 +3,10 @@
 pragma solidity ^0.8.20;
 
 import {Account} from "../../account/draft-Account.sol";
-import {AccountECDSA} from "../../account/extensions/draft-AccountECDSA.sol";
+import {SignerECDSA} from "../../utils/cryptography/SignerECDSA.sol";
 
-abstract contract AccountECDSAMock is Account, AccountECDSA {
+abstract contract AccountECDSAMock is Account, SignerECDSA {
     constructor(address signerAddr) {
         _initializeSigner(signerAddr);
-    }
-
-    function _rawSignatureValidation(
-        bytes32 hash,
-        bytes calldata signature
-    ) internal view virtual override(Account, AccountECDSA) returns (bool) {
-        return super._rawSignatureValidation(hash, signature);
     }
 }

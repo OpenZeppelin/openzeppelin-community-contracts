@@ -13,10 +13,7 @@ import {AccountCore} from "./draft-AccountCore.sol";
  * * {ERC721Holder} for ERC-721 token handling
  * * {ERC1155Holder} for ERC-1155 token handling
  * * {ERC7739Signer} for ERC-1271 signature support with ERC-7739 replay protection
+ *
+ * NOTE: This needs to be combine with a signer implementation such as {SignerECDSA}, {SignerP256} or {SignerRSA}
  */
-abstract contract Account is AccountCore, ERC721Holder, ERC1155Holder, ERC7739Signer {
-    function _rawSignatureValidation(
-        bytes32 hash,
-        bytes calldata signature
-    ) internal view virtual override(AccountCore, ERC7739Signer) returns (bool);
-}
+abstract contract Account is AccountCore, ERC721Holder, ERC1155Holder, ERC7739Signer {}

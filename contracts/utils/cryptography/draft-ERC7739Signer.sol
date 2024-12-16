@@ -6,6 +6,7 @@ import {IERC1271} from "@openzeppelin/contracts/interfaces/IERC1271.sol";
 import {EIP712} from "@openzeppelin/contracts/utils/cryptography/EIP712.sol";
 import {MessageHashUtils} from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
 import {ShortStrings} from "@openzeppelin/contracts/utils/ShortStrings.sol";
+import {AbstractSigner} from "./AbstractSigner.sol";
 import {ERC7739Utils} from "./draft-ERC7739Utils.sol";
 
 /**
@@ -21,7 +22,7 @@ import {ERC7739Utils} from "./draft-ERC7739Utils.sol";
  * Consider that strings longer than that will use storage, which may limit the ability of the signer to
  * be used within the ERC-4337 validation phase (due to ERC-7562 storage access rules).
  */
-abstract contract ERC7739Signer is EIP712, IERC1271 {
+abstract contract ERC7739Signer is AbstractSigner, EIP712, IERC1271 {
     using ERC7739Utils for *;
     using MessageHashUtils for bytes32;
 
@@ -93,13 +94,4 @@ abstract contract ERC7739Signer is EIP712, IERC1271 {
                 signature
             );
     }
-
-    /**
-     * @dev Signature validation algorithm.
-     *
-     * WARNING: Implementing a signature validation algorithm is a security-sensitive operation as it involves
-     * cryptographic verification. It is important to review and test thoroughly before deployment. Consider
-     * using one of the signature verification libraries ({ECDSA}, {P256} or {RSA}).
-     */
-    function _rawSignatureValidation(bytes32 hash, bytes calldata signature) internal view virtual returns (bool);
 }
