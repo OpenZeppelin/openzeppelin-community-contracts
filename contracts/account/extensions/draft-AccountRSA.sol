@@ -2,13 +2,8 @@
 
 pragma solidity ^0.8.20;
 
-import {IERC5267} from "@openzeppelin/contracts/interfaces/IERC5267.sol";
-import {ERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 import {RSA} from "@openzeppelin/contracts/utils/cryptography/RSA.sol";
-import {ERC721Holder} from "@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol";
-import {ERC1155Holder} from "@openzeppelin/contracts/token/ERC1155/utils/ERC1155Holder.sol";
-import {AccountBase} from "../draft-AccountBase.sol";
-import {ERC7739Signer} from "../../utils/cryptography/draft-ERC7739Signer.sol";
+import {AccountCore} from "../draft-AccountCore.sol";
 
 /**
  * @dev Account implementation using {RSA} signatures and {ERC7739Signer} for replay protection with
@@ -33,7 +28,7 @@ import {ERC7739Signer} from "../../utils/cryptography/draft-ERC7739Signer.sol";
  * IMPORTANT: Avoiding to call {_initializeSigner} either during construction (if used standalone)
  * or during initialization (if used as a clone) may leave the account either front-runnable or unusable.
  */
-abstract contract AccountRSA is ERC165, IERC5267, ERC7739Signer, AccountBase, ERC721Holder, ERC1155Holder {
+abstract contract AccountRSA is AccountCore {
     /**
      * @dev The {signer} is already initialized.
      */
@@ -64,13 +59,8 @@ abstract contract AccountRSA is ERC165, IERC5267, ERC7739Signer, AccountBase, ER
     function _rawSignatureValidation(
         bytes32 hash,
         bytes calldata signature
-    ) internal view virtual override(AccountBase, ERC7739Signer) returns (bool) {
+    ) internal view virtual override returns (bool) {
         (bytes memory e, bytes memory n) = signer();
         return RSA.pkcs1Sha256(abi.encodePacked(hash), signature, e, n);
-    }
-
-    // @inheritdoc ERC165
-    function supportsInterface(bytes4 interfaceId) public view virtual override(ERC165, ERC1155Holder) returns (bool) {
-        return super.supportsInterface(interfaceId);
     }
 }

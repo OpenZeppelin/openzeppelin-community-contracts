@@ -18,7 +18,7 @@ import {EIP712} from "@openzeppelin/contracts/utils/cryptography/EIP712.sol";
  * attacker to bypass the account's security measures. Check out {AccountECDSA}, {AccountP256}, or {AccountRSA} for
  * digital signature validation implementations.
  */
-abstract contract AccountBase is EIP712, IAccount, IAccountExecute {
+abstract contract AccountCore is EIP712, IAccount, IAccountExecute {
     using MessageHashUtils for bytes32;
 
     bytes32 internal constant _PACKED_USER_OPERATION =
