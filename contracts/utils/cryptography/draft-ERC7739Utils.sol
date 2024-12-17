@@ -7,18 +7,20 @@ pragma solidity ^0.8.20;
  * that are specific to an EIP-712 domain.
  *
  * This library provides methods to wrap, unwrap and operate over typed data signatures with a defensive
- * rehashing mechanism that includes the application's {EIP712-_domainSeparatorV4} and preserves
- * readability of the signed content using an EIP-712 nested approach.
+ * rehashing mechanism that includes the application's
+ * https://docs.openzeppelin.com/contracts/api/utils#EIP712-_domainSeparatorV4[EIP-712]
+ * and preserves readability of the signed content using an EIP-712 nested approach.
  *
  * A smart contract domain can validate a signature for a typed data structure in two ways:
  *
- * - As an application validating a typed data signature. See {toNestedTypedDataHash}.
- * - As a smart contract validating a raw message signature. See {toNestedPersonalSignHash}.
+ * - As an application validating a typed data signature. See {typedDataSignStructHash}.
+ * - As a smart contract validating a raw message signature. See {personalSignStructHash}.
  *
  * NOTE: A provider for a smart contract wallet would need to return this signature as the
  * result of a call to `personal_sign` or `eth_signTypedData`, and this may be unsupported by
  * API clients that expect a return value of 129 bytes, or specifically the `r,s,v` parameters
- * of an {ECDSA} signature, as is for example specified for {EIP712}.
+ * of an https://docs.openzeppelin.com/contracts/api/utils#ECDSA[ECDSA] signature, as is for
+ * example specified for https://docs.openzeppelin.com/contracts/api/utils#EIP712[EIP-712].
  */
 library ERC7739Utils {
     /**
