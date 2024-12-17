@@ -7,7 +7,7 @@ import {EIP712} from "@openzeppelin/contracts/utils/cryptography/EIP712.sol";
 import {MessageHashUtils} from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
 import {ShortStrings} from "@openzeppelin/contracts/utils/ShortStrings.sol";
 import {AbstractSigner} from "./AbstractSigner.sol";
-import {ERC7739Utils} from "./draft-ERC7739Utils.sol";
+import {ERC7739Utils} from "./ERC7739Utils.sol";
 
 /**
  * @dev Validates signatures wrapping the message hash in a nested EIP712 type. See {ERC7739Utils}.
