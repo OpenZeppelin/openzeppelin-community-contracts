@@ -2,9 +2,10 @@
 
 pragma solidity ^0.8.20;
 
-import {AccountRSA} from "../../account/extensions/draft-AccountRSA.sol";
+import {Account} from "../../account/draft-Account.sol";
+import {SignerRSA} from "../../utils/cryptography/SignerRSA.sol";
 
-abstract contract AccountRSAMock is AccountRSA {
+abstract contract AccountRSAMock is Account, SignerRSA {
     constructor(bytes memory e, bytes memory n) {
         _initializeSigner(e, n);
     }
