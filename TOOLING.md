@@ -9,6 +9,3 @@ We had to remove the following line that causes issues:
 "compile_force_framework": "hardat"
 ```
 
-## Linter (prettier/solhint/eslint)
-
-Can we do symlinks from lib/@openzeppelin/contracts/xxx for the linter configs?
