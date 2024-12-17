@@ -66,11 +66,11 @@ https://docs.openzeppelin.com/contracts/api/utils#P256[P256] or https://docs.ope
 
 [.contract]
 [[ERC7739Signer]]
-=== `++ERC7739Signer++` link:https://github.com/OpenZeppelin/openzeppelin-contracts/blob/v0.0.1/contracts/utils/cryptography/draft-ERC7739Signer.sol[{github-icon},role=heading-link]
+=== `++ERC7739Signer++` link:https://github.com/OpenZeppelin/openzeppelin-contracts/blob/v0.0.1/contracts/utils/cryptography/ERC7739Signer.sol[{github-icon},role=heading-link]
 
 [.hljs-theme-light.nopadding]
 ```solidity
-import "@openzeppelin/contracts/utils/cryptography/draft-ERC7739Signer.sol";
+import "@openzeppelin/contracts/utils/cryptography/ERC7739Signer.sol";
 ```
 
 Validates signatures wrapping the message hash in a nested EIP712 type. See {ERC7739Utils}.
@@ -153,11 +153,11 @@ A nested EIP-712 type might be presented in 2 different ways:
 
 [.contract]
 [[ERC7739Utils]]
-=== `++ERC7739Utils++` link:https://github.com/OpenZeppelin/openzeppelin-contracts/blob/v0.0.1/contracts/utils/cryptography/draft-ERC7739Utils.sol[{github-icon},role=heading-link]
+=== `++ERC7739Utils++` link:https://github.com/OpenZeppelin/openzeppelin-contracts/blob/v0.0.1/contracts/utils/cryptography/ERC7739Utils.sol[{github-icon},role=heading-link]
 
 [.hljs-theme-light.nopadding]
 ```solidity
-import "@openzeppelin/contracts/utils/cryptography/draft-ERC7739Utils.sol";
+import "@openzeppelin/contracts/utils/cryptography/ERC7739Utils.sol";
 ```
 
 Utilities to process https://ercs.ethereum.org/ERCS/erc-7739[ERC-7739] typed data signatures

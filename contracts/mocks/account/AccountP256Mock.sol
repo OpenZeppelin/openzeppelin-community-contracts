@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.20;
 
-import {Account} from "../../account/draft-Account.sol";
+import {Account} from "../../account/Account.sol";
 import {SignerP256} from "../../utils/cryptography/SignerP256.sol";
 
 abstract contract AccountP256Mock is Account, SignerP256 {

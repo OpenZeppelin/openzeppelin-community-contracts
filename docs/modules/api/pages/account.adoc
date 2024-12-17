@@ -34,11 +34,11 @@ This directory includes contracts to build accounts for ERC-4337.
 
 [.contract]
 [[AccountCore]]
-=== `++AccountCore++` link:https://github.com/OpenZeppelin/openzeppelin-contracts/blob/v0.0.1/contracts/account/draft-AccountCore.sol[{github-icon},role=heading-link]
+=== `++AccountCore++` link:https://github.com/OpenZeppelin/openzeppelin-contracts/blob/v0.0.1/contracts/account/AccountCore.sol[{github-icon},role=heading-link]
 
 [.hljs-theme-light.nopadding]
 ```solidity
-import "@openzeppelin/contracts/account/draft-AccountCore.sol";
+import "@openzeppelin/contracts/account/AccountCore.sol";
 ```
 
 A simple ERC4337 account implementation. This base implementation only includes the minimal logic to process
@@ -262,11 +262,11 @@ Unauthorized call to the account.
 
 [.contract]
 [[Account]]
-=== `++Account++` link:https://github.com/OpenZeppelin/openzeppelin-contracts/blob/v0.0.1/contracts/account/draft-Account.sol[{github-icon},role=heading-link]
+=== `++Account++` link:https://github.com/OpenZeppelin/openzeppelin-contracts/blob/v0.0.1/contracts/account/Account.sol[{github-icon},role=heading-link]
 
 [.hljs-theme-light.nopadding]
 ```solidity
-import "@openzeppelin/contracts/account/draft-Account.sol";
+import "@openzeppelin/contracts/account/Account.sol";
 ```
 
 Extension of {AccountCore} with recommended feature that most account abstraction implementation will want:
@@ -450,11 +450,11 @@ implemented using a specific signature verification algorithm. See {SignerECDSA}
 
 [.contract]
 [[AccountSignerERC7702]]
-=== `++AccountSignerERC7702++` link:https://github.com/OpenZeppelin/openzeppelin-contracts/blob/v0.0.1/contracts/account/extensions/draft-AccountSignerERC7702.sol[{github-icon},role=heading-link]
+=== `++AccountSignerERC7702++` link:https://github.com/OpenZeppelin/openzeppelin-contracts/blob/v0.0.1/contracts/account/extensions/AccountSignerERC7702.sol[{github-icon},role=heading-link]
 
 [.hljs-theme-light.nopadding]
 ```solidity
-import "@openzeppelin/contracts/account/extensions/draft-AccountSignerERC7702.sol";
+import "@openzeppelin/contracts/account/extensions/AccountSignerERC7702.sol";
 ```
 
 {Account} implementation whose low-level signature validation is done by an EOA.

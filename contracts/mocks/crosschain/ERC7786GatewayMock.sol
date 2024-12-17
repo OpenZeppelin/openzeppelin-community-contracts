@@ -6,7 +6,7 @@ import {BitMaps} from "@openzeppelin/contracts/utils/structs/BitMaps.sol";
 import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 import {CAIP2} from "@openzeppelin/contracts/utils/CAIP2.sol";
 import {CAIP10} from "@openzeppelin/contracts/utils/CAIP10.sol";
-import {IERC7786GatewaySource, IERC7786Receiver} from "../../interfaces/draft-IERC7786.sol";
+import {IERC7786GatewaySource, IERC7786Receiver} from "../../interfaces/IERC7786.sol";
 
 contract ERC7786GatewayMock is IERC7786GatewaySource {
     using BitMaps for BitMaps.BitMap;

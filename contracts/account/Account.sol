@@ -4,8 +4,8 @@ pragma solidity ^0.8.20;
 
 import {ERC721Holder} from "@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol";
 import {ERC1155Holder} from "@openzeppelin/contracts/token/ERC1155/utils/ERC1155Holder.sol";
-import {ERC7739Signer} from "../utils/cryptography/draft-ERC7739Signer.sol";
-import {AccountCore} from "./draft-AccountCore.sol";
+import {ERC7739Signer} from "../utils/cryptography/ERC7739Signer.sol";
+import {AccountCore} from "./AccountCore.sol";
 
 /**
  * @dev Extension of {AccountCore} with recommended feature that most account abstraction implementation will want:
