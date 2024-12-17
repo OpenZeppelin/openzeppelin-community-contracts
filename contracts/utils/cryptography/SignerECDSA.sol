@@ -6,10 +6,11 @@ import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import {AbstractSigner} from "./AbstractSigner.sol";
 
 /**
- * @dev Implementation of {AbstractSigner} using {ECDSA} signatures.
+ * @dev Implementation of {AbstractSigner} using
+ * https://docs.openzeppelin.com/contracts/api/utils#ECDSA[ECDSA] signatures.
  *
- * An {_initializeSigner} function is provided to set the account's signer address. Doing so it's
- * easier for a factory, whose likely to use initializable clones of this contract.
+ * For {Account} usage, an {_initializeSigner} function is provided to set the {signer} address.
+ * Doing so it's easier for a factory, whose likely to use initializable clones of this contract.
  *
  * Example of usage:
  *
@@ -25,34 +26,32 @@ import {AbstractSigner} from "./AbstractSigner.sol";
  * ```
  *
  * IMPORTANT: Avoiding to call {_initializeSigner} either during construction (if used standalone)
- * or during initialization (if used as a clone) may leave the account either front-runnable or unusable.
+ * or during initialization (if used as a clone) may leave the signer either front-runnable or unusable.
  */
 abstract contract SignerECDSA is AbstractSigner {
     /**
      * @dev The {signer} is already initialized.
      */
-    error AccountECDSAUninitializedSigner(address signer);
+    error SignerECDSAUninitializedSigner(address signer);
 
     address private _signer;
 
     /**
-     * @dev Initializes the account with the address of the native signer. This function can be called only once.
+     * @dev Initializes the signer with the address of the native signer. This function can be called only once.
      */
     function _initializeSigner(address signerAddr) internal {
-        if (_signer != address(0)) revert AccountECDSAUninitializedSigner(signerAddr);
+        if (_signer != address(0)) revert SignerECDSAUninitializedSigner(signerAddr);
         _signer = signerAddr;
     }
 
     /**
-     * @dev Return the account's signer address.
+     * @dev Return the signer's address.
      */
     function signer() public view virtual returns (address) {
         return _signer;
     }
 
-    /**
-     * @dev Validates the signature using the account's signer.
-     */
+    // @inheritdoc AbstractSigner
     function _rawSignatureValidation(
         bytes32 hash,
         bytes calldata signature

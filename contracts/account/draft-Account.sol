@@ -10,10 +10,10 @@ import {AccountCore} from "./draft-AccountCore.sol";
 /**
  * @dev Extension of {AccountCore} with recommended feature that most account abstraction implementation will want:
  *
- * * {ERC721Holder} for ERC-721 token handling
- * * {ERC1155Holder} for ERC-1155 token handling
+ * * {ERC721Holder} and {ERC1155Holder} to accept ERC-712 and ERC-1155 token transfers transfers.
  * * {ERC7739Signer} for ERC-1271 signature support with ERC-7739 replay protection
  *
- * NOTE: This needs to be combine with a signer implementation such as {SignerECDSA}, {SignerP256} or {SignerRSA}
+ * NOTE: To use this contract, the {ERC7739Signer-_rawSignatureValidation} function must be
+ * implemented using a specific signature verification algorithm. See {SignerECDSA}, {SignerP256} or {SignerRSA}.
  */
 abstract contract Account is AccountCore, ERC721Holder, ERC1155Holder, ERC7739Signer {}

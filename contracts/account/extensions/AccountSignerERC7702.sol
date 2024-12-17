@@ -5,9 +5,12 @@ pragma solidity ^0.8.20;
 import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import {AccountCore} from "../draft-AccountCore.sol";
 
+/**
+ * @dev {Account} implementation whose low-level signature validation is done by an EOA.
+ */
 abstract contract AccountSignerERC7702 is AccountCore {
     /**
-     * @dev Validates the signature using the account's address.
+     * @dev Validates the signature using the EOA's address (ie. `address(this)`).
      */
     function _rawSignatureValidation(
         bytes32 hash,

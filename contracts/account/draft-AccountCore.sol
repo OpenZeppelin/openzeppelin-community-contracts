@@ -13,10 +13,10 @@ import {AbstractSigner} from "../utils/cryptography/AbstractSigner.sol";
  * @dev A simple ERC4337 account implementation. This base implementation only includes the minimal logic to process
  * user operations.
  *
- * Developers must implement the {_rawSignatureValidation} function to define the account's validation logic.
+ * Developers must implement the {AbstractSigner-_rawSignatureValidation} function to define the account's validation logic.
  *
  * IMPORTANT: Implementing a mechanism to validate signatures is a security-sensitive operation as it may allow an
- * attacker to bypass the account's security measures. Check out {AccountECDSA}, {AccountP256}, or {AccountRSA} for
+ * attacker to bypass the account's security measures. Check out {SignerECDSA}, {SignerP256}, or {SignerRSA} for
  * digital signature validation implementations.
  */
 abstract contract AccountCore is AbstractSigner, EIP712, IAccount, IAccountExecute {

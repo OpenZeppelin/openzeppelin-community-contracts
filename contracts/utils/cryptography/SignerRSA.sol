@@ -6,10 +6,11 @@ import {RSA} from "@openzeppelin/contracts/utils/cryptography/RSA.sol";
 import {AbstractSigner} from "./AbstractSigner.sol";
 
 /**
- * @dev Implementation of {AbstractSigner} using {RSA} signatures.
+ * @dev Implementation of {AbstractSigner} using
+ * https://docs.openzeppelin.com/contracts/api/utils#RSA[RSA] signatures.
  *
- * An {_initializeSigner} function is provided to set the account's signer address. Doing so it's
- * easier for a factory, whose likely to use initializable clones of this contract.
+ * For {Account} usage, an {_initializeSigner} function is provided to set the {signer} public key.
+ * Doing so it's easier for a factory, whose likely to use initializable clones of this contract.
  *
  * Example of usage:
  *
@@ -25,36 +26,34 @@ import {AbstractSigner} from "./AbstractSigner.sol";
  * ```
  *
  * IMPORTANT: Avoiding to call {_initializeSigner} either during construction (if used standalone)
- * or during initialization (if used as a clone) may leave the account either front-runnable or unusable.
+ * or during initialization (if used as a clone) may leave the signer either front-runnable or unusable.
  */
 abstract contract SignerRSA is AbstractSigner {
     /**
      * @dev The {signer} is already initialized.
      */
-    error AccountRSAUninitializedSigner(bytes e, bytes n);
+    error SignerRSAUninitializedSigner(bytes e, bytes n);
 
     bytes private _e;
     bytes private _n;
 
     /**
-     * @dev Initializes the account with the RSA public key. This function can be called only once.
+     * @dev Initializes the signer with the RSA public key. This function can be called only once.
      */
     function _initializeSigner(bytes memory e, bytes memory n) internal {
-        if (_e.length != 0 || _n.length != 0) revert AccountRSAUninitializedSigner(e, n);
+        if (_e.length != 0 || _n.length != 0) revert SignerRSAUninitializedSigner(e, n);
         _e = e;
         _n = n;
     }
 
     /**
-     * @dev Return the account's signer RSA public key.
+     * @dev Return the signer's RSA public key.
      */
     function signer() public view virtual returns (bytes memory e, bytes memory n) {
         return (_e, _n);
     }
 
-    /**
-     * @dev Validates the signature using the account's signer.
-     */
+    /// @inheritdoc AbstractSigner
     function _rawSignatureValidation(
         bytes32 hash,
         bytes calldata signature

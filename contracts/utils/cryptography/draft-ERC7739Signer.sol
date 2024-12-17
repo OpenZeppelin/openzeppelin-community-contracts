@@ -18,9 +18,11 @@ import {ERC7739Utils} from "./draft-ERC7739Utils.sol";
  * This contract requires implementing the {_rawSignatureValidation} function, which passes the wrapped message hash,
  * which may be either an typed data or a personal sign nested type.
  *
- * NOTE: {EIP712} uses {ShortStrings} to optimize gas costs for short strings (up to 31 characters).
- * Consider that strings longer than that will use storage, which may limit the ability of the signer to
- * be used within the ERC-4337 validation phase (due to ERC-7562 storage access rules).
+ * NOTE: https://docs.openzeppelin.com/contracts/api/utils#EIP712[EIP-712] uses
+ * https://docs.openzeppelin.com/contracts/api/utils#ShortStrings[ShortStrings] to optimize gas costs for
+ * short strings (up to 31 characters). Consider that strings longer than that will use storage, which
+ * may limit the ability of the signer to be used within the ERC-4337 validation phase (due to
+ * https://eips.ethereum.org/EIPS/eip-7562#storage-rules[ERC-7562 storage access rules]).
  */
 abstract contract ERC7739Signer is AbstractSigner, EIP712, IERC1271 {
     using ERC7739Utils for *;

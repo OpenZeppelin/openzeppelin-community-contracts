@@ -6,10 +6,11 @@ import {P256} from "@openzeppelin/contracts/utils/cryptography/P256.sol";
 import {AbstractSigner} from "./AbstractSigner.sol";
 
 /**
- * @dev Implementation of {AbstractSigner} using {P256} signatures.
+ * @dev Implementation of {AbstractSigner} using
+ * https://docs.openzeppelin.com/contracts/api/utils#P256[P256] signatures.
  *
- * An {_initializeSigner} function is provided to set the account's signer address. Doing so it's
- * easier for a factory, whose likely to use initializable clones of this contract.
+ * For {Account} usage, an {_initializeSigner} function is provided to set the {signer} public key.
+ * Doing so it's easier for a factory, whose likely to use initializable clones of this contract.
  *
  * Example of usage:
  *
@@ -25,36 +26,34 @@ import {AbstractSigner} from "./AbstractSigner.sol";
  * ```
  *
  * IMPORTANT: Avoiding to call {_initializeSigner} either during construction (if used standalone)
- * or during initialization (if used as a clone) may leave the account either front-runnable or unusable.
+ * or during initialization (if used as a clone) may leave the signer either front-runnable or unusable.
  */
 abstract contract SignerP256 is AbstractSigner {
     /**
      * @dev The {signer} is already initialized.
      */
-    error AccountP256UninitializedSigner(bytes32 qx, bytes32 qy);
+    error SignerP256UninitializedSigner(bytes32 qx, bytes32 qy);
 
     bytes32 private _qx;
     bytes32 private _qy;
 
     /**
-     * @dev Initializes the account with the P256 public key. This function can be called only once.
+     * @dev Initializes the signer with the P256 public key. This function can be called only once.
      */
     function _initializeSigner(bytes32 qx, bytes32 qy) internal {
-        if (_qx != 0 || _qy != 0) revert AccountP256UninitializedSigner(qx, qy);
+        if (_qx != 0 || _qy != 0) revert SignerP256UninitializedSigner(qx, qy);
         _qx = qx;
         _qy = qy;
     }
 
     /**
-     * @dev Return the account's signer P256 public key.
+     * @dev Return the signer's P256 public key.
      */
     function signer() public view virtual returns (bytes32 qx, bytes32 qy) {
         return (_qx, _qy);
     }
 
-    /**
-     * @dev Validates the signature using the account's signer.
-     */
+    /// @inheritdoc AbstractSigner
     function _rawSignatureValidation(
         bytes32 hash,
         bytes calldata signature
