@@ -22,7 +22,7 @@ abstract contract ERC20Custodian is ERC20 {
     /**
      * @dev The amount of tokens frozen by user address.
      */
-    mapping(address user => uint256 amount) internal _frozen;
+    mapping(address user => uint256 amount) private _frozen;
 
     /**
      * @dev Emitted when tokens are frozen for a user.

@@ -54,7 +54,6 @@ Chainlink's Link, that implement the 667 interface for transferAndCall.
 
 == ERC20
 
-:_allowed: pass:normal[xref:#ERC20Allowlist-_allowed-mapping-address----bool-[`++_allowed++`]]
 :UserAllowed: pass:normal[xref:#ERC20Allowlist-UserAllowed-address-[`++UserAllowed++`]]
 :UserDisallowed: pass:normal[xref:#ERC20Allowlist-UserDisallowed-address-[`++UserDisallowed++`]]
 :ERC20Disallowed: pass:normal[xref:#ERC20Allowlist-ERC20Disallowed-address-[`++ERC20Disallowed++`]]
@@ -168,25 +167,6 @@ argument. Similarly, the account will be disallowed again if
 
 --
 
-[.contract-index]
-.Internal Variables
---
-* `++mapping(address &#x3D;&gt; bool)  _allowed++`
-
-[.contract-subindex-inherited]
-.ERC20
-
-[.contract-subindex-inherited]
-.IERC20Errors
-
-[.contract-subindex-inherited]
-.IERC20Metadata
-
-[.contract-subindex-inherited]
-.IERC20
-
---
-
 [.contract-item]
 [[ERC20Allowlist-allowed-address-]]
 ==== `[.contract-item-name]#++allowed++#++(address account) → bool++` [.item-kind]#public#
@@ -235,13 +215,6 @@ Emitted when a user is disallowed.
 
 The operation failed because the user is not allowed.
 
-[.contract-item]
-[[ERC20Allowlist-_allowed-mapping-address----bool-]]
-==== `mapping(address &#x3D;&gt; bool) [.contract-item-name]#++_allowed++#` [.item-kind]#internal#
-
-Allowed status of addresses. True if allowed, False otherwise.
-
-:_blocked: pass:normal[xref:#ERC20Blocklist-_blocked-mapping-address----bool-[`++_blocked++`]]
 :UserBlocked: pass:normal[xref:#ERC20Blocklist-UserBlocked-address-[`++UserBlocked++`]]
 :UserUnblocked: pass:normal[xref:#ERC20Blocklist-UserUnblocked-address-[`++UserUnblocked++`]]
 :ERC20Blocked: pass:normal[xref:#ERC20Blocklist-ERC20Blocked-address-[`++ERC20Blocked++`]]
@@ -355,25 +328,6 @@ argument. Similarly, the account will be unblocked again if
 
 --
 
-[.contract-index]
-.Internal Variables
---
-* `++mapping(address &#x3D;&gt; bool)  _blocked++`
-
-[.contract-subindex-inherited]
-.ERC20
-
-[.contract-subindex-inherited]
-.IERC20Errors
-
-[.contract-subindex-inherited]
-.IERC20Metadata
-
-[.contract-subindex-inherited]
-.IERC20
-
---
-
 [.contract-item]
 [[ERC20Blocklist-blocked-address-]]
 ==== `[.contract-item-name]#++blocked++#++(address account) → bool++` [.item-kind]#public#
@@ -421,12 +375,6 @@ Emitted when a user is unblocked.
 ==== `[.contract-item-name]#++ERC20Blocked++#++(address user)++` [.item-kind]#error#
 
 The operation failed because the user is blocked.
-
-[.contract-item]
-[[ERC20Blocklist-_blocked-mapping-address----bool-]]
-==== `mapping(address &#x3D;&gt; bool) [.contract-item-name]#++_blocked++#` [.item-kind]#internal#
-
-Blocked status of addresses. True if blocked, False otherwise.
 
 :ERC20ExceededSupply: pass:normal[xref:#ERC20Collateral-ERC20ExceededSupply-uint256-uint256-[`++ERC20ExceededSupply++`]]
 :ERC20ExpiredCollateral: pass:normal[xref:#ERC20Collateral-ERC20ExpiredCollateral-uint48-uint48-[`++ERC20ExpiredCollateral++`]]

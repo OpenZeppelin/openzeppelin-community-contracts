@@ -544,7 +544,7 @@ The {signer} is already initialized.
 :union: pass:normal[xref:#Masks-union-Masks-Mask-Masks-Mask-[`++union++`]]
 :intersection: pass:normal[xref:#Masks-intersection-Masks-Mask-Masks-Mask-[`++intersection++`]]
 :difference: pass:normal[xref:#Masks-difference-Masks-Mask-Masks-Mask-[`++difference++`]]
-:symmetric_difference: pass:normal[xref:#Masks-symmetric_difference-Masks-Mask-Masks-Mask-[`++symmetric_difference++`]]
+:symmetricDifference: pass:normal[xref:#Masks-symmetricDifference-Masks-Mask-Masks-Mask-[`++symmetricDifference++`]]
 
 [.contract]
 [[Masks]]
@@ -568,7 +568,7 @@ Library for handling bit masks
 * `++union(m1, m2)++`
 * `++intersection(m1, m2)++`
 * `++difference(m1, m2)++`
-* `++symmetric_difference(m1, m2)++`
+* `++symmetricDifference(m1, m2)++`
 
 --
 
@@ -621,8 +621,8 @@ Perform a bitwise AND operation on two masks
 Perform a bitwise difference operation on two masks (m1 - m2)
 
 [.contract-item]
-[[Masks-symmetric_difference-Masks-Mask-Masks-Mask-]]
-==== `[.contract-item-name]#++symmetric_difference++#++(Masks.Mask m1, Masks.Mask m2) → Masks.Mask++` [.item-kind]#internal#
+[[Masks-symmetricDifference-Masks-Mask-Masks-Mask-]]
+==== `[.contract-item-name]#++symmetricDifference++#++(Masks.Mask m1, Masks.Mask m2) → Masks.Mask++` [.item-kind]#internal#
 
 Returns the symmetric difference (∆) of two masks, also known as disjunctive union or exclusive OR (XOR)
 

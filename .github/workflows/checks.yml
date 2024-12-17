@@ -19,6 +19,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          submodules: recursive
       - name: Set up environment
         uses: ./.github/actions/setup
       - run: npm run lint
@@ -82,4 +84,4 @@ jobs:
         uses: codespell-project/actions-codespell@v2.0
         with:
           check_filenames: true
-          skip: package-lock.json,vendor
+          skip: package-lock.json
