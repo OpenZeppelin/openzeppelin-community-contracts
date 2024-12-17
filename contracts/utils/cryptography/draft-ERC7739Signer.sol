@@ -6,6 +6,7 @@ import {IERC1271} from "@openzeppelin/contracts/interfaces/IERC1271.sol";
 import {EIP712} from "@openzeppelin/contracts/utils/cryptography/EIP712.sol";
 import {MessageHashUtils} from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
 import {ShortStrings} from "@openzeppelin/contracts/utils/ShortStrings.sol";
+import {AbstractSigner} from "./AbstractSigner.sol";
 import {ERC7739Utils} from "./draft-ERC7739Utils.sol";
 
 /**
@@ -14,14 +15,16 @@ import {ERC7739Utils} from "./draft-ERC7739Utils.sol";
  * Linking the signature to the EIP-712 domain separator is a security measure to prevent signature replay across different
  * EIP-712 domains (e.g. a single offchain owner of multiple contracts).
  *
- * This contract requires implementing the {_validateSignature} function, which passes the wrapped message hash,
+ * This contract requires implementing the {_rawSignatureValidation} function, which passes the wrapped message hash,
  * which may be either an typed data or a personal sign nested type.
  *
- * NOTE: {EIP712} uses {ShortStrings} to optimize gas costs for short strings (up to 31 characters).
- * Consider that strings longer than that will use storage, which may limit the ability of the signer to
- * be used within the ERC-4337 validation phase (due to ERC-7562 storage access rules).
+ * NOTE: https://docs.openzeppelin.com/contracts/api/utils#EIP712[EIP-712] uses
+ * https://docs.openzeppelin.com/contracts/api/utils#ShortStrings[ShortStrings] to optimize gas costs for
+ * short strings (up to 31 characters). Consider that strings longer than that will use storage, which
+ * may limit the ability of the signer to be used within the ERC-4337 validation phase (due to
+ * https://eips.ethereum.org/EIPS/eip-7562#storage-rules[ERC-7562 storage access rules]).
  */
-abstract contract ERC7739Signer is EIP712, IERC1271 {
+abstract contract ERC7739Signer is AbstractSigner, EIP712, IERC1271 {
     using ERC7739Utils for *;
     using MessageHashUtils for bytes32;
 
@@ -38,7 +41,7 @@ abstract contract ERC7739Signer is EIP712, IERC1271 {
         // we return the magic value too as it's assumed impossible to find a preimage for it that can be used maliciously.
         // Useful for simulation purposes and to validate whether the contract supports ERC-7739.
         return
-            _isValidSignature(hash, signature)
+            (_isValidNestedTypedDataSignature(hash, signature) || _isValidNestedPersonalSignSignature(hash, signature))
                 ? IERC1271.isValidSignature.selector
                 : (hash == 0x7739773977397739773977397739773977397739773977397739773977397739 && signature.length == 0)
                     ? bytes4(0x77390001)
@@ -46,21 +49,10 @@ abstract contract ERC7739Signer is EIP712, IERC1271 {
     }
 
     /**
-     * @dev Internal version of {isValidSignature} that returns a boolean.
-     */
-    function _isValidSignature(bytes32 hash, bytes calldata signature) internal view virtual returns (bool) {
-        return
-            _isValidNestedTypedDataSignature(hash, signature) || _isValidNestedPersonalSignSignature(hash, signature);
-    }
-
-    /**
      * @dev Nested personal signature verification.
      */
-    function _isValidNestedPersonalSignSignature(
-        bytes32 hash,
-        bytes calldata signature
-    ) internal view virtual returns (bool) {
-        return _validateSignature(_domainSeparatorV4().toTypedDataHash(hash.personalSignStructHash()), signature);
+    function _isValidNestedPersonalSignSignature(bytes32 hash, bytes calldata signature) private view returns (bool) {
+        return _rawSignatureValidation(_domainSeparatorV4().toTypedDataHash(hash.personalSignStructHash()), signature);
     }
 
     /**
@@ -69,7 +61,7 @@ abstract contract ERC7739Signer is EIP712, IERC1271 {
     function _isValidNestedTypedDataSignature(
         bytes32 hash,
         bytes calldata encodedSignature
-    ) internal view virtual returns (bool) {
+    ) private view returns (bool) {
         // decode signature
         (
             bytes calldata signature,
@@ -93,7 +85,7 @@ abstract contract ERC7739Signer is EIP712, IERC1271 {
         return
             hash == appSeparator.toTypedDataHash(contentsHash) &&
             bytes(contentsDescr).length != 0 &&
-            _validateSignature(
+            _rawSignatureValidation(
                 appSeparator.toTypedDataHash(
                     ERC7739Utils.typedDataSignStructHash(
                         contentsDescr,
@@ -104,13 +96,4 @@ abstract contract ERC7739Signer is EIP712, IERC1271 {
                 signature
             );
     }
-
-    /**
-     * @dev Signature validation algorithm.
-     *
-     * WARNING: Implementing a signature validation algorithm is a security-sensitive operation as it involves
-     * cryptographic verification. It is important to review and test thoroughly before deployment. Consider
-     * using one of the signature verification libraries ({ECDSA}, {P256} or {RSA}).
-     */
-    function _validateSignature(bytes32 hash, bytes calldata signature) internal view virtual returns (bool);
 }
