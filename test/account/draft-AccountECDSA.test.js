@@ -14,7 +14,7 @@ async function fixture() {
   const target = await ethers.deployContract('CallReceiverMockExtended');
   const signer = ethers.Wallet.createRandom();
   const helper = new ERC4337Helper('$AccountECDSAMock');
-  const smartAccount = await helper.newAccount(['AccountECDSA', '1', signer.address]);
+  const smartAccount = await helper.newAccount(['AccountECDSA', '1', signer]);
   const domain = {
     name: 'AccountECDSA',
     version: '1',
