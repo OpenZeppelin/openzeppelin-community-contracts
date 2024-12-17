@@ -50,9 +50,6 @@ abstract contract ERC7739Signer is AbstractSigner, EIP712, IERC1271 {
 
     /**
      * @dev Nested personal signature verification.
-     *
-     * NOTE: Instead of overriding this function, try with {_rawSignatureValidation}. It encapsulates
-     * nested EIP-712 hashes.
      */
     function _isValidNestedPersonalSignSignature(bytes32 hash, bytes calldata signature) private view returns (bool) {
         return _rawSignatureValidation(_domainSeparatorV4().toTypedDataHash(hash.personalSignStructHash()), signature);
@@ -60,9 +57,6 @@ abstract contract ERC7739Signer is AbstractSigner, EIP712, IERC1271 {
 
     /**
      * @dev Nested EIP-712 typed data verification.
-     *
-     * NOTE: Instead of overriding this function, try with {_rawSignatureValidation}. It encapsulates
-     * nested EIP-712 hashes.
      */
     function _isValidNestedTypedDataSignature(
         bytes32 hash,
