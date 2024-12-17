@@ -2,6 +2,11 @@ const { ethers } = require('hardhat');
 const { UserOperation } = require('@openzeppelin/contracts/test/helpers/erc4337');
 const { deployEntrypoint } = require('@openzeppelin/contracts/test/helpers/erc4337-entrypoint');
 
+const parseInitCode = initCode => ({
+  factory: '0x' + initCode.replace(/0x/, '').slice(0, 40),
+  factoryData: '0x' + initCode.replace(/0x/, '').slice(40),
+});
+
 /// Global ERC-4337 environment helper.
 class ERC4337Helper {
   constructor(account, params = {}) {
@@ -43,16 +48,12 @@ class SmartAccount extends ethers.BaseContract {
     super(instance.target, instance.interface, instance.runner, instance.deployTx);
     this.address = instance.target;
     this.initCode = initCode;
-    this.factory = '0x' + initCode.replace(/0x/, '').slice(0, 40);
-    this.factoryData = '0x' + initCode.replace(/0x/, '').slice(40);
     this.context = context;
   }
 
   async deploy(account = this.runner) {
-    this.deployTx = await account.sendTransaction({
-      to: this.factory,
-      data: this.factoryData,
-    });
+    const { factory: to, factoryData: data } = parseInitCode(this.initCode);
+    this.deployTx = await account.sendTransaction({ to, data });
     return this;
   }
 
@@ -83,14 +84,11 @@ class UserOperationWithContext extends UserOperation {
   constructor(params) {
     super(params);
     this.context = params.sender.context;
-    this.initCode = {
-      factory: params.sender.factory,
-      factoryData: params.sender.factoryData,
-    };
+    this.initCode = params.sender.initCode;
   }
 
   addInitCode() {
-    return Object.assign(this, this.initCode);
+    return Object.assign(this, parseInitCode(this.initCode));
   }
 
   hash() {
