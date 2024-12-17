@@ -4,7 +4,7 @@ pragma solidity ^0.8.20;
 
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import {ERC165, IERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
-import {IERC7802} from "../../../interfaces/draft-IERC7802.sol";
+import {IERC7802} from "../../../interfaces/IERC7802.sol";
 
 /**
  * @dev ERC20 extension that implements the standard token interface according to
