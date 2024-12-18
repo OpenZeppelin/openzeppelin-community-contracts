@@ -1,7 +1,6 @@
 const { ethers } = require('hardhat');
 const { loadFixture } = require('@nomicfoundation/hardhat-network-helpers');
 const { ERC4337Helper } = require('../helpers/erc4337');
-const { NonNativeSigner, RSASHA256SigningKey } = require('../helpers/signers');
 const { PackedUserOperation } = require('../helpers/eip712-types');
 
 const {
@@ -17,21 +16,16 @@ async function fixture() {
   const target = await ethers.deployContract('CallReceiverMockExtended');
 
   // ERC-4337 signer
-  const signer = new NonNativeSigner(RSASHA256SigningKey.random());
+  const signer = ethers.Wallet.createRandom();
 
   // ERC-4337 account
   const helper = new ERC4337Helper();
   const env = await helper.wait();
-  const mock = await helper.newAccount('$AccountRSAMock', [
-    'AccountRSA',
-    '1',
-    signer.signingKey.publicKey.e,
-    signer.signingKey.publicKey.n,
-  ]);
+  const mock = await helper.newAccount('$AccountERC7702Mock', ['AccountERC7702Mock', '1'], { erc7702signer: signer });
 
   // domain cannot be fetched using getDomain(mock) before the mock is deployed
   const domain = {
-    name: 'AccountRSA',
+    name: 'AccountERC7702Mock',
     version: '1',
     chainId: env.chainId,
     verifyingContract: mock.address,
@@ -43,16 +37,16 @@ async function fixture() {
     return userOp;
   };
 
-  return { ...env, domain, mock, signer, target, beneficiary, other, signUserOp };
+  return { ...env, mock, domain, signer, target, beneficiary, other, signUserOp };
 }
 
-describe('AccountRSA', function () {
+describe('AccountERC7702', function () {
   beforeEach(async function () {
     Object.assign(this, await loadFixture(fixture));
   });
 
   shouldBehaveLikeAnAccountBase();
-  shouldBehaveLikeAnAccountBaseExecutor();
+  shouldBehaveLikeAnAccountBaseExecutor({ deployable: false });
   shouldBehaveLikeAccountHolder();
 
   describe('ERC7739Signer', function () {

@@ -1,54 +1,43 @@
 const { ethers } = require('hardhat');
+const { loadFixture } = require('@nomicfoundation/hardhat-network-helpers');
+const { ERC4337Helper } = require('../helpers/erc4337');
+const { PackedUserOperation } = require('../helpers/eip712-types');
+
 const {
   shouldBehaveLikeAnAccountBase,
   shouldBehaveLikeAnAccountBaseExecutor,
   shouldBehaveLikeAccountHolder,
 } = require('./Account.behavior');
-const { loadFixture } = require('@nomicfoundation/hardhat-network-helpers');
-const { ERC4337Helper } = require('../helpers/erc4337');
 const { shouldBehaveLikeERC7739Signer } = require('../utils/cryptography/ERC7739Signer.behavior');
-const { PackedUserOperation } = require('../helpers/eip712');
 
 async function fixture() {
+  // EOAs and environment
   const [beneficiary, other] = await ethers.getSigners();
   const target = await ethers.deployContract('CallReceiverMockExtended');
+
+  // ERC-4337 signer
   const signer = ethers.Wallet.createRandom();
-  const helper = new ERC4337Helper('$AccountECDSAMock');
-  const smartAccount = await helper.newAccount(['AccountECDSA', '1', signer]);
+
+  // ERC-4337 account
+  const helper = new ERC4337Helper();
+  const env = await helper.wait();
+  const mock = await helper.newAccount('$AccountECDSAMock', ['AccountECDSA', '1', signer]);
+
+  // domain cannot be fetched using getDomain(mock) before the mock is deployed
   const domain = {
     name: 'AccountECDSA',
     version: '1',
-    chainId: helper.chainId,
-    verifyingContract: smartAccount.address,
+    chainId: env.chainId,
+    verifyingContract: mock.address,
   };
+
   const signUserOp = async userOp => {
-    const types = { PackedUserOperation };
-    const packed = userOp.packed;
-    const typedOp = {
-      sender: packed.sender,
-      nonce: packed.nonce,
-      initCode: packed.initCode,
-      callData: packed.callData,
-      accountGasLimits: packed.accountGasLimits,
-      preVerificationGas: packed.preVerificationGas,
-      gasFees: packed.gasFees,
-      paymasterAndData: packed.paymasterAndData,
-      entrypoint: userOp.context.entrypoint.target,
-    };
-    userOp.signature = await signer.signTypedData(domain, types, typedOp);
+    const typedOp = Object.assign(userOp.packed, { entrypoint: env.entrypoint.target });
+    userOp.signature = await signer.signTypedData(domain, { PackedUserOperation }, typedOp);
     return userOp;
   };
 
-  return {
-    ...helper,
-    domain,
-    mock: smartAccount,
-    signer,
-    target,
-    beneficiary,
-    other,
-    signUserOp,
-  };
+  return { ...env, mock, domain, signer, target, beneficiary, other, signUserOp };
 }
 
 describe('AccountECDSA', function () {

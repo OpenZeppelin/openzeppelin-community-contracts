@@ -1,4 +1,6 @@
 const { ethers } = require('hardhat');
+const { setCode } = require('@nomicfoundation/hardhat-network-helpers');
+
 const { UserOperation } = require('@openzeppelin/contracts/test/helpers/erc4337');
 const { deployEntrypoint } = require('@openzeppelin/contracts/test/helpers/erc4337-entrypoint');
 
@@ -9,46 +11,75 @@ const parseInitCode = initCode => ({
 
 /// Global ERC-4337 environment helper.
 class ERC4337Helper {
-  constructor(account, params = {}) {
-    this.entrypointAsPromise = deployEntrypoint();
-    this.factoryAsPromise = ethers.deployContract('Create2Mock');
-    this.accountContractAsPromise = ethers.getContractFactory(account);
-    this.chainIdAsPromise = ethers.provider.getNetwork().then(({ chainId }) => chainId);
-    this.params = params;
+  constructor() {
+    this.cache = new Map();
+    this.envAsPromise = Promise.all([
+      deployEntrypoint(),
+      ethers.provider.getNetwork(),
+      ethers.deployContract('Create2Mock'),
+    ]).then(([{ entrypoint, sendercreator }, { chainId }, factory]) => ({
+      entrypoint,
+      sendercreator,
+      chainId,
+      factory,
+    }));
   }
 
   async wait() {
-    const { entrypoint, sendercreator } = await this.entrypointAsPromise;
-
-    this.entrypoint = entrypoint;
-    this.senderCreator = sendercreator;
-    this.factory = await this.factoryAsPromise;
-    this.accountContract = await this.accountContractAsPromise;
-    this.chainId = await this.chainIdAsPromise;
-
-    return this;
+    return (this.env = await this.envAsPromise);
   }
 
-  async newAccount(extraArgs = [], salt = ethers.randomBytes(32)) {
-    await this.wait();
-    const initCode = await this.accountContract
-      .getDeployTransaction(...extraArgs)
-      .then(tx => this.factory.interface.encodeFunctionData('$deploy', [0, salt, tx.data]))
-      .then(deployCode => ethers.concat([this.factory.target, deployCode]));
-    const instance = await this.senderCreator.createSender
-      .staticCall(initCode)
-      .then(address => this.accountContract.attach(address));
-    return new SmartAccount(instance, initCode, this);
+  async newAccount(name, extraArgs = [], params = {}) {
+    const { factory, sendercreator } = await this.wait();
+
+    if (!this.cache.has(name)) {
+      await ethers.getContractFactory(name).then(factory => this.cache.set(name, factory));
+    }
+    const accountFactory = this.cache.get(name);
+
+    if (params.erc7702signer) {
+      const delegate = await accountFactory.deploy(...extraArgs);
+      const instance = await params.erc7702signer.getAddress().then(address => accountFactory.attach(address));
+      return new ERC7702SmartAccount(instance, delegate, this);
+    } else {
+      const initCode = await accountFactory
+        .getDeployTransaction(...extraArgs)
+        .then(tx =>
+          factory.interface.encodeFunctionData('$deploy', [0, params.salt ?? ethers.randomBytes(32), tx.data]),
+        )
+        .then(deployCode => ethers.concat([factory.target, deployCode]));
+      const instance = await sendercreator.createSender
+        .staticCall(initCode)
+        .then(address => accountFactory.attach(address));
+      return new SmartAccount(instance, initCode, this);
+    }
+  }
+
+  async fillUserOp(userOp) {
+    if (!userOp.nonce) {
+      const { entrypoint } = await this.wait();
+      userOp.nonce = await entrypoint.getNonce(userOp.sender, 0);
+    }
+    if (ethers.isAddressable(userOp.paymaster)) {
+      userOp.paymaster = await ethers.resolveAddress(userOp.paymaster);
+      userOp.paymasterVerificationGasLimit ??= 100_000n;
+      userOp.paymasterPostOpGasLimit ??= 100_000n;
+      userOp.paymasterAndData = ethers.solidityPacked(
+        ['address', 'uint128', 'uint128'],
+        [userOp.paymaster, userOp.paymasterVerificationGasLimit, userOp.paymasterPostOpGasLimit],
+      );
+    }
+    return userOp;
   }
 }
 
 /// Represent one ERC-4337 account contract.
 class SmartAccount extends ethers.BaseContract {
-  constructor(instance, initCode, context) {
+  constructor(instance, initCode, helper) {
     super(instance.target, instance.interface, instance.runner, instance.deployTx);
     this.address = instance.target;
     this.initCode = initCode;
-    this.context = context;
+    this.helper = helper;
   }
 
   async deploy(account = this.runner) {
@@ -57,42 +88,48 @@ class SmartAccount extends ethers.BaseContract {
     return this;
   }
 
-  async createOp(args = {}) {
-    await this.context.wait();
+  createOp(userOp = {}) {
+    return this.helper
+      .fillUserOp({ sender: this, ...userOp })
+      .then(filledUserOp => new UserOperationWithContext(filledUserOp));
+  }
+}
 
-    const params = Object.assign({ sender: this }, args);
-    // fetch nonce
-    if (!params.nonce) {
-      params.nonce = await this.context.entrypoint.getNonce(this, 0);
-    }
-    // prepare paymaster and data
-    if (ethers.isAddressable(params.paymaster)) {
-      params.paymaster = await ethers.resolveAddress(params.paymaster);
-      params.paymasterVerificationGasLimit ??= 100_000n;
-      params.paymasterPostOpGasLimit ??= 100_000n;
-      params.paymasterAndData = ethers.solidityPacked(
-        ['address', 'uint128', 'uint128'],
-        [params.paymaster, params.paymasterVerificationGasLimit, params.paymasterPostOpGasLimit],
-      );
-    }
+class ERC7702SmartAccount extends ethers.BaseContract {
+  constructor(instance, delegate, helper) {
+    super(instance.target, instance.interface, instance.runner, instance.deployTx);
+    this.address = instance.target;
+    this.delegate = delegate;
+    this.helper = helper;
+  }
 
-    return new UserOperationWithContext(params);
+  async deploy() {
+    await ethers.provider.getCode(this.delegate).then(code => setCode(this.target, code));
+    return this;
+  }
+
+  createOp(userOp = {}) {
+    return this.helper
+      .fillUserOp({ sender: this, ...userOp })
+      .then(filledUserOp => new UserOperationWithContext(filledUserOp));
   }
 }
 
 class UserOperationWithContext extends UserOperation {
   constructor(params) {
     super(params);
-    this.context = params.sender.context;
-    this.initCode = params.sender.initCode;
+    this.params = params;
   }
 
   addInitCode() {
-    return Object.assign(this, parseInitCode(this.initCode));
+    const { initCode } = this.params.sender;
+    if (!initCode) throw new Error('No init code available for the sender of this user operation');
+    return Object.assign(this, parseInitCode(initCode));
   }
 
   hash() {
-    return super.hash(this.context.entrypoint, this.context.chainId);
+    const { entrypoint, chainId } = this.params.sender.helper.env;
+    return super.hash(entrypoint, chainId);
   }
 }
 
