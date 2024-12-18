@@ -12,22 +12,29 @@ const {
 const { shouldBehaveLikeERC7739Signer } = require('../utils/cryptography/ERC7739Signer.behavior');
 
 async function fixture() {
+  // EOAs and environment
   const [beneficiary, other] = await ethers.getSigners();
   const target = await ethers.deployContract('CallReceiverMockExtended');
+
+  // ERC-4337 signer and account
+  const helper = new ERC4337Helper();
+  await helper.wait();
   const signer = new NonNativeSigner(RSASHA256SigningKey.random());
-  const helper = new ERC4337Helper('$AccountRSAMock');
-  const smartAccount = await helper.newAccount([
+  const mock = await helper.newAccount('$AccountRSAMock', [
     'AccountRSA',
     '1',
     signer.signingKey.publicKey.e,
     signer.signingKey.publicKey.n,
   ]);
+
+  // domain cannot be fetched using getDomain(mock) before the mock is deployed
   const domain = {
     name: 'AccountRSA',
     version: '1',
     chainId: helper.chainId,
-    verifyingContract: smartAccount.address,
+    verifyingContract: mock.address,
   };
+
   const signUserOp = async userOp => {
     const types = { PackedUserOperation };
     const packed = userOp.packed;
@@ -40,13 +47,13 @@ async function fixture() {
       preVerificationGas: packed.preVerificationGas,
       gasFees: packed.gasFees,
       paymasterAndData: packed.paymasterAndData,
-      entrypoint: userOp.context.entrypoint.target,
+      entrypoint: helper.entrypoint.target,
     };
     userOp.signature = await signer.signTypedData(domain, types, typedOp);
     return userOp;
   };
 
-  return { ...helper, domain, mock: smartAccount, signer, target, beneficiary, other, signUserOp };
+  return { ...helper, domain, mock, signer, target, beneficiary, other, signUserOp };
 }
 
 describe('AccountRSA', function () {
