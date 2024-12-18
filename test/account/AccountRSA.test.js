@@ -16,10 +16,12 @@ async function fixture() {
   const [beneficiary, other] = await ethers.getSigners();
   const target = await ethers.deployContract('CallReceiverMockExtended');
 
-  // ERC-4337 signer and account
-  const helper = new ERC4337Helper();
-  await helper.wait();
+  // ERC-4337 signer
   const signer = new NonNativeSigner(RSASHA256SigningKey.random());
+
+  // ERC-4337 account
+  const helper = new ERC4337Helper();
+  const env = await helper.wait();
   const mock = await helper.newAccount('$AccountRSAMock', [
     'AccountRSA',
     '1',
@@ -31,29 +33,17 @@ async function fixture() {
   const domain = {
     name: 'AccountRSA',
     version: '1',
-    chainId: helper.chainId,
+    chainId: env.chainId,
     verifyingContract: mock.address,
   };
 
   const signUserOp = async userOp => {
-    const types = { PackedUserOperation };
-    const packed = userOp.packed;
-    const typedOp = {
-      sender: packed.sender,
-      nonce: packed.nonce,
-      initCode: packed.initCode,
-      callData: packed.callData,
-      accountGasLimits: packed.accountGasLimits,
-      preVerificationGas: packed.preVerificationGas,
-      gasFees: packed.gasFees,
-      paymasterAndData: packed.paymasterAndData,
-      entrypoint: helper.entrypoint.target,
-    };
-    userOp.signature = await signer.signTypedData(domain, types, typedOp);
+    const typedOp = Object.assign(userOp.packed, { entrypoint: env.entrypoint.target });
+    userOp.signature = await signer.signTypedData(domain, { PackedUserOperation }, typedOp);
     return userOp;
   };
 
-  return { ...helper, domain, mock, signer, target, beneficiary, other, signUserOp };
+  return { ...env, domain, mock, signer, target, beneficiary, other, signUserOp };
 }
 
 describe('AccountRSA', function () {

@@ -15,48 +15,29 @@ async function fixture() {
   const [beneficiary, other] = await ethers.getSigners();
   const target = await ethers.deployContract('CallReceiverMockExtended');
 
-  // ERC-4337 signer and account
-  const helper = new ERC4337Helper();
-  await helper.wait();
+  // ERC-4337 signer
   const signer = ethers.Wallet.createRandom();
+
+  // ERC-4337 account
+  const helper = new ERC4337Helper();
+  const env = await helper.wait();
   const mock = await helper.newAccount('$AccountERC7702Mock', ['AccountERC7702Mock', '1'], { erc7702signer: signer });
 
   // domain cannot be fetched using getDomain(mock) before the mock is deployed
   const domain = {
     name: 'AccountERC7702Mock',
     version: '1',
-    chainId: helper.chainId,
+    chainId: env.chainId,
     verifyingContract: mock.address,
   };
 
   const signUserOp = async userOp => {
-    const types = { PackedUserOperation };
-    const packed = userOp.packed;
-    const typedOp = {
-      sender: packed.sender,
-      nonce: packed.nonce,
-      initCode: packed.initCode,
-      callData: packed.callData,
-      accountGasLimits: packed.accountGasLimits,
-      preVerificationGas: packed.preVerificationGas,
-      gasFees: packed.gasFees,
-      paymasterAndData: packed.paymasterAndData,
-      entrypoint: helper.entrypoint.target,
-    };
-    userOp.signature = await signer.signTypedData(domain, types, typedOp);
+    const typedOp = Object.assign(userOp.packed, { entrypoint: env.entrypoint.target });
+    userOp.signature = await signer.signTypedData(domain, { PackedUserOperation }, typedOp);
     return userOp;
   };
 
-  return {
-    ...helper,
-    mock,
-    domain,
-    signer,
-    target,
-    beneficiary,
-    other,
-    signUserOp,
-  };
+  return { ...env, mock, domain, signer, target, beneficiary, other, signUserOp };
 }
 
 describe('AccountERC7702', function () {

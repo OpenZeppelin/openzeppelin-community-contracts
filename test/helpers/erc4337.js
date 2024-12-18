@@ -26,8 +26,7 @@ class ERC4337Helper {
   }
 
   async wait() {
-    Object.assign(this, await this.envAsPromise);
-    return this;
+    return (this.env = await this.envAsPromise);
   }
 
   async newAccount(name, extraArgs = [], params = {}) {
@@ -41,8 +40,7 @@ class ERC4337Helper {
     if (params.erc7702signer) {
       const delegate = await accountFactory.deploy(...extraArgs);
       const instance = await params.erc7702signer.getAddress().then(address => accountFactory.attach(address));
-
-      return new ERC7702SmartAccount(instance, delegate, this);
+      return new ERC7702SmartAccount(instance, delegate, this.env);
     } else {
       const initCode = await accountFactory
         .getDeployTransaction(...extraArgs)
@@ -53,7 +51,7 @@ class ERC4337Helper {
       const instance = await sendercreator.createSender
         .staticCall(initCode)
         .then(address => accountFactory.attach(address));
-      return new SmartAccount(instance, initCode, this);
+      return new SmartAccount(instance, initCode, this.env);
     }
   }
 }
