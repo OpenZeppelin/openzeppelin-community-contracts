@@ -1,8 +1,9 @@
 const { ethers } = require('hardhat');
-const { shouldBehaveLikeAnAccountBase, shouldBehaveLikeAnAccountBaseExecutor } = require('./Account.behavior');
 const { loadFixture } = require('@nomicfoundation/hardhat-network-helpers');
 const { ERC4337Helper } = require('../helpers/erc4337');
 const { NonNativeSigner } = require('../helpers/signers');
+
+const { shouldBehaveLikeAnAccountBase, shouldBehaveLikeAnAccountBaseExecutor } = require('./Account.behavior');
 
 async function fixture() {
   const [beneficiary, other] = await ethers.getSigners();

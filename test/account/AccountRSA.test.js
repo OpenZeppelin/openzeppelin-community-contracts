@@ -1,14 +1,15 @@
 const { ethers } = require('hardhat');
+const { loadFixture } = require('@nomicfoundation/hardhat-network-helpers');
+const { ERC4337Helper } = require('../helpers/erc4337');
+const { NonNativeSigner, RSASHA256SigningKey } = require('../helpers/signers');
+const { PackedUserOperation } = require('../helpers/eip712-types');
+
 const {
   shouldBehaveLikeAnAccountBase,
   shouldBehaveLikeAnAccountBaseExecutor,
   shouldBehaveLikeAccountHolder,
 } = require('./Account.behavior');
-const { loadFixture } = require('@nomicfoundation/hardhat-network-helpers');
-const { ERC4337Helper } = require('../helpers/erc4337');
-const { NonNativeSigner, RSASHA256SigningKey } = require('../helpers/signers');
 const { shouldBehaveLikeERC7739Signer } = require('../utils/cryptography/ERC7739Signer.behavior');
-const { PackedUserOperation } = require('../helpers/eip712');
 
 async function fixture() {
   const [beneficiary, other] = await ethers.getSigners();

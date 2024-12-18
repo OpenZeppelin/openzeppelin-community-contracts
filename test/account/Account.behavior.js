@@ -1,14 +1,12 @@
 const { ethers } = require('hardhat');
 const { expect } = require('chai');
-const { impersonate } = require('../../lib/@openzeppelin-contracts/test/helpers/account');
-const {
-  SIG_VALIDATION_SUCCESS,
-  SIG_VALIDATION_FAILURE,
-} = require('../../lib/@openzeppelin-contracts/test/helpers/erc4337');
 const { setBalance } = require('@nomicfoundation/hardhat-network-helpers');
+
+const { impersonate } = require('@openzeppelin/contracts/test/helpers/account');
+const { SIG_VALIDATION_SUCCESS, SIG_VALIDATION_FAILURE } = require('@openzeppelin/contracts/test/helpers/erc4337');
 const {
   shouldSupportInterfaces,
-} = require('../../lib/@openzeppelin-contracts/test/utils/introspection/SupportsInterface.behavior');
+} = require('@openzeppelin/contracts/test/utils/introspection/SupportsInterface.behavior');
 
 function shouldBehaveLikeAnAccountBase() {
   describe('entryPoint', function () {

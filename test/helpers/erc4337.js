@@ -1,4 +1,6 @@
 const { ethers } = require('hardhat');
+const { setCode } = require('@nomicfoundation/hardhat-network-helpers');
+
 const { UserOperation } = require('@openzeppelin/contracts/test/helpers/erc4337');
 const { deployEntrypoint } = require('@openzeppelin/contracts/test/helpers/erc4337-entrypoint');
 
@@ -40,6 +42,12 @@ class ERC4337Helper {
       .then(address => this.accountContract.attach(address));
     return new SmartAccount(instance, initCode, this);
   }
+
+  async newERC7702Account(signer, extraArgs = []) {
+    await this.wait();
+    const instance = await this.accountContract.deploy(...extraArgs);
+    return new ERC7702SmartAccount(instance, signer, this);
+  }
 }
 
 /// Represent one ERC-4337 account contract.
@@ -80,6 +88,42 @@ class SmartAccount extends ethers.BaseContract {
   }
 }
 
+class ERC7702SmartAccount extends ethers.BaseContract {
+  constructor(instance, signer, context) {
+    super(signer.address, instance.interface, instance.runner, undefined);
+    this.address = signer.address;
+    this.delegate = instance;
+    this.context = context;
+  }
+
+  async deploy() {
+    await ethers.provider.getCode(this.delegate).then(code => setCode(this.address, code));
+    return this;
+  }
+
+  async createOp(args = {}) {
+    await this.context.wait();
+
+    const params = Object.assign({ sender: this }, args);
+    // fetch nonce
+    if (!params.nonce) {
+      params.nonce = await this.context.entrypoint.getNonce(this, 0);
+    }
+    // prepare paymaster and data
+    if (ethers.isAddressable(params.paymaster)) {
+      params.paymaster = await ethers.resolveAddress(params.paymaster);
+      params.paymasterVerificationGasLimit ??= 100_000n;
+      params.paymasterPostOpGasLimit ??= 100_000n;
+      params.paymasterAndData = ethers.solidityPacked(
+        ['address', 'uint128', 'uint128'],
+        [params.paymaster, params.paymasterVerificationGasLimit, params.paymasterPostOpGasLimit],
+      );
+    }
+
+    return new UserOperationWithContext(params);
+  }
+}
+
 class UserOperationWithContext extends UserOperation {
   constructor(params) {
     super(params);
@@ -88,6 +132,7 @@ class UserOperationWithContext extends UserOperation {
   }
 
   addInitCode() {
+    if (!this.initCode) throw new Error('No init code available for the sender of this user operation');
     return Object.assign(this, parseInitCode(this.initCode));
   }
 

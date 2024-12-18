@@ -14,14 +14,15 @@ async function fixture() {
   const [beneficiary, other] = await ethers.getSigners();
   const target = await ethers.deployContract('CallReceiverMockExtended');
   const signer = ethers.Wallet.createRandom();
-  const helper = new ERC4337Helper('$AccountECDSAMock');
-  const smartAccount = await helper.newAccount(['AccountECDSA', '1', signer]);
+  const helper = new ERC4337Helper('$AccountERC7702Mock');
+  const smartAccount = await helper.newERC7702Account(signer, ['AccountERC7702Mock', '1']);
   const domain = {
-    name: 'AccountECDSA',
+    name: 'AccountERC7702Mock',
     version: '1',
     chainId: helper.chainId,
     verifyingContract: smartAccount.address,
   };
+
   const signUserOp = async userOp => {
     const types = { PackedUserOperation };
     const packed = userOp.packed;
@@ -52,13 +53,13 @@ async function fixture() {
   };
 }
 
-describe('AccountECDSA', function () {
+describe('AccountERC7702', function () {
   beforeEach(async function () {
     Object.assign(this, await loadFixture(fixture));
   });
 
   shouldBehaveLikeAnAccountBase();
-  shouldBehaveLikeAnAccountBaseExecutor();
+  shouldBehaveLikeAnAccountBaseExecutor({ deployable: false });
   shouldBehaveLikeAccountHolder();
 
   describe('ERC7739Signer', function () {
