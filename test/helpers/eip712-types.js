@@ -12,7 +12,6 @@ module.exports = mapValues(
       preVerificationGas: 'uint256',
       gasFees: 'bytes32',
       paymasterAndData: 'bytes',
-      entrypoint: 'address',
     },
   },
   formatType,

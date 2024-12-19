@@ -24,7 +24,7 @@ abstract contract AccountCore is AbstractSigner, EIP712, IAccount, IAccountExecu
 
     bytes32 internal constant _PACKED_USER_OPERATION =
         keccak256(
-            "PackedUserOperation(address sender,uint256 nonce,bytes initCode,bytes callData,bytes32 accountGasLimits,uint256 preVerificationGas,bytes32 gasFees,bytes paymasterAndData,address entrypoint)"
+            "PackedUserOperation(address sender,uint256 nonce,bytes initCode,bytes callData,bytes32 accountGasLimits,uint256 preVerificationGas,bytes32 gasFees,bytes paymasterAndData)"
         );
 
     /**
@@ -119,8 +119,7 @@ abstract contract AccountCore is AbstractSigner, EIP712, IAccount, IAccountExecu
                         userOp.accountGasLimits,
                         userOp.preVerificationGas,
                         userOp.gasFees,
-                        keccak256(userOp.paymasterAndData),
-                        entryPoint()
+                        keccak256(userOp.paymasterAndData)
                     )
                 )
             );
