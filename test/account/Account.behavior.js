@@ -1,4 +1,4 @@
-const { ethers } = require('hardhat');
+const { ethers, entrypoint } = require('hardhat');
 const { expect } = require('chai');
 const { setBalance } = require('@nomicfoundation/hardhat-network-helpers');
 
@@ -12,7 +12,7 @@ function shouldBehaveLikeAnAccountBase() {
   describe('entryPoint', function () {
     it('should return the canonical entrypoint', async function () {
       await this.mock.deploy();
-      expect(await this.mock.entryPoint()).to.equal(this.entrypoint.target);
+      expect(await this.mock.entryPoint()).to.equal(entrypoint);
     });
   });
 
@@ -43,7 +43,7 @@ function shouldBehaveLikeAnAccountBase() {
 
     describe('when the caller is the canonical entrypoint', function () {
       beforeEach(async function () {
-        this.entrypointAsSigner = await impersonate(this.entrypoint.target);
+        this.entrypointAsSigner = await impersonate(entrypoint.target);
       });
 
       it('should return SIG_VALIDATION_SUCCESS if the signature is valid', async function () {
@@ -102,8 +102,8 @@ function shouldBehaveLikeAnAccountBase() {
           })
           .then(op => this.signUserOp(op));
 
-        const prevAccountBalance = await ethers.provider.getBalance(this.mock.target);
-        const prevEntrypointBalance = await ethers.provider.getBalance(this.entrypoint.target);
+        const prevAccountBalance = await ethers.provider.getBalance(this.mock);
+        const prevEntrypointBalance = await ethers.provider.getBalance(entrypoint);
         const amount = ethers.parseEther('0.1');
 
         const tx = await this.mock
@@ -113,10 +113,8 @@ function shouldBehaveLikeAnAccountBase() {
         const receipt = await tx.wait();
         const callerFees = receipt.gasUsed * tx.gasPrice;
 
-        expect(await ethers.provider.getBalance(this.mock.target)).to.equal(prevAccountBalance - amount);
-        expect(await ethers.provider.getBalance(this.entrypoint.target)).to.equal(
-          prevEntrypointBalance + amount - callerFees,
-        );
+        expect(await ethers.provider.getBalance(this.mock)).to.equal(prevAccountBalance - amount);
+        expect(await ethers.provider.getBalance(entrypoint)).to.equal(prevEntrypointBalance + amount - callerFees);
       });
     });
   });
@@ -126,11 +124,11 @@ function shouldBehaveLikeAnAccountBase() {
       await this.mock.deploy();
       await setBalance(this.other.address, ethers.parseEther('1'));
 
-      const prevBalance = await ethers.provider.getBalance(this.mock.target);
+      const prevBalance = await ethers.provider.getBalance(this.mock);
       const amount = ethers.parseEther('0.1');
-      await this.other.sendTransaction({ to: this.mock.target, value: amount });
+      await this.other.sendTransaction({ to: this.mock, value: amount });
 
-      expect(await ethers.provider.getBalance(this.mock.target)).to.equal(prevBalance + amount);
+      expect(await ethers.provider.getBalance(this.mock)).to.equal(prevBalance + amount);
     });
   });
 }
@@ -192,7 +190,7 @@ function shouldBehaveLikeAccountHolder() {
 
         await token.connect(owner).safeTransferFrom(owner, this.mock, tokenId);
 
-        expect(await token.ownerOf(tokenId)).to.equal(this.mock.target);
+        expect(await token.ownerOf(tokenId)).to.equal(this.mock);
       });
     });
   });
@@ -202,8 +200,8 @@ function shouldBehaveLikeAnAccountBaseExecutor({ deployable = true } = {}) {
   describe('executeUserOp', function () {
     beforeEach(async function () {
       await setBalance(this.mock.target, ethers.parseEther('1'));
-      expect(await ethers.provider.getCode(this.mock.target)).to.equal('0x');
-      this.entrypointAsSigner = await impersonate(this.entrypoint.target);
+      expect(await ethers.provider.getCode(this.mock)).to.equal('0x');
+      this.entrypointAsSigner = await impersonate(entrypoint.target);
     });
 
     it('should revert if the caller is not the canonical entrypoint or the account itself', async function () {
@@ -244,8 +242,8 @@ function shouldBehaveLikeAnAccountBaseExecutor({ deployable = true } = {}) {
             .then(op => op.addInitCode())
             .then(op => this.signUserOp(op));
 
-          await expect(this.entrypoint.connect(this.entrypointAsSigner).handleOps([operation.packed], this.beneficiary))
-            .to.emit(this.entrypoint, 'AccountDeployed')
+          await expect(entrypoint.handleOps([operation.packed], this.beneficiary))
+            .to.emit(entrypoint, 'AccountDeployed')
             .withArgs(operation.hash(), this.mock, this.factory, ethers.ZeroAddress)
             .to.emit(this.target, 'MockFunctionCalledExtra')
             .withArgs(this.mock, 17);
@@ -268,8 +266,7 @@ function shouldBehaveLikeAnAccountBaseExecutor({ deployable = true } = {}) {
 
           operation.signature = '0x00';
 
-          await expect(this.entrypoint.connect(this.entrypointAsSigner).handleOps([operation.packed], this.beneficiary))
-            .to.be.reverted;
+          await expect(entrypoint.handleOps([operation.packed], this.beneficiary)).to.be.reverted;
         });
       });
     }
@@ -294,7 +291,7 @@ function shouldBehaveLikeAnAccountBaseExecutor({ deployable = true } = {}) {
           .then(op => this.signUserOp(op));
 
         expect(await this.mock.getNonce()).to.equal(0);
-        await expect(this.entrypoint.connect(this.entrypointAsSigner).handleOps([operation.packed], this.beneficiary))
+        await expect(entrypoint.handleOps([operation.packed], this.beneficiary))
           .to.emit(this.target, 'MockFunctionCalledExtra')
           .withArgs(this.mock, 42);
         expect(await this.mock.getNonce()).to.equal(1);

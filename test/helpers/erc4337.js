@@ -1,8 +1,7 @@
-const { ethers } = require('hardhat');
+const { ethers, entrypoint, senderCreator } = require('hardhat');
 const { setCode } = require('@nomicfoundation/hardhat-network-helpers');
 
 const { UserOperation } = require('@openzeppelin/contracts/test/helpers/erc4337');
-const { deployEntrypoint } = require('@openzeppelin/contracts/test/helpers/erc4337-entrypoint');
 
 const parseInitCode = initCode => ({
   factory: '0x' + initCode.replace(/0x/, '').slice(0, 40),
@@ -13,16 +12,12 @@ const parseInitCode = initCode => ({
 class ERC4337Helper {
   constructor() {
     this.cache = new Map();
-    this.envAsPromise = Promise.all([
-      deployEntrypoint(),
-      ethers.provider.getNetwork(),
-      ethers.deployContract('Create2Mock'),
-    ]).then(([{ entrypoint, sendercreator }, { chainId }, factory]) => ({
-      entrypoint,
-      sendercreator,
-      chainId,
-      factory,
-    }));
+    this.envAsPromise = Promise.all([ethers.provider.getNetwork(), ethers.deployContract('Create2Mock')]).then(
+      ([{ chainId }, factory]) => ({
+        chainId,
+        factory,
+      }),
+    );
   }
 
   async wait() {
@@ -30,7 +25,7 @@ class ERC4337Helper {
   }
 
   async newAccount(name, extraArgs = [], params = {}) {
-    const { factory, sendercreator } = await this.wait();
+    const { factory } = await this.wait();
 
     if (!this.cache.has(name)) {
       await ethers.getContractFactory(name).then(factory => this.cache.set(name, factory));
@@ -48,7 +43,7 @@ class ERC4337Helper {
           factory.interface.encodeFunctionData('$deploy', [0, params.salt ?? ethers.randomBytes(32), tx.data]),
         )
         .then(deployCode => ethers.concat([factory.target, deployCode]));
-      const instance = await sendercreator.createSender
+      const instance = await senderCreator.createSender
         .staticCall(initCode)
         .then(address => accountFactory.attach(address));
       return new SmartAccount(instance, initCode, this);
@@ -57,7 +52,6 @@ class ERC4337Helper {
 
   async fillUserOp(userOp) {
     if (!userOp.nonce) {
-      const { entrypoint } = await this.wait();
       userOp.nonce = await entrypoint.getNonce(userOp.sender, 0);
     }
     if (ethers.isAddressable(userOp.paymaster)) {
@@ -128,7 +122,7 @@ class UserOperationWithContext extends UserOperation {
   }
 
   hash() {
-    const { entrypoint, chainId } = this.params.sender.helper.env;
+    const { chainId } = this.params.sender.helper.env;
     return super.hash(entrypoint, chainId);
   }
 }
