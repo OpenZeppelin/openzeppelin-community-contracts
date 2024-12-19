@@ -1,4 +1,4 @@
-const { ethers, entrypoint } = require('hardhat');
+const { ethers } = require('hardhat');
 const { loadFixture } = require('@nomicfoundation/hardhat-network-helpers');
 const { ERC4337Helper } = require('../helpers/erc4337');
 const { NonNativeSigner, RSASHA256SigningKey } = require('../helpers/signers');
@@ -37,11 +37,10 @@ async function fixture() {
     verifyingContract: mock.address,
   };
 
-  const signUserOp = async userOp => {
-    const typedOp = Object.assign(userOp.packed, { entrypoint: entrypoint.target });
-    userOp.signature = await signer.signTypedData(domain, { PackedUserOperation }, typedOp);
-    return userOp;
-  };
+  const signUserOp = userOp =>
+    signer
+      .signTypedData(domain, { PackedUserOperation }, userOp.packed)
+      .then(signature => Object.assign(userOp, { signature }));
 
   return { ...env, domain, mock, signer, target, beneficiary, other, signUserOp };
 }
