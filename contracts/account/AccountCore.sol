@@ -91,7 +91,9 @@ abstract contract AccountCore is AbstractSigner, EIP712, IAccount, IAccountExecu
         PackedUserOperation calldata userOp,
         bytes32 /*userOpHash*/
     ) public virtual onlyEntryPointOrSelf {
-        (address target, uint256 value, bytes memory data) = abi.decode(userOp.callData[4:], (address, uint256, bytes));
+        address target = address(bytes20(userOp.callData[4:24]));
+        uint256 value = uint256(bytes32(userOp.callData[24:56]));
+        bytes calldata data = userOp.callData[56:];
         Address.functionCallWithValue(target, data, value);
     }
 

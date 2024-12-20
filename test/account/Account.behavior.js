@@ -8,6 +8,10 @@ const {
   shouldSupportInterfaces,
 } = require('@openzeppelin/contracts/test/utils/introspection/SupportsInterface.behavior');
 
+const getAddress = account => ethers.getAddress(account.target ?? account.address ?? account);
+const encodeExecuteUserOp = (target, value, calldata) =>
+  ethers.solidityPacked(['address', 'uint256', 'bytes'], [getAddress(target), value ?? 0, calldata ?? '0x']);
+
 function shouldBehaveLikeAnAccountBase() {
   describe('entryPoint', function () {
     it('should return the canonical entrypoint', async function () {
@@ -28,10 +32,7 @@ function shouldBehaveLikeAnAccountBase() {
         .createUserOp({
           callData: ethers.concat([
             selector,
-            ethers.AbiCoder.defaultAbiCoder().encode(
-              ['address', 'uint256', 'bytes'],
-              [this.target.target, 0, this.target.interface.encodeFunctionData('mockFunctionExtra')],
-            ),
+            encodeExecuteUserOp(this.target, 0, this.target.interface.encodeFunctionData('mockFunctionExtra')),
           ]),
         })
         .then(op => this.signUserOp(op));
@@ -52,10 +53,7 @@ function shouldBehaveLikeAnAccountBase() {
           .createUserOp({
             callData: ethers.concat([
               selector,
-              ethers.AbiCoder.defaultAbiCoder().encode(
-                ['address', 'uint256', 'bytes'],
-                [this.target.target, 0, this.target.interface.encodeFunctionData('mockFunctionExtra')],
-              ),
+              encodeExecuteUserOp(this.target, 0, this.target.interface.encodeFunctionData('mockFunctionExtra')),
             ]),
           })
           .then(op => this.signUserOp(op));
@@ -72,10 +70,7 @@ function shouldBehaveLikeAnAccountBase() {
         const operation = await this.mock.createUserOp({
           callData: ethers.concat([
             selector,
-            ethers.AbiCoder.defaultAbiCoder().encode(
-              ['address', 'uint256', 'bytes'],
-              [this.target.target, 0, this.target.interface.encodeFunctionData('mockFunctionExtra')],
-            ),
+            encodeExecuteUserOp(this.target, 0, this.target.interface.encodeFunctionData('mockFunctionExtra')),
           ]),
         });
 
@@ -94,10 +89,7 @@ function shouldBehaveLikeAnAccountBase() {
           .createUserOp({
             callData: ethers.concat([
               selector,
-              ethers.AbiCoder.defaultAbiCoder().encode(
-                ['address', 'uint256', 'bytes'],
-                [this.target.target, 0, this.target.interface.encodeFunctionData('mockFunctionExtra')],
-              ),
+              encodeExecuteUserOp(this.target, 0, this.target.interface.encodeFunctionData('mockFunctionExtra')),
             ]),
           })
           .then(op => this.signUserOp(op));
@@ -212,10 +204,7 @@ function shouldBehaveLikeAnAccountBaseExecutor({ deployable = true } = {}) {
         .createUserOp({
           callData: ethers.concat([
             selector,
-            ethers.AbiCoder.defaultAbiCoder().encode(
-              ['address', 'uint256', 'bytes'],
-              [this.target.target, 0, this.target.interface.encodeFunctionData('mockFunctionExtra')],
-            ),
+            encodeExecuteUserOp(this.target, 0, this.target.interface.encodeFunctionData('mockFunctionExtra')),
           ]),
         })
         .then(op => this.signUserOp(op));
@@ -233,10 +222,7 @@ function shouldBehaveLikeAnAccountBaseExecutor({ deployable = true } = {}) {
             .createUserOp({
               callData: ethers.concat([
                 selector,
-                ethers.AbiCoder.defaultAbiCoder().encode(
-                  ['address', 'uint256', 'bytes'],
-                  [this.target.target, 17, this.target.interface.encodeFunctionData('mockFunctionExtra')],
-                ),
+                encodeExecuteUserOp(this.target, 17, this.target.interface.encodeFunctionData('mockFunctionExtra')),
               ]),
             })
             .then(op => op.addInitCode())
@@ -256,10 +242,7 @@ function shouldBehaveLikeAnAccountBaseExecutor({ deployable = true } = {}) {
             .createUserOp({
               callData: ethers.concat([
                 selector,
-                ethers.AbiCoder.defaultAbiCoder().encode(
-                  ['address', 'uint256', 'bytes'],
-                  [this.target.target, 17, this.target.interface.encodeFunctionData('mockFunctionExtra')],
-                ),
+                encodeExecuteUserOp(this.target, 17, this.target.interface.encodeFunctionData('mockFunctionExtra')),
               ]),
             })
             .then(op => op.addInitCode());
@@ -282,9 +265,10 @@ function shouldBehaveLikeAnAccountBaseExecutor({ deployable = true } = {}) {
           .createUserOp({
             callData: ethers.concat([
               selector,
-              ethers.AbiCoder.defaultAbiCoder().encode(
-                ['address', 'uint256', 'bytes'],
-                [this.target.target, 42, this.target.interface.encodeFunctionData('mockFunctionExtra')],
+              encodeExecuteUserOp(
+                this.target.target,
+                42,
+                this.target.interface.encodeFunctionData('mockFunctionExtra'),
               ),
             ]),
           })
