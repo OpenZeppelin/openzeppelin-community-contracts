@@ -8,17 +8,6 @@ const {
   shouldSupportInterfaces,
 } = require('@openzeppelin/contracts/test/utils/introspection/SupportsInterface.behavior');
 
-const getAddress = account => ethers.getAddress(account.target ?? account.address ?? account);
-const encodeUserOpCalldata = (target, value, calldata) =>
-  ethers.concat([
-    '0x8dd7712f', // IAccountExecute.executeUserOp selector,
-    '0xb61d27f6', // Account.execute selector,
-    ethers.AbiCoder.defaultAbiCoder().encode(
-      ['address', 'uint256', 'bytes'],
-      [getAddress(target), value ?? 0, calldata ?? '0x'],
-    ),
-  ]);
-
 function shouldBehaveLikeAccountCore() {
   describe('entryPoint', function () {
     it('should return the canonical entrypoint', async function () {
@@ -173,7 +162,16 @@ function shouldBehaveLikeAccountExecutor({ deployable = true } = {}) {
     beforeEach(async function () {
       await setBalance(this.mock.target, ethers.parseEther('1'));
       expect(await ethers.provider.getCode(this.mock)).to.equal('0x');
-      this.entrypointAsSigner = await impersonate(entrypoint.target);
+
+      this.encodeUserOpCalldata = (to, value, calldata) =>
+        ethers.concat([
+          this.mock.interface.getFunction('executeUserOp').selector,
+          this.mock.interface.encodeFunctionData('execute', [
+            to.target ?? to.address ?? to,
+            value ?? 0,
+            calldata ?? '0x',
+          ]),
+        ]);
     });
 
     it('should revert if the caller is not the canonical entrypoint or the account itself', async function () {
@@ -181,7 +179,11 @@ function shouldBehaveLikeAccountExecutor({ deployable = true } = {}) {
 
       const operation = await this.mock
         .createUserOp({
-          callData: encodeUserOpCalldata(this.target, 0, this.target.interface.encodeFunctionData('mockFunctionExtra')),
+          callData: this.encodeUserOpCalldata(
+            this.target,
+            0,
+            this.target.interface.encodeFunctionData('mockFunctionExtra'),
+          ),
         })
         .then(op => this.signUserOp(op));
 
@@ -195,7 +197,7 @@ function shouldBehaveLikeAccountExecutor({ deployable = true } = {}) {
         it('should be created with handleOps and increase nonce', async function () {
           const operation = await this.mock
             .createUserOp({
-              callData: encodeUserOpCalldata(
+              callData: this.encodeUserOpCalldata(
                 this.target,
                 17,
                 this.target.interface.encodeFunctionData('mockFunctionExtra'),
@@ -215,7 +217,7 @@ function shouldBehaveLikeAccountExecutor({ deployable = true } = {}) {
         it('should revert if the signature is invalid', async function () {
           const operation = await this.mock
             .createUserOp({
-              callData: encodeUserOpCalldata(
+              callData: this.encodeUserOpCalldata(
                 this.target,
                 17,
                 this.target.interface.encodeFunctionData('mockFunctionExtra'),
@@ -238,7 +240,7 @@ function shouldBehaveLikeAccountExecutor({ deployable = true } = {}) {
       it('should increase nonce and call target', async function () {
         const operation = await this.mock
           .createUserOp({
-            callData: encodeUserOpCalldata(
+            callData: this.encodeUserOpCalldata(
               this.target,
               42,
               this.target.interface.encodeFunctionData('mockFunctionExtra'),
@@ -258,7 +260,7 @@ function shouldBehaveLikeAccountExecutor({ deployable = true } = {}) {
         const value = 43374337n;
 
         const operation = await this.mock
-          .createUserOp({ callData: encodeUserOpCalldata(this.other, value) })
+          .createUserOp({ callData: this.encodeUserOpCalldata(this.other, value) })
           .then(op => this.signUserOp(op));
 
         await expect(entrypoint.handleOps([operation.packed], this.beneficiary)).to.changeEtherBalance(
