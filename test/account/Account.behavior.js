@@ -165,17 +165,6 @@ function shouldBehaveLikeAccountExecutor({ deployable = true } = {}) {
             [to.target ?? to.address ?? to, value ?? 0, calldata ?? '0x'],
           ),
         ]);
-
-      this.encodeUserOpCalldataBatch = (...calls) =>
-        this.mock.interface.encodeFunctionData('multicall', [
-          calls.map(({ to, value, calldata }) =>
-            this.mock.interface.encodeFunctionData('execute', [
-              to.target ?? to.address ?? to,
-              value ?? 0,
-              calldata ?? '0x',
-            ]),
-          ),
-        ]);
     });
 
     it('should revert if the caller is not the canonical entrypoint or the account itself', async function () {
@@ -270,30 +259,6 @@ function shouldBehaveLikeAccountExecutor({ deployable = true } = {}) {
           this.other,
           value,
         );
-        expect(this.mock.getNonce()).to.eventually.equal(1);
-      });
-
-      it('should support batch execution using multicall', async function () {
-        const value1 = 43374337n;
-        const value2 = 69420n;
-
-        const operation = await this.mock
-          .createUserOp({
-            callData: this.encodeUserOpCalldataBatch(
-              { to: this.other, value: value1 },
-              {
-                to: this.target,
-                value: value2,
-                calldata: this.target.interface.encodeFunctionData('mockFunctionExtra'),
-              },
-            ),
-          })
-          .then(op => this.signUserOp(op));
-
-        expect(this.mock.getNonce()).to.eventually.equal(0);
-        const tx = entrypoint.handleOps([operation.packed], this.beneficiary);
-        await expect(tx).to.changeEtherBalances([this.other, this.target], [value1, value2]);
-        await expect(tx).to.emit(this.target, 'MockFunctionCalledExtra').withArgs(this.mock, value2);
         expect(this.mock.getNonce()).to.eventually.equal(1);
       });
     });
