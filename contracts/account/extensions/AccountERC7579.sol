@@ -14,7 +14,7 @@ abstract contract AccountERC7579 is AccountCore, IERC7579Execution, IERC7579Acco
 
     EnumerableSet.AddressSet private _validators;
     EnumerableSet.AddressSet private _executors;
-    mapping(bytes4 => address) private _fallbacks;
+    mapping(bytes4 selector => address) private _fallbacks;
 
     error ERC7579MissingFallbackHandler(bytes4 selector);
 
