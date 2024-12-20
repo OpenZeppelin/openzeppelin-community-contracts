@@ -12,7 +12,7 @@ function shouldBehaveLikeAccountCore() {
   describe('entryPoint', function () {
     it('should return the canonical entrypoint', async function () {
       await this.mock.deploy();
-      expect(await this.mock.entryPoint()).to.equal(entrypoint);
+      expect(this.mock.entryPoint()).to.eventually.equal(entrypoint);
     });
   });
 
@@ -74,8 +74,8 @@ function shouldBehaveLikeAccountCore() {
         const receipt = await tx.wait();
         const callerFees = receipt.gasUsed * tx.gasPrice;
 
-        expect(await ethers.provider.getBalance(this.mock)).to.equal(prevAccountBalance - amount);
-        expect(await ethers.provider.getBalance(entrypoint)).to.equal(prevEntrypointBalance + amount - callerFees);
+        expect(ethers.provider.getBalance(this.mock)).to.eventually.equal(prevAccountBalance - amount);
+        expect(ethers.provider.getBalance(entrypoint)).to.eventually.equal(prevEntrypointBalance + amount - callerFees);
       });
     });
   });
@@ -89,7 +89,7 @@ function shouldBehaveLikeAccountCore() {
       const amount = ethers.parseEther('0.1');
       await this.other.sendTransaction({ to: this.mock, value: amount });
 
-      expect(await ethers.provider.getBalance(this.mock)).to.equal(prevBalance + amount);
+      expect(ethers.provider.getBalance(this.mock)).to.eventually.equal(prevBalance + amount);
     });
   });
 }
@@ -115,9 +115,9 @@ function shouldBehaveLikeAccountHolder() {
 
       it('receives ERC1155 tokens from a single ID', async function () {
         await this.token.connect(this.owner).safeTransferFrom(this.owner, this.mock, ids[0], values[0], data);
-        expect(await this.token.balanceOf(this.mock, ids[0])).to.equal(values[0]);
+        expect(this.token.balanceOf(this.mock, ids[0])).to.eventually.equal(values[0]);
         for (let i = 1; i < ids.length; i++) {
-          expect(await this.token.balanceOf(this.mock, ids[i])).to.equal(0n);
+          expect(this.token.balanceOf(this.mock, ids[i])).to.eventually.equal(0n);
         }
       });
 
@@ -151,7 +151,7 @@ function shouldBehaveLikeAccountHolder() {
 
         await token.connect(owner).safeTransferFrom(owner, this.mock, tokenId);
 
-        expect(await token.ownerOf(tokenId)).to.equal(this.mock);
+        expect(token.ownerOf(tokenId)).to.eventually.equal(this.mock);
       });
     });
   });
@@ -161,7 +161,7 @@ function shouldBehaveLikeAccountExecutor({ deployable = true } = {}) {
   describe('executeUserOp', function () {
     beforeEach(async function () {
       await setBalance(this.mock.target, ethers.parseEther('1'));
-      expect(await ethers.provider.getCode(this.mock)).to.equal('0x');
+      expect(ethers.provider.getCode(this.mock)).to.eventually.equal('0x');
 
       this.encodeUserOpCalldata = (to, value, calldata) =>
         ethers.concat([
@@ -170,6 +170,20 @@ function shouldBehaveLikeAccountExecutor({ deployable = true } = {}) {
             to.target ?? to.address ?? to,
             value ?? 0,
             calldata ?? '0x',
+          ]),
+        ]);
+
+      this.encodeUserOpCalldataBatch = (...calls) =>
+        ethers.concat([
+          this.mock.interface.getFunction('executeUserOp').selector,
+          this.mock.interface.encodeFunctionData('multicall', [
+            calls.map(({ to, value, calldata }) =>
+              this.mock.interface.encodeFunctionData('execute', [
+                to.target ?? to.address ?? to,
+                value ?? 0,
+                calldata ?? '0x',
+              ]),
+            ),
           ]),
         ]);
     });
@@ -211,7 +225,7 @@ function shouldBehaveLikeAccountExecutor({ deployable = true } = {}) {
             .withArgs(operation.hash(), this.mock, this.factory, ethers.ZeroAddress)
             .to.emit(this.target, 'MockFunctionCalledExtra')
             .withArgs(this.mock, 17);
-          expect(await this.mock.getNonce()).to.equal(1);
+          expect(this.mock.getNonce()).to.eventually.equal(1);
         });
 
         it('should revert if the signature is invalid', async function () {
@@ -248,11 +262,11 @@ function shouldBehaveLikeAccountExecutor({ deployable = true } = {}) {
           })
           .then(op => this.signUserOp(op));
 
-        expect(await this.mock.getNonce()).to.equal(0);
+        expect(this.mock.getNonce()).to.eventually.equal(0);
         await expect(entrypoint.handleOps([operation.packed], this.beneficiary))
           .to.emit(this.target, 'MockFunctionCalledExtra')
           .withArgs(this.mock, 42);
-        expect(await this.mock.getNonce()).to.equal(1);
+        expect(this.mock.getNonce()).to.eventually.equal(1);
       });
 
       it('should support sending eth to an EOA', async function () {
@@ -263,10 +277,37 @@ function shouldBehaveLikeAccountExecutor({ deployable = true } = {}) {
           .createUserOp({ callData: this.encodeUserOpCalldata(this.other, value) })
           .then(op => this.signUserOp(op));
 
+        expect(this.mock.getNonce()).to.eventually.equal(0);
         await expect(entrypoint.handleOps([operation.packed], this.beneficiary)).to.changeEtherBalance(
           this.other,
           value,
         );
+        expect(this.mock.getNonce()).to.eventually.equal(1);
+      });
+
+      it('should support batch execution using multicall', async function () {
+        await setBalance(this.mock.address, ethers.parseEther('1'));
+        const value1 = 43374337n;
+        const value2 = 69420n;
+
+        const operation = await this.mock
+          .createUserOp({
+            callData: this.encodeUserOpCalldataBatch(
+              { to: this.other, value: value1 },
+              {
+                to: this.target,
+                value: value2,
+                calldata: this.target.interface.encodeFunctionData('mockFunctionExtra'),
+              },
+            ),
+          })
+          .then(op => this.signUserOp(op));
+
+        expect(this.mock.getNonce()).to.eventually.equal(0);
+        const tx = entrypoint.handleOps([operation.packed], this.beneficiary);
+        await expect(tx).to.changeEtherBalances([this.other, this.target], [value1, value2]);
+        await expect(tx).to.emit(this.target, 'MockFunctionCalledExtra').withArgs(this.mock, value2);
+        expect(this.mock.getNonce()).to.eventually.equal(1);
       });
     });
   });
