@@ -8,6 +8,8 @@ const {
   shouldSupportInterfaces,
 } = require('@openzeppelin/contracts/test/utils/introspection/SupportsInterface.behavior');
 
+const value = ethers.parseEther('0.1');
+
 function shouldBehaveLikeAccountCore() {
   describe('entryPoint', function () {
     it('should return the canonical entrypoint', async function () {
@@ -63,19 +65,9 @@ function shouldBehaveLikeAccountCore() {
         // empty operation (does nothing)
         const operation = await this.mock.createUserOp({}).then(op => this.signUserOp(op));
 
-        const prevAccountBalance = await ethers.provider.getBalance(this.mock);
-        const prevEntrypointBalance = await ethers.provider.getBalance(entrypoint);
-        const amount = ethers.parseEther('0.1');
-
-        const tx = await this.mock
-          .connect(this.entrypointAsSigner)
-          .validateUserOp(operation.packed, operation.hash(), amount);
-
-        const receipt = await tx.wait();
-        const callerFees = receipt.gasUsed * tx.gasPrice;
-
-        expect(ethers.provider.getBalance(this.mock)).to.eventually.equal(prevAccountBalance - amount);
-        expect(ethers.provider.getBalance(entrypoint)).to.eventually.equal(prevEntrypointBalance + amount - callerFees);
+        await expect(
+          this.mock.connect(this.entrypointAsSigner).validateUserOp(operation.packed, operation.hash(), value),
+        ).to.changeEtherBalances([this.mock, entrypoint], [-value, value]);
       });
     });
   });
@@ -83,13 +75,11 @@ function shouldBehaveLikeAccountCore() {
   describe('fallback', function () {
     it('should receive ether', async function () {
       await this.mock.deploy();
-      await setBalance(this.other.address, ethers.parseEther('1'));
 
-      const prevBalance = await ethers.provider.getBalance(this.mock);
-      const amount = ethers.parseEther('0.1');
-      await this.other.sendTransaction({ to: this.mock, value: amount });
-
-      expect(ethers.provider.getBalance(this.mock)).to.eventually.equal(prevBalance + amount);
+      await expect(this.other.sendTransaction({ to: this.mock, value })).to.changeEtherBalances(
+        [this.other, this.mock],
+        [-value, value],
+      );
     });
   });
 }
@@ -108,50 +98,51 @@ function shouldBehaveLikeAccountHolder() {
       const data = '0x12345678';
 
       beforeEach(async function () {
-        [this.owner] = await ethers.getSigners();
         this.token = await ethers.deployContract('$ERC1155Mock', ['https://somedomain.com/{id}.json']);
-        await this.token.$_mintBatch(this.owner, ids, values, '0x');
+        await this.token.$_mintBatch(this.other, ids, values, '0x');
       });
 
       it('receives ERC1155 tokens from a single ID', async function () {
-        await this.token.connect(this.owner).safeTransferFrom(this.owner, this.mock, ids[0], values[0], data);
-        expect(this.token.balanceOf(this.mock, ids[0])).to.eventually.equal(values[0]);
-        for (let i = 1; i < ids.length; i++) {
-          expect(this.token.balanceOf(this.mock, ids[i])).to.eventually.equal(0n);
-        }
+        await this.token.connect(this.other).safeTransferFrom(this.other, this.mock, ids[0], values[0], data);
+
+        expect(
+          this.token.balanceOfBatch(
+            ids.map(() => this.mock),
+            ids,
+          ),
+        ).to.eventually.deep.equal(values.map((v, i) => (i == 0 ? v : 0n)));
       });
 
       it('receives ERC1155 tokens from a multiple IDs', async function () {
         expect(
-          await this.token.balanceOfBatch(
+          this.token.balanceOfBatch(
             ids.map(() => this.mock),
             ids,
           ),
-        ).to.deep.equal(ids.map(() => 0n));
-        await this.token.connect(this.owner).safeBatchTransferFrom(this.owner, this.mock, ids, values, data);
+        ).to.eventually.deep.equal(ids.map(() => 0n));
+
+        await this.token.connect(this.other).safeBatchTransferFrom(this.other, this.mock, ids, values, data);
         expect(
-          await this.token.balanceOfBatch(
+          this.token.balanceOfBatch(
             ids.map(() => this.mock),
             ids,
           ),
-        ).to.deep.equal(values);
+        ).to.eventually.deep.equal(values);
       });
     });
 
     describe('onERC721Received', function () {
+      const tokenId = 1n;
+
+      beforeEach(async function () {
+        this.token = await ethers.deployContract('$ERC721Mock', ['Some NFT', 'SNFT']);
+        await this.token.$_mint(this.other, tokenId);
+      });
+
       it('receives an ERC721 token', async function () {
-        const name = 'Some NFT';
-        const symbol = 'SNFT';
-        const tokenId = 1n;
+        await this.token.connect(this.other).safeTransferFrom(this.other, this.mock, tokenId);
 
-        const [owner] = await ethers.getSigners();
-
-        const token = await ethers.deployContract('$ERC721Mock', [name, symbol]);
-        await token.$_mint(owner, tokenId);
-
-        await token.connect(owner).safeTransferFrom(owner, this.mock, tokenId);
-
-        expect(token.ownerOf(tokenId)).to.eventually.equal(this.mock);
+        expect(this.token.ownerOf(tokenId)).to.eventually.equal(this.mock);
       });
     });
   });
@@ -160,7 +151,10 @@ function shouldBehaveLikeAccountHolder() {
 function shouldBehaveLikeAccountExecutor({ deployable = true } = {}) {
   describe('executeUserOp', function () {
     beforeEach(async function () {
+      // give eth to the account (before deployment)
       await setBalance(this.mock.target, ethers.parseEther('1'));
+
+      // account is not initially deployed
       expect(ethers.provider.getCode(this.mock)).to.eventually.equal('0x');
 
       this.encodeUserOpCalldata = (to, value, calldata) =>
@@ -220,6 +214,7 @@ function shouldBehaveLikeAccountExecutor({ deployable = true } = {}) {
             .then(op => op.addInitCode())
             .then(op => this.signUserOp(op));
 
+          expect(this.mock.getNonce()).to.eventually.equal(0);
           await expect(entrypoint.handleOps([operation.packed], this.beneficiary))
             .to.emit(entrypoint, 'AccountDeployed')
             .withArgs(operation.hash(), this.mock, this.factory, ethers.ZeroAddress)
@@ -270,9 +265,6 @@ function shouldBehaveLikeAccountExecutor({ deployable = true } = {}) {
       });
 
       it('should support sending eth to an EOA', async function () {
-        await setBalance(this.mock.address, ethers.parseEther('1'));
-        const value = 43374337n;
-
         const operation = await this.mock
           .createUserOp({ callData: this.encodeUserOpCalldata(this.other, value) })
           .then(op => this.signUserOp(op));
@@ -286,7 +278,6 @@ function shouldBehaveLikeAccountExecutor({ deployable = true } = {}) {
       });
 
       it('should support batch execution using multicall', async function () {
-        await setBalance(this.mock.address, ethers.parseEther('1'));
         const value1 = 43374337n;
         const value2 = 69420n;
 
