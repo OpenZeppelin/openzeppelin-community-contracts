@@ -27,11 +27,10 @@ function shouldBehaveLikeAnAccountBase() {
     });
 
     it('should revert if the caller is not the canonical entrypoint', async function () {
-      const selector = this.mock.interface.getFunction('executeUserOp').selector;
       const operation = await this.mock
         .createUserOp({
           callData: ethers.concat([
-            selector,
+            this.mock.interface.getFunction('executeUserOp').selector,
             encodeExecuteUserOp(this.target, 0, this.target.interface.encodeFunctionData('mockFunctionExtra')),
           ]),
         })
@@ -48,11 +47,10 @@ function shouldBehaveLikeAnAccountBase() {
       });
 
       it('should return SIG_VALIDATION_SUCCESS if the signature is valid', async function () {
-        const selector = this.mock.interface.getFunction('executeUserOp').selector;
         const operation = await this.mock
           .createUserOp({
             callData: ethers.concat([
-              selector,
+              this.mock.interface.getFunction('executeUserOp').selector,
               encodeExecuteUserOp(this.target, 0, this.target.interface.encodeFunctionData('mockFunctionExtra')),
             ]),
           })
@@ -66,10 +64,9 @@ function shouldBehaveLikeAnAccountBase() {
       });
 
       it('should return SIG_VALIDATION_FAILURE if the signature is invalid', async function () {
-        const selector = this.mock.interface.getFunction('executeUserOp').selector;
         const operation = await this.mock.createUserOp({
           callData: ethers.concat([
-            selector,
+            this.mock.interface.getFunction('executeUserOp').selector,
             encodeExecuteUserOp(this.target, 0, this.target.interface.encodeFunctionData('mockFunctionExtra')),
           ]),
         });
@@ -84,11 +81,10 @@ function shouldBehaveLikeAnAccountBase() {
       });
 
       it('should pay missing account funds for execution', async function () {
-        const selector = this.mock.interface.getFunction('executeUserOp').selector;
         const operation = await this.mock
           .createUserOp({
             callData: ethers.concat([
-              selector,
+              this.mock.interface.getFunction('executeUserOp').selector,
               encodeExecuteUserOp(this.target, 0, this.target.interface.encodeFunctionData('mockFunctionExtra')),
             ]),
           })
@@ -199,11 +195,10 @@ function shouldBehaveLikeAnAccountBaseExecutor({ deployable = true } = {}) {
     it('should revert if the caller is not the canonical entrypoint or the account itself', async function () {
       await this.mock.deploy();
 
-      const selector = this.mock.interface.getFunction('executeUserOp').selector;
       const operation = await this.mock
         .createUserOp({
           callData: ethers.concat([
-            selector,
+            this.mock.interface.getFunction('executeUserOp').selector,
             encodeExecuteUserOp(this.target, 0, this.target.interface.encodeFunctionData('mockFunctionExtra')),
           ]),
         })
@@ -217,11 +212,10 @@ function shouldBehaveLikeAnAccountBaseExecutor({ deployable = true } = {}) {
     if (deployable) {
       describe('when not deployed', function () {
         it('should be created with handleOps and increase nonce', async function () {
-          const selector = this.mock.interface.getFunction('executeUserOp').selector;
           const operation = await this.mock
             .createUserOp({
               callData: ethers.concat([
-                selector,
+                this.mock.interface.getFunction('executeUserOp').selector,
                 encodeExecuteUserOp(this.target, 17, this.target.interface.encodeFunctionData('mockFunctionExtra')),
               ]),
             })
@@ -237,11 +231,10 @@ function shouldBehaveLikeAnAccountBaseExecutor({ deployable = true } = {}) {
         });
 
         it('should revert if the signature is invalid', async function () {
-          const selector = this.mock.interface.getFunction('executeUserOp').selector;
           const operation = await this.mock
             .createUserOp({
               callData: ethers.concat([
-                selector,
+                this.mock.interface.getFunction('executeUserOp').selector,
                 encodeExecuteUserOp(this.target, 17, this.target.interface.encodeFunctionData('mockFunctionExtra')),
               ]),
             })
@@ -260,16 +253,11 @@ function shouldBehaveLikeAnAccountBaseExecutor({ deployable = true } = {}) {
       });
 
       it('should increase nonce and call target', async function () {
-        const selector = this.mock.interface.getFunction('executeUserOp').selector;
         const operation = await this.mock
           .createUserOp({
             callData: ethers.concat([
-              selector,
-              encodeExecuteUserOp(
-                this.target.target,
-                42,
-                this.target.interface.encodeFunctionData('mockFunctionExtra'),
-              ),
+              this.mock.interface.getFunction('executeUserOp').selector,
+              encodeExecuteUserOp(this.target, 42, this.target.interface.encodeFunctionData('mockFunctionExtra')),
             ]),
           })
           .then(op => this.signUserOp(op));
@@ -279,6 +267,25 @@ function shouldBehaveLikeAnAccountBaseExecutor({ deployable = true } = {}) {
           .to.emit(this.target, 'MockFunctionCalledExtra')
           .withArgs(this.mock, 42);
         expect(await this.mock.getNonce()).to.equal(1);
+      });
+
+      it('should support sending eth to an EOA', async function () {
+        await setBalance(this.mock.address, ethers.parseEther('1'));
+        const value = 43374337n;
+
+        const operation = await this.mock
+          .createUserOp({
+            callData: ethers.concat([
+              this.mock.interface.getFunction('executeUserOp').selector,
+              encodeExecuteUserOp(this.other, value),
+            ]),
+          })
+          .then(op => this.signUserOp(op));
+
+        await expect(entrypoint.handleOps([operation.packed], this.beneficiary)).to.changeEtherBalance(
+          this.other,
+          value,
+        );
       });
     });
   });
