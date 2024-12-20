@@ -160,25 +160,21 @@ function shouldBehaveLikeAccountExecutor({ deployable = true } = {}) {
       this.encodeUserOpCalldata = (to, value, calldata) =>
         ethers.concat([
           this.mock.interface.getFunction('executeUserOp').selector,
-          this.mock.interface.encodeFunctionData('execute', [
-            to.target ?? to.address ?? to,
-            value ?? 0,
-            calldata ?? '0x',
-          ]),
+          ethers.solidityPacked(
+            ['address', 'uint256', 'bytes'],
+            [to.target ?? to.address ?? to, value ?? 0, calldata ?? '0x'],
+          ),
         ]);
 
       this.encodeUserOpCalldataBatch = (...calls) =>
-        ethers.concat([
-          this.mock.interface.getFunction('executeUserOp').selector,
-          this.mock.interface.encodeFunctionData('multicall', [
-            calls.map(({ to, value, calldata }) =>
-              this.mock.interface.encodeFunctionData('execute', [
-                to.target ?? to.address ?? to,
-                value ?? 0,
-                calldata ?? '0x',
-              ]),
-            ),
-          ]),
+        this.mock.interface.encodeFunctionData('multicall', [
+          calls.map(({ to, value, calldata }) =>
+            this.mock.interface.encodeFunctionData('execute', [
+              to.target ?? to.address ?? to,
+              value ?? 0,
+              calldata ?? '0x',
+            ]),
+          ),
         ]);
     });
 
