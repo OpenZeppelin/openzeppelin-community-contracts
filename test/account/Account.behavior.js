@@ -9,10 +9,17 @@ const {
 } = require('@openzeppelin/contracts/test/utils/introspection/SupportsInterface.behavior');
 
 const getAddress = account => ethers.getAddress(account.target ?? account.address ?? account);
-const encodeExecuteUserOp = (target, value, calldata) =>
-  ethers.solidityPacked(['address', 'uint256', 'bytes'], [getAddress(target), value ?? 0, calldata ?? '0x']);
+const encodeUserOpCalldata = (target, value, calldata) =>
+  ethers.concat([
+    '0x8dd7712f', // IAccountExecute.executeUserOp selector,
+    '0xb61d27f6', // Account.execute selector,
+    ethers.AbiCoder.defaultAbiCoder().encode(
+      ['address', 'uint256', 'bytes'],
+      [getAddress(target), value ?? 0, calldata ?? '0x'],
+    ),
+  ]);
 
-function shouldBehaveLikeAnAccountBase() {
+function shouldBehaveLikeAccountCore() {
   describe('entryPoint', function () {
     it('should return the canonical entrypoint', async function () {
       await this.mock.deploy();
@@ -27,14 +34,8 @@ function shouldBehaveLikeAnAccountBase() {
     });
 
     it('should revert if the caller is not the canonical entrypoint', async function () {
-      const operation = await this.mock
-        .createUserOp({
-          callData: ethers.concat([
-            this.mock.interface.getFunction('executeUserOp').selector,
-            encodeExecuteUserOp(this.target, 0, this.target.interface.encodeFunctionData('mockFunctionExtra')),
-          ]),
-        })
-        .then(op => this.signUserOp(op));
+      // empty operation (does nothing)
+      const operation = await this.mock.createUserOp({}).then(op => this.signUserOp(op));
 
       await expect(this.mock.connect(this.other).validateUserOp(operation.packed, operation.hash(), 0))
         .to.be.revertedWithCustomError(this.mock, 'AccountUnauthorized')
@@ -47,14 +48,8 @@ function shouldBehaveLikeAnAccountBase() {
       });
 
       it('should return SIG_VALIDATION_SUCCESS if the signature is valid', async function () {
-        const operation = await this.mock
-          .createUserOp({
-            callData: ethers.concat([
-              this.mock.interface.getFunction('executeUserOp').selector,
-              encodeExecuteUserOp(this.target, 0, this.target.interface.encodeFunctionData('mockFunctionExtra')),
-            ]),
-          })
-          .then(op => this.signUserOp(op));
+        // empty operation (does nothing)
+        const operation = await this.mock.createUserOp({}).then(op => this.signUserOp(op));
 
         expect(
           await this.mock
@@ -64,13 +59,8 @@ function shouldBehaveLikeAnAccountBase() {
       });
 
       it('should return SIG_VALIDATION_FAILURE if the signature is invalid', async function () {
-        const operation = await this.mock.createUserOp({
-          callData: ethers.concat([
-            this.mock.interface.getFunction('executeUserOp').selector,
-            encodeExecuteUserOp(this.target, 0, this.target.interface.encodeFunctionData('mockFunctionExtra')),
-          ]),
-        });
-
+        // empty operation (does nothing)
+        const operation = await this.mock.createUserOp({});
         operation.signature = '0x00';
 
         expect(
@@ -81,14 +71,8 @@ function shouldBehaveLikeAnAccountBase() {
       });
 
       it('should pay missing account funds for execution', async function () {
-        const operation = await this.mock
-          .createUserOp({
-            callData: ethers.concat([
-              this.mock.interface.getFunction('executeUserOp').selector,
-              encodeExecuteUserOp(this.target, 0, this.target.interface.encodeFunctionData('mockFunctionExtra')),
-            ]),
-          })
-          .then(op => this.signUserOp(op));
+        // empty operation (does nothing)
+        const operation = await this.mock.createUserOp({}).then(op => this.signUserOp(op));
 
         const prevAccountBalance = await ethers.provider.getBalance(this.mock);
         const prevEntrypointBalance = await ethers.provider.getBalance(entrypoint);
@@ -184,7 +168,7 @@ function shouldBehaveLikeAccountHolder() {
   });
 }
 
-function shouldBehaveLikeAnAccountBaseExecutor({ deployable = true } = {}) {
+function shouldBehaveLikeAccountExecutor({ deployable = true } = {}) {
   describe('executeUserOp', function () {
     beforeEach(async function () {
       await setBalance(this.mock.target, ethers.parseEther('1'));
@@ -197,10 +181,7 @@ function shouldBehaveLikeAnAccountBaseExecutor({ deployable = true } = {}) {
 
       const operation = await this.mock
         .createUserOp({
-          callData: ethers.concat([
-            this.mock.interface.getFunction('executeUserOp').selector,
-            encodeExecuteUserOp(this.target, 0, this.target.interface.encodeFunctionData('mockFunctionExtra')),
-          ]),
+          callData: encodeUserOpCalldata(this.target, 0, this.target.interface.encodeFunctionData('mockFunctionExtra')),
         })
         .then(op => this.signUserOp(op));
 
@@ -214,10 +195,11 @@ function shouldBehaveLikeAnAccountBaseExecutor({ deployable = true } = {}) {
         it('should be created with handleOps and increase nonce', async function () {
           const operation = await this.mock
             .createUserOp({
-              callData: ethers.concat([
-                this.mock.interface.getFunction('executeUserOp').selector,
-                encodeExecuteUserOp(this.target, 17, this.target.interface.encodeFunctionData('mockFunctionExtra')),
-              ]),
+              callData: encodeUserOpCalldata(
+                this.target,
+                17,
+                this.target.interface.encodeFunctionData('mockFunctionExtra'),
+              ),
             })
             .then(op => op.addInitCode())
             .then(op => this.signUserOp(op));
@@ -233,10 +215,11 @@ function shouldBehaveLikeAnAccountBaseExecutor({ deployable = true } = {}) {
         it('should revert if the signature is invalid', async function () {
           const operation = await this.mock
             .createUserOp({
-              callData: ethers.concat([
-                this.mock.interface.getFunction('executeUserOp').selector,
-                encodeExecuteUserOp(this.target, 17, this.target.interface.encodeFunctionData('mockFunctionExtra')),
-              ]),
+              callData: encodeUserOpCalldata(
+                this.target,
+                17,
+                this.target.interface.encodeFunctionData('mockFunctionExtra'),
+              ),
             })
             .then(op => op.addInitCode());
 
@@ -255,10 +238,11 @@ function shouldBehaveLikeAnAccountBaseExecutor({ deployable = true } = {}) {
       it('should increase nonce and call target', async function () {
         const operation = await this.mock
           .createUserOp({
-            callData: ethers.concat([
-              this.mock.interface.getFunction('executeUserOp').selector,
-              encodeExecuteUserOp(this.target, 42, this.target.interface.encodeFunctionData('mockFunctionExtra')),
-            ]),
+            callData: encodeUserOpCalldata(
+              this.target,
+              42,
+              this.target.interface.encodeFunctionData('mockFunctionExtra'),
+            ),
           })
           .then(op => this.signUserOp(op));
 
@@ -274,12 +258,7 @@ function shouldBehaveLikeAnAccountBaseExecutor({ deployable = true } = {}) {
         const value = 43374337n;
 
         const operation = await this.mock
-          .createUserOp({
-            callData: ethers.concat([
-              this.mock.interface.getFunction('executeUserOp').selector,
-              encodeExecuteUserOp(this.other, value),
-            ]),
-          })
+          .createUserOp({ callData: encodeUserOpCalldata(this.other, value) })
           .then(op => this.signUserOp(op));
 
         await expect(entrypoint.handleOps([operation.packed], this.beneficiary)).to.changeEtherBalance(
@@ -292,7 +271,7 @@ function shouldBehaveLikeAnAccountBaseExecutor({ deployable = true } = {}) {
 }
 
 module.exports = {
-  shouldBehaveLikeAnAccountBase,
+  shouldBehaveLikeAccountCore,
   shouldBehaveLikeAccountHolder,
-  shouldBehaveLikeAnAccountBaseExecutor,
+  shouldBehaveLikeAccountExecutor,
 };

@@ -13,7 +13,12 @@ import {AbstractSigner} from "../utils/cryptography/AbstractSigner.sol";
  * @dev A simple ERC4337 account implementation. This base implementation only includes the minimal logic to process
  * user operations.
  *
- * Developers must implement the {AbstractSigner-_rawSignatureValidation} function to define the account's validation logic.
+ * Developers must implement the {AbstractSigner-_rawSignatureValidation} function to define the account's validation
+ * logic.
+ *
+ * NOTE: By default `executeUserOp` does a delegatecall to self. This by itself is not enough to perform the external
+ * calls necessary to operate on Eth, ERC-20 assets, or any other token. An `execute` function like the one present in
+ * ERC-7579 is required. You can get such a mechanism by using {Account} or {AccountERC7579}.
  *
  * IMPORTANT: Implementing a mechanism to validate signatures is a security-sensitive operation as it may allow an
  * attacker to bypass the account's security measures. Check out {SignerECDSA}, {SignerP256}, or {SignerRSA} for
@@ -91,14 +96,7 @@ abstract contract AccountCore is AbstractSigner, EIP712, IAccount, IAccountExecu
         PackedUserOperation calldata userOp,
         bytes32 /*userOpHash*/
     ) public virtual onlyEntryPointOrSelf {
-        // decode packed calldata
-        address target = address(bytes20(userOp.callData[4:24]));
-        uint256 value = uint256(bytes32(userOp.callData[24:56]));
-        bytes calldata data = userOp.callData[56:];
-
-        // we cannot use `Address.functionCallWithValue` here as it would revert on EOA targets
-        (bool success, bytes memory returndata) = target.call{value: value}(data);
-        Address.verifyCallResult(success, returndata);
+        Address.functionDelegateCall(address(this), userOp.callData[4:]);
     }
 
     /**

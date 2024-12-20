@@ -4,8 +4,8 @@ const { ERC4337Helper } = require('../helpers/erc4337');
 const { PackedUserOperation } = require('../helpers/eip712-types');
 
 const {
-  shouldBehaveLikeAnAccountBase,
-  shouldBehaveLikeAnAccountBaseExecutor,
+  shouldBehaveLikeAccountCore,
+  shouldBehaveLikeAccountExecutor,
   shouldBehaveLikeAccountHolder,
 } = require('./Account.behavior');
 const { shouldBehaveLikeERC7739Signer } = require('../utils/cryptography/ERC7739Signer.behavior');
@@ -44,8 +44,8 @@ describe('AccountERC7702', function () {
     Object.assign(this, await loadFixture(fixture));
   });
 
-  shouldBehaveLikeAnAccountBase();
-  shouldBehaveLikeAnAccountBaseExecutor({ deployable: false });
+  shouldBehaveLikeAccountCore();
+  shouldBehaveLikeAccountExecutor({ deployable: false });
   shouldBehaveLikeAccountHolder();
 
   describe('ERC7739Signer', function () {
