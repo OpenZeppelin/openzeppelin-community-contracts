@@ -5,8 +5,8 @@ const { NonNativeSigner, RSASHA256SigningKey } = require('../helpers/signers');
 const { PackedUserOperation } = require('../helpers/eip712-types');
 
 const {
-  shouldBehaveLikeAnAccountBase,
-  shouldBehaveLikeAnAccountBaseExecutor,
+  shouldBehaveLikeAccountCore,
+  shouldBehaveLikeAccountExecutor,
   shouldBehaveLikeAccountHolder,
 } = require('./Account.behavior');
 const { shouldBehaveLikeERC7739Signer } = require('../utils/cryptography/ERC7739Signer.behavior');
@@ -50,8 +50,8 @@ describe('AccountRSA', function () {
     Object.assign(this, await loadFixture(fixture));
   });
 
-  shouldBehaveLikeAnAccountBase();
-  shouldBehaveLikeAnAccountBaseExecutor();
+  shouldBehaveLikeAccountCore();
+  shouldBehaveLikeAccountExecutor();
   shouldBehaveLikeAccountHolder();
 
   describe('ERC7739Signer', function () {
