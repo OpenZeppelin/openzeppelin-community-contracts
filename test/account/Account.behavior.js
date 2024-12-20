@@ -25,7 +25,7 @@ function shouldBehaveLikeAnAccountBase() {
     it('should revert if the caller is not the canonical entrypoint', async function () {
       const selector = this.mock.interface.getFunction('executeUserOp').selector;
       const operation = await this.mock
-        .createOp({
+        .createUserOp({
           callData: ethers.concat([
             selector,
             ethers.AbiCoder.defaultAbiCoder().encode(
@@ -49,7 +49,7 @@ function shouldBehaveLikeAnAccountBase() {
       it('should return SIG_VALIDATION_SUCCESS if the signature is valid', async function () {
         const selector = this.mock.interface.getFunction('executeUserOp').selector;
         const operation = await this.mock
-          .createOp({
+          .createUserOp({
             callData: ethers.concat([
               selector,
               ethers.AbiCoder.defaultAbiCoder().encode(
@@ -69,7 +69,7 @@ function shouldBehaveLikeAnAccountBase() {
 
       it('should return SIG_VALIDATION_FAILURE if the signature is invalid', async function () {
         const selector = this.mock.interface.getFunction('executeUserOp').selector;
-        const operation = await this.mock.createOp({
+        const operation = await this.mock.createUserOp({
           callData: ethers.concat([
             selector,
             ethers.AbiCoder.defaultAbiCoder().encode(
@@ -91,7 +91,7 @@ function shouldBehaveLikeAnAccountBase() {
       it('should pay missing account funds for execution', async function () {
         const selector = this.mock.interface.getFunction('executeUserOp').selector;
         const operation = await this.mock
-          .createOp({
+          .createUserOp({
             callData: ethers.concat([
               selector,
               ethers.AbiCoder.defaultAbiCoder().encode(
@@ -209,7 +209,7 @@ function shouldBehaveLikeAnAccountBaseExecutor({ deployable = true } = {}) {
 
       const selector = this.mock.interface.getFunction('executeUserOp').selector;
       const operation = await this.mock
-        .createOp({
+        .createUserOp({
           callData: ethers.concat([
             selector,
             ethers.AbiCoder.defaultAbiCoder().encode(
@@ -230,7 +230,7 @@ function shouldBehaveLikeAnAccountBaseExecutor({ deployable = true } = {}) {
         it('should be created with handleOps and increase nonce', async function () {
           const selector = this.mock.interface.getFunction('executeUserOp').selector;
           const operation = await this.mock
-            .createOp({
+            .createUserOp({
               callData: ethers.concat([
                 selector,
                 ethers.AbiCoder.defaultAbiCoder().encode(
@@ -253,7 +253,7 @@ function shouldBehaveLikeAnAccountBaseExecutor({ deployable = true } = {}) {
         it('should revert if the signature is invalid', async function () {
           const selector = this.mock.interface.getFunction('executeUserOp').selector;
           const operation = await this.mock
-            .createOp({
+            .createUserOp({
               callData: ethers.concat([
                 selector,
                 ethers.AbiCoder.defaultAbiCoder().encode(
@@ -279,7 +279,7 @@ function shouldBehaveLikeAnAccountBaseExecutor({ deployable = true } = {}) {
       it('should increase nonce and call target', async function () {
         const selector = this.mock.interface.getFunction('executeUserOp').selector;
         const operation = await this.mock
-          .createOp({
+          .createUserOp({
             callData: ethers.concat([
               selector,
               ethers.AbiCoder.defaultAbiCoder().encode(

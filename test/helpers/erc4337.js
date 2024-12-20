@@ -11,7 +11,6 @@ const parseInitCode = initCode => ({
 /// Global ERC-4337 environment helper.
 class ERC4337Helper {
   constructor() {
-    this.cache = new Map();
     this.envAsPromise = Promise.all([ethers.provider.getNetwork(), ethers.deployContract('Create2Mock')]).then(
       ([{ chainId }, factory]) => ({
         chainId,
@@ -25,17 +24,14 @@ class ERC4337Helper {
   }
 
   async newAccount(name, extraArgs = [], params = {}) {
-    const { factory } = await this.wait();
+    const { factory, chainId } = await this.wait();
 
-    if (!this.cache.has(name)) {
-      await ethers.getContractFactory(name).then(factory => this.cache.set(name, factory));
-    }
-    const accountFactory = this.cache.get(name);
+    const accountFactory = await ethers.getContractFactory(name);
 
     if (params.erc7702signer) {
       const delegate = await accountFactory.deploy(...extraArgs);
       const instance = await params.erc7702signer.getAddress().then(address => accountFactory.attach(address));
-      return new ERC7702SmartAccount(instance, delegate, this);
+      return new ERC7702SmartAccount(instance, chainId, delegate);
     } else {
       const initCode = await accountFactory
         .getDeployTransaction(...extraArgs)
@@ -46,34 +42,18 @@ class ERC4337Helper {
       const instance = await senderCreator.createSender
         .staticCall(initCode)
         .then(address => accountFactory.attach(address));
-      return new SmartAccount(instance, initCode, this);
+      return new SmartAccount(instance, chainId, initCode);
     }
-  }
-
-  async fillUserOp(userOp) {
-    if (!userOp.nonce) {
-      userOp.nonce = await entrypoint.getNonce(userOp.sender, 0);
-    }
-    if (ethers.isAddressable(userOp.paymaster)) {
-      userOp.paymaster = await ethers.resolveAddress(userOp.paymaster);
-      userOp.paymasterVerificationGasLimit ??= 100_000n;
-      userOp.paymasterPostOpGasLimit ??= 100_000n;
-      userOp.paymasterAndData = ethers.solidityPacked(
-        ['address', 'uint128', 'uint128'],
-        [userOp.paymaster, userOp.paymasterVerificationGasLimit, userOp.paymasterPostOpGasLimit],
-      );
-    }
-    return userOp;
   }
 }
 
 /// Represent one ERC-4337 account contract.
 class SmartAccount extends ethers.BaseContract {
-  constructor(instance, initCode, helper) {
+  constructor(instance, chainId, initCode) {
     super(instance.target, instance.interface, instance.runner, instance.deployTx);
     this.address = instance.target;
+    this.chainId = chainId;
     this.initCode = initCode;
-    this.helper = helper;
   }
 
   async deploy(account = this.runner) {
@@ -82,48 +62,44 @@ class SmartAccount extends ethers.BaseContract {
     return this;
   }
 
-  createOp(userOp = {}) {
-    return this.helper
-      .fillUserOp({ sender: this, ...userOp })
-      .then(filledUserOp => new UserOperationWithContext(filledUserOp));
+  async createUserOp(userOp = {}) {
+    userOp.sender ??= this;
+    userOp.nonce ??= await entrypoint.getNonce(userOp.sender, 0);
+    if (ethers.isAddressable(userOp.paymaster)) {
+      userOp.paymaster = await ethers.resolveAddress(userOp.paymaster);
+      userOp.paymasterVerificationGasLimit ??= 100_000n;
+      userOp.paymasterPostOpGasLimit ??= 100_000n;
+    }
+    return new UserOperationWithContext(userOp);
   }
 }
 
-class ERC7702SmartAccount extends ethers.BaseContract {
-  constructor(instance, delegate, helper) {
-    super(instance.target, instance.interface, instance.runner, instance.deployTx);
-    this.address = instance.target;
+class ERC7702SmartAccount extends SmartAccount {
+  constructor(instance, chainId, delegate) {
+    super(instance, chainId);
     this.delegate = delegate;
-    this.helper = helper;
   }
 
   async deploy() {
     await ethers.provider.getCode(this.delegate).then(code => setCode(this.target, code));
     return this;
   }
-
-  createOp(userOp = {}) {
-    return this.helper
-      .fillUserOp({ sender: this, ...userOp })
-      .then(filledUserOp => new UserOperationWithContext(filledUserOp));
-  }
 }
 
 class UserOperationWithContext extends UserOperation {
   constructor(params) {
     super(params);
-    this.params = params;
+    this.initCode = params.sender?.initCode;
+    this.chainId = params.sender?.chainId;
   }
 
   addInitCode() {
-    const { initCode } = this.params.sender;
-    if (!initCode) throw new Error('No init code available for the sender of this user operation');
-    return Object.assign(this, parseInitCode(initCode));
+    if (!this.initCode) throw new Error('No init code available for the sender of this user operation');
+    return Object.assign(this, parseInitCode(this.initCode));
   }
 
   hash() {
-    const { chainId } = this.params.sender.helper.env;
-    return super.hash(entrypoint, chainId);
+    return super.hash(entrypoint, this.chainId);
   }
 }
 
