@@ -89,17 +89,17 @@ class ERC7702SmartAccount extends SmartAccount {
 class UserOperationWithContext extends UserOperation {
   constructor(params) {
     super(params);
-    this.initCode = params.sender?.initCode;
-    this.chainId = params.sender?.chainId;
+    this._initCode = params.sender?.initCode;
+    this._chainId = params.sender?.chainId;
   }
 
   addInitCode() {
-    if (!this.initCode) throw new Error('No init code available for the sender of this user operation');
-    return Object.assign(this, parseInitCode(this.initCode));
+    if (!this._initCode) throw new Error('No init code available for the sender of this user operation');
+    return Object.assign(this, parseInitCode(this._initCode));
   }
 
   hash() {
-    return super.hash(entrypoint, this.chainId);
+    return super.hash(entrypoint, this._chainId);
   }
 }
 
