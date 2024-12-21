@@ -149,7 +149,7 @@ function shouldBehaveLikeAccountHolder() {
   });
 }
 
-function shouldBehaveLikeAccountExecutor({ deployable = true } = {}) {
+function shouldBehaveLikeAccountERC7821({ deployable = true } = {}) {
   describe('executeUserOp', function () {
     beforeEach(async function () {
       // give eth to the account (before deployment)
@@ -289,5 +289,5 @@ function shouldBehaveLikeAccountExecutor({ deployable = true } = {}) {
 module.exports = {
   shouldBehaveLikeAccountCore,
   shouldBehaveLikeAccountHolder,
-  shouldBehaveLikeAccountExecutor,
+  shouldBehaveLikeAccountERC7821,
 };

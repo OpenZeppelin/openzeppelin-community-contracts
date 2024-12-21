@@ -3,7 +3,7 @@ const { loadFixture } = require('@nomicfoundation/hardhat-network-helpers');
 const { ERC4337Helper } = require('../helpers/erc4337');
 const { NonNativeSigner } = require('../helpers/signers');
 
-const { shouldBehaveLikeAccountCore, shouldBehaveLikeAccountExecutor } = require('./Account.behavior');
+const { shouldBehaveLikeAccountCore, shouldBehaveLikeAccountERC7821 } = require('./Account.behavior');
 
 async function fixture() {
   // EOAs and environment
@@ -32,5 +32,5 @@ describe('AccountBase', function () {
   });
 
   shouldBehaveLikeAccountCore();
-  shouldBehaveLikeAccountExecutor();
+  shouldBehaveLikeAccountERC7821();
 });

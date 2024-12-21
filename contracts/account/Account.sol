@@ -11,6 +11,7 @@ import {AccountERC7821} from "./extensions/AccountERC7821.sol";
 /**
  * @dev Extension of {AccountCore} with recommended feature that most account abstraction implementation will want:
  *
+ * * {AccountERC7821} for performing external calls in batches.
  * * {ERC721Holder} and {ERC1155Holder} to accept ERC-712 and ERC-1155 token transfers transfers.
  * * {ERC7739Signer} for ERC-1271 signature support with ERC-7739 replay protection
  *

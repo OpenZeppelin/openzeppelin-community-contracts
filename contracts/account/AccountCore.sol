@@ -15,6 +15,10 @@ import {AbstractSigner} from "../utils/cryptography/AbstractSigner.sol";
  *
  * Developers must implement the {AbstractSigner-_rawSignatureValidation} function to define the account's validation logic.
  *
+ * NOTE: This core account doesn't include any mechanism for performing arbitrary external calls. This is an essential
+ * feature that all Account should have. We leave it up to the developers to implement the mechanism of their choice.
+ * Common choices include ERC-6900, ERC-7579 and ERC-7821 (among others).
+ *
  * IMPORTANT: Implementing a mechanism to validate signatures is a security-sensitive operation as it may allow an
  * attacker to bypass the account's security measures. Check out {SignerECDSA}, {SignerP256}, or {SignerRSA} for
  * digital signature validation implementations.
