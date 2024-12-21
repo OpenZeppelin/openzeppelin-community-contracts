@@ -19,7 +19,7 @@ abstract contract AccountERC7821 is AccountCore, IERC7821 {
 
     /// @inheritdoc IERC7821
     function execute(bytes32 mode, bytes calldata executionData) public payable virtual onlyEntryPointOrSelf {
-        require(supportsExecutionMode(mode), UnsupportedExecutionMode());
+        if (!supportsExecutionMode(mode)) revert UnsupportedExecutionMode();
         executionData.execBatch(ERC7579Utils.EXECTYPE_DEFAULT);
     }
 
