@@ -4,6 +4,7 @@ const { setBalance } = require('@nomicfoundation/hardhat-network-helpers');
 
 const { impersonate } = require('@openzeppelin/contracts/test/helpers/account');
 const { SIG_VALIDATION_SUCCESS, SIG_VALIDATION_FAILURE } = require('@openzeppelin/contracts/test/helpers/erc4337');
+const { CALL_TYPE_BATCH, encodeMode, encodeBatch } = require('@openzeppelin/contracts/test/helpers/erc7579');
 const {
   shouldSupportInterfaces,
 } = require('@openzeppelin/contracts/test/utils/introspection/SupportsInterface.behavior');
@@ -157,24 +158,16 @@ function shouldBehaveLikeAccountExecutor({ deployable = true } = {}) {
       // account is not initially deployed
       expect(ethers.provider.getCode(this.mock)).to.eventually.equal('0x');
 
-      this.encodeUserOpCalldata = (to, value, calldata) =>
-        ethers.concat([
-          this.mock.interface.getFunction('executeUserOp').selector,
-          ethers.solidityPacked(
-            ['address', 'uint256', 'bytes'],
-            [to.target ?? to.address ?? to, value ?? 0, calldata ?? '0x'],
-          ),
+      this.encodeUserOpCalldata = (target, value, data) =>
+        this.mock.interface.encodeFunctionData('execute', [
+          encodeMode({ callType: CALL_TYPE_BATCH }),
+          encodeBatch({ target, value, data }),
         ]);
 
       this.encodeUserOpCalldataBatch = (...calls) =>
-        this.mock.interface.encodeFunctionData('multicall', [
-          calls.map(({ to, value, calldata }) =>
-            this.mock.interface.encodeFunctionData('execute', [
-              to.target ?? to.address ?? to,
-              value ?? 0,
-              calldata ?? '0x',
-            ]),
-          ),
+        this.mock.interface.encodeFunctionData('execute', [
+          encodeMode({ callType: CALL_TYPE_BATCH }),
+          encodeBatch(...calls),
         ]);
     });
 
@@ -280,11 +273,11 @@ function shouldBehaveLikeAccountExecutor({ deployable = true } = {}) {
         const operation = await this.mock
           .createUserOp({
             callData: this.encodeUserOpCalldataBatch(
-              { to: this.other, value: value1 },
+              { target: this.other, value: value1 },
               {
-                to: this.target,
+                target: this.target,
                 value: value2,
-                calldata: this.target.interface.encodeFunctionData('mockFunctionExtra'),
+                data: this.target.interface.encodeFunctionData('mockFunctionExtra'),
               },
             ),
           })
