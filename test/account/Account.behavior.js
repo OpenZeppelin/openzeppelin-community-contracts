@@ -158,13 +158,7 @@ function shouldBehaveLikeAccountExecutor({ deployable = true } = {}) {
       // account is not initially deployed
       expect(ethers.provider.getCode(this.mock)).to.eventually.equal('0x');
 
-      this.encodeUserOpCalldata = (target, value, data) =>
-        this.mock.interface.encodeFunctionData('execute', [
-          encodeMode({ callType: CALL_TYPE_BATCH }),
-          encodeBatch({ target, value, data }),
-        ]);
-
-      this.encodeUserOpCalldataBatch = (...calls) =>
+      this.encodeUserOpCalldata = (...calls) =>
         this.mock.interface.encodeFunctionData('execute', [
           encodeMode({ callType: CALL_TYPE_BATCH }),
           encodeBatch(...calls),
@@ -176,11 +170,10 @@ function shouldBehaveLikeAccountExecutor({ deployable = true } = {}) {
 
       const operation = await this.mock
         .createUserOp({
-          callData: this.encodeUserOpCalldata(
-            this.target,
-            0,
-            this.target.interface.encodeFunctionData('mockFunctionExtra'),
-          ),
+          callData: this.encodeUserOpCalldata({
+            target: this.target,
+            data: this.target.interface.encodeFunctionData('mockFunctionExtra'),
+          }),
         })
         .then(op => this.signUserOp(op));
 
@@ -194,11 +187,11 @@ function shouldBehaveLikeAccountExecutor({ deployable = true } = {}) {
         it('should be created with handleOps and increase nonce', async function () {
           const operation = await this.mock
             .createUserOp({
-              callData: this.encodeUserOpCalldata(
-                this.target,
-                17,
-                this.target.interface.encodeFunctionData('mockFunctionExtra'),
-              ),
+              callData: this.encodeUserOpCalldata({
+                target: this.target,
+                value: 17,
+                data: this.target.interface.encodeFunctionData('mockFunctionExtra'),
+              }),
             })
             .then(op => op.addInitCode())
             .then(op => this.signUserOp(op));
@@ -215,11 +208,11 @@ function shouldBehaveLikeAccountExecutor({ deployable = true } = {}) {
         it('should revert if the signature is invalid', async function () {
           const operation = await this.mock
             .createUserOp({
-              callData: this.encodeUserOpCalldata(
-                this.target,
-                17,
-                this.target.interface.encodeFunctionData('mockFunctionExtra'),
-              ),
+              callData: this.encodeUserOpCalldata({
+                target: this.target,
+                value: 17,
+                data: this.target.interface.encodeFunctionData('mockFunctionExtra'),
+              }),
             })
             .then(op => op.addInitCode());
 
@@ -238,11 +231,11 @@ function shouldBehaveLikeAccountExecutor({ deployable = true } = {}) {
       it('should increase nonce and call target', async function () {
         const operation = await this.mock
           .createUserOp({
-            callData: this.encodeUserOpCalldata(
-              this.target,
-              42,
-              this.target.interface.encodeFunctionData('mockFunctionExtra'),
-            ),
+            callData: this.encodeUserOpCalldata({
+              target: this.target,
+              value: 42,
+              data: this.target.interface.encodeFunctionData('mockFunctionExtra'),
+            }),
           })
           .then(op => this.signUserOp(op));
 
@@ -255,7 +248,7 @@ function shouldBehaveLikeAccountExecutor({ deployable = true } = {}) {
 
       it('should support sending eth to an EOA', async function () {
         const operation = await this.mock
-          .createUserOp({ callData: this.encodeUserOpCalldata(this.other, value) })
+          .createUserOp({ callData: this.encodeUserOpCalldata({ target: this.other, value }) })
           .then(op => this.signUserOp(op));
 
         expect(this.mock.getNonce()).to.eventually.equal(0);
@@ -272,7 +265,7 @@ function shouldBehaveLikeAccountExecutor({ deployable = true } = {}) {
 
         const operation = await this.mock
           .createUserOp({
-            callData: this.encodeUserOpCalldataBatch(
+            callData: this.encodeUserOpCalldata(
               { target: this.other, value: value1 },
               {
                 target: this.target,
