@@ -12,9 +12,6 @@ import {AccountCore} from "../AccountCore.sol";
 abstract contract AccountERC7821 is AccountCore, IERC7821 {
     using ERC7579Utils for *;
 
-    ModeSelector internal constant MODE_BASIC = ModeSelector.wrap(0x00000000);
-    ModeSelector internal constant MODE_OPDATA = ModeSelector.wrap(0x78210001); // Not supported yet
-
     error UnsupportedExecutionMode();
 
     /// @inheritdoc IERC7821
@@ -29,6 +26,6 @@ abstract contract AccountERC7821 is AccountCore, IERC7821 {
         return
             callType == ERC7579Utils.CALLTYPE_BATCH &&
             execType == ERC7579Utils.EXECTYPE_DEFAULT &&
-            modeSelector == MODE_BASIC;
+            modeSelector == ModeSelector.wrap(0x00000000);
     }
 }
