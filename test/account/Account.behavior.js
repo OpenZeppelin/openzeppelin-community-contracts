@@ -4,6 +4,7 @@ const { setBalance } = require('@nomicfoundation/hardhat-network-helpers');
 
 const { impersonate } = require('@openzeppelin/contracts/test/helpers/account');
 const { SIG_VALIDATION_SUCCESS, SIG_VALIDATION_FAILURE } = require('@openzeppelin/contracts/test/helpers/erc4337');
+const { CALL_TYPE_BATCH, encodeMode, encodeBatch } = require('@openzeppelin/contracts/test/helpers/erc7579');
 const {
   shouldSupportInterfaces,
 } = require('@openzeppelin/contracts/test/utils/introspection/SupportsInterface.behavior');
@@ -148,7 +149,7 @@ function shouldBehaveLikeAccountHolder() {
   });
 }
 
-function shouldBehaveLikeAccountExecutor({ deployable = true } = {}) {
+function shouldBehaveLikeAccountERC7821({ deployable = true } = {}) {
   describe('executeUserOp', function () {
     beforeEach(async function () {
       // give eth to the account (before deployment)
@@ -157,13 +158,10 @@ function shouldBehaveLikeAccountExecutor({ deployable = true } = {}) {
       // account is not initially deployed
       expect(ethers.provider.getCode(this.mock)).to.eventually.equal('0x');
 
-      this.encodeUserOpCalldata = (to, value, calldata) =>
-        ethers.concat([
-          this.mock.interface.getFunction('executeUserOp').selector,
-          ethers.solidityPacked(
-            ['address', 'uint256', 'bytes'],
-            [to.target ?? to.address ?? to, value ?? 0, calldata ?? '0x'],
-          ),
+      this.encodeUserOpCalldata = (...calls) =>
+        this.mock.interface.encodeFunctionData('execute', [
+          encodeMode({ callType: CALL_TYPE_BATCH }),
+          encodeBatch(...calls),
         ]);
     });
 
@@ -172,11 +170,10 @@ function shouldBehaveLikeAccountExecutor({ deployable = true } = {}) {
 
       const operation = await this.mock
         .createUserOp({
-          callData: this.encodeUserOpCalldata(
-            this.target,
-            0,
-            this.target.interface.encodeFunctionData('mockFunctionExtra'),
-          ),
+          callData: this.encodeUserOpCalldata({
+            target: this.target,
+            data: this.target.interface.encodeFunctionData('mockFunctionExtra'),
+          }),
         })
         .then(op => this.signUserOp(op));
 
@@ -190,11 +187,11 @@ function shouldBehaveLikeAccountExecutor({ deployable = true } = {}) {
         it('should be created with handleOps and increase nonce', async function () {
           const operation = await this.mock
             .createUserOp({
-              callData: this.encodeUserOpCalldata(
-                this.target,
-                17,
-                this.target.interface.encodeFunctionData('mockFunctionExtra'),
-              ),
+              callData: this.encodeUserOpCalldata({
+                target: this.target,
+                value: 17,
+                data: this.target.interface.encodeFunctionData('mockFunctionExtra'),
+              }),
             })
             .then(op => op.addInitCode())
             .then(op => this.signUserOp(op));
@@ -211,11 +208,11 @@ function shouldBehaveLikeAccountExecutor({ deployable = true } = {}) {
         it('should revert if the signature is invalid', async function () {
           const operation = await this.mock
             .createUserOp({
-              callData: this.encodeUserOpCalldata(
-                this.target,
-                17,
-                this.target.interface.encodeFunctionData('mockFunctionExtra'),
-              ),
+              callData: this.encodeUserOpCalldata({
+                target: this.target,
+                value: 17,
+                data: this.target.interface.encodeFunctionData('mockFunctionExtra'),
+              }),
             })
             .then(op => op.addInitCode());
 
@@ -234,11 +231,11 @@ function shouldBehaveLikeAccountExecutor({ deployable = true } = {}) {
       it('should increase nonce and call target', async function () {
         const operation = await this.mock
           .createUserOp({
-            callData: this.encodeUserOpCalldata(
-              this.target,
-              42,
-              this.target.interface.encodeFunctionData('mockFunctionExtra'),
-            ),
+            callData: this.encodeUserOpCalldata({
+              target: this.target,
+              value: 42,
+              data: this.target.interface.encodeFunctionData('mockFunctionExtra'),
+            }),
           })
           .then(op => this.signUserOp(op));
 
@@ -251,7 +248,7 @@ function shouldBehaveLikeAccountExecutor({ deployable = true } = {}) {
 
       it('should support sending eth to an EOA', async function () {
         const operation = await this.mock
-          .createUserOp({ callData: this.encodeUserOpCalldata(this.other, value) })
+          .createUserOp({ callData: this.encodeUserOpCalldata({ target: this.other, value }) })
           .then(op => this.signUserOp(op));
 
         expect(this.mock.getNonce()).to.eventually.equal(0);
@@ -261,6 +258,30 @@ function shouldBehaveLikeAccountExecutor({ deployable = true } = {}) {
         );
         expect(this.mock.getNonce()).to.eventually.equal(1);
       });
+
+      it('should support batch execution', async function () {
+        const value1 = 43374337n;
+        const value2 = 69420n;
+
+        const operation = await this.mock
+          .createUserOp({
+            callData: this.encodeUserOpCalldata(
+              { target: this.other, value: value1 },
+              {
+                target: this.target,
+                value: value2,
+                data: this.target.interface.encodeFunctionData('mockFunctionExtra'),
+              },
+            ),
+          })
+          .then(op => this.signUserOp(op));
+
+        expect(this.mock.getNonce()).to.eventually.equal(0);
+        const tx = entrypoint.handleOps([operation.packed], this.beneficiary);
+        await expect(tx).to.changeEtherBalances([this.other, this.target], [value1, value2]);
+        await expect(tx).to.emit(this.target, 'MockFunctionCalledExtra').withArgs(this.mock, value2);
+        expect(this.mock.getNonce()).to.eventually.equal(1);
+      });
     });
   });
 }
@@ -268,5 +289,5 @@ function shouldBehaveLikeAccountExecutor({ deployable = true } = {}) {
 module.exports = {
   shouldBehaveLikeAccountCore,
   shouldBehaveLikeAccountHolder,
-  shouldBehaveLikeAccountExecutor,
+  shouldBehaveLikeAccountERC7821,
 };

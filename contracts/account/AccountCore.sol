@@ -15,6 +15,10 @@ import {AbstractSigner} from "../utils/cryptography/AbstractSigner.sol";
  *
  * Developers must implement the {AbstractSigner-_rawSignatureValidation} function to define the account's validation logic.
  *
+ * NOTE: This core account doesn't include any mechanism for performing arbitrary external calls. This is an essential
+ * feature that all Account should have. We leave it up to the developers to implement the mechanism of their choice.
+ * Common choices include ERC-6900, ERC-7579 and ERC-7821 (among others).
+ *
  * IMPORTANT: Implementing a mechanism to validate signatures is a security-sensitive operation as it may allow an
  * attacker to bypass the account's security measures. Check out {SignerECDSA}, {SignerP256}, or {SignerRSA} for
  * digital signature validation implementations.
@@ -91,14 +95,7 @@ abstract contract AccountCore is AbstractSigner, EIP712, IAccount, IAccountExecu
         PackedUserOperation calldata userOp,
         bytes32 /*userOpHash*/
     ) public virtual onlyEntryPointOrSelf {
-        // decode packed calldata
-        address target = address(bytes20(userOp.callData[4:24]));
-        uint256 value = uint256(bytes32(userOp.callData[24:56]));
-        bytes calldata data = userOp.callData[56:];
-
-        // we cannot use `Address.functionCallWithValue` here as it would revert on EOA targets
-        (bool success, bytes memory returndata) = target.call{value: value}(data);
-        Address.verifyCallResult(success, returndata);
+        Address.functionDelegateCall(address(this), userOp.callData[4:]);
     }
 
     /**

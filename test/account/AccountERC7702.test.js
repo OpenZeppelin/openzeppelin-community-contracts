@@ -5,7 +5,7 @@ const { PackedUserOperation } = require('../helpers/eip712-types');
 
 const {
   shouldBehaveLikeAccountCore,
-  shouldBehaveLikeAccountExecutor,
+  shouldBehaveLikeAccountERC7821,
   shouldBehaveLikeAccountHolder,
 } = require('./Account.behavior');
 const { shouldBehaveLikeERC7739Signer } = require('../utils/cryptography/ERC7739Signer.behavior');
@@ -45,7 +45,7 @@ describe('AccountERC7702', function () {
   });
 
   shouldBehaveLikeAccountCore();
-  shouldBehaveLikeAccountExecutor({ deployable: false });
+  shouldBehaveLikeAccountERC7821({ deployable: false });
   shouldBehaveLikeAccountHolder();
 
   describe('ERC7739Signer', function () {
