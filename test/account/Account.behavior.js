@@ -259,7 +259,7 @@ function shouldBehaveLikeAccountERC7821({ deployable = true } = {}) {
         expect(this.mock.getNonce()).to.eventually.equal(1);
       });
 
-      it('should support batch execution using multicall', async function () {
+      it('should support batch execution', async function () {
         const value1 = 43374337n;
         const value2 = 69420n;
 
