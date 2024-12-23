@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.20;
 
-import {PackedUserOperation, IAccount, IEntryPoint, IAccountExecute} from "@openzeppelin/contracts/interfaces/draft-IERC4337.sol";
+import {PackedUserOperation, IAccount, IEntryPoint} from "@openzeppelin/contracts/interfaces/draft-IERC4337.sol";
 import {ERC4337Utils} from "@openzeppelin/contracts/account/utils/draft-ERC4337Utils.sol";
 import {Address} from "@openzeppelin/contracts/utils/Address.sol";
 import {MessageHashUtils} from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
@@ -23,7 +23,7 @@ import {AbstractSigner} from "../utils/cryptography/AbstractSigner.sol";
  * attacker to bypass the account's security measures. Check out {SignerECDSA}, {SignerP256}, or {SignerRSA} for
  * digital signature validation implementations.
  */
-abstract contract AccountCore is AbstractSigner, EIP712, IAccount, IAccountExecute {
+abstract contract AccountCore is AbstractSigner, EIP712, IAccount {
     using MessageHashUtils for bytes32;
 
     bytes32 internal constant _PACKED_USER_OPERATION =
@@ -86,16 +86,6 @@ abstract contract AccountCore is AbstractSigner, EIP712, IAccount, IAccountExecu
             : ERC4337Utils.SIG_VALIDATION_FAILED;
         _payPrefund(missingAccountFunds);
         return validationData;
-    }
-
-    /**
-     * @inheritdoc IAccountExecute
-     */
-    function executeUserOp(
-        PackedUserOperation calldata userOp,
-        bytes32 /*userOpHash*/
-    ) public virtual onlyEntryPointOrSelf {
-        Address.functionDelegateCall(address(this), userOp.callData[4:]);
     }
 
     /**

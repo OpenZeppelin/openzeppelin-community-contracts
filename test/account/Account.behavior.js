@@ -150,7 +150,7 @@ function shouldBehaveLikeAccountHolder() {
 }
 
 function shouldBehaveLikeAccountERC7821({ deployable = true } = {}) {
-  describe('executeUserOp', function () {
+  describe('execute', function () {
     beforeEach(async function () {
       // give eth to the account (before deployment)
       await setBalance(this.mock.target, ethers.parseEther('1'));
@@ -168,16 +168,15 @@ function shouldBehaveLikeAccountERC7821({ deployable = true } = {}) {
     it('should revert if the caller is not the canonical entrypoint or the account itself', async function () {
       await this.mock.deploy();
 
-      const operation = await this.mock
-        .createUserOp({
-          callData: this.encodeUserOpCalldata({
+      await expect(
+        this.mock.connect(this.other).execute(
+          encodeMode({ callType: CALL_TYPE_BATCH }),
+          encodeBatch({
             target: this.target,
             data: this.target.interface.encodeFunctionData('mockFunctionExtra'),
           }),
-        })
-        .then(op => this.signUserOp(op));
-
-      await expect(this.mock.connect(this.other).executeUserOp(operation.packed, operation.hash()))
+        ),
+      )
         .to.be.revertedWithCustomError(this.mock, 'AccountUnauthorized')
         .withArgs(this.other);
     });
