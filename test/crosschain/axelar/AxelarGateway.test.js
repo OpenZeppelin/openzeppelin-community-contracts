@@ -46,7 +46,7 @@ describe('AxelarGateway', function () {
     const dstCAIP10 = this.asCAIP10(this.receiver);
     const payload = ethers.randomBytes(128);
     const attributes = [];
-    const package = ethers.AbiCoder.defaultAbiCoder().encode(
+    const encoded = ethers.AbiCoder.defaultAbiCoder().encode(
       ['string', 'string', 'bytes', 'bytes[]'],
       [getAddress(this.sender), getAddress(this.receiver), payload, attributes],
     );
@@ -57,7 +57,7 @@ describe('AxelarGateway', function () {
       .to.emit(this.srcGateway, 'MessagePosted')
       .withArgs(ethers.ZeroHash, srcCAIP10, dstCAIP10, payload, attributes)
       .to.emit(this.axelar, 'ContractCall')
-      .withArgs(this.srcGateway, 'local', getAddress(this.dstGateway), ethers.keccak256(package), package)
+      .withArgs(this.srcGateway, 'local', getAddress(this.dstGateway), ethers.keccak256(encoded), encoded)
       .to.emit(this.axelar, 'ContractCallExecuted')
       .withArgs(anyValue)
       .to.emit(this.receiver, 'MessageReceived')

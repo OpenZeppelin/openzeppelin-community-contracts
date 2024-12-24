@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.20;
 
-import {PackedUserOperation, IAccount, IEntryPoint, IAccountExecute} from "@openzeppelin/contracts/interfaces/draft-IERC4337.sol";
+import {PackedUserOperation, IAccount, IEntryPoint} from "@openzeppelin/contracts/interfaces/draft-IERC4337.sol";
 import {ERC4337Utils} from "@openzeppelin/contracts/account/utils/draft-ERC4337Utils.sol";
 import {Address} from "@openzeppelin/contracts/utils/Address.sol";
 import {MessageHashUtils} from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
@@ -15,16 +15,20 @@ import {AbstractSigner} from "../utils/cryptography/AbstractSigner.sol";
  *
  * Developers must implement the {AbstractSigner-_rawSignatureValidation} function to define the account's validation logic.
  *
+ * NOTE: This core account doesn't include any mechanism for performing arbitrary external calls. This is an essential
+ * feature that all Account should have. We leave it up to the developers to implement the mechanism of their choice.
+ * Common choices include ERC-6900, ERC-7579 and ERC-7821 (among others).
+ *
  * IMPORTANT: Implementing a mechanism to validate signatures is a security-sensitive operation as it may allow an
  * attacker to bypass the account's security measures. Check out {SignerECDSA}, {SignerP256}, or {SignerRSA} for
  * digital signature validation implementations.
  */
-abstract contract AccountCore is AbstractSigner, EIP712, IAccount, IAccountExecute {
+abstract contract AccountCore is AbstractSigner, EIP712, IAccount {
     using MessageHashUtils for bytes32;
 
     bytes32 internal constant _PACKED_USER_OPERATION =
         keccak256(
-            "PackedUserOperation(address sender,uint256 nonce,bytes initCode,bytes callData,bytes32 accountGasLimits,uint256 preVerificationGas,bytes32 gasFees,bytes paymasterAndData,address entrypoint)"
+            "PackedUserOperation(address sender,uint256 nonce,bytes initCode,bytes callData,bytes32 accountGasLimits,uint256 preVerificationGas,bytes32 gasFees,bytes paymasterAndData)"
         );
 
     /**
@@ -85,17 +89,6 @@ abstract contract AccountCore is AbstractSigner, EIP712, IAccount, IAccountExecu
     }
 
     /**
-     * @inheritdoc IAccountExecute
-     */
-    function executeUserOp(
-        PackedUserOperation calldata userOp,
-        bytes32 /*userOpHash*/
-    ) public virtual onlyEntryPointOrSelf {
-        (address target, uint256 value, bytes memory data) = abi.decode(userOp.callData[4:], (address, uint256, bytes));
-        Address.functionCallWithValue(target, data, value);
-    }
-
-    /**
      * @dev Returns the digest used by an offchain signer instead of the opaque `userOpHash`.
      *
      * Given the `userOpHash` calculation is defined by ERC-4337, offchain signers
@@ -119,8 +112,7 @@ abstract contract AccountCore is AbstractSigner, EIP712, IAccount, IAccountExecu
                         userOp.accountGasLimits,
                         userOp.preVerificationGas,
                         userOp.gasFees,
-                        keccak256(userOp.paymasterAndData),
-                        entryPoint()
+                        keccak256(userOp.paymasterAndData)
                     )
                 )
             );

@@ -20,7 +20,7 @@ abstract contract ERC20Blocklist is ERC20 {
     /**
      * @dev Blocked status of addresses. True if blocked, False otherwise.
      */
-    mapping(address user => bool) internal _blocked;
+    mapping(address user => bool) private _blocked;
 
     /**
      * @dev Emitted when a user is blocked.

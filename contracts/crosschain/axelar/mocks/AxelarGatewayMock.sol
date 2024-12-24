@@ -12,7 +12,7 @@ contract AxelarGatewayMock {
     using Strings for string;
     using BitMaps for BitMaps.BitMap;
 
-    BitMaps.BitMap private pendingCommandIds;
+    BitMaps.BitMap private _pendingCommandIds;
 
     event CommandIdPending(
         bytes32 indexed commandId,
@@ -45,8 +45,8 @@ contract AxelarGatewayMock {
             )
         );
 
-        require(!pendingCommandIds.get(uint256(commandId)));
-        pendingCommandIds.set(uint256(commandId));
+        require(!_pendingCommandIds.get(uint256(commandId)));
+        _pendingCommandIds.set(uint256(commandId));
 
         emit CommandIdPending(commandId, destinationChain, destinationContractAddress, payload);
 
@@ -61,8 +61,8 @@ contract AxelarGatewayMock {
         string calldata sourceAddress,
         bytes32 payloadHash
     ) external returns (bool) {
-        if (pendingCommandIds.get(uint256(commandId))) {
-            pendingCommandIds.unset(uint256(commandId));
+        if (_pendingCommandIds.get(uint256(commandId))) {
+            _pendingCommandIds.unset(uint256(commandId));
 
             emit IAxelarGateway.ContractCallExecuted(commandId);
 

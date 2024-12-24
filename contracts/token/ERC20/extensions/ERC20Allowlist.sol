@@ -20,7 +20,7 @@ abstract contract ERC20Allowlist is ERC20 {
     /**
      * @dev Allowed status of addresses. True if allowed, False otherwise.
      */
-    mapping(address account => bool) internal _allowed;
+    mapping(address account => bool) private _allowed;
 
     /**
      * @dev Emitted when a `user` is allowed to transfer and approve.

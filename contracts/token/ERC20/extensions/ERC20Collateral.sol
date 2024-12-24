@@ -53,6 +53,7 @@ abstract contract ERC20Collateral is ERC20, IERC6372 {
     /**
      * @inheritdoc IERC6372
      */
+    // solhint-disable-next-line func-name-mixedcase
     function CLOCK_MODE() public view virtual returns (string memory) {
         return "mode=timestamp";
     }
