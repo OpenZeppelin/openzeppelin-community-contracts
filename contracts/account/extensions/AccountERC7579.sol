@@ -3,12 +3,21 @@
 pragma solidity ^0.8.20;
 
 import {PackedUserOperation} from "@openzeppelin/contracts/interfaces/draft-IERC4337.sol";
-import {IERC7579Module, IERC7579Validator, IERC7579Execution, IERC7579AccountConfig, IERC7579ModuleConfig, MODULE_TYPE_VALIDATOR, MODULE_TYPE_EXECUTOR, MODULE_TYPE_FALLBACK, MODULE_TYPE_HOOK} from "@openzeppelin/contracts/interfaces/draft-IERC7579.sol";
+import {IERC7579Module, IERC7579Validator, IERC7579Execution, IERC7579AccountConfig, IERC7579ModuleConfig, MODULE_TYPE_VALIDATOR, MODULE_TYPE_EXECUTOR, MODULE_TYPE_FALLBACK} from "@openzeppelin/contracts/interfaces/draft-IERC7579.sol";
 import {ERC7579Utils, Mode, CallType, ExecType} from "@openzeppelin/contracts/account/utils/draft-ERC7579Utils.sol";
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
+import {Address} from "@openzeppelin/contracts/utils/Address.sol";
+import {ERC4337Utils} from "@openzeppelin/contracts/account/utils/draft-ERC4337Utils.sol";
+import {ERC7739Signer} from "../../utils/cryptography/ERC7739Signer.sol";
 import {AccountCore} from "../AccountCore.sol";
 
-abstract contract AccountERC7579 is AccountCore, IERC7579Execution, IERC7579AccountConfig, IERC7579ModuleConfig {
+abstract contract AccountERC7579 is
+    AccountCore,
+    ERC7739Signer,
+    IERC7579Execution,
+    IERC7579AccountConfig,
+    IERC7579ModuleConfig
+{
     using ERC7579Utils for *;
     using EnumerableSet for *;
 
@@ -23,19 +32,14 @@ abstract contract AccountERC7579 is AccountCore, IERC7579Execution, IERC7579Acco
         _;
     }
 
-    /// @dev fallback handler for ERC-7579 fallback modules
-    fallback() external payable virtual {
-        _fallback();
-    }
-
     /// @inheritdoc IERC7579AccountConfig
-    function accountId() public view virtual returns (string memory accountImplementationId) {
+    function accountId() public view virtual returns (string memory) {
         //vendorname.accountname.semver
         return "@openzeppelin/contracts.erc7579account.v0-beta";
     }
 
     /// @inheritdoc IERC7579AccountConfig
-    function supportsExecutionMode(bytes32 encodedMode) public pure returns (bool) {
+    function supportsExecutionMode(bytes32 encodedMode) public view virtual returns (bool) {
         (CallType callType, , , ) = Mode.wrap(encodedMode).decodeMode();
         return
             callType == ERC7579Utils.CALLTYPE_SINGLE ||
@@ -45,7 +49,7 @@ abstract contract AccountERC7579 is AccountCore, IERC7579Execution, IERC7579Acco
 
     /// @inheritdoc IERC7579AccountConfig
     // TODO: add hook support
-    function supportsModule(uint256 moduleTypeId) public pure returns (bool) {
+    function supportsModule(uint256 moduleTypeId) public view virtual returns (bool) {
         return
             moduleTypeId == MODULE_TYPE_VALIDATOR ||
             moduleTypeId == MODULE_TYPE_EXECUTOR ||
@@ -75,7 +79,7 @@ abstract contract AccountERC7579 is AccountCore, IERC7579Execution, IERC7579Acco
         uint256 moduleTypeId,
         address module,
         bytes calldata additionalContext
-    ) public view returns (bool) {
+    ) public view virtual returns (bool) {
         if (moduleTypeId == MODULE_TYPE_VALIDATOR) return _validators.contains(module);
         if (moduleTypeId == MODULE_TYPE_EXECUTOR) return _executors.contains(module);
         if (moduleTypeId == MODULE_TYPE_FALLBACK) return _fallbacks[bytes4(additionalContext[0:4])] != module;
@@ -106,16 +110,13 @@ abstract contract AccountERC7579 is AccountCore, IERC7579Execution, IERC7579Acco
         revert ERC7579Utils.ERC7579UnsupportedCallType(callType);
     }
 
-    /// @inheritdoc AccountCore
-    function _validateUserOp(
-        PackedUserOperation calldata userOp,
-        bytes32 userOpHash
-    ) internal virtual override returns (uint256) {
-        address module = address(bytes20(userOp.signature[0:20]));
-        return
-            isModuleInstalled(MODULE_TYPE_VALIDATOR, module, _emptyCalldataBytes())
-                ? IERC7579Validator(module).validateUserOp(userOp, userOpHash)
-                : super._validateUserOp(userOp, userOpHash);
+    function _rawSignatureValidation(
+        bytes32 hash,
+        bytes calldata signature
+    ) internal view virtual override returns (bool) {
+        address module = address(bytes20(signature[0:20]));
+        if (!isModuleInstalled(MODULE_TYPE_VALIDATOR, module, msg.data)) return false;
+        return IERC7579Validator(module).isValidSignatureWithSender(msg.sender, hash, signature) == bytes4(0x77390001);
     }
 
     function _checkModule(uint256 moduleTypeId, address module) internal view virtual {
@@ -132,11 +133,15 @@ abstract contract AccountERC7579 is AccountCore, IERC7579Execution, IERC7579Acco
             ERC7579Utils.ERC7579MismatchedModuleTypeId(moduleTypeId, module)
         );
 
-        if (moduleTypeId == MODULE_TYPE_VALIDATOR) {
-            require(_validators.add(module), ERC7579Utils.ERC7579AlreadyInstalledModule(moduleTypeId, module));
-        } else if (moduleTypeId == MODULE_TYPE_EXECUTOR) {
-            require(_executors.add(module), ERC7579Utils.ERC7579AlreadyInstalledModule(moduleTypeId, module));
-        } else if (moduleTypeId == MODULE_TYPE_FALLBACK) {
+        require(
+            moduleTypeId != MODULE_TYPE_VALIDATOR || _validators.add(module),
+            ERC7579Utils.ERC7579AlreadyInstalledModule(moduleTypeId, module)
+        );
+        require(
+            moduleTypeId != MODULE_TYPE_EXECUTOR || _executors.add(module),
+            ERC7579Utils.ERC7579AlreadyInstalledModule(moduleTypeId, module)
+        );
+        if (moduleTypeId == MODULE_TYPE_FALLBACK) {
             bytes4 selector;
             (selector, initData) = abi.decode(initData, (bytes4, bytes));
             require(
@@ -150,11 +155,13 @@ abstract contract AccountERC7579 is AccountCore, IERC7579Execution, IERC7579Acco
     }
 
     function _uninstallModule(uint256 moduleTypeId, address module, bytes memory deInitData) internal virtual {
-        if (moduleTypeId == MODULE_TYPE_VALIDATOR) {
-            require(_validators.remove(module), ERC7579Utils.ERC7579UninstalledModule(moduleTypeId, module));
-        } else if (moduleTypeId == MODULE_TYPE_EXECUTOR) {
-            require(_executors.remove(module), ERC7579Utils.ERC7579UninstalledModule(moduleTypeId, module));
-        } else if (moduleTypeId == MODULE_TYPE_FALLBACK) {
+        require(
+            (moduleTypeId != MODULE_TYPE_VALIDATOR || _validators.remove(module)) ||
+                (moduleTypeId != MODULE_TYPE_EXECUTOR || _executors.remove(module)),
+            ERC7579Utils.ERC7579UninstalledModule(moduleTypeId, module)
+        );
+
+        if (moduleTypeId == MODULE_TYPE_FALLBACK) {
             bytes4 selector;
             (selector, deInitData) = abi.decode(deInitData, (bytes4, bytes));
             require(_uninstallFallback(module, selector), ERC7579Utils.ERC7579UninstalledModule(moduleTypeId, module));
@@ -165,17 +172,16 @@ abstract contract AccountERC7579 is AccountCore, IERC7579Execution, IERC7579Acco
     }
 
     function _installFallback(address module, bytes4 selector) internal virtual returns (bool) {
-        if (_fallbackHandler(selector) == address(0)) {
-            _fallbacks[selector] = module;
-            return true;
-        } else return false;
+        if (_fallbacks[selector] != address(0)) return false;
+        _fallbacks[selector] = module;
+        return true;
     }
 
     function _uninstallFallback(address module, bytes4 selector) internal virtual returns (bool) {
-        if (_fallbackHandler(selector) == module && module != address(0)) {
-            delete _fallbacks[selector];
-            return true;
-        } else return false;
+        address handler = _fallbackHandler(selector);
+        if (handler == address(0) || handler != module) return false;
+        delete _fallbacks[selector];
+        return true;
     }
 
     function _fallbackHandler(bytes4 selector) internal view virtual returns (address) {
@@ -210,5 +216,9 @@ abstract contract AccountERC7579 is AccountCore, IERC7579Execution, IERC7579Acco
             result.offset := 0
             result.length := 0
         }
+    }
+
+    fallback() external payable virtual {
+        _fallback();
     }
 }
