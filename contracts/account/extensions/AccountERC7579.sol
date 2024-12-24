@@ -134,11 +134,8 @@ abstract contract AccountERC7579 is
         );
 
         require(
-            moduleTypeId != MODULE_TYPE_VALIDATOR || _validators.add(module),
-            ERC7579Utils.ERC7579AlreadyInstalledModule(moduleTypeId, module)
-        );
-        require(
-            moduleTypeId != MODULE_TYPE_EXECUTOR || _executors.add(module),
+            (moduleTypeId != MODULE_TYPE_VALIDATOR || _validators.add(module)) ||
+                (moduleTypeId != MODULE_TYPE_EXECUTOR || _executors.add(module)),
             ERC7579Utils.ERC7579AlreadyInstalledModule(moduleTypeId, module)
         );
         if (moduleTypeId == MODULE_TYPE_FALLBACK) {
