@@ -48,7 +48,6 @@ abstract contract AccountERC7579 is
     }
 
     /// @inheritdoc IERC7579AccountConfig
-    // TODO: add hook support
     function supportsModule(uint256 moduleTypeId) public view virtual returns (bool) {
         return
             moduleTypeId == MODULE_TYPE_VALIDATOR ||
