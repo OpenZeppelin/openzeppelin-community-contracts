@@ -27,8 +27,8 @@ abstract contract AccountERC7579 is
 
     error ERC7579MissingFallbackHandler(bytes4 selector);
 
-    modifier onlyModule(uint256 moduleType) {
-        _checkModule(moduleType, msg.sender);
+    modifier onlyModule(uint256 moduleTypeId) {
+        _checkModule(moduleTypeId, msg.sender);
         _;
     }
 
