@@ -20,7 +20,7 @@ async function fixture() {
   // ERC-4337 account
   const helper = new ERC4337Helper();
   const env = await helper.wait();
-  const mock = await helper.newAccount('$AccountCoreMock', ['AccountCore', '1']);
+  const mock = await helper.newAccount('$AccountMock', ['Account', '1']);
 
   const signUserOp = async userOp => {
     userOp.signature = await signer.signMessage(userOp.hash());
@@ -30,7 +30,7 @@ async function fixture() {
   return { ...env, mock, signer, target, beneficiary, other, signUserOp };
 }
 
-describe('AccountCore', function () {
+describe('Account', function () {
   beforeEach(async function () {
     Object.assign(this, await loadFixture(fixture));
   });
