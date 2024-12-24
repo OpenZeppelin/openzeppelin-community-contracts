@@ -7,16 +7,15 @@ import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 /**
  * @dev Extension of {ERC20} that allows to implement a custodian
  * mechanism that can be managed by an authorized account with the
- * {freeze} and {unfreeze} functions.
+ * {freeze} function.
  *
  * This mechanism allows a custodian (e.g. a DAO or a
  * well-configured multisig) to freeze and unfreeze the balance
  * of a user.
  *
  * The frozen balance is not available for transfers or approvals
- * to other entities to operate on its behalf if {freeze} was not
- * called with such account as an argument. Similarly, the account
- * will be unfrozen again if {unfreeze} is called.
+ * to other entities to operate on its behalf if. The frozen balance
+ * can be reduced by calling {freeze} again with a lower amount.
  */
 abstract contract ERC20Custodian is ERC20 {
     /**

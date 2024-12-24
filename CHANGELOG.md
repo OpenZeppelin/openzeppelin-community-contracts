@@ -2,11 +2,11 @@
 
 - `AccountERC7821`: Account implementation that implements ERC-7821 for minimal batch execution interface. No support for additional `opData` is included.
 
-## XX-XX-2024
+## 16-12-2024
 
 - `AccountCore`: Added a simple ERC-4337 account implementation with minimal logic to process user operations.
-- `Account`: Extensions of {AccountCore} with recommended features that most accounts should have.
-- `AbstractSigner`, `SignerECDSA`, `SignerP256`, and `SignerRSA`: Add an abstract contract, and various implementations, for contracts that deal with signature verification. Used by {AccountCore} and {ERC7739Utils}.
+- `Account`: Extensions of AccountCore with recommended features that most accounts should have.
+- `AbstractSigner`, `SignerECDSA`, `SignerP256`, and `SignerRSA`: Add an abstract contract, and various implementations, for contracts that deal with signature verification. Used by AccountCore and `ERC7739Utils.
 - `AccountSignerERC7702`: Implementation of `AbstractSigner` for ERC-7702 compatible accounts.
 
 ## 06-11-2024
