@@ -4,6 +4,7 @@
 :SignerP256: pass:normal[xref:utils.adoc#SignerP256[`SignerP256`]]
 :SignerRSA: pass:normal[xref:utils.adoc#SignerRSA[`SignerRSA`]]
 :AccountCore: pass:normal[xref:account.adoc#AccountCore[`AccountCore`]]
+:AccountERC7821: pass:normal[xref:account.adoc#AccountERC7821[`AccountERC7821`]]
 :ERC7739Signer: pass:normal[xref:utils.adoc#ERC7739Signer[`ERC7739Signer`]]
 :SignerECDSA: pass:normal[xref:utils.adoc#SignerECDSA[`SignerECDSA`]]
 :SignerP256: pass:normal[xref:utils.adoc#SignerP256[`SignerP256`]]
@@ -25,7 +26,6 @@ This directory includes contracts to build accounts for ERC-4337.
 :getNonce: pass:normal[xref:#AccountCore-getNonce--[`++getNonce++`]]
 :getNonce: pass:normal[xref:#AccountCore-getNonce-uint192-[`++getNonce++`]]
 :validateUserOp: pass:normal[xref:#AccountCore-validateUserOp-struct-PackedUserOperation-bytes32-uint256-[`++validateUserOp++`]]
-:executeUserOp: pass:normal[xref:#AccountCore-executeUserOp-struct-PackedUserOperation-bytes32-[`++executeUserOp++`]]
 :_signableUserOpHash: pass:normal[xref:#AccountCore-_signableUserOpHash-struct-PackedUserOperation-bytes32-[`++_signableUserOpHash++`]]
 :_payPrefund: pass:normal[xref:#AccountCore-_payPrefund-uint256-[`++_payPrefund++`]]
 :_checkEntryPoint: pass:normal[xref:#AccountCore-_checkEntryPoint--[`++_checkEntryPoint++`]]
@@ -46,6 +46,10 @@ user operations.
 
 Developers must implement the {AbstractSigner-_rawSignatureValidation} function to define the account's validation logic.
 
+NOTE: This core account doesn't include any mechanism for performing arbitrary external calls. This is an essential
+feature that all Account should have. We leave it up to the developers to implement the mechanism of their choice.
+Common choices include ERC-6900, ERC-7579 and ERC-7821 (among others).
+
 IMPORTANT: Implementing a mechanism to validate signatures is a security-sensitive operation as it may allow an
 attacker to bypass the account's security measures. Check out {SignerECDSA}, {SignerP256}, or {SignerRSA} for
 digital signature validation implementations.
@@ -64,15 +68,11 @@ digital signature validation implementations.
 * `++getNonce()++`
 * `++getNonce(key)++`
 * `++validateUserOp(userOp, userOpHash, missingAccountFunds)++`
-* `++executeUserOp(userOp, )++`
 * `++_signableUserOpHash(userOp, )++`
 * `++_payPrefund(missingAccountFunds)++`
 * `++_checkEntryPoint()++`
 * `++_checkEntryPointOrSelf()++`
 * `++receive()++`
-
-[.contract-subindex-inherited]
-.IAccountExecute
 
 [.contract-subindex-inherited]
 .IAccount
@@ -99,9 +99,6 @@ digital signature validation implementations.
 --
 
 [.contract-subindex-inherited]
-.IAccountExecute
-
-[.contract-subindex-inherited]
 .IAccount
 
 [.contract-subindex-inherited]
@@ -122,9 +119,6 @@ digital signature validation implementations.
 * `++AccountUnauthorized(sender)++`
 
 [.contract-subindex-inherited]
-.IAccountExecute
-
-[.contract-subindex-inherited]
 .IAccount
 
 [.contract-subindex-inherited]
@@ -142,9 +136,6 @@ digital signature validation implementations.
 .Internal Variables
 --
 * `++bytes32 constant _PACKED_USER_OPERATION++`
-
-[.contract-subindex-inherited]
-.IAccountExecute
 
 [.contract-subindex-inherited]
 .IAccount
@@ -209,12 +200,6 @@ Returns an encoded packed validation data that is composed of the following elem
 - `validAfter` (`uint48`): The UserOp is valid only after this time.
 
 [.contract-item]
-[[AccountCore-executeUserOp-struct-PackedUserOperation-bytes32-]]
-==== `[.contract-item-name]#++executeUserOp++#++(struct PackedUserOperation userOp, bytes32)++` [.item-kind]#public#
-
-Executes a user operation.
-
-[.contract-item]
 [[AccountCore-_signableUserOpHash-struct-PackedUserOperation-bytes32-]]
 ==== `[.contract-item-name]#++_signableUserOpHash++#++(struct PackedUserOperation userOp, bytes32) → bytes32++` [.item-kind]#internal#
 
@@ -271,6 +256,7 @@ import "@openzeppelin/contracts/account/Account.sol";
 
 Extension of {AccountCore} with recommended feature that most account abstraction implementation will want:
 
+* {AccountERC7821} for performing external calls in batches.
 * {ERC721Holder} and {ERC1155Holder} to accept ERC-712 and ERC-1155 token transfers transfers.
 * {ERC7739Signer} for ERC-1271 signature support with ERC-7739 replay protection
 
@@ -311,20 +297,24 @@ implemented using a specific signature verification algorithm. See {SignerECDSA}
 .IERC721Receiver
 
 [.contract-subindex-inherited]
+.AccountERC7821
+* `++execute(mode, executionData)++`
+* `++supportsExecutionMode(mode)++`
+
+[.contract-subindex-inherited]
+.IERC7821
+
+[.contract-subindex-inherited]
 .AccountCore
 * `++entryPoint()++`
 * `++getNonce()++`
 * `++getNonce(key)++`
 * `++validateUserOp(userOp, userOpHash, missingAccountFunds)++`
-* `++executeUserOp(userOp, )++`
 * `++_signableUserOpHash(userOp, )++`
 * `++_payPrefund(missingAccountFunds)++`
 * `++_checkEntryPoint()++`
 * `++_checkEntryPointOrSelf()++`
 * `++receive()++`
-
-[.contract-subindex-inherited]
-.IAccountExecute
 
 [.contract-subindex-inherited]
 .IAccount
@@ -375,10 +365,13 @@ implemented using a specific signature verification algorithm. See {SignerECDSA}
 .IERC721Receiver
 
 [.contract-subindex-inherited]
-.AccountCore
+.AccountERC7821
 
 [.contract-subindex-inherited]
-.IAccountExecute
+.IERC7821
+
+[.contract-subindex-inherited]
+.AccountCore
 
 [.contract-subindex-inherited]
 .IAccount
@@ -424,11 +417,15 @@ implemented using a specific signature verification algorithm. See {SignerECDSA}
 .IERC721Receiver
 
 [.contract-subindex-inherited]
-.AccountCore
-* `++AccountUnauthorized(sender)++`
+.AccountERC7821
+* `++UnsupportedExecutionMode()++`
 
 [.contract-subindex-inherited]
-.IAccountExecute
+.IERC7821
+
+[.contract-subindex-inherited]
+.AccountCore
+* `++AccountUnauthorized(sender)++`
 
 [.contract-subindex-inherited]
 .IAccount
@@ -470,15 +467,11 @@ import "@openzeppelin/contracts/account/extensions/AccountSignerERC7702.sol";
 * `++getNonce()++`
 * `++getNonce(key)++`
 * `++validateUserOp(userOp, userOpHash, missingAccountFunds)++`
-* `++executeUserOp(userOp, )++`
 * `++_signableUserOpHash(userOp, )++`
 * `++_payPrefund(missingAccountFunds)++`
 * `++_checkEntryPoint()++`
 * `++_checkEntryPointOrSelf()++`
 * `++receive()++`
-
-[.contract-subindex-inherited]
-.IAccountExecute
 
 [.contract-subindex-inherited]
 .IAccount
@@ -507,9 +500,6 @@ import "@openzeppelin/contracts/account/extensions/AccountSignerERC7702.sol";
 .AccountCore
 
 [.contract-subindex-inherited]
-.IAccountExecute
-
-[.contract-subindex-inherited]
 .IAccount
 
 [.contract-subindex-inherited]
@@ -531,9 +521,6 @@ import "@openzeppelin/contracts/account/extensions/AccountSignerERC7702.sol";
 [.contract-subindex-inherited]
 .AccountCore
 * `++AccountUnauthorized(sender)++`
-
-[.contract-subindex-inherited]
-.IAccountExecute
 
 [.contract-subindex-inherited]
 .IAccount

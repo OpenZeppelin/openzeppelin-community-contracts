@@ -1,3 +1,7 @@
+## 23-12-2024
+
+- `AccountERC7821`: Account implementation that implements ERC-7821 for minimal batch execution interface. No support for additional `opData` is included.
+
 ## 16-12-2024
 
 - `AccountCore`: Added a simple ERC-4337 account implementation with minimal logic to process user operations.
