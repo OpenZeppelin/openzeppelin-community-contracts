@@ -3,7 +3,11 @@ const { loadFixture } = require('@nomicfoundation/hardhat-network-helpers');
 const { ERC4337Helper } = require('../helpers/erc4337');
 const { NonNativeSigner } = require('../helpers/signers');
 
-const { shouldBehaveLikeAccountCore, shouldBehaveLikeAccountExecutor } = require('./Account.behavior');
+const {
+  shouldBehaveLikeAccountCore,
+  shouldBehaveLikeAccountERC7821,
+  shouldBehaveLikeAccountHolder,
+} = require('./Account.behavior');
 
 async function fixture() {
   // EOAs and environment
@@ -16,7 +20,7 @@ async function fixture() {
   // ERC-4337 account
   const helper = new ERC4337Helper();
   const env = await helper.wait();
-  const mock = await helper.newAccount('$AccountBaseMock', ['AccountBase', '1']);
+  const mock = await helper.newAccount('$AccountMock', ['Account', '1']);
 
   const signUserOp = async userOp => {
     userOp.signature = await signer.signMessage(userOp.hash());
@@ -26,11 +30,12 @@ async function fixture() {
   return { ...env, mock, signer, target, beneficiary, other, signUserOp };
 }
 
-describe('AccountBase', function () {
+describe('Account', function () {
   beforeEach(async function () {
     Object.assign(this, await loadFixture(fixture));
   });
 
   shouldBehaveLikeAccountCore();
-  shouldBehaveLikeAccountExecutor();
+  shouldBehaveLikeAccountERC7821();
+  shouldBehaveLikeAccountHolder();
 });
