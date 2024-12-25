@@ -285,8 +285,93 @@ function shouldBehaveLikeAccountERC7821({ deployable = true } = {}) {
   });
 }
 
+function shouldBehaveLikeAccountERC7579() {
+  const CALLTYPE_SINGLE = '0x00';
+  const CALLTYPE_BATCH = '0x01';
+  const CALLTYPE_DELEGATECALL = '0xFF';
+
+  const MODULE_TYPE_VALIDATOR = 1;
+  const MODULE_TYPE_EXECUTOR = 2;
+  const MODULE_TYPE_FALLBACK = 3;
+
+  describe('accountId', function () {
+    it('should return the account ID', function () {
+      expect(this.mock.accountId()).to.eventually.equal('@openzeppelin/contracts.erc7579account.v0-beta');
+    });
+  });
+
+  describe('supportsExecutionMode', function () {
+    it('supports CALLTYPE_SINGLE execution mode', function () {
+      expect(this.mock.supportsExecutionMode(CALLTYPE_SINGLE)).to.eventually.equal(true);
+    });
+
+    it('supports CALLTYPE_BATCH execution mode', function () {
+      expect(this.mock.supportsExecutionMode(CALLTYPE_BATCH)).to.eventually.equal(true);
+    });
+
+    it('supports CALLTYPE_DELEGATECALL execution mode', function () {
+      expect(this.mock.supportsExecutionMode(CALLTYPE_DELEGATECALL)).to.eventually.equal(true);
+    });
+  });
+
+  describe('supportsModule', function () {
+    it('supports MODULE_TYPE_VALIDATOR module type', function () {
+      expect(this.mock.supportsModule(MODULE_TYPE_VALIDATOR)).to.eventually.equal(true);
+    });
+
+    it('supports MODULE_TYPE_EXECUTOR module type', function () {
+      expect(this.mock.supportsModule(MODULE_TYPE_EXECUTOR)).to.eventually.equal(true);
+    });
+
+    it('supports MODULE_TYPE_FALLBACK module type', function () {
+      expect(this.mock.supportsModule(MODULE_TYPE_FALLBACK)).to.eventually.equal(true);
+    });
+  });
+
+  describe('module installation', function () {
+    beforeEach(async function () {
+      await this.mock.deploy();
+      this.entrypointAsSigner = await impersonate(entrypoint.target);
+    });
+
+    it('should revert if the caller is not the canonical entrypoint or the account itself', async function () {
+      await expect(this.mock.connect(this.other).installModule(MODULE_TYPE_VALIDATOR, this.mock.address, '0x'))
+        .to.be.revertedWithCustomError(this.mock, 'AccountUnauthorized')
+        .withArgs(this.other);
+    });
+
+    it('should revert if the module type is not supported', async function () {
+      await expect(this.mock.connect(this.entrypointAsSigner).installModule(999, this.mock.address, '0x'))
+        .to.be.revertedWithCustomError(this.mock, 'ERC7579UnsupportedModuleType')
+        .withArgs(999);
+    });
+
+    for (const moduleTypeId of [MODULE_TYPE_VALIDATOR, MODULE_TYPE_EXECUTOR]) {
+      it(`should install a module of type ${moduleTypeId}`, async function () {
+        const moduleMock = await ethers.deployContract('$ERC7579ModuleMock', [moduleTypeId]);
+        await this.mock.connect(this.entrypointAsSigner).installModule(moduleTypeId, moduleMock.target, '0x');
+        await expect(this.mock.isModuleInstalled(moduleTypeId, moduleMock.target, '0x')).to.eventually.equal(true);
+      });
+    }
+
+    it(`should install a module of type ${MODULE_TYPE_FALLBACK}`, async function () {
+      const moduleMock = await ethers.deployContract('$ERC7579ModuleMock', [MODULE_TYPE_FALLBACK]);
+      const selector = '0x12345678';
+      await this.mock.connect(this.entrypointAsSigner).installModule(
+        MODULE_TYPE_FALLBACK,
+        moduleMock.target,
+        ethers.AbiCoder.defaultAbiCoder().encode(['bytes4', 'bytes'], [selector, '0x']), // Min data for MODULE_TYPE_FALLBACK
+      );
+      await expect(this.mock.isModuleInstalled(MODULE_TYPE_FALLBACK, moduleMock.target, selector)).to.eventually.equal(
+        true,
+      );
+    });
+  });
+}
+
 module.exports = {
   shouldBehaveLikeAccountCore,
   shouldBehaveLikeAccountHolder,
   shouldBehaveLikeAccountERC7821,
+  shouldBehaveLikeAccountERC7579,
 };

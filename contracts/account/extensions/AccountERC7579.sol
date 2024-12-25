@@ -82,7 +82,7 @@ abstract contract AccountERC7579 is
     ) public view virtual returns (bool) {
         if (moduleTypeId == MODULE_TYPE_VALIDATOR) return _validators.contains(module);
         if (moduleTypeId == MODULE_TYPE_EXECUTOR) return _executors.contains(module);
-        if (moduleTypeId == MODULE_TYPE_FALLBACK) return _fallbacks[bytes4(additionalContext[0:4])] != module;
+        if (moduleTypeId == MODULE_TYPE_FALLBACK) return _fallbacks[bytes4(additionalContext[0:4])] == module;
         return false;
     }
 
@@ -137,7 +137,7 @@ abstract contract AccountERC7579 is
         );
 
         require(
-            (moduleTypeId != MODULE_TYPE_VALIDATOR || _validators.add(module)) ||
+            (moduleTypeId != MODULE_TYPE_VALIDATOR || _validators.add(module)) &&
                 (moduleTypeId != MODULE_TYPE_EXECUTOR || _executors.add(module)),
             ERC7579Utils.ERC7579AlreadyInstalledModule(moduleTypeId, module)
         );
@@ -156,7 +156,7 @@ abstract contract AccountERC7579 is
 
     function _uninstallModule(uint256 moduleTypeId, address module, bytes memory deInitData) internal virtual {
         require(
-            (moduleTypeId != MODULE_TYPE_VALIDATOR || _validators.remove(module)) ||
+            (moduleTypeId != MODULE_TYPE_VALIDATOR || _validators.remove(module)) &&
                 (moduleTypeId != MODULE_TYPE_EXECUTOR || _executors.remove(module)),
             ERC7579Utils.ERC7579UninstalledModule(moduleTypeId, module)
         );
