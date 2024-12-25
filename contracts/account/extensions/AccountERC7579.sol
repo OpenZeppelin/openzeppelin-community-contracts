@@ -2,6 +2,7 @@
 
 pragma solidity ^0.8.20;
 
+import {IERC1271} from "@openzeppelin/contracts/interfaces/IERC1271.sol";
 import {PackedUserOperation} from "@openzeppelin/contracts/interfaces/draft-IERC4337.sol";
 import {IERC7579Module, IERC7579Validator, IERC7579Execution, IERC7579AccountConfig, IERC7579ModuleConfig, MODULE_TYPE_VALIDATOR, MODULE_TYPE_EXECUTOR, MODULE_TYPE_FALLBACK} from "@openzeppelin/contracts/interfaces/draft-IERC7579.sol";
 import {ERC7579Utils, Mode, CallType, ExecType} from "@openzeppelin/contracts/account/utils/draft-ERC7579Utils.sol";
@@ -113,9 +114,12 @@ abstract contract AccountERC7579 is
         bytes32 hash,
         bytes calldata signature
     ) internal view virtual override returns (bool) {
+        if (signature.length < 20) return false;
         address module = address(bytes20(signature[0:20]));
         if (!isModuleInstalled(MODULE_TYPE_VALIDATOR, module, msg.data)) return false;
-        return IERC7579Validator(module).isValidSignatureWithSender(msg.sender, hash, signature) == bytes4(0x77390001);
+        return
+            IERC7579Validator(module).isValidSignatureWithSender(msg.sender, hash, signature) ==
+            IERC1271.isValidSignature.selector;
     }
 
     function _checkModule(uint256 moduleTypeId, address module) internal view virtual {
