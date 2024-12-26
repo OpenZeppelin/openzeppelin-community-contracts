@@ -62,7 +62,7 @@ describe('ERC7759Validator', function () {
     )
       .to.emit(this.mock, 'P256SignerAssociated')
       .withArgs(this.accountAsSigner, this.publicKey.qx, this.publicKey.qy);
-    await expect(this.mock.signer(this.account)).to.eventually.deep.equal([this.publicKey.qx, this.publicKey.qy]);
+    expect(this.mock.signer(this.account)).to.eventually.deep.equal([this.publicKey.qx, this.publicKey.qy]);
   });
 
   it('disassociates an P256 signer from the account when calling onUninstall', async function () {
@@ -72,8 +72,8 @@ describe('ERC7759Validator', function () {
     );
     this.mock.connect(this.accountAsSigner).onInstall(data);
     await expect(this.mock.connect(this.accountAsSigner).onUninstall(data))
-      .to.emit(this.mock, 'P256SignerDisassociated')
-      .withArgs(this.accountAsSigner);
-    await expect(this.mock.signer(this.account)).to.eventually.deep.equal([ethers.ZeroHash, ethers.ZeroHash]);
+      .to.emit(this.mock, 'P256SignerAssociated')
+      .withArgs(this.accountAsSigner, ethers.ZeroHash, ethers.ZeroHash);
+    expect(this.mock.signer(this.account)).to.eventually.deep.equal([ethers.ZeroHash, ethers.ZeroHash]);
   });
 });

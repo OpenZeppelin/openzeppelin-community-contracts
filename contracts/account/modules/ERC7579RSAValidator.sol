@@ -15,9 +15,6 @@ abstract contract ERC7579RSAValidator is ERC7579Validator {
     /// @dev Emitted when an account is associated with an RSA public key.
     event RSASignerAssociated(address indexed account, bytes e, bytes n);
 
-    /// @dev Emitted when an account is disassociated from an RSA public key.
-    event RSASignerDisassociated(address indexed account);
-
     /// @dev Return the account's signer RSA public key for the given account.
     function signer(address account) public view virtual returns (bytes memory e, bytes memory n) {
         return (_associatedE[account], _associatedN[account]);
@@ -30,26 +27,19 @@ abstract contract ERC7579RSAValidator is ERC7579Validator {
      */
     function onInstall(bytes calldata data) public virtual {
         (bytes memory e, bytes memory n) = abi.decode(data, (bytes, bytes));
-        _onInstall(msg.sender, e, n);
+        _setSigner(msg.sender, e, n);
     }
 
     /// @dev Disassociates an account from an RSA public key.
     function onUninstall(bytes calldata) public virtual {
-        _onUninstall(msg.sender);
+        _setSigner(msg.sender, bytes(""), bytes(""));
     }
 
-    /// @dev Internal version of {onInstall} without access control.
-    function _onInstall(address account, bytes memory e, bytes memory n) internal virtual {
+    /// @dev Sets the ECDSA public key in the account's associated storage.
+    function _setSigner(address account, bytes memory e, bytes memory n) internal {
         _associatedE[account] = e;
         _associatedN[account] = n;
         emit RSASignerAssociated(account, e, n);
-    }
-
-    /// @dev Internal version of {onUninstall} without access control.
-    function _onUninstall(address account) internal virtual {
-        delete _associatedE[account];
-        delete _associatedN[account];
-        emit RSASignerDisassociated(account);
     }
 
     /// @dev Validate the RSA signature with the account's associated public key.

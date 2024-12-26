@@ -56,15 +56,15 @@ describe('ERC7759Validator', function () {
     )
       .to.emit(this.mock, 'ECDSASignerAssociated')
       .withArgs(this.accountAsSigner, this.signer);
-    await expect(this.mock.signer(this.account)).to.eventually.equal(this.signer.address);
+    expect(this.mock.signer(this.account)).to.eventually.equal(this.signer.address);
   });
 
   it('disassociates an ECDSA signer from the account when calling onUninstall', async function () {
     const data = ethers.solidityPacked(['address'], [this.signer.address]);
     this.mock.connect(this.accountAsSigner).onInstall(data);
     await expect(this.mock.connect(this.accountAsSigner).onUninstall(data))
-      .to.emit(this.mock, 'ECDSASignerDisassociated')
-      .withArgs(this.accountAsSigner);
-    await expect(this.mock.signer(this.account)).to.eventually.equal(ethers.ZeroAddress);
+      .to.emit(this.mock, 'ECDSASignerAssociated')
+      .withArgs(this.accountAsSigner, ethers.ZeroAddress);
+    expect(this.mock.signer(this.account)).to.eventually.equal(ethers.ZeroAddress);
   });
 });

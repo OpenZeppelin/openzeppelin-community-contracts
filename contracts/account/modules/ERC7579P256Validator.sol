@@ -15,9 +15,6 @@ abstract contract ERC7579P256Validator is ERC7579Validator {
     /// @dev Emitted when an account is associated with a P256 public key.
     event P256SignerAssociated(address indexed account, bytes32 qx, bytes32 qy);
 
-    /// @dev Emitted when an account is disassociated from a P256 public key.
-    event P256SignerDisassociated(address indexed account);
-
     /// @dev Return the account's signer P256 public key for the given account.
     function signer(address account) public view virtual returns (bytes32, bytes32) {
         return (_associatedQx[account], _associatedQy[account]);
@@ -31,26 +28,19 @@ abstract contract ERC7579P256Validator is ERC7579Validator {
      */
     function onInstall(bytes calldata data) public virtual {
         (bytes32 qx, bytes32 qy) = abi.decode(data, (bytes32, bytes32));
-        _onInstall(msg.sender, qx, qy);
+        _setSigner(msg.sender, qx, qy);
     }
 
     /// @dev Disassociates an account from a P256 public key.
     function onUninstall(bytes calldata) public virtual {
-        _onUninstall(msg.sender);
+        _setSigner(msg.sender, bytes32(0), bytes32(0));
     }
 
-    /// @dev Internal version of {onInstall} without access control.
-    function _onInstall(address account, bytes32 qx, bytes32 qy) internal virtual {
+    /// @dev Sets the P256 public key in the account's associated storage.
+    function _setSigner(address account, bytes32 qx, bytes32 qy) internal {
         _associatedQx[account] = qx;
         _associatedQy[account] = qy;
         emit P256SignerAssociated(account, qx, qy);
-    }
-
-    /// @dev Internal version of {onUninstall} without access control.
-    function _onUninstall(address account) internal virtual {
-        delete _associatedQx[account];
-        delete _associatedQy[account];
-        emit P256SignerDisassociated(account);
     }
 
     /// @dev Validate the P256 signature with the account's associated public key.

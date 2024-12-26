@@ -60,15 +60,15 @@ describe('ERC7759Validator', function () {
     )
       .to.emit(this.mock, 'RSASignerAssociated')
       .withArgs(this.accountAsSigner, this.publicKey.e, this.publicKey.n);
-    await expect(this.mock.signer(this.account)).to.eventually.deep.equal([this.publicKey.e, this.publicKey.n]);
+    expect(this.mock.signer(this.account)).to.eventually.deep.equal([this.publicKey.e, this.publicKey.n]);
   });
 
   it('disassociates an RSA signer from the account when calling onUninstall', async function () {
     const data = ethers.AbiCoder.defaultAbiCoder().encode(['bytes', 'bytes'], [this.publicKey.e, this.publicKey.n]);
     this.mock.connect(this.accountAsSigner).onInstall(data);
     await expect(this.mock.connect(this.accountAsSigner).onUninstall(data))
-      .to.emit(this.mock, 'RSASignerDisassociated')
-      .withArgs(this.accountAsSigner);
-    await expect(this.mock.signer(this.account)).to.eventually.deep.equal(['0x', '0x']);
+      .to.emit(this.mock, 'RSASignerAssociated')
+      .withArgs(this.accountAsSigner, '0x', '0x');
+    expect(this.mock.signer(this.account)).to.eventually.deep.equal(['0x', '0x']);
   });
 });

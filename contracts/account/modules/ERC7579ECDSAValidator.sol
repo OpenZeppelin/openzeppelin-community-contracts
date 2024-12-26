@@ -14,9 +14,6 @@ abstract contract ERC7579ECDSAValidator is ERC7579Validator {
     /// @dev Emitted when an account is associated with an ECDSA signer.
     event ECDSASignerAssociated(address indexed account, address indexed signer);
 
-    /// @dev Emitted when an account is disassociated from an ECDSA signer.
-    event ECDSASignerDisassociated(address indexed account);
-
     /// @dev Return the account's signer address for the given account.
     function signer(address account) public view virtual returns (address) {
         return _associatedSigners[account];
@@ -30,25 +27,18 @@ abstract contract ERC7579ECDSAValidator is ERC7579Validator {
      * NOTE: The validity of `data` is not checked.
      */
     function onInstall(bytes calldata data) public virtual {
-        address signerAddr = address(bytes20(data[0:20]));
-        _onInstall(msg.sender, signerAddr);
+        _setSigner(msg.sender, address(bytes20(data[0:20])));
     }
 
     /// @dev Disassociates an account from an ECDSA signer.
     function onUninstall(bytes calldata) public virtual {
-        _onUninstall(msg.sender);
+        _setSigner(msg.sender, address(0));
     }
 
-    /// @dev Internal version of {onInstall} without access control.
-    function _onInstall(address account, address signerAddr) internal virtual {
+    /// @dev Sets the ECDSA address in the account's associated storage.
+    function _setSigner(address account, address signerAddr) internal {
         _associatedSigners[account] = signerAddr;
         emit ECDSASignerAssociated(account, signerAddr);
-    }
-
-    /// @dev Internal version of {onUninstall} without access control.
-    function _onUninstall(address account) internal virtual {
-        delete _associatedSigners[account];
-        emit ECDSASignerDisassociated(account);
     }
 
     /// @dev Validates the signature using the account's signer.
