@@ -7,19 +7,19 @@ import {IERC7579Module} from "@openzeppelin/contracts/interfaces/draft-IERC7579.
 abstract contract ERC7579ModuleMock is IERC7579Module {
     uint256 private _moduleTypeId;
 
-    event ModuleInstalled(address account, bytes data);
-    event ModuleUninstalled(address account, bytes data);
+    event ModuleInstalledReceived(address account, bytes data);
+    event ModuleUninstalledReceived(address account, bytes data);
 
     constructor(uint256 moduleTypeId) {
         _moduleTypeId = moduleTypeId;
     }
 
     function onInstall(bytes calldata data) public virtual {
-        emit ModuleInstalled(msg.sender, data);
+        emit ModuleInstalledReceived(msg.sender, data);
     }
 
     function onUninstall(bytes calldata data) public virtual {
-        emit ModuleUninstalled(msg.sender, data);
+        emit ModuleUninstalledReceived(msg.sender, data);
     }
 
     function isModuleType(uint256 moduleTypeId) external view returns (bool) {

@@ -7,8 +7,9 @@ const { shouldBehaveLikeAccountCore, shouldBehaveLikeAccountERC7579 } = require(
 
 async function fixture() {
   // EOAs and environment
-  const [beneficiary, other] = await ethers.getSigners();
+  const [other] = await ethers.getSigners();
   const target = await ethers.deployContract('CallReceiverMockExtended');
+  const anotherTarget = await ethers.deployContract('CallReceiverMockExtended');
 
   // ERC-7579 validator
   const validatorMock = await ethers.deployContract('$ERC7579ValidatorMock');
@@ -36,7 +37,7 @@ async function fixture() {
     return userOp;
   };
 
-  return { ...env, mock, domain, signer, target, beneficiary, other, signUserOp };
+  return { ...env, mock, domain, signer, target, anotherTarget, other, signUserOp };
 }
 
 describe('AccountERC7579', function () {
