@@ -42,7 +42,7 @@ include::api:example$account/MyAccountECDSA.sol[]
 
 NOTE: xref:api:account.adoc#Account[`Account`] initializes xref:api:utils.adoc#EIP712[`EIP712`] to generate a domain separator that prevents replayability in other accounts controlled by the same key. See xref:account-abstraction.adoc#erc7739_signatures[ERC-7739 signatures]
 
-Along with the regular EOA signature verification, the library also provides the xref:api:account.adoc#SignerP256[`SignerP256`] for P256 signatures, a widely used _elliptic curve_ verification algorithm that's present in mobile device security enclaves, FIDO keys, and corporate environments (i.e. public key infrastructures).
+Along with the regular EOA signature verification, the library also provides the xref:api:utils.adoc#SignerP256[`SignerP256`] for P256 signatures, a widely used _elliptic curve_ verification algorithm that's present in mobile device security enclaves, FIDO keys, and corporate environments (i.e. public key infrastructures).
 
 [source,solidity]
 ----
