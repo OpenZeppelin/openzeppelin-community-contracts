@@ -2,7 +2,7 @@
 
 Unlike Externally Owned Accounts (EOAs), smart contracts may contain arbitrary verification logic based on authentication mechanisms different to Ethereum's native xref:api:utils.adoc#ECDSA[ECDSA] and have execution advantages such as batching or gas sponsorship. To leverage these properties of smart contracts, the community has widely adopted https://eips.ethereum.org/EIPS/eip-4337[ERC-4337], a standard to process user operations through an alternative mempool.
 
-The library provides multiple contracts for Account Abstraction following this standard as it enables more flexible and user-friendly interactions with applications. Account Abstraction use cases include wallets in novel contexts (e.g. embedded wallets), more granular configuration of accounts and recovery mechanisms. 
+The library provides multiple contracts for Account Abstraction following this standard as it enables more flexible and user-friendly interactions with applications. Account Abstraction use cases include wallets in novel contexts (e.g. embedded wallets), more granular configuration of accounts, and recovery mechanisms. 
 
 These capabilities can be supercharged with a modularity approach following standards such as https://eips.ethereum.org/EIPS/eip-7579[ERC-7579] or https://eips.ethereum.org/EIPS/eip-6909[ERC-6909].
 
@@ -75,7 +75,7 @@ The ERC-4337 is a detailed specification of how to implement the necessary logic
 
 === UserOperation
 
-An `UserOperation` is a higher-layer pseudo-transaction object that represents the intent of the account. This shares some similarities with regular EVM transactions like the concept of `gasFees` or `callData` but includes fields that enable new capabilities.
+A `UserOperation` is a higher-layer pseudo-transaction object that represents the intent of the account. This shares some similarities with regular EVM transactions like the concept of `gasFees` or `callData` but includes fields that enable new capabilities.
 
 ```solidity
 struct PackedUserOperation {
@@ -105,7 +105,7 @@ During the process, the bundler pays for the gas of executing the transaction an
 
 === Account Contract
 
-The Account Contract is a type of smart contract implements the logic required to validate an `UserOperation` in the context of ERC-4337. Any smart contract account should conform with the `IAccount` interface to validate operations.
+The Account Contract is a smart contract that implements the logic required to validate a `UserOperation` in the context of ERC-4337. Any smart contract account should conform with the `IAccount` interface to validate operations.
 
 ```solidity
 interface IAccount {
