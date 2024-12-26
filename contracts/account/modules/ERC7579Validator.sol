@@ -42,7 +42,13 @@ abstract contract ERC7579Validator is IERC7579Validator {
                 : bytes4(0xffffffff);
     }
 
-    /// @dev Validates a signature for a specific sender.
+    /**
+     * @dev Validates a signature for a specific sender.
+     *
+     * IMPORTANT: This function is used by the ERC-7579 Validator module to validate user operations. Make sure
+     * the sender's associated storage follows https://eips.ethereum.org/EIPS/eip-7562[ERC-7562] validation rules
+     * to ensure compatibility with the descentralized ERC-4337 mempool.
+     */
     function _isValidSignatureWithSender(
         address sender,
         bytes32 hash,
