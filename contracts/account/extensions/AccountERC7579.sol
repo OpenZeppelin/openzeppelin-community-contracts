@@ -210,14 +210,6 @@ abstract contract AccountERC7579 is
         }
     }
 
-    // slither-disable-next-line write-after-write
-    function _emptyCalldataBytes() private pure returns (bytes calldata result) {
-        assembly ("memory-safe") {
-            result.offset := 0
-            result.length := 0
-        }
-    }
-
     fallback() external payable virtual {
         _fallback();
     }

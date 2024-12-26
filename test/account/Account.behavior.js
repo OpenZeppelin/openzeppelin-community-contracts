@@ -299,7 +299,7 @@ function shouldBehaveLikeAccountERC7579() {
   const coder = ethers.AbiCoder.defaultAbiCoder();
   const data = coder.encode(['bytes4', 'bytes'], [fnSig, '0x']); // Min data for MODULE_TYPE_FALLBACK
 
-  describe('ERC7579', function () {
+  describe('AccountERC7579', function () {
     beforeEach(async function () {
       await this.mock.deploy();
     });
