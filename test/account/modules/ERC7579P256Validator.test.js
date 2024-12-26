@@ -45,7 +45,7 @@ async function fixture() {
   return { ...env, mock, signer, publicKey, account, accountAsSigner, signUserOp };
 }
 
-describe('ERC7759Validator', function () {
+describe('ERC7759P256Validator', function () {
   beforeEach(async function () {
     Object.assign(this, await loadFixture(fixture));
   });

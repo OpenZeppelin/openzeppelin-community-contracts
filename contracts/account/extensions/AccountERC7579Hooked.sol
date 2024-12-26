@@ -2,8 +2,8 @@
 
 pragma solidity ^0.8.20;
 
-import {IERC7579Hook, IERC7579ModuleConfig, MODULE_TYPE_HOOK} from "@openzeppelin/contracts/interfaces/draft-IERC7579.sol";
-import {ERC7579Utils, Mode} from "@openzeppelin/contracts/account/utils/draft-ERC7579Utils.sol";
+import {IERC7579Hook, MODULE_TYPE_HOOK} from "@openzeppelin/contracts/interfaces/draft-IERC7579.sol";
+import {Mode} from "@openzeppelin/contracts/account/utils/draft-ERC7579Utils.sol";
 import {AccountERC7579} from "./AccountERC7579.sol";
 
 abstract contract AccountERC7579Hooked is AccountERC7579 {
