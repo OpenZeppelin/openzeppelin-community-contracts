@@ -6,7 +6,7 @@ const { SIG_VALIDATION_SUCCESS, SIG_VALIDATION_FAILURE } = require('@openzeppeli
 function shouldBehaveLikeERC7579Validator() {
   describe('isModuleType', function () {
     it('should support validator type', async function () {
-      expect(this.mock.isModuleType(MODULE_TYPE_VALIDATOR)).to.eventually.equal(true);
+      await expect(this.mock.isModuleType(MODULE_TYPE_VALIDATOR)).to.eventually.equal(true);
     });
   });
 
@@ -14,7 +14,9 @@ function shouldBehaveLikeERC7579Validator() {
     it('should return SIG_VALIDATION_SUCCESS if the signature is valid', async function () {
       // empty operation (does nothing)
       const operation = await this.account.createUserOp({}).then(op => this.signUserOp(op));
-      expect(this.mock.validateUserOp(operation.packed, operation.hash(), 0)).to.eventually.eq(SIG_VALIDATION_SUCCESS);
+      await expect(this.mock.validateUserOp(operation.packed, operation.hash(), 0)).to.eventually.eq(
+        SIG_VALIDATION_SUCCESS,
+      );
     });
 
     it('should return SIG_VALIDATION_FAILURE if the signature is invalid', async function () {
@@ -22,7 +24,9 @@ function shouldBehaveLikeERC7579Validator() {
       const operation = await this.account.createUserOp({});
       operation.signature = '0x00';
 
-      expect(this.mock.validateUserOp(operation.packed, operation.hash(), 0)).to.eventually.eq(SIG_VALIDATION_FAILURE);
+      await expect(this.mock.validateUserOp(operation.packed, operation.hash(), 0)).to.eventually.eq(
+        SIG_VALIDATION_FAILURE,
+      );
     });
   });
 

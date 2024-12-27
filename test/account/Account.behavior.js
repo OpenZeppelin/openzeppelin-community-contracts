@@ -305,36 +305,36 @@ function shouldBehaveLikeAccountERC7579() {
     });
 
     describe('accountId', function () {
-      it('should return the account ID', function () {
-        expect(this.mock.accountId()).to.eventually.equal('@openzeppelin/contracts.erc7579account.v0-beta');
+      it('should return the account ID', async function () {
+        await expect(this.mock.accountId()).to.eventually.equal('@openzeppelin/contracts.erc7579account.v0-beta');
       });
     });
 
     describe('supportsExecutionMode', function () {
-      it('supports CALL_TYPE_CALL execution mode', function () {
-        expect(this.mock.supportsExecutionMode(CALL_TYPE_CALL)).to.eventually.equal(true);
+      it('supports CALL_TYPE_CALL execution mode', async function () {
+        await expect(this.mock.supportsExecutionMode(CALL_TYPE_CALL)).to.eventually.equal(true);
       });
 
-      it('supports CALL_TYPE_BATCH execution mode', function () {
-        expect(this.mock.supportsExecutionMode(CALL_TYPE_BATCH)).to.eventually.equal(true);
+      it('supports CALL_TYPE_BATCH execution mode', async function () {
+        await expect(this.mock.supportsExecutionMode(CALL_TYPE_BATCH)).to.eventually.equal(true);
       });
 
-      it('supports CALL_TYPE_DELEGATE execution mode', function () {
-        expect(this.mock.supportsExecutionMode(CALL_TYPE_DELEGATE)).to.eventually.equal(true);
+      it('supports CALL_TYPE_DELEGATE execution mode', async function () {
+        await expect(this.mock.supportsExecutionMode(CALL_TYPE_DELEGATE)).to.eventually.equal(true);
       });
     });
 
     describe('supportsModule', function () {
-      it('supports MODULE_TYPE_VALIDATOR module type', function () {
-        expect(this.mock.supportsModule(MODULE_TYPE_VALIDATOR)).to.eventually.equal(true);
+      it('supports MODULE_TYPE_VALIDATOR module type', async function () {
+        await expect(this.mock.supportsModule(MODULE_TYPE_VALIDATOR)).to.eventually.equal(true);
       });
 
-      it('supports MODULE_TYPE_EXECUTOR module type', function () {
-        expect(this.mock.supportsModule(MODULE_TYPE_EXECUTOR)).to.eventually.equal(true);
+      it('supports MODULE_TYPE_EXECUTOR module type', async function () {
+        await expect(this.mock.supportsModule(MODULE_TYPE_EXECUTOR)).to.eventually.equal(true);
       });
 
-      it('supports MODULE_TYPE_FALLBACK module type', function () {
-        expect(this.mock.supportsModule(MODULE_TYPE_FALLBACK)).to.eventually.equal(true);
+      it('supports MODULE_TYPE_FALLBACK module type', async function () {
+        await expect(this.mock.supportsModule(MODULE_TYPE_FALLBACK)).to.eventually.equal(true);
       });
     });
 
@@ -423,7 +423,7 @@ function shouldBehaveLikeAccountERC7579() {
             .withArgs(moduleTypeId, moduleMock)
             .to.emit(moduleMock, 'ModuleUninstalledReceived')
             .withArgs(this.mock, '0x'); // After decoding MODULE_TYPE_FALLBACK, it should remove the fnSig
-          expect(this.mock.isModuleInstalled(moduleTypeId, moduleMock, deinitData)).to.eventually.equal(false);
+          await expect(this.mock.isModuleInstalled(moduleTypeId, moduleMock, deinitData)).to.eventually.equal(false);
         });
       }
     });
@@ -481,7 +481,7 @@ function shouldBehaveLikeAccountERC7579() {
                 .to.emit(this.target, 'MockFunctionCalledWithArgs')
                 .withArgs(42, '0x1234');
 
-              expect(ethers.provider.getBalance(this.target)).to.eventually.equal(value);
+              await expect(ethers.provider.getBalance(this.target)).to.eventually.equal(value);
             });
 
             it('reverts when target reverts in default ExecType', async function () {
@@ -534,8 +534,8 @@ function shouldBehaveLikeAccountERC7579() {
                 .to.emit(this.target, 'MockFunctionCalledWithArgs')
                 .to.emit(this.anotherTarget, 'MockFunctionCalledWithArgs');
 
-              expect(ethers.provider.getBalance(this.target)).to.eventually.equal(value1);
-              expect(ethers.provider.getBalance(this.anotherTarget)).to.eventually.equal(value2);
+              await expect(ethers.provider.getBalance(this.target)).to.eventually.equal(value1);
+              await expect(ethers.provider.getBalance(this.anotherTarget)).to.eventually.equal(value2);
             });
 
             it('reverts when any target reverts in default ExecType', async function () {
@@ -577,8 +577,8 @@ function shouldBehaveLikeAccountERC7579() {
                   ),
                 );
 
-              expect(ethers.provider.getBalance(this.target)).to.eventually.equal(value1);
-              expect(ethers.provider.getBalance(this.anotherTarget)).to.eventually.equal(0);
+              await expect(ethers.provider.getBalance(this.target)).to.eventually.equal(value1);
+              await expect(ethers.provider.getBalance(this.anotherTarget)).to.eventually.equal(0);
             });
           });
 
@@ -591,9 +591,9 @@ function shouldBehaveLikeAccountERC7579() {
                 this.target.interface.encodeFunctionData('mockFunctionWritesStorage', [slot, value]),
               );
 
-              expect(ethers.provider.getStorage(this.mock.target, slot)).to.eventually.equal(ethers.ZeroHash);
+              await expect(ethers.provider.getStorage(this.mock.target, slot)).to.eventually.equal(ethers.ZeroHash);
               await this[mock][execFn](encodeMode({ callType: CALL_TYPE_DELEGATE }), data);
-              expect(ethers.provider.getStorage(this.mock.target, slot)).to.eventually.equal(value);
+              await expect(ethers.provider.getStorage(this.mock.target, slot)).to.eventually.equal(value);
             });
 
             it('reverts when target reverts in default ExecType', async function () {
