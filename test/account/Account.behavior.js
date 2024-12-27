@@ -36,11 +36,12 @@ function shouldBehaveLikeAccountCore() {
     beforeEach(async function () {
       await setBalance(this.mock.target, ethers.parseEther('1'));
       await this.mock.deploy();
+      this.userOp ??= {};
     });
 
     it('should revert if the caller is not the canonical entrypoint', async function () {
       // empty operation (does nothing)
-      const operation = await this.mock.createUserOp({}).then(op => this.signUserOp(op));
+      const operation = await this.mock.createUserOp(this.userOp).then(op => this.signUserOp(op));
 
       await expect(this.mock.connect(this.other).validateUserOp(operation.packed, operation.hash(), 0))
         .to.be.revertedWithCustomError(this.mock, 'AccountUnauthorized')
@@ -54,7 +55,7 @@ function shouldBehaveLikeAccountCore() {
 
       it('should return SIG_VALIDATION_SUCCESS if the signature is valid', async function () {
         // empty operation (does nothing)
-        const operation = await this.mock.createUserOp({}).then(op => this.signUserOp(op));
+        const operation = await this.mock.createUserOp(this.userOp).then(op => this.signUserOp(op));
 
         expect(await this.mockFromEntrypoint.validateUserOp.staticCall(operation.packed, operation.hash(), 0)).to.eq(
           SIG_VALIDATION_SUCCESS,
@@ -63,7 +64,7 @@ function shouldBehaveLikeAccountCore() {
 
       it('should return SIG_VALIDATION_FAILURE if the signature is invalid', async function () {
         // empty operation (does nothing)
-        const operation = await this.mock.createUserOp({});
+        const operation = await this.mock.createUserOp(this.userOp);
         operation.signature = '0x00';
 
         expect(await this.mockFromEntrypoint.validateUserOp.staticCall(operation.packed, operation.hash(), 0)).to.eq(
@@ -73,7 +74,7 @@ function shouldBehaveLikeAccountCore() {
 
       it('should pay missing account funds for execution', async function () {
         // empty operation (does nothing)
-        const operation = await this.mock.createUserOp({}).then(op => this.signUserOp(op));
+        const operation = await this.mock.createUserOp(this.userOp).then(op => this.signUserOp(op));
 
         await expect(
           this.mockFromEntrypoint.validateUserOp(operation.packed, operation.hash(), value),

@@ -2,10 +2,12 @@
 
 pragma solidity ^0.8.20;
 
+import {PackedUserOperation} from "@openzeppelin/contracts/interfaces/draft-IERC4337.sol";
 import {IERC1271} from "@openzeppelin/contracts/interfaces/IERC1271.sol";
 import {IERC7579Module, IERC7579Validator, IERC7579Execution, IERC7579AccountConfig, IERC7579ModuleConfig, MODULE_TYPE_VALIDATOR, MODULE_TYPE_EXECUTOR, MODULE_TYPE_FALLBACK} from "@openzeppelin/contracts/interfaces/draft-IERC7579.sol";
 import {ERC7579Utils, Mode, CallType, ExecType} from "@openzeppelin/contracts/account/utils/draft-ERC7579Utils.sol";
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
+import {Packing} from "@openzeppelin/contracts/utils/Packing.sol";
 import {ERC7739Signer} from "../../utils/cryptography/ERC7739Signer.sol";
 import {AccountCore} from "../AccountCore.sol";
 
@@ -18,6 +20,7 @@ abstract contract AccountERC7579 is
 {
     using ERC7579Utils for *;
     using EnumerableSet for *;
+    using Packing for bytes32;
 
     EnumerableSet.AddressSet private _validators;
     EnumerableSet.AddressSet private _executors;
@@ -96,6 +99,17 @@ abstract contract AccountERC7579 is
         return _execute(Mode.wrap(mode), executionCalldata);
     }
 
+    function _validateUserOp(
+        PackedUserOperation calldata userOp,
+        bytes32 userOpHash
+    ) internal virtual override returns (uint256) {
+        address module = address(bytes32(userOp.nonce).extract_32_20(0));
+        return
+            isModuleInstalled(MODULE_TYPE_VALIDATOR, module, _emptyCalldataBytes())
+                ? IERC7579Validator(module).validateUserOp(userOp, _signableUserOpHash(userOp, userOpHash))
+                : super._validateUserOp(userOp, userOpHash);
+    }
+
     function _execute(
         Mode mode,
         bytes calldata executionCalldata
@@ -113,9 +127,9 @@ abstract contract AccountERC7579 is
     ) internal view virtual override returns (bool) {
         if (signature.length < 20) return false;
         address module = address(bytes20(signature[0:20]));
-        if (!isModuleInstalled(MODULE_TYPE_VALIDATOR, module, msg.data)) return false;
         return
-            IERC7579Validator(module).isValidSignatureWithSender(msg.sender, hash, signature) ==
+            isModuleInstalled(MODULE_TYPE_VALIDATOR, module, msg.data) &&
+            IERC7579Validator(module).isValidSignatureWithSender(address(this), hash, signature[20:]) ==
             IERC1271.isValidSignature.selector;
     }
 
@@ -204,6 +218,14 @@ abstract contract AccountERC7579 is
             default {
                 return(add(returndata, 0x20), mload(returndata))
             }
+        }
+    }
+
+    // slither-disable-next-line write-after-write
+    function _emptyCalldataBytes() private pure returns (bytes calldata result) {
+        assembly ("memory-safe") {
+            result.offset := 0
+            result.length := 0
         }
     }
 

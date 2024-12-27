@@ -1,10 +1,10 @@
 const { ethers } = require('hardhat');
 const { loadFixture } = require('@nomicfoundation/hardhat-network-helpers');
 const { ERC4337Helper } = require('../helpers/erc4337');
-const { NonNativeSigner } = require('../helpers/signers');
 const { PackedUserOperation } = require('../helpers/eip712-types');
 
 const { shouldBehaveLikeAccountCore, shouldBehaveLikeAccountERC7579 } = require('./Account.behavior');
+const { shouldBehaveLikeERC7739Signer } = require('../utils/cryptography/ERC7739Signer.behavior');
 
 async function fixture() {
   // EOAs and environment
@@ -13,17 +13,20 @@ async function fixture() {
   const anotherTarget = await ethers.deployContract('CallReceiverMockExtended');
 
   // ERC-7579 validator
-  const validatorMock = await ethers.deployContract('$ERC7579ValidatorMock');
+  const validatorMock = await ethers.deployContract('$ERC7579ECDSAValidator');
 
   // ERC-4337 signer
-  const signer = new NonNativeSigner({
-    sign: () => ({ serialized: ethers.solidityPacked(['address', 'bool'], [validatorMock.target, '0x01']) }),
-  });
+  const signer = ethers.Wallet.createRandom();
 
   // ERC-4337 account
   const helper = new ERC4337Helper();
   const env = await helper.wait();
-  const mock = await helper.newAccount('$AccountERC7579Mock', ['AccountERC7579', '1', validatorMock.target, '0x']);
+  const mock = await helper.newAccount('$AccountERC7579Mock', [
+    'AccountERC7579',
+    '1',
+    validatorMock.target,
+    ethers.solidityPacked(['address'], [signer.address]),
+  ]);
 
   // domain cannot be fetched using getDomain(mock) before the mock is deployed
   const domain = {
@@ -38,7 +41,12 @@ async function fixture() {
       .signTypedData(domain, { PackedUserOperation }, userOp.packed)
       .then(signature => Object.assign(userOp, { signature }));
 
-  return { ...env, mock, domain, signer, target, anotherTarget, other, signUserOp };
+  const userOp = {
+    // Use the first 20 bytes from the nonce key (24 bytes) to identify the validator module
+    nonce: ethers.zeroPadBytes(ethers.hexlify(validatorMock.target), 32),
+  };
+
+  return { ...env, validatorMock, mock, domain, signer, target, anotherTarget, other, signUserOp, userOp };
 }
 
 describe('AccountERC7579', function () {
@@ -48,4 +56,17 @@ describe('AccountERC7579', function () {
 
   shouldBehaveLikeAccountCore();
   shouldBehaveLikeAccountERC7579();
+
+  describe('ERC7739Signer', function () {
+    beforeEach(async function () {
+      this.mock = await this.mock.deploy();
+      this.signTypedData ??= (async (...args) => {
+        // Use the first 20 bytes from the signature to identify the validator module
+        const sig = await this.signer.signTypedData(...args);
+        return ethers.solidityPacked(['address', 'bytes'], [this.validatorMock.target, sig]);
+      }).bind(this.signer);
+    });
+
+    shouldBehaveLikeERC7739Signer();
+  });
 });
