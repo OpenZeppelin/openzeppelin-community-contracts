@@ -42,7 +42,9 @@ async function fixture() {
       .signTypedData(domain, { PackedUserOperation }, userOp.packed)
       .then(signature => Object.assign(userOp, { signature }));
 
-  return { ...env, mock, signer, publicKey, account, accountAsSigner, signUserOp };
+  const signUserOpHash = userOp => ethers.TypedDataEncoder.hash(domain, { PackedUserOperation }, userOp.packed);
+
+  return { ...env, mock, signer, publicKey, account, accountAsSigner, signUserOp, signUserOpHash };
 }
 
 describe('ERC7759P256Validator', function () {
@@ -70,7 +72,7 @@ describe('ERC7759P256Validator', function () {
       ['bytes32', 'bytes32'],
       [this.publicKey.qx, this.publicKey.qy],
     );
-    this.mock.connect(this.accountAsSigner).onInstall(data);
+    await this.mock.connect(this.accountAsSigner).onInstall(data);
     await expect(this.mock.connect(this.accountAsSigner).onUninstall(data))
       .to.emit(this.mock, 'P256SignerAssociated')
       .withArgs(this.accountAsSigner, ethers.ZeroHash, ethers.ZeroHash);

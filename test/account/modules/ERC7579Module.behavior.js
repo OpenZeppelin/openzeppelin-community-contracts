@@ -14,9 +14,9 @@ function shouldBehaveLikeERC7579Validator() {
     it('should return SIG_VALIDATION_SUCCESS if the signature is valid', async function () {
       // empty operation (does nothing)
       const operation = await this.account.createUserOp({}).then(op => this.signUserOp(op));
-      await expect(this.mock.validateUserOp(operation.packed, operation.hash(), 0)).to.eventually.eq(
-        SIG_VALIDATION_SUCCESS,
-      );
+      await expect(
+        this.mock.connect(this.accountAsSigner).validateUserOp(operation.packed, this.signUserOpHash(operation)),
+      ).to.eventually.eq(SIG_VALIDATION_SUCCESS);
     });
 
     it('should return SIG_VALIDATION_FAILURE if the signature is invalid', async function () {
@@ -24,7 +24,7 @@ function shouldBehaveLikeERC7579Validator() {
       const operation = await this.account.createUserOp({});
       operation.signature = '0x00';
 
-      await expect(this.mock.validateUserOp(operation.packed, operation.hash(), 0)).to.eventually.eq(
+      await expect(this.mock.validateUserOp(operation.packed, this.signUserOpHash(operation))).to.eventually.eq(
         SIG_VALIDATION_FAILURE,
       );
     });

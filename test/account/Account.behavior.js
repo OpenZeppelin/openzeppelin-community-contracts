@@ -312,15 +312,21 @@ function shouldBehaveLikeAccountERC7579() {
 
     describe('supportsExecutionMode', function () {
       it('supports CALL_TYPE_CALL execution mode', async function () {
-        await expect(this.mock.supportsExecutionMode(CALL_TYPE_CALL)).to.eventually.equal(true);
+        await expect(this.mock.supportsExecutionMode(encodeMode({ callType: CALL_TYPE_CALL }))).to.eventually.equal(
+          true,
+        );
       });
 
       it('supports CALL_TYPE_BATCH execution mode', async function () {
-        await expect(this.mock.supportsExecutionMode(CALL_TYPE_BATCH)).to.eventually.equal(true);
+        await expect(this.mock.supportsExecutionMode(encodeMode({ callType: CALL_TYPE_BATCH }))).to.eventually.equal(
+          true,
+        );
       });
 
       it('supports CALL_TYPE_DELEGATE execution mode', async function () {
-        await expect(this.mock.supportsExecutionMode(CALL_TYPE_DELEGATE)).to.eventually.equal(true);
+        await expect(this.mock.supportsExecutionMode(encodeMode({ callType: CALL_TYPE_DELEGATE }))).to.eventually.equal(
+          true,
+        );
       });
     });
 

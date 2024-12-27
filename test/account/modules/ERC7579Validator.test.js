@@ -4,6 +4,7 @@ const { shouldBehaveLikeERC7579Validator } = require('./ERC7579Module.behavior')
 const { NonNativeSigner } = require('../../helpers/signers');
 const { ERC4337Helper } = require('../../helpers/erc4337');
 const { PackedUserOperation } = require('../../helpers/eip712-types');
+const { impersonate } = require('@openzeppelin/contracts/test/helpers/account');
 
 async function fixture() {
   // ERC-7579 validator
@@ -21,6 +22,8 @@ async function fixture() {
     .newAccount('$AccountERC7579Mock', ['AccountERC7579', '1', mock.target, '0x'])
     .then(account => account.deploy());
 
+  const accountAsSigner = await impersonate(account.address);
+
   // domain cannot be fetched using getDomain(mock) before the mock is deployed
   const domain = {
     name: 'AccountERC7579',
@@ -34,7 +37,9 @@ async function fixture() {
       .signTypedData(domain, { PackedUserOperation }, userOp.packed)
       .then(signature => Object.assign(userOp, { signature }));
 
-  return { ...env, mock, signer, account, signUserOp };
+  const signUserOpHash = userOp => ethers.TypedDataEncoder.hash(domain, { PackedUserOperation }, userOp.packed);
+
+  return { ...env, mock, signer, account, accountAsSigner, signUserOp, signUserOpHash };
 }
 
 describe('ERC7759Validator', function () {

@@ -40,7 +40,9 @@ async function fixture() {
       .signTypedData(domain, { PackedUserOperation }, userOp.packed)
       .then(signature => Object.assign(userOp, { signature }));
 
-  return { ...env, mock, signer, account, accountAsSigner, signUserOp };
+  const signUserOpHash = userOp => ethers.TypedDataEncoder.hash(domain, { PackedUserOperation }, userOp.packed);
+
+  return { ...env, mock, signer, account, accountAsSigner, signUserOp, signUserOpHash };
 }
 
 describe('ERC7759ECDSAValidator', function () {
