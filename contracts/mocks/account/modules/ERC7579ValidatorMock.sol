@@ -9,7 +9,7 @@ abstract contract ERC7579ValidatorMock is ERC7579Validator {
 
     function onUninstall(bytes calldata) public virtual {}
 
-    /// WARNING: This validator returns true for all signatures starting in `0x01` for testing purposes.
+    /// WARNING: This validator returns true for all signatures ending in `0x01` for testing purposes.
     function _isValidSignatureWithSender(
         address /* sender */,
         bytes32 /* hash */,
