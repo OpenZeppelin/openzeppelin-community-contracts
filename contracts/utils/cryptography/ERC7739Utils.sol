@@ -157,7 +157,7 @@ library ERC7739Utils {
      * modes.
      *
      * Following ERC-7739 specifications, a `contentsTypeName` is considered invalid if it's empty, it contains
-     * any of the following bytes (`, )\x00`) or it starts with a forbidden character (a-z or `(`).
+     * any of the following bytes (`, )\x00`), or it starts with a forbidden character (a-z or `(`).
      *
      * If the `contentsType` is invalid, this returns an empty string. Otherwise, the return string has non-zero
      * length.
