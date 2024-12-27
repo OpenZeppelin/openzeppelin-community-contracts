@@ -178,7 +178,7 @@ library ERC7739Utils {
                         break;
                     }
                     // we found the end of the contentsTypeName
-                    return (string(buffer[:i]), string(buffer));
+                    return (string(buffer[:i]), contentsDescr);
                 } else if (_isForbiddenChar(current)) {
                     // we found an invalid character (forbidden) - passthrough (fail)
                     break;
