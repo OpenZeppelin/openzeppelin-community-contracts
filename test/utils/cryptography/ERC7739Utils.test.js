@@ -156,7 +156,6 @@ describe('ERC7739Utils', function () {
   });
 
   describe('decodeContentsDescr', function () {
-    const forbiddenFirstChars = 'abcdefghijklmnopqrstuvwxyz(';
     const forbiddenChars = ', )\x00';
 
     for (const { descr, contentDescr, contentTypeName, contentType } of [].concat(
@@ -181,16 +180,16 @@ describe('ERC7739Utils', function () {
         contentDescr: 'SomeType',
         contentTypeName: null,
       },
-      forbiddenFirstChars.split('').map(char => ({
-        descr: `should return nothing if starts with [${char}] (implicit)`,
-        contentDescr: `${char}SomeType()`,
+      {
+        descr: 'should return nothing if starts with [(] (implicit)',
+        contentDescr: '(SomeType(address foo,uint256 bar)',
         contentTypeName: null,
-      })),
-      forbiddenFirstChars.split('').map(char => ({
-        descr: `should return nothing if starts with [${char}] (explicit)`,
-        contentDescr: `${char}SomeType()${char}SomeType`,
+      },
+      {
+        descr: 'should return nothing if starts with [(] (explicit)',
+        contentDescr: '(SomeType(address foo,uint256 bar)(SomeType',
         contentTypeName: null,
-      })),
+      },
       forbiddenChars.split('').map(char => ({
         descr: `should return nothing if contains [${char}] (implicit)`,
         contentDescr: `SomeType${char}(address foo,uint256 bar)`,

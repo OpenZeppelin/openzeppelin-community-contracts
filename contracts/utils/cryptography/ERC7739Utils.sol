@@ -156,8 +156,8 @@ library ERC7739Utils {
      * @dev Parse the type name out of the ERC-7739 contents type description. Supports both the implicit and explicit
      * modes.
      *
-     * Following ERC-7739 specifications, a `contentsTypeName` is considered invalid if it's empty, it contains
-     * any of the following bytes (`, )\x00`), or it starts with a forbidden character (a-z or `(`).
+     * Following ERC-7739 specifications, a `contentsTypeName` is considered invalid if it's empty or it contains
+     * any of the following bytes , )\x00
      *
      * If the `contentsType` is invalid, this returns an empty string. Otherwise, the return string has non-zero
      * length.
@@ -173,10 +173,8 @@ library ERC7739Utils {
             for (uint256 i = 0; i < buffer.length; ++i) {
                 bytes1 current = buffer[i];
                 if (current == bytes1("(")) {
-                    if (_isForbiddenFirstChar(buffer[0])) {
-                        // we found an invalid first character (forbidden) - passthrough (fail)
-                        break;
-                    }
+                    // if name is empty - passthrough (fail)
+                    if (i == 0) break;
                     // we found the end of the contentsTypeName
                     return (string(buffer[:i]), contentsDescr);
                 } else if (_isForbiddenChar(current)) {
@@ -189,10 +187,6 @@ library ERC7739Utils {
             for (uint256 i = buffer.length; i > 0; --i) {
                 bytes1 current = buffer[i - 1];
                 if (current == bytes1(")")) {
-                    if (i >= buffer.length || _isForbiddenFirstChar(buffer[i])) {
-                        // we found an invalid first character (forbidden) - passthrough (fail)
-                        break;
-                    }
                     // we found the end of the contentsTypeName
                     return (string(buffer[i:]), string(buffer[:i]));
                 } else if (_isForbiddenChar(current)) {
@@ -221,10 +215,6 @@ library ERC7739Utils {
     }
 
     function _isForbiddenChar(bytes1 char) private pure returns (bool) {
-        return char == 0x00 || char == bytes1(" ") || char == bytes1(",") || char == bytes1(")");
-    }
-
-    function _isForbiddenFirstChar(bytes1 char) private pure returns (bool) {
-        return (char > 0x60 && char < 0x7b) || char == bytes1("(");
+        return char == 0x00 || char == bytes1(" ") || char == bytes1(",") || char == bytes1("(") || char == bytes1(")");
     }
 }
