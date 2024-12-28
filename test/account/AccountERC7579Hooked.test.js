@@ -111,6 +111,31 @@ describe('AccountERC7579Hooked', function () {
         this.mockFromExecutor = this.mock.connect(await impersonate(this.executorMock.target));
       });
 
+      it(`should call the hook of the installed module when executing through executeUserOp`, async function () {
+        const value = 0x00; // Can't use 0x00 as value since `execute` is not payable
+        const data = this.target.interface.encodeFunctionData('mockFunctionWithArgs', [42, '0x1234']);
+        const opts = { value };
+
+        const mode = encodeMode({ callType: CALL_TYPE_CALL });
+        const call = encodeSingle(this.target, value, data);
+
+        const precheckData = this.mockFromEntrypoint.interface.encodeFunctionData('execute', [mode, call]);
+        const operation = await this.mock.createUserOp({
+          callData: ethers.concat([
+            this.mockFromEntrypoint.interface.getFunction('executeUserOp').selector,
+            precheckData,
+          ]),
+        });
+
+        await expect(this.mockFromEntrypoint.executeUserOp(operation.packed, operation.hash(), opts))
+          .to.emit(this.moduleMock, 'PreCheck')
+          .withArgs(entrypoint, value, precheckData)
+          .to.emit(this.moduleMock, 'PostCheck')
+          .withArgs(precheckData);
+
+        await expect(ethers.provider.getBalance(this.target)).to.eventually.equal(value);
+      });
+
       for (const [execFn, mock] of [
         ['execute', 'mockFromEntrypoint'],
         ['executeFromExecutor', 'mockFromExecutor'],

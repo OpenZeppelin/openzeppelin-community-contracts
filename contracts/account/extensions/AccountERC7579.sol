@@ -2,12 +2,13 @@
 
 pragma solidity ^0.8.20;
 
-import {PackedUserOperation} from "@openzeppelin/contracts/interfaces/draft-IERC4337.sol";
+import {PackedUserOperation, IAccountExecute} from "@openzeppelin/contracts/interfaces/draft-IERC4337.sol";
 import {IERC1271} from "@openzeppelin/contracts/interfaces/IERC1271.sol";
 import {IERC7579Module, IERC7579Validator, IERC7579Execution, IERC7579AccountConfig, IERC7579ModuleConfig, MODULE_TYPE_VALIDATOR, MODULE_TYPE_EXECUTOR, MODULE_TYPE_FALLBACK} from "@openzeppelin/contracts/interfaces/draft-IERC7579.sol";
 import {ERC7579Utils, Mode, CallType, ExecType} from "@openzeppelin/contracts/account/utils/draft-ERC7579Utils.sol";
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import {Packing} from "@openzeppelin/contracts/utils/Packing.sol";
+import {Address} from "@openzeppelin/contracts/utils/Address.sol";
 import {ERC7739Signer} from "../../utils/cryptography/ERC7739Signer.sol";
 import {AccountCore} from "../AccountCore.sol";
 
@@ -16,7 +17,8 @@ abstract contract AccountERC7579 is
     ERC7739Signer,
     IERC7579Execution,
     IERC7579AccountConfig,
-    IERC7579ModuleConfig
+    IERC7579ModuleConfig,
+    IAccountExecute
 {
     using ERC7579Utils for *;
     using EnumerableSet for *;
@@ -84,6 +86,11 @@ abstract contract AccountERC7579 is
         if (moduleTypeId == MODULE_TYPE_EXECUTOR) return _executors.contains(module);
         if (moduleTypeId == MODULE_TYPE_FALLBACK) return _fallbacks[bytes4(additionalContext[0:4])] == module;
         return false;
+    }
+
+    /// @inheritdoc IAccountExecute
+    function executeUserOp(PackedUserOperation calldata userOp, bytes32 /*userOpHash*/) public virtual onlyEntryPoint {
+        Address.functionDelegateCall(address(this), userOp.callData[4:]);
     }
 
     /// @inheritdoc IERC7579Execution
