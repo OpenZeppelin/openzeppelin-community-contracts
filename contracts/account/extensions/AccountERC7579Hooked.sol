@@ -35,12 +35,12 @@ abstract contract AccountERC7579Hooked is AccountERC7579 {
     }
 
     function _installModule(uint256 moduleTypeId, address module, bytes memory initData) internal virtual override {
-        _hook = module;
+        if (moduleTypeId == MODULE_TYPE_HOOK) _hook = module;
         super._installModule(moduleTypeId, module, initData);
     }
 
     function _uninstallModule(uint256 moduleTypeId, address module, bytes memory deInitData) internal virtual override {
-        _hook = address(0);
+        if (moduleTypeId == MODULE_TYPE_HOOK) _hook = address(0);
         super._uninstallModule(moduleTypeId, module, deInitData);
     }
 
@@ -49,10 +49,6 @@ abstract contract AccountERC7579Hooked is AccountERC7579 {
     }
 
     function _isHookInstalled(address module) internal view returns (bool) {
-        return _hook == module;
-    }
-
-    function _fallback() internal virtual override withHook {
-        super._fallback();
+        return hook() == module;
     }
 }
