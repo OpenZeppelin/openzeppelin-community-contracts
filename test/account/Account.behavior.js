@@ -345,6 +345,10 @@ function shouldBehaveLikeAccountERC7579() {
       });
     });
 
+    it('unsupported module types are not installed', async function () {
+      await expect(this.mock.isModuleInstalled(999, this.mock, '0x')).to.eventually.equal(false);
+    });
+
     describe('module installation', function () {
       beforeEach(async function () {
         this.mockFromEntrypoint = this.mock.connect(await impersonate(entrypoint.target));
@@ -369,7 +373,7 @@ function shouldBehaveLikeAccountERC7579() {
           .withArgs(MODULE_TYPE_VALIDATOR, moduleMock);
       });
 
-      for (const moduleTypeId of [MODULE_TYPE_VALIDATOR, MODULE_TYPE_EXECUTOR]) {
+      for (const moduleTypeId of [MODULE_TYPE_VALIDATOR, MODULE_TYPE_EXECUTOR, MODULE_TYPE_FALLBACK]) {
         it(`does not allow to install a module of ${moduleTypeId} id twice`, async function () {
           const moduleMock = await ethers.deployContract('$ERC7579ModuleMock', [moduleTypeId]);
           const initData = moduleTypeId === MODULE_TYPE_FALLBACK ? data : '0x';
@@ -420,6 +424,16 @@ function shouldBehaveLikeAccountERC7579() {
         });
       }
 
+      it('should revert uninstalling a module of type MODULE_TYPE_FALLBACK if a different module was installed for the provided selector', async function () {
+        const moduleMock = await ethers.deployContract('$ERC7579ModuleMock', [MODULE_TYPE_FALLBACK]);
+        const anotherModuleMock = await ethers.deployContract('$ERC7579ModuleMock', [MODULE_TYPE_FALLBACK]);
+
+        await this.mockFromEntrypoint.$_installModule(MODULE_TYPE_FALLBACK, moduleMock, data);
+        await expect(this.mockFromEntrypoint.uninstallModule(MODULE_TYPE_FALLBACK, anotherModuleMock, data))
+          .to.be.revertedWithCustomError(this.mock, 'ERC7579UninstalledModule')
+          .withArgs(MODULE_TYPE_FALLBACK, anotherModuleMock);
+      });
+
       for (const moduleTypeId of [MODULE_TYPE_VALIDATOR, MODULE_TYPE_EXECUTOR, MODULE_TYPE_FALLBACK]) {
         it(`should uninstall a module of type ${moduleTypeId}`, async function () {
           const moduleMock = await ethers.deployContract('$ERC7579ModuleMock', [moduleTypeId]);
@@ -435,7 +449,7 @@ function shouldBehaveLikeAccountERC7579() {
       }
     });
 
-    describe('execute', function () {
+    describe('execution', function () {
       beforeEach(async function () {
         const moduleMock = await ethers.deployContract('$ERC7579ModuleMock', [MODULE_TYPE_EXECUTOR]);
         await this.mock.$_installModule(MODULE_TYPE_EXECUTOR, moduleMock, '0x');
@@ -633,6 +647,44 @@ function shouldBehaveLikeAccountERC7579() {
           });
         });
       }
+    });
+
+    describe('fallback', function () {
+      beforeEach(async function () {
+        this.fallbackHandler = await ethers.deployContract('$ERC7579FallbackHandlerMock', [
+          this.mock.target, // Trusted forwarder
+        ]);
+      });
+
+      it('reverts if there is no fallback module installed', async function () {
+        await expect(
+          this.other.sendTransaction({
+            data: fnSig,
+            to: this.mock,
+          }),
+        )
+          .to.be.revertedWithCustomError(this.mock, 'ERC7579MissingFallbackHandler')
+          .withArgs(fnSig);
+      });
+
+      describe('with a fallback module installed', function () {
+        it('forwards the call to the fallback handler', async function () {
+          await this.mock.$_installModule(MODULE_TYPE_FALLBACK, this.fallbackHandler, data);
+          await expect(this.other.sendTransaction({ data: fnSig, to: this.mock, value: 32 }))
+            .to.emit(this.fallbackHandler, 'ERC7579FallbackHandlerMockCalled')
+            .withArgs(this.other, 32, fnSig);
+        });
+
+        it('bubble up reverts from the fallback handler', async function () {
+          const revertData = this.fallbackHandler.interface.encodeFunctionData('callRevert');
+          const initData = coder.encode(['bytes4', 'bytes'], [revertData, '0x']);
+          await this.mock.$_installModule(MODULE_TYPE_FALLBACK, this.fallbackHandler, initData);
+          await expect(this.other.sendTransaction({ data: revertData, to: this.mock })).to.be.revertedWithCustomError(
+            this.fallbackHandler,
+            'ERC7579FallbackHandlerMockRevert',
+          );
+        });
+      });
     });
   });
 }
