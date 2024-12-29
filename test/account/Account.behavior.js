@@ -307,7 +307,9 @@ function shouldBehaveLikeAccountERC7579() {
 
     describe('accountId', function () {
       it('should return the account ID', async function () {
-        await expect(this.mock.accountId()).to.eventually.equal('@openzeppelin/contracts.erc7579account.v0-beta');
+        await expect(this.mock.accountId()).to.eventually.equal(
+          '@openzeppelin/community-contracts.AccountERC7579.v0.0.0',
+        );
       });
     });
 
