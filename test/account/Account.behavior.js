@@ -4,10 +4,23 @@ const { setBalance } = require('@nomicfoundation/hardhat-network-helpers');
 
 const { impersonate } = require('@openzeppelin/contracts/test/helpers/account');
 const { SIG_VALIDATION_SUCCESS, SIG_VALIDATION_FAILURE } = require('@openzeppelin/contracts/test/helpers/erc4337');
-const { CALL_TYPE_BATCH, encodeMode, encodeBatch } = require('@openzeppelin/contracts/test/helpers/erc7579');
+const {
+  CALL_TYPE_BATCH,
+  encodeMode,
+  encodeBatch,
+  encodeSingle,
+  encodeDelegate,
+  EXEC_TYPE_TRY,
+  CALL_TYPE_CALL,
+  CALL_TYPE_DELEGATE,
+  MODULE_TYPE_VALIDATOR,
+  MODULE_TYPE_EXECUTOR,
+  MODULE_TYPE_FALLBACK,
+} = require('@openzeppelin/contracts/test/helpers/erc7579');
 const {
   shouldSupportInterfaces,
 } = require('@openzeppelin/contracts/test/utils/introspection/SupportsInterface.behavior');
+const { selector } = require('@openzeppelin/contracts/test/helpers/methods');
 
 const value = ethers.parseEther('0.1');
 
@@ -23,11 +36,12 @@ function shouldBehaveLikeAccountCore() {
     beforeEach(async function () {
       await setBalance(this.mock.target, ethers.parseEther('1'));
       await this.mock.deploy();
+      this.userOp ??= {};
     });
 
     it('should revert if the caller is not the canonical entrypoint', async function () {
       // empty operation (does nothing)
-      const operation = await this.mock.createUserOp({}).then(op => this.signUserOp(op));
+      const operation = await this.mock.createUserOp(this.userOp).then(op => this.signUserOp(op));
 
       await expect(this.mock.connect(this.other).validateUserOp(operation.packed, operation.hash(), 0))
         .to.be.revertedWithCustomError(this.mock, 'AccountUnauthorized')
@@ -36,38 +50,34 @@ function shouldBehaveLikeAccountCore() {
 
     describe('when the caller is the canonical entrypoint', function () {
       beforeEach(async function () {
-        this.entrypointAsSigner = await impersonate(entrypoint.target);
+        this.mockFromEntrypoint = this.mock.connect(await impersonate(entrypoint.target));
       });
 
       it('should return SIG_VALIDATION_SUCCESS if the signature is valid', async function () {
         // empty operation (does nothing)
-        const operation = await this.mock.createUserOp({}).then(op => this.signUserOp(op));
+        const operation = await this.mock.createUserOp(this.userOp).then(op => this.signUserOp(op));
 
-        expect(
-          await this.mock
-            .connect(this.entrypointAsSigner)
-            .validateUserOp.staticCall(operation.packed, operation.hash(), 0),
-        ).to.eq(SIG_VALIDATION_SUCCESS);
+        expect(await this.mockFromEntrypoint.validateUserOp.staticCall(operation.packed, operation.hash(), 0)).to.eq(
+          SIG_VALIDATION_SUCCESS,
+        );
       });
 
       it('should return SIG_VALIDATION_FAILURE if the signature is invalid', async function () {
         // empty operation (does nothing)
-        const operation = await this.mock.createUserOp({});
+        const operation = await this.mock.createUserOp(this.userOp);
         operation.signature = '0x00';
 
-        expect(
-          await this.mock
-            .connect(this.entrypointAsSigner)
-            .validateUserOp.staticCall(operation.packed, operation.hash(), 0),
-        ).to.eq(SIG_VALIDATION_FAILURE);
+        expect(await this.mockFromEntrypoint.validateUserOp.staticCall(operation.packed, operation.hash(), 0)).to.eq(
+          SIG_VALIDATION_FAILURE,
+        );
       });
 
       it('should pay missing account funds for execution', async function () {
         // empty operation (does nothing)
-        const operation = await this.mock.createUserOp({}).then(op => this.signUserOp(op));
+        const operation = await this.mock.createUserOp(this.userOp).then(op => this.signUserOp(op));
 
         await expect(
-          this.mock.connect(this.entrypointAsSigner).validateUserOp(operation.packed, operation.hash(), value),
+          this.mockFromEntrypoint.validateUserOp(operation.packed, operation.hash(), value),
         ).to.changeEtherBalances([this.mock, entrypoint], [-value, value]);
       });
     });
@@ -285,8 +295,428 @@ function shouldBehaveLikeAccountERC7821({ deployable = true } = {}) {
   });
 }
 
+function shouldBehaveLikeAccountERC7579() {
+  const fnSig = '0x12345678';
+  const coder = ethers.AbiCoder.defaultAbiCoder();
+  const data = coder.encode(['bytes4', 'bytes'], [fnSig, '0x']); // Min data for MODULE_TYPE_FALLBACK
+
+  describe('AccountERC7579', function () {
+    beforeEach(async function () {
+      await this.mock.deploy();
+    });
+
+    describe('accountId', function () {
+      it('should return the account ID', async function () {
+        await expect(this.mock.accountId()).to.eventually.equal(
+          '@openzeppelin/community-contracts.AccountERC7579.v0.0.0',
+        );
+      });
+    });
+
+    describe('supportsExecutionMode', function () {
+      it('supports CALL_TYPE_CALL execution mode', async function () {
+        await expect(this.mock.supportsExecutionMode(encodeMode({ callType: CALL_TYPE_CALL }))).to.eventually.equal(
+          true,
+        );
+      });
+
+      it('supports CALL_TYPE_BATCH execution mode', async function () {
+        await expect(this.mock.supportsExecutionMode(encodeMode({ callType: CALL_TYPE_BATCH }))).to.eventually.equal(
+          true,
+        );
+      });
+
+      it('supports CALL_TYPE_DELEGATE execution mode', async function () {
+        await expect(this.mock.supportsExecutionMode(encodeMode({ callType: CALL_TYPE_DELEGATE }))).to.eventually.equal(
+          true,
+        );
+      });
+    });
+
+    describe('supportsModule', function () {
+      it('supports MODULE_TYPE_VALIDATOR module type', async function () {
+        await expect(this.mock.supportsModule(MODULE_TYPE_VALIDATOR)).to.eventually.equal(true);
+      });
+
+      it('supports MODULE_TYPE_EXECUTOR module type', async function () {
+        await expect(this.mock.supportsModule(MODULE_TYPE_EXECUTOR)).to.eventually.equal(true);
+      });
+
+      it('supports MODULE_TYPE_FALLBACK module type', async function () {
+        await expect(this.mock.supportsModule(MODULE_TYPE_FALLBACK)).to.eventually.equal(true);
+      });
+    });
+
+    it('unsupported module types are not installed', async function () {
+      await expect(this.mock.isModuleInstalled(999, this.mock, '0x')).to.eventually.equal(false);
+    });
+
+    describe('module installation', function () {
+      beforeEach(async function () {
+        this.mockFromEntrypoint = this.mock.connect(await impersonate(entrypoint.target));
+      });
+
+      it('should revert if the caller is not the canonical entrypoint or the account itself', async function () {
+        await expect(this.mock.connect(this.other).installModule(MODULE_TYPE_VALIDATOR, this.mock, '0x'))
+          .to.be.revertedWithCustomError(this.mock, 'AccountUnauthorized')
+          .withArgs(this.other);
+      });
+
+      it('should revert if the module type is not supported', async function () {
+        await expect(this.mockFromEntrypoint.installModule(999, this.mock, '0x'))
+          .to.be.revertedWithCustomError(this.mock, 'ERC7579UnsupportedModuleType')
+          .withArgs(999);
+      });
+
+      it('should revert if the module is not the provided type', async function () {
+        const moduleMock = await ethers.deployContract('$ERC7579ModuleMock', [MODULE_TYPE_EXECUTOR]);
+        await expect(this.mockFromEntrypoint.installModule(MODULE_TYPE_VALIDATOR, moduleMock, '0x'))
+          .to.be.revertedWithCustomError(this.mock, 'ERC7579MismatchedModuleTypeId')
+          .withArgs(MODULE_TYPE_VALIDATOR, moduleMock);
+      });
+
+      for (const moduleTypeId of [MODULE_TYPE_VALIDATOR, MODULE_TYPE_EXECUTOR, MODULE_TYPE_FALLBACK]) {
+        it(`does not allow to install a module of ${moduleTypeId} id twice`, async function () {
+          const moduleMock = await ethers.deployContract('$ERC7579ModuleMock', [moduleTypeId]);
+          const initData = moduleTypeId === MODULE_TYPE_FALLBACK ? data : '0x';
+          await this.mockFromEntrypoint.installModule(moduleTypeId, moduleMock, initData);
+          await expect(this.mockFromEntrypoint.installModule(moduleTypeId, moduleMock, initData))
+            .to.be.revertedWithCustomError(this.mock, 'ERC7579AlreadyInstalledModule')
+            .withArgs(moduleTypeId, moduleMock);
+        });
+      }
+
+      for (const moduleTypeId of [MODULE_TYPE_VALIDATOR, MODULE_TYPE_EXECUTOR, MODULE_TYPE_FALLBACK]) {
+        it(`should install a module of type ${moduleTypeId}`, async function () {
+          const moduleMock = await ethers.deployContract('$ERC7579ModuleMock', [moduleTypeId]);
+          const initData = moduleTypeId === MODULE_TYPE_FALLBACK ? data : '0x';
+          await expect(this.mockFromEntrypoint.installModule(moduleTypeId, moduleMock, initData))
+            .to.emit(this.mock, 'ModuleInstalled')
+            .withArgs(moduleTypeId, moduleMock)
+            .to.emit(moduleMock, 'ModuleInstalledReceived')
+            .withArgs(this.mock, '0x'); // After decoding MODULE_TYPE_FALLBACK, it should remove the fnSig
+          await expect(this.mock.isModuleInstalled(moduleTypeId, moduleMock, initData)).to.eventually.equal(true);
+        });
+      }
+    });
+
+    describe('module uninstallation', function () {
+      beforeEach(async function () {
+        this.mockFromEntrypoint = this.mock.connect(await impersonate(entrypoint.target));
+      });
+
+      it('should revert if the caller is not the canonical entrypoint or the account itself', async function () {
+        await expect(this.mock.connect(this.other).uninstallModule(MODULE_TYPE_VALIDATOR, this.mock, '0x'))
+          .to.be.revertedWithCustomError(this.mock, 'AccountUnauthorized')
+          .withArgs(this.other);
+      });
+
+      for (const moduleTypeId of [MODULE_TYPE_VALIDATOR, MODULE_TYPE_EXECUTOR, MODULE_TYPE_FALLBACK]) {
+        it(`should revert uninstalling a module of type ${moduleTypeId} if it was not installed`, async function () {
+          const moduleMock = await ethers.deployContract('$ERC7579ModuleMock', [moduleTypeId]);
+          await expect(
+            this.mockFromEntrypoint.uninstallModule(
+              moduleTypeId,
+              moduleMock,
+              moduleTypeId === MODULE_TYPE_FALLBACK ? data : '0x',
+            ),
+          )
+            .to.be.revertedWithCustomError(this.mock, 'ERC7579UninstalledModule')
+            .withArgs(moduleTypeId, moduleMock);
+        });
+      }
+
+      it('should revert uninstalling a module of type MODULE_TYPE_FALLBACK if a different module was installed for the provided selector', async function () {
+        const moduleMock = await ethers.deployContract('$ERC7579ModuleMock', [MODULE_TYPE_FALLBACK]);
+        const anotherModuleMock = await ethers.deployContract('$ERC7579ModuleMock', [MODULE_TYPE_FALLBACK]);
+
+        await this.mockFromEntrypoint.$_installModule(MODULE_TYPE_FALLBACK, moduleMock, data);
+        await expect(this.mockFromEntrypoint.uninstallModule(MODULE_TYPE_FALLBACK, anotherModuleMock, data))
+          .to.be.revertedWithCustomError(this.mock, 'ERC7579UninstalledModule')
+          .withArgs(MODULE_TYPE_FALLBACK, anotherModuleMock);
+      });
+
+      for (const moduleTypeId of [MODULE_TYPE_VALIDATOR, MODULE_TYPE_EXECUTOR, MODULE_TYPE_FALLBACK]) {
+        it(`should uninstall a module of type ${moduleTypeId}`, async function () {
+          const moduleMock = await ethers.deployContract('$ERC7579ModuleMock', [moduleTypeId]);
+          const deinitData = moduleTypeId === MODULE_TYPE_FALLBACK ? data : '0x';
+          await this.mock.$_installModule(moduleTypeId, moduleMock, deinitData);
+          await expect(this.mockFromEntrypoint.uninstallModule(moduleTypeId, moduleMock, deinitData))
+            .to.emit(this.mock, 'ModuleUninstalled')
+            .withArgs(moduleTypeId, moduleMock)
+            .to.emit(moduleMock, 'ModuleUninstalledReceived')
+            .withArgs(this.mock, '0x'); // After decoding MODULE_TYPE_FALLBACK, it should remove the fnSig
+          await expect(this.mock.isModuleInstalled(moduleTypeId, moduleMock, deinitData)).to.eventually.equal(false);
+        });
+      }
+    });
+
+    describe('execution', function () {
+      beforeEach(async function () {
+        const moduleMock = await ethers.deployContract('$ERC7579ModuleMock', [MODULE_TYPE_EXECUTOR]);
+        await this.mock.$_installModule(MODULE_TYPE_EXECUTOR, moduleMock, '0x');
+        this.mockFromEntrypoint = this.mock.connect(await impersonate(entrypoint.target));
+        this.mockFromExecutor = this.mock.connect(await impersonate(moduleMock.target));
+        await setBalance(this.mock.target, ethers.parseEther('1'));
+      });
+
+      it('should revert using execute if the caller is not the canonical entrypoint or the account itself', async function () {
+        await expect(
+          this.mock
+            .connect(this.other)
+            .execute(encodeMode({ callType: CALL_TYPE_CALL }), encodeSingle(this.other, 0, '0x')),
+        )
+          .to.be.revertedWithCustomError(this.mock, 'AccountUnauthorized')
+          .withArgs(this.other);
+      });
+
+      it('should revert using executeFromExecutor if the caller is not an installed executor', async function () {
+        await expect(
+          this.mock
+            .connect(this.other)
+            .executeFromExecutor(encodeMode({ callType: CALL_TYPE_CALL }), encodeSingle(this.other, 0, '0x')),
+        )
+          .to.be.revertedWithCustomError(this.mock, 'ERC7579UninstalledModule')
+          .withArgs(MODULE_TYPE_EXECUTOR, this.other);
+      });
+
+      it('should execute via executeUserOp', async function () {
+        const value = 0x00; // Can't use 0x00 as value since `execute` is not payable
+        const data = this.target.interface.encodeFunctionData('mockFunctionWithArgs', [42, '0x1234']);
+        const opts = { value };
+
+        const mode = encodeMode({ callType: CALL_TYPE_CALL });
+        const call = encodeSingle(this.target, value, data);
+
+        const precheckData = this.mockFromEntrypoint.interface.encodeFunctionData('execute', [mode, call]);
+        const operation = await this.mock.createUserOp({
+          callData: ethers.concat([
+            this.mockFromEntrypoint.interface.getFunction('executeUserOp').selector,
+            precheckData,
+          ]),
+        });
+
+        await expect(this.mockFromEntrypoint.executeUserOp(operation.packed, operation.hash(), opts))
+          .to.emit(this.target, 'MockFunctionCalledWithArgs')
+          .withArgs(42, '0x1234');
+
+        await expect(ethers.provider.getBalance(this.target)).to.eventually.equal(value);
+      });
+
+      for (const [execFn, mock] of [
+        ['execute', 'mockFromEntrypoint'],
+        ['executeFromExecutor', 'mockFromExecutor'],
+      ]) {
+        describe(`executing with ${execFn}`, function () {
+          it('should revert if the call type is not supported', async function () {
+            await expect(this[mock][execFn](encodeMode({ callType: '0x12' }), encodeSingle(this.other, 0, '0x')))
+              .to.be.revertedWithCustomError(this.mock, 'ERC7579UnsupportedCallType')
+              .withArgs(ethers.solidityPacked(['bytes1'], ['0x12']));
+          });
+
+          describe('single execution', function () {
+            it('calls the target with value and args', async function () {
+              const value = 0x432;
+              const data = encodeSingle(
+                this.target,
+                value,
+                this.target.interface.encodeFunctionData('mockFunctionWithArgs', [42, '0x1234']),
+              );
+
+              await expect(this[mock][execFn](encodeMode({ callType: CALL_TYPE_CALL }), data))
+                .to.emit(this.target, 'MockFunctionCalledWithArgs')
+                .withArgs(42, '0x1234');
+
+              await expect(ethers.provider.getBalance(this.target)).to.eventually.equal(value);
+            });
+
+            it('reverts when target reverts in default ExecType', async function () {
+              const value = 0x012;
+              const data = encodeSingle(
+                this.target,
+                value,
+                this.target.interface.encodeFunctionData('mockFunctionRevertsReason'),
+              );
+
+              await expect(this[mock][execFn](encodeMode({ callType: CALL_TYPE_CALL }), data)).to.be.revertedWith(
+                'CallReceiverMock: reverting',
+              );
+            });
+
+            it('emits ERC7579TryExecuteFail event when target reverts in try ExecType', async function () {
+              const value = 0x012;
+              const data = encodeSingle(
+                this.target,
+                value,
+                this.target.interface.encodeFunctionData('mockFunctionRevertsReason'),
+              );
+
+              await expect(this[mock][execFn](encodeMode({ callType: CALL_TYPE_CALL, execType: EXEC_TYPE_TRY }), data))
+                .to.emit(this.mock, 'ERC7579TryExecuteFail')
+                .withArgs(
+                  CALL_TYPE_CALL,
+                  ethers.solidityPacked(
+                    ['bytes4', 'bytes'],
+                    [selector('Error(string)'), coder.encode(['string'], ['CallReceiverMock: reverting'])],
+                  ),
+                );
+            });
+          });
+
+          describe('batch execution', function () {
+            it('calls the targets with value and args', async function () {
+              const value1 = 0x012;
+              const value2 = 0x234;
+              const data = encodeBatch(
+                [this.target, value1, this.target.interface.encodeFunctionData('mockFunctionWithArgs', [42, '0x1234'])],
+                [
+                  this.anotherTarget,
+                  value2,
+                  this.anotherTarget.interface.encodeFunctionData('mockFunctionWithArgs', [42, '0x1234']),
+                ],
+              );
+
+              await expect(this[mock][execFn](encodeMode({ callType: CALL_TYPE_BATCH }), data))
+                .to.emit(this.target, 'MockFunctionCalledWithArgs')
+                .to.emit(this.anotherTarget, 'MockFunctionCalledWithArgs');
+
+              await expect(ethers.provider.getBalance(this.target)).to.eventually.equal(value1);
+              await expect(ethers.provider.getBalance(this.anotherTarget)).to.eventually.equal(value2);
+            });
+
+            it('reverts when any target reverts in default ExecType', async function () {
+              const value1 = 0x012;
+              const value2 = 0x234;
+              const data = encodeBatch(
+                [this.target, value1, this.target.interface.encodeFunctionData('mockFunction')],
+                [
+                  this.anotherTarget,
+                  value2,
+                  this.anotherTarget.interface.encodeFunctionData('mockFunctionRevertsReason'),
+                ],
+              );
+
+              await expect(this[mock][execFn](encodeMode({ callType: CALL_TYPE_BATCH }), data)).to.be.revertedWith(
+                'CallReceiverMock: reverting',
+              );
+            });
+
+            it('emits ERC7579TryExecuteFail event when any target reverts in try ExecType', async function () {
+              const value1 = 0x012;
+              const value2 = 0x234;
+              const data = encodeBatch(
+                [this.target, value1, this.target.interface.encodeFunctionData('mockFunction')],
+                [
+                  this.anotherTarget,
+                  value2,
+                  this.anotherTarget.interface.encodeFunctionData('mockFunctionRevertsReason'),
+                ],
+              );
+
+              await expect(this[mock][execFn](encodeMode({ callType: CALL_TYPE_BATCH, execType: EXEC_TYPE_TRY }), data))
+                .to.emit(this.mock, 'ERC7579TryExecuteFail')
+                .withArgs(
+                  CALL_TYPE_BATCH,
+                  ethers.solidityPacked(
+                    ['bytes4', 'bytes'],
+                    [selector('Error(string)'), coder.encode(['string'], ['CallReceiverMock: reverting'])],
+                  ),
+                );
+
+              await expect(ethers.provider.getBalance(this.target)).to.eventually.equal(value1);
+              await expect(ethers.provider.getBalance(this.anotherTarget)).to.eventually.equal(0);
+            });
+          });
+
+          describe('delegate call execution', function () {
+            it('delegate calls the target', async function () {
+              const slot = ethers.hexlify(ethers.randomBytes(32));
+              const value = ethers.hexlify(ethers.randomBytes(32));
+              const data = encodeDelegate(
+                this.target,
+                this.target.interface.encodeFunctionData('mockFunctionWritesStorage', [slot, value]),
+              );
+
+              await expect(ethers.provider.getStorage(this.mock.target, slot)).to.eventually.equal(ethers.ZeroHash);
+              await this[mock][execFn](encodeMode({ callType: CALL_TYPE_DELEGATE }), data);
+              await expect(ethers.provider.getStorage(this.mock.target, slot)).to.eventually.equal(value);
+            });
+
+            it('reverts when target reverts in default ExecType', async function () {
+              const data = encodeDelegate(
+                this.target,
+                this.target.interface.encodeFunctionData('mockFunctionRevertsReason'),
+              );
+              await expect(this[mock][execFn](encodeMode({ callType: CALL_TYPE_DELEGATE }), data)).to.be.revertedWith(
+                'CallReceiverMock: reverting',
+              );
+            });
+
+            it('emits ERC7579TryExecuteFail event when target reverts in try ExecType', async function () {
+              const data = encodeDelegate(
+                this.target,
+                this.target.interface.encodeFunctionData('mockFunctionRevertsReason'),
+              );
+              await expect(
+                this[mock][execFn](encodeMode({ callType: CALL_TYPE_DELEGATE, execType: EXEC_TYPE_TRY }), data),
+              )
+                .to.emit(this.mock, 'ERC7579TryExecuteFail')
+                .withArgs(
+                  CALL_TYPE_CALL,
+                  ethers.solidityPacked(
+                    ['bytes4', 'bytes'],
+                    [selector('Error(string)'), coder.encode(['string'], ['CallReceiverMock: reverting'])],
+                  ),
+                );
+            });
+          });
+        });
+      }
+    });
+
+    describe('fallback', function () {
+      beforeEach(async function () {
+        this.fallbackHandler = await ethers.deployContract('$ERC7579FallbackHandlerMock', [
+          this.mock.target, // Trusted forwarder
+        ]);
+      });
+
+      it('reverts if there is no fallback module installed', async function () {
+        await expect(
+          this.other.sendTransaction({
+            data: fnSig,
+            to: this.mock,
+          }),
+        )
+          .to.be.revertedWithCustomError(this.mock, 'ERC7579MissingFallbackHandler')
+          .withArgs(fnSig);
+      });
+
+      describe('with a fallback module installed', function () {
+        it('forwards the call to the fallback handler', async function () {
+          await this.mock.$_installModule(MODULE_TYPE_FALLBACK, this.fallbackHandler, data);
+          await expect(this.other.sendTransaction({ data: fnSig, to: this.mock, value: 32 }))
+            .to.emit(this.fallbackHandler, 'ERC7579FallbackHandlerMockCalled')
+            .withArgs(this.other, 32, fnSig);
+        });
+
+        it('bubble up reverts from the fallback handler', async function () {
+          const revertData = this.fallbackHandler.interface.encodeFunctionData('callRevert');
+          const initData = coder.encode(['bytes4', 'bytes'], [revertData, '0x']);
+          await this.mock.$_installModule(MODULE_TYPE_FALLBACK, this.fallbackHandler, initData);
+          await expect(this.other.sendTransaction({ data: revertData, to: this.mock })).to.be.revertedWithCustomError(
+            this.fallbackHandler,
+            'ERC7579FallbackHandlerMockRevert',
+          );
+        });
+      });
+    });
+  });
+}
+
 module.exports = {
   shouldBehaveLikeAccountCore,
   shouldBehaveLikeAccountHolder,
   shouldBehaveLikeAccountERC7821,
+  shouldBehaveLikeAccountERC7579,
 };

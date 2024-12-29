@@ -57,7 +57,6 @@ describe('AccountP256', function () {
   describe('ERC7739Signer', function () {
     beforeEach(async function () {
       this.mock = await this.mock.deploy();
-      this.signTypedData = this.signer.signTypedData.bind(this.signer);
     });
 
     shouldBehaveLikeERC7739Signer();
