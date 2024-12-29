@@ -1,3 +1,11 @@
+## XX-XX-XXXX
+
+- `AccountCore`: Add an internal `_validateUserOp` function to validate user operations.
+- `AccountERC7579`: Extension of `AccountCore` that implements support for ERC-7579 modules of type executor, validator, and fallback handler.
+- `AccountERC7579Hooked`: Extension of `AccountERC7579` that implements support for ERC-7579 hook modules.
+- `ERC7579Validator`: Add an abstract ERC-7579 validator module.
+- `ERC7579ECDSAValidator`, `ERC7579P256Validator` and `ERC7579RSAValidator`: Implementations of `ERC7579Validator` for ECDSA, P256, and RSA signatures.
+
 ## 23-12-2024
 
 - `AccountERC7821`: Account implementation that implements ERC-7821 for minimal batch execution interface. No support for additional `opData` is included.
