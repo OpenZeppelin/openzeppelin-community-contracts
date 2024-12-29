@@ -739,6 +739,177 @@ The operation failed because the user has insufficient frozen balance.
 
 Error thrown when a non-custodian account attempts to perform a custodian-only operation.
 
+:onlyTokenBridge: pass:normal[xref:#ERC20Bridgeable-onlyTokenBridge--[`++onlyTokenBridge++`]]
+:supportsInterface: pass:normal[xref:#ERC20Bridgeable-supportsInterface-bytes4-[`++supportsInterface++`]]
+:crosschainMint: pass:normal[xref:#ERC20Bridgeable-crosschainMint-address-uint256-[`++crosschainMint++`]]
+:crosschainBurn: pass:normal[xref:#ERC20Bridgeable-crosschainBurn-address-uint256-[`++crosschainBurn++`]]
+:_checkTokenBridge: pass:normal[xref:#ERC20Bridgeable-_checkTokenBridge-address-[`++_checkTokenBridge++`]]
+
+[.contract]
+[[ERC20Bridgeable]]
+=== `++ERC20Bridgeable++` link:https://github.com/OpenZeppelin/openzeppelin-contracts/blob/v0.0.1/contracts/token/ERC20/extensions/ERC20Bridgeable.sol[{github-icon},role=heading-link]
+
+[.hljs-theme-light.nopadding]
+```solidity
+import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Bridgeable.sol";
+```
+
+ERC20 extension that implements the standard token interface according to
+https://github.com/ethereum/ERCs/blob/bcea9feb6c3f3ded391e33690056635d722b101e/ERCS/erc-7802.md[ERC-7802].
+
+NOTE: To implement a crosschain gateway for a chain, consider using an implementation if {IERC7786} token
+bridge (e.g. {AxelarGatewaySource}, {AxelarGatewayDestination}).
+
+[.contract-index]
+.Modifiers
+--
+* `++onlyTokenBridge()++`
+--
+
+[.contract-index]
+.Functions
+--
+* `++supportsInterface(interfaceId)++`
+* `++crosschainMint(to, value)++`
+* `++crosschainBurn(from, value)++`
+* `++_checkTokenBridge(caller)++`
+
+[.contract-subindex-inherited]
+.IERC7802
+
+[.contract-subindex-inherited]
+.ERC165
+
+[.contract-subindex-inherited]
+.IERC165
+
+[.contract-subindex-inherited]
+.ERC20
+* `++name()++`
+* `++symbol()++`
+* `++decimals()++`
+* `++totalSupply()++`
+* `++balanceOf(account)++`
+* `++transfer(to, value)++`
+* `++allowance(owner, spender)++`
+* `++approve(spender, value)++`
+* `++transferFrom(from, to, value)++`
+* `++_transfer(from, to, value)++`
+* `++_update(from, to, value)++`
+* `++_mint(account, value)++`
+* `++_burn(account, value)++`
+* `++_approve(owner, spender, value)++`
+* `++_approve(owner, spender, value, emitEvent)++`
+* `++_spendAllowance(owner, spender, value)++`
+
+[.contract-subindex-inherited]
+.IERC20Errors
+
+[.contract-subindex-inherited]
+.IERC20Metadata
+
+[.contract-subindex-inherited]
+.IERC20
+
+--
+
+[.contract-index]
+.Events
+--
+
+[.contract-subindex-inherited]
+.IERC7802
+* `++CrosschainMint(to, amount, sender)++`
+* `++CrosschainBurn(from, amount, sender)++`
+
+[.contract-subindex-inherited]
+.ERC165
+
+[.contract-subindex-inherited]
+.IERC165
+
+[.contract-subindex-inherited]
+.ERC20
+
+[.contract-subindex-inherited]
+.IERC20Errors
+
+[.contract-subindex-inherited]
+.IERC20Metadata
+
+[.contract-subindex-inherited]
+.IERC20
+* `++Transfer(from, to, value)++`
+* `++Approval(owner, spender, value)++`
+
+--
+
+[.contract-index]
+.Errors
+--
+
+[.contract-subindex-inherited]
+.IERC7802
+
+[.contract-subindex-inherited]
+.ERC165
+
+[.contract-subindex-inherited]
+.IERC165
+
+[.contract-subindex-inherited]
+.ERC20
+
+[.contract-subindex-inherited]
+.IERC20Errors
+* `++ERC20InsufficientBalance(sender, balance, needed)++`
+* `++ERC20InvalidSender(sender)++`
+* `++ERC20InvalidReceiver(receiver)++`
+* `++ERC20InsufficientAllowance(spender, allowance, needed)++`
+* `++ERC20InvalidApprover(approver)++`
+* `++ERC20InvalidSpender(spender)++`
+
+[.contract-subindex-inherited]
+.IERC20Metadata
+
+[.contract-subindex-inherited]
+.IERC20
+
+--
+
+[.contract-item]
+[[ERC20Bridgeable-onlyTokenBridge--]]
+==== `[.contract-item-name]#++onlyTokenBridge++#++()++` [.item-kind]#modifier#
+
+Modifier to restrict access to the token bridge.
+
+[.contract-item]
+[[ERC20Bridgeable-supportsInterface-bytes4-]]
+==== `[.contract-item-name]#++supportsInterface++#++(bytes4 interfaceId) → bool++` [.item-kind]#public#
+
+See {IERC165-supportsInterface}.
+
+[.contract-item]
+[[ERC20Bridgeable-crosschainMint-address-uint256-]]
+==== `[.contract-item-name]#++crosschainMint++#++(address to, uint256 value)++` [.item-kind]#public#
+
+See {IERC7802-crosschainMint}. Emits a {CrosschainMint} event.
+
+[.contract-item]
+[[ERC20Bridgeable-crosschainBurn-address-uint256-]]
+==== `[.contract-item-name]#++crosschainBurn++#++(address from, uint256 value)++` [.item-kind]#public#
+
+See {IERC7802-crosschainBurn}. Emits a {CrosschainBurn} event.
+
+[.contract-item]
+[[ERC20Bridgeable-_checkTokenBridge-address-]]
+==== `[.contract-item-name]#++_checkTokenBridge++#++(address caller)++` [.item-kind]#internal#
+
+Checks if the caller is a trusted token bridge. MUST revert otherwise.
+
+Developers should implement this function using an access control mechanism that allows
+customizing the list of allowed senders. Consider using {AccessControl} or {AccessManaged}.
+
 :previewDeposit: pass:normal[xref:#ERC4626Fees-previewDeposit-uint256-[`++previewDeposit++`]]
 :previewMint: pass:normal[xref:#ERC4626Fees-previewMint-uint256-[`++previewMint++`]]
 :previewWithdraw: pass:normal[xref:#ERC4626Fees-previewWithdraw-uint256-[`++previewWithdraw++`]]

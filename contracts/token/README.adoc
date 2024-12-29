@@ -26,4 +26,6 @@ Set of extensions and utilities for tokens (e.g ERC-20, ERC-721, ERC-1155) and d
 
 {{ERC20Custodian}}
 
+{{ERC20Bridgeable}}
+
 {{ERC4626Fees}}

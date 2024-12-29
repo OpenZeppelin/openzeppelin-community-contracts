@@ -13,3 +13,5 @@ This directory includes contracts to build accounts for ERC-4337.
 == Extensions
 
 {{AccountSignerERC7702}}
+
+{{AccountERC7821}}

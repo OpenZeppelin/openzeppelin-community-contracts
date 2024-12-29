@@ -542,3 +542,148 @@ import "@openzeppelin/contracts/account/extensions/AccountSignerERC7702.sol";
 
 Validates the signature using the EOA's address (ie. `address(this)`).
 
+:UnsupportedExecutionMode: pass:normal[xref:#AccountERC7821-UnsupportedExecutionMode--[`++UnsupportedExecutionMode++`]]
+:execute: pass:normal[xref:#AccountERC7821-execute-bytes32-bytes-[`++execute++`]]
+:supportsExecutionMode: pass:normal[xref:#AccountERC7821-supportsExecutionMode-bytes32-[`++supportsExecutionMode++`]]
+
+[.contract]
+[[AccountERC7821]]
+=== `++AccountERC7821++` link:https://github.com/OpenZeppelin/openzeppelin-contracts/blob/v0.0.1/contracts/account/extensions/AccountERC7821.sol[{github-icon},role=heading-link]
+
+[.hljs-theme-light.nopadding]
+```solidity
+import "@openzeppelin/contracts/account/extensions/AccountERC7821.sol";
+```
+
+Minimal batch executor following ERC7821. Only supports basic mode (no optional "opData").
+
+[.contract-index]
+.Functions
+--
+* `++execute(mode, executionData)++`
+* `++supportsExecutionMode(mode)++`
+
+[.contract-subindex-inherited]
+.IERC7821
+
+[.contract-subindex-inherited]
+.AccountCore
+* `++entryPoint()++`
+* `++getNonce()++`
+* `++getNonce(key)++`
+* `++validateUserOp(userOp, userOpHash, missingAccountFunds)++`
+* `++_signableUserOpHash(userOp, )++`
+* `++_payPrefund(missingAccountFunds)++`
+* `++_checkEntryPoint()++`
+* `++_checkEntryPointOrSelf()++`
+* `++receive()++`
+
+[.contract-subindex-inherited]
+.IAccount
+
+[.contract-subindex-inherited]
+.EIP712
+* `++_domainSeparatorV4()++`
+* `++_hashTypedDataV4(structHash)++`
+* `++eip712Domain()++`
+* `++_EIP712Name()++`
+* `++_EIP712Version()++`
+
+[.contract-subindex-inherited]
+.IERC5267
+
+[.contract-subindex-inherited]
+.AbstractSigner
+* `++_rawSignatureValidation(hash, signature)++`
+
+--
+
+[.contract-index]
+.Events
+--
+
+[.contract-subindex-inherited]
+.IERC7821
+
+[.contract-subindex-inherited]
+.AccountCore
+
+[.contract-subindex-inherited]
+.IAccount
+
+[.contract-subindex-inherited]
+.EIP712
+
+[.contract-subindex-inherited]
+.IERC5267
+* `++EIP712DomainChanged()++`
+
+[.contract-subindex-inherited]
+.AbstractSigner
+
+--
+
+[.contract-index]
+.Errors
+--
+* `++UnsupportedExecutionMode()++`
+
+[.contract-subindex-inherited]
+.IERC7821
+
+[.contract-subindex-inherited]
+.AccountCore
+* `++AccountUnauthorized(sender)++`
+
+[.contract-subindex-inherited]
+.IAccount
+
+[.contract-subindex-inherited]
+.EIP712
+
+[.contract-subindex-inherited]
+.IERC5267
+
+[.contract-subindex-inherited]
+.AbstractSigner
+
+--
+
+[.contract-item]
+[[AccountERC7821-execute-bytes32-bytes-]]
+==== `[.contract-item-name]#++execute++#++(bytes32 mode, bytes executionData)++` [.item-kind]#public#
+
+Executes the calls in `executionData`.
+Reverts and bubbles up error if any call fails.
+
+`executionData` encoding:
+- If `opData` is empty, `executionData` is simply `abi.encode(calls)`.
+- Else, `executionData` is `abi.encode(calls, opData)`.
+  See: https://eips.ethereum.org/EIPS/eip-7579
+
+Supported modes:
+- `bytes32(0x01000000000000000000...)`: does not support optional `opData`.
+- `bytes32(0x01000000000078210001...)`: supports optional `opData`.
+
+Authorization checks:
+- If `opData` is empty, the implementation SHOULD require that
+  `msg.sender == address(this)`.
+- If `opData` is not empty, the implementation SHOULD use the signature
+  encoded in `opData` to determine if the caller can perform the execution.
+
+`opData` may be used to store additional data for authentication,
+paymaster data, gas limits, etc.
+
+[.contract-item]
+[[AccountERC7821-supportsExecutionMode-bytes32-]]
+==== `[.contract-item-name]#++supportsExecutionMode++#++(bytes32 mode) → bool result++` [.item-kind]#public#
+
+This function is provided for frontends to detect support.
+Only returns true for:
+- `bytes32(0x01000000000000000000...)`: does not support optional `opData`.
+- `bytes32(0x01000000000078210001...)`: supports optional `opData`.
+
+[.contract-item]
+[[AccountERC7821-UnsupportedExecutionMode--]]
+==== `[.contract-item-name]#++UnsupportedExecutionMode++#++()++` [.item-kind]#error#
+
