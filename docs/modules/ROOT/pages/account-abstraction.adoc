@@ -1,0 +1,156 @@
+= Account Abstraction
+
+Unlike Externally Owned Accounts (EOAs), smart contracts may contain arbitrary verification logic based on authentication mechanisms different to Ethereum's native xref:api:utils.adoc#ECDSA[ECDSA] and have execution advantages such as batching or gas sponsorship. To leverage these properties of smart contracts, the community has widely adopted https://eips.ethereum.org/EIPS/eip-4337[ERC-4337], a standard to process user operations through an alternative mempool.
+
+The library provides multiple contracts for Account Abstraction following this standard as it enables more flexible and user-friendly interactions with applications. Account Abstraction use cases include wallets in novel contexts (e.g. embedded wallets), more granular configuration of accounts, and recovery mechanisms. 
+
+These capabilities can be supercharged with a modularity approach following standards such as https://eips.ethereum.org/EIPS/eip-7579[ERC-7579] or https://eips.ethereum.org/EIPS/eip-6909[ERC-6909].
+
+== Smart Accounts
+
+OpenZeppelin provides an abstract xref:api:account.adoc#AccountCore[`AccountCore`] contract that implements the basic logic to handle user operations in compliance with ERC-4337. Developers who want to build their own account can use this to bootstrap.
+
+User operations are validated using an xref:api:utils.adoc#AbstractSigner[`AbstractSigner`], which requires to implement the internal xref:api:utils.adoc#AbstractSigner-_rawSignatureValidation[`_rawSignatureValidation`] function. This is the lowest-level signature validation layer and is used to wrap other validation methods like the Account's xref:api:account.adoc#AccountCore-validateUserOp-struct-PackedUserOperation-bytes32-uint256-[`validateUserOp`].
+
+A more opinionated version is the xref:api:account.adoc#Account[`Account`] contract, which also inherits from:
+
+* xref:api:utils.adoc#ERC7739Signer[ERC7739Signer]: An implementation of the https://eips.ethereum.org/EIPS/eip-1271[ERC-1271] interface for smart contract signatures. This layer adds a defensive rehashing mechanism that prevents signatures for this account to be replayed in another account controlled by the same signer. See xref:account-abstraction.adoc#erc7739_signatures[ERC-7739 signatures].
+* https://docs.openzeppelin.com/contracts/api/token/erc721#AccountERC7821[AccountERC7821]: An extension that provides the minimal logic batch multiple calls in a single execution. Useful to execute multiple operations within a single user operation.
+* https://docs.openzeppelin.com/contracts/api/token/erc721#ERC721Holder[ERC721Holder], https://docs.openzeppelin.com/contracts/api/token/erc1155#ERC1155Holder[ERC1155Holder]: Allows the account to hold https://eips.ethereum.org/EIPS/eip-721[ERC-721] and https://eips.ethereum.org/EIPS/eip-1155[ERC-1155] tokens.
+
+[source,solidity]
+----
+include::api:example$account/MyAccount.sol[]
+----
+
+=== Setting up an account
+
+To setup an account, you can either bring your own validation logic and start with xref:api:account.adoc#Account[`Account`] or xref:api:account.adoc#AccountCore[`AccountCore`], or import any of the predefined signers that can be used to control an account.
+
+=== Selecting a signer
+
+The library includes specializations of the `AbstractSigner` contract that use custom digital signature verification algorithms. These are xref:api:utils.adoc#SignerECDSA[`SignerECDSA`], xref:api:utils.adoc#SignerP256[`SignerP256`] and xref:api:utils.adoc#SignerRSA[`SignerRSA`].
+
+Since smart accounts are deployed by a factory, the best practice is to create https://docs.openzeppelin.com/contracts/5.x/api/proxy#minimal_clones[minimal clones] of initializable contracts. These signer implementations provide an initializable design by default so that the factory can interact with the account to set it up after deployment in a single transaction.
+
+WARNING: Leaving an account uninitialized may leave it unusable since no public key was associated with it.
+
+[source,solidity]
+----
+include::api:example$account/MyAccountECDSA.sol[]
+----
+
+NOTE: xref:api:account.adoc#Account[`Account`] initializes xref:api:utils.adoc#EIP712[`EIP712`] to generate a domain separator that prevents replayability in other accounts controlled by the same key. See xref:account-abstraction.adoc#erc7739_signatures[ERC-7739 signatures]
+
+Along with the regular EOA signature verification, the library also provides the xref:api:utils.adoc#SignerP256[`SignerP256`] for P256 signatures, a widely used _elliptic curve_ verification algorithm that's present in mobile device security enclaves, FIDO keys, and corporate environments (i.e. public key infrastructures).
+
+[source,solidity]
+----
+include::api:example$account/MyAccountP256.sol[]
+----
+
+Similarly, some government and corporate public key infrastructures use RSA for signature verification. For those cases, the xref:api:account.adoc#AccountRSA[`AccountRSA`] may be a good fit.
+
+[source,solidity]
+----
+include::api:example$account/MyAccountRSA.sol[]
+----
+
+== Account Factory
+
+The first time a user sends an user operation, the account will be created deterministically (i.e. its code and address can be predicted) using the the `initCode` field in the UserOperation. This field contains both the address of a smart contract (the factory) and the data required to call it and deploy the smart account.
+
+For this purpose, developers can create an account factory using the https://docs.openzeppelin.com/contracts/5.x/api/proxy#Clones[Clones library from OpenZeppelin Contracts]. It exposes methods to calculate the address of an account before deployment.
+
+[source,solidity]
+----
+include::api:example$account/MyFactoryAccount.sol[]
+----
+
+You've setup your own account and its corresponding factory. Both are ready to be used with ERC-4337 infrastructure. Customizing the factory to other validation mechanisms must be straightforward.
+
+== ERC-4337 Overview
+
+The ERC-4337 is a detailed specification of how to implement the necessary logic to handle operations without making changes to the protocol level (i.e. the rules of the blockchain itself). This specification defines the following components:
+
+=== UserOperation
+
+A `UserOperation` is a higher-layer pseudo-transaction object that represents the intent of the account. This shares some similarities with regular EVM transactions like the concept of `gasFees` or `callData` but includes fields that enable new capabilities.
+
+```solidity
+struct PackedUserOperation {
+    address sender;
+    uint256 nonce;
+    bytes initCode; // concatenation of factory address and factoryData (or empty)
+    bytes callData;
+    bytes32 accountGasLimits; // concatenation of verificationGas (16 bytes) and callGas (16 bytes)
+    uint256 preVerificationGas;
+    bytes32 gasFees; // concatenation of maxPriorityFee (16 bytes) and maxFeePerGas (16 bytes)
+    bytes paymasterAndData; // concatenation of paymaster fields (or empty)
+    bytes signature;
+}
+```
+
+=== Entrypoint
+
+Each `UserOperation` is executed through a contract known as the https://etherscan.io/address/0x0000000071727de22e5e9d8baf0edac6f37da032#code[`EntryPoint`]. This contract is a singleton deployed across multiple networks at the same address although other custom implementations may be used.
+
+The Entrypoint contracts is considered a trusted entity by the account.
+
+=== Bundlers
+
+The bundler is a piece of _offchain_ infrastructure that is in charge of processing an alternative mempool of user operations. Bundlers themselves call the Entrypoint contract's `handleOps` function with an array of UserOperations that are executed and included in a block.
+
+During the process, the bundler pays for the gas of executing the transaction and gets refunded during the execution phase of the Entrypoint contract.
+
+=== Account Contract
+
+The Account Contract is a smart contract that implements the logic required to validate a `UserOperation` in the context of ERC-4337. Any smart contract account should conform with the `IAccount` interface to validate operations.
+
+```solidity
+interface IAccount {
+    function validateUserOp(PackedUserOperation calldata, bytes32, uint256) external returns (uint256 validationData);
+}
+```
+
+Similarly, an Account should have a way to execute these operations by either handling arbitrary calldata on its `fallback` or implementing the `IAccountExecute` interface:
+
+```solidity
+interface IAccountExecute {
+    function executeUserOp(PackedUserOperation calldata userOp, bytes32 userOpHash) external;
+}
+```
+
+NOTE: The `IAccountExecute` interface is optional. Developers might want to use xref:api:account.adoc#AccountERC7821[`AccountERC7821`] for a minimal batched execution interface or rely on ERC-7579, ERC-6909 or any other execution logic.
+
+To build your own account, see xref:account-abstraction.adoc#smart_accounts[Smart Accounts].
+
+=== Factory Contract
+
+The smart contract accounts are created by a Factory contract defined by the Account developer. This factory receives arbitrary bytes as `initData` and returns an `address` where the logic of the account is deployed.
+
+To build your own factory, see xref:account-abstraction.adoc#account_factory[Account Factory]
+
+=== Paymaster Contract
+
+A Paymaster is an optional entity that can sponsor gas fees for Accounts, or allow them to pay for those fees in ERC-20 instead of native currency. This abstracts gas away of the user experience in the same way that computational costs of cloud servers are abstracted away from end-users.
+
+== Further notes
+
+=== ERC-7739 Signatures
+
+A common security practice to prevent user operation https://mirror.xyz/curiousapple.eth/pFqAdW2LiJ-6S4sg_u1z08k4vK6BCJ33LcyXpnNb8yU[replayability across smart contract accounts controlled by the same private key] (i.e. multiple accounts for the same signer) is to link the signature to the `address` and `chainId` of the account. This can be done by asking the user to sign a hash that includes these values.
+
+The problem with this approach is that the user might be prompted by the wallet provider to sign an https://x.com/howydev/status/1780353754333634738[obfuscated message], which is a phishing vector that may lead to a user losing its assets.
+
+To prevent this, developers may use xref:api:account#ERC7739Signer[`ERC7739Signer`], a utility that implements xref:api:interfaces#IERC1271[`IERC1271`] for smart contract signatures with a defensive rehashing mechanism based on a https://github.com/frangio/eip712-wrapper-for-eip1271[nested EIP-712 approach] to wrap the signature request in a context where there's clearer information for the end user.
+
+=== ERC-7562 Validation Rules
+
+To process a bundle of `UserOperations`, bundlers call xref:api:account.adoc#AccountCore-validateUserOp-struct-PackedUserOperation-bytes32-uint256-[`validateUserOp`] on each operation sender to check whether the operation can be executed. However, the bundler has no guarantee that the state of the blockchain will remain the same after the validation phase. To overcome this problem, https://eips.ethereum.org/EIPS/eip-7562[ERC-7562] proposes a set of limitations to EVM code so that bundlers (or node operators) are protected from unexpected state changes.
+
+These rules outline the requirements for operations to be processed by the canonical mempool.
+
+Accounts can access its own storage during the validation phase, they might easily violate ERC-7562 storage access rules in undirect ways. For example, most accounts access their public keys from storage when validating a signature, limiting the ability of having accounts that validate operations for other accounts (e.g. via ERC-1271)
+
+TIP: Although any Account that breaks such rules may still be processed by a private bundler, developers should keep in mind the centralization tradeoffs of relying on private infrastructure instead of _permissionless_ execution.
