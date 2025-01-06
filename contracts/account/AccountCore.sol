@@ -4,9 +4,6 @@ pragma solidity ^0.8.20;
 
 import {PackedUserOperation, IAccount, IEntryPoint} from "@openzeppelin/contracts/interfaces/draft-IERC4337.sol";
 import {ERC4337Utils} from "@openzeppelin/contracts/account/utils/draft-ERC4337Utils.sol";
-import {Address} from "@openzeppelin/contracts/utils/Address.sol";
-import {MessageHashUtils} from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
-import {EIP712} from "@openzeppelin/contracts/utils/cryptography/EIP712.sol";
 import {AbstractSigner} from "../utils/cryptography/AbstractSigner.sol";
 
 /**
@@ -23,14 +20,7 @@ import {AbstractSigner} from "../utils/cryptography/AbstractSigner.sol";
  * attacker to bypass the account's security measures. Check out {SignerECDSA}, {SignerP256}, or {SignerRSA} for
  * digital signature validation implementations.
  */
-abstract contract AccountCore is AbstractSigner, EIP712, IAccount {
-    using MessageHashUtils for bytes32;
-
-    bytes32 internal constant _PACKED_USER_OPERATION =
-        keccak256(
-            "PackedUserOperation(address sender,uint256 nonce,bytes initCode,bytes callData,bytes32 accountGasLimits,uint256 preVerificationGas,bytes32 gasFees,bytes paymasterAndData)"
-        );
-
+abstract contract AccountCore is AbstractSigner, IAccount {
     /**
      * @dev Unauthorized call to the account.
      */
@@ -93,29 +83,12 @@ abstract contract AccountCore is AbstractSigner, EIP712, IAccount {
      *
      * Given the `userOpHash` calculation is defined by ERC-4337, offchain signers
      * may need to sign again this hash by rehashing it with other schemes (e.g. ERC-191).
-     *
-     * Returns a typehash following EIP-712 typed data hashing for readability.
      */
     function _signableUserOpHash(
-        PackedUserOperation calldata userOp,
-        bytes32 /* userOpHash */
+        PackedUserOperation calldata /*userOp*/,
+        bytes32 userOpHash
     ) internal view virtual returns (bytes32) {
-        return
-            _hashTypedDataV4(
-                keccak256(
-                    abi.encode(
-                        _PACKED_USER_OPERATION,
-                        userOp.sender,
-                        userOp.nonce,
-                        keccak256(userOp.initCode),
-                        keccak256(userOp.callData),
-                        userOp.accountGasLimits,
-                        userOp.preVerificationGas,
-                        userOp.gasFees,
-                        keccak256(userOp.paymasterAndData)
-                    )
-                )
-            );
+        return userOpHash;
     }
 
     /**
