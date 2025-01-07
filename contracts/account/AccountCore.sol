@@ -79,7 +79,7 @@ abstract contract AccountCore is AbstractSigner, IAccount {
     }
 
     /**
-     * @dev Returns the digest used by an offchain signer instead of the opaque `userOpHash`.
+     * @dev Returns the `userOpHash` by default. May be overridden for a different hashing scheme.
      *
      * Given the `userOpHash` calculation is defined by ERC-4337, offchain signers
      * may need to sign again this hash by rehashing it with other schemes (e.g. ERC-191).
