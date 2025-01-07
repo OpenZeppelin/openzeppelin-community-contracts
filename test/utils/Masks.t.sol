@@ -44,7 +44,7 @@ contract MasksTest is Test {
     }
 
     function testSymetricDifference(bytes32 m1, bytes32 m2) public pure {
-        Masks.Mask m = Masks.Mask.wrap(m1).symmetric_difference(Masks.Mask.wrap(m2));
+        Masks.Mask m = Masks.Mask.wrap(m1).symmetricDifference(Masks.Mask.wrap(m2));
         assertEq(Masks.Mask.unwrap(m), m1 ^ m2);
     }
 }

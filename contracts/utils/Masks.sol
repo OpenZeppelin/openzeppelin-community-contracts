@@ -53,7 +53,7 @@ library Masks {
     }
 
     /// @dev Returns the symmetric difference (∆) of two masks, also known as disjunctive union or exclusive OR (XOR)
-    function symmetric_difference(Mask m1, Mask m2) internal pure returns (Mask) {
+    function symmetricDifference(Mask m1, Mask m2) internal pure returns (Mask) {
         return m1.union(m2).difference(m1.intersection(m2));
     }
 }

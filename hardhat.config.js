@@ -17,6 +17,7 @@ require('hardhat-exposed');
 require('solidity-coverage');
 require('solidity-docgen');
 require('./hardhat/remappings');
+require('@openzeppelin/contracts/hardhat/common-contracts');
 
 module.exports = {
   solidity: {
@@ -33,9 +34,6 @@ module.exports = {
     hardhat: {
       hardfork: argv.hardfork,
     },
-  },
-  exposed: {
-    exclude: ['@axelar-network/**/*'],
   },
   docgen: require('./docs/config'),
 };

@@ -65,5 +65,5 @@ if (!matchingDocsBranches) {
 
 run('npm run prepare-docs');
 run('git add -f docs'); // --force needed because generated docs files are gitignored
-run('git commit -m "Update docs"');
+run('git commit --no-verify -m "Update docs"');
 run(`git checkout ${currentBranch}`);

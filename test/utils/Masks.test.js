@@ -110,15 +110,15 @@ describe('Masks', function () {
     });
   });
 
-  describe('symmetric_difference', function () {
+  describe('symmetricDifference', function () {
     it('returns symmetric difference of two masks', async function () {
-      expect(await this.mock.$symmetric_difference(ethers.toBeHex(1, 32), ethers.toBeHex(2, 32))).to.equal(
+      expect(await this.mock.$symmetricDifference(ethers.toBeHex(1, 32), ethers.toBeHex(2, 32))).to.equal(
         ethers.toBeHex(3, 32),
       );
     });
 
     it('returns symmetric difference of two masks with common group', async function () {
-      expect(await this.mock.$symmetric_difference(ethers.toBeHex(1, 32), ethers.toBeHex(3, 32))).to.equal(
+      expect(await this.mock.$symmetricDifference(ethers.toBeHex(1, 32), ethers.toBeHex(3, 32))).to.equal(
         ethers.toBeHex(2, 32),
       );
     });

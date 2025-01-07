@@ -1,4 +1,1 @@
-module.exports = {
-  skipFiles: ['mocks'],
-  istanbulReporter: ['html', 'lcov', 'text-summary'],
-};
+lib/@openzeppelin-contracts/.solcover.js

@@ -1,5 +1,5 @@
 const { ethers } = require('hardhat');
-const { formatType } = require('../../lib/@openzeppelin-contracts/test/helpers/eip712');
+const { formatType } = require('@openzeppelin/contracts/test/helpers/eip712');
 
 const DEFAULT_DOMAIN = {
   name: '',
@@ -77,7 +77,7 @@ class TypedDataSignHelper {
       ethers.concat([
         signature,
         ethers.TypedDataEncoder.hashDomain(domain), // appDomainSeparator
-        ethers.TypedDataEncoder.hashStruct(this.contentsTypeName, this.allTypes, message.contents), // contentsHash
+        this.hashStruct(this.contentsTypeName, message.contents), // contentsHash
         ethers.toUtf8Bytes(this.contentDescr),
         ethers.toBeHex(this.contentDescr.length, 2),
       ]),
