@@ -20,7 +20,7 @@ import {ERC7821} from "./extensions/ERC7821.sol";
  */
 abstract contract Account is AccountCore, ERC7821, ERC721Holder, ERC1155Holder, ERC7739Signer {
     /// @inheritdoc ERC7821
-    function execute(bytes32 mode, bytes calldata executionData) public payable virtual override onlyEntryPointOrSelf {
-        super.execute(mode, executionData);
+    function _erc7821AuthorizedExecutor(address caller) internal view virtual override returns (bool) {
+        return super._erc7821AuthorizedExecutor(caller) || caller == address(entryPoint());
     }
 }
