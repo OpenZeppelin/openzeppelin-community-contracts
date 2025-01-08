@@ -23,7 +23,7 @@ abstract contract ERC7821 is IERC7821 {
      * Reverts and bubbles up error if any call fails.
      */
     function execute(bytes32 mode, bytes calldata executionData) public payable virtual {
-        if (!_erc7821AuthorizedExecutor(msg.sender)) revert AccountCore.AccountUnauthorized(msg.sender);
+        if (!_erc7821AuthorizedExecutor(mode, executionData)) revert AccountCore.AccountUnauthorized(msg.sender);
         if (!supportsExecutionMode(mode)) revert UnsupportedExecutionMode();
         executionData.execBatch(ERC7579Utils.EXECTYPE_DEFAULT);
     }
@@ -40,8 +40,11 @@ abstract contract ERC7821 is IERC7821 {
     /**
      * @dev Access control mechanism for the {execute} function.
      */
-    function _erc7821AuthorizedExecutor(address caller) internal view virtual returns (bool) {
-        return caller == address(this);
+    function _erc7821AuthorizedExecutor(
+        bytes32 /* mode */,
+        bytes calldata /* executionData */
+    ) internal view virtual returns (bool) {
+        return msg.sender == address(this);
     }
 
     // slither-disable-next-line write-after-write
