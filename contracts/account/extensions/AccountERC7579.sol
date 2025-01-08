@@ -242,11 +242,11 @@ abstract contract AccountERC7579 is
             ERC7579Utils.ERC7579MismatchedModuleTypeId(moduleTypeId, module)
         );
 
-        require(
-            (moduleTypeId != MODULE_TYPE_VALIDATOR || _validators.add(module)) &&
-                (moduleTypeId != MODULE_TYPE_EXECUTOR || _executors.add(module)),
-            ERC7579Utils.ERC7579AlreadyInstalledModule(moduleTypeId, module)
-        );
+        bool exists;
+        if (moduleTypeId == MODULE_TYPE_VALIDATOR) exists = !_validators.add(module);
+        if (moduleTypeId == MODULE_TYPE_EXECUTOR) exists = !_executors.add(module);
+        require(!exists, ERC7579Utils.ERC7579AlreadyInstalledModule(moduleTypeId, module));
+
         if (moduleTypeId == MODULE_TYPE_FALLBACK) {
             bytes4 selector;
             (selector, initData) = abi.decode(initData, (bytes4, bytes));
