@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.27;
 
-import {IERC7786Receiver} from "../../interfaces/IERC7786.sol";
+import {IERC7786Receiver} from "./IERC7786.sol";
 
 /**
  * @dev Base implementation of an ERC-7786 compliant cross-chain message receiver.
@@ -33,7 +33,7 @@ abstract contract ERC7786Receiver is IERC7786Receiver {
     }
 
     /// @dev Virtual getter that returns whether an address is a valid ERC-7786 gateway.
-    function _isKnownGateway(address instance) internal view virtual returns (bool);
+    function _isKnownGateway(address instance) internal virtual returns (bool);
 
     /// @dev Virtual function that should contain the logic to execute when a cross-chain message is received.
     function _processMessage(

@@ -14,15 +14,30 @@ To address the lack of composability in a simple and unopinionated way, ERC-7786
 
 The ERC defines a source and a destination gateway. Both are contracts that implement a protocol to send a message and process its reception respectively. These two processes are identified explicitly by the ERC-7786 specification since they define the minimal requirements for both gateways.
 
-* On the **source chain**, the contract implements a standard xref:api:crosschain.adoc#IERC7786GatewaySource#sendMessage[`sendMessage`] function and emits a xref:api:crosschain.adoc#IERC7786GatewaySource#MessagePosted[`MessagePosted`] event to signal that the message should be relayed by the underlying protocol.
+* On the **source chain**, the contract implements a standard xref:api:crosschain.adoc#IERC7786GatewaySource-sendMessage-string-string-bytes-bytes---[`sendMessage`] function and emits a xref:api:crosschain.adoc#IERC7786GatewaySource-MessagePosted-bytes32-string-string-bytes-bytes---[`MessagePosted`] event to signal that the message should be relayed by the underlying protocol.
 
-* On the **destination chain**, the gateway that receives the message and passes it to the contract receiver by calling the xref:api:crosschain.adoc#IERC7786Receiver#executeMessage[`executeMessage`] function.
+* On the **destination chain**, the gateway that receives the message and passes it to the contract receiver by calling the xref:api:crosschain.adoc#IERC7786Receiver-executeMessage-string-string-bytes-bytes---[`executeMessage`] function.
 
 Smart contract developers only need to worry about implementing the xref:api:crosschain.adoc#IERC7786GatewaySource[IERC7786GatewaySource] interface to send a message on the source chain and the xref:api:crosschain.adoc#IERC7786GatewaySource[IERC7786GatewaySource] and xref:api:crosschain.adoc#IERC7786Receiver[IERC7786Receiver] interface to receive such message on the destination chain.
 
-== Sending a message
+=== Getting started with Axelar Network
 
-The interface for a source gateway is general enough that it allows wrapping a custom protocol to authenticate messages. Depending on the use case, developers can implement any offchain mechanism to read the standard xref:api:crosschain.adoc#IERC7786GatewaySource#MessagePosted[`MessagePosted`] event and deliver it to the receiver on the destination chain.
+To start sending cross-chain messages, developers can get started with a duplex gateway powered by Axelar Network. This will allow a contract to send a receive cross-chain messages from other applications or users leveraging automated execution by Axelar relayers on the destination chain.
+
+[source,solidity]
+----
+include::api:example$crosschain/MyCustomAxelarGatewayDuplex.sol[]
+----
+
+For more details of how the duplex gateway works, see xref:crosschain.adoc#axelar_network[how to send and receive messages with the  Axelar Network] below
+
+NOTE: Developers can register supported chains and destination gateways using the xref:api:crosschain.adoc#AxelarGatewayBase-registerChainEquivalence-string-string-[`registerChainEquivalence`] and xref:api:crosschain.adoc#AxelarGatewayBase-registerRemoteGateway-string-string-[`registerRemoteGateway`] functions
+
+== Cross-chain communication
+
+=== Sending a message
+
+The interface for a source gateway is general enough that it allows wrapping a custom protocol to authenticate messages. Depending on the use case, developers can implement any offchain mechanism to read the standard xref:api:crosschain.adoc#IERC7786GatewaySource-MessagePosted-bytes32-string-string-bytes-bytes---[`MessagePosted`] event and deliver it to the receiver on the destination chain.
 
 [source,solidity]
 ----
@@ -31,23 +46,7 @@ include::api:example$crosschain/MyERC7786GatewaySource.sol[]
 
 NOTE: The standard represents chains using https://github.com/ChainAgnostic/CAIPs/blob/main/CAIPs/caip-2.md[CAIP-2] identifiers and accounts using https://github.com/ChainAgnostic/CAIPs/blob/main/CAIPs/caip-2.md[CAIP-10] identifiers for increased interoperability with non-EVM chains. Consider using the Strings library in the contracts library to process these identifiers.
 
-=== Axelar Network
-
-The library offers an implementation of the xref:api:crosschain.adoc#IERC7786GatewaySource[IERC7786GatewaySource] interface called xref:api:crosschain.adoc#AxelarGatewaySource[AxelarGatewaySource] that works as an adapter for ERC-7786.
-
-The implementation takes a local gateway address that MUST correspond to https://axelarscan.io/resources/chains?type=evm[Axelar's native gateways] and has mechanisms to:
-
-* Keep track of equivalences between Axelar chain names and CAIP-2 identifiers
-* Record a destination gateway per network using their CAIP-2 identifier
-
-The xref:api:crosschain.adoc#AxelarGatewaySource[AxelarGatewaySource] implementation can be used out of the box
-
-[source,solidity]
-----
-include::api:example$crosschain/MyCustomAxelarGatewaySource.sol[]
-----
-
-== Receiving a message
+=== Receiving a message
 
 To successfully process a message on the destination chain, a destination gateway is required. Although ERC-7786 doesn't define a standard interface for the destination gateway, it requires that it calls the `executeMessage` upon message reception.
 
@@ -64,7 +63,21 @@ The standard receiving interface abstracts away the underlying protocol. This wa
 
 === Axelar Network
 
-To solve the requirement of a destination gateway, the library provides an adapter of the `AxelarExecutable` interface to receive messages and relay them to an xref:api:crosschain.adoc#IERC7786Receiver[IERC7786Receiver].
+Aside from the xref:api:crosschain.adoc#AxelarGatewayDuple[AxelarGatewayDuple], the library offers an implementation of the xref:api:crosschain.adoc#IERC7786GatewaySource[IERC7786GatewaySource] interface called xref:api:crosschain.adoc#AxelarGatewaySource[AxelarGatewaySource] that works as an adapter for sending messages in compliance with ERC-7786
+
+The implementation takes a local gateway address that MUST correspond to https://axelarscan.io/resources/chains?type=evm[Axelar's native gateways] and has mechanisms to:
+
+* Keep track of equivalences between Axelar chain names and CAIP-2 identifiers
+* Record a destination gateway per network using their CAIP-2 identifier
+
+The xref:api:crosschain.adoc#AxelarGatewaySource[AxelarGatewaySource] implementation can be used out of the box
+
+[source,solidity]
+----
+include::api:example$crosschain/MyCustomAxelarGatewaySource.sol[]
+----
+
+For a destination gateway, the library provides an adapter of the `AxelarExecutable` interface to receive messages and relay them to an xref:api:crosschain.adoc#IERC7786Receiver[IERC7786Receiver].
 
 [source,solidity]
 ----
