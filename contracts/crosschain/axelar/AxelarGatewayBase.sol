@@ -49,7 +49,7 @@ abstract contract AxelarGatewayBase {
 
     /// @dev Registers a chain equivalence between a CAIP-2 chain identifier and an Axelar network identifier.
     function registerChainEquivalence(string calldata caip2, string calldata axelarSupported) public virtual {
-        _authorizeRegister(msg.sender);
+        _authorizeRegistrant();
         require(bytes(_chainEquivalence[caip2]).length == 0, ChainEquivalenceAlreadyRegistered(caip2));
         _chainEquivalence[caip2] = axelarSupported;
         _chainEquivalence[axelarSupported] = caip2;
@@ -58,12 +58,12 @@ abstract contract AxelarGatewayBase {
 
     /// @dev Registers the address string of the remote gateway for a given CAIP-2 chain identifier.
     function registerRemoteGateway(string calldata caip2, string calldata remoteGateway) public virtual {
-        _authorizeRegister(msg.sender);
+        _authorizeRegistrant();
         require(bytes(_remoteGateways[caip2]).length == 0, RemoteGatewayAlreadyRegistered(caip2));
         _remoteGateways[caip2] = remoteGateway;
         emit RegisteredRemoteGateway(caip2, remoteGateway);
     }
 
     /// @dev Modifier to check if the caller is allowed to register remote gateways and chain equivalences.
-    function _authorizeRegister(address register) internal virtual;
+    function _authorizeRegistrant() internal virtual;
 }
