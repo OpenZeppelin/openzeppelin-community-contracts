@@ -18,7 +18,7 @@ import {ERC7821} from "./extensions/ERC7821.sol";
  * NOTE: To use this contract, the {ERC7739Signer-_rawSignatureValidation} function must be
  * implemented using a specific signature verification algorithm. See {SignerECDSA}, {SignerP256} or {SignerRSA}.
  */
-abstract contract Account is AccountCore, ERC7821, ERC721Holder, ERC1155Holder, ERC7739Signer {
+abstract contract Account is AccountCore, ERC721Holder, ERC1155Holder, ERC7739Signer, ERC7821 {
     /// @inheritdoc ERC7821
     function _erc7821AuthorizedExecutor(address caller) internal view virtual override returns (bool) {
         return super._erc7821AuthorizedExecutor(caller) || caller == address(entryPoint());
