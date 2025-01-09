@@ -155,17 +155,13 @@ abstract contract AccountERC7579 is
      * if the module specified by the first 20 bytes of the nonce key is installed. Falls back to
      * {AccountCore-_validateUserOp} otherwise.
      *
-     * To construct a nonce key, set nonce as follows:
-     *
-     * ```
-     * <module address (20 bytes)> | <key (4 bytes)> | <nonce (8 bytes)>
-     * ```
+     * See {_extractUserOpValidator} for the module extraction logic.
      */
     function _validateUserOp(
         PackedUserOperation calldata userOp,
         bytes32 userOpHash
     ) internal virtual override returns (uint256) {
-        address module = address(bytes32(userOp.nonce).extract_32_20(0));
+        address module = _extractUserOpValidator(userOp);
         return
             isModuleInstalled(MODULE_TYPE_VALIDATOR, module, _emptyCalldataBytes())
                 ? IERC7579Validator(module).validateUserOp(userOp, _signableUserOpHash(userOp, userOpHash))
@@ -194,19 +190,14 @@ abstract contract AccountERC7579 is
      * This function delegates the signature validation to a validation module if the first 20 bytes of the
      * signature correspond to an installed validator module.
      *
-     * To construct a signature, set the first 20 bytes as the module address and the remaining bytes as the
-     * signature data:
-     *
-     * ```
-     * <module address (20 bytes)> | <signature data>
-     * ```
+     * See {_extractSignatureValidator} for the module extraction logic.
      */
     function _rawSignatureValidation(
         bytes32 hash,
         bytes calldata signature
     ) internal view virtual override returns (bool) {
         if (signature.length < 20) return false;
-        address module = address(bytes20(signature[0:20]));
+        address module = _extractSignatureValidator(signature);
         return
             isModuleInstalled(MODULE_TYPE_VALIDATOR, module, msg.data) &&
             IERC7579Validator(module).isValidSignatureWithSender(address(this), hash, signature[20:]) ==
@@ -309,6 +300,29 @@ abstract contract AccountERC7579 is
     /// @dev Returns the fallback handler for the given selector. Returns `address(0)` if not installed.
     function _fallbackHandler(bytes4 selector) internal view virtual returns (address) {
         return _fallbacks[selector];
+    }
+
+    /// @dev Extracts the nonce validator from the user operation.
+    ///
+    /// To construct a nonce key, set nonce as follows:
+    ///
+    /// ```
+    /// <module address (20 bytes)> | <key (4 bytes)> | <nonce (8 bytes)>
+    /// ```
+    function _extractUserOpValidator(PackedUserOperation calldata userOp) internal pure virtual returns (address) {
+        return address(bytes32(userOp.nonce).extract_32_20(0));
+    }
+
+    /// @dev Extracts the signature validator from the signature.
+    ///
+    /// To construct a signature, set the first 20 bytes as the module address and the remaining bytes as the
+    /// signature data:
+    ///
+    /// ```
+    /// <module address (20 bytes)> | <signature data>
+    /// ```
+    function _extractSignatureValidator(bytes calldata signature) internal pure virtual returns (address) {
+        return address(bytes20(signature[0:20]));
     }
 
     /**
