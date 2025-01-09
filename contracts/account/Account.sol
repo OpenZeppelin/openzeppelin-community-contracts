@@ -29,7 +29,7 @@ abstract contract Account is AccountCore, AccountERC7821, EIP712, ERC721Holder, 
     /**
      * @dev Specialization of {AccountCore-_signableUserOpHash} that returns a typehash following EIP-712 typed data
      * hashing for readability. This assumes the underlying signature scheme implements `signTypedData`, which will be
-     * the case when combined with {SignerECDSA} or {AccountSignerERC7702}.
+     * the case when combined with {SignerECDSA} or {SignerERC7702}.
      */
     function _signableUserOpHash(
         PackedUserOperation calldata userOp,
