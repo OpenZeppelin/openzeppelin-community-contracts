@@ -28,7 +28,7 @@ function shouldBehaveLikeAccountCore() {
   describe('entryPoint', function () {
     it('should return the canonical entrypoint', async function () {
       await this.mock.deploy();
-      expect(this.mock.entryPoint()).to.eventually.equal(entrypoint);
+      await expect(this.mock.entryPoint()).to.eventually.equal(entrypoint);
     });
   });
 
@@ -116,7 +116,7 @@ function shouldBehaveLikeAccountHolder() {
       it('receives ERC1155 tokens from a single ID', async function () {
         await this.token.connect(this.other).safeTransferFrom(this.other, this.mock, ids[0], values[0], data);
 
-        expect(
+        await expect(
           this.token.balanceOfBatch(
             ids.map(() => this.mock),
             ids,
@@ -125,7 +125,7 @@ function shouldBehaveLikeAccountHolder() {
       });
 
       it('receives ERC1155 tokens from a multiple IDs', async function () {
-        expect(
+        await expect(
           this.token.balanceOfBatch(
             ids.map(() => this.mock),
             ids,
@@ -133,7 +133,7 @@ function shouldBehaveLikeAccountHolder() {
         ).to.eventually.deep.equal(ids.map(() => 0n));
 
         await this.token.connect(this.other).safeBatchTransferFrom(this.other, this.mock, ids, values, data);
-        expect(
+        await expect(
           this.token.balanceOfBatch(
             ids.map(() => this.mock),
             ids,
@@ -153,7 +153,7 @@ function shouldBehaveLikeAccountHolder() {
       it('receives an ERC721 token', async function () {
         await this.token.connect(this.other).safeTransferFrom(this.other, this.mock, tokenId);
 
-        expect(this.token.ownerOf(tokenId)).to.eventually.equal(this.mock);
+        await expect(this.token.ownerOf(tokenId)).to.eventually.equal(this.mock);
       });
     });
   });
@@ -166,7 +166,7 @@ function shouldBehaveLikeAccountERC7821({ deployable = true } = {}) {
       await setBalance(this.mock.target, ethers.parseEther('1'));
 
       // account is not initially deployed
-      expect(ethers.provider.getCode(this.mock)).to.eventually.equal('0x');
+      await expect(ethers.provider.getCode(this.mock)).to.eventually.equal('0x');
 
       this.encodeUserOpCalldata = (...calls) =>
         this.mock.interface.encodeFunctionData('execute', [
@@ -205,13 +205,14 @@ function shouldBehaveLikeAccountERC7821({ deployable = true } = {}) {
             .then(op => op.addInitCode())
             .then(op => this.signUserOp(op));
 
-          expect(this.mock.getNonce()).to.eventually.equal(0);
+          // Can't call the account to get its nonce before it's deployed
+          await expect(entrypoint.getNonce(this.mock.target, 0)).to.eventually.equal(0);
           await expect(entrypoint.handleOps([operation.packed], this.beneficiary))
             .to.emit(entrypoint, 'AccountDeployed')
             .withArgs(operation.hash(), this.mock, this.factory, ethers.ZeroAddress)
             .to.emit(this.target, 'MockFunctionCalledExtra')
             .withArgs(this.mock, 17);
-          expect(this.mock.getNonce()).to.eventually.equal(1);
+          await expect(this.mock.getNonce()).to.eventually.equal(1);
         });
 
         it('should revert if the signature is invalid', async function () {
@@ -248,11 +249,11 @@ function shouldBehaveLikeAccountERC7821({ deployable = true } = {}) {
           })
           .then(op => this.signUserOp(op));
 
-        expect(this.mock.getNonce()).to.eventually.equal(0);
+        await expect(this.mock.getNonce()).to.eventually.equal(0);
         await expect(entrypoint.handleOps([operation.packed], this.beneficiary))
           .to.emit(this.target, 'MockFunctionCalledExtra')
           .withArgs(this.mock, 42);
-        expect(this.mock.getNonce()).to.eventually.equal(1);
+        await expect(this.mock.getNonce()).to.eventually.equal(1);
       });
 
       it('should support sending eth to an EOA', async function () {
@@ -260,12 +261,12 @@ function shouldBehaveLikeAccountERC7821({ deployable = true } = {}) {
           .createUserOp({ callData: this.encodeUserOpCalldata({ target: this.other, value }) })
           .then(op => this.signUserOp(op));
 
-        expect(this.mock.getNonce()).to.eventually.equal(0);
+        await expect(this.mock.getNonce()).to.eventually.equal(0);
         await expect(entrypoint.handleOps([operation.packed], this.beneficiary)).to.changeEtherBalance(
           this.other,
           value,
         );
-        expect(this.mock.getNonce()).to.eventually.equal(1);
+        await expect(this.mock.getNonce()).to.eventually.equal(1);
       });
 
       it('should support batch execution', async function () {
@@ -285,11 +286,11 @@ function shouldBehaveLikeAccountERC7821({ deployable = true } = {}) {
           })
           .then(op => this.signUserOp(op));
 
-        expect(this.mock.getNonce()).to.eventually.equal(0);
+        await expect(this.mock.getNonce()).to.eventually.equal(0);
         const tx = entrypoint.handleOps([operation.packed], this.beneficiary);
         await expect(tx).to.changeEtherBalances([this.other, this.target], [value1, value2]);
         await expect(tx).to.emit(this.target, 'MockFunctionCalledExtra').withArgs(this.mock, value2);
-        expect(this.mock.getNonce()).to.eventually.equal(1);
+        await expect(this.mock.getNonce()).to.eventually.equal(1);
       });
     });
   });

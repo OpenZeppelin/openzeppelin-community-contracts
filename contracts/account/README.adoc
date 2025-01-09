@@ -18,6 +18,8 @@ This directory includes contracts to build accounts for ERC-4337.
 
 {{AccountERC7759Hooked}}
 
+{{AccountERC7821}}
+
 == Modules
 
 {{ERC7579Validator}}
@@ -27,3 +29,4 @@ This directory includes contracts to build accounts for ERC-4337.
 {{ERC7579P256Validator}}
 
 {{ERC7579RSAValidator}}
+

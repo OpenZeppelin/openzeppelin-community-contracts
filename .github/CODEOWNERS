@@ -11,3 +11,6 @@
 
 ## Owners of the OpenZeppelin Community Contracts CODEOWNERS file
 /.github/CODEOWNERS @OpenZeppelin/contracts
+
+## Axelar
+/contracts/crosschain/axelar/ @cjcobb23
