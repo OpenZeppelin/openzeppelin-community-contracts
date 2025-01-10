@@ -9,6 +9,7 @@ import {ERC7579Utils, Mode, CallType, ExecType} from "@openzeppelin/contracts/ac
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import {Packing} from "@openzeppelin/contracts/utils/Packing.sol";
 import {Address} from "@openzeppelin/contracts/utils/Address.sol";
+import {Calldata} from "@openzeppelin/contracts/utils/Calldata.sol";
 import {ERC7739Signer} from "../../utils/cryptography/ERC7739Signer.sol";
 import {AccountCore} from "../AccountCore.sol";
 
@@ -138,7 +139,7 @@ abstract contract AccountERC7579 is
     }
 
     /// @dev Executes a transaction from the entry point or the account itself. See {_execute}.
-    function execute(bytes32 mode, bytes calldata executionCalldata) public virtual onlyEntryPointOrSelf {
+    function execute(bytes32 mode, bytes calldata executionCalldata) public payable virtual onlyEntryPointOrSelf {
         _execute(Mode.wrap(mode), executionCalldata);
     }
 
@@ -146,7 +147,7 @@ abstract contract AccountERC7579 is
     function executeFromExecutor(
         bytes32 mode,
         bytes calldata executionCalldata
-    ) public virtual onlyModule(MODULE_TYPE_EXECUTOR) returns (bytes[] memory returnData) {
+    ) public payable virtual onlyModule(MODULE_TYPE_EXECUTOR) returns (bytes[] memory returnData) {
         return _execute(Mode.wrap(mode), executionCalldata);
     }
 
@@ -163,7 +164,7 @@ abstract contract AccountERC7579 is
     ) internal virtual override returns (uint256) {
         address module = _extractUserOpValidator(userOp);
         return
-            isModuleInstalled(MODULE_TYPE_VALIDATOR, module, _emptyCalldataBytes())
+            isModuleInstalled(MODULE_TYPE_VALIDATOR, module, Calldata.emptyBytes())
                 ? IERC7579Validator(module).validateUserOp(userOp, _signableUserOpHash(userOp, userOpHash))
                 : super._validateUserOp(userOp, userOpHash);
     }
@@ -335,14 +336,6 @@ abstract contract AccountERC7579 is
             default {
                 return(add(returndata, 0x20), mload(returndata))
             }
-        }
-    }
-
-    // slither-disable-next-line write-after-write
-    function _emptyCalldataBytes() private pure returns (bytes calldata result) {
-        assembly ("memory-safe") {
-            result.offset := 0
-            result.length := 0
         }
     }
 
