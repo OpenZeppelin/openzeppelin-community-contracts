@@ -22,11 +22,10 @@ abstract contract AccountERC7579Hooked is AccountERC7579 {
      */
     modifier withHook() {
         address hook_ = hook();
-        bool hooked = hook_ != address(0);
         bytes memory hookData;
-        if (hooked) hookData = IERC7579Hook(hook_).preCheck(msg.sender, msg.value, msg.data);
+        if (hook_ != address(0)) hookData = IERC7579Hook(hook_).preCheck(msg.sender, msg.value, msg.data);
         _;
-        if (hooked) IERC7579Hook(hook_).postCheck(hookData);
+        if (hook_ != address(0)) IERC7579Hook(hook_).postCheck(hookData);
     }
 
     /// @dev Returns the hook module address if installed, or `address(0)` otherwise.
