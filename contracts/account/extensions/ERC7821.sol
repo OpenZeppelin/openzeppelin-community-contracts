@@ -48,12 +48,4 @@ abstract contract ERC7821 is IERC7821 {
     ) internal view virtual returns (bool) {
         return caller == address(this);
     }
-
-    // slither-disable-next-line write-after-write
-    function _emptyCalldataBytes() private pure returns (bytes calldata result) {
-        assembly ("memory-safe") {
-            result.offset := 0
-            result.length := 0
-        }
-    }
 }
