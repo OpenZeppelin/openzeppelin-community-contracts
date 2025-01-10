@@ -233,18 +233,18 @@ abstract contract AccountERC7579 is
             ERC7579Utils.ERC7579MismatchedModuleTypeId(moduleTypeId, module)
         );
 
-        bool exists;
-        if (moduleTypeId == MODULE_TYPE_VALIDATOR) exists = !_validators.add(module);
-        if (moduleTypeId == MODULE_TYPE_EXECUTOR) exists = !_executors.add(module);
-        require(!exists, ERC7579Utils.ERC7579AlreadyInstalledModule(moduleTypeId, module));
-
-        if (moduleTypeId == MODULE_TYPE_FALLBACK) {
+        if (moduleTypeId == MODULE_TYPE_VALIDATOR) {
+            require(_validators.add(module), ERC7579Utils.ERC7579AlreadyInstalledModule(moduleTypeId, module));
+        } else if (moduleTypeId == MODULE_TYPE_EXECUTOR) {
+            require(_executors.add(module), ERC7579Utils.ERC7579AlreadyInstalledModule(moduleTypeId, module));
+        } else if (moduleTypeId == MODULE_TYPE_FALLBACK) {
             bytes4 selector;
             (selector, initData) = abi.decode(initData, (bytes4, bytes));
             require(
-                _installFallback(module, selector),
+                _fallbacks[selector] == address(0),
                 ERC7579Utils.ERC7579AlreadyInstalledModule(moduleTypeId, module)
             );
+            _fallbacks[selector] = module;
         }
 
         IERC7579Module(module).onInstall(initData);
@@ -262,39 +262,22 @@ abstract contract AccountERC7579 is
      * * Module must be already installed. Reverts with {ERC7579UninstalledModule} otherwise.
      */
     function _uninstallModule(uint256 moduleTypeId, address module, bytes memory deInitData) internal virtual {
-        require(
-            (moduleTypeId != MODULE_TYPE_VALIDATOR || _validators.remove(module)) &&
-                (moduleTypeId != MODULE_TYPE_EXECUTOR || _executors.remove(module)),
-            ERC7579Utils.ERC7579UninstalledModule(moduleTypeId, module)
-        );
-
-        if (moduleTypeId == MODULE_TYPE_FALLBACK) {
+        if (moduleTypeId == MODULE_TYPE_VALIDATOR) {
+            require(_validators.remove(module), ERC7579Utils.ERC7579UninstalledModule(moduleTypeId, module));
+        } else if (moduleTypeId == MODULE_TYPE_EXECUTOR) {
+            require(_executors.remove(module), ERC7579Utils.ERC7579UninstalledModule(moduleTypeId, module));
+        } else if (moduleTypeId == MODULE_TYPE_FALLBACK) {
             bytes4 selector;
             (selector, deInitData) = abi.decode(deInitData, (bytes4, bytes));
-            require(_uninstallFallback(module, selector), ERC7579Utils.ERC7579UninstalledModule(moduleTypeId, module));
+            require(
+                _fallbackHandler(selector) == module && module != address(0),
+                ERC7579Utils.ERC7579UninstalledModule(moduleTypeId, module)
+            );
+            delete _fallbacks[selector];
         }
 
         IERC7579Module(module).onUninstall(deInitData);
         emit ModuleUninstalled(moduleTypeId, module);
-    }
-
-    /**
-     * @dev Installs a fallback handler for the given selector. Returns true if the handler was installed,
-     */
-    function _installFallback(address module, bytes4 selector) internal virtual returns (bool) {
-        if (_fallbacks[selector] != address(0)) return false;
-        _fallbacks[selector] = module;
-        return true;
-    }
-
-    /**
-     * @dev Uninstalls a fallback handler for the given selector. Returns true if the handler was uninstalled,
-     */
-    function _uninstallFallback(address module, bytes4 selector) internal virtual returns (bool) {
-        address handler = _fallbackHandler(selector);
-        if (handler == address(0) || handler != module) return false;
-        delete _fallbacks[selector];
-        return true;
     }
 
     /// @dev Returns the fallback handler for the given selector. Returns `address(0)` if not installed.
