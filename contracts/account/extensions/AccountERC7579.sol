@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.20;
 
-import {PackedUserOperation, IAccountExecute} from "@openzeppelin/contracts/interfaces/draft-IERC4337.sol";
+import {PackedUserOperation} from "@openzeppelin/contracts/interfaces/draft-IERC4337.sol";
 import {IERC1271} from "@openzeppelin/contracts/interfaces/IERC1271.sol";
 import {IERC7579Module, IERC7579Validator, IERC7579Execution, IERC7579AccountConfig, IERC7579ModuleConfig, MODULE_TYPE_VALIDATOR, MODULE_TYPE_EXECUTOR, MODULE_TYPE_FALLBACK} from "@openzeppelin/contracts/interfaces/draft-IERC7579.sol";
 import {ERC7579Utils, Mode, CallType, ExecType} from "@openzeppelin/contracts/account/utils/draft-ERC7579Utils.sol";
@@ -40,8 +40,7 @@ abstract contract AccountERC7579 is
     ERC7739,
     IERC7579Execution,
     IERC7579AccountConfig,
-    IERC7579ModuleConfig,
-    IAccountExecute
+    IERC7579ModuleConfig
 {
     using ERC7579Utils for *;
     using EnumerableSet for *;
@@ -131,11 +130,6 @@ abstract contract AccountERC7579 is
         if (moduleTypeId == MODULE_TYPE_EXECUTOR) return _executors.contains(module);
         if (moduleTypeId == MODULE_TYPE_FALLBACK) return _fallbacks[bytes4(additionalContext[0:4])] == module;
         return false;
-    }
-
-    /// @inheritdoc IAccountExecute
-    function executeUserOp(PackedUserOperation calldata userOp, bytes32 /*userOpHash*/) public virtual onlyEntryPoint {
-        Address.functionDelegateCall(address(this), userOp.callData[4:]);
     }
 
     /// @dev Executes a transaction from the entry point or the account itself. See {_execute}.

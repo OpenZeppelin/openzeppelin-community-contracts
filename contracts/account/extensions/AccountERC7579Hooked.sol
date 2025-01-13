@@ -3,7 +3,7 @@
 pragma solidity ^0.8.20;
 
 import {IERC7579Hook, MODULE_TYPE_HOOK} from "@openzeppelin/contracts/interfaces/draft-IERC7579.sol";
-import {Mode} from "@openzeppelin/contracts/account/utils/draft-ERC7579Utils.sol";
+import {ERC7579Utils, Mode} from "@openzeppelin/contracts/account/utils/draft-ERC7579Utils.sol";
 import {AccountERC7579} from "./AccountERC7579.sol";
 
 /**
@@ -59,13 +59,19 @@ abstract contract AccountERC7579Hooked is AccountERC7579 {
 
     /// @dev Installs a module with support for hook modules. See {AccountERC7579-_installModule}
     function _installModule(uint256 moduleTypeId, address module, bytes memory initData) internal virtual override {
-        if (moduleTypeId == MODULE_TYPE_HOOK) _hook = module;
+        if (moduleTypeId == MODULE_TYPE_HOOK) {
+            require(_hook == address(0), ERC7579Utils.ERC7579AlreadyInstalledModule(moduleTypeId, module));
+            _hook = module;
+        }
         super._installModule(moduleTypeId, module, initData);
     }
 
     /// @dev Uninstalls a module with support for hook modules. See {AccountERC7579-_uninstallModule}
     function _uninstallModule(uint256 moduleTypeId, address module, bytes memory deInitData) internal virtual override {
-        if (moduleTypeId == MODULE_TYPE_HOOK) _hook = address(0);
+        if (moduleTypeId == MODULE_TYPE_HOOK) {
+            require(_hook == module, ERC7579Utils.ERC7579UninstalledModule(moduleTypeId, module));
+            _hook = address(0);
+        }
         super._uninstallModule(moduleTypeId, module, deInitData);
     }
 }

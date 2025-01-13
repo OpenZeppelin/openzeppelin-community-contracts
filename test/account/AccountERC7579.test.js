@@ -60,11 +60,11 @@ describe('AccountERC7579', function () {
   describe('ERC7739', function () {
     beforeEach(async function () {
       this.mock = await this.mock.deploy();
-      this.signTypedData ??= (async (...args) => {
-        // Use the first 20 bytes from the signature to identify the validator module
-        const sig = await this.signer.signTypedData(...args);
-        return ethers.solidityPacked(['address', 'bytes'], [this.validatorMock.target, sig]);
-      }).bind(this.signer);
+      // Use the first 20 bytes from the signature to identify the validator module
+      this.signTypedData ??= (...args) =>
+        this.signer
+          .signTypedData(...args)
+          .then(signature => ethers.solidityPacked(['address', 'bytes'], [this.validatorMock.target, signature]));
     });
 
     shouldBehaveLikeERC7739();
