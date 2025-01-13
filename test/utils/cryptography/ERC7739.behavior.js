@@ -3,7 +3,7 @@ const { expect } = require('chai');
 const { Permit, formatType, getDomain } = require('../../../lib/@openzeppelin-contracts/test/helpers/eip712');
 const { PersonalSignHelper, TypedDataSignHelper } = require('../../helpers/erc7739');
 
-function shouldBehaveLikeERC7739Signer() {
+function shouldBehaveLikeERC7739() {
   const MAGIC_VALUE = '0x1626ba7e';
 
   describe('isValidSignature', function () {
@@ -32,7 +32,7 @@ function shouldBehaveLikeERC7739Signer() {
 
     describe('TypedDataSign', function () {
       beforeEach(async function () {
-        // Dummy app domain, different from the ERC7739Signer's domain
+        // Dummy app domain, different from the ERC7739's domain
         // Note the difference of format (signer domain doesn't include a salt, but app domain does)
         this.appDomain = {
           name: 'SomeApp',
@@ -101,5 +101,5 @@ function shouldBehaveLikeERC7739Signer() {
 }
 
 module.exports = {
-  shouldBehaveLikeERC7739Signer,
+  shouldBehaveLikeERC7739,
 };
