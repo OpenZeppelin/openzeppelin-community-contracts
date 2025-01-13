@@ -10,13 +10,13 @@ import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet
 import {Packing} from "@openzeppelin/contracts/utils/Packing.sol";
 import {Address} from "@openzeppelin/contracts/utils/Address.sol";
 import {Calldata} from "@openzeppelin/contracts/utils/Calldata.sol";
-import {ERC7739Signer} from "../../utils/cryptography/ERC7739Signer.sol";
+import {ERC7739} from "../../utils/cryptography/ERC7739.sol";
 import {AccountCore} from "../AccountCore.sol";
 
 /**
  * @dev Extension of {AccountCore} that implements support for ERC-7579 modules.
  *
- * To comply with the ERC-1271 support requirement, this contract implements {ERC7739Signer} as an
+ * To comply with the ERC-1271 support requirement, this contract implements {ERC7739} as an
  * opinionated layer to avoid signature replayability across accounts controlled by the same key.
  *
  * This contract does not implement validation logic for user operations since these functionality
@@ -37,7 +37,7 @@ import {AccountCore} from "../AccountCore.sol";
  */
 abstract contract AccountERC7579 is
     AccountCore,
-    ERC7739Signer,
+    ERC7739,
     IERC7579Execution,
     IERC7579AccountConfig,
     IERC7579ModuleConfig,
@@ -186,7 +186,7 @@ abstract contract AccountERC7579 is
     }
 
     /**
-     * @dev Lowest-level signature validation function. See {ERC7739Signer-_rawSignatureValidation}.
+     * @dev Lowest-level signature validation function. See {ERC7739-_rawSignatureValidation}.
      *
      * This function delegates the signature validation to a validation module if the first 20 bytes of the
      * signature correspond to an installed validator module.

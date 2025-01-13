@@ -6,6 +6,10 @@
 - `ERC7579Validator`: Add an abstract ERC-7579 validator module.
 - `ERC7579ECDSAValidator`, `ERC7579P256Validator` and `ERC7579RSAValidator`: Implementations of `ERC7579Validator` for ECDSA, P256, and RSA signatures.
 
+## 13-01-2025
+
+- Rename `ERC7739Signer` into `ERC7739` to avoid confusion with the `AbstractSigner` family of contracts.
+
 ## 23-12-2024
 
 - `AccountERC7821`: Account implementation that implements ERC-7821 for minimal batch execution interface. No support for additional `opData` is included.
