@@ -2,20 +2,53 @@
 
 pragma solidity ^0.8.20;
 
-import {ERC7579Validator} from "../../../account/modules/ERC7579Validator.sol";
+import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
+import {IERC1271} from "@openzeppelin/contracts/interfaces/IERC1271.sol";
+import {PackedUserOperation} from "@openzeppelin/contracts/interfaces/draft-IERC4337.sol";
+import {IERC7579Module, IERC7579Validator, MODULE_TYPE_VALIDATOR} from "@openzeppelin/contracts/interfaces/draft-IERC7579.sol";
+import {ERC4337Utils} from "@openzeppelin/contracts/account/utils/draft-ERC4337Utils.sol";
+import {ERC7579ModuleMock} from "./ERC7579ModuleMock.sol";
 
-abstract contract ERC7579ValidatorMock is ERC7579Validator {
-    function onInstall(bytes calldata data) public virtual {}
+abstract contract ERC7579ValidatorMock is ERC7579ModuleMock(MODULE_TYPE_VALIDATOR), IERC7579Validator {
+    mapping(address sender => address signer) private _associatedSigners;
 
-    function onUninstall(bytes calldata) public virtual {}
+    function onInstall(bytes calldata data) public virtual override(IERC7579Module, ERC7579ModuleMock) {
+        _associatedSigners[msg.sender] = address(bytes20(data[0:20]));
+        super.onInstall(data);
+    }
 
-    /// WARNING: This validator returns true for all signatures ending in `0x01` for testing purposes.
-    function _isValidSignatureWithSender(
-        address /* sender */,
-        bytes32 /* hash */,
+    function onUninstall(bytes calldata data) public virtual override(IERC7579Module, ERC7579ModuleMock) {
+        delete _associatedSigners[msg.sender];
+        super.onUninstall(data);
+    }
+
+    function validateUserOp(
+        PackedUserOperation calldata userOp,
+        bytes32 userOpHash
+    ) public view virtual returns (uint256) {
+        return
+            _isValidSignatureWithSender(msg.sender, userOpHash, userOp.signature)
+                ? ERC4337Utils.SIG_VALIDATION_SUCCESS
+                : ERC4337Utils.SIG_VALIDATION_FAILED;
+    }
+
+    function isValidSignatureWithSender(
+        address sender,
+        bytes32 hash,
         bytes calldata signature
-    ) internal view virtual override returns (bool) {
-        uint256 offset = signature.length;
-        return bytes1(signature[offset - 1:offset]) == bytes1(0x01);
+    ) public view virtual returns (bytes4) {
+        return
+            _isValidSignatureWithSender(sender, hash, signature)
+                ? IERC1271.isValidSignature.selector
+                : bytes4(0xffffffff);
+    }
+
+    function _isValidSignatureWithSender(
+        address sender,
+        bytes32 hash,
+        bytes calldata signature
+    ) internal view virtual returns (bool) {
+        (address recovered, ECDSA.RecoverError err, ) = ECDSA.tryRecover(hash, signature);
+        return _associatedSigners[sender] == recovered && err == ECDSA.RecoverError.NoError;
     }
 }

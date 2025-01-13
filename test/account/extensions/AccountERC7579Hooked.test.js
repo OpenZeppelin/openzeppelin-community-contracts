@@ -14,7 +14,7 @@ async function fixture() {
   const anotherTarget = await ethers.deployContract('CallReceiverMockExtended');
 
   // ERC-7579 validator
-  const validatorMock = await ethers.deployContract('$ERC7579ECDSAValidator');
+  const validatorMock = await ethers.deployContract('$ERC7579ValidatorMock');
 
   // ERC-4337 signer
   const signer = ethers.Wallet.createRandom();
