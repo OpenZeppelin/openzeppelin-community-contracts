@@ -3,7 +3,8 @@ const { loadFixture } = require('@nomicfoundation/hardhat-network-helpers');
 const { ERC4337Helper } = require('../../helpers/erc4337');
 const { PackedUserOperation } = require('../../helpers/eip712-types');
 
-const { shouldBehaveLikeAccountCore, shouldBehaveLikeAccountERC7579 } = require('../Account.behavior');
+const { shouldBehaveLikeAccountCore } = require('../Account.behavior');
+const { shouldBehaveLikeAccountERC7579 } = require('./AccountERC7579.behavior');
 const { shouldBehaveLikeERC7739 } = require('../../utils/cryptography/ERC7739.behavior');
 
 async function fixture() {
