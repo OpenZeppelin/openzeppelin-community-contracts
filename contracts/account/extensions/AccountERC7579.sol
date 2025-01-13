@@ -7,6 +7,7 @@ import {IERC1271} from "@openzeppelin/contracts/interfaces/IERC1271.sol";
 import {IERC7579Module, IERC7579Validator, IERC7579Execution, IERC7579AccountConfig, IERC7579ModuleConfig, MODULE_TYPE_VALIDATOR, MODULE_TYPE_EXECUTOR, MODULE_TYPE_FALLBACK} from "@openzeppelin/contracts/interfaces/draft-IERC7579.sol";
 import {ERC7579Utils, Mode, CallType, ExecType} from "@openzeppelin/contracts/account/utils/draft-ERC7579Utils.sol";
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
+import {Bytes} from "@openzeppelin/contracts/utils/Bytes.sol";
 import {Packing} from "@openzeppelin/contracts/utils/Packing.sol";
 import {Address} from "@openzeppelin/contracts/utils/Address.sol";
 import {Calldata} from "@openzeppelin/contracts/utils/Calldata.sol";
@@ -42,6 +43,7 @@ abstract contract AccountERC7579 is
     IERC7579AccountConfig,
     IERC7579ModuleConfig
 {
+    using Bytes for *;
     using ERC7579Utils for *;
     using EnumerableSet for *;
     using Packing for bytes32;
@@ -234,7 +236,7 @@ abstract contract AccountERC7579 is
             require(_executors.add(module), ERC7579Utils.ERC7579AlreadyInstalledModule(moduleTypeId, module));
         } else if (moduleTypeId == MODULE_TYPE_FALLBACK) {
             bytes4 selector;
-            (selector, initData) = abi.decode(initData, (bytes4, bytes));
+            (selector, initData) = _decodeFallbackData(initData);
             require(
                 _fallbacks[selector] == address(0),
                 ERC7579Utils.ERC7579AlreadyInstalledModule(moduleTypeId, module)
@@ -263,7 +265,7 @@ abstract contract AccountERC7579 is
             require(_executors.remove(module), ERC7579Utils.ERC7579UninstalledModule(moduleTypeId, module));
         } else if (moduleTypeId == MODULE_TYPE_FALLBACK) {
             bytes4 selector;
-            (selector, deInitData) = abi.decode(deInitData, (bytes4, bytes));
+            (selector, deInitData) = _decodeFallbackData(deInitData);
             require(
                 _fallbackHandler(selector) == module && module != address(0),
                 ERC7579Utils.ERC7579UninstalledModule(moduleTypeId, module)
@@ -280,27 +282,40 @@ abstract contract AccountERC7579 is
         return _fallbacks[selector];
     }
 
-    /// @dev Extracts the nonce validator from the user operation.
-    ///
-    /// To construct a nonce key, set nonce as follows:
-    ///
-    /// ```
-    /// <module address (20 bytes)> | <key (4 bytes)> | <nonce (8 bytes)>
-    /// ```
+    /**
+     * @dev Extracts the nonce validator from the user operation.
+     *
+     * To construct a nonce key, set nonce as follows:
+     *
+     * ```
+     * <module address (20 bytes)> | <key (4 bytes)> | <nonce (8 bytes)>
+     * ```
+     */
     function _extractUserOpValidator(PackedUserOperation calldata userOp) internal pure virtual returns (address) {
         return address(bytes32(userOp.nonce).extract_32_20(0));
     }
 
-    /// @dev Extracts the signature validator from the signature.
-    ///
-    /// To construct a signature, set the first 20 bytes as the module address and the remaining bytes as the
-    /// signature data:
-    ///
-    /// ```
-    /// <module address (20 bytes)> | <signature data>
-    /// ```
+    /**
+     * @dev Extracts the signature validator from the signature.
+     *
+     * To construct a signature, set the first 20 bytes as the module address and the remaining bytes as the
+     * signature data:
+     *
+     * ```
+     * <module address (20 bytes)> | <signature data>
+     * ```
+     */
     function _extractSignatureValidator(bytes calldata signature) internal pure virtual returns (address) {
         return address(bytes20(signature[0:20]));
+    }
+
+    /**
+     * @dev Extract the function selector from initData/deInitData for MODULE_TYPE_FALLBACK
+     */
+    function _decodeFallbackData(
+        bytes memory data
+    ) internal pure virtual returns (bytes4 selector, bytes memory remaining) {
+        return (bytes4(data), data.slice(4));
     }
 
     /**

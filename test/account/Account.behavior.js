@@ -24,7 +24,7 @@ const { selector } = require('@openzeppelin/contracts/test/helpers/methods');
 const CALL_TYPE_INVALID = '0x42';
 const MODULE_TYPE_INVALID = 999n;
 
-const value = ethers.parseEther('0.1');
+const coder = ethers.AbiCoder.defaultAbiCoder();
 
 function shouldBehaveLikeAccountCore() {
   describe('entryPoint', function () {
@@ -77,6 +77,7 @@ function shouldBehaveLikeAccountCore() {
       it('should pay missing account funds for execution', async function () {
         // empty operation (does nothing)
         const operation = await this.mock.createUserOp(this.userOp).then(op => this.signUserOp(op));
+        const value = 42n;
 
         await expect(
           this.mockFromEntrypoint.validateUserOp(operation.packed, operation.hash(), value),
@@ -88,6 +89,7 @@ function shouldBehaveLikeAccountCore() {
   describe('fallback', function () {
     it('should receive ether', async function () {
       await this.mock.deploy();
+      const value = 42n;
 
       await expect(this.other.sendTransaction({ to: this.mock, value })).to.changeEtherBalances(
         [this.other, this.mock],
@@ -260,14 +262,11 @@ function shouldBehaveLikeAccountERC7821({ deployable = true } = {}) {
 
       it('should support sending eth to an EOA', async function () {
         const operation = await this.mock
-          .createUserOp({ callData: this.encodeUserOpCalldata({ target: this.other, value }) })
+          .createUserOp({ callData: this.encodeUserOpCalldata({ target: this.other, value: 42 }) })
           .then(op => this.signUserOp(op));
 
         await expect(this.mock.getNonce()).to.eventually.equal(0);
-        await expect(entrypoint.handleOps([operation.packed], this.beneficiary)).to.changeEtherBalance(
-          this.other,
-          value,
-        );
+        await expect(entrypoint.handleOps([operation.packed], this.beneficiary)).to.changeEtherBalance(this.other, 42);
         await expect(this.mock.getNonce()).to.eventually.equal(1);
       });
 
@@ -299,10 +298,6 @@ function shouldBehaveLikeAccountERC7821({ deployable = true } = {}) {
 }
 
 function shouldBehaveLikeAccountERC7579({ withHooks = false } = {}) {
-  const fnSig = '0x12345678';
-  const coder = ethers.AbiCoder.defaultAbiCoder();
-  const data = coder.encode(['bytes4', 'bytes'], [fnSig, '0x']); // Min data for MODULE_TYPE_FALLBACK
-
   describe('AccountERC7579', function () {
     beforeEach(async function () {
       await this.mock.deploy();
@@ -398,7 +393,7 @@ function shouldBehaveLikeAccountERC7579({ withHooks = false } = {}) {
       ].filter(Boolean)) {
         it(`should install a module of type ${moduleTypeId}`, async function () {
           const moduleMock = await ethers.deployContract('$ERC7579ModuleMock', [moduleTypeId]);
-          const initData = moduleTypeId === MODULE_TYPE_FALLBACK ? data : '0x';
+          const initData = moduleTypeId === MODULE_TYPE_FALLBACK ? '0x12345678abcdef' : '0xabcdef';
 
           await expect(this.mock.isModuleInstalled(moduleTypeId, moduleMock, initData)).to.eventually.equal(false);
 
@@ -406,14 +401,14 @@ function shouldBehaveLikeAccountERC7579({ withHooks = false } = {}) {
             .to.emit(this.mock, 'ModuleInstalled')
             .withArgs(moduleTypeId, moduleMock)
             .to.emit(moduleMock, 'ModuleInstalledReceived')
-            .withArgs(this.mock, '0x'); // After decoding MODULE_TYPE_FALLBACK, it should remove the fnSig
+            .withArgs(this.mock, '0xabcdef'); // After decoding MODULE_TYPE_FALLBACK, it should remove the fnSig
 
           await expect(this.mock.isModuleInstalled(moduleTypeId, moduleMock, initData)).to.eventually.equal(true);
         });
 
         it(`does not allow to install a module of ${moduleTypeId} id twice`, async function () {
           const moduleMock = await ethers.deployContract('$ERC7579ModuleMock', [moduleTypeId]);
-          const initData = moduleTypeId === MODULE_TYPE_FALLBACK ? data : '0x';
+          const initData = moduleTypeId === MODULE_TYPE_FALLBACK ? '0x12345678abcdef' : '0xabcdef';
 
           await this.mockFromEntrypoint.installModule(moduleTypeId, moduleMock, initData);
 
@@ -441,26 +436,26 @@ function shouldBehaveLikeAccountERC7579({ withHooks = false } = {}) {
       ].filter(Boolean)) {
         it(`should uninstall a module of type ${moduleTypeId}`, async function () {
           const moduleMock = await ethers.deployContract('$ERC7579ModuleMock', [moduleTypeId]);
-          const deinitData = moduleTypeId === MODULE_TYPE_FALLBACK ? data : '0x';
+          const initData = moduleTypeId === MODULE_TYPE_FALLBACK ? '0x12345678abcdef' : '0xabcdef';
 
-          await this.mock.$_installModule(moduleTypeId, moduleMock, deinitData);
+          await this.mock.$_installModule(moduleTypeId, moduleMock, initData);
 
-          await expect(this.mock.isModuleInstalled(moduleTypeId, moduleMock, deinitData)).to.eventually.equal(true);
+          await expect(this.mock.isModuleInstalled(moduleTypeId, moduleMock, initData)).to.eventually.equal(true);
 
-          await expect(this.mockFromEntrypoint.uninstallModule(moduleTypeId, moduleMock, deinitData))
+          await expect(this.mockFromEntrypoint.uninstallModule(moduleTypeId, moduleMock, initData))
             .to.emit(this.mock, 'ModuleUninstalled')
             .withArgs(moduleTypeId, moduleMock)
             .to.emit(moduleMock, 'ModuleUninstalledReceived')
-            .withArgs(this.mock, '0x'); // After decoding MODULE_TYPE_FALLBACK, it should remove the fnSig
+            .withArgs(this.mock, '0xabcdef'); // After decoding MODULE_TYPE_FALLBACK, it should remove the fnSig
 
-          await expect(this.mock.isModuleInstalled(moduleTypeId, moduleMock, deinitData)).to.eventually.equal(false);
+          await expect(this.mock.isModuleInstalled(moduleTypeId, moduleMock, initData)).to.eventually.equal(false);
         });
 
         it(`should revert uninstalling a module of type ${moduleTypeId} if it was not installed`, async function () {
           const moduleMock = await ethers.deployContract('$ERC7579ModuleMock', [moduleTypeId]);
-          const deinitData = moduleTypeId === MODULE_TYPE_FALLBACK ? data : '0x';
+          const initData = moduleTypeId === MODULE_TYPE_FALLBACK ? '0x12345678abcdef' : '0xabcdef';
 
-          await expect(this.mockFromEntrypoint.uninstallModule(moduleTypeId, moduleMock, deinitData))
+          await expect(this.mockFromEntrypoint.uninstallModule(moduleTypeId, moduleMock, initData))
             .to.be.revertedWithCustomError(this.mock, 'ERC7579UninstalledModule')
             .withArgs(moduleTypeId, moduleMock);
         });
@@ -469,9 +464,10 @@ function shouldBehaveLikeAccountERC7579({ withHooks = false } = {}) {
       it('should revert uninstalling a module of type MODULE_TYPE_FALLBACK if a different module was installed for the provided selector', async function () {
         const moduleMock = await ethers.deployContract('$ERC7579ModuleMock', [MODULE_TYPE_FALLBACK]);
         const anotherModuleMock = await ethers.deployContract('$ERC7579ModuleMock', [MODULE_TYPE_FALLBACK]);
+        const initData = '0x12345678abcdef';
 
-        await this.mockFromEntrypoint.$_installModule(MODULE_TYPE_FALLBACK, moduleMock, data);
-        await expect(this.mockFromEntrypoint.uninstallModule(MODULE_TYPE_FALLBACK, anotherModuleMock, data))
+        await this.mockFromEntrypoint.$_installModule(MODULE_TYPE_FALLBACK, moduleMock, initData);
+        await expect(this.mockFromEntrypoint.uninstallModule(MODULE_TYPE_FALLBACK, anotherModuleMock, initData))
           .to.be.revertedWithCustomError(this.mock, 'ERC7579UninstalledModule')
           .withArgs(MODULE_TYPE_FALLBACK, anotherModuleMock);
       });
@@ -734,6 +730,7 @@ function shouldBehaveLikeAccountERC7579({ withHooks = false } = {}) {
 
         it('forwards the call to the fallback handler', async function () {
           const calldata = this.fallbackHandler.interface.encodeFunctionData('callPayable');
+          const value = 17n;
 
           await expect(this.fallbackHandler.attach(this.mock).connect(this.other).callPayable({ value }))
             .to.emit(this.fallbackHandler, 'ERC7579FallbackHandlerMockCalled')
@@ -761,6 +758,7 @@ function shouldBehaveLikeAccountERC7579({ withHooks = false } = {}) {
 
             it('should call the hook of the installed module when performing a callback', async function () {
               const precheckData = this.fallbackHandler.interface.encodeFunctionData('callPayable');
+              const value = 17n;
 
               // call with interface: decode returned data
               await expect(this.fallbackHandler.attach(this.mock).connect(this.other).callPayable({ value }))
