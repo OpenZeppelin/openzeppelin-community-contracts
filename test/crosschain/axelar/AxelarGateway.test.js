@@ -32,13 +32,13 @@ describe('AxelarGateway', function () {
   });
 
   it('initial setup', async function () {
-    expect(this.srcGateway.localGateway()).to.eventually.equal(this.axelar);
-    expect(this.srcGateway.getEquivalentChain(this.CAIP2)).to.eventually.equal('local');
-    expect(this.srcGateway.getRemoteGateway(this.CAIP2)).to.eventually.equal(getAddress(this.dstGateway));
+    await expect(this.srcGateway.localGateway()).to.eventually.equal(this.axelar);
+    await expect(this.srcGateway.getEquivalentChain(this.CAIP2)).to.eventually.equal('local');
+    await expect(this.srcGateway.getRemoteGateway(this.CAIP2)).to.eventually.equal(getAddress(this.dstGateway));
 
-    expect(this.dstGateway.localGateway()).to.eventually.equal(this.axelar);
-    expect(this.dstGateway.getEquivalentChain(this.CAIP2)).to.eventually.equal('local');
-    expect(this.dstGateway.getRemoteGateway(this.CAIP2)).to.eventually.equal(getAddress(this.srcGateway));
+    await expect(this.dstGateway.localGateway()).to.eventually.equal(this.axelar);
+    await expect(this.dstGateway.getEquivalentChain(this.CAIP2)).to.eventually.equal('local');
+    await expect(this.dstGateway.getRemoteGateway(this.CAIP2)).to.eventually.equal(getAddress(this.srcGateway));
   });
 
   it('workflow', async function () {

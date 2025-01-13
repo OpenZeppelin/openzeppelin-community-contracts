@@ -3,7 +3,7 @@ const { expect } = require('chai');
 const { Permit, formatType, getDomain } = require('../../../lib/@openzeppelin-contracts/test/helpers/eip712');
 const { PersonalSignHelper, TypedDataSignHelper } = require('../../helpers/erc7739');
 
-function shouldBehaveLikeERC7739Signer() {
+function shouldBehaveLikeERC7739() {
   const MAGIC_VALUE = '0x1626ba7e';
 
   describe('isValidSignature', function () {
@@ -19,20 +19,20 @@ function shouldBehaveLikeERC7739Signer() {
         const hash = PersonalSignHelper.hash(text);
         const signature = await PersonalSignHelper.sign(this.signTypedData, text, this.domain);
 
-        expect(this.mock.isValidSignature(hash, signature)).to.eventually.equal(MAGIC_VALUE);
+        await expect(this.mock.isValidSignature(hash, signature)).to.eventually.equal(MAGIC_VALUE);
       });
 
       it('returns false for an invalid personal signature', async function () {
         const hash = PersonalSignHelper.hash('Message the app expects');
         const signature = await PersonalSignHelper.sign(this.signTypedData, 'Message signed is different', this.domain);
 
-        expect(this.mock.isValidSignature(hash, signature)).to.eventually.not.equal(MAGIC_VALUE);
+        await expect(this.mock.isValidSignature(hash, signature)).to.eventually.not.equal(MAGIC_VALUE);
       });
     });
 
     describe('TypedDataSign', function () {
       beforeEach(async function () {
-        // Dummy app domain, different from the ERC7739Signer's domain
+        // Dummy app domain, different from the ERC7739's domain
         // Note the difference of format (signer domain doesn't include a salt, but app domain does)
         this.appDomain = {
           name: 'SomeApp',
@@ -56,7 +56,7 @@ function shouldBehaveLikeERC7739Signer() {
         const hash = ethers.TypedDataEncoder.hash(this.appDomain, { Permit }, message.contents);
         const signature = await TypedDataSignHelper.sign(this.signTypedData, this.appDomain, { Permit }, message);
 
-        expect(this.mock.isValidSignature(hash, signature)).to.eventually.equal(MAGIC_VALUE);
+        await expect(this.mock.isValidSignature(hash, signature)).to.eventually.equal(MAGIC_VALUE);
       });
 
       it('returns true for valid typed data signature (nested types)', async function () {
@@ -72,7 +72,7 @@ function shouldBehaveLikeERC7739Signer() {
         const hash = TypedDataSignHelper.hash(this.appDomain, contentsTypes, message.contents);
         const signature = await TypedDataSignHelper.sign(this.signTypedData, this.appDomain, contentsTypes, message);
 
-        expect(this.mock.isValidSignature(hash, signature)).to.eventually.equal(MAGIC_VALUE);
+        await expect(this.mock.isValidSignature(hash, signature)).to.eventually.equal(MAGIC_VALUE);
       });
 
       it('returns false for an invalid typed data signature', async function () {
@@ -89,18 +89,17 @@ function shouldBehaveLikeERC7739Signer() {
         const hash = ethers.TypedDataEncoder.hash(this.appDomain, { Permit }, appContents);
         const signature = await TypedDataSignHelper.sign(this.signTypedData, this.appDomain, { Permit }, message);
 
-        expect(this.mock.isValidSignature(hash, signature)).to.eventually.not.equal(MAGIC_VALUE);
+        await expect(this.mock.isValidSignature(hash, signature)).to.eventually.not.equal(MAGIC_VALUE);
       });
     });
 
-    it('support detection', function () {
-      expect(
-        this.mock.isValidSignature('0x7739773977397739773977397739773977397739773977397739773977397739', ''),
-      ).to.eventually.equal('0x77390001');
+    it('support detection', async function () {
+      const hash = '0x7739773977397739773977397739773977397739773977397739773977397739';
+      await expect(this.mock.isValidSignature(hash, '0x')).to.eventually.equal('0x77390001');
     });
   });
 }
 
 module.exports = {
-  shouldBehaveLikeERC7739Signer,
+  shouldBehaveLikeERC7739,
 };

@@ -2,6 +2,8 @@
 
 pragma solidity ^0.8.20;
 
+import {Calldata} from "@openzeppelin/contracts/utils/Calldata.sol";
+
 /**
  * @dev Utilities to process https://ercs.ethereum.org/ERCS/erc-7739[ERC-7739] typed data signatures
  * that are specific to an EIP-712 domain.
@@ -71,13 +73,13 @@ library ERC7739Utils {
         unchecked {
             uint256 sigLength = encodedSignature.length;
 
-            if (sigLength < 4) return (_emptyCalldataBytes(), 0, 0, _emptyCalldataString());
+            if (sigLength < 4) return (Calldata.emptyBytes(), 0, 0, Calldata.emptyString());
 
             uint256 contentsDescrEnd = sigLength - 2; // Last 2 bytes
             uint256 contentsDescrLength = uint16(bytes2(encodedSignature[contentsDescrEnd:]));
 
             if (contentsDescrLength + 64 > contentsDescrEnd)
-                return (_emptyCalldataBytes(), 0, 0, _emptyCalldataString());
+                return (Calldata.emptyBytes(), 0, 0, Calldata.emptyString());
 
             uint256 contentsHashEnd = contentsDescrEnd - contentsDescrLength;
             uint256 separatorEnd = contentsHashEnd - 32;
@@ -195,23 +197,7 @@ library ERC7739Utils {
                 }
             }
         }
-        return (_emptyCalldataString(), _emptyCalldataString());
-    }
-
-    // slither-disable-next-line write-after-write
-    function _emptyCalldataBytes() private pure returns (bytes calldata result) {
-        assembly ("memory-safe") {
-            result.offset := 0
-            result.length := 0
-        }
-    }
-
-    // slither-disable-next-line write-after-write
-    function _emptyCalldataString() private pure returns (string calldata result) {
-        assembly ("memory-safe") {
-            result.offset := 0
-            result.length := 0
-        }
+        return (Calldata.emptyString(), Calldata.emptyString());
     }
 
     function _isForbiddenChar(bytes1 char) private pure returns (bool) {

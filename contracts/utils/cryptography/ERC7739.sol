@@ -24,7 +24,7 @@ import {ERC7739Utils} from "./ERC7739Utils.sol";
  * may limit the ability of the signer to be used within the ERC-4337 validation phase (due to
  * https://eips.ethereum.org/EIPS/eip-7562#storage-rules[ERC-7562 storage access rules]).
  */
-abstract contract ERC7739Signer is AbstractSigner, EIP712, IERC1271 {
+abstract contract ERC7739 is AbstractSigner, EIP712, IERC1271 {
     using ERC7739Utils for *;
     using MessageHashUtils for bytes32;
 

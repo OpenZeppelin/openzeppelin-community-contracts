@@ -1,3 +1,8 @@
+## 13-01-2025
+
+- Rename `ERC7739Signer` into `ERC7739` to avoid confusion with the `AbstractSigner` family of contracts.
+- Remove `AccountERC7821` in favor of `ERC7821`, an ERC-7821 implementation that doesn't rely on (but is compatible with) `AccountCore`.
+
 ## 23-12-2024
 
 - `AccountERC7821`: Account implementation that implements ERC-7821 for minimal batch execution interface. No support for additional `opData` is included.
