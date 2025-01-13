@@ -1,11 +1,15 @@
 :github-icon: pass:[<svg class="icon"><use href="#github-icon"/></svg>]
+:AccountCore: pass:normal[xref:account.adoc#AccountCore[`AccountCore`]]
+:Account: pass:normal[xref:account.adoc#Account[`Account`]]
+:AccountSignerERC7702: pass:normal[xref:account.adoc#AccountSignerERC7702[`AccountSignerERC7702`]]
+:ERC7821: pass:normal[xref:account.adoc#ERC7821[`ERC7821`]]
 :AbstractSigner-_rawSignatureValidation: pass:normal[xref:utils.adoc#AbstractSigner-_rawSignatureValidation-bytes32-bytes-[`AbstractSigner._rawSignatureValidation`]]
 :SignerECDSA: pass:normal[xref:utils.adoc#SignerECDSA[`SignerECDSA`]]
 :SignerP256: pass:normal[xref:utils.adoc#SignerP256[`SignerP256`]]
 :SignerRSA: pass:normal[xref:utils.adoc#SignerRSA[`SignerRSA`]]
 :AccountCore: pass:normal[xref:account.adoc#AccountCore[`AccountCore`]]
-:AccountERC7821: pass:normal[xref:account.adoc#AccountERC7821[`AccountERC7821`]]
 :ERC7739: pass:normal[xref:utils.adoc#ERC7739[`ERC7739`]]
+:ERC7821: pass:normal[xref:account.adoc#ERC7821[`ERC7821`]]
 :SignerECDSA: pass:normal[xref:utils.adoc#SignerECDSA[`SignerECDSA`]]
 :SignerP256: pass:normal[xref:utils.adoc#SignerP256[`SignerP256`]]
 :SignerRSA: pass:normal[xref:utils.adoc#SignerRSA[`SignerRSA`]]
@@ -14,7 +18,12 @@
 [.readme-notice]
 NOTE: This document is better viewed at https://docs.openzeppelin.com/community-contracts/api/account
 
-This directory includes contracts to build accounts for ERC-4337.
+This directory includes contracts to build accounts for ERC-4337. These include:
+
+ * {AccountCore}: An ERC-4337 smart account implementation that includes the core logic to process user operations.
+ * {Account}: An extension of `AccountCore` that implements the recommended features for ERC-4337 smart accounts.
+ * {AccountSignerERC7702}: An account implementation with low-level signature validation performed by an EOA.
+ * {ERC7821}: Minimal batch executor implementation contracts. Useful to enable easy batch execution for smart contracts. 
 
 == Core
 
@@ -245,6 +254,8 @@ Unauthorized call to the account.
 [[AccountCore-_PACKED_USER_OPERATION-bytes32]]
 ==== `bytes32 [.contract-item-name]#++_PACKED_USER_OPERATION++#` [.item-kind]#internal constant#
 
+:_erc7821AuthorizedExecutor: pass:normal[xref:#Account-_erc7821AuthorizedExecutor-address-bytes32-bytes-[`++_erc7821AuthorizedExecutor++`]]
+
 [.contract]
 [[Account]]
 === `++Account++` link:https://github.com/OpenZeppelin/openzeppelin-contracts/blob/v0.0.1/contracts/account/Account.sol[{github-icon},role=heading-link]
@@ -256,9 +267,9 @@ import "@openzeppelin/contracts/account/Account.sol";
 
 Extension of {AccountCore} with recommended feature that most account abstraction implementation will want:
 
-* {AccountERC7821} for performing external calls in batches.
 * {ERC721Holder} and {ERC1155Holder} to accept ERC-712 and ERC-1155 token transfers transfers.
 * {ERC7739} for ERC-1271 signature support with ERC-7739 replay protection
+* {ERC7821} for performing external calls in batches.
 
 NOTE: To use this contract, the {ERC7739-_rawSignatureValidation} function must be
 implemented using a specific signature verification algorithm. See {SignerECDSA}, {SignerP256} or {SignerRSA}.
@@ -266,6 +277,15 @@ implemented using a specific signature verification algorithm. See {SignerECDSA}
 [.contract-index]
 .Functions
 --
+* `++_erc7821AuthorizedExecutor(caller, mode, executionData)++`
+
+[.contract-subindex-inherited]
+.ERC7821
+* `++execute(mode, executionData)++`
+* `++supportsExecutionMode(mode)++`
+
+[.contract-subindex-inherited]
+.IERC7821
 
 [.contract-subindex-inherited]
 .ERC7739
@@ -295,14 +315,6 @@ implemented using a specific signature verification algorithm. See {SignerECDSA}
 
 [.contract-subindex-inherited]
 .IERC721Receiver
-
-[.contract-subindex-inherited]
-.AccountERC7821
-* `++execute(mode, executionData)++`
-* `++supportsExecutionMode(mode)++`
-
-[.contract-subindex-inherited]
-.IERC7821
 
 [.contract-subindex-inherited]
 .AccountCore
@@ -341,6 +353,12 @@ implemented using a specific signature verification algorithm. See {SignerECDSA}
 --
 
 [.contract-subindex-inherited]
+.ERC7821
+
+[.contract-subindex-inherited]
+.IERC7821
+
+[.contract-subindex-inherited]
 .ERC7739
 
 [.contract-subindex-inherited]
@@ -363,12 +381,6 @@ implemented using a specific signature verification algorithm. See {SignerECDSA}
 
 [.contract-subindex-inherited]
 .IERC721Receiver
-
-[.contract-subindex-inherited]
-.AccountERC7821
-
-[.contract-subindex-inherited]
-.IERC7821
 
 [.contract-subindex-inherited]
 .AccountCore
@@ -393,6 +405,13 @@ implemented using a specific signature verification algorithm. See {SignerECDSA}
 --
 
 [.contract-subindex-inherited]
+.ERC7821
+* `++UnsupportedExecutionMode()++`
+
+[.contract-subindex-inherited]
+.IERC7821
+
+[.contract-subindex-inherited]
 .ERC7739
 
 [.contract-subindex-inherited]
@@ -417,13 +436,6 @@ implemented using a specific signature verification algorithm. See {SignerECDSA}
 .IERC721Receiver
 
 [.contract-subindex-inherited]
-.AccountERC7821
-* `++UnsupportedExecutionMode()++`
-
-[.contract-subindex-inherited]
-.IERC7821
-
-[.contract-subindex-inherited]
 .AccountCore
 * `++AccountUnauthorized(sender)++`
 
@@ -440,6 +452,12 @@ implemented using a specific signature verification algorithm. See {SignerECDSA}
 .AbstractSigner
 
 --
+
+[.contract-item]
+[[Account-_erc7821AuthorizedExecutor-address-bytes32-bytes-]]
+==== `[.contract-item-name]#++_erc7821AuthorizedExecutor++#++(address caller, bytes32 mode, bytes executionData) → bool++` [.item-kind]#internal#
+
+Access control mechanism for the {execute} function.
 
 == Extensions
 
@@ -542,84 +560,31 @@ import "@openzeppelin/contracts/account/extensions/AccountSignerERC7702.sol";
 
 Validates the signature using the EOA's address (ie. `address(this)`).
 
-:UnsupportedExecutionMode: pass:normal[xref:#AccountERC7821-UnsupportedExecutionMode--[`++UnsupportedExecutionMode++`]]
-:execute: pass:normal[xref:#AccountERC7821-execute-bytes32-bytes-[`++execute++`]]
-:supportsExecutionMode: pass:normal[xref:#AccountERC7821-supportsExecutionMode-bytes32-[`++supportsExecutionMode++`]]
+:UnsupportedExecutionMode: pass:normal[xref:#ERC7821-UnsupportedExecutionMode--[`++UnsupportedExecutionMode++`]]
+:execute: pass:normal[xref:#ERC7821-execute-bytes32-bytes-[`++execute++`]]
+:supportsExecutionMode: pass:normal[xref:#ERC7821-supportsExecutionMode-bytes32-[`++supportsExecutionMode++`]]
+:_erc7821AuthorizedExecutor: pass:normal[xref:#ERC7821-_erc7821AuthorizedExecutor-address-bytes32-bytes-[`++_erc7821AuthorizedExecutor++`]]
 
 [.contract]
-[[AccountERC7821]]
-=== `++AccountERC7821++` link:https://github.com/OpenZeppelin/openzeppelin-contracts/blob/v0.0.1/contracts/account/extensions/AccountERC7821.sol[{github-icon},role=heading-link]
+[[ERC7821]]
+=== `++ERC7821++` link:https://github.com/OpenZeppelin/openzeppelin-contracts/blob/v0.0.1/contracts/account/extensions/ERC7821.sol[{github-icon},role=heading-link]
 
 [.hljs-theme-light.nopadding]
 ```solidity
-import "@openzeppelin/contracts/account/extensions/AccountERC7821.sol";
+import "@openzeppelin/contracts/account/extensions/ERC7821.sol";
 ```
 
-Minimal batch executor following ERC7821. Only supports basic mode (no optional "opData").
+Minimal batch executor following ERC-7821. Only supports basic mode (no optional "opData").
 
 [.contract-index]
 .Functions
 --
 * `++execute(mode, executionData)++`
 * `++supportsExecutionMode(mode)++`
+* `++_erc7821AuthorizedExecutor(caller, , )++`
 
 [.contract-subindex-inherited]
 .IERC7821
-
-[.contract-subindex-inherited]
-.AccountCore
-* `++entryPoint()++`
-* `++getNonce()++`
-* `++getNonce(key)++`
-* `++validateUserOp(userOp, userOpHash, missingAccountFunds)++`
-* `++_signableUserOpHash(userOp, )++`
-* `++_payPrefund(missingAccountFunds)++`
-* `++_checkEntryPoint()++`
-* `++_checkEntryPointOrSelf()++`
-* `++receive()++`
-
-[.contract-subindex-inherited]
-.IAccount
-
-[.contract-subindex-inherited]
-.EIP712
-* `++_domainSeparatorV4()++`
-* `++_hashTypedDataV4(structHash)++`
-* `++eip712Domain()++`
-* `++_EIP712Name()++`
-* `++_EIP712Version()++`
-
-[.contract-subindex-inherited]
-.IERC5267
-
-[.contract-subindex-inherited]
-.AbstractSigner
-* `++_rawSignatureValidation(hash, signature)++`
-
---
-
-[.contract-index]
-.Events
---
-
-[.contract-subindex-inherited]
-.IERC7821
-
-[.contract-subindex-inherited]
-.AccountCore
-
-[.contract-subindex-inherited]
-.IAccount
-
-[.contract-subindex-inherited]
-.EIP712
-
-[.contract-subindex-inherited]
-.IERC5267
-* `++EIP712DomainChanged()++`
-
-[.contract-subindex-inherited]
-.AbstractSigner
 
 --
 
@@ -631,51 +596,21 @@ Minimal batch executor following ERC7821. Only supports basic mode (no optional 
 [.contract-subindex-inherited]
 .IERC7821
 
-[.contract-subindex-inherited]
-.AccountCore
-* `++AccountUnauthorized(sender)++`
-
-[.contract-subindex-inherited]
-.IAccount
-
-[.contract-subindex-inherited]
-.EIP712
-
-[.contract-subindex-inherited]
-.IERC5267
-
-[.contract-subindex-inherited]
-.AbstractSigner
-
 --
 
 [.contract-item]
-[[AccountERC7821-execute-bytes32-bytes-]]
+[[ERC7821-execute-bytes32-bytes-]]
 ==== `[.contract-item-name]#++execute++#++(bytes32 mode, bytes executionData)++` [.item-kind]#public#
 
-Executes the calls in `executionData`.
+Executes the calls in `executionData` with no optional `opData` support.
+
+NOTE: Access to this function is controlled by {_erc7821AuthorizedExecutor}. Changing access permissions, for
+example to approve calls by the ERC-4337 entrypoint, should be implement by overriding it.
+
 Reverts and bubbles up error if any call fails.
 
-`executionData` encoding:
-- If `opData` is empty, `executionData` is simply `abi.encode(calls)`.
-- Else, `executionData` is `abi.encode(calls, opData)`.
-  See: https://eips.ethereum.org/EIPS/eip-7579
-
-Supported modes:
-- `bytes32(0x01000000000000000000...)`: does not support optional `opData`.
-- `bytes32(0x01000000000078210001...)`: supports optional `opData`.
-
-Authorization checks:
-- If `opData` is empty, the implementation SHOULD require that
-  `msg.sender == address(this)`.
-- If `opData` is not empty, the implementation SHOULD use the signature
-  encoded in `opData` to determine if the caller can perform the execution.
-
-`opData` may be used to store additional data for authentication,
-paymaster data, gas limits, etc.
-
 [.contract-item]
-[[AccountERC7821-supportsExecutionMode-bytes32-]]
+[[ERC7821-supportsExecutionMode-bytes32-]]
 ==== `[.contract-item-name]#++supportsExecutionMode++#++(bytes32 mode) → bool result++` [.item-kind]#public#
 
 This function is provided for frontends to detect support.
@@ -684,6 +619,12 @@ Only returns true for:
 - `bytes32(0x01000000000078210001...)`: supports optional `opData`.
 
 [.contract-item]
-[[AccountERC7821-UnsupportedExecutionMode--]]
+[[ERC7821-_erc7821AuthorizedExecutor-address-bytes32-bytes-]]
+==== `[.contract-item-name]#++_erc7821AuthorizedExecutor++#++(address caller, bytes32, bytes) → bool++` [.item-kind]#internal#
+
+Access control mechanism for the {execute} function.
+
+[.contract-item]
+[[ERC7821-UnsupportedExecutionMode--]]
 ==== `[.contract-item-name]#++UnsupportedExecutionMode++#++()++` [.item-kind]#error#
 
