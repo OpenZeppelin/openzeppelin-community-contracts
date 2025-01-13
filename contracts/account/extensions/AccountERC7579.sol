@@ -311,6 +311,12 @@ abstract contract AccountERC7579 is
 
     /**
      * @dev Extract the function selector from initData/deInitData for MODULE_TYPE_FALLBACK
+     *
+     * NOTE: If we had calldata here, we would could use calldata slice which are cheaper to manipulate and don't
+     * require actual copy. However, this would require `_installModule` to get a calldata bytes object instead of a
+     * memory bytes object. This would prevent calling `_installModule` from a contract constructor and would force
+     * the use of external initializers. That may change in the future, as most accounts will probably be deployed as
+     * clones/proxy/ERC-7702 delegates and therefore rely on initializers anyway.
      */
     function _decodeFallbackData(
         bytes memory data
