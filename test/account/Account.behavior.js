@@ -734,13 +734,14 @@ function shouldBehaveLikeAccountERC7579({ withHooks = false } = {}) {
 
           await expect(this.fallbackHandler.attach(this.mock).connect(this.other).callPayable({ value }))
             .to.emit(this.fallbackHandler, 'ERC7579FallbackHandlerMockCalled')
-            .withArgs(this.other, value, calldata);
+            .withArgs(this.mock, this.other, value, calldata);
         });
 
         it('returns answer from the fallback handler', async function () {
-          await expect(this.fallbackHandler.attach(this.mock).connect(this.other).callView()).to.eventually.equal(
-            this.other,
-          );
+          await expect(this.fallbackHandler.attach(this.mock).connect(this.other).callView()).to.eventually.deep.equal([
+            this.mock.target,
+            this.other.address,
+          ]);
         });
 
         it('bubble up reverts from the fallback handler', async function () {
