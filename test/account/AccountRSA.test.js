@@ -4,12 +4,9 @@ const { ERC4337Helper } = require('../helpers/erc4337');
 const { NonNativeSigner, RSASHA256SigningKey } = require('../helpers/signers');
 const { PackedUserOperation } = require('../helpers/eip712-types');
 
-const {
-  shouldBehaveLikeAccountCore,
-  shouldBehaveLikeAccountERC7821,
-  shouldBehaveLikeAccountHolder,
-} = require('./Account.behavior');
+const { shouldBehaveLikeAccountCore, shouldBehaveLikeAccountHolder } = require('./Account.behavior');
 const { shouldBehaveLikeERC7739 } = require('../utils/cryptography/ERC7739.behavior');
+const { shouldBehaveLikeERC7821 } = require('./extensions/ERC7821.behavior');
 
 async function fixture() {
   // EOAs and environment
@@ -51,8 +48,8 @@ describe('AccountRSA', function () {
   });
 
   shouldBehaveLikeAccountCore();
-  shouldBehaveLikeAccountERC7821();
   shouldBehaveLikeAccountHolder();
+  shouldBehaveLikeERC7821();
 
   describe('ERC7739', function () {
     beforeEach(async function () {

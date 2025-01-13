@@ -1,8 +1,8 @@
 :github-icon: pass:[<svg class="icon"><use href="#github-icon"/></svg>]
 :AccountCore: pass:normal[xref:account.adoc#AccountCore[`AccountCore`]]
 :Account: pass:normal[xref:account.adoc#Account[`Account`]]
-:AccountSignerERC7702: pass:normal[xref:account.adoc#AccountSignerERC7702[`AccountSignerERC7702`]]
 :ERC7821: pass:normal[xref:account.adoc#ERC7821[`ERC7821`]]
+:AccountCore-_signableUserOpHash: pass:normal[xref:account.adoc#AccountCore-_signableUserOpHash-struct-PackedUserOperation-bytes32-[`AccountCore._signableUserOpHash`]]
 :AbstractSigner-_rawSignatureValidation: pass:normal[xref:utils.adoc#AbstractSigner-_rawSignatureValidation-bytes32-bytes-[`AbstractSigner._rawSignatureValidation`]]
 :SignerECDSA: pass:normal[xref:utils.adoc#SignerECDSA[`SignerECDSA`]]
 :SignerP256: pass:normal[xref:utils.adoc#SignerP256[`SignerP256`]]
@@ -13,7 +13,9 @@
 :SignerECDSA: pass:normal[xref:utils.adoc#SignerECDSA[`SignerECDSA`]]
 :SignerP256: pass:normal[xref:utils.adoc#SignerP256[`SignerP256`]]
 :SignerRSA: pass:normal[xref:utils.adoc#SignerRSA[`SignerRSA`]]
-:Account: pass:normal[xref:account.adoc#Account[`Account`]]
+:AccountCore-_signableUserOpHash: pass:normal[xref:account.adoc#AccountCore-_signableUserOpHash-struct-PackedUserOperation-bytes32-[`AccountCore._signableUserOpHash`]]
+:SignerECDSA: pass:normal[xref:utils.adoc#SignerECDSA[`SignerECDSA`]]
+:SignerERC7702: pass:normal[xref:utils.adoc#SignerERC7702[`SignerERC7702`]]
 = Account
 [.readme-notice]
 NOTE: This document is better viewed at https://docs.openzeppelin.com/community-contracts/api/account
@@ -27,7 +29,6 @@ This directory includes contracts to build accounts for ERC-4337. These include:
 
 == Core
 
-:_PACKED_USER_OPERATION: pass:normal[xref:#AccountCore-_PACKED_USER_OPERATION-bytes32[`++_PACKED_USER_OPERATION++`]]
 :AccountUnauthorized: pass:normal[xref:#AccountCore-AccountUnauthorized-address-[`++AccountUnauthorized++`]]
 :onlyEntryPointOrSelf: pass:normal[xref:#AccountCore-onlyEntryPointOrSelf--[`++onlyEntryPointOrSelf++`]]
 :onlyEntryPoint: pass:normal[xref:#AccountCore-onlyEntryPoint--[`++onlyEntryPoint++`]]
@@ -53,7 +54,8 @@ import "@openzeppelin/contracts/account/AccountCore.sol";
 A simple ERC4337 account implementation. This base implementation only includes the minimal logic to process
 user operations.
 
-Developers must implement the {AbstractSigner-_rawSignatureValidation} function to define the account's validation logic.
+Developers must implement the {AccountCore-_signableUserOpHash} and {AbstractSigner-_rawSignatureValidation}
+functions to define the account's validation logic.
 
 NOTE: This core account doesn't include any mechanism for performing arbitrary external calls. This is an essential
 feature that all Account should have. We leave it up to the developers to implement the mechanism of their choice.
@@ -77,7 +79,7 @@ digital signature validation implementations.
 * `++getNonce()++`
 * `++getNonce(key)++`
 * `++validateUserOp(userOp, userOpHash, missingAccountFunds)++`
-* `++_signableUserOpHash(userOp, )++`
+* `++_signableUserOpHash(userOp, userOpHash)++`
 * `++_payPrefund(missingAccountFunds)++`
 * `++_checkEntryPoint()++`
 * `++_checkEntryPointOrSelf()++`
@@ -87,38 +89,8 @@ digital signature validation implementations.
 .IAccount
 
 [.contract-subindex-inherited]
-.EIP712
-* `++_domainSeparatorV4()++`
-* `++_hashTypedDataV4(structHash)++`
-* `++eip712Domain()++`
-* `++_EIP712Name()++`
-* `++_EIP712Version()++`
-
-[.contract-subindex-inherited]
-.IERC5267
-
-[.contract-subindex-inherited]
 .AbstractSigner
 * `++_rawSignatureValidation(hash, signature)++`
-
---
-
-[.contract-index]
-.Events
---
-
-[.contract-subindex-inherited]
-.IAccount
-
-[.contract-subindex-inherited]
-.EIP712
-
-[.contract-subindex-inherited]
-.IERC5267
-* `++EIP712DomainChanged()++`
-
-[.contract-subindex-inherited]
-.AbstractSigner
 
 --
 
@@ -129,31 +101,6 @@ digital signature validation implementations.
 
 [.contract-subindex-inherited]
 .IAccount
-
-[.contract-subindex-inherited]
-.EIP712
-
-[.contract-subindex-inherited]
-.IERC5267
-
-[.contract-subindex-inherited]
-.AbstractSigner
-
---
-
-[.contract-index]
-.Internal Variables
---
-* `++bytes32 constant _PACKED_USER_OPERATION++`
-
-[.contract-subindex-inherited]
-.IAccount
-
-[.contract-subindex-inherited]
-.EIP712
-
-[.contract-subindex-inherited]
-.IERC5267
 
 [.contract-subindex-inherited]
 .AbstractSigner
@@ -210,14 +157,11 @@ Returns an encoded packed validation data that is composed of the following elem
 
 [.contract-item]
 [[AccountCore-_signableUserOpHash-struct-PackedUserOperation-bytes32-]]
-==== `[.contract-item-name]#++_signableUserOpHash++#++(struct PackedUserOperation userOp, bytes32) → bytes32++` [.item-kind]#internal#
+==== `[.contract-item-name]#++_signableUserOpHash++#++(struct PackedUserOperation userOp, bytes32 userOpHash) → bytes32++` [.item-kind]#internal#
 
-Returns the digest used by an offchain signer instead of the opaque `userOpHash`.
-
-Given the `userOpHash` calculation is defined by ERC-4337, offchain signers
-may need to sign again this hash by rehashing it with other schemes (e.g. ERC-191).
-
-Returns a typehash following EIP-712 typed data hashing for readability.
+Virtual function that returns the signable hash for a user operations. Some implementation may return
+`userOpHash` while other may prefer a signer-friendly value such as an EIP-712 hash describing the `userOp`
+details.
 
 [.contract-item]
 [[AccountCore-_payPrefund-uint256-]]
@@ -250,10 +194,8 @@ Receive Ether.
 
 Unauthorized call to the account.
 
-[.contract-item]
-[[AccountCore-_PACKED_USER_OPERATION-bytes32]]
-==== `bytes32 [.contract-item-name]#++_PACKED_USER_OPERATION++#` [.item-kind]#internal constant#
-
+:_PACKED_USER_OPERATION: pass:normal[xref:#Account-_PACKED_USER_OPERATION-bytes32[`++_PACKED_USER_OPERATION++`]]
+:_signableUserOpHash: pass:normal[xref:#Account-_signableUserOpHash-struct-PackedUserOperation-bytes32-[`++_signableUserOpHash++`]]
 :_erc7821AuthorizedExecutor: pass:normal[xref:#Account-_erc7821AuthorizedExecutor-address-bytes32-bytes-[`++_erc7821AuthorizedExecutor++`]]
 
 [.contract]
@@ -277,6 +219,7 @@ implemented using a specific signature verification algorithm. See {SignerECDSA}
 [.contract-index]
 .Functions
 --
+* `++_signableUserOpHash(userOp, )++`
 * `++_erc7821AuthorizedExecutor(caller, mode, executionData)++`
 
 [.contract-subindex-inherited]
@@ -314,24 +257,6 @@ implemented using a specific signature verification algorithm. See {SignerECDSA}
 * `++onERC721Received(, , , )++`
 
 [.contract-subindex-inherited]
-.IERC721Receiver
-
-[.contract-subindex-inherited]
-.AccountCore
-* `++entryPoint()++`
-* `++getNonce()++`
-* `++getNonce(key)++`
-* `++validateUserOp(userOp, userOpHash, missingAccountFunds)++`
-* `++_signableUserOpHash(userOp, )++`
-* `++_payPrefund(missingAccountFunds)++`
-* `++_checkEntryPoint()++`
-* `++_checkEntryPointOrSelf()++`
-* `++receive()++`
-
-[.contract-subindex-inherited]
-.IAccount
-
-[.contract-subindex-inherited]
 .EIP712
 * `++_domainSeparatorV4()++`
 * `++_hashTypedDataV4(structHash)++`
@@ -341,6 +266,23 @@ implemented using a specific signature verification algorithm. See {SignerECDSA}
 
 [.contract-subindex-inherited]
 .IERC5267
+
+[.contract-subindex-inherited]
+.IERC721Receiver
+
+[.contract-subindex-inherited]
+.AccountCore
+* `++entryPoint()++`
+* `++getNonce()++`
+* `++getNonce(key)++`
+* `++validateUserOp(userOp, userOpHash, missingAccountFunds)++`
+* `++_payPrefund(missingAccountFunds)++`
+* `++_checkEntryPoint()++`
+* `++_checkEntryPointOrSelf()++`
+* `++receive()++`
+
+[.contract-subindex-inherited]
+.IAccount
 
 [.contract-subindex-inherited]
 .AbstractSigner
@@ -380,6 +322,13 @@ implemented using a specific signature verification algorithm. See {SignerECDSA}
 .ERC721Holder
 
 [.contract-subindex-inherited]
+.EIP712
+
+[.contract-subindex-inherited]
+.IERC5267
+* `++EIP712DomainChanged()++`
+
+[.contract-subindex-inherited]
 .IERC721Receiver
 
 [.contract-subindex-inherited]
@@ -387,13 +336,6 @@ implemented using a specific signature verification algorithm. See {SignerECDSA}
 
 [.contract-subindex-inherited]
 .IAccount
-
-[.contract-subindex-inherited]
-.EIP712
-
-[.contract-subindex-inherited]
-.IERC5267
-* `++EIP712DomainChanged()++`
 
 [.contract-subindex-inherited]
 .AbstractSigner
@@ -433,6 +375,12 @@ implemented using a specific signature verification algorithm. See {SignerECDSA}
 .ERC721Holder
 
 [.contract-subindex-inherited]
+.EIP712
+
+[.contract-subindex-inherited]
+.IERC5267
+
+[.contract-subindex-inherited]
 .IERC721Receiver
 
 [.contract-subindex-inherited]
@@ -443,15 +391,69 @@ implemented using a specific signature verification algorithm. See {SignerECDSA}
 .IAccount
 
 [.contract-subindex-inherited]
+.AbstractSigner
+
+--
+
+[.contract-index]
+.Internal Variables
+--
+* `++bytes32 constant _PACKED_USER_OPERATION++`
+
+[.contract-subindex-inherited]
+.ERC7821
+
+[.contract-subindex-inherited]
+.IERC7821
+
+[.contract-subindex-inherited]
+.ERC7739
+
+[.contract-subindex-inherited]
+.IERC1271
+
+[.contract-subindex-inherited]
+.ERC1155Holder
+
+[.contract-subindex-inherited]
+.IERC1155Receiver
+
+[.contract-subindex-inherited]
+.ERC165
+
+[.contract-subindex-inherited]
+.IERC165
+
+[.contract-subindex-inherited]
+.ERC721Holder
+
+[.contract-subindex-inherited]
 .EIP712
 
 [.contract-subindex-inherited]
 .IERC5267
 
 [.contract-subindex-inherited]
+.IERC721Receiver
+
+[.contract-subindex-inherited]
+.AccountCore
+
+[.contract-subindex-inherited]
+.IAccount
+
+[.contract-subindex-inherited]
 .AbstractSigner
 
 --
+
+[.contract-item]
+[[Account-_signableUserOpHash-struct-PackedUserOperation-bytes32-]]
+==== `[.contract-item-name]#++_signableUserOpHash++#++(struct PackedUserOperation userOp, bytes32) → bytes32++` [.item-kind]#internal#
+
+Specialization of {AccountCore-_signableUserOpHash} that returns a typehash following EIP-712 typed data
+hashing for readability. This assumes the underlying signature scheme implements `signTypedData`, which will be
+the case when combined with {SignerECDSA} or {SignerERC7702}.
 
 [.contract-item]
 [[Account-_erc7821AuthorizedExecutor-address-bytes32-bytes-]]
@@ -459,106 +461,11 @@ implemented using a specific signature verification algorithm. See {SignerECDSA}
 
 Access control mechanism for the {execute} function.
 
-== Extensions
-
-:_rawSignatureValidation: pass:normal[xref:#AccountSignerERC7702-_rawSignatureValidation-bytes32-bytes-[`++_rawSignatureValidation++`]]
-
-[.contract]
-[[AccountSignerERC7702]]
-=== `++AccountSignerERC7702++` link:https://github.com/OpenZeppelin/openzeppelin-contracts/blob/v0.0.1/contracts/account/extensions/AccountSignerERC7702.sol[{github-icon},role=heading-link]
-
-[.hljs-theme-light.nopadding]
-```solidity
-import "@openzeppelin/contracts/account/extensions/AccountSignerERC7702.sol";
-```
-
-{Account} implementation whose low-level signature validation is done by an EOA.
-
-[.contract-index]
-.Functions
---
-* `++_rawSignatureValidation(hash, signature)++`
-
-[.contract-subindex-inherited]
-.AccountCore
-* `++entryPoint()++`
-* `++getNonce()++`
-* `++getNonce(key)++`
-* `++validateUserOp(userOp, userOpHash, missingAccountFunds)++`
-* `++_signableUserOpHash(userOp, )++`
-* `++_payPrefund(missingAccountFunds)++`
-* `++_checkEntryPoint()++`
-* `++_checkEntryPointOrSelf()++`
-* `++receive()++`
-
-[.contract-subindex-inherited]
-.IAccount
-
-[.contract-subindex-inherited]
-.EIP712
-* `++_domainSeparatorV4()++`
-* `++_hashTypedDataV4(structHash)++`
-* `++eip712Domain()++`
-* `++_EIP712Name()++`
-* `++_EIP712Version()++`
-
-[.contract-subindex-inherited]
-.IERC5267
-
-[.contract-subindex-inherited]
-.AbstractSigner
-
---
-
-[.contract-index]
-.Events
---
-
-[.contract-subindex-inherited]
-.AccountCore
-
-[.contract-subindex-inherited]
-.IAccount
-
-[.contract-subindex-inherited]
-.EIP712
-
-[.contract-subindex-inherited]
-.IERC5267
-* `++EIP712DomainChanged()++`
-
-[.contract-subindex-inherited]
-.AbstractSigner
-
---
-
-[.contract-index]
-.Errors
---
-
-[.contract-subindex-inherited]
-.AccountCore
-* `++AccountUnauthorized(sender)++`
-
-[.contract-subindex-inherited]
-.IAccount
-
-[.contract-subindex-inherited]
-.EIP712
-
-[.contract-subindex-inherited]
-.IERC5267
-
-[.contract-subindex-inherited]
-.AbstractSigner
-
---
-
 [.contract-item]
-[[AccountSignerERC7702-_rawSignatureValidation-bytes32-bytes-]]
-==== `[.contract-item-name]#++_rawSignatureValidation++#++(bytes32 hash, bytes signature) → bool++` [.item-kind]#internal#
+[[Account-_PACKED_USER_OPERATION-bytes32]]
+==== `bytes32 [.contract-item-name]#++_PACKED_USER_OPERATION++#` [.item-kind]#internal constant#
 
-Validates the signature using the EOA's address (ie. `address(this)`).
+== Extensions
 
 :UnsupportedExecutionMode: pass:normal[xref:#ERC7821-UnsupportedExecutionMode--[`++UnsupportedExecutionMode++`]]
 :execute: pass:normal[xref:#ERC7821-execute-bytes32-bytes-[`++execute++`]]
