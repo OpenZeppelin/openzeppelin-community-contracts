@@ -33,13 +33,20 @@ abstract contract AccountERC7579Hooked is AccountERC7579 {
         return _hook;
     }
 
+    /// @dev Supports hook modules. See {AccountERC7579-supportsModule}
+    function supportsModule(uint256 moduleTypeId) public view virtual override returns (bool) {
+        return moduleTypeId == MODULE_TYPE_HOOK || super.supportsModule(moduleTypeId);
+    }
+
     /// @inheritdoc AccountERC7579
     function isModuleInstalled(
         uint256 moduleTypeId,
         address module,
         bytes calldata data
     ) public view virtual override returns (bool) {
-        return _isHookInstalled(module) || super.isModuleInstalled(moduleTypeId, module, data);
+        return
+            (moduleTypeId == MODULE_TYPE_HOOK && module == hook()) ||
+            super.isModuleInstalled(moduleTypeId, module, data);
     }
 
     /// @dev Hooked version of {AccountERC7579-_execute}.
@@ -60,15 +67,5 @@ abstract contract AccountERC7579Hooked is AccountERC7579 {
     function _uninstallModule(uint256 moduleTypeId, address module, bytes memory deInitData) internal virtual override {
         if (moduleTypeId == MODULE_TYPE_HOOK) _hook = address(0);
         super._uninstallModule(moduleTypeId, module, deInitData);
-    }
-
-    /// @dev Supports hook modules. See {AccountERC7579-supportsModule}
-    function supportsModule(uint256 moduleTypeId) public view virtual override returns (bool) {
-        return moduleTypeId == MODULE_TYPE_HOOK || super.supportsModule(moduleTypeId);
-    }
-
-    /// @dev Returns whether a hook module is installed.
-    function _isHookInstalled(address module) internal view virtual returns (bool) {
-        return hook() == module;
     }
 }
