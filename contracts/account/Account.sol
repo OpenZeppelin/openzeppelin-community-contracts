@@ -51,6 +51,7 @@ abstract contract Account is AccountCore, EIP712, ERC721Holder, ERC1155Holder, E
                     )
                 )
             );
+    }
 
     /// @inheritdoc ERC7821
     function _erc7821AuthorizedExecutor(
