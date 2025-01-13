@@ -5,7 +5,7 @@
 :SignerRSA: pass:normal[xref:utils.adoc#SignerRSA[`SignerRSA`]]
 :AccountCore: pass:normal[xref:account.adoc#AccountCore[`AccountCore`]]
 :AccountERC7821: pass:normal[xref:account.adoc#AccountERC7821[`AccountERC7821`]]
-:ERC7739Signer: pass:normal[xref:utils.adoc#ERC7739Signer[`ERC7739Signer`]]
+:ERC7739: pass:normal[xref:utils.adoc#ERC7739[`ERC7739`]]
 :SignerECDSA: pass:normal[xref:utils.adoc#SignerECDSA[`SignerECDSA`]]
 :SignerP256: pass:normal[xref:utils.adoc#SignerP256[`SignerP256`]]
 :SignerRSA: pass:normal[xref:utils.adoc#SignerRSA[`SignerRSA`]]
@@ -258,9 +258,9 @@ Extension of {AccountCore} with recommended feature that most account abstractio
 
 * {AccountERC7821} for performing external calls in batches.
 * {ERC721Holder} and {ERC1155Holder} to accept ERC-712 and ERC-1155 token transfers transfers.
-* {ERC7739Signer} for ERC-1271 signature support with ERC-7739 replay protection
+* {ERC7739} for ERC-1271 signature support with ERC-7739 replay protection
 
-NOTE: To use this contract, the {ERC7739Signer-_rawSignatureValidation} function must be
+NOTE: To use this contract, the {ERC7739-_rawSignatureValidation} function must be
 implemented using a specific signature verification algorithm. See {SignerECDSA}, {SignerP256} or {SignerRSA}.
 
 [.contract-index]
@@ -268,7 +268,7 @@ implemented using a specific signature verification algorithm. See {SignerECDSA}
 --
 
 [.contract-subindex-inherited]
-.ERC7739Signer
+.ERC7739
 * `++isValidSignature(hash, signature)++`
 
 [.contract-subindex-inherited]
@@ -341,7 +341,7 @@ implemented using a specific signature verification algorithm. See {SignerECDSA}
 --
 
 [.contract-subindex-inherited]
-.ERC7739Signer
+.ERC7739
 
 [.contract-subindex-inherited]
 .IERC1271
@@ -393,7 +393,7 @@ implemented using a specific signature verification algorithm. See {SignerECDSA}
 --
 
 [.contract-subindex-inherited]
-.ERC7739Signer
+.ERC7739
 
 [.contract-subindex-inherited]
 .IERC1271

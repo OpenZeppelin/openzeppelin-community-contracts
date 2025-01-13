@@ -9,7 +9,7 @@ const {
   shouldBehaveLikeAccountERC7821,
   shouldBehaveLikeAccountHolder,
 } = require('./Account.behavior');
-const { shouldBehaveLikeERC7739Signer } = require('../utils/cryptography/ERC7739Signer.behavior');
+const { shouldBehaveLikeERC7739 } = require('../utils/cryptography/ERC7739.behavior');
 
 async function fixture() {
   // EOAs and environment
@@ -54,12 +54,12 @@ describe('AccountRSA', function () {
   shouldBehaveLikeAccountERC7821();
   shouldBehaveLikeAccountHolder();
 
-  describe('ERC7739Signer', function () {
+  describe('ERC7739', function () {
     beforeEach(async function () {
       this.mock = await this.mock.deploy();
       this.signTypedData = this.signer.signTypedData.bind(this.signer);
     });
 
-    shouldBehaveLikeERC7739Signer();
+    shouldBehaveLikeERC7739();
   });
 });
