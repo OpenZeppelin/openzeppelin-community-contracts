@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.20;
 
-import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
+import {SignatureChecker} from "@openzeppelin/contracts/utils/cryptography/SignatureChecker.sol";
 import {IERC1271} from "@openzeppelin/contracts/interfaces/IERC1271.sol";
 import {PackedUserOperation} from "@openzeppelin/contracts/interfaces/draft-IERC4337.sol";
 import {IERC7579Module, IERC7579Validator, MODULE_TYPE_VALIDATOR} from "@openzeppelin/contracts/interfaces/draft-IERC7579.sol";
@@ -27,7 +27,7 @@ abstract contract ERC7579ValidatorMock is ERC7579ModuleMock(MODULE_TYPE_VALIDATO
         bytes32 userOpHash
     ) public view virtual returns (uint256) {
         return
-            _isValidSignatureWithSender(msg.sender, userOpHash, userOp.signature)
+            SignatureChecker.isValidSignatureNow(_associatedSigners[msg.sender], userOpHash, userOp.signature)
                 ? ERC4337Utils.SIG_VALIDATION_SUCCESS
                 : ERC4337Utils.SIG_VALIDATION_FAILED;
     }
@@ -38,17 +38,8 @@ abstract contract ERC7579ValidatorMock is ERC7579ModuleMock(MODULE_TYPE_VALIDATO
         bytes calldata signature
     ) public view virtual returns (bytes4) {
         return
-            _isValidSignatureWithSender(sender, hash, signature)
+            SignatureChecker.isValidSignatureNow(_associatedSigners[sender], hash, signature)
                 ? IERC1271.isValidSignature.selector
                 : bytes4(0xffffffff);
-    }
-
-    function _isValidSignatureWithSender(
-        address sender,
-        bytes32 hash,
-        bytes calldata signature
-    ) internal view virtual returns (bool) {
-        (address recovered, ECDSA.RecoverError err, ) = ECDSA.tryRecover(hash, signature);
-        return _associatedSigners[sender] == recovered && err == ECDSA.RecoverError.NoError;
     }
 }
