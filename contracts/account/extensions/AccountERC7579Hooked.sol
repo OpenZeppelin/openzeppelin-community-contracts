@@ -51,7 +51,11 @@ abstract contract AccountERC7579Hooked is AccountERC7579 {
 
     /// @dev Installs a module with support for hook modules. See {AccountERC7579-_installModule}
     /// TODO: withHook? based on what value?
-    function _installModule(uint256 moduleTypeId, address module, bytes memory initData) internal virtual override {
+    function _installModule(
+        uint256 moduleTypeId,
+        address module,
+        bytes memory initData
+    ) internal virtual override withHook {
         if (moduleTypeId == MODULE_TYPE_HOOK) {
             require(_hook == address(0), ERC7579Utils.ERC7579AlreadyInstalledModule(moduleTypeId, module));
             _hook = module;
@@ -61,7 +65,11 @@ abstract contract AccountERC7579Hooked is AccountERC7579 {
 
     /// @dev Uninstalls a module with support for hook modules. See {AccountERC7579-_uninstallModule}
     /// TODO: withHook? based on what value?
-    function _uninstallModule(uint256 moduleTypeId, address module, bytes memory deInitData) internal virtual override {
+    function _uninstallModule(
+        uint256 moduleTypeId,
+        address module,
+        bytes memory deInitData
+    ) internal virtual override withHook {
         if (moduleTypeId == MODULE_TYPE_HOOK) {
             require(_hook == module, ERC7579Utils.ERC7579UninstalledModule(moduleTypeId, module));
             _hook = address(0);
