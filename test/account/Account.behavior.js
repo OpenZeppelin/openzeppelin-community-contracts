@@ -479,9 +479,9 @@ function shouldBehaveLikeAccountERC7579({ withHooks = false } = {}) {
 
     describe('execution', function () {
       beforeEach(async function () {
-        const moduleMock = await ethers.deployContract('$ERC7579ModuleMock', [MODULE_TYPE_EXECUTOR]);
-        await this.mock.$_installModule(MODULE_TYPE_EXECUTOR, moduleMock, '0x');
-        this.mockFromExecutor = this.mock.connect(await impersonate(moduleMock.target));
+        this.executorModule = await ethers.deployContract('$ERC7579ModuleMock', [MODULE_TYPE_EXECUTOR]);
+        await this.mock.$_installModule(MODULE_TYPE_EXECUTOR, this.executorModule, '0x');
+        this.mockFromExecutor = this.mock.connect(await impersonate(this.executorModule.target));
       });
 
       for (const [execFn, mock] of [
@@ -671,6 +671,33 @@ function shouldBehaveLikeAccountERC7579({ withHooks = false } = {}) {
                 );
             });
           });
+
+          withHooks &&
+            describe('with hook', function () {
+              beforeEach(async function () {
+                this.hookModule = await ethers.deployContract('$ERC7579HookMock');
+                await this.mockFromEntrypoint.$_installModule(MODULE_TYPE_HOOK, this.hookModule, '0x');
+              });
+
+              it(`should call the hook of the installed module when executing ${execFn}`, async function () {
+                const caller = execFn === 'execute' ? entrypoint : this.executorModule;
+                const value = 17;
+                const data = this.target.interface.encodeFunctionData('mockFunctionWithArgs', [42, '0x1234']);
+
+                const mode = encodeMode({ callType: CALL_TYPE_CALL });
+                const call = encodeSingle(this.target, value, data);
+                const precheckData = this[mock].interface.encodeFunctionData(execFn, [mode, call]);
+
+                const tx = this[mock][execFn](mode, call, { value });
+
+                await expect(tx)
+                  .to.emit(this.hookModule, 'PreCheck')
+                  .withArgs(caller, value, precheckData)
+                  .to.emit(this.hookModule, 'PostCheck')
+                  .withArgs(precheckData);
+                await expect(tx).to.changeEtherBalances([caller, this.mock, this.target], [-value, 0n, value]);
+              });
+            });
         });
       }
     });
@@ -681,18 +708,20 @@ function shouldBehaveLikeAccountERC7579({ withHooks = false } = {}) {
       });
 
       it('reverts if there is no fallback module installed', async function () {
-        await expect(this.fallbackHandler.attach(this.mock).callReturn())
+        const { selector } = this.fallbackHandler.callPayable.getFragment();
+
+        await expect(this.fallbackHandler.attach(this.mock).callPayable())
           .to.be.revertedWithCustomError(this.mock, 'ERC7579MissingFallbackHandler')
-          .withArgs(this.fallbackHandler.callReturn.getFragment().selector);
+          .withArgs(selector);
       });
 
       describe('with a fallback module installed', function () {
         beforeEach(async function () {
           await Promise.all(
             [
-              this.fallbackHandler.callReturn.getFragment().selector,
+              this.fallbackHandler.callPayable.getFragment().selector,
+              this.fallbackHandler.callView.getFragment().selector,
               this.fallbackHandler.callRevert.getFragment().selector,
-              fnSig,
             ].map(selector =>
               this.mock.$_installModule(
                 MODULE_TYPE_FALLBACK,
@@ -704,15 +733,17 @@ function shouldBehaveLikeAccountERC7579({ withHooks = false } = {}) {
         });
 
         it('forwards the call to the fallback handler', async function () {
-          // call with interface: decode returned data
-          await expect(this.fallbackHandler.attach(this.mock).connect(this.other).callReturn()).to.eventually.equal(
+          const calldata = this.fallbackHandler.interface.encodeFunctionData('callPayable');
+
+          await expect(this.fallbackHandler.attach(this.mock).connect(this.other).callPayable({ value }))
+            .to.emit(this.fallbackHandler, 'ERC7579FallbackHandlerMockCalled')
+            .withArgs(this.other, value, calldata);
+        });
+
+        it('returns answer from the fallback handler', async function () {
+          await expect(this.fallbackHandler.attach(this.mock).connect(this.other).callView()).to.eventually.equal(
             this.other,
           );
-
-          // call without interface: fallback catch with value
-          await expect(this.other.sendTransaction({ to: this.mock, value: 32, data: fnSig }))
-            .to.emit(this.fallbackHandler, 'ERC7579FallbackHandlerMockCalled')
-            .withArgs(this.other, 32, fnSig);
         });
 
         it('bubble up reverts from the fallback handler', async function () {
@@ -720,45 +751,27 @@ function shouldBehaveLikeAccountERC7579({ withHooks = false } = {}) {
             this.fallbackHandler.attach(this.mock).connect(this.other).callRevert(),
           ).to.be.revertedWithCustomError(this.fallbackHandler, 'ERC7579FallbackHandlerMockRevert');
         });
-      });
-    });
 
-    withHooks &&
-      describe('hook', function () {
-        describe('execution hooks', function () {
-          beforeEach(async function () {
-            this.executorModule = await ethers.deployContract('$ERC7579ModuleMock', [MODULE_TYPE_EXECUTOR]);
-            this.hookModule = await ethers.deployContract('$ERC7579HookMock');
-            await this.mockFromEntrypoint.$_installModule(MODULE_TYPE_EXECUTOR, this.executorModule, '0x');
-            await this.mockFromEntrypoint.$_installModule(MODULE_TYPE_HOOK, this.hookModule, '0x');
-            this.mockFromExecutor = this.mock.connect(await impersonate(this.executorModule.target));
-          });
+        withHooks &&
+          describe('with hook', function () {
+            beforeEach(async function () {
+              this.hookModule = await ethers.deployContract('$ERC7579HookMock');
+              await this.mockFromEntrypoint.$_installModule(MODULE_TYPE_HOOK, this.hookModule, '0x');
+            });
 
-          for (const [execFn, mock] of [
-            ['execute', 'mockFromEntrypoint'],
-            ['executeFromExecutor', 'mockFromExecutor'],
-          ]) {
-            it(`should call the hook of the installed module when executing ${execFn}`, async function () {
-              const caller = execFn === 'execute' ? entrypoint : this.executorModule;
-              const value = 17;
-              const data = this.target.interface.encodeFunctionData('mockFunctionWithArgs', [42, '0x1234']);
+            it('should call the hook of the installed module when performing a callback', async function () {
+              const precheckData = this.fallbackHandler.interface.encodeFunctionData('callPayable');
 
-              const mode = encodeMode({ callType: CALL_TYPE_CALL });
-              const call = encodeSingle(this.target, value, data);
-              const precheckData = this[mock].interface.encodeFunctionData(execFn, [mode, call]);
-
-              const tx = this[mock][execFn](mode, call, { value });
-
-              await expect(tx)
+              // call with interface: decode returned data
+              await expect(this.fallbackHandler.attach(this.mock).connect(this.other).callPayable({ value }))
                 .to.emit(this.hookModule, 'PreCheck')
-                .withArgs(caller, value, precheckData)
+                .withArgs(this.other, value, precheckData)
                 .to.emit(this.hookModule, 'PostCheck')
                 .withArgs(precheckData);
-              await expect(tx).to.changeEtherBalances([caller, this.mock, this.target], [-value, 0n, value]);
             });
-          }
-        });
+          });
       });
+    });
   });
 }
 

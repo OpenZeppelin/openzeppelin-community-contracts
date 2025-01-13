@@ -1,10 +1,10 @@
 const { ethers } = require('hardhat');
 const { loadFixture } = require('@nomicfoundation/hardhat-network-helpers');
-const { ERC4337Helper } = require('../helpers/erc4337');
-const { PackedUserOperation } = require('../helpers/eip712-types');
+const { ERC4337Helper } = require('../../helpers/erc4337');
+const { PackedUserOperation } = require('../../helpers/eip712-types');
 
-const { shouldBehaveLikeAccountCore, shouldBehaveLikeAccountERC7579 } = require('./Account.behavior');
-const { shouldBehaveLikeERC7739 } = require('../utils/cryptography/ERC7739.behavior');
+const { shouldBehaveLikeAccountCore, shouldBehaveLikeAccountERC7579 } = require('../Account.behavior');
+const { shouldBehaveLikeERC7739 } = require('../../utils/cryptography/ERC7739.behavior');
 
 async function fixture() {
   // EOAs and environment

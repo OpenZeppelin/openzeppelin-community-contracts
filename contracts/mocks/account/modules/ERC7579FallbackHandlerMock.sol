@@ -16,19 +16,15 @@ abstract contract ERC7579FallbackHandlerMock is ERC2771Context(address(0)), ERC7
         return true;
     }
 
-    function callReturn() public view returns (address) {
+    function callPayable() public payable {
+        emit ERC7579FallbackHandlerMockCalled(_msgSender(), msg.value, _msgData());
+    }
+
+    function callView() public view returns (address) {
         return _msgSender();
     }
 
     function callRevert() public pure {
         revert ERC7579FallbackHandlerMockRevert();
-    }
-
-    receive() external payable {
-        emit ERC7579FallbackHandlerMockCalled(_msgSender(), msg.value, _msgData());
-    }
-
-    fallback() external payable {
-        emit ERC7579FallbackHandlerMockCalled(_msgSender(), msg.value, _msgData());
     }
 }

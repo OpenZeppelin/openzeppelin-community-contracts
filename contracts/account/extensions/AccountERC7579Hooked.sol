@@ -49,15 +49,8 @@ abstract contract AccountERC7579Hooked is AccountERC7579 {
             super.isModuleInstalled(moduleTypeId, module, data);
     }
 
-    /// @dev Hooked version of {AccountERC7579-_execute}.
-    function _execute(
-        Mode mode,
-        bytes calldata executionCalldata
-    ) internal virtual override withHook returns (bytes[] memory) {
-        return super._execute(mode, executionCalldata);
-    }
-
     /// @dev Installs a module with support for hook modules. See {AccountERC7579-_installModule}
+    /// TODO: withHook? based on what value?
     function _installModule(uint256 moduleTypeId, address module, bytes memory initData) internal virtual override {
         if (moduleTypeId == MODULE_TYPE_HOOK) {
             require(_hook == address(0), ERC7579Utils.ERC7579AlreadyInstalledModule(moduleTypeId, module));
@@ -67,11 +60,25 @@ abstract contract AccountERC7579Hooked is AccountERC7579 {
     }
 
     /// @dev Uninstalls a module with support for hook modules. See {AccountERC7579-_uninstallModule}
+    /// TODO: withHook? based on what value?
     function _uninstallModule(uint256 moduleTypeId, address module, bytes memory deInitData) internal virtual override {
         if (moduleTypeId == MODULE_TYPE_HOOK) {
             require(_hook == module, ERC7579Utils.ERC7579UninstalledModule(moduleTypeId, module));
             _hook = address(0);
         }
         super._uninstallModule(moduleTypeId, module, deInitData);
+    }
+
+    /// @dev Hooked version of {AccountERC7579-_execute}.
+    function _execute(
+        Mode mode,
+        bytes calldata executionCalldata
+    ) internal virtual override withHook returns (bytes[] memory) {
+        return super._execute(mode, executionCalldata);
+    }
+
+    /// @dev Hooked version of {AccountERC7579-_fallback}.
+    function _fallback() internal virtual override withHook returns (bytes memory) {
+        return super._fallback();
     }
 }

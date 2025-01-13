@@ -311,7 +311,7 @@ abstract contract AccountERC7579 is
      * Calls the handler with the original `msg.sender` appended at the end of the calldata following
      * the ERC-2771 format.
      */
-    function _fallback() internal virtual {
+    function _fallback() internal virtual returns (bytes memory) {
         address handler = _fallbackHandler(msg.sig);
         require(handler != address(0), ERC7579MissingFallbackHandler(msg.sig));
 
@@ -322,19 +322,15 @@ abstract contract AccountERC7579 is
             abi.encodePacked(msg.data, msg.sender)
         );
 
+        if (success) return returndata;
+
         assembly ("memory-safe") {
-            switch success
-            case 0 {
-                revert(add(returndata, 0x20), mload(returndata))
-            }
-            default {
-                return(add(returndata, 0x20), mload(returndata))
-            }
+            revert(add(returndata, 0x20), mload(returndata))
         }
     }
 
     /// @dev See {_fallback}.
-    fallback() external payable virtual {
-        _fallback();
+    fallback(bytes calldata) external payable virtual returns (bytes memory) {
+        return _fallback();
     }
 }
