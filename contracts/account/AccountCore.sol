@@ -10,7 +10,8 @@ import {AbstractSigner} from "../utils/cryptography/AbstractSigner.sol";
  * @dev A simple ERC4337 account implementation. This base implementation only includes the minimal logic to process
  * user operations.
  *
- * Developers must implement the {AbstractSigner-_rawSignatureValidation} function to define the account's validation logic.
+ * Developers must implement the {AccountCore-_signableUserOpHash} and {AbstractSigner-_rawSignatureValidation}
+ * functions to define the account's validation logic.
  *
  * NOTE: This core account doesn't include any mechanism for performing arbitrary external calls. This is an essential
  * feature that all Account should have. We leave it up to the developers to implement the mechanism of their choice.
@@ -79,17 +80,14 @@ abstract contract AccountCore is AbstractSigner, IAccount {
     }
 
     /**
-     * @dev Returns the `userOpHash` by default. May be overridden for a different hashing scheme.
-     *
-     * Given the `userOpHash` calculation is defined by ERC-4337, offchain signers
-     * may need to sign again this hash by rehashing it with other schemes (e.g. ERC-191).
+     * @dev Virtual function that returns the signable hash for a user operations. Some implementation may return
+     * `userOpHash` while other may prefer a signer-friendly value such as an EIP-712 hash describing the `userOp`
+     * details.
      */
     function _signableUserOpHash(
-        PackedUserOperation calldata /*userOp*/,
+        PackedUserOperation calldata userOp,
         bytes32 userOpHash
-    ) internal view virtual returns (bytes32) {
-        return userOpHash;
-    }
+    ) internal view virtual returns (bytes32);
 
     /**
      * @dev Sends the missing funds for executing the user operation to the {entrypoint}.
