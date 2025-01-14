@@ -3,9 +3,9 @@ const { loadFixture } = require('@nomicfoundation/hardhat-network-helpers');
 const { ERC4337Helper } = require('../../helpers/erc4337');
 const { PackedUserOperation } = require('../../helpers/eip712-types');
 
-const { shouldBehaveLikeAccountCore } = require('../Account.behavior');
-const { shouldBehaveLikeAccountERC7579 } = require('./AccountERC7579.behavior');
-const { shouldBehaveLikeERC7821 } = require('./ERC7821.behavior');
+const { shouldBehaveLikeAccountCore, shouldBehaveLikeAccountHolder } = require('../Account.behavior');
+const { shouldBehaveLikeAccountERC7579 } = require('../extensions/AccountERC7579.behavior');
+const { shouldBehaveLikeERC7821 } = require('../extensions/ERC7821.behavior');
 
 const { MODULE_TYPE_VALIDATOR } = require('@openzeppelin/contracts/test/helpers/erc7579');
 
@@ -53,6 +53,7 @@ describe('AccountERC7702WithModules: ERC-7702 account with ERC-7579 modules supp
     });
 
     shouldBehaveLikeAccountCore();
+    shouldBehaveLikeAccountHolder();
     shouldBehaveLikeERC7821({ deployable: false });
   });
 
@@ -72,6 +73,7 @@ describe('AccountERC7702WithModules: ERC-7702 account with ERC-7579 modules supp
     });
 
     shouldBehaveLikeAccountCore();
+    shouldBehaveLikeAccountHolder();
     shouldBehaveLikeAccountERC7579();
   });
 });
