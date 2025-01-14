@@ -58,8 +58,6 @@ abstract contract SignerRSA is AbstractSigner {
         bytes32 hash,
         bytes calldata signature
     ) internal view virtual override returns (bool) {
-        if (super._rawSignatureValidation(hash, signature)) return true;
-
         (bytes memory e, bytes memory n) = signer();
         return RSA.pkcs1Sha256(abi.encodePacked(hash), signature, e, n);
     }

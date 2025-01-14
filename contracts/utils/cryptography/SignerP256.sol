@@ -58,8 +58,6 @@ abstract contract SignerP256 is AbstractSigner {
         bytes32 hash,
         bytes calldata signature
     ) internal view virtual override returns (bool) {
-        if (super._rawSignatureValidation(hash, signature)) return true;
-
         if (signature.length < 0x40) return false;
         bytes32 r = bytes32(signature[0x00:0x20]);
         bytes32 s = bytes32(signature[0x20:0x40]);

@@ -56,8 +56,6 @@ abstract contract SignerECDSA is AbstractSigner {
         bytes32 hash,
         bytes calldata signature
     ) internal view virtual override returns (bool) {
-        if (super._rawSignatureValidation(hash, signature)) return true;
-
         (address recovered, ECDSA.RecoverError err, ) = ECDSA.tryRecover(hash, signature);
         return signer() == recovered && err == ECDSA.RecoverError.NoError;
     }
