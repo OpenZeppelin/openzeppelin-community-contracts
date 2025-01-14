@@ -37,9 +37,6 @@ abstract contract AccountERC7702WithModulesMock is Account, AccountERC7579, Sign
         bytes32 hash,
         bytes calldata signature
     ) internal view virtual override(AbstractSigner, AccountERC7579, SignerERC7702) returns (bool) {
-        // Try ERC-7702 first, and fallback to ERC-7579
-        return
-            SignerERC7702._rawSignatureValidation(hash, signature) ||
-            AccountERC7579._rawSignatureValidation(hash, signature);
+        return super._rawSignatureValidation(hash, signature);
     }
 }

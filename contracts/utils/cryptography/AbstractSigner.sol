@@ -16,5 +16,10 @@ abstract contract AbstractSigner {
      * using one of the signature verification libraries (https://docs.openzeppelin.com/contracts/api/utils#ECDSA[ECDSA],
      * https://docs.openzeppelin.com/contracts/api/utils#P256[P256] or https://docs.openzeppelin.com/contracts/api/utils#RSA[RSA]).
      */
-    function _rawSignatureValidation(bytes32 hash, bytes calldata signature) internal view virtual returns (bool);
+    function _rawSignatureValidation(
+        bytes32 /* hash */,
+        bytes calldata /* signature */
+    ) internal view virtual returns (bool) {
+        return false;
+    }
 }
