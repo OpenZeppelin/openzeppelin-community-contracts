@@ -43,6 +43,8 @@ jobs:
         run: npm run test
       - name: Check linearisation of the inheritance graph
         run: npm run test:inheritance
+      - name: Check pragma consistency between files
+        run: npm run test:pragma
 
   coverage:
     runs-on: ubuntu-latest
