@@ -24,7 +24,7 @@
     "coverage": "scripts/checks/coverage.sh",
     "test": "hardhat test",
     "test:inheritance": "scripts/checks/inheritance-ordering.js artifacts/build-info/*",
-		"test:pragma": "scripts/checks/pragma-consistency.js artifacts/build-info/*"
+    "test:pragma": "scripts/checks/pragma-consistency.js artifacts/build-info/*"
   },
   "homepage": "https://openzeppelin.com/contracts/",
   "repository": {
