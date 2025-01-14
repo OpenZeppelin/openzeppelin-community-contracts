@@ -2,22 +2,25 @@ const { ethers, entrypoint } = require('hardhat');
 const { expect } = require('chai');
 const { impersonate } = require('@openzeppelin/contracts/test/helpers/account');
 const { selector } = require('@openzeppelin/contracts/test/helpers/methods');
+const { zip } = require('@openzeppelin/contracts/test/helpers/iterate');
 const {
-  CALL_TYPE_BATCH,
   encodeMode,
   encodeBatch,
   encodeSingle,
   encodeDelegate,
-  EXEC_TYPE_TRY,
-  CALL_TYPE_CALL,
-  CALL_TYPE_DELEGATE,
   MODULE_TYPE_VALIDATOR,
   MODULE_TYPE_EXECUTOR,
   MODULE_TYPE_FALLBACK,
   MODULE_TYPE_HOOK,
+  CALL_TYPE_CALL,
+  CALL_TYPE_BATCH,
+  CALL_TYPE_DELEGATE,
+  EXEC_TYPE_DEFAULT,
+  EXEC_TYPE_TRY,
 } = require('@openzeppelin/contracts/test/helpers/erc7579');
 
 const CALL_TYPE_INVALID = '0x42';
+const EXEC_TYPE_INVALID = '0x17';
 const MODULE_TYPE_INVALID = 999n;
 
 const coder = ethers.AbiCoder.defaultAbiCoder();
@@ -47,29 +50,18 @@ function shouldBehaveLikeAccountERC7579({ withHooks = false } = {}) {
     });
 
     describe('supportsExecutionMode', function () {
-      it('supports CALL_TYPE_CALL execution mode', async function () {
-        await expect(this.mock.supportsExecutionMode(encodeMode({ callType: CALL_TYPE_CALL }))).to.eventually.equal(
-          true,
-        );
-      });
+      for (const [callType, execType] of zip(
+        [CALL_TYPE_CALL, CALL_TYPE_BATCH, CALL_TYPE_DELEGATE, CALL_TYPE_INVALID],
+        [EXEC_TYPE_DEFAULT, EXEC_TYPE_TRY, EXEC_TYPE_INVALID],
+      )) {
+        const result = callType != CALL_TYPE_INVALID && execType != EXEC_TYPE_INVALID;
 
-      it('supports CALL_TYPE_BATCH execution mode', async function () {
-        await expect(this.mock.supportsExecutionMode(encodeMode({ callType: CALL_TYPE_BATCH }))).to.eventually.equal(
-          true,
-        );
-      });
-
-      it('supports CALL_TYPE_DELEGATE execution mode', async function () {
-        await expect(this.mock.supportsExecutionMode(encodeMode({ callType: CALL_TYPE_DELEGATE }))).to.eventually.equal(
-          true,
-        );
-      });
-
-      it('does not supports invalid execution mode', async function () {
-        await expect(this.mock.supportsExecutionMode(encodeMode({ callType: CALL_TYPE_INVALID }))).to.eventually.equal(
-          false,
-        );
-      });
+        it(`${
+          result ? 'does not support' : 'supports'
+        } CALL_TYPE=${callType} and EXEC_TYPE=${execType} execution mode`, async function () {
+          await expect(this.mock.supportsExecutionMode(encodeMode({ callType, execType }))).to.eventually.equal(result);
+        });
+      }
     });
 
     describe('supportsModule', function () {

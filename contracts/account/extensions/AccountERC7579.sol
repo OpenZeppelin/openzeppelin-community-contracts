@@ -80,11 +80,12 @@ abstract contract AccountERC7579 is
      * * Try (`0x01`): Try execution type (emits ERC7579TryExecuteFail on failure).
      */
     function supportsExecutionMode(bytes32 encodedMode) public view virtual returns (bool) {
-        (CallType callType, , , ) = Mode.wrap(encodedMode).decodeMode();
+        (CallType callType, ExecType execType, , ) = Mode.wrap(encodedMode).decodeMode();
         return
-            callType == ERC7579Utils.CALLTYPE_SINGLE ||
-            callType == ERC7579Utils.CALLTYPE_BATCH ||
-            callType == ERC7579Utils.CALLTYPE_DELEGATECALL;
+            (callType == ERC7579Utils.CALLTYPE_SINGLE ||
+                callType == ERC7579Utils.CALLTYPE_BATCH ||
+                callType == ERC7579Utils.CALLTYPE_DELEGATECALL) &&
+            (execType == ERC7579Utils.EXECTYPE_DEFAULT || execType == ERC7579Utils.EXECTYPE_TRY);
     }
 
     /**
