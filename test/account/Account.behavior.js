@@ -1,14 +1,10 @@
 const { ethers, entrypoint } = require('hardhat');
 const { expect } = require('chai');
-const { setBalance } = require('@nomicfoundation/hardhat-network-helpers');
-
 const { impersonate } = require('@openzeppelin/contracts/test/helpers/account');
 const { SIG_VALIDATION_SUCCESS, SIG_VALIDATION_FAILURE } = require('@openzeppelin/contracts/test/helpers/erc4337');
 const {
   shouldSupportInterfaces,
 } = require('@openzeppelin/contracts/test/utils/introspection/SupportsInterface.behavior');
-
-const value = ethers.parseEther('0.1');
 
 function shouldBehaveLikeAccountCore() {
   describe('entryPoint', function () {
@@ -20,13 +16,14 @@ function shouldBehaveLikeAccountCore() {
 
   describe('validateUserOp', function () {
     beforeEach(async function () {
-      await setBalance(this.mock.target, ethers.parseEther('1'));
+      await this.other.sendTransaction({ to: this.mock.target, value: ethers.parseEther('1') });
       await this.mock.deploy();
+      this.userOp ??= {};
     });
 
     it('should revert if the caller is not the canonical entrypoint', async function () {
       // empty operation (does nothing)
-      const operation = await this.mock.createUserOp({}).then(op => this.signUserOp(op));
+      const operation = await this.mock.createUserOp(this.userOp).then(op => this.signUserOp(op));
 
       await expect(this.mock.connect(this.other).validateUserOp(operation.packed, operation.hash(), 0))
         .to.be.revertedWithCustomError(this.mock, 'AccountUnauthorized')
@@ -35,38 +32,35 @@ function shouldBehaveLikeAccountCore() {
 
     describe('when the caller is the canonical entrypoint', function () {
       beforeEach(async function () {
-        this.entrypointAsSigner = await impersonate(entrypoint.target);
+        this.mockFromEntrypoint = this.mock.connect(await impersonate(entrypoint.target));
       });
 
       it('should return SIG_VALIDATION_SUCCESS if the signature is valid', async function () {
         // empty operation (does nothing)
-        const operation = await this.mock.createUserOp({}).then(op => this.signUserOp(op));
+        const operation = await this.mock.createUserOp(this.userOp).then(op => this.signUserOp(op));
 
-        expect(
-          await this.mock
-            .connect(this.entrypointAsSigner)
-            .validateUserOp.staticCall(operation.packed, operation.hash(), 0),
-        ).to.eq(SIG_VALIDATION_SUCCESS);
+        expect(await this.mockFromEntrypoint.validateUserOp.staticCall(operation.packed, operation.hash(), 0)).to.eq(
+          SIG_VALIDATION_SUCCESS,
+        );
       });
 
       it('should return SIG_VALIDATION_FAILURE if the signature is invalid', async function () {
         // empty operation (does nothing)
-        const operation = await this.mock.createUserOp({});
+        const operation = await this.mock.createUserOp(this.userOp);
         operation.signature = '0x00';
 
-        expect(
-          await this.mock
-            .connect(this.entrypointAsSigner)
-            .validateUserOp.staticCall(operation.packed, operation.hash(), 0),
-        ).to.eq(SIG_VALIDATION_FAILURE);
+        expect(await this.mockFromEntrypoint.validateUserOp.staticCall(operation.packed, operation.hash(), 0)).to.eq(
+          SIG_VALIDATION_FAILURE,
+        );
       });
 
       it('should pay missing account funds for execution', async function () {
         // empty operation (does nothing)
-        const operation = await this.mock.createUserOp({}).then(op => this.signUserOp(op));
+        const operation = await this.mock.createUserOp(this.userOp).then(op => this.signUserOp(op));
+        const value = 42n;
 
         await expect(
-          this.mock.connect(this.entrypointAsSigner).validateUserOp(operation.packed, operation.hash(), value),
+          this.mockFromEntrypoint.validateUserOp(operation.packed, operation.hash(), value),
         ).to.changeEtherBalances([this.mock, entrypoint], [-value, value]);
       });
     });
@@ -75,6 +69,7 @@ function shouldBehaveLikeAccountCore() {
   describe('fallback', function () {
     it('should receive ether', async function () {
       await this.mock.deploy();
+      const value = 42n;
 
       await expect(this.other.sendTransaction({ to: this.mock, value })).to.changeEtherBalances(
         [this.other, this.mock],

@@ -26,7 +26,7 @@ This directory includes contracts to build accounts for ERC-4337. These include:
  * {AccountCore}: An ERC-4337 smart account implementation that includes the core logic to process user operations.
  * {Account}: An extension of `AccountCore` that implements the recommended features for ERC-4337 smart accounts.
  * {AccountSignerERC7702}: An account implementation with low-level signature validation performed by an EOA.
- * {ERC7821}: Minimal batch executor implementation contracts. Useful to enable easy batch execution for smart contracts. 
+ * {ERC7821}: Minimal batch executor implementation contracts. Useful to enable easy batch execution for smart contracts.
 
 == Core
 
@@ -37,6 +37,7 @@ This directory includes contracts to build accounts for ERC-4337. These include:
 :getNonce: pass:normal[xref:#AccountCore-getNonce--[`++getNonce++`]]
 :getNonce: pass:normal[xref:#AccountCore-getNonce-uint192-[`++getNonce++`]]
 :validateUserOp: pass:normal[xref:#AccountCore-validateUserOp-struct-PackedUserOperation-bytes32-uint256-[`++validateUserOp++`]]
+:_validateUserOp: pass:normal[xref:#AccountCore-_validateUserOp-struct-PackedUserOperation-bytes32-[`++_validateUserOp++`]]
 :_signableUserOpHash: pass:normal[xref:#AccountCore-_signableUserOpHash-struct-PackedUserOperation-bytes32-[`++_signableUserOpHash++`]]
 :_payPrefund: pass:normal[xref:#AccountCore-_payPrefund-uint256-[`++_payPrefund++`]]
 :_checkEntryPoint: pass:normal[xref:#AccountCore-_checkEntryPoint--[`++_checkEntryPoint++`]]
@@ -80,6 +81,7 @@ digital signature validation implementations.
 * `++getNonce()++`
 * `++getNonce(key)++`
 * `++validateUserOp(userOp, userOpHash, missingAccountFunds)++`
+* `++_validateUserOp(userOp, userOpHash)++`
 * `++_signableUserOpHash(userOp, userOpHash)++`
 * `++_payPrefund(missingAccountFunds)++`
 * `++_checkEntryPoint()++`
@@ -155,6 +157,16 @@ Returns an encoded packed validation data that is composed of the following elem
 - `authorizer` (`address`): 0 for success, 1 for failure, otherwise the address of an authorizer contract
 - `validUntil` (`uint48`): The UserOp is valid only up to this time. Zero for “infinite”.
 - `validAfter` (`uint48`): The UserOp is valid only after this time.
+
+[.contract-item]
+[[AccountCore-_validateUserOp-struct-PackedUserOperation-bytes32-]]
+==== `[.contract-item-name]#++_validateUserOp++#++(struct PackedUserOperation userOp, bytes32 userOpHash) → uint256++` [.item-kind]#internal#
+
+Returns the validationData for a given user operation. By default, this checks the signature of the
+signable hash (produced by {_signableUserOpHash}) using the abstract signer ({_rawSignatureValidation}).
+
+NOTE: The userOpHash is assumed to be correct. Calling this function with a userOpHash that does not match the
+userOp will result in undefined behavior.
 
 [.contract-item]
 [[AccountCore-_signableUserOpHash-struct-PackedUserOperation-bytes32-]]
@@ -269,6 +281,7 @@ implemented using a specific signature verification algorithm. See {SignerECDSA}
 * `++getNonce()++`
 * `++getNonce(key)++`
 * `++validateUserOp(userOp, userOpHash, missingAccountFunds)++`
+* `++_validateUserOp(userOp, userOpHash)++`
 * `++_payPrefund(missingAccountFunds)++`
 * `++_checkEntryPoint()++`
 * `++_checkEntryPointOrSelf()++`

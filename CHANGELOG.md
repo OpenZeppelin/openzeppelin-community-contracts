@@ -1,3 +1,9 @@
+## XX-XX-XXXX
+
+- `AccountCore`: Add an internal `_validateUserOp` function to validate user operations.
+- `AccountERC7579`: Extension of `AccountCore` that implements support for ERC-7579 modules of type executor, validator, and fallback handler.
+- `AccountERC7579Hooked`: Extension of `AccountERC7579` that implements support for ERC-7579 hook modules.
+
 ## 13-01-2025
 
 - Rename `ERC7739Signer` into `ERC7739` to avoid confusion with the `AbstractSigner` family of contracts.

@@ -54,7 +54,6 @@ describe('AccountRSA', function () {
   describe('ERC7739', function () {
     beforeEach(async function () {
       this.mock = await this.mock.deploy();
-      this.signTypedData = this.signer.signTypedData.bind(this.signer);
     });
 
     shouldBehaveLikeERC7739();

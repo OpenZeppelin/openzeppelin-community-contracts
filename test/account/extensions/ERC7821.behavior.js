@@ -1,6 +1,5 @@
 const { ethers, entrypoint } = require('hardhat');
 const { expect } = require('chai');
-const { setBalance } = require('@nomicfoundation/hardhat-network-helpers');
 
 const { CALL_TYPE_BATCH, encodeMode, encodeBatch } = require('@openzeppelin/contracts/test/helpers/erc7579');
 
@@ -8,7 +7,7 @@ function shouldBehaveLikeERC7821({ deployable = true } = {}) {
   describe('execute', function () {
     beforeEach(async function () {
       // give eth to the account (before deployment)
-      await setBalance(this.mock.target, ethers.parseEther('1'));
+      await this.other.sendTransaction({ to: this.mock.target, value: ethers.parseEther('1') });
 
       // account is not initially deployed
       await expect(ethers.provider.getCode(this.mock)).to.eventually.equal('0x');

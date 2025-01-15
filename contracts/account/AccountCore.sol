@@ -72,11 +72,26 @@ abstract contract AccountCore is AbstractSigner, IAccount {
         bytes32 userOpHash,
         uint256 missingAccountFunds
     ) public virtual onlyEntryPoint returns (uint256) {
-        uint256 validationData = _rawSignatureValidation(_signableUserOpHash(userOp, userOpHash), userOp.signature)
-            ? ERC4337Utils.SIG_VALIDATION_SUCCESS
-            : ERC4337Utils.SIG_VALIDATION_FAILED;
+        uint256 validationData = _validateUserOp(userOp, userOpHash);
         _payPrefund(missingAccountFunds);
         return validationData;
+    }
+
+    /**
+     * @dev Returns the validationData for a given user operation. By default, this checks the signature of the
+     * signable hash (produced by {_signableUserOpHash}) using the abstract signer ({_rawSignatureValidation}).
+     *
+     * NOTE: The userOpHash is assumed to be correct. Calling this function with a userOpHash that does not match the
+     * userOp will result in undefined behavior.
+     */
+    function _validateUserOp(
+        PackedUserOperation calldata userOp,
+        bytes32 userOpHash
+    ) internal virtual returns (uint256) {
+        return
+            _rawSignatureValidation(_signableUserOpHash(userOp, userOpHash), userOp.signature)
+                ? ERC4337Utils.SIG_VALIDATION_SUCCESS
+                : ERC4337Utils.SIG_VALIDATION_FAILED;
     }
 
     /**
