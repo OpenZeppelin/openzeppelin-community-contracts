@@ -11,21 +11,6 @@ import {AbstractSigner} from "../../utils/cryptography/AbstractSigner.sol";
 import {SignerERC7702} from "../../utils/cryptography/SignerERC7702.sol";
 
 abstract contract AccountERC7702WithModulesMock is Account, AccountERC7579, SignerERC7702 {
-    function execute(
-        bytes32 mode,
-        bytes calldata executionData
-    ) public payable virtual override(AccountERC7579, ERC7821) {
-        // Force resolution to AccountERC7579 (discard ERC7821 implementation)
-        AccountERC7579.execute(mode, executionData);
-    }
-
-    function supportsExecutionMode(
-        bytes32 mode
-    ) public view virtual override(AccountERC7579, ERC7821) returns (bool result) {
-        // Force resolution to AccountERC7579 (discard ERC7821 implementation)
-        return AccountERC7579.supportsExecutionMode(mode);
-    }
-
     function _validateUserOp(
         PackedUserOperation calldata userOp,
         bytes32 userOpHash
