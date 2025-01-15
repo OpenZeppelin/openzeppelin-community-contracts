@@ -10,6 +10,7 @@
 :AccountCore: pass:normal[xref:account.adoc#AccountCore[`AccountCore`]]
 :ERC7739: pass:normal[xref:utils.adoc#ERC7739[`ERC7739`]]
 :ERC7821: pass:normal[xref:account.adoc#ERC7821[`ERC7821`]]
+:ERC7821: pass:normal[xref:account.adoc#ERC7821[`ERC7821`]]
 :SignerECDSA: pass:normal[xref:utils.adoc#SignerECDSA[`SignerECDSA`]]
 :SignerP256: pass:normal[xref:utils.adoc#SignerP256[`SignerP256`]]
 :SignerRSA: pass:normal[xref:utils.adoc#SignerRSA[`SignerRSA`]]
@@ -196,7 +197,6 @@ Unauthorized call to the account.
 
 :_PACKED_USER_OPERATION: pass:normal[xref:#Account-_PACKED_USER_OPERATION-bytes32[`++_PACKED_USER_OPERATION++`]]
 :_signableUserOpHash: pass:normal[xref:#Account-_signableUserOpHash-struct-PackedUserOperation-bytes32-[`++_signableUserOpHash++`]]
-:_erc7821AuthorizedExecutor: pass:normal[xref:#Account-_erc7821AuthorizedExecutor-address-bytes32-bytes-[`++_erc7821AuthorizedExecutor++`]]
 
 [.contract]
 [[Account]]
@@ -213,6 +213,8 @@ Extension of {AccountCore} with recommended feature that most account abstractio
 * {ERC7739} for ERC-1271 signature support with ERC-7739 replay protection
 * {ERC7821} for performing external calls in batches.
 
+TIP: Use {ERC7821} to enable external calls in batches.
+
 NOTE: To use this contract, the {ERC7739-_rawSignatureValidation} function must be
 implemented using a specific signature verification algorithm. See {SignerECDSA}, {SignerP256} or {SignerRSA}.
 
@@ -220,15 +222,6 @@ implemented using a specific signature verification algorithm. See {SignerECDSA}
 .Functions
 --
 * `++_signableUserOpHash(userOp, )++`
-* `++_erc7821AuthorizedExecutor(caller, mode, executionData)++`
-
-[.contract-subindex-inherited]
-.ERC7821
-* `++execute(mode, executionData)++`
-* `++supportsExecutionMode(mode)++`
-
-[.contract-subindex-inherited]
-.IERC7821
 
 [.contract-subindex-inherited]
 .ERC7739
@@ -295,12 +288,6 @@ implemented using a specific signature verification algorithm. See {SignerECDSA}
 --
 
 [.contract-subindex-inherited]
-.ERC7821
-
-[.contract-subindex-inherited]
-.IERC7821
-
-[.contract-subindex-inherited]
 .ERC7739
 
 [.contract-subindex-inherited]
@@ -345,13 +332,6 @@ implemented using a specific signature verification algorithm. See {SignerECDSA}
 [.contract-index]
 .Errors
 --
-
-[.contract-subindex-inherited]
-.ERC7821
-* `++UnsupportedExecutionMode()++`
-
-[.contract-subindex-inherited]
-.IERC7821
 
 [.contract-subindex-inherited]
 .ERC7739
@@ -401,12 +381,6 @@ implemented using a specific signature verification algorithm. See {SignerECDSA}
 * `++bytes32 constant _PACKED_USER_OPERATION++`
 
 [.contract-subindex-inherited]
-.ERC7821
-
-[.contract-subindex-inherited]
-.IERC7821
-
-[.contract-subindex-inherited]
 .ERC7739
 
 [.contract-subindex-inherited]
@@ -454,12 +428,6 @@ implemented using a specific signature verification algorithm. See {SignerECDSA}
 Specialization of {AccountCore-_signableUserOpHash} that returns a typehash following EIP-712 typed data
 hashing for readability. This assumes the underlying signature scheme implements `signTypedData`, which will be
 the case when combined with {SignerECDSA} or {SignerERC7702}.
-
-[.contract-item]
-[[Account-_erc7821AuthorizedExecutor-address-bytes32-bytes-]]
-==== `[.contract-item-name]#++_erc7821AuthorizedExecutor++#++(address caller, bytes32 mode, bytes executionData) → bool++` [.item-kind]#internal#
-
-Access control mechanism for the {execute} function.
 
 [.contract-item]
 [[Account-_PACKED_USER_OPERATION-bytes32]]
@@ -530,6 +498,20 @@ Only returns true for:
 ==== `[.contract-item-name]#++_erc7821AuthorizedExecutor++#++(address caller, bytes32, bytes) → bool++` [.item-kind]#internal#
 
 Access control mechanism for the {execute} function.
+By default, only the contract itself is allowed to execute.
+
+Override this function to implement custom access control, for example to allow the
+ERC-4337 entrypoint to execute.
+
+```solidity
+function _erc7821AuthorizedExecutor(
+  address caller,
+  bytes32 mode,
+  bytes calldata executionData
+) internal view virtual override returns (bool) {
+  return caller == address(entryPoint()) || super._erc7821AuthorizedExecutor(caller, mode, executionData);
+}
+```
 
 [.contract-item]
 [[ERC7821-UnsupportedExecutionMode--]]
