@@ -15,8 +15,9 @@ User operations are validated using an xref:api:utils.adoc#AbstractSigner[`Abstr
 A more opinionated version is the xref:api:account.adoc#Account[`Account`] contract, which also inherits from:
 
 * xref:api:utils.adoc#ERC7739Signer[ERC7739Signer]: An implementation of the https://eips.ethereum.org/EIPS/eip-1271[ERC-1271] interface for smart contract signatures. This layer adds a defensive rehashing mechanism that prevents signatures for this account to be replayed in another account controlled by the same signer. See xref:account-abstraction.adoc#erc7739_signatures[ERC-7739 signatures].
-* https://docs.openzeppelin.com/contracts/api/token/erc721#AccountERC7821[AccountERC7821]: An extension that provides the minimal logic batch multiple calls in a single execution. Useful to execute multiple operations within a single user operation.
 * https://docs.openzeppelin.com/contracts/api/token/erc721#ERC721Holder[ERC721Holder], https://docs.openzeppelin.com/contracts/api/token/erc1155#ERC1155Holder[ERC1155Holder]: Allows the account to hold https://eips.ethereum.org/EIPS/eip-721[ERC-721] and https://eips.ethereum.org/EIPS/eip-1155[ERC-1155] tokens.
+
+NOTE: The Account doesn't include an execution mechanism. Using xref:api:account.adoc#ERC7821[`ERC7821`] is a recommended solution with the minimal logic to batch multiple calls in a single execution. This is useful to execute multiple calls within a single user operation (e.g. approve and transfer).
 
 [source,solidity]
 ----

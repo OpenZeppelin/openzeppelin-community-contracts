@@ -5,9 +5,10 @@ pragma solidity ^0.8.20;
 
 import {EIP712} from "@openzeppelin/contracts/utils/cryptography/EIP712.sol";
 import {Account} from "../../../account/Account.sol";
+import {ERC7821} from "../../../account/extensions/ERC7821.sol";
 import {SignerECDSA} from "../../../utils/cryptography/SignerECDSA.sol";
 
-contract MyAccountECDSA is Account, SignerECDSA {
+contract MyAccountECDSA is Account, SignerECDSA, ERC7821 {
     constructor() EIP712("MyAccountECDSA", "1") {}
 
     function initializeSigner(address signerAddr) public virtual {

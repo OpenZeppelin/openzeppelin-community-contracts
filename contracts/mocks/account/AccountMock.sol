@@ -3,6 +3,7 @@
 pragma solidity ^0.8.20;
 
 import {PackedUserOperation} from "@openzeppelin/contracts/interfaces/draft-IERC4337.sol";
+import {ERC7821} from "../../account/extensions/ERC7821.sol";
 import {ERC4337Utils} from "@openzeppelin/contracts/account/utils/draft-ERC4337Utils.sol";
 import {Account} from "../../account/Account.sol";
 
