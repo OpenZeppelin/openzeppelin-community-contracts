@@ -5,10 +5,10 @@ pragma solidity ^0.8.20;
 
 import {EIP712} from "@openzeppelin/contracts/utils/cryptography/EIP712.sol";
 import {Initializable} from "@openzeppelin/contracts/proxy/utils/Initializable.sol";
-import {ERC7821} from "../../../account/extensions/ERC7821.sol";
 import {Account} from "../../../account/Account.sol"; // or AccountCore
+import {ERC7821} from "../../../account/extensions/ERC7821.sol";
 
-contract MyAccount is Account, Initializable, ERC7821 {
+contract MyAccount is Account, ERC7821, Initializable {
     /**
      * NOTE: EIP-712 domain is set at construction because each account clone
      * will recalculate its domain separator based on their own address.
