@@ -10,4 +10,13 @@ abstract contract AccountECDSAMock is Account, SignerECDSA, ERC7821 {
     constructor(address signerAddr) {
         _initializeSigner(signerAddr);
     }
+
+    /// @inheritdoc ERC7821
+    function _erc7821AuthorizedExecutor(
+        address caller,
+        bytes32 mode,
+        bytes calldata executionData
+    ) internal view virtual override returns (bool) {
+        return caller == address(entryPoint()) || super._erc7821AuthorizedExecutor(caller, mode, executionData);
+    }
 }

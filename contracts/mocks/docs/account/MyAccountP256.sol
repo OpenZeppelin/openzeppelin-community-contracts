@@ -15,4 +15,13 @@ contract MyAccountP256 is Account, SignerP256, ERC7821 {
         // Will revert if the signer is already initialized
         _initializeSigner(qx, qy);
     }
+
+    /// @dev Allows the entry point as an authorized executor.
+    function _erc7821AuthorizedExecutor(
+        address caller,
+        bytes32 mode,
+        bytes calldata executionData
+    ) internal view virtual override returns (bool) {
+        return caller == address(entryPoint()) || super._erc7821AuthorizedExecutor(caller, mode, executionData);
+    }
 }
