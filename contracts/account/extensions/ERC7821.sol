@@ -40,6 +40,20 @@ abstract contract ERC7821 is IERC7821 {
 
     /**
      * @dev Access control mechanism for the {execute} function.
+     * By default, only the contract itself is allowed to execute.
+     *
+     * Override this function to implement custom access control, for example to allow the
+     * ERC-4337 entrypoint to execute.
+     *
+     * ```solidity
+     * function _erc7821AuthorizedExecutor(
+     *   address caller,
+     *   bytes32 mode,
+     *   bytes calldata executionData
+     * ) internal view virtual override returns (bool) {
+     *   return caller == address(entryPoint()) || super._erc7821AuthorizedExecutor(caller, mode, executionData);
+     * }
+     * ```
      */
     function _erc7821AuthorizedExecutor(
         address caller,
