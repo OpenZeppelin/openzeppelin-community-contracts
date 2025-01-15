@@ -34,7 +34,12 @@ import {AccountCore} from "../AccountCore.sol";
  * }
  * ```
  *
- * NOTE: Hook support is not included. See {AccountERC7579Hooked} for a version that hooks to execution.
+ * NOTE:
+ * * Hook support is not included. See {AccountERC7579Hooked} for a version that hooks to execution.
+ * * Validator selection, when verifying either ERC-1271 signature or ERC-4337 UserOperation is implemented in
+ *   internal virtual functions {_extractUserOpValidator} and {_extractSignatureValidator}. Both are implemented
+ *   following common practices. However, this part is not standardized in ERC-7579 (or in any follow-up ERC). Some
+ *   accounts may want to override these internal functions.
  */
 abstract contract AccountERC7579 is
     AccountCore,
@@ -56,9 +61,14 @@ abstract contract AccountERC7579 is
     error ERC7579MissingFallbackHandler(bytes4 selector);
 
     /// @dev Modifier that checks if the caller is an installed module of the given type.
-    modifier onlyModule(uint256 moduleTypeId) {
-        _checkModule(moduleTypeId, msg.sender);
+    modifier onlyModule(uint256 moduleTypeId, bytes calldata additionalContext) {
+        _checkModule(moduleTypeId, msg.sender, additionalContext);
         _;
+    }
+
+    /// @dev See {_fallback}.
+    fallback(bytes calldata) external payable virtual returns (bytes memory) {
+        return _fallback();
     }
 
     /// @inheritdoc IERC7579AccountConfig
@@ -68,9 +78,9 @@ abstract contract AccountERC7579 is
     }
 
     /**
-     * @dev Returns whether the account supports the given execution mode.
+     * @inheritdoc IERC7579AccountConfig
      *
-     * Supported call types:
+     * @dev Supported call types:
      * * Single (`0x00`): A single transaction execution.
      * * Batch (`0x01`): A batch of transactions execution.
      * * Delegate (`0xff`): A delegate call execution.
@@ -89,9 +99,9 @@ abstract contract AccountERC7579 is
     }
 
     /**
-     * @dev Returns whether the account supports the given module type.
+     * @inheritdoc IERC7579AccountConfig
      *
-     * Supported module types:
+     * @dev Supported module types:
      *
      * * Validator: A module used during the validation phase to determine if a transaction is valid and
      * should be executed on the account.
@@ -144,7 +154,13 @@ abstract contract AccountERC7579 is
     function executeFromExecutor(
         bytes32 mode,
         bytes calldata executionCalldata
-    ) public payable virtual onlyModule(MODULE_TYPE_EXECUTOR) returns (bytes[] memory returnData) {
+    )
+        public
+        payable
+        virtual
+        onlyModule(MODULE_TYPE_EXECUTOR, Calldata.emptyBytes())
+        returns (bytes[] memory returnData)
+    {
         return _execute(Mode.wrap(mode), executionCalldata);
     }
 
@@ -167,6 +183,26 @@ abstract contract AccountERC7579 is
     }
 
     /**
+     * @dev Lowest-level signature validation function. See {ERC7739-_rawSignatureValidation}.
+     *
+     * This function delegates the signature validation to a validation module if the first 20 bytes of the
+     * signature correspond to an installed validator module.
+     *
+     * See {_extractSignatureValidator} for the module extraction logic.
+     */
+    function _rawSignatureValidation(
+        bytes32 hash,
+        bytes calldata signature
+    ) internal view virtual override returns (bool) {
+        if (signature.length < 20) return false;
+        (address module, bytes calldata innerSignature) = _extractSignatureValidator(signature);
+        return
+            isModuleInstalled(MODULE_TYPE_VALIDATOR, module, Calldata.emptyBytes()) &&
+            IERC7579Validator(module).isValidSignatureWithSender(address(this), hash, innerSignature) ==
+            IERC1271.isValidSignature.selector;
+    }
+
+    /**
      * @dev ERC-7579 execution logic. See {supportsExecutionMode} for supported modes.
      *
      * Reverts if the call type is not supported.
@@ -180,34 +216,6 @@ abstract contract AccountERC7579 is
         if (callType == ERC7579Utils.CALLTYPE_BATCH) return executionCalldata.execBatch(execType);
         if (callType == ERC7579Utils.CALLTYPE_DELEGATECALL) return executionCalldata.execDelegateCall(execType);
         revert ERC7579Utils.ERC7579UnsupportedCallType(callType);
-    }
-
-    /**
-     * @dev Lowest-level signature validation function. See {ERC7739-_rawSignatureValidation}.
-     *
-     * This function delegates the signature validation to a validation module if the first 20 bytes of the
-     * signature correspond to an installed validator module.
-     *
-     * See {_extractSignatureValidator} for the module extraction logic.
-     */
-    function _rawSignatureValidation(
-        bytes32 hash,
-        bytes calldata signature
-    ) internal view virtual override returns (bool) {
-        if (signature.length < 20) return false;
-        address module = _extractSignatureValidator(signature);
-        return
-            isModuleInstalled(MODULE_TYPE_VALIDATOR, module, msg.data) &&
-            IERC7579Validator(module).isValidSignatureWithSender(address(this), hash, signature[20:]) ==
-            IERC1271.isValidSignature.selector;
-    }
-
-    /// @dev Checks if the module is installed. Reverts if the module is not installed.
-    function _checkModule(uint256 moduleTypeId, address module) internal view virtual {
-        require(
-            isModuleInstalled(moduleTypeId, module, msg.data),
-            ERC7579Utils.ERC7579UninstalledModule(moduleTypeId, module)
-        );
     }
 
     /**
@@ -278,53 +286,6 @@ abstract contract AccountERC7579 is
         emit ModuleUninstalled(moduleTypeId, module);
     }
 
-    /// @dev Returns the fallback handler for the given selector. Returns `address(0)` if not installed.
-    function _fallbackHandler(bytes4 selector) internal view virtual returns (address) {
-        return _fallbacks[selector];
-    }
-
-    /**
-     * @dev Extracts the nonce validator from the user operation.
-     *
-     * To construct a nonce key, set nonce as follows:
-     *
-     * ```
-     * <module address (20 bytes)> | <key (4 bytes)> | <nonce (8 bytes)>
-     * ```
-     */
-    function _extractUserOpValidator(PackedUserOperation calldata userOp) internal pure virtual returns (address) {
-        return address(bytes32(userOp.nonce).extract_32_20(0));
-    }
-
-    /**
-     * @dev Extracts the signature validator from the signature.
-     *
-     * To construct a signature, set the first 20 bytes as the module address and the remaining bytes as the
-     * signature data:
-     *
-     * ```
-     * <module address (20 bytes)> | <signature data>
-     * ```
-     */
-    function _extractSignatureValidator(bytes calldata signature) internal pure virtual returns (address) {
-        return address(bytes20(signature[0:20]));
-    }
-
-    /**
-     * @dev Extract the function selector from initData/deInitData for MODULE_TYPE_FALLBACK
-     *
-     * NOTE: If we had calldata here, we would could use calldata slice which are cheaper to manipulate and don't
-     * require actual copy. However, this would require `_installModule` to get a calldata bytes object instead of a
-     * memory bytes object. This would prevent calling `_installModule` from a contract constructor and would force
-     * the use of external initializers. That may change in the future, as most accounts will probably be deployed as
-     * clones/proxy/ERC-7702 delegates and therefore rely on initializers anyway.
-     */
-    function _decodeFallbackData(
-        bytes memory data
-    ) internal pure virtual returns (bytes4 selector, bytes memory remaining) {
-        return (bytes4(data), data.slice(4));
-    }
-
     /**
      * @dev Fallback function that delegates the call to the installed handler for the given selector.
      *
@@ -351,8 +312,79 @@ abstract contract AccountERC7579 is
         }
     }
 
-    /// @dev See {_fallback}.
-    fallback(bytes calldata) external payable virtual returns (bytes memory) {
-        return _fallback();
+    /// @dev Returns the fallback handler for the given selector. Returns `address(0)` if not installed.
+    function _fallbackHandler(bytes4 selector) internal view virtual returns (address) {
+        return _fallbacks[selector];
+    }
+
+    /// @dev Checks if the module is installed. Reverts if the module is not installed.
+    function _checkModule(
+        uint256 moduleTypeId,
+        address module,
+        bytes calldata additionalContext
+    ) internal view virtual {
+        require(
+            isModuleInstalled(moduleTypeId, module, additionalContext),
+            ERC7579Utils.ERC7579UninstalledModule(moduleTypeId, module)
+        );
+    }
+
+    /**
+     * @dev Extracts the nonce validator from the user operation.
+     *
+     * To construct a nonce key, set nonce as follows:
+     *
+     * ```
+     * <module address (20 bytes)> | <key (4 bytes)> | <nonce (8 bytes)>
+     * ```
+     * NOTE: The default behavior of this function replicated the behavior of
+     * [Safe adapter](https://github.com/rhinestonewtf/safe7579/blob/bb29e8b1a66658790c4169e72608e27d220f79be/src/Safe7579.sol#L266) and
+     * [Etherspot's Prime Account](https://github.com/etherspot/etherspot-prime-contracts/blob/cfcdb48c4172cea0d66038324c0bae3288aa8caa/src/modular-etherspot-wallet/wallet/ModularEtherspotWallet.sol#L227).
+     *
+     * This is not standardized in ERC-7579 (or in any follow-up ERC). Some accounts may want to override these internal functions.
+     *
+     * For example, [Biconomy's Nexus](https://github.com/bcnmy/nexus/blob/54f4e19baaff96081a8843672977caf712ef19f4/contracts/lib/NonceLib.sol#L17)
+     * uses a similar yet incompatible approach (the validator address is also part of the nonce, but not at the same location)
+     */
+    function _extractUserOpValidator(PackedUserOperation calldata userOp) internal pure virtual returns (address) {
+        return address(bytes32(userOp.nonce).extract_32_20(0));
+    }
+
+    /**
+     * @dev Extracts the signature validator from the signature.
+     *
+     * To construct a signature, set the first 20 bytes as the module address and the remaining bytes as the
+     * signature data:
+     *
+     * ```
+     * <module address (20 bytes)> | <signature data>
+     * ```
+     *
+     * NOTE: The default behavior of this function replicated the behavior of
+     * [Safe adapter](https://github.com/rhinestonewtf/safe7579/blob/bb29e8b1a66658790c4169e72608e27d220f79be/src/Safe7579.sol#L350),
+     * [Biconomy's Nexus](https://github.com/bcnmy/nexus/blob/54f4e19baaff96081a8843672977caf712ef19f4/contracts/Nexus.sol#L239) and
+     * [Etherspot's Prime Account](https://github.com/etherspot/etherspot-prime-contracts/blob/cfcdb48c4172cea0d66038324c0bae3288aa8caa/src/modular-etherspot-wallet/wallet/ModularEtherspotWallet.sol#L252)
+     *
+     * This is not standardized in ERC-7579 (or in any follow-up ERC). Some accounts may want to override these internal functions.
+     */
+    function _extractSignatureValidator(
+        bytes calldata signature
+    ) internal pure virtual returns (address module, bytes calldata innerSignature) {
+        return (address(bytes20(signature[0:20])), signature[20:]);
+    }
+
+    /**
+     * @dev Extract the function selector from initData/deInitData for MODULE_TYPE_FALLBACK
+     *
+     * NOTE: If we had calldata here, we would could use calldata slice which are cheaper to manipulate and don't
+     * require actual copy. However, this would require `_installModule` to get a calldata bytes object instead of a
+     * memory bytes object. This would prevent calling `_installModule` from a contract constructor and would force
+     * the use of external initializers. That may change in the future, as most accounts will probably be deployed as
+     * clones/proxy/ERC-7702 delegates and therefore rely on initializers anyway.
+     */
+    function _decodeFallbackData(
+        bytes memory data
+    ) internal pure virtual returns (bytes4 selector, bytes memory remaining) {
+        return (bytes4(data), data.slice(4));
     }
 }
