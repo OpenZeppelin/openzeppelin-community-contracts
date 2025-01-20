@@ -4,7 +4,7 @@
 
 > [!IMPORTANT]
 > This repository includes community-curated and experimental code that has not been audited and may introduce breaking changes at any time. We recommend
-> reviewing the [Security](#security) section  before using any code from this repository.
+> reviewing the [Security](#security) section before using any code from this repository.
 
 ## Overview
 
