@@ -1,5 +1,6 @@
 # <img src="logo.svg" alt="OpenZeppelin" height="40px">
 
+[![Coverage Status](https://codecov.io/gh/OpenZeppelin/openzeppelin-community-contracts/graph/badge.svg)](https://codecov.io/gh/OpenZeppelin/openzeppelin-community-contracts)
 [![Forum](https://img.shields.io/badge/forum-%F0%9F%92%AC-yellow)](https://docs.openzeppelin.com/contracts)
 
 > [!IMPORTANT]
