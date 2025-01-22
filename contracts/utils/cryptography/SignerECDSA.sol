@@ -18,7 +18,7 @@ import {AbstractSigner} from "./AbstractSigner.sol";
  * contract MyAccountECDSA is Account, SignerECDSA {
  *     constructor() EIP712("MyAccountECDSA", "1") {}
  *
- *     function initializeSigner(address signerAddr) public virtual initializer {
+ *     function initializeSigner(address signerAddr) external {
  *       // Will revert if the signer is already initialized
  *       _initializeSigner(signerAddr);
  *     }

@@ -18,7 +18,7 @@ import {AbstractSigner} from "./AbstractSigner.sol";
  * contract MyAccountP256 is Account, SignerP256 {
  *     constructor() EIP712("MyAccountP256", "1") {}
  *
- *     function initializeSigner(bytes32 qx, bytes32 qy) public virtual initializer {
+ *     function initializeSigner(bytes32 qx, bytes32 qy) external {
  *       // Will revert if the signer is already initialized
  *       _initializeSigner(qx, qy);
  *     }
