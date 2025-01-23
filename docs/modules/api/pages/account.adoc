@@ -46,11 +46,11 @@ This directory includes contracts to build accounts for ERC-4337. These include:
 
 [.contract]
 [[AccountCore]]
-=== `++AccountCore++` link:https://github.com/OpenZeppelin/openzeppelin-contracts/blob/v0.0.1/contracts/account/AccountCore.sol[{github-icon},role=heading-link]
+=== `++AccountCore++` link:https://github.com/OpenZeppelin/openzeppelin-community-contracts/blob/master/contracts/account/AccountCore.sol[{github-icon},role=heading-link]
 
 [.hljs-theme-light.nopadding]
 ```solidity
-import "@openzeppelin/contracts/account/AccountCore.sol";
+import "@openzeppelin/community-contracts/account/AccountCore.sol";
 ```
 
 A simple ERC4337 account implementation. This base implementation only includes the minimal logic to process
@@ -212,11 +212,11 @@ Unauthorized call to the account.
 
 [.contract]
 [[Account]]
-=== `++Account++` link:https://github.com/OpenZeppelin/openzeppelin-contracts/blob/v0.0.1/contracts/account/Account.sol[{github-icon},role=heading-link]
+=== `++Account++` link:https://github.com/OpenZeppelin/openzeppelin-community-contracts/blob/master/contracts/account/Account.sol[{github-icon},role=heading-link]
 
 [.hljs-theme-light.nopadding]
 ```solidity
-import "@openzeppelin/contracts/account/Account.sol";
+import "@openzeppelin/community-contracts/account/Account.sol";
 ```
 
 Extension of {AccountCore} with recommended feature that most account abstraction implementation will want:
@@ -455,11 +455,11 @@ the case when combined with {SignerECDSA} or {SignerERC7702}.
 
 [.contract]
 [[ERC7821]]
-=== `++ERC7821++` link:https://github.com/OpenZeppelin/openzeppelin-contracts/blob/v0.0.1/contracts/account/extensions/ERC7821.sol[{github-icon},role=heading-link]
+=== `++ERC7821++` link:https://github.com/OpenZeppelin/openzeppelin-community-contracts/blob/master/contracts/account/extensions/ERC7821.sol[{github-icon},role=heading-link]
 
 [.hljs-theme-light.nopadding]
 ```solidity
-import "@openzeppelin/contracts/account/extensions/ERC7821.sol";
+import "@openzeppelin/community-contracts/account/extensions/ERC7821.sol";
 ```
 
 Minimal batch executor following ERC-7821. Only supports basic mode (no optional "opData").

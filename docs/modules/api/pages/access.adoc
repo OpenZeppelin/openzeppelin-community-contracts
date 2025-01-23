@@ -37,11 +37,11 @@ This directory contains utility contracts to restrict access control in smart co
 
 [.contract]
 [[AccessManagerLight]]
-=== `++AccessManagerLight++` link:https://github.com/OpenZeppelin/openzeppelin-contracts/blob/v0.0.1/contracts/access/manager/AccessManagerLight.sol[{github-icon},role=heading-link]
+=== `++AccessManagerLight++` link:https://github.com/OpenZeppelin/openzeppelin-community-contracts/blob/master/contracts/access/manager/AccessManagerLight.sol[{github-icon},role=heading-link]
 
 [.hljs-theme-light.nopadding]
 ```solidity
-import "@openzeppelin/contracts/access/manager/AccessManagerLight.sol";
+import "@openzeppelin/community-contracts/access/manager/AccessManagerLight.sol";
 ```
 
 Light version of an AccessManager contract that defines `bytes8` roles

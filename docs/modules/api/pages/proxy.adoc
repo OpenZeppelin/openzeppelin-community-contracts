@@ -16,11 +16,11 @@ Variants of proxy patterns, which are contracts that allow to forward a call to 
 
 [.contract]
 [[HybridProxy]]
-=== `++HybridProxy++` link:https://github.com/OpenZeppelin/openzeppelin-contracts/blob/v0.0.1/contracts/proxy/HybridProxy.sol[{github-icon},role=heading-link]
+=== `++HybridProxy++` link:https://github.com/OpenZeppelin/openzeppelin-community-contracts/blob/master/contracts/proxy/HybridProxy.sol[{github-icon},role=heading-link]
 
 [.hljs-theme-light.nopadding]
 ```solidity
-import "@openzeppelin/contracts/proxy/HybridProxy.sol";
+import "@openzeppelin/community-contracts/proxy/HybridProxy.sol";
 ```
 
 A version of an ERC-1967 proxy that uses the address stored in the implementation slot as a beacon.
