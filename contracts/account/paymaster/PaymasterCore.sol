@@ -55,12 +55,14 @@ abstract contract PaymasterCore is IPaymaster {
      * @dev Internal validation of whether the paymaster is willing to pay for the user operation.
      * Returns the context to be passed to postOp and the validation data.
      *
-     * // TODO: Define `maxCost`
+     * The `requiredPreFund` is the amount the paymaster has to pay (in native tokens). It's calculated
+     * as `requiredGas * userOp.maxFeePerGas`, where `required` gas can be calculated from the user operation
+     * as `verificationGasLimit + callGasLimit + paymasterVerificationGasLimit + paymasterPostOpGasLimit + preVerificationGas`
      */
     function _validatePaymasterUserOp(
         PackedUserOperation calldata userOp,
         bytes32 userOpHash,
-        uint256 maxCost
+        uint256 requiredPreFund
     ) internal virtual returns (bytes memory context, uint256 validationData);
 
     /// @inheritdoc IPaymaster
