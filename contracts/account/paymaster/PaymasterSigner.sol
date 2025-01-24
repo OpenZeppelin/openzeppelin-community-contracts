@@ -22,7 +22,7 @@ import {AbstractSigner} from "../../utils/cryptography/AbstractSigner.sol";
  * }
  * ```
  */
-abstract contract PaymasterSigner is PaymasterCore, EIP712, AbstractSigner {
+abstract contract PaymasterSigner is PaymasterCore, AbstractSigner, EIP712 {
     using ERC4337Utils for *;
 
     bytes32 internal constant _USER_OPERATION_REQUEST =
