@@ -6,7 +6,7 @@ const { NonNativeSigner } = require('../../helpers/signers');
 
 async function fixture() {
   // EOAs and environment
-  const [depositor, staker, receiver] = await ethers.getSigners();
+  const [depositor, staker, receiver, other] = await ethers.getSigners();
   const target = await ethers.deployContract('CallReceiverMockExtended');
 
   // ERC-4337 signer
@@ -39,6 +39,7 @@ async function fixture() {
     depositor,
     staker,
     receiver,
+    other,
     target,
     accountMock,
     mock,

@@ -89,6 +89,7 @@ abstract contract PaymasterSigner is PaymasterCore, AbstractSigner, EIP712 {
         bytes calldata paymasterData = userOp.paymasterData();
         return (uint48(bytes6(paymasterData[0:6])), uint48(bytes6(paymasterData[6:12])), paymasterData[12:]);
     }
+
     function _postOp(
         PostOpMode /* mode */,
         bytes calldata /* context */,

@@ -40,6 +40,13 @@ function shouldBehaveLikePaymaster() {
       expect(handleOpsTx).to.emit(this.target, 'MockFunctionCalledExtra');
       expect(handleOpsTx).to.not.changeEtherBalance(this.accountMock, 1n);
     });
+
+    it('reverts if the caller is not the entrypoint', async function () {
+      const operation = await this.accountMock.createUserOp(this.userOp);
+      await expect(this.mock.connect(this.other).validatePaymasterUserOp(operation.packed, ethers.ZeroHash, 100_000n))
+        .to.be.revertedWithCustomError(this.mock, 'PaymasterUnauthorized')
+        .withArgs(this.other);
+    });
   });
 
   describe('deposit lifecycle', function () {
