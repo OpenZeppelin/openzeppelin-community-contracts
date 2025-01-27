@@ -13,6 +13,18 @@ module.exports = mapValues(
       gasFees: 'bytes32',
       paymasterAndData: 'bytes',
     },
+    UserOperationRequest: {
+      sender: 'address',
+      nonce: 'uint256',
+      initCode: 'bytes',
+      callData: 'bytes',
+      accountGasLimits: 'bytes32',
+      paymasterVerificationGasLimit: 'uint256',
+      preVerificationGas: 'uint256',
+      gasFees: 'bytes32',
+      validAfter: 'uint48',
+      validUntil: 'uint48',
+    },
   },
   formatType,
 );

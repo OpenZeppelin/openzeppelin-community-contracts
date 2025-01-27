@@ -1,11 +1,44 @@
 const { ethers, entrypoint } = require('hardhat');
 const { expect } = require('chai');
 const time = require('@openzeppelin/contracts/test/helpers/time');
+const { encodeBatch, encodeMode, CALL_TYPE_BATCH } = require('@openzeppelin/contracts/test/helpers/erc7579');
 
 function shouldBehaveLikePaymaster() {
   describe('entryPoint', function () {
     it('should return the canonical entrypoint', async function () {
       await expect(this.mock.entryPoint()).to.eventually.equal(entrypoint);
+    });
+  });
+
+  describe('validatePaymasterUserOp', function () {
+    beforeEach(async function () {
+      this.deposit = ethers.parseEther('1');
+      await this.mock.connect(this.depositor).deposit({ value: this.deposit });
+      this.userOp ??= {
+        paymaster: this.mock,
+      };
+    });
+
+    it('sponsors a user operation', async function () {
+      const userOp = { ...this.userOp };
+      userOp.callData = this.accountMock.interface.encodeFunctionData('execute', [
+        encodeMode({ callType: CALL_TYPE_BATCH }),
+        encodeBatch([
+          {
+            target: this.target.target,
+            data: this.target.interface.encodeFunctionData('mockFunction'),
+          },
+        ]),
+      ]);
+      const operation = await this.accountMock.createUserOp(this.userOp);
+      const userSignedUserOp = await this.signUserOp(operation);
+      const paymasterSignedUserOp = await this.paymasterSignUserOp(userSignedUserOp, 0, 0);
+
+      await expect(entrypoint.balanceOf(this.mock)).to.eventually.eq(this.deposit);
+      const handleOpsTx = await entrypoint.handleOps([paymasterSignedUserOp.packed], this.receiver);
+      await expect(entrypoint.balanceOf(this.mock)).to.eventually.be.lessThan(this.deposit);
+      expect(handleOpsTx).to.emit(this.target, 'MockFunctionCalledExtra');
+      expect(handleOpsTx).to.not.changeEtherBalance(this.accountMock, 1n);
     });
   });
 
