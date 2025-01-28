@@ -27,7 +27,7 @@ abstract contract PaymasterSigner is PaymasterCore, AbstractSigner, EIP712 {
 
     bytes32 internal constant _USER_OPERATION_REQUEST =
         keccak256(
-            "UserOperationRequest(address sender,uint256 nonce,bytes initCode,bytes callData,bytes32 accountGasLimits,uint256 paymasterVerificationGasLimit,uint256 preVerificationGas,bytes32 gasFees,uint48 validAfter,uint48 validUntil)"
+            "UserOperationRequest(address sender,uint256 nonce,bytes initCode,bytes callData,bytes32 accountGasLimits,uint256 preVerificationGas,bytes32 gasFees,uint256 paymasterVerificationGasLimit,uint48 validAfter,uint48 validUntil)"
         );
 
     /**
@@ -50,9 +50,9 @@ abstract contract PaymasterSigner is PaymasterCore, AbstractSigner, EIP712 {
                         keccak256(userOp.initCode),
                         keccak256(userOp.callData),
                         userOp.accountGasLimits,
-                        userOp.paymasterVerificationGasLimit(),
                         userOp.preVerificationGas,
                         userOp.gasFees,
+                        userOp.paymasterVerificationGasLimit(),
                         validAfter,
                         validUntil
                     )
