@@ -58,12 +58,12 @@ describe('PaymasterCore', function () {
 
   shouldBehaveLikePaymaster({ postOp: true });
 
-  it('reverts if validatePaymasterUserOp returns context and was not overriden', async function () {
-    const mock = await ethers.deployContract('$PaymasterCoreContextNoPostOpMock');
+  it('still execute the user op if validatePaymasterUserOp returns context and _postOp was not overriden', async function () {
+    const paymaster = await ethers.deployContract('$PaymasterCoreContextNoPostOpMock');
     const paymasterDeposit = ethers.parseEther('1');
-    await mock.connect(this.depositor).deposit({ value: paymasterDeposit });
+    await paymaster.connect(this.depositor).deposit({ value: paymasterDeposit });
     const userOp = {
-      paymaster: this.mock,
+      paymaster,
     };
 
     userOp.callData = this.accountMock.interface.encodeFunctionData('execute', [
@@ -79,6 +79,8 @@ describe('PaymasterCore', function () {
     const userSignedUserOp = await this.signUserOp(operation);
     const paymasterSignedUserOp = await this.paymasterSignUserOp(userSignedUserOp, 0, 0);
 
-    await expect(entrypoint.handleOps([paymasterSignedUserOp.packed], this.receiver)).to.be.reverted;
+    await expect(this.accountMock.getNonce()).to.eventually.equal(0);
+    await entrypoint.handleOps([paymasterSignedUserOp.packed], this.receiver);
+    await expect(this.accountMock.getNonce()).to.eventually.equal(1); // Does execute
   });
 });

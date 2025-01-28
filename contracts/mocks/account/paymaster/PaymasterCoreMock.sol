@@ -13,7 +13,7 @@ contract PaymasterCoreContextNoPostOpMock is PaymasterCore {
         PackedUserOperation calldata userOp,
         bytes32 /* userOpHash */,
         uint256 /* requiredPreFund */
-    ) internal virtual override returns (bytes memory context, uint256 validationData) {
+    ) internal pure override returns (bytes memory context, uint256 validationData) {
         bytes calldata paymasterData = userOp.paymasterData();
         return (
             paymasterData,
@@ -30,25 +30,10 @@ contract PaymasterCoreContextNoPostOpMock is PaymasterCore {
     }
 }
 
-contract PaymasterCoreMock is PaymasterCore {
+contract PaymasterCoreMock is PaymasterCoreContextNoPostOpMock {
     using ERC4337Utils for *;
 
     event PaymasterDataPostOp(bytes paymasterData);
-
-    function _validatePaymasterUserOp(
-        PackedUserOperation calldata userOp,
-        bytes32 /* userOpHash */,
-        uint256 /* requiredPreFund */
-    ) internal virtual override returns (bytes memory context, uint256 validationData) {
-        bytes calldata paymasterData = userOp.paymasterData();
-        return (
-            paymasterData,
-            (bytes1(paymasterData[0:1]) == bytes1(0x01)).packValidationData(
-                uint48(bytes6(paymasterData[1:7])),
-                uint48(bytes6(paymasterData[7:13]))
-            )
-        );
-    }
 
     function _postOp(
         PostOpMode /* mode */,
@@ -57,11 +42,6 @@ contract PaymasterCoreMock is PaymasterCore {
         uint256 /* actualUserOpFeePerGas */
     ) internal override {
         emit PaymasterDataPostOp(context);
-    }
-
-    // WARNING: No access control
-    function deposit() external payable {
-        _deposit();
     }
 
     // WARNING: No access control
