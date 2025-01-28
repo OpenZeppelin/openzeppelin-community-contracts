@@ -15,7 +15,7 @@ import {AbstractSigner} from "./AbstractSigner.sol";
  * Example of usage:
  *
  * ```solidity
- * contract MyAccountRSA is Account, SignerRSA {
+ * contract MyAccountRSA is Account, SignerRSA, Initializable {
  *     constructor() EIP712("MyAccountRSA", "1") {}
  *
  *     function initializeSigner(bytes memory e, bytes memory n) public initializer {
