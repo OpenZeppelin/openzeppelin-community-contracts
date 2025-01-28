@@ -1,8 +1,10 @@
-const { ethers } = require('hardhat');
+const { ethers, entrypoint } = require('hardhat');
+const { expect } = require('chai');
 const { loadFixture } = require('@nomicfoundation/hardhat-network-helpers');
 const { shouldBehaveLikePaymaster } = require('./Paymaster.behavior');
 const { ERC4337Helper } = require('../../helpers/erc4337');
 const { NonNativeSigner } = require('../../helpers/signers');
+const { encodeMode, encodeBatch, CALL_TYPE_BATCH } = require('@openzeppelin/contracts/test/helpers/erc7579');
 
 async function fixture() {
   // EOAs and environment
@@ -54,5 +56,29 @@ describe('PaymasterCore', function () {
     Object.assign(this, await loadFixture(fixture));
   });
 
-  shouldBehaveLikePaymaster();
+  shouldBehaveLikePaymaster({ postOp: true });
+
+  it('reverts if validatePaymasterUserOp returns context and was not overriden', async function () {
+    const mock = await ethers.deployContract('$PaymasterCoreContextNoPostOpMock');
+    const paymasterDeposit = ethers.parseEther('1');
+    await mock.connect(this.depositor).deposit({ value: paymasterDeposit });
+    const userOp = {
+      paymaster: this.mock,
+    };
+
+    userOp.callData = this.accountMock.interface.encodeFunctionData('execute', [
+      encodeMode({ callType: CALL_TYPE_BATCH }),
+      encodeBatch([
+        {
+          target: this.target.target,
+          data: this.target.interface.encodeFunctionData('mockFunction'),
+        },
+      ]),
+    ]);
+    const operation = await this.accountMock.createUserOp(userOp);
+    const userSignedUserOp = await this.signUserOp(operation);
+    const paymasterSignedUserOp = await this.paymasterSignUserOp(userSignedUserOp, 0, 0);
+
+    await expect(entrypoint.handleOps([paymasterSignedUserOp.packed], this.receiver)).to.be.reverted;
+  });
 });

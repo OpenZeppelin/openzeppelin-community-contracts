@@ -8,9 +8,8 @@ import {IEntryPoint, IPaymaster, PackedUserOperation} from "@openzeppelin/contra
  * @dev A simple ERC4337 paymaster implementation. This base implementation only includes the minimal logic to validate
  * and pay for user operations.
  *
- * Developers must implement the {PaymasterCore-_validatePaymasterUserOp} and {PaymasterCore-_postOp} functions to define
- * the paymaster's validation and payment logic. The `context` parameter is used to pass data between the validation and
- * execution phases.
+ * Developers must implement the {PaymasterCore-_validatePaymasterUserOp} function to define the paymaster's validation
+ * and payment logic. The `context` parameter is used to pass data between the validation and execution phases.
  *
  * The paymaster includes support to call the {IEntryPointStake} interface to manage the paymaster's deposits and stakes
  * through the internal functions {_deposit}, {_withdraw}, {_addStake}, {_unlockStake} and {_withdrawStake}.
@@ -22,22 +21,16 @@ import {IEntryPoint, IPaymaster, PackedUserOperation} from "@openzeppelin/contra
  * for more details on the paymaster's storage access limitations.
  */
 abstract contract PaymasterCore is IPaymaster {
-    /**
-     * @dev Unauthorized call to the account.
-     */
+    /// @dev Unauthorized call to the account.
     error PaymasterUnauthorized(address sender);
 
-    /**
-     * @dev Revert if the caller is not the entry point.
-     */
+    /// @dev Revert if the caller is not the entry point.
     modifier onlyEntryPoint() {
         _checkEntryPoint();
         _;
     }
 
-    /**
-     * @dev Canonical entry point for the account that forwards and validates user operations.
-     */
+    /// @dev Canonical entry point for the account that forwards and validates user operations.
     function entryPoint() public view virtual returns (IEntryPoint) {
         return IEntryPoint(0x0000000071727De22E5E9d8BAf0edAc6f37da032);
     }
@@ -78,17 +71,22 @@ abstract contract PaymasterCore is IPaymaster {
     /**
      * @dev Handles post user operation execution logic. The caller must be the entry point.
      *
-     * It receives the `context` returned by `_validatePaymasterUserOp`.
+     * It receives the `context` returned by `_validatePaymasterUserOp`. Reverts by default
+     * since the function is not called if no context is returned by {validatePaymasterUserOp}.
+     * Overriding without calling `super._postOp(...)` is advised.
      *
-     * NOTE: The actualUserOpFeePerGas is not `tx.gasprice`. A user operation can be bundled with other transactions
+     * NOTE: The `actualUserOpFeePerGas` is not `tx.gasprice`. A user operation can be bundled with other transactions
      * making the gas price of the user operation to differ.
      */
     function _postOp(
-        PostOpMode mode,
-        bytes calldata context,
-        uint256 actualGasCost,
-        uint256 actualUserOpFeePerGas
-    ) internal virtual;
+        PostOpMode /* mode */,
+        bytes calldata /* context */,
+        uint256 /* actualGasCost */,
+        uint256 /* actualUserOpFeePerGas */
+    ) internal virtual {
+        // Must override if `context` is provided
+        revert();
+    }
 
     /// @dev Calls {IEntryPointStake-depositTo}.
     function _deposit(address to, uint256 value) internal virtual {

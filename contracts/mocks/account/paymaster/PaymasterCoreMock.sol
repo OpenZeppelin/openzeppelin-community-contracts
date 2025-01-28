@@ -6,7 +6,7 @@ import {PackedUserOperation} from "@openzeppelin/contracts/interfaces/draft-IERC
 import {ERC4337Utils} from "@openzeppelin/contracts/account/utils/draft-ERC4337Utils.sol";
 import {PaymasterCore} from "../../../account/paymaster/PaymasterCore.sol";
 
-contract PaymasterCoreMock is PaymasterCore {
+contract PaymasterCoreContextNoPostOpMock is PaymasterCore {
     using ERC4337Utils for *;
 
     function _validatePaymasterUserOp(
@@ -16,7 +16,33 @@ contract PaymasterCoreMock is PaymasterCore {
     ) internal virtual override returns (bytes memory context, uint256 validationData) {
         bytes calldata paymasterData = userOp.paymasterData();
         return (
-            context,
+            paymasterData,
+            (bytes1(paymasterData[0:1]) == bytes1(0x01)).packValidationData(
+                uint48(bytes6(paymasterData[1:7])),
+                uint48(bytes6(paymasterData[7:13]))
+            )
+        );
+    }
+
+    // WARNING: No access control
+    function deposit() external payable {
+        _deposit();
+    }
+}
+
+contract PaymasterCoreMock is PaymasterCore {
+    using ERC4337Utils for *;
+
+    event PaymasterDataPostOp(bytes paymasterData);
+
+    function _validatePaymasterUserOp(
+        PackedUserOperation calldata userOp,
+        bytes32 /* userOpHash */,
+        uint256 /* requiredPreFund */
+    ) internal virtual override returns (bytes memory context, uint256 validationData) {
+        bytes calldata paymasterData = userOp.paymasterData();
+        return (
+            paymasterData,
             (bytes1(paymasterData[0:1]) == bytes1(0x01)).packValidationData(
                 uint48(bytes6(paymasterData[1:7])),
                 uint48(bytes6(paymasterData[7:13]))
@@ -30,7 +56,7 @@ contract PaymasterCoreMock is PaymasterCore {
         uint256 /* actualGasCost */,
         uint256 /* actualUserOpFeePerGas */
     ) internal override {
-        // No context for postop
+        emit PaymasterDataPostOp(context);
     }
 
     // WARNING: No access control

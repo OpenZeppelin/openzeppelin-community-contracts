@@ -3,7 +3,7 @@ const { expect } = require('chai');
 const time = require('@openzeppelin/contracts/test/helpers/time');
 const { encodeBatch, encodeMode, CALL_TYPE_BATCH } = require('@openzeppelin/contracts/test/helpers/erc7579');
 
-function shouldBehaveLikePaymaster() {
+function shouldBehaveLikePaymaster({ postOp } = { postOp: false }) {
   describe('entryPoint', function () {
     it('should return the canonical entrypoint', async function () {
       await expect(this.mock.entryPoint()).to.eventually.equal(entrypoint);
@@ -39,6 +39,9 @@ function shouldBehaveLikePaymaster() {
       await expect(entrypoint.balanceOf(this.mock)).to.eventually.be.lessThan(this.deposit);
       expect(handleOpsTx).to.emit(this.target, 'MockFunctionCalledExtra');
       expect(handleOpsTx).to.not.changeEtherBalance(this.accountMock, 1n);
+
+      if (postOp)
+        expect(handleOpsTx).to.emit(this.mock, 'PaymasterDataPostOp').withArgs(paymasterSignedUserOp.paymasterData);
     });
 
     it('reverts if the caller is not the entrypoint', async function () {
@@ -46,6 +49,12 @@ function shouldBehaveLikePaymaster() {
       await expect(this.mock.connect(this.other).validatePaymasterUserOp(operation.packed, ethers.ZeroHash, 100_000n))
         .to.be.revertedWithCustomError(this.mock, 'PaymasterUnauthorized')
         .withArgs(this.other);
+    });
+  });
+
+  describe('postOp', function () {
+    it('reverts if the caller is not the entrypoint', async function () {
+      await expect(this.mock.connect(this.other).postOp(0, '0x', 0, 0)).to.be.reverted;
     });
   });
 
