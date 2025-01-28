@@ -8,6 +8,6 @@ import {SignerP256} from "../../../utils/cryptography/SignerP256.sol";
 
 contract ERC7739P256Mock is ERC7739, SignerP256 {
     constructor(bytes32 qx, bytes32 qy) EIP712("ERC7739P256", "1") {
-        _initializeSigner(qx, qy);
+        _setSigner(qx, qy);
     }
 }
