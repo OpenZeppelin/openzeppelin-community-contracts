@@ -74,7 +74,7 @@ abstract contract PaymasterSigner is PaymasterCore, AbstractSigner, EIP712 {
     ) internal virtual override returns (bytes memory context, uint256 validationData) {
         (uint48 validUntil, uint48 validAfter, bytes calldata signature) = decodePaymasterUserOp(userOp);
         return (
-            context,
+            bytes(""),
             _rawSignatureValidation(_signableUserOpHash(userOp, validAfter, validUntil), signature).packValidationData(
                 validUntil,
                 validAfter
