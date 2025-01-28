@@ -20,7 +20,7 @@ contract PaymasterSignerECDSAMock is PaymasterSigner, SignerECDSA {
     }
 
     // WARNING: No access control
-    function addStake(uint32 unstakeDelaySec) external payable {
-        _addStake(unstakeDelaySec);
+    function addStake(uint256 value, uint32 unstakeDelaySec) external payable {
+        _addStake(value, unstakeDelaySec);
     }
 }

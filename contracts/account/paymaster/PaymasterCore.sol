@@ -108,11 +108,6 @@ abstract contract PaymasterCore is IPaymaster {
         entryPoint().addStake{value: value}(unstakeDelaySec);
     }
 
-    /// @dev Variant of {_addStake} that uses `msg.value` as the stake amount.
-    function _addStake(uint32 unstakeDelaySec) internal virtual {
-        _addStake(msg.value, unstakeDelaySec);
-    }
-
     /// @dev Calls {IEntryPointStake-unlockStake}.
     function _unlockStake() internal virtual {
         entryPoint().unlockStake();
