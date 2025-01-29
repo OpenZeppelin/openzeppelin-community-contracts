@@ -36,12 +36,13 @@ contract PaymasterCoreMock is PaymasterCoreContextNoPostOpMock {
     event PaymasterDataPostOp(bytes paymasterData);
 
     function _postOp(
-        PostOpMode /* mode */,
+        PostOpMode mode,
         bytes calldata context,
-        uint256 /* actualGasCost */,
-        uint256 /* actualUserOpFeePerGas */
+        uint256 actualGasCost,
+        uint256 actualUserOpFeePerGas
     ) internal override {
         emit PaymasterDataPostOp(context);
+        super._postOp(mode, context, actualGasCost, actualUserOpFeePerGas);
     }
 
     // WARNING: No access control

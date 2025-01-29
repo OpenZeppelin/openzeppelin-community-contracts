@@ -73,7 +73,6 @@ abstract contract PaymasterCore is IPaymaster {
      *
      * It receives the `context` returned by `_validatePaymasterUserOp`. Reverts by default
      * since the function is not called if no context is returned by {validatePaymasterUserOp}.
-     * Overriding without calling `super._postOp(...)` is advised.
      *
      * NOTE: The `actualUserOpFeePerGas` is not `tx.gasprice`. A user operation can be bundled with other transactions
      * making the gas price of the user operation to differ.
@@ -83,10 +82,7 @@ abstract contract PaymasterCore is IPaymaster {
         bytes calldata /* context */,
         uint256 /* actualGasCost */,
         uint256 /* actualUserOpFeePerGas */
-    ) internal virtual {
-        // Must override if `context` is provided
-        revert();
-    }
+    ) internal virtual {}
 
     /// @dev Calls {IEntryPointStake-depositTo}.
     function _deposit(address to, uint256 value) internal virtual {

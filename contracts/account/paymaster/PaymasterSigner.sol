@@ -72,7 +72,7 @@ abstract contract PaymasterSigner is PaymasterCore, AbstractSigner, EIP712 {
         bytes32 /* userOpHash */,
         uint256 /* maxCost */
     ) internal virtual override returns (bytes memory context, uint256 validationData) {
-        (uint48 validUntil, uint48 validAfter, bytes calldata signature) = decodePaymasterUserOp(userOp);
+        (uint48 validUntil, uint48 validAfter, bytes calldata signature) = _decodePaymasterUserOp(userOp);
         return (
             bytes(""),
             _rawSignatureValidation(_signableUserOpHash(userOp, validAfter, validUntil), signature).packValidationData(
@@ -83,9 +83,9 @@ abstract contract PaymasterSigner is PaymasterCore, AbstractSigner, EIP712 {
     }
 
     /// @dev Decodes the user operation's data from `paymasterAndData`.
-    function decodePaymasterUserOp(
+    function _decodePaymasterUserOp(
         PackedUserOperation calldata userOp
-    ) public pure virtual returns (uint48 validAfter, uint48 validUntil, bytes calldata signature) {
+    ) internal pure virtual returns (uint48 validAfter, uint48 validUntil, bytes calldata signature) {
         bytes calldata paymasterData = userOp.paymasterData();
         return (uint48(bytes6(paymasterData[0:6])), uint48(bytes6(paymasterData[6:12])), paymasterData[12:]);
     }
