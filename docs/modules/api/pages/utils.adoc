@@ -272,8 +272,7 @@ length.
 
 Error when the contents type is invalid. See {tryValidateContentsType}.
 
-:SignerECDSAUninitializedSigner: pass:normal[xref:#SignerECDSA-SignerECDSAUninitializedSigner-address-[`++SignerECDSAUninitializedSigner++`]]
-:_initializeSigner: pass:normal[xref:#SignerECDSA-_initializeSigner-address-[`++_initializeSigner++`]]
+:_setSigner: pass:normal[xref:#SignerECDSA-_setSigner-address-[`++_setSigner++`]]
 :signer: pass:normal[xref:#SignerECDSA-signer--[`++signer++`]]
 :_rawSignatureValidation: pass:normal[xref:#SignerECDSA-_rawSignatureValidation-bytes32-bytes-[`++_rawSignatureValidation++`]]
 
@@ -289,29 +288,28 @@ import "@openzeppelin/community-contracts/utils/cryptography/SignerECDSA.sol";
 Implementation of {AbstractSigner} using
 https://docs.openzeppelin.com/contracts/api/utils#ECDSA[ECDSA] signatures.
 
-For {Account} usage, an {_initializeSigner} function is provided to set the {signer} address.
+For {Account} usage, an {_setSigner} function is provided to set the {signer} address.
 Doing so it's easier for a factory, whose likely to use initializable clones of this contract.
 
 Example of usage:
 
 ```solidity
-contract MyAccountECDSA is Account, SignerECDSA {
+contract MyAccountECDSA is Account, SignerECDSA, Initializable {
     constructor() EIP712("MyAccountECDSA", "1") {}
 
-    function initializeSigner(address signerAddr) public virtual initializer {
-      // Will revert if the signer is already initialized
-      _initializeSigner(signerAddr);
+    function initialize(address signerAddr) public initializer {
+      _setSigner(signerAddr);
     }
 }
 ```
 
-IMPORTANT: Avoiding to call {_initializeSigner} either during construction (if used standalone)
+IMPORTANT: Avoiding to call {_setSigner} either during construction (if used standalone)
 or during initialization (if used as a clone) may leave the signer either front-runnable or unusable.
 
 [.contract-index]
 .Functions
 --
-* `++_initializeSigner(signerAddr)++`
+* `++_setSigner(signerAddr)++`
 * `++signer()++`
 * `++_rawSignatureValidation(hash, signature)++`
 
@@ -320,21 +318,12 @@ or during initialization (if used as a clone) may leave the signer either front-
 
 --
 
-[.contract-index]
-.Errors
---
-* `++SignerECDSAUninitializedSigner(signer)++`
-
-[.contract-subindex-inherited]
-.AbstractSigner
-
---
-
 [.contract-item]
-[[SignerECDSA-_initializeSigner-address-]]
-==== `[.contract-item-name]#++_initializeSigner++#++(address signerAddr)++` [.item-kind]#internal#
+[[SignerECDSA-_setSigner-address-]]
+==== `[.contract-item-name]#++_setSigner++#++(address signerAddr)++` [.item-kind]#internal#
 
-Initializes the signer with the address of the native signer. This function can be called only once.
+Sets the signer with the address of the native signer. This function should be called during construction
+or through an initializater.
 
 [.contract-item]
 [[SignerECDSA-signer--]]
@@ -353,14 +342,8 @@ cryptographic verification. It is important to review and test thoroughly before
 using one of the signature verification libraries (https://docs.openzeppelin.com/contracts/api/utils#ECDSA[ECDSA],
 https://docs.openzeppelin.com/contracts/api/utils#P256[P256] or https://docs.openzeppelin.com/contracts/api/utils#RSA[RSA]).
 
-[.contract-item]
-[[SignerECDSA-SignerECDSAUninitializedSigner-address-]]
-==== `[.contract-item-name]#++SignerECDSAUninitializedSigner++#++(address signer)++` [.item-kind]#error#
-
-The {signer} is already initialized.
-
-:SignerP256UninitializedSigner: pass:normal[xref:#SignerP256-SignerP256UninitializedSigner-bytes32-bytes32-[`++SignerP256UninitializedSigner++`]]
-:_initializeSigner: pass:normal[xref:#SignerP256-_initializeSigner-bytes32-bytes32-[`++_initializeSigner++`]]
+:SignerP256InvalidPublicKey: pass:normal[xref:#SignerP256-SignerP256InvalidPublicKey-bytes32-bytes32-[`++SignerP256InvalidPublicKey++`]]
+:_setSigner: pass:normal[xref:#SignerP256-_setSigner-bytes32-bytes32-[`++_setSigner++`]]
 :signer: pass:normal[xref:#SignerP256-signer--[`++signer++`]]
 :_rawSignatureValidation: pass:normal[xref:#SignerP256-_rawSignatureValidation-bytes32-bytes-[`++_rawSignatureValidation++`]]
 
@@ -376,29 +359,28 @@ import "@openzeppelin/community-contracts/utils/cryptography/SignerP256.sol";
 Implementation of {AbstractSigner} using
 https://docs.openzeppelin.com/contracts/api/utils#P256[P256] signatures.
 
-For {Account} usage, an {_initializeSigner} function is provided to set the {signer} public key.
+For {Account} usage, an {_setSigner} function is provided to set the {signer} public key.
 Doing so it's easier for a factory, whose likely to use initializable clones of this contract.
 
 Example of usage:
 
 ```solidity
-contract MyAccountP256 is Account, SignerP256 {
+contract MyAccountP256 is Account, SignerP256, Initializable {
     constructor() EIP712("MyAccountP256", "1") {}
 
-    function initializeSigner(bytes32 qx, bytes32 qy) public virtual initializer {
-      // Will revert if the signer is already initialized
-      _initializeSigner(qx, qy);
+    function initializeSigner(bytes32 qx, bytes32 qy) public initializer {
+      _setSigner(qx, qy);
     }
 }
 ```
 
-IMPORTANT: Avoiding to call {_initializeSigner} either during construction (if used standalone)
+IMPORTANT: Avoiding to call {_setSigner} either during construction (if used standalone)
 or during initialization (if used as a clone) may leave the signer either front-runnable or unusable.
 
 [.contract-index]
 .Functions
 --
-* `++_initializeSigner(qx, qy)++`
+* `++_setSigner(qx, qy)++`
 * `++signer()++`
 * `++_rawSignatureValidation(hash, signature)++`
 
@@ -410,7 +392,7 @@ or during initialization (if used as a clone) may leave the signer either front-
 [.contract-index]
 .Errors
 --
-* `++SignerP256UninitializedSigner(qx, qy)++`
+* `++SignerP256InvalidPublicKey(qx, qy)++`
 
 [.contract-subindex-inherited]
 .AbstractSigner
@@ -418,10 +400,11 @@ or during initialization (if used as a clone) may leave the signer either front-
 --
 
 [.contract-item]
-[[SignerP256-_initializeSigner-bytes32-bytes32-]]
-==== `[.contract-item-name]#++_initializeSigner++#++(bytes32 qx, bytes32 qy)++` [.item-kind]#internal#
+[[SignerP256-_setSigner-bytes32-bytes32-]]
+==== `[.contract-item-name]#++_setSigner++#++(bytes32 qx, bytes32 qy)++` [.item-kind]#internal#
 
-Initializes the signer with the P256 public key. This function can be called only once.
+Sets the signer with a P256 public key. This function should be called during construction
+or through an initializater.
 
 [.contract-item]
 [[SignerP256-signer--]]
@@ -441,13 +424,10 @@ using one of the signature verification libraries (https://docs.openzeppelin.com
 https://docs.openzeppelin.com/contracts/api/utils#P256[P256] or https://docs.openzeppelin.com/contracts/api/utils#RSA[RSA]).
 
 [.contract-item]
-[[SignerP256-SignerP256UninitializedSigner-bytes32-bytes32-]]
-==== `[.contract-item-name]#++SignerP256UninitializedSigner++#++(bytes32 qx, bytes32 qy)++` [.item-kind]#error#
+[[SignerP256-SignerP256InvalidPublicKey-bytes32-bytes32-]]
+==== `[.contract-item-name]#++SignerP256InvalidPublicKey++#++(bytes32 qx, bytes32 qy)++` [.item-kind]#error#
 
-The {signer} is already initialized.
-
-:SignerRSAUninitializedSigner: pass:normal[xref:#SignerRSA-SignerRSAUninitializedSigner-bytes-bytes-[`++SignerRSAUninitializedSigner++`]]
-:_initializeSigner: pass:normal[xref:#SignerRSA-_initializeSigner-bytes-bytes-[`++_initializeSigner++`]]
+:_setSigner: pass:normal[xref:#SignerRSA-_setSigner-bytes-bytes-[`++_setSigner++`]]
 :signer: pass:normal[xref:#SignerRSA-signer--[`++signer++`]]
 :_rawSignatureValidation: pass:normal[xref:#SignerRSA-_rawSignatureValidation-bytes32-bytes-[`++_rawSignatureValidation++`]]
 
@@ -463,29 +443,28 @@ import "@openzeppelin/community-contracts/utils/cryptography/SignerRSA.sol";
 Implementation of {AbstractSigner} using
 https://docs.openzeppelin.com/contracts/api/utils#RSA[RSA] signatures.
 
-For {Account} usage, an {_initializeSigner} function is provided to set the {signer} public key.
+For {Account} usage, an {_setSigner} function is provided to set the {signer} public key.
 Doing so it's easier for a factory, whose likely to use initializable clones of this contract.
 
 Example of usage:
 
 ```solidity
-contract MyAccountRSA is Account, SignerRSA {
+contract MyAccountRSA is Account, SignerRSA, Initializable {
     constructor() EIP712("MyAccountRSA", "1") {}
 
-    function initializeSigner(bytes memory e, bytes memory n) external {
-      // Will revert if the signer is already initialized
-      _initializeSigner(e, n);
+    function initializeSigner(bytes memory e, bytes memory n) public initializer {
+      _setSigner(e, n);
     }
 }
 ```
 
-IMPORTANT: Avoiding to call {_initializeSigner} either during construction (if used standalone)
+IMPORTANT: Avoiding to call {_setSigner} either during construction (if used standalone)
 or during initialization (if used as a clone) may leave the signer either front-runnable or unusable.
 
 [.contract-index]
 .Functions
 --
-* `++_initializeSigner(e, n)++`
+* `++_setSigner(e, n)++`
 * `++signer()++`
 * `++_rawSignatureValidation(hash, signature)++`
 
@@ -494,21 +473,12 @@ or during initialization (if used as a clone) may leave the signer either front-
 
 --
 
-[.contract-index]
-.Errors
---
-* `++SignerRSAUninitializedSigner(e, n)++`
-
-[.contract-subindex-inherited]
-.AbstractSigner
-
---
-
 [.contract-item]
-[[SignerRSA-_initializeSigner-bytes-bytes-]]
-==== `[.contract-item-name]#++_initializeSigner++#++(bytes e, bytes n)++` [.item-kind]#internal#
+[[SignerRSA-_setSigner-bytes-bytes-]]
+==== `[.contract-item-name]#++_setSigner++#++(bytes e, bytes n)++` [.item-kind]#internal#
 
-Initializes the signer with the RSA public key. This function can be called only once.
+Sets the signer with a RSA public key. This function should be called during construction
+or through an initializater.
 
 [.contract-item]
 [[SignerRSA-signer--]]
@@ -526,12 +496,6 @@ WARNING: Implementing a signature validation algorithm is a security-sensitive o
 cryptographic verification. It is important to review and test thoroughly before deployment. Consider
 using one of the signature verification libraries (https://docs.openzeppelin.com/contracts/api/utils#ECDSA[ECDSA],
 https://docs.openzeppelin.com/contracts/api/utils#P256[P256] or https://docs.openzeppelin.com/contracts/api/utils#RSA[RSA]).
-
-[.contract-item]
-[[SignerRSA-SignerRSAUninitializedSigner-bytes-bytes-]]
-==== `[.contract-item-name]#++SignerRSAUninitializedSigner++#++(bytes e, bytes n)++` [.item-kind]#error#
-
-The {signer} is already initialized.
 
 == Libraries
 

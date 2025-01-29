@@ -9,38 +9,32 @@ import {AbstractSigner} from "./AbstractSigner.sol";
  * @dev Implementation of {AbstractSigner} using
  * https://docs.openzeppelin.com/contracts/api/utils#ECDSA[ECDSA] signatures.
  *
- * For {Account} usage, an {_initializeSigner} function is provided to set the {signer} address.
+ * For {Account} usage, an {_setSigner} function is provided to set the {signer} address.
  * Doing so it's easier for a factory, whose likely to use initializable clones of this contract.
  *
  * Example of usage:
  *
  * ```solidity
- * contract MyAccountECDSA is Account, SignerECDSA {
+ * contract MyAccountECDSA is Account, SignerECDSA, Initializable {
  *     constructor() EIP712("MyAccountECDSA", "1") {}
  *
- *     function initializeSigner(address signerAddr) public virtual initializer {
- *       // Will revert if the signer is already initialized
- *       _initializeSigner(signerAddr);
+ *     function initialize(address signerAddr) public initializer {
+ *       _setSigner(signerAddr);
  *     }
  * }
  * ```
  *
- * IMPORTANT: Avoiding to call {_initializeSigner} either during construction (if used standalone)
+ * IMPORTANT: Avoiding to call {_setSigner} either during construction (if used standalone)
  * or during initialization (if used as a clone) may leave the signer either front-runnable or unusable.
  */
 abstract contract SignerECDSA is AbstractSigner {
-    /**
-     * @dev The {signer} is already initialized.
-     */
-    error SignerECDSAUninitializedSigner(address signer);
-
     address private _signer;
 
     /**
-     * @dev Initializes the signer with the address of the native signer. This function can be called only once.
+     * @dev Sets the signer with the address of the native signer. This function should be called during construction
+     * or through an initializater.
      */
-    function _initializeSigner(address signerAddr) internal {
-        if (_signer != address(0)) revert SignerECDSAUninitializedSigner(signerAddr);
+    function _setSigner(address signerAddr) internal {
         _signer = signerAddr;
     }
 

@@ -8,7 +8,7 @@ import {SignerECDSA} from "../../utils/cryptography/SignerECDSA.sol";
 
 abstract contract AccountECDSAMock is Account, SignerECDSA, ERC7821 {
     constructor(address signerAddr) {
-        _initializeSigner(signerAddr);
+        _setSigner(signerAddr);
     }
 
     /// @inheritdoc ERC7821

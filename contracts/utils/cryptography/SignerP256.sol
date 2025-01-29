@@ -9,39 +9,36 @@ import {AbstractSigner} from "./AbstractSigner.sol";
  * @dev Implementation of {AbstractSigner} using
  * https://docs.openzeppelin.com/contracts/api/utils#P256[P256] signatures.
  *
- * For {Account} usage, an {_initializeSigner} function is provided to set the {signer} public key.
+ * For {Account} usage, an {_setSigner} function is provided to set the {signer} public key.
  * Doing so it's easier for a factory, whose likely to use initializable clones of this contract.
  *
  * Example of usage:
  *
  * ```solidity
- * contract MyAccountP256 is Account, SignerP256 {
+ * contract MyAccountP256 is Account, SignerP256, Initializable {
  *     constructor() EIP712("MyAccountP256", "1") {}
  *
- *     function initializeSigner(bytes32 qx, bytes32 qy) public virtual initializer {
- *       // Will revert if the signer is already initialized
- *       _initializeSigner(qx, qy);
+ *     function initializeSigner(bytes32 qx, bytes32 qy) public initializer {
+ *       _setSigner(qx, qy);
  *     }
  * }
  * ```
  *
- * IMPORTANT: Avoiding to call {_initializeSigner} either during construction (if used standalone)
+ * IMPORTANT: Avoiding to call {_setSigner} either during construction (if used standalone)
  * or during initialization (if used as a clone) may leave the signer either front-runnable or unusable.
  */
 abstract contract SignerP256 is AbstractSigner {
-    /**
-     * @dev The {signer} is already initialized.
-     */
-    error SignerP256UninitializedSigner(bytes32 qx, bytes32 qy);
-
     bytes32 private _qx;
     bytes32 private _qy;
 
+    error SignerP256InvalidPublicKey(bytes32 qx, bytes32 qy);
+
     /**
-     * @dev Initializes the signer with the P256 public key. This function can be called only once.
+     * @dev Sets the signer with a P256 public key. This function should be called during construction
+     * or through an initializater.
      */
-    function _initializeSigner(bytes32 qx, bytes32 qy) internal {
-        if (_qx != 0 || _qy != 0) revert SignerP256UninitializedSigner(qx, qy);
+    function _setSigner(bytes32 qx, bytes32 qy) internal {
+        if (!P256.isValidPublicKey(qx, qy)) revert SignerP256InvalidPublicKey(qx, qy);
         _qx = qx;
         _qy = qy;
     }
