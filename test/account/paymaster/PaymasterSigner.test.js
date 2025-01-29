@@ -45,6 +45,7 @@ async function fixture() {
         {
           ...userOp.packed,
           paymasterVerificationGasLimit: userOp.paymasterVerificationGasLimit,
+          paymasterPostOpGasLimit: userOp.paymasterPostOpGasLimit,
           validAfter,
           validUntil,
         },

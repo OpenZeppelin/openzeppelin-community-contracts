@@ -22,6 +22,7 @@ module.exports = mapValues(
       preVerificationGas: 'uint256',
       gasFees: 'bytes32',
       paymasterVerificationGasLimit: 'uint256',
+      paymasterPostOpGasLimit: 'uint256',
       validAfter: 'uint48',
       validUntil: 'uint48',
     },
