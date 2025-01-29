@@ -9,6 +9,6 @@ import {SignerECDSA} from "../../../../utils/cryptography/SignerECDSA.sol";
 
 contract MyPaymasterECDSA is PaymasterSigner, SignerECDSA {
     constructor(address paymasterSignerAddr) EIP712("MyAccountECDSA", "1") {
-        _initializeSigner(paymasterSignerAddr);
+        _setSigner(paymasterSignerAddr);
     }
 }

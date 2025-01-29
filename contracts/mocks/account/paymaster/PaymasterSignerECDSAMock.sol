@@ -11,7 +11,7 @@ contract PaymasterSignerECDSAMock is PaymasterSigner, SignerECDSA {
     using ERC4337Utils for *;
 
     constructor(address signerAddr) EIP712("MyPaymasterECDSASigner", "1") {
-        _initializeSigner(signerAddr);
+        _setSigner(signerAddr);
     }
 
     // WARNING: No access control
