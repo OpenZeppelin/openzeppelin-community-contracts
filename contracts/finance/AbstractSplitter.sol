@@ -79,14 +79,12 @@ abstract contract AbstractSplitter {
      * called whenever shares are minted, burned or transferred.
      */
     function _beforeShareTransfer(address from, address to, uint256 amount) internal virtual {
-        uint256 supply = _totalShares();
-        if (amount > 0 && supply > 0) {
-            int256 virtualRelease = _allocation(amount, supply).toInt256();
-            if (from != address(0)) {
-                _subRelease(from, virtualRelease);
-            }
-            if (to != address(0)) {
-                _addRelease(to, virtualRelease);
+        if (amount > 0) {
+            uint256 supply = _totalShares();
+            if (supply > 0) {
+                int256 virtualRelease = _allocation(amount, supply).toInt256();
+                if (from != address(0)) _subRelease(from, virtualRelease);
+                if (to != address(0)) _addRelease(to, virtualRelease);
             }
         }
     }
