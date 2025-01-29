@@ -8,7 +8,7 @@ import {SignerP256} from "../../utils/cryptography/SignerP256.sol";
 
 abstract contract AccountP256Mock is Account, SignerP256, ERC7821 {
     constructor(bytes32 qx, bytes32 qy) {
-        _initializeSigner(qx, qy);
+        _setSigner(qx, qy);
     }
 
     /// @inheritdoc ERC7821

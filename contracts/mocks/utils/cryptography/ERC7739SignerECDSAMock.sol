@@ -9,6 +9,6 @@ import {SignerECDSA} from "../../../utils/cryptography/SignerECDSA.sol";
 
 contract ERC7739ECDSAMock is ERC7739, SignerECDSA {
     constructor(address signerAddr) EIP712("ERC7739ECDSA", "1") {
-        _initializeSigner(signerAddr);
+        _setSigner(signerAddr);
     }
 }

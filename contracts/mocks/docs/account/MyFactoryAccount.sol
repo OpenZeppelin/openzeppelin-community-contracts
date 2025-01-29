@@ -32,7 +32,7 @@ contract MyFactoryAccount {
         address predicted = predictAddress(_signerSalt);
         if (predicted.code.length == 0) {
             _impl.cloneDeterministic(_signerSalt);
-            MyAccountECDSA(payable(predicted)).initializeSigner(signer);
+            MyAccountECDSA(payable(predicted)).initialize(signer);
         }
         return predicted;
     }

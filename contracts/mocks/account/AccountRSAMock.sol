@@ -8,7 +8,7 @@ import {SignerRSA} from "../../utils/cryptography/SignerRSA.sol";
 
 abstract contract AccountRSAMock is Account, SignerRSA, ERC7821 {
     constructor(bytes memory e, bytes memory n) {
-        _initializeSigner(e, n);
+        _setSigner(e, n);
     }
 
     /// @inheritdoc ERC7821

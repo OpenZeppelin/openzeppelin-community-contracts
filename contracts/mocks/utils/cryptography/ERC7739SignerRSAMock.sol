@@ -8,6 +8,6 @@ import {SignerRSA} from "../../../utils/cryptography/SignerRSA.sol";
 
 contract ERC7739RSAMock is ERC7739, SignerRSA {
     constructor(bytes memory e, bytes memory n) EIP712("ERC7739RSA", "1") {
-        _initializeSigner(e, n);
+        _setSigner(e, n);
     }
 }
