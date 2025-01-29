@@ -1,7 +1,8 @@
 # <img src="logo.svg" alt="OpenZeppelin" height="40px">
 
 [![Coverage Status](https://codecov.io/gh/OpenZeppelin/openzeppelin-community-contracts/graph/badge.svg)](https://codecov.io/gh/OpenZeppelin/openzeppelin-community-contracts)
-[![Forum](https://img.shields.io/badge/forum-%F0%9F%92%AC-yellow)](https://docs.openzeppelin.com/contracts)
+[![Docs](https://img.shields.io/badge/docs-%F0%9F%93%9A-blue)](https://docs.openzeppelin.com/community-contracts)
+[![Forum](https://img.shields.io/badge/forum-%F0%9F%92%AC-yellow)](https://forum.openzeppelin.com)
 
 > [!IMPORTANT]
 > This repository includes community-curated and experimental code that has not been audited and may introduce breaking changes at any time. We recommend
