@@ -2,6 +2,7 @@ const { ethers, entrypoint } = require('hardhat');
 const { expect } = require('chai');
 
 const { encodeBatch, encodeMode, CALL_TYPE_BATCH } = require('@openzeppelin/contracts/test/helpers/erc7579');
+const { MAX_UINT48 } = require('@openzeppelin/contracts/test/helpers/constants');
 const time = require('@openzeppelin/contracts/test/helpers/time');
 
 const deposit = ethers.parseEther('1');
@@ -53,6 +54,72 @@ function shouldBehaveLikePaymaster({ postOp } = { postOp: false }) {
       // after
       await expect(entrypoint.getNonce(this.account, 0n)).to.eventually.equal(1n);
       await expect(entrypoint.balanceOf(this.paymaster)).to.eventually.be.lessThan(deposit);
+    });
+
+    it('revert if missing paymaster signature', async function () {
+      const badSignature = await this.other.signMessage('hello world!');
+
+      const signedUserOp = await this.account
+        .createUserOp({
+          ...this.userOp,
+          callData: this.account.interface.encodeFunctionData('execute', [
+            encodeMode({ callType: CALL_TYPE_BATCH }),
+            encodeBatch({
+              target: this.target,
+              data: this.target.interface.encodeFunctionData('mockFunctionExtra'),
+            }),
+          ]),
+        })
+        .then(op =>
+          Object.assign(op, {
+            paymasterData: ethers.solidityPacked(['uint48', 'uint48', 'bytes'], [0n, 0n, badSignature]),
+          }),
+        )
+        .then(op => this.signUserOp(op));
+
+      await expect(entrypoint.handleOps([signedUserOp.packed], this.receiver))
+        .to.be.revertedWithCustomError(entrypoint, 'FailedOp')
+        .withArgs(0n, 'AA34 signature error');
+    });
+
+    it('revert if validation data is not too early', async function () {
+      const signedUserOp = await this.account
+        .createUserOp({
+          ...this.userOp,
+          callData: this.account.interface.encodeFunctionData('execute', [
+            encodeMode({ callType: CALL_TYPE_BATCH }),
+            encodeBatch({
+              target: this.target,
+              data: this.target.interface.encodeFunctionData('mockFunctionExtra'),
+            }),
+          ]),
+        })
+        .then(op => this.paymasterSignUserOp(op, MAX_UINT48, 0n)) // validAfter MAX_UINT48 is in the future
+        .then(op => this.signUserOp(op));
+
+      await expect(entrypoint.handleOps([signedUserOp.packed], this.receiver))
+        .to.be.revertedWithCustomError(entrypoint, 'FailedOp')
+        .withArgs(0n, 'AA32 paymaster expired or not due');
+    });
+
+    it('revert if validation data is not too late', async function () {
+      const signedUserOp = await this.account
+        .createUserOp({
+          ...this.userOp,
+          callData: this.account.interface.encodeFunctionData('execute', [
+            encodeMode({ callType: CALL_TYPE_BATCH }),
+            encodeBatch({
+              target: this.target,
+              data: this.target.interface.encodeFunctionData('mockFunctionExtra'),
+            }),
+          ]),
+        })
+        .then(op => this.paymasterSignUserOp(op, 0n, 1n)) // validUntil 1n is in the past
+        .then(op => this.signUserOp(op));
+
+      await expect(entrypoint.handleOps([signedUserOp.packed], this.receiver))
+        .to.be.revertedWithCustomError(entrypoint, 'FailedOp')
+        .withArgs(0n, 'AA32 paymaster expired or not due');
     });
 
     it('reverts if the caller is not the entrypoint', async function () {
