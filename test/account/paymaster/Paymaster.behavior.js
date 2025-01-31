@@ -74,7 +74,7 @@ function shouldBehaveLikePaymaster({ postOp } = { postOp: false }) {
     it('adds and removes stake effectively', async function () {
       const value = 100;
       const delay = time.duration.hours(10);
-      const stakeTx = await this.mock.connect(this.staker).addStake(value, delay, {
+      const stakeTx = await this.mock.connect(this.staker).addStake(delay, {
         value,
       });
       expect(stakeTx).to.changeEtherBalance(this.staker, value * -1);

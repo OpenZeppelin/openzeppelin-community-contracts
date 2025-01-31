@@ -28,6 +28,11 @@ contract PaymasterCoreContextNoPostOpMock is PaymasterCore {
     function deposit() external payable {
         _deposit(msg.value);
     }
+
+    // WARNING: No access control
+    function addStake(uint32 unstakeDelaySec) external payable {
+        _addStake(msg.value, unstakeDelaySec);
+    }
 }
 
 contract PaymasterCoreMock is PaymasterCoreContextNoPostOpMock {
@@ -41,10 +46,5 @@ contract PaymasterCoreMock is PaymasterCoreContextNoPostOpMock {
     ) internal override {
         emit PaymasterDataPostOp(context);
         super._postOp(mode, context, actualGasCost, actualUserOpFeePerGas);
-    }
-
-    // WARNING: No access control
-    function addStake(uint256 value, uint32 unstakeDelaySec) external payable {
-        _addStake(value, unstakeDelaySec);
     }
 }
