@@ -16,7 +16,7 @@ contract PaymasterSignerECDSAMock is PaymasterSigner, SignerECDSA {
 
     // WARNING: No access control
     function deposit() external payable {
-        _deposit();
+        _deposit(msg.value);
     }
 
     // WARNING: No access control

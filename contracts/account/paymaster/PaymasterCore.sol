@@ -3,6 +3,7 @@
 pragma solidity ^0.8.20;
 
 import {IEntryPoint, IPaymaster, PackedUserOperation} from "@openzeppelin/contracts/interfaces/draft-IERC4337.sol";
+import {ERC4337Utils} from "@openzeppelin/contracts/account/utils/draft-ERC4337Utils.sol";
 
 /**
  * @dev A simple ERC4337 paymaster implementation. This base implementation only includes the minimal logic to validate
@@ -32,7 +33,7 @@ abstract contract PaymasterCore is IPaymaster {
 
     /// @dev Canonical entry point for the account that forwards and validates user operations.
     function entryPoint() public view virtual returns (IEntryPoint) {
-        return IEntryPoint(0x0000000071727De22E5E9d8BAf0edAc6f37da032);
+        return ERC4337Utils.ENTRYPOINT;
     }
 
     /// @inheritdoc IPaymaster
@@ -85,33 +86,28 @@ abstract contract PaymasterCore is IPaymaster {
     ) internal virtual {}
 
     /// @dev Calls {IEntryPointStake-depositTo}.
-    function _deposit(address to, uint256 value) internal virtual {
-        entryPoint().depositTo{value: value}(to);
-    }
-
-    /// @dev Variant of {_deposit} that deposits `msg.value` to the paymaster itself (i.e. `address(this)`).
-    function _deposit() internal virtual {
-        _deposit(address(this), msg.value);
+    function _deposit(uint256 value) internal virtual {
+        ERC4337Utils.depositTo(address(this), value);
     }
 
     /// @dev Calls {IEntryPointStake-withdrawTo}.
     function _withdraw(address payable to, uint256 value) internal virtual {
-        entryPoint().withdrawTo(to, value);
+        ERC4337Utils.withdrawTo(to, value);
     }
 
     /// @dev Calls {IEntryPointStake-addStake}.
     function _addStake(uint256 value, uint32 unstakeDelaySec) internal virtual {
-        entryPoint().addStake{value: value}(unstakeDelaySec);
+        ERC4337Utils.addStake(value, unstakeDelaySec);
     }
 
     /// @dev Calls {IEntryPointStake-unlockStake}.
     function _unlockStake() internal virtual {
-        entryPoint().unlockStake();
+        ERC4337Utils.unlockStake();
     }
 
     /// @dev Calls {IEntryPointStake-withdrawStake}.
     function _withdrawStake(address payable to) internal virtual {
-        entryPoint().withdrawStake(to);
+        ERC4337Utils.withdrawStake(to);
     }
 
     /// @dev Ensures the caller is the {entrypoint}.

@@ -26,7 +26,7 @@ contract PaymasterCoreContextNoPostOpMock is PaymasterCore {
 
     // WARNING: No access control
     function deposit() external payable {
-        _deposit();
+        _deposit(msg.value);
     }
 }
 
