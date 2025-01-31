@@ -35,8 +35,9 @@ function shouldBehaveLikePaymaster({ postOp } = { postOp: false }) {
         .then(op => this.paymasterSignUserOp(op, 0n, 0n))
         .then(op => this.signUserOp(op));
 
-      // paymaster balance before
-      await expect(entrypoint.balanceOf(this.paymaster)).to.eventually.eq(this.deposit);
+      // before
+      await expect(entrypoint.getNonce(this.account, 0n)).to.eventually.equal(0n);
+      await expect(entrypoint.balanceOf(this.paymaster)).to.eventually.equal(this.deposit);
 
       // execute sponsored user operation
       const handleOpsTx = entrypoint.handleOps([signedUserOp.packed], this.receiver);
@@ -45,7 +46,8 @@ function shouldBehaveLikePaymaster({ postOp } = { postOp: false }) {
       if (postOp)
         expect(handleOpsTx).to.emit(this.paymaster, 'PaymasterDataPostOp').withArgs(signedUserOp.paymasterData);
 
-      // paymaster balance after
+      // after
+      await expect(entrypoint.getNonce(this.account, 0n)).to.eventually.equal(1n);
       await expect(entrypoint.balanceOf(this.paymaster)).to.eventually.be.lessThan(this.deposit);
     });
 
@@ -69,13 +71,14 @@ function shouldBehaveLikePaymaster({ postOp } = { postOp: false }) {
   });
 
   describe('deposit lifecycle', function () {
+    const value = 100n;
+
     it('deposits and withdraws effectively', async function () {
-      const value = 100n;
       await expect(this.paymaster.connect(this.other).deposit({ value })).to.changeEtherBalances(
         [this.other, entrypoint],
         [-value, value],
       );
-      await expect(this.paymaster.withdraw(this.receiver, value)).to.changeEtherBalances(
+      await expect(this.paymaster.connect(this.admin).withdraw(this.receiver, value)).to.changeEtherBalances(
         [entrypoint, this.receiver],
         [-value, value],
       );
@@ -87,26 +90,37 @@ function shouldBehaveLikePaymaster({ postOp } = { postOp: false }) {
   });
 
   describe('stake lifecycle', function () {
-    it('adds and removes stake effectively', async function () {
-      const value = 100n;
-      const delay = time.duration.hours(10);
+    const value = 100n;
+    const delay = time.duration.hours(10);
 
+    it('adds and removes stake effectively', async function () {
       // stake
       await expect(this.paymaster.connect(this.other).addStake(delay, { value })).to.changeEtherBalances(
         [this.other, entrypoint],
         [-value, value],
       );
       // unlock
-      await this.paymaster.unlockStake();
+      await this.paymaster.connect(this.admin).unlockStake();
       await time.increaseBy.timestamp(delay);
+
       // withdraw stake
-      await expect(this.paymaster.withdrawStake(this.receiver)).to.changeEtherBalances(
+      await expect(this.paymaster.connect(this.admin).withdrawStake(this.receiver)).to.changeEtherBalances(
         [entrypoint, this.receiver],
         [-value, value],
       );
     });
 
+    it('reverts when an unauthorized caller tries to unlock stake', async function () {
+      await this.paymaster.addStake(delay, { value });
+
+      await expect(this.paymaster.connect(this.other).unlockStake()).to.be.reverted;
+    });
+
     it('reverts when an unauthorized caller tries to withdraw stake', async function () {
+      await this.paymaster.addStake(delay, { value });
+      await this.paymaster.connect(this.admin).unlockStake();
+      await time.increaseBy.timestamp(delay);
+
       await expect(this.paymaster.connect(this.other).withdrawStake(this.receiver)).to.be.reverted;
     });
   });
