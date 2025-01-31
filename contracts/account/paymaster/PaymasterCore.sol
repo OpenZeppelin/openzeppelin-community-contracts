@@ -2,6 +2,7 @@
 
 pragma solidity ^0.8.20;
 
+import {ERC4337Utils} from "@openzeppelin/contracts/account/utils/draft-ERC4337Utils.sol";
 import {IEntryPoint, IPaymaster, PackedUserOperation} from "@openzeppelin/contracts/interfaces/draft-IERC4337.sol";
 import {ERC4337Utils} from "@openzeppelin/contracts/account/utils/draft-ERC4337Utils.sol";
 
@@ -28,6 +29,11 @@ abstract contract PaymasterCore is IPaymaster {
     /// @dev Revert if the caller is not the entry point.
     modifier onlyEntryPoint() {
         _checkEntryPoint();
+        _;
+    }
+
+    modifier onlyWithdrawer() {
+        _authorizeWithdraw();
         _;
     }
 
@@ -86,27 +92,27 @@ abstract contract PaymasterCore is IPaymaster {
     ) internal virtual {}
 
     /// @dev Calls {IEntryPointStake-depositTo}.
-    function _deposit(uint256 value) internal virtual {
-        ERC4337Utils.depositTo(address(this), value);
+    function deposit() public payable virtual {
+        ERC4337Utils.depositTo(address(this), msg.value);
     }
 
     /// @dev Calls {IEntryPointStake-withdrawTo}.
-    function _withdraw(address payable to, uint256 value) internal virtual {
+    function withdraw(address payable to, uint256 value) public virtual onlyWithdrawer {
         ERC4337Utils.withdrawTo(to, value);
     }
 
     /// @dev Calls {IEntryPointStake-addStake}.
-    function _addStake(uint256 value, uint32 unstakeDelaySec) internal virtual {
-        ERC4337Utils.addStake(value, unstakeDelaySec);
+    function addStake(uint32 unstakeDelaySec) public payable virtual {
+        ERC4337Utils.addStake(msg.value, unstakeDelaySec);
     }
 
     /// @dev Calls {IEntryPointStake-unlockStake}.
-    function _unlockStake() internal virtual {
+    function unlockStake() public virtual onlyWithdrawer {
         ERC4337Utils.unlockStake();
     }
 
     /// @dev Calls {IEntryPointStake-withdrawStake}.
-    function _withdrawStake(address payable to) internal virtual {
+    function withdrawStake(address payable to) public virtual onlyWithdrawer {
         ERC4337Utils.withdrawStake(to);
     }
 
@@ -117,4 +123,16 @@ abstract contract PaymasterCore is IPaymaster {
             revert PaymasterUnauthorized(sender);
         }
     }
+
+    /**
+     * @dev Checks whether `msg.sender` withdraw funds stake or deposit from the entrypoint on paymaster's behalf.
+     *
+     * Use of an https://docs.openzeppelin.com/contracts/5.x/access-control[access control]
+     * modifier such as {Ownable-onlyOwner} is recommended.
+     *
+     * ```solidity
+     * function _authorizeUpgrade() internal onlyOwner {}
+     * ```
+     */
+    function _authorizeWithdraw() internal virtual;
 }

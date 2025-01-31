@@ -23,7 +23,7 @@ async function fixture() {
   const signer = ethers.Wallet.createRandom();
 
   // ERC-4337 paymaster
-  const mock = await ethers.deployContract('$PaymasterSignerECDSAMock', [signer]);
+  const mock = await ethers.deployContract('$PaymasterSignerECDSAMock', [signer, depositor]);
 
   const domain = {
     name: 'MyPaymasterECDSASigner',

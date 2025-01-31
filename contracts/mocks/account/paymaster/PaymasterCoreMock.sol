@@ -2,12 +2,15 @@
 
 pragma solidity ^0.8.20;
 
+import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {PackedUserOperation} from "@openzeppelin/contracts/interfaces/draft-IERC4337.sol";
 import {ERC4337Utils} from "@openzeppelin/contracts/account/utils/draft-ERC4337Utils.sol";
 import {PaymasterCore} from "../../../account/paymaster/PaymasterCore.sol";
 
-contract PaymasterCoreContextNoPostOpMock is PaymasterCore {
+contract PaymasterCoreContextNoPostOpMock is PaymasterCore, Ownable {
     using ERC4337Utils for *;
+
+    constructor(address withdrawer) Ownable(withdrawer) {}
 
     function _validatePaymasterUserOp(
         PackedUserOperation calldata userOp,
@@ -24,18 +27,14 @@ contract PaymasterCoreContextNoPostOpMock is PaymasterCore {
         );
     }
 
-    // WARNING: No access control
-    function deposit() external payable {
-        _deposit(msg.value);
-    }
-
-    // WARNING: No access control
-    function addStake(uint32 unstakeDelaySec) external payable {
-        _addStake(msg.value, unstakeDelaySec);
-    }
+    function _authorizeWithdraw() internal override onlyOwner {}
 }
 
 contract PaymasterCoreMock is PaymasterCoreContextNoPostOpMock {
+    using ERC4337Utils for *;
+
+    constructor(address withdrawer) PaymasterCoreContextNoPostOpMock(withdrawer) {}
+
     event PaymasterDataPostOp(bytes paymasterData);
 
     function _postOp(

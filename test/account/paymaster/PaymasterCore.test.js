@@ -24,7 +24,7 @@ async function fixture() {
   const signer = new NonNativeSigner({ sign: () => ({ serialized: '0x01' }) });
 
   // ERC-4337 paymaster
-  const mock = await ethers.deployContract('$PaymasterCoreMock');
+  const mock = await ethers.deployContract('$PaymasterCoreMock', [depositor]);
 
   const signUserOp = async userOp => {
     userOp.signature = await accountSigner.signMessage(userOp.hash());
@@ -58,8 +58,8 @@ describe('PaymasterCore', function () {
 
   shouldBehaveLikePaymaster({ postOp: true });
 
-  it('still execute the user op if validatePaymasterUserOp returns context and _postOp was not overriden', async function () {
-    const paymaster = await ethers.deployContract('$PaymasterCoreContextNoPostOpMock');
+  it('still executes the user op if validatePaymasterUserOp returns context and _postOp was not overriden', async function () {
+    const paymaster = await ethers.deployContract('$PaymasterCoreContextNoPostOpMock', [this.depositor]);
     const paymasterDeposit = ethers.parseEther('1');
     await paymaster.connect(this.depositor).deposit({ value: paymasterDeposit });
     const userOp = {
