@@ -17,7 +17,7 @@ contract PaymasterCoreContextNoPostOpMock is PaymasterCore {
         bytes calldata paymasterData = userOp.paymasterData();
         return (
             paymasterData,
-            (bytes1(paymasterData[0:1]) == bytes1(0x01)).packValidationData(
+            (bytes1(paymasterData) == bytes1(0x01)).packValidationData(
                 uint48(bytes6(paymasterData[1:7])),
                 uint48(bytes6(paymasterData[7:13]))
             )
@@ -31,8 +31,6 @@ contract PaymasterCoreContextNoPostOpMock is PaymasterCore {
 }
 
 contract PaymasterCoreMock is PaymasterCoreContextNoPostOpMock {
-    using ERC4337Utils for *;
-
     event PaymasterDataPostOp(bytes paymasterData);
 
     function _postOp(

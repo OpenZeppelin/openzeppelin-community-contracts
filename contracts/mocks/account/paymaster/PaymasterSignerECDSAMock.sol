@@ -8,8 +8,6 @@ import {PaymasterSigner, EIP712} from "../../../account/paymaster/PaymasterSigne
 import {SignerECDSA} from "../../../utils/cryptography/SignerECDSA.sol";
 
 contract PaymasterSignerECDSAMock is PaymasterSigner, SignerECDSA {
-    using ERC4337Utils for *;
-
     constructor(address signerAddr) EIP712("MyPaymasterECDSASigner", "1") {
         _setSigner(signerAddr);
     }
