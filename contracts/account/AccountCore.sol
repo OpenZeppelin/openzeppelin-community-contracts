@@ -47,7 +47,7 @@ abstract contract AccountCore is AbstractSigner, IAccount {
      * @dev Canonical entry point for the account that forwards and validates user operations.
      */
     function entryPoint() public view virtual returns (IEntryPoint) {
-        return IEntryPoint(0x0000000071727De22E5E9d8BAf0edAc6f37da032);
+        return ERC4337Utils.ENTRYPOINT;
     }
 
     /**

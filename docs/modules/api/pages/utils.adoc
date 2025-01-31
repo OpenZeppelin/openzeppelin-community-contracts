@@ -368,7 +368,7 @@ Example of usage:
 contract MyAccountP256 is Account, SignerP256, Initializable {
     constructor() EIP712("MyAccountP256", "1") {}
 
-    function initializeSigner(bytes32 qx, bytes32 qy) public initializer {
+    function initialize(bytes32 qx, bytes32 qy) public initializer {
       _setSigner(qx, qy);
     }
 }
@@ -452,7 +452,7 @@ Example of usage:
 contract MyAccountRSA is Account, SignerRSA, Initializable {
     constructor() EIP712("MyAccountRSA", "1") {}
 
-    function initializeSigner(bytes memory e, bytes memory n) public initializer {
+    function initialize(bytes memory e, bytes memory n) public initializer {
       _setSigner(e, n);
     }
 }

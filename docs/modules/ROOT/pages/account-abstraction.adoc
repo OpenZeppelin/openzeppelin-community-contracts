@@ -70,6 +70,30 @@ include::api:example$account/MyFactoryAccount.sol[]
 
 You've setup your own account and its corresponding factory. Both are ready to be used with ERC-4337 infrastructure. Customizing the factory to other validation mechanisms must be straightforward.
 
+== Paymaster
+
+In case you want to sponsor user operation for your users, the ERC-4337 defines a special type of contract called Paymaster, whose purpose is to pay the gas fees consumed by the user operation. Developers can bootstrap their own paymaster with xref:api:utils.adoc#PaymasterCore[`PaymasterCore`] and implement a signature-based paymaster authorization with xref:api:utils.adoc#PaymasterSigner[`PaymasterSigner`] that they can combine with any xref:api:utils.adoc#AbstractSigner[`AbstractSigner`] quite easily.
+
+To enable operation sponsorship, users sign their user operation including a special field called `paymasterAndData` resulting from the concatenation of the paymaster they're using and the calldata that's going to be passed into xref:api:utils.adoc#PaymasterCore-validatePaymasterUserOp[`validatePaymasterUserOp`]. This function will use the passed bytes buffer to determine whether it will pay for the user operation or not.
+
+=== Setting up a paymaster
+
+To start your paymaster from scratch, the library provides xref:api:utils.adoc#PaymasterCore[`PaymasterCore`] with the basic logic you can extend to implement your own validation logic.
+
+[source,solidity]
+----
+include::api:example$account/paymaster/MyPaymaster.sol[]
+----
+
+TIP: Use https://docs.openzeppelin.com/contracts/5.x/api/account#ERC4337Utils[`ERC4337Utils`] to access paymaster-related fields of the userOp (e.g. `paymasterData`, `paymasterVerificationGasLimit`)
+
+The library also includes the xref:api:utils.adoc#PaymasterSigner[`PaymasterSigner`] that allows developers to setup a signature-based authorization paymaster. This is the easiest setup to start sponsoring user operations with an ECDSA signature (i.e. a regular ethereum signature).
+
+[source,solidity]
+----
+include::api:example$account/paymaster/MyPaymasterECDSA.sol[]
+----
+
 == ERC-4337 Overview
 
 The ERC-4337 is a detailed specification of how to implement the necessary logic to handle operations without making changes to the protocol level (i.e. the rules of the blockchain itself). This specification defines the following components:
@@ -135,6 +159,8 @@ To build your own factory, see xref:account-abstraction.adoc#account_factory[Acc
 === Paymaster Contract
 
 A Paymaster is an optional entity that can sponsor gas fees for Accounts, or allow them to pay for those fees in ERC-20 instead of native currency. This abstracts gas away of the user experience in the same way that computational costs of cloud servers are abstracted away from end-users.
+
+To build your own paymaster, see xref:account-abstraction.adoc#paymaster[Paymaster]
 
 == Further notes
 

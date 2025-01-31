@@ -18,7 +18,7 @@ import {AbstractSigner} from "./AbstractSigner.sol";
  * contract MyAccountP256 is Account, SignerP256, Initializable {
  *     constructor() EIP712("MyAccountP256", "1") {}
  *
- *     function initializeSigner(bytes32 qx, bytes32 qy) public initializer {
+ *     function initialize(bytes32 qx, bytes32 qy) public initializer {
  *       _setSigner(qx, qy);
  *     }
  * }
