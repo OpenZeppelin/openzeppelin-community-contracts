@@ -18,9 +18,9 @@ function shouldBehaveLikePaymaster({ postOp } = { postOp: false }) {
   describe('validatePaymasterUserOp', function () {
     beforeEach(async function () {
       await this.paymaster.deposit({ value: deposit });
-      this.userOp ??= {
-        paymaster: this.paymaster,
-      };
+
+      this.userOp ??= {};
+      this.userOp.paymaster = this.paymaster;
     });
 
     it('sponsors a user operation', async function () {
