@@ -4,6 +4,10 @@ const { expect } = require('chai');
 const { encodeBatch, encodeMode, CALL_TYPE_BATCH } = require('@openzeppelin/contracts/test/helpers/erc7579');
 const time = require('@openzeppelin/contracts/test/helpers/time');
 
+const deposit = ethers.parseEther('1');
+const value = 42n;
+const delay = time.duration.hours(10);
+
 function shouldBehaveLikePaymaster({ postOp } = { postOp: false }) {
   describe('entryPoint', function () {
     it('should return the canonical entrypoint', async function () {
@@ -13,8 +17,7 @@ function shouldBehaveLikePaymaster({ postOp } = { postOp: false }) {
 
   describe('validatePaymasterUserOp', function () {
     beforeEach(async function () {
-      this.deposit = ethers.parseEther('1');
-      await this.paymaster.deposit({ value: this.deposit });
+      await this.paymaster.deposit({ value: deposit });
       this.userOp ??= {
         paymaster: this.paymaster,
       };
@@ -37,7 +40,7 @@ function shouldBehaveLikePaymaster({ postOp } = { postOp: false }) {
 
       // before
       await expect(entrypoint.getNonce(this.account, 0n)).to.eventually.equal(0n);
-      await expect(entrypoint.balanceOf(this.paymaster)).to.eventually.equal(this.deposit);
+      await expect(entrypoint.balanceOf(this.paymaster)).to.eventually.equal(deposit);
 
       // execute sponsored user operation
       const handleOpsTx = entrypoint.handleOps([signedUserOp.packed], this.receiver);
@@ -49,7 +52,7 @@ function shouldBehaveLikePaymaster({ postOp } = { postOp: false }) {
 
       // after
       await expect(entrypoint.getNonce(this.account, 0n)).to.eventually.equal(1n);
-      await expect(entrypoint.balanceOf(this.paymaster)).to.eventually.be.lessThan(this.deposit);
+      await expect(entrypoint.balanceOf(this.paymaster)).to.eventually.be.lessThan(deposit);
     });
 
     it('reverts if the caller is not the entrypoint', async function () {
@@ -72,8 +75,6 @@ function shouldBehaveLikePaymaster({ postOp } = { postOp: false }) {
   });
 
   describe('deposit lifecycle', function () {
-    const value = 100n;
-
     it('deposits and withdraws effectively', async function () {
       await expect(this.paymaster.connect(this.other).deposit({ value })).to.changeEtherBalances(
         [this.other, entrypoint],
@@ -91,9 +92,6 @@ function shouldBehaveLikePaymaster({ postOp } = { postOp: false }) {
   });
 
   describe('stake lifecycle', function () {
-    const value = 100n;
-    const delay = time.duration.hours(10);
-
     it('adds and removes stake effectively', async function () {
       // stake
       await expect(this.paymaster.connect(this.other).addStake(delay, { value })).to.changeEtherBalances(
