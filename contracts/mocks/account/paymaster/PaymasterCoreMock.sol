@@ -7,10 +7,8 @@ import {PackedUserOperation} from "@openzeppelin/contracts/interfaces/draft-IERC
 import {ERC4337Utils} from "@openzeppelin/contracts/account/utils/draft-ERC4337Utils.sol";
 import {PaymasterCore} from "../../../account/paymaster/PaymasterCore.sol";
 
-contract PaymasterCoreContextNoPostOpMock is PaymasterCore, Ownable {
+abstract contract PaymasterCoreContextNoPostOpMock is PaymasterCore, Ownable {
     using ERC4337Utils for *;
-
-    constructor(address withdrawer) Ownable(withdrawer) {}
 
     function _validatePaymasterUserOp(
         PackedUserOperation calldata userOp,
@@ -30,11 +28,7 @@ contract PaymasterCoreContextNoPostOpMock is PaymasterCore, Ownable {
     function _authorizeWithdraw() internal override onlyOwner {}
 }
 
-contract PaymasterCoreMock is PaymasterCoreContextNoPostOpMock {
-    using ERC4337Utils for *;
-
-    constructor(address withdrawer) PaymasterCoreContextNoPostOpMock(withdrawer) {}
-
+abstract contract PaymasterCoreMock is PaymasterCoreContextNoPostOpMock {
     event PaymasterDataPostOp(bytes paymasterData);
 
     function _postOp(
