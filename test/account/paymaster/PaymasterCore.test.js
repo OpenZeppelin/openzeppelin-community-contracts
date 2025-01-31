@@ -6,7 +6,10 @@ const { ERC4337Helper } = require('../../helpers/erc4337');
 
 const { shouldBehaveLikePaymaster } = require('./Paymaster.behavior');
 
-for (const name of ['PaymasterCore', 'PaymasterCoreContextNoPostOp']) {
+for (const [name, opts] of Object.entries({
+  PaymasterCore: { postOp: true },
+  PaymasterCoreContextNoPostOp: { postOp: false },
+})) {
   async function fixture() {
     // EOAs and environment
     const [admin, receiver, other] = await ethers.getSigners();
@@ -82,6 +85,6 @@ for (const name of ['PaymasterCore', 'PaymasterCoreContextNoPostOp']) {
       Object.assign(this, await loadFixture(fixture));
     });
 
-    shouldBehaveLikePaymaster({ postOp: true });
+    shouldBehaveLikePaymaster(opts);
   });
 }

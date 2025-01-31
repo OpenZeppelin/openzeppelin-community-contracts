@@ -43,8 +43,9 @@ function shouldBehaveLikePaymaster({ postOp } = { postOp: false }) {
       const handleOpsTx = entrypoint.handleOps([signedUserOp.packed], this.receiver);
       await expect(handleOpsTx).to.changeEtherBalance(this.account, 0n); // no balance change
       await expect(handleOpsTx).to.emit(this.target, 'MockFunctionCalledExtra').withArgs(this.account, 0n);
+
       if (postOp)
-        expect(handleOpsTx).to.emit(this.paymaster, 'PaymasterDataPostOp').withArgs(signedUserOp.paymasterData);
+        await expect(handleOpsTx).to.emit(this.paymaster, 'PaymasterDataPostOp').withArgs(signedUserOp.paymasterData);
 
       // after
       await expect(entrypoint.getNonce(this.account, 0n)).to.eventually.equal(1n);
