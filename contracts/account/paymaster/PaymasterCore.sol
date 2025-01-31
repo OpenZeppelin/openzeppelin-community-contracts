@@ -45,6 +45,16 @@ abstract contract PaymasterCore is IPaymaster {
         return _validatePaymasterUserOp(userOp, userOpHash, maxCost);
     }
 
+    /// @inheritdoc IPaymaster
+    function postOp(
+        PostOpMode mode,
+        bytes calldata context,
+        uint256 actualGasCost,
+        uint256 actualUserOpFeePerGas
+    ) public virtual onlyEntryPoint {
+        _postOp(mode, context, actualGasCost, actualUserOpFeePerGas);
+    }
+
     /**
      * @dev Internal validation of whether the paymaster is willing to pay for the user operation.
      * Returns the context to be passed to postOp and the validation data.
@@ -58,16 +68,6 @@ abstract contract PaymasterCore is IPaymaster {
         bytes32 userOpHash,
         uint256 requiredPreFund
     ) internal virtual returns (bytes memory context, uint256 validationData);
-
-    /// @inheritdoc IPaymaster
-    function postOp(
-        PostOpMode mode,
-        bytes calldata context,
-        uint256 actualGasCost,
-        uint256 actualUserOpFeePerGas
-    ) public virtual onlyEntryPoint {
-        _postOp(mode, context, actualGasCost, actualUserOpFeePerGas);
-    }
 
     /**
      * @dev Handles post user operation execution logic. The caller must be the entry point.
