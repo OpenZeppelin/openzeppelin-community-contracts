@@ -18,7 +18,7 @@ import {AbstractSigner} from "../../utils/cryptography/AbstractSigner.sol";
  * contract MyPaymasterECDSASigner is PaymasterSigner, SignerECDSA {
  *     constructor() EIP712("MyPaymasterECDSASigner", "1") {
  *       // Will revert if the signer is already initialized
- *       _initializeSigner(signerAddr);
+ *       _setSigner(signerAddr);
  *     }
  * }
  * ```

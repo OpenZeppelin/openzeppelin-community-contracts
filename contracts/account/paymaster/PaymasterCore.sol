@@ -22,7 +22,7 @@ import {ERC4337Utils} from "@openzeppelin/contracts/account/utils/draft-ERC4337U
  * for more details on the paymaster's storage access limitations.
  */
 abstract contract PaymasterCore is IPaymaster {
-    /// @dev Unauthorized call to the account.
+    /// @dev Unauthorized call to the paymaster.
     error PaymasterUnauthorized(address sender);
 
     /// @dev Revert if the caller is not the entry point.
