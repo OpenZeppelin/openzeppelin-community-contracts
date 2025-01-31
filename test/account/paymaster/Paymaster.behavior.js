@@ -147,6 +147,7 @@ function shouldBehaveLikePaymaster({ postOp } = { postOp: false }) {
         [this.other, entrypoint],
         [-value, value],
       );
+
       await expect(this.paymaster.connect(this.admin).withdraw(this.receiver, value)).to.changeEtherBalances(
         [entrypoint, this.receiver],
         [-value, value],
@@ -154,7 +155,9 @@ function shouldBehaveLikePaymaster({ postOp } = { postOp: false }) {
     });
 
     it('reverts when an unauthorized caller tries to withdraw', async function () {
-      await expect(this.paymaster.connect(this.other).withdraw(this.receiver, 100n)).to.be.reverted;
+      await this.paymaster.deposit({ value });
+
+      await expect(this.paymaster.connect(this.other).withdraw(this.receiver, value)).to.be.reverted;
     });
   });
 
