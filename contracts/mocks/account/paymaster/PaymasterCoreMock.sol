@@ -5,24 +5,21 @@ pragma solidity ^0.8.20;
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {PackedUserOperation} from "@openzeppelin/contracts/interfaces/draft-IERC4337.sol";
 import {ERC4337Utils} from "@openzeppelin/contracts/account/utils/draft-ERC4337Utils.sol";
-import {PaymasterCore} from "../../../account/paymaster/PaymasterCore.sol";
+import {PaymasterSigner} from "../../../account/paymaster/PaymasterSigner.sol";
+import {SignerECDSA} from "../../../utils/cryptography/SignerECDSA.sol";
 
-abstract contract PaymasterCoreContextNoPostOpMock is PaymasterCore, Ownable {
+abstract contract PaymasterCoreContextNoPostOpMock is PaymasterSigner, SignerECDSA, Ownable {
     using ERC4337Utils for *;
 
     function _validatePaymasterUserOp(
         PackedUserOperation calldata userOp,
-        bytes32 /* userOpHash */,
-        uint256 /* requiredPreFund */
-    ) internal pure override returns (bytes memory context, uint256 validationData) {
-        bytes calldata paymasterData = userOp.paymasterData();
-        return (
-            paymasterData,
-            (bytes1(paymasterData) == bytes1(0x01)).packValidationData(
-                uint48(bytes6(paymasterData[1:7])),
-                uint48(bytes6(paymasterData[7:13]))
-            )
-        );
+        bytes32 userOpHash,
+        uint256 requiredPreFund
+    ) internal override returns (bytes memory context, uint256 validationData) {
+        // use the userOp's paymasterData as context;
+        context = userOp.paymasterData();
+        // super call (PaymasterSigner + SignerECDSA) for the validation data
+        (, validationData) = super._validatePaymasterUserOp(userOp, userOpHash, requiredPreFund);
     }
 
     function _authorizeWithdraw() internal override onlyOwner {}

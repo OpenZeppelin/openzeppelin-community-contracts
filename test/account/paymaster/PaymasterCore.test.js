@@ -1,86 +1,87 @@
-const { ethers, entrypoint } = require('hardhat');
-const { expect } = require('chai');
+const { ethers } = require('hardhat');
 const { loadFixture } = require('@nomicfoundation/hardhat-network-helpers');
-const { shouldBehaveLikePaymaster } = require('./Paymaster.behavior');
+
+const { PackedUserOperation, UserOperationRequest } = require('../../helpers/eip712-types');
 const { ERC4337Helper } = require('../../helpers/erc4337');
-const { NonNativeSigner } = require('../../helpers/signers');
-const { encodeMode, encodeBatch, CALL_TYPE_BATCH } = require('@openzeppelin/contracts/test/helpers/erc7579');
 
-async function fixture() {
-  // EOAs and environment
-  const [depositor, staker, receiver, other] = await ethers.getSigners();
-  const target = await ethers.deployContract('CallReceiverMockExtended');
+const { shouldBehaveLikePaymaster } = require('./Paymaster.behavior');
 
-  // ERC-4337 signer
-  const accountSigner = new NonNativeSigner({ sign: () => ({ serialized: '0x01' }) });
+for (const name of ['PaymasterCore', 'PaymasterCoreContextNoPostOp']) {
+  async function fixture() {
+    // EOAs and environment
+    const [admin, receiver, other] = await ethers.getSigners();
+    const target = await ethers.deployContract('CallReceiverMockExtended');
 
-  // ERC-4337 account
-  const helper = new ERC4337Helper();
-  const env = await helper.wait();
-  const accountMock = await helper.newAccount('$AccountMock', ['Account', '1']);
-  await accountMock.deploy();
+    // signers
+    const accountSigner = ethers.Wallet.createRandom();
+    const paymasterSigner = ethers.Wallet.createRandom();
 
-  // ERC-4337 paymaster signer
-  const signer = new NonNativeSigner({ sign: () => ({ serialized: '0x01' }) });
+    // ERC-4337 account
+    const helper = new ERC4337Helper();
+    const env = await helper.wait();
+    const account = await helper.newAccount('$AccountECDSAMock', ['AccountECDSA', '1', accountSigner]);
+    await account.deploy();
 
-  // ERC-4337 paymaster
-  const mock = await ethers.deployContract('$PaymasterCoreMock', [depositor]);
+    // ERC-4337 paymaster
+    const paymaster = await ethers.deployContract(`$${name}Mock`, ['MyPaymasterECDSASigner', '1', admin]);
+    await paymaster.$_setSigner(paymasterSigner);
 
-  const signUserOp = async userOp => {
-    userOp.signature = await accountSigner.signMessage(userOp.hash());
-    return userOp;
-  };
+    const signUserOp = userOp =>
+      accountSigner
+        .signTypedData(
+          {
+            name: 'AccountECDSA',
+            version: '1',
+            chainId: env.chainId,
+            verifyingContract: account.target,
+          },
+          { PackedUserOperation },
+          userOp.packed,
+        )
+        .then(signature => Object.assign(userOp, { signature }));
 
-  const paymasterSignUserOp = async (userOp, validAfter, validUntil) => {
-    const signature = await signer.signMessage(userOp.hash());
-    userOp.paymasterData = ethers.solidityPacked(['bool', 'uint48', 'uint48'], [signature, validAfter, validUntil]);
-    return userOp;
-  };
+    const paymasterSignUserOp = (userOp, validAfter, validUntil) =>
+      paymasterSigner
+        .signTypedData(
+          {
+            name: 'MyPaymasterECDSASigner',
+            version: '1',
+            chainId: env.chainId,
+            verifyingContract: paymaster.target,
+          },
+          { UserOperationRequest },
+          {
+            ...userOp.packed,
+            paymasterVerificationGasLimit: userOp.paymasterVerificationGasLimit,
+            paymasterPostOpGasLimit: userOp.paymasterPostOpGasLimit,
+            validAfter,
+            validUntil,
+          },
+        )
+        .then(signature =>
+          Object.assign(userOp, {
+            paymasterData: ethers.solidityPacked(['uint48', 'uint48', 'bytes'], [validAfter, validUntil, signature]),
+          }),
+        );
 
-  return {
-    depositor,
-    staker,
-    receiver,
-    other,
-    target,
-    accountMock,
-    mock,
-    signUserOp,
-    paymasterSignUserOp,
-    ...env,
-  };
-}
-
-describe('PaymasterCore', function () {
-  beforeEach(async function () {
-    Object.assign(this, await loadFixture(fixture));
-  });
-
-  shouldBehaveLikePaymaster({ postOp: true });
-
-  it('still executes the user op if validatePaymasterUserOp returns context and _postOp was not overriden', async function () {
-    const paymaster = await ethers.deployContract('$PaymasterCoreContextNoPostOpMock', [this.depositor]);
-    const paymasterDeposit = ethers.parseEther('1');
-    await paymaster.connect(this.depositor).deposit({ value: paymasterDeposit });
-    const userOp = {
+    return {
+      admin,
+      receiver,
+      other,
+      target,
+      account,
       paymaster,
+      signUserOp,
+      paymasterSignUserOp,
+      ...env,
     };
+  }
 
-    userOp.callData = this.accountMock.interface.encodeFunctionData('execute', [
-      encodeMode({ callType: CALL_TYPE_BATCH }),
-      encodeBatch([
-        {
-          target: this.target.target,
-          data: this.target.interface.encodeFunctionData('mockFunction'),
-        },
-      ]),
-    ]);
-    const operation = await this.accountMock.createUserOp(userOp);
-    const userSignedUserOp = await this.signUserOp(operation);
-    const paymasterSignedUserOp = await this.paymasterSignUserOp(userSignedUserOp, 0, 0);
+  describe(name, function () {
+    beforeEach(async function () {
+      Object.assign(this, await loadFixture(fixture));
+    });
 
-    await expect(this.accountMock.getNonce()).to.eventually.equal(0);
-    await entrypoint.handleOps([paymasterSignedUserOp.packed], this.receiver);
-    await expect(this.accountMock.getNonce()).to.eventually.equal(1); // Does execute
+    shouldBehaveLikePaymaster({ postOp: true });
   });
-});
+}

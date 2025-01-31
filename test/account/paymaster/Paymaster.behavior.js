@@ -1,92 +1,113 @@
 const { ethers, entrypoint } = require('hardhat');
 const { expect } = require('chai');
-const time = require('@openzeppelin/contracts/test/helpers/time');
+
 const { encodeBatch, encodeMode, CALL_TYPE_BATCH } = require('@openzeppelin/contracts/test/helpers/erc7579');
+const time = require('@openzeppelin/contracts/test/helpers/time');
 
 function shouldBehaveLikePaymaster({ postOp } = { postOp: false }) {
   describe('entryPoint', function () {
     it('should return the canonical entrypoint', async function () {
-      await expect(this.mock.entryPoint()).to.eventually.equal(entrypoint);
+      await expect(this.paymaster.entryPoint()).to.eventually.equal(entrypoint);
     });
   });
 
   describe('validatePaymasterUserOp', function () {
     beforeEach(async function () {
       this.deposit = ethers.parseEther('1');
-      await this.mock.connect(this.depositor).deposit({ value: this.deposit });
+      await this.paymaster.deposit({ value: this.deposit });
       this.userOp ??= {
-        paymaster: this.mock,
+        paymaster: this.paymaster,
       };
     });
 
     it('sponsors a user operation', async function () {
-      const userOp = { ...this.userOp };
-      userOp.callData = this.accountMock.interface.encodeFunctionData('execute', [
-        encodeMode({ callType: CALL_TYPE_BATCH }),
-        encodeBatch([
-          {
-            target: this.target.target,
-            data: this.target.interface.encodeFunctionData('mockFunction'),
-          },
-        ]),
-      ]);
-      const operation = await this.accountMock.createUserOp(this.userOp);
-      const userSignedUserOp = await this.signUserOp(operation);
-      const paymasterSignedUserOp = await this.paymasterSignUserOp(userSignedUserOp, 0, 0);
+      const signedUserOp = await this.account
+        .createUserOp({
+          ...this.userOp,
+          callData: this.account.interface.encodeFunctionData('execute', [
+            encodeMode({ callType: CALL_TYPE_BATCH }),
+            encodeBatch({
+              target: this.target,
+              data: this.target.interface.encodeFunctionData('mockFunctionExtra'),
+            }),
+          ]),
+        })
+        .then(op => this.paymasterSignUserOp(op, 0n, 0n))
+        .then(op => this.signUserOp(op));
 
-      await expect(entrypoint.balanceOf(this.mock)).to.eventually.eq(this.deposit);
-      const handleOpsTx = await entrypoint.handleOps([paymasterSignedUserOp.packed], this.receiver);
-      await expect(entrypoint.balanceOf(this.mock)).to.eventually.be.lessThan(this.deposit);
-      expect(handleOpsTx).to.emit(this.target, 'MockFunctionCalledExtra');
-      expect(handleOpsTx).to.not.changeEtherBalance(this.accountMock);
+      // paymaster balance before
+      await expect(entrypoint.balanceOf(this.paymaster)).to.eventually.eq(this.deposit);
 
+      // execute sponsored user operation
+      const handleOpsTx = entrypoint.handleOps([signedUserOp.packed], this.receiver);
+      await expect(handleOpsTx).to.changeEtherBalance(this.account, 0n); // no balance change
+      await expect(handleOpsTx).to.emit(this.target, 'MockFunctionCalledExtra').withArgs(this.account, 0n);
       if (postOp)
-        expect(handleOpsTx).to.emit(this.mock, 'PaymasterDataPostOp').withArgs(paymasterSignedUserOp.paymasterData);
+        expect(handleOpsTx).to.emit(this.paymaster, 'PaymasterDataPostOp').withArgs(signedUserOp.paymasterData);
+
+      // paymaster balance after
+      await expect(entrypoint.balanceOf(this.paymaster)).to.eventually.be.lessThan(this.deposit);
     });
 
     it('reverts if the caller is not the entrypoint', async function () {
-      const operation = await this.accountMock.createUserOp(this.userOp);
-      await expect(this.mock.connect(this.other).validatePaymasterUserOp(operation.packed, ethers.ZeroHash, 100_000n))
-        .to.be.revertedWithCustomError(this.mock, 'PaymasterUnauthorized')
+      const operation = await this.account.createUserOp(this.userOp);
+
+      await expect(
+        this.paymaster.connect(this.other).validatePaymasterUserOp(operation.packed, ethers.ZeroHash, 100_000n),
+      )
+        .to.be.revertedWithCustomError(this.paymaster, 'PaymasterUnauthorized')
         .withArgs(this.other);
     });
   });
 
   describe('postOp', function () {
     it('reverts if the caller is not the entrypoint', async function () {
-      await expect(this.mock.connect(this.other).postOp(0, '0x', 0, 0)).to.be.reverted;
+      await expect(this.paymaster.connect(this.other).postOp(0, '0x', 0, 0))
+        .to.be.revertedWithCustomError(this.paymaster, 'PaymasterUnauthorized')
+        .withArgs(this.other);
     });
   });
 
   describe('deposit lifecycle', function () {
     it('deposits and withdraws effectively', async function () {
       const value = 100n;
-      const depositTx = await this.mock.connect(this.depositor).deposit({ value });
-      expect(depositTx).to.changeEtherBalance([this.depositor, entrypoint], [value * -1n, value]);
-      const withdrawTx = await this.mock.withdraw(this.receiver, value);
-      expect(withdrawTx).to.changeEtherBalance([entrypoint, this.receiver], [value * -1n, value]);
+      await expect(this.paymaster.connect(this.other).deposit({ value })).to.changeEtherBalances(
+        [this.other, entrypoint],
+        [-value, value],
+      );
+      await expect(this.paymaster.withdraw(this.receiver, value)).to.changeEtherBalances(
+        [entrypoint, this.receiver],
+        [-value, value],
+      );
     });
 
     it('reverts when an unauthorized caller tries to withdraw', async function () {
-      await expect(this.mock.connect(this.other).withdraw(this.receiver, 100n)).to.be.reverted;
+      await expect(this.paymaster.connect(this.other).withdraw(this.receiver, 100n)).to.be.reverted;
     });
   });
 
   describe('stake lifecycle', function () {
     it('adds and removes stake effectively', async function () {
-      const value = 100;
+      const value = 100n;
       const delay = time.duration.hours(10);
-      const stakeTx = await this.mock.connect(this.staker).addStake(delay, {
-        value,
-      });
-      expect(stakeTx).to.changeEtherBalance([this.staker, entrypoint], [value * -1, value]);
-      await this.mock.unlockStake().then(() => time.increaseBy.timestamp(delay));
-      const withdrawTx = await this.mock.withdrawStake(this.receiver);
-      expect(withdrawTx).to.changeEtherBalance([entrypoint, this.receiver], [value * -1, value]);
+
+      // stake
+      await expect(this.paymaster.connect(this.other).addStake(delay, { value })).to.changeEtherBalances(
+        [this.other, entrypoint],
+        [-value, value],
+      );
+      // unlock
+      await this.paymaster.unlockStake();
+      await time.increaseBy.timestamp(delay);
+      // withdraw stake
+      await expect(this.paymaster.withdrawStake(this.receiver)).to.changeEtherBalances(
+        [entrypoint, this.receiver],
+        [-value, value],
+      );
     });
 
     it('reverts when an unauthorized caller tries to withdraw stake', async function () {
-      await expect(this.mock.connect(this.other).withdrawStake(this.receiver)).to.be.reverted;
+      await expect(this.paymaster.connect(this.other).withdrawStake(this.receiver)).to.be.reverted;
     });
   });
 }

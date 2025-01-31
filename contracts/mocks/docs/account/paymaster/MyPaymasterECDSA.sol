@@ -9,7 +9,7 @@ import {PackedUserOperation} from "@openzeppelin/contracts/interfaces/draft-IERC
 import {SignerECDSA} from "../../../../utils/cryptography/SignerECDSA.sol";
 
 contract MyPaymasterECDSA is PaymasterSigner, SignerECDSA, Ownable {
-    constructor(address paymasterSignerAddr, address withdrawer) EIP712("MyAccountECDSA", "1") Ownable(withdrawer) {
+    constructor(address paymasterSignerAddr, address withdrawer) EIP712("MyPaymasterECDSA", "1") Ownable(withdrawer) {
         _setSigner(paymasterSignerAddr);
     }
 
