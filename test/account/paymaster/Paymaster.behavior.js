@@ -106,6 +106,10 @@ function shouldBehaveLikePaymaster({ postOp } = { postOp: false }) {
       );
     });
 
+    it('reverts when an unauthorized caller tries to unlock stake', async function () {
+      await expect(this.paymaster.connect(this.other).unlockStake()).to.be.reverted;
+    });
+
     it('reverts when an unauthorized caller tries to withdraw stake', async function () {
       await expect(this.paymaster.connect(this.other).withdrawStake(this.receiver)).to.be.reverted;
     });
