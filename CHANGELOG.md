@@ -1,5 +1,14 @@
 ## XX-XX-XXXX
 
+- `PaymasterERC721`: Extension of `PaumasterCore` that approves sponsoring of user operation based on ownership of an ERC-721 NFT.
+
+## 31-01-2025
+
+- `PaymasterCore`: Add a simple ERC-4337 paymaster implementation with minimal logic.
+- `PaymasterSigner`: Extension of `PaumasterCore` that approves sponsoring of user operation based on a cryptographic signature verified by the paymaster.
+
+## 15-01-2025
+
 - `AccountCore`: Add an internal `_validateUserOp` function to validate user operations.
 - `AccountERC7579`: Extension of `AccountCore` that implements support for ERC-7579 modules of type executor, validator, and fallback handler.
 - `AccountERC7579Hooked`: Extension of `AccountERC7579` that implements support for ERC-7579 hook modules.
