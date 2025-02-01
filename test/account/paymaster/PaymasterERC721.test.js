@@ -56,7 +56,7 @@ for (const [name, opts] of Object.entries({
       account,
       paymaster,
       signUserOp,
-      paymasterSignUserOp,
+      paymasterSignUserOp, // mint a token for the userOp sender
       paymasterSignUserOpInvalid: userOp => userOp, // don't do anything
       ...env,
     };

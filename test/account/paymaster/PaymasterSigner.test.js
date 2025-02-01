@@ -75,8 +75,8 @@ for (const [name, opts] of Object.entries({
       account,
       paymaster,
       signUserOp,
-      paymasterSignUserOp: (...args) => paymasterSignUserOp(paymasterSigner, ...args),
-      paymasterSignUserOpInvalid: (...args) => paymasterSignUserOp(other, ...args),
+      paymasterSignUserOp: (...args) => paymasterSignUserOp(paymasterSigner, ...args), // sign using the correct key
+      paymasterSignUserOpInvalid: (...args) => paymasterSignUserOp(other, ...args), // sign using the wrong key
       ...env,
     };
   }
