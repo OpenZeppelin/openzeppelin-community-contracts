@@ -2,10 +2,8 @@
 
 pragma solidity ^0.8.20;
 
-import {PackedUserOperation} from "@openzeppelin/contracts/interfaces/draft-IERC4337.sol";
-import {ERC4337Utils} from "@openzeppelin/contracts/account/utils/draft-ERC4337Utils.sol";
+import {ERC4337Utils, PackedUserOperation} from "@openzeppelin/contracts/account/utils/draft-ERC4337Utils.sol";
 import {EIP712} from "@openzeppelin/contracts/utils/cryptography/EIP712.sol";
-import {Calldata} from "@openzeppelin/contracts/utils/Calldata.sol";
 import {PaymasterCore} from "./PaymasterCore.sol";
 import {AbstractSigner} from "../../utils/cryptography/AbstractSigner.sol";
 
@@ -26,7 +24,7 @@ import {AbstractSigner} from "../../utils/cryptography/AbstractSigner.sol";
 abstract contract PaymasterSigner is AbstractSigner, EIP712, PaymasterCore {
     using ERC4337Utils for *;
 
-    bytes32 internal constant _USER_OPERATION_REQUEST =
+    bytes32 private constant USER_OPERATION_REQUEST_TYPEHASH =
         keccak256(
             "UserOperationRequest(address sender,uint256 nonce,bytes initCode,bytes callData,bytes32 accountGasLimits,uint256 preVerificationGas,bytes32 gasFees,uint256 paymasterVerificationGasLimit,uint256 paymasterPostOpGasLimit,uint48 validAfter,uint48 validUntil)"
         );
@@ -45,7 +43,7 @@ abstract contract PaymasterSigner is AbstractSigner, EIP712, PaymasterCore {
             _hashTypedDataV4(
                 keccak256(
                     abi.encode(
-                        _USER_OPERATION_REQUEST,
+                        USER_OPERATION_REQUEST_TYPEHASH,
                         userOp.sender,
                         userOp.nonce,
                         keccak256(userOp.initCode),
