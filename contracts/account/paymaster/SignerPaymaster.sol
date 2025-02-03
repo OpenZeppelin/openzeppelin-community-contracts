@@ -13,7 +13,7 @@ import {AbstractSigner} from "../../utils/cryptography/AbstractSigner.sol";
  * Example of usage:
  *
  * ```solidity
- * contract MyPaymasterECDSASigner is PaymasterSigner, SignerECDSA {
+ * contract MyPaymasterECDSASigner is SignerPaymaster, SignerECDSA {
  *     constructor() EIP712("MyPaymasterECDSASigner", "1") {
  *       // Will revert if the signer is already initialized
  *       _setSigner(signerAddr);
@@ -21,10 +21,10 @@ import {AbstractSigner} from "../../utils/cryptography/AbstractSigner.sol";
  * }
  * ```
  */
-abstract contract PaymasterSigner is AbstractSigner, EIP712, PaymasterCore {
+abstract contract SignerPaymaster is AbstractSigner, EIP712, PaymasterCore {
     using ERC4337Utils for *;
 
-    bytes32 internal constant _USER_OPERATION_REQUEST =
+    bytes32 private constant USER_OPERATION_REQUEST_TYPEHASH =
         keccak256(
             "UserOperationRequest(address sender,uint256 nonce,bytes initCode,bytes callData,bytes32 accountGasLimits,uint256 preVerificationGas,bytes32 gasFees,uint256 paymasterVerificationGasLimit,uint256 paymasterPostOpGasLimit,uint48 validAfter,uint48 validUntil)"
         );
@@ -43,7 +43,7 @@ abstract contract PaymasterSigner is AbstractSigner, EIP712, PaymasterCore {
             _hashTypedDataV4(
                 keccak256(
                     abi.encode(
-                        _USER_OPERATION_REQUEST,
+                        USER_OPERATION_REQUEST_TYPEHASH,
                         userOp.sender,
                         userOp.nonce,
                         keccak256(userOp.initCode),
