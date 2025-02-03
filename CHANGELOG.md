@@ -1,11 +1,11 @@
 ## XX-XX-XXXX
 
-- `PaymasterERC721`: Extension of `PaumasterCore` that approves sponsoring of user operation based on ownership of an ERC-721 NFT.
+- `ERC721Paymaster`: Extension of `PaumasterCore` that approves sponsoring of user operation based on ownership of an ERC-721 NFT.
 
 ## 31-01-2025
 
 - `PaymasterCore`: Add a simple ERC-4337 paymaster implementation with minimal logic.
-- `PaymasterSigner`: Extension of `PaumasterCore` that approves sponsoring of user operation based on a cryptographic signature verified by the paymaster.
+- `SignerPaymaster`: Extension of `PaymasterCore` that approves sponsoring of user operation based on a cryptographic signature verified by the paymaster.
 
 ## 15-01-2025
 
