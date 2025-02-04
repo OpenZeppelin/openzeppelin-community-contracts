@@ -135,7 +135,7 @@ function shouldBehaveLikePaymaster({ postOp } = { postOp: false }) {
 
   describe('postOp', function () {
     it('reverts if the caller is not the entrypoint', async function () {
-      await expect(this.paymaster.connect(this.other).postOp(0, '0x', 0, 0))
+      await expect(this.paymaster.connect(this.other).postOp(0n, '0x', 0n, 0n))
         .to.be.revertedWithCustomError(this.paymaster, 'PaymasterUnauthorized')
         .withArgs(this.other);
     });
@@ -143,15 +143,21 @@ function shouldBehaveLikePaymaster({ postOp } = { postOp: false }) {
 
   describe('deposit lifecycle', function () {
     it('deposits and withdraws effectively', async function () {
+      await expect(entrypoint.balanceOf(this.paymaster)).to.eventually.equal(0n);
+
       await expect(this.paymaster.connect(this.other).deposit({ value })).to.changeEtherBalances(
         [this.other, entrypoint],
         [-value, value],
       );
 
-      await expect(this.paymaster.connect(this.admin).withdraw(this.receiver, value)).to.changeEtherBalances(
+      await expect(entrypoint.balanceOf(this.paymaster)).to.eventually.equal(value);
+
+      await expect(this.paymaster.connect(this.admin).withdraw(this.receiver, 1n)).to.changeEtherBalances(
         [entrypoint, this.receiver],
-        [-value, value],
+        [-1n, 1n],
       );
+
+      await expect(entrypoint.balanceOf(this.paymaster)).to.eventually.equal(value - 1n);
     });
 
     it('reverts when an unauthorized caller tries to withdraw', async function () {
@@ -163,13 +169,28 @@ function shouldBehaveLikePaymaster({ postOp } = { postOp: false }) {
 
   describe('stake lifecycle', function () {
     it('adds and removes stake effectively', async function () {
+      await expect(entrypoint.deposits(this.paymaster)).to.eventually.deep.equal([0n, false, 0n, 0n, 0n]);
+
       // stake
       await expect(this.paymaster.connect(this.other).addStake(delay, { value })).to.changeEtherBalances(
         [this.other, entrypoint],
         [-value, value],
       );
+
+      await expect(entrypoint.deposits(this.paymaster)).to.eventually.deep.equal([0n, true, 42n, delay, 0n]);
+
       // unlock
-      await this.paymaster.connect(this.admin).unlockStake();
+      const unlockTx = this.paymaster.connect(this.admin).unlockStake();
+
+      const timestamp = await time.clockFromReceipt.timestamp(unlockTx);
+      await expect(entrypoint.deposits(this.paymaster)).to.eventually.deep.equal([
+        0n,
+        false,
+        42n,
+        delay,
+        timestamp + delay,
+      ]);
+
       await time.increaseBy.timestamp(delay);
 
       // withdraw stake
@@ -177,6 +198,8 @@ function shouldBehaveLikePaymaster({ postOp } = { postOp: false }) {
         [entrypoint, this.receiver],
         [-value, value],
       );
+
+      await expect(entrypoint.deposits(this.paymaster)).to.eventually.deep.equal([0n, false, 0n, 0n, 0n]);
     });
 
     it('reverts when an unauthorized caller tries to unlock stake', async function () {
