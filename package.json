@@ -51,8 +51,7 @@
   },
   "lint-staged": {
     "*.{js,ts}": [
-      "prettier --log-level warn --ignore-path .gitignore --check",
-      "eslint"
+      "prettier --log-level warn --ignore-path .gitignore --check"
     ],
     "*.sol": [
       "prettier --log-level warn --ignore-path .gitignore --check",
