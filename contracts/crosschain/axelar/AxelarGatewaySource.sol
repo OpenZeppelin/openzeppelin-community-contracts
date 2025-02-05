@@ -32,9 +32,7 @@ abstract contract AxelarGatewaySource is IERC7786GatewaySource, AxelarGatewayBas
         bytes[] calldata attributes
     ) external payable returns (bytes32 outboxId) {
         require(msg.value == 0, UnsupportedNativeTransfer());
-        // Use of `if () revert` syntax to avoid accessing attributes[0] if it's empty
-        if (attributes.length > 0)
-            revert UnsupportedAttribute(attributes[0].length < 0x04 ? bytes4(0) : bytes4(attributes[0][0:4]));
+        _checkAttributes(attributes);
 
         // Create the package
         string memory sender = msg.sender.toChecksumHexString();
@@ -56,5 +54,14 @@ abstract contract AxelarGatewaySource is IERC7786GatewaySource, AxelarGatewayBas
         localGateway.callContract(axelarDestination, remoteGateway, adapterPayload);
 
         return outboxId;
+    }
+
+    /// @dev Checks whether the attributes are supported. Reverts if at least one is not.
+    function _checkAttributes(bytes[] calldata attributes) private pure {
+        for (uint256 i = 0; i < attributes.length; i++) {
+            uint8 tooShort = attributes[i].length < 0x04;
+            bytes4 selector = tooShort ? bytes4(0) : bytes4(attributes[i][0:4]);
+            require(!tooShort && supportsAttribute(selector), UnsupportedAttribute(selector));
+        }
     }
 }
