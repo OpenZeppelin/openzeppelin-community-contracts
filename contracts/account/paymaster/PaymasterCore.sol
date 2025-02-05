@@ -39,7 +39,7 @@ abstract contract PaymasterCore is IPaymaster {
 
     /// @dev Canonical entry point for the account that forwards and validates user operations.
     function entryPoint() public view virtual returns (IEntryPoint) {
-        return ERC4337Utils.ENTRYPOINT;
+        return ERC4337Utils.ENTRYPOINT_V07;
     }
 
     /// @inheritdoc IPaymaster
