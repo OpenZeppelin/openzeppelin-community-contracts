@@ -9,10 +9,10 @@ import {PaymasterCore} from "./PaymasterCore.sol";
 /**
  * @dev Extension of {PaymasterCore} that supports account based on ownership of an ERC-721 token
  */
-abstract contract PaymasterERC721 is PaymasterCore {
+abstract contract PaymasterNFT is PaymasterCore {
     IERC721 private _token;
 
-    event PaymasterERC721TokenSet(IERC721 token);
+    event PaymasterNFTTokenSet(IERC721 token);
 
     constructor(IERC721 token_) {
         _setToken(token_);
@@ -24,7 +24,7 @@ abstract contract PaymasterERC721 is PaymasterCore {
 
     function _setToken(IERC721 token_) internal virtual {
         _token = token_;
-        emit PaymasterERC721TokenSet(token_);
+        emit PaymasterNFTTokenSet(token_);
     }
 
     /**

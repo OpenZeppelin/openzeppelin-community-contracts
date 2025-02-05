@@ -13,7 +13,7 @@ import {AbstractSigner} from "../../utils/cryptography/AbstractSigner.sol";
  * Example of usage:
  *
  * ```solidity
- * contract MyPaymasterECDSASigner is SignerPaymaster, SignerECDSA {
+ * contract MyPaymasterECDSASigner is PaymasterSigner, SignerECDSA {
  *     constructor() EIP712("MyPaymasterECDSASigner", "1") {
  *       // Will revert if the signer is already initialized
  *       _setSigner(signerAddr);
@@ -21,7 +21,7 @@ import {AbstractSigner} from "../../utils/cryptography/AbstractSigner.sol";
  * }
  * ```
  */
-abstract contract SignerPaymaster is AbstractSigner, EIP712, PaymasterCore {
+abstract contract PaymasterSigner is AbstractSigner, EIP712, PaymasterCore {
     using ERC4337Utils for *;
 
     bytes32 private constant USER_OPERATION_REQUEST_TYPEHASH =

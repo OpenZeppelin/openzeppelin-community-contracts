@@ -4,9 +4,9 @@ pragma solidity ^0.8.20;
 
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {ERC4337Utils, PackedUserOperation} from "@openzeppelin/contracts/account/utils/draft-ERC4337Utils.sol";
-import {ERC721Paymaster} from "../../../account/paymaster/PaymasterERC721.sol";
+import {PaymasterNFT} from "../../../account/paymaster/PaymasterNFT.sol";
 
-abstract contract ERC721PaymasterContextNoPostOpMock is ERC721Paymaster, Ownable {
+abstract contract PaymasterNFTContextNoPostOpMock is PaymasterNFT, Ownable {
     using ERC4337Utils for *;
 
     function _validatePaymasterUserOp(
@@ -16,14 +16,14 @@ abstract contract ERC721PaymasterContextNoPostOpMock is ERC721Paymaster, Ownable
     ) internal override returns (bytes memory context, uint256 validationData) {
         // use the userOp's callData as context;
         context = userOp.callData;
-        // super call (ERC721Paymaster) for the validation data
+        // super call (PaymasterNFT) for the validation data
         (, validationData) = super._validatePaymasterUserOp(userOp, userOpHash, requiredPreFund);
     }
 
     function _authorizeWithdraw() internal override onlyOwner {}
 }
 
-abstract contract ERC721PaymasterMock is ERC721PaymasterContextNoPostOpMock {
+abstract contract PaymasterNFTMock is PaymasterNFTContextNoPostOpMock {
     event PaymasterDataPostOp(bytes paymasterData);
 
     function _postOp(

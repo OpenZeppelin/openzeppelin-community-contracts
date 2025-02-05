@@ -7,8 +7,8 @@ const { ERC4337Helper } = require('../../helpers/erc4337');
 const { shouldBehaveLikePaymaster } = require('./Paymaster.behavior');
 
 for (const [name, opts] of Object.entries({
-  PaymasterERC721: { postOp: true, timeRange: false },
-  PaymasterERC721ContextNoPostOp: { postOp: false, timeRange: false },
+  PaymasterNFT: { postOp: true, timeRange: false },
+  PaymasterNFTContextNoPostOp: { postOp: false, timeRange: false },
 })) {
   async function fixture() {
     // EOAs and environment
