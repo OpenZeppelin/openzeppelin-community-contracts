@@ -38,7 +38,7 @@ abstract contract PaymasterCore is IPaymaster {
 
     /// @dev Canonical entry point for the account that forwards and validates user operations.
     function entryPoint() public view virtual returns (IEntryPoint) {
-        return ERC4337Utils.ENTRYPOINT;
+        return ERC4337Utils.ENTRYPOINT_V07;
     }
 
     /// @inheritdoc IPaymaster
@@ -92,27 +92,27 @@ abstract contract PaymasterCore is IPaymaster {
 
     /// @dev Calls {IEntryPointStake-depositTo}.
     function deposit() public payable virtual {
-        ERC4337Utils.depositTo(address(this), msg.value);
+        entryPoint().depositTo{value: msg.value}(address(this));
     }
 
     /// @dev Calls {IEntryPointStake-withdrawTo}.
     function withdraw(address payable to, uint256 value) public virtual onlyWithdrawer {
-        ERC4337Utils.withdrawTo(to, value);
+        entryPoint().withdrawTo(to, value);
     }
 
     /// @dev Calls {IEntryPointStake-addStake}.
     function addStake(uint32 unstakeDelaySec) public payable virtual {
-        ERC4337Utils.addStake(msg.value, unstakeDelaySec);
+        entryPoint().addStake{value: msg.value}(unstakeDelaySec);
     }
 
     /// @dev Calls {IEntryPointStake-unlockStake}.
     function unlockStake() public virtual onlyWithdrawer {
-        ERC4337Utils.unlockStake();
+        entryPoint().unlockStake();
     }
 
     /// @dev Calls {IEntryPointStake-withdrawStake}.
     function withdrawStake(address payable to) public virtual onlyWithdrawer {
-        ERC4337Utils.withdrawStake(to);
+        entryPoint().withdrawStake(to);
     }
 
     /// @dev Ensures the caller is the {entrypoint}.

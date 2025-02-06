@@ -1,4 +1,9 @@
-## XX-XX-XXXX
+## 31-01-2025
+
+- `PaymasterCore`: Add a simple ERC-4337 paymaster implementation with minimal logic.
+- `PaymasterSigner`: Extension of `PaymasterCore` that approves sponsoring of user operation based on a cryptographic signature verified by the paymaster.
+
+## 15-01-2025
 
 - `PaymasterNFT`: Extension of `PaymasterCore` that approves sponsoring of user operation based on ownership of an ERC-721 NFT.
 
