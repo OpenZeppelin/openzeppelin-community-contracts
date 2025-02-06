@@ -140,9 +140,13 @@ describe('PaymasterERC20', function () {
         [-tokenAmount, tokenAmount],
       );
       await expect(txPromise).to.changeEtherBalances([entrypoint, this.receiver], [-actualGasCost, actualGasCost]);
-      expect(tokenAmount)
-        .to.be.greaterThan(actualGasCost * 2n)
-        .to.be.lessThan((actualGasCost * 2n * 110n) / 100n); // covers costs with no more than 10% overcost
+
+      // skip gas consumption tests when running coverage (significantly affects the postOp costs)
+      if (!process.env.COVERAGE) {
+        expect(tokenAmount)
+          .to.be.greaterThan(actualGasCost * 2n)
+          .to.be.lessThan((actualGasCost * 2n * 110n) / 100n); // covers costs with no more than 10% overcost
+      }
     });
 
     it('from account, with guarantor refund', async function () {
@@ -205,9 +209,13 @@ describe('PaymasterERC20', function () {
         [value - tokenAmount, 0n, tokenAmount],
       );
       await expect(txPromise).to.changeEtherBalances([entrypoint, this.receiver], [-actualGasCost, actualGasCost]);
-      expect(tokenAmount)
-        .to.be.greaterThan(actualGasCost * 2n)
-        .to.be.lessThan((actualGasCost * 2n * 110n) / 100n); // covers costs with no more than 10% overcost
+
+      // skip gas consumption tests when running coverage (significantly affects the postOp costs)
+      if (!process.env.COVERAGE) {
+        expect(tokenAmount)
+          .to.be.greaterThan(actualGasCost * 2n)
+          .to.be.lessThan((actualGasCost * 2n * 110n) / 100n); // covers costs with no more than 10% overcost
+      }
     });
 
     it('from guarantor, when account fails to pay', async function () {
@@ -256,9 +264,13 @@ describe('PaymasterERC20', function () {
         [0n, -tokenAmount, tokenAmount],
       );
       await expect(txPromise).to.changeEtherBalances([entrypoint, this.receiver], [-actualGasCost, actualGasCost]);
-      expect(tokenAmount)
-        .to.be.greaterThan(actualGasCost * 2n)
-        .to.be.lessThan((actualGasCost * 2n * 110n) / 100n); // covers costs with no more than 10% overcost
+
+      // skip gas consumption tests when running coverage (significantly affects the postOp costs)
+      if (!process.env.COVERAGE) {
+        expect(tokenAmount)
+          .to.be.greaterThan(actualGasCost * 2n)
+          .to.be.lessThan((actualGasCost * 2n * 110n) / 100n); // covers costs with no more than 10% overcost
+      }
     });
   });
 
