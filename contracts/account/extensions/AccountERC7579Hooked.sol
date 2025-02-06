@@ -50,7 +50,6 @@ abstract contract AccountERC7579Hooked is AccountERC7579 {
     }
 
     /// @dev Installs a module with support for hook modules. See {AccountERC7579-_installModule}
-    /// TODO: withHook? based on what value?
     function _installModule(
         uint256 moduleTypeId,
         address module,
@@ -64,7 +63,6 @@ abstract contract AccountERC7579Hooked is AccountERC7579 {
     }
 
     /// @dev Uninstalls a module with support for hook modules. See {AccountERC7579-_uninstallModule}
-    /// TODO: withHook? based on what value?
     function _uninstallModule(
         uint256 moduleTypeId,
         address module,
