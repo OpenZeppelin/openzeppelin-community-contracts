@@ -89,7 +89,7 @@ describe('PaymasterERC20', function () {
     shouldBehaveLikePaymaster({ timeRange: true });
   });
 
-  describe('moves ERC-20 balances', function () {
+  describe('pays with ERC-20 tokens', function () {
     beforeEach(async function () {
       await this.paymaster.deposit({ value });
     });
@@ -244,6 +244,28 @@ describe('PaymasterERC20', function () {
         [0n, -actualAmount, actualAmount],
       );
       // amount of ether transferred from entrypoint to receiver (deducted from paymaster's deposit) is approximately `actualAmount / 2`
+    });
+  });
+
+  describe('withdraw ERC-20 tokens', function () {
+    beforeEach(async function () {
+      await this.token.$_mint(this.paymaster, value);
+    });
+
+    it('withdraw some token', async function () {
+      await expect(
+        this.paymaster.connect(this.admin).withdrawTokens(this.token, this.receiver, 10n),
+      ).to.changeTokenBalances(this.token, [this.paymaster, this.receiver], [-10n, 10n]);
+    });
+
+    it('withdraw all token', async function () {
+      await expect(
+        this.paymaster.connect(this.admin).withdrawTokens(this.token, this.receiver, ethers.MaxUint256),
+      ).to.changeTokenBalances(this.token, [this.paymaster, this.receiver], [-value, value]);
+    });
+
+    it('only admin can withdraw', async function () {
+      await expect(this.paymaster.connect(this.other).withdrawTokens(this.token, this.receiver, 10n)).to.be.reverted;
     });
   });
 });
