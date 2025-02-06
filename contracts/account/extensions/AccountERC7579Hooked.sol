@@ -17,12 +17,16 @@ abstract contract AccountERC7579Hooked is AccountERC7579 {
     address private _hook;
 
     /**
-     * @dev Calls {IERC7579Hook-preCheck} before executing the modified
-     * function and {IERC7579Hook-postCheck} thereafter.
+     * @dev Calls {IERC7579Hook-preCheck} before executing the modified function and {IERC7579Hook-postCheck}
+     * thereafter.
+     *
+     * NOTE: function that use this modifier expose themselves to reentrancy trough the {IERC7579Hook-preCheck} hook.
      */
     modifier withHook() {
         address hook_ = hook();
         bytes memory hookData;
+
+        // slither-disable-next-line reentrancy-no-eth
         if (hook_ != address(0)) hookData = IERC7579Hook(hook_).preCheck(msg.sender, msg.value, msg.data);
         _;
         if (hook_ != address(0)) IERC7579Hook(hook_).postCheck(hookData);
