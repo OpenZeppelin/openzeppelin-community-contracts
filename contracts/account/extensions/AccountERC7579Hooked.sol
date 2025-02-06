@@ -9,9 +9,14 @@ import {AccountERC7579} from "./AccountERC7579.sol";
 /**
  * @dev Extension of {AccountERC7579} with support for a single hook module (type 4).
  *
- * If installed, this extension will call the hook module's {IERC7579Hook-preCheck} before
- * executing any operation with {_execute} (including {execute} and {executeFromExecutor} by
- * default) and {IERC7579Hook-postCheck} thereafter.
+ * If installed, this extension will call the hook module's {IERC7579Hook-preCheck} before executing any operation
+ * with {_execute} (including {execute} and {executeFromExecutor} by default) and {IERC7579Hook-postCheck} thereafter.
+ *
+ * NOTE: Hook modules break the check-effect-interaction pattern. In particular, the {IERC7579Hook-preCheck} hook can
+ * lead to potentially dangerous reentrancy. Using the `withHook()` modifier is safe if no effect is performed
+ * before the preHook or after the postHook. That is the case on all functions here, but it may not be the case if
+ * functions that have this modifier are overridden. Developers should be extremely careful when implementing hook
+ * modules or further overriding functions that involve hooks.
  */
 abstract contract AccountERC7579Hooked is AccountERC7579 {
     address private _hook;
@@ -19,8 +24,6 @@ abstract contract AccountERC7579Hooked is AccountERC7579 {
     /**
      * @dev Calls {IERC7579Hook-preCheck} before executing the modified function and {IERC7579Hook-postCheck}
      * thereafter.
-     *
-     * NOTE: function that use this modifier expose themselves to reentrancy trough the {IERC7579Hook-preCheck} hook.
      */
     modifier withHook() {
         address hook_ = hook();
