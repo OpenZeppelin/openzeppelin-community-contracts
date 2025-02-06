@@ -130,14 +130,19 @@ describe('PaymasterERC20', function () {
         .withArgs(this.account, 0n);
 
       const { logs } = await txPromise.then(tx => tx.wait());
-      const actualAmount = this.paymaster.interface.parseLog(logs.find(ev => ev.address == this.paymaster.target))
-        .args[3];
+      const { tokenAmount } = this.paymaster.interface.parseLog(
+        logs.find(ev => ev.address == this.paymaster.target),
+      ).args;
+      const { actualGasCost } = logs.find(ev => ev.fragment?.name == 'UserOperationEvent').args;
       await expect(txPromise).to.changeTokenBalances(
         this.token,
         [this.account, this.paymaster],
-        [-actualAmount, actualAmount],
+        [-tokenAmount, tokenAmount],
       );
-      // amount of ether transferred from entrypoint to receiver (deducted from paymaster's deposit) is approximately `actualAmount / 2`
+      await expect(txPromise).to.changeEtherBalances([entrypoint, this.receiver], [-actualGasCost, actualGasCost]);
+      expect(tokenAmount)
+        .to.be.greaterThan(actualGasCost * 2n)
+        .to.be.lessThan((actualGasCost * 2n * 110n) / 100n); // covers costs with no more than 10% overcost
     });
 
     it('from account, with guarantor refund', async function () {
@@ -190,14 +195,19 @@ describe('PaymasterERC20', function () {
         .withArgs(this.account, 0n);
 
       const { logs } = await txPromise.then(tx => tx.wait());
-      const actualAmount = this.paymaster.interface.parseLog(logs.find(ev => ev.address == this.paymaster.target))
-        .args[3];
+      const { tokenAmount } = this.paymaster.interface.parseLog(
+        logs.find(ev => ev.address == this.paymaster.target),
+      ).args;
+      const { actualGasCost } = logs.find(ev => ev.fragment?.name == 'UserOperationEvent').args;
       await expect(txPromise).to.changeTokenBalances(
         this.token,
         [this.account, this.guarantor, this.paymaster],
-        [value - actualAmount, 0n, actualAmount],
+        [value - tokenAmount, 0n, tokenAmount],
       );
-      // amount of ether transferred from entrypoint to receiver (deducted from paymaster's deposit) is approximately `actualAmount / 2`
+      await expect(txPromise).to.changeEtherBalances([entrypoint, this.receiver], [-actualGasCost, actualGasCost]);
+      expect(tokenAmount)
+        .to.be.greaterThan(actualGasCost * 2n)
+        .to.be.lessThan((actualGasCost * 2n * 110n) / 100n); // covers costs with no more than 10% overcost
     });
 
     it('from guarantor, when account fails to pay', async function () {
@@ -236,14 +246,19 @@ describe('PaymasterERC20', function () {
         .withArgs(this.account, 0n);
 
       const { logs } = await txPromise.then(tx => tx.wait());
-      const actualAmount = this.paymaster.interface.parseLog(logs.find(ev => ev.address == this.paymaster.target))
-        .args[3];
+      const { tokenAmount } = this.paymaster.interface.parseLog(
+        logs.find(ev => ev.address == this.paymaster.target),
+      ).args;
+      const { actualGasCost } = logs.find(ev => ev.fragment?.name == 'UserOperationEvent').args;
       await expect(txPromise).to.changeTokenBalances(
         this.token,
         [this.account, this.guarantor, this.paymaster],
-        [0n, -actualAmount, actualAmount],
+        [0n, -tokenAmount, tokenAmount],
       );
-      // amount of ether transferred from entrypoint to receiver (deducted from paymaster's deposit) is approximately `actualAmount / 2`
+      await expect(txPromise).to.changeEtherBalances([entrypoint, this.receiver], [-actualGasCost, actualGasCost]);
+      expect(tokenAmount)
+        .to.be.greaterThan(actualGasCost * 2n)
+        .to.be.lessThan((actualGasCost * 2n * 110n) / 100n); // covers costs with no more than 10% overcost
     });
   });
 
