@@ -137,7 +137,7 @@ describe('PaymasterERC20', function () {
         [this.account, this.paymaster],
         [-actualAmount, actualAmount],
       );
-      // amount of ether transfered from entrypoint to receiver (deducted from paymaster's deposit) is approximately `actualAmount / 2`
+      // amount of ether transferred from entrypoint to receiver (deducted from paymaster's deposit) is approximately `actualAmount / 2`
     });
 
     it('from account, with guarantor refund', async function () {
@@ -197,7 +197,7 @@ describe('PaymasterERC20', function () {
         [this.account, this.guarantor, this.paymaster],
         [value - actualAmount, 0n, actualAmount],
       );
-      // amount of ether transfered from entrypoint to receiver (deducted from paymaster's deposit) is approximately `actualAmount / 2`
+      // amount of ether transferred from entrypoint to receiver (deducted from paymaster's deposit) is approximately `actualAmount / 2`
     });
 
     it('from guarantor, when account fails to pay', async function () {
@@ -243,7 +243,7 @@ describe('PaymasterERC20', function () {
         [this.account, this.guarantor, this.paymaster],
         [0n, -actualAmount, actualAmount],
       );
-      // amount of ether transfered from entrypoint to receiver (deducted from paymaster's deposit) is approximately `actualAmount / 2`
+      // amount of ether transferred from entrypoint to receiver (deducted from paymaster's deposit) is approximately `actualAmount / 2`
     });
   });
 });
