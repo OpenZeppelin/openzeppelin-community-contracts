@@ -89,7 +89,7 @@ describe('PaymasterERC20', function () {
     shouldBehaveLikePaymaster({ timeRange: true });
   });
 
-  describe.only('moves ERC-20 balances', function () {
+  describe('moves ERC-20 balances', function () {
     beforeEach(async function () {
       await this.paymaster.deposit({ value });
     });
