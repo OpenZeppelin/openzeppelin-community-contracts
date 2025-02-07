@@ -78,8 +78,8 @@ abstract contract PaymasterCore is IPaymaster {
     /**
      * @dev Handles post user operation execution logic. The caller must be the entry point.
      *
-     * It receives the `context` returned by `_validatePaymasterUserOp`. Reverts by default
-     * since the function is not called if no context is returned by {validatePaymasterUserOp}.
+     * It receives the `context` returned by `_validatePaymasterUserOp`. Function is not called if no context
+     * is returned by {validatePaymasterUserOp}.
      *
      * NOTE: The `actualUserOpFeePerGas` is not `tx.gasprice`. A user operation can be bundled with other transactions
      * making the gas price of the user operation to differ.
