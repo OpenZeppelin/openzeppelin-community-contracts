@@ -92,6 +92,9 @@ describe('PaymasterERC20', function () {
   describe('pays with ERC-20 tokens', function () {
     beforeEach(async function () {
       await this.paymaster.deposit({ value });
+
+      this.userOp ??= {};
+      this.userOp.paymaster = this.paymaster;
     });
 
     it('from account', async function () {
@@ -99,54 +102,13 @@ describe('PaymasterERC20', function () {
       await this.token.$_mint(this.account, value);
       await this.token.$_approve(this.account, this.paymaster, ethers.MaxUint256);
 
-      // prepare user operation
-      const signedUserOp = await this.account
-        .createUserOp({
-          callData: this.account.interface.encodeFunctionData('execute', [
-            encodeMode({ callType: CALL_TYPE_BATCH }),
-            encodeBatch({
-              target: this.target,
-              data: this.target.interface.encodeFunctionData('mockFunctionExtra'),
-            }),
-          ]),
-          paymaster: this.paymaster,
-          paymasterData: ethers.solidityPacked(
-            ['address', 'uint48', 'uint48', 'uint256', 'address'],
-            [this.token.target, 0n, 0n, 2e6, ethers.ZeroAddress],
-          ),
-        })
-        .then(op => this.signUserOp(op));
-
-      // perform operation
-      const txPromise = entrypoint.handleOps([signedUserOp.packed], this.receiver);
-      await expect(txPromise)
-        .to.emit(this.token, 'Transfer')
-        .withArgs(this.account, this.paymaster, anyValue)
-        .to.emit(this.token, 'Transfer')
-        .withArgs(this.paymaster, this.account, anyValue)
-        .to.emit(this.paymaster, 'UserOperationSponsored')
-        .withArgs(signedUserOp.hash(), this.account, ethers.ZeroAddress, anyValue, 2e6, false)
-        .to.emit(this.target, 'MockFunctionCalledExtra')
-        .withArgs(this.account, 0n);
-
-      const { logs } = await txPromise.then(tx => tx.wait());
-      const { tokenAmount } = this.paymaster.interface.parseLog(
-        logs.find(ev => ev.address == this.paymaster.target),
-      ).args;
-      const { actualGasCost } = logs.find(ev => ev.fragment?.name == 'UserOperationEvent').args;
-      await expect(txPromise).to.changeTokenBalances(
-        this.token,
-        [this.account, this.paymaster],
-        [-tokenAmount, tokenAmount],
-      );
-      await expect(txPromise).to.changeEtherBalances([entrypoint, this.receiver], [-actualGasCost, actualGasCost]);
-
-      // skip gas consumption tests when running coverage (significantly affects the postOp costs)
-      if (!process.env.COVERAGE) {
-        expect(tokenAmount)
-          .to.be.greaterThan(actualGasCost * 2n)
-          .to.be.lessThan((actualGasCost * 2n * 110n) / 100n); // covers costs with no more than 10% overcost
-      }
+      this.extraCalls = [];
+      this.withGuarantor = false;
+      this.guarantorPays = false;
+      this.tokenMovements = [
+        { account: this.account, factor: -1n },
+        { account: this.paymaster, factor: 1n },
+      ];
     });
 
     it('from account, with guarantor refund', async function () {
@@ -154,68 +116,37 @@ describe('PaymasterERC20', function () {
       await this.token.$_mint(this.guarantor, value);
       await this.token.$_approve(this.guarantor, this.paymaster, ethers.MaxUint256);
 
-      // prepare user operation
-      const signedUserOp = await this.account
-        .createUserOp({
-          callData: this.account.interface.encodeFunctionData('execute', [
-            encodeMode({ callType: CALL_TYPE_BATCH }),
-            encodeBatch(
-              {
-                target: this.token,
-                data: this.token.interface.encodeFunctionData('$_mint', [this.account.target, value]),
-              },
-              {
-                target: this.token,
-                data: this.token.interface.encodeFunctionData('approve', [this.paymaster.target, ethers.MaxUint256]),
-              },
-              {
-                target: this.target,
-                data: this.target.interface.encodeFunctionData('mockFunctionExtra'),
-              },
-            ),
-          ]),
-          paymaster: this.paymaster,
-          paymasterData: ethers.solidityPacked(
-            ['address', 'uint48', 'uint48', 'uint256', 'address'],
-            [this.token.target, 0n, 0n, 2e6, this.guarantor.address],
-          ),
-        })
-        .then(op => this.signUserOp(op));
+      this.extraCalls = [
+        { target: this.token, data: this.token.interface.encodeFunctionData('$_mint', [this.account.target, value]) },
+        {
+          target: this.token,
+          data: this.token.interface.encodeFunctionData('approve', [this.paymaster.target, ethers.MaxUint256]),
+        },
+      ];
+      this.withGuarantor = true;
+      this.guarantorPays = false;
+      this.tokenMovements = [
+        { account: this.account, factor: -1n, offset: value },
+        { account: this.guarantor, factor: 0n },
+        { account: this.paymaster, factor: 1n },
+      ];
+    });
 
-      // perform operation
-      const txPromise = entrypoint.handleOps([signedUserOp.packed], this.receiver);
-      await expect(txPromise)
-        .to.emit(this.token, 'Transfer')
-        .withArgs(this.guarantor, this.paymaster, anyValue)
-        .to.emit(this.token, 'Transfer')
-        .withArgs(ethers.ZeroAddress, this.account, value)
-        .to.emit(this.token, 'Transfer')
-        .withArgs(this.account, this.paymaster, anyValue)
-        .to.emit(this.token, 'Transfer')
-        .withArgs(this.paymaster, this.guarantor, anyValue)
-        .to.emit(this.paymaster, 'UserOperationSponsored')
-        .withArgs(signedUserOp.hash(), this.account, this.guarantor, anyValue, 2e6, false)
-        .to.emit(this.target, 'MockFunctionCalledExtra')
-        .withArgs(this.account, 0n);
+    it('from account, with guarantor refund (cold storage)', async function () {
+      // fund guarantor and account beforeend. All balances and allowances are cold, making it the worst cas for postOp gas costs
+      await this.token.$_mint(this.account, value);
+      await this.token.$_mint(this.guarantor, value);
+      await this.token.$_approve(this.account, this.paymaster, ethers.MaxUint256);
+      await this.token.$_approve(this.guarantor, this.paymaster, ethers.MaxUint256);
 
-      const { logs } = await txPromise.then(tx => tx.wait());
-      const { tokenAmount } = this.paymaster.interface.parseLog(
-        logs.find(ev => ev.address == this.paymaster.target),
-      ).args;
-      const { actualGasCost } = logs.find(ev => ev.fragment?.name == 'UserOperationEvent').args;
-      await expect(txPromise).to.changeTokenBalances(
-        this.token,
-        [this.account, this.guarantor, this.paymaster],
-        [value - tokenAmount, 0n, tokenAmount],
-      );
-      await expect(txPromise).to.changeEtherBalances([entrypoint, this.receiver], [-actualGasCost, actualGasCost]);
-
-      // skip gas consumption tests when running coverage (significantly affects the postOp costs)
-      if (!process.env.COVERAGE) {
-        expect(tokenAmount)
-          .to.be.greaterThan(actualGasCost * 2n)
-          .to.be.lessThan((actualGasCost * 2n * 110n) / 100n); // covers costs with no more than 10% overcost
-      }
+      this.extraCalls = [];
+      this.withGuarantor = true;
+      this.guarantorPays = false;
+      this.tokenMovements = [
+        { account: this.account, factor: -1n },
+        { account: this.guarantor, factor: 0n },
+        { account: this.paymaster, factor: 1n },
+      ];
     });
 
     it('from guarantor, when account fails to pay', async function () {
@@ -223,48 +154,69 @@ describe('PaymasterERC20', function () {
       await this.token.$_mint(this.guarantor, value);
       await this.token.$_approve(this.guarantor, this.paymaster, ethers.MaxUint256);
 
-      // prepare user operation
+      this.extraCalls = [];
+      this.withGuarantor = true;
+      this.guarantorPays = true;
+      this.tokenMovements = [
+        { account: this.account, factor: 0n },
+        { account: this.guarantor, factor: -1n },
+        { account: this.paymaster, factor: 1n },
+      ];
+    });
+
+    afterEach(async function () {
       const signedUserOp = await this.account
+        // prepare user operation, with paymaster data
         .createUserOp({
+          ...this.userOp,
           callData: this.account.interface.encodeFunctionData('execute', [
             encodeMode({ callType: CALL_TYPE_BATCH }),
-            encodeBatch({
+            encodeBatch(...this.extraCalls, {
               target: this.target,
               data: this.target.interface.encodeFunctionData('mockFunctionExtra'),
             }),
           ]),
-          paymaster: this.paymaster,
           paymasterData: ethers.solidityPacked(
             ['address', 'uint48', 'uint48', 'uint256', 'address'],
-            [this.token.target, 0n, 0n, 2e6, this.guarantor.address],
+            [this.token.target, 0n, 0n, 2e6, this.withGuarantor ? this.guarantor.address : ethers.ZeroAddress],
           ),
         })
+        // sign it
         .then(op => this.signUserOp(op));
 
-      // perform operation
+      // send it to the entrypoint
       const txPromise = entrypoint.handleOps([signedUserOp.packed], this.receiver);
+
+      // check main events (target call and sponsoring)
       await expect(txPromise)
-        .to.emit(this.token, 'Transfer')
-        .withArgs(this.guarantor, this.paymaster, anyValue)
-        .to.emit(this.token, 'Transfer')
-        .withArgs(this.paymaster, this.guarantor, anyValue)
         .to.emit(this.paymaster, 'UserOperationSponsored')
-        .withArgs(signedUserOp.hash(), this.account, this.guarantor, anyValue, 2e6, true)
+        .withArgs(
+          signedUserOp.hash(),
+          this.account,
+          this.withGuarantor ? this.guarantor.address : ethers.ZeroAddress,
+          anyValue,
+          2e6,
+          this.guarantorPays,
+        )
         .to.emit(this.target, 'MockFunctionCalledExtra')
         .withArgs(this.account, 0n);
 
+      // parse logs:
+      // - get tokenAmount repaid for the paymaster event
+      // - get the actual gas cost from the entrypoint event
       const { logs } = await txPromise.then(tx => tx.wait());
-      const { tokenAmount } = this.paymaster.interface.parseLog(
-        logs.find(ev => ev.address == this.paymaster.target),
-      ).args;
+      const { tokenAmount } = logs.map(ev => this.paymaster.interface.parseLog(ev)).find(Boolean).args;
       const { actualGasCost } = logs.find(ev => ev.fragment?.name == 'UserOperationEvent').args;
+      // check token balances moved as expected
       await expect(txPromise).to.changeTokenBalances(
         this.token,
-        [this.account, this.guarantor, this.paymaster],
-        [0n, -tokenAmount, tokenAmount],
+        this.tokenMovements.map(({ account }) => account),
+        this.tokenMovements.map(({ factor = 0n, offset = 0n }) => offset + tokenAmount * factor),
       );
+      // check that ether moved as expected
       await expect(txPromise).to.changeEtherBalances([entrypoint, this.receiver], [-actualGasCost, actualGasCost]);
 
+      // check token cost is within the expected values
       // skip gas consumption tests when running coverage (significantly affects the postOp costs)
       if (!process.env.COVERAGE) {
         expect(tokenAmount)
