@@ -10,7 +10,7 @@ import {PaymasterCore} from "./PaymasterCore.sol";
 import {AbstractSigner} from "../../utils/cryptography/AbstractSigner.sol";
 
 /**
- * @dev Extension of {PaymasterCore} supports user paying gas with ERC-20 tokens.
+ * @dev Extension of {PaymasterCore} that enables users to pay gas with ERC-20 tokens.
  */
 abstract contract PaymasterERC20 is PaymasterCore {
     using ERC4337Utils for *;
