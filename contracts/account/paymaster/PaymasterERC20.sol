@@ -83,6 +83,16 @@ abstract contract PaymasterERC20 is PaymasterCore {
         }
     }
 
+    /**
+     * @dev Internal function that returns the repayment details for a given user operation
+     *
+     * This may be implemented in any number of ways, including
+     * * Hardcoding values (only one token supported)
+     * * Getting the price from an onchain oracle
+     * * Getting the (signed) values through the userOp's paymasterData
+     *
+     * The paymaster can also decide to not support guarantors, and always return address(0) for that part.
+     */
     function _fetchDetails(
         PackedUserOperation calldata userOp,
         bytes32 userOpHash
@@ -92,10 +102,12 @@ abstract contract PaymasterERC20 is PaymasterCore {
         virtual
         returns (IERC20 token, uint48 validAfter, uint48 validUntil, uint256 tokenPrice, address guarantor);
 
+    /// @dev Denominator used for interpreting the `tokenPrice` returned by {_fetchDetails} as "fixed point".
     function _tokenPriceDenominator() internal view virtual returns (uint256) {
-        return 1e6;
+        return 1e18;
     }
 
+    /// @dev Public function that allows the withdrawer to extract ERC-20 tokens resulting from gas payments.
     function withdrawTokens(IERC20 token, address recipient, uint256 amount) public virtual onlyWithdrawer {
         if (amount == type(uint256).max) amount = token.balanceOf(address(this));
         token.safeTransfer(recipient, amount);

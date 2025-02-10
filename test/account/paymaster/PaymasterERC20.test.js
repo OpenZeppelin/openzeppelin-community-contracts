@@ -72,7 +72,7 @@ describe('PaymasterERC20', function () {
         Object.assign(userOp, {
           paymasterData: ethers.solidityPacked(
             ['address', 'uint48', 'uint48', 'uint256', 'address'],
-            [this.token.target, validAfter, validUntil, 1e6, ethers.ZeroAddress],
+            [this.token.target, validAfter, validUntil, ethers.WeiPerEther, ethers.ZeroAddress],
           ),
         });
 
@@ -81,7 +81,7 @@ describe('PaymasterERC20', function () {
         Object.assign(userOp, {
           paymasterData: ethers.solidityPacked(
             ['address', 'uint48', 'uint48', 'uint256', 'address'],
-            [this.other.address, validAfter, validUntil, 1e6, ethers.ZeroAddress],
+            [this.other.address, validAfter, validUntil, ethers.WeiPerEther, ethers.ZeroAddress],
           ),
         });
     });
@@ -178,7 +178,13 @@ describe('PaymasterERC20', function () {
           ]),
           paymasterData: ethers.solidityPacked(
             ['address', 'uint48', 'uint48', 'uint256', 'address'],
-            [this.token.target, 0n, 0n, 2e6, this.withGuarantor ? this.guarantor.address : ethers.ZeroAddress],
+            [
+              this.token.target,
+              0n,
+              0n,
+              2n * ethers.WeiPerEther,
+              this.withGuarantor ? this.guarantor.address : ethers.ZeroAddress,
+            ],
           ),
         })
         // sign it
@@ -195,7 +201,7 @@ describe('PaymasterERC20', function () {
           this.account,
           this.withGuarantor ? this.guarantor.address : ethers.ZeroAddress,
           anyValue,
-          2e6,
+          2n * ethers.WeiPerEther,
           this.guarantorPays,
         )
         .to.emit(this.target, 'MockFunctionCalledExtra')
