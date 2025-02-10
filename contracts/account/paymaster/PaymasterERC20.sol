@@ -37,7 +37,8 @@ abstract contract PaymasterERC20 is PaymasterCore {
         uint256 maxCost
     ) internal virtual override returns (bytes memory context, uint256 validationData) {
         (IERC20 token, uint48 validAfter, uint48 validUntil, uint256 tokenPrice, address guarantor) = _fetchDetails(
-            userOp.paymasterData()
+            userOp,
+            userOpHash
         );
 
         uint256 prefundAmount = (maxCost +
@@ -83,7 +84,8 @@ abstract contract PaymasterERC20 is PaymasterCore {
     }
 
     function _fetchDetails(
-        bytes calldata paymasterData
+        PackedUserOperation calldata userOp,
+        bytes32 userOpHash
     )
         internal
         view
