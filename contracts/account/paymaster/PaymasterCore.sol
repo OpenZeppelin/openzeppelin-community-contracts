@@ -4,7 +4,6 @@ pragma solidity ^0.8.20;
 
 import {ERC4337Utils} from "@openzeppelin/contracts/account/utils/draft-ERC4337Utils.sol";
 import {IEntryPoint, IPaymaster, PackedUserOperation} from "@openzeppelin/contracts/interfaces/draft-IERC4337.sol";
-import {ERC4337Utils} from "@openzeppelin/contracts/account/utils/draft-ERC4337Utils.sol";
 
 /**
  * @dev A simple ERC4337 paymaster implementation. This base implementation only includes the minimal logic to validate
@@ -39,7 +38,7 @@ abstract contract PaymasterCore is IPaymaster {
 
     /// @dev Canonical entry point for the account that forwards and validates user operations.
     function entryPoint() public view virtual returns (IEntryPoint) {
-        return ERC4337Utils.ENTRYPOINT;
+        return ERC4337Utils.ENTRYPOINT_V07;
     }
 
     /// @inheritdoc IPaymaster
@@ -78,8 +77,8 @@ abstract contract PaymasterCore is IPaymaster {
     /**
      * @dev Handles post user operation execution logic. The caller must be the entry point.
      *
-     * It receives the `context` returned by `_validatePaymasterUserOp`. Reverts by default
-     * since the function is not called if no context is returned by {validatePaymasterUserOp}.
+     * It receives the `context` returned by `_validatePaymasterUserOp`. Function is not called if no context
+     * is returned by {validatePaymasterUserOp}.
      *
      * NOTE: The `actualUserOpFeePerGas` is not `tx.gasprice`. A user operation can be bundled with other transactions
      * making the gas price of the user operation to differ.

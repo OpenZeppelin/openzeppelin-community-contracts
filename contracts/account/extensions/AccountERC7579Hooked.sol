@@ -9,20 +9,27 @@ import {AccountERC7579} from "./AccountERC7579.sol";
 /**
  * @dev Extension of {AccountERC7579} with support for a single hook module (type 4).
  *
- * If installed, this extension will call the hook module's {IERC7579Hook-preCheck} before
- * executing any operation with {_execute} (including {execute} and {executeFromExecutor} by
- * default) and {IERC7579Hook-postCheck} thereafter.
+ * If installed, this extension will call the hook module's {IERC7579Hook-preCheck} before executing any operation
+ * with {_execute} (including {execute} and {executeFromExecutor} by default) and {IERC7579Hook-postCheck} thereafter.
+ *
+ * NOTE: Hook modules break the check-effect-interaction pattern. In particular, the {IERC7579Hook-preCheck} hook can
+ * lead to potentially dangerous reentrancy. Using the `withHook()` modifier is safe if no effect is performed
+ * before the preHook or after the postHook. That is the case on all functions here, but it may not be the case if
+ * functions that have this modifier are overridden. Developers should be extremely careful when implementing hook
+ * modules or further overriding functions that involve hooks.
  */
 abstract contract AccountERC7579Hooked is AccountERC7579 {
     address private _hook;
 
     /**
-     * @dev Calls {IERC7579Hook-preCheck} before executing the modified
-     * function and {IERC7579Hook-postCheck} thereafter.
+     * @dev Calls {IERC7579Hook-preCheck} before executing the modified function and {IERC7579Hook-postCheck}
+     * thereafter.
      */
     modifier withHook() {
         address hook_ = hook();
         bytes memory hookData;
+
+        // slither-disable-next-line reentrancy-no-eth
         if (hook_ != address(0)) hookData = IERC7579Hook(hook_).preCheck(msg.sender, msg.value, msg.data);
         _;
         if (hook_ != address(0)) IERC7579Hook(hook_).postCheck(hookData);
@@ -50,7 +57,6 @@ abstract contract AccountERC7579Hooked is AccountERC7579 {
     }
 
     /// @dev Installs a module with support for hook modules. See {AccountERC7579-_installModule}
-    /// TODO: withHook? based on what value?
     function _installModule(
         uint256 moduleTypeId,
         address module,
@@ -64,7 +70,6 @@ abstract contract AccountERC7579Hooked is AccountERC7579 {
     }
 
     /// @dev Uninstalls a module with support for hook modules. See {AccountERC7579-_uninstallModule}
-    /// TODO: withHook? based on what value?
     function _uninstallModule(
         uint256 moduleTypeId,
         address module,
