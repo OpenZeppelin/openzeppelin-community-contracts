@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.20;
+pragma solidity ^0.8.24;
 
 import {ValidationConfig, ModuleEntity, ValidationFlags, HookConfig, ExecutionManifest, ManifestExecutionHook, ManifestExecutionFunction, Call} from "../../interfaces/IERC6900.sol";
 import {Bytes} from "@openzeppelin/contracts/utils/Bytes.sol";
