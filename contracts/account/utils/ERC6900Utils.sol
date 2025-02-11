@@ -16,23 +16,6 @@ import {Address} from "@openzeppelin/contracts/utils/Address.sol";
 library ERC6900Utils {
     using Packing for *;
 
-    error ERC6900ModuleInterfaceNotSupported(address module, bytes4 expectedInterface);
-    error ERC6900AlreadySetSelectorForValidation(ModuleEntity validationFunction, bytes4 selector);
-    error ERC6900AlreadySetValidationHookForValidation();
-    error ERC6900AlreadySetExecutionHookForExecution();
-    error ERC6900AlreadySetExecutionHookForValidation();
-    error ERC6900AlreadyUsedModuleFunctionExecutionSelector(bytes4 selector);
-    error ERC6900ExecutionSelectorConflictingWithERC4337Function(address module, bytes4 selector);
-    error ERC6900ExecutionSelectorConflictingWithERC6900Function(address module, bytes4 selector);
-    error ERC6900BadUserOpValidation(ModuleEntity moduleEntity);
-    error ERC6900BadSignatureValidation(ModuleEntity moduleEntity);
-    error ERC6900MissingValidationForSelector(bytes4 selector);
-    error ERC6900ExecutionSelectorNotAllowedForGlobalValidation(
-        ModuleEntity validationModuleEntity,
-        bytes4 executionSelector
-    );
-    error ERC6900InvalidExecuteTarget();
-
     // ModuleEntity
 
     function unpack(ModuleEntity moduleEntity) internal pure returns (address, uint32) {

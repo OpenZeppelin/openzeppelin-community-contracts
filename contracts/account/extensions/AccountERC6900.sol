@@ -53,6 +53,23 @@ abstract contract AccountERC6900 is AccountCore, ERC7739, IERC6900ModularAccount
     mapping(bytes4 interfaceId => bool supported) private _interfaceIds;
     mapping(bytes4 selector => address) private _fallbacks;
 
+    error ERC6900ModuleInterfaceNotSupported(address module, bytes4 expectedInterface);
+    error ERC6900AlreadySetSelectorForValidation(ModuleEntity validationFunction, bytes4 selector);
+    error ERC6900AlreadySetValidationHookForValidation();
+    error ERC6900AlreadySetExecutionHookForExecution();
+    error ERC6900AlreadySetExecutionHookForValidation();
+    error ERC6900AlreadyUsedModuleFunctionExecutionSelector(bytes4 selector);
+    error ERC6900ExecutionSelectorConflictingWithERC4337Function(address module, bytes4 selector);
+    error ERC6900ExecutionSelectorConflictingWithERC6900Function(address module, bytes4 selector);
+    error ERC6900BadUserOpValidation(ModuleEntity moduleEntity);
+    error ERC6900BadSignatureValidation(ModuleEntity moduleEntity);
+    error ERC6900MissingValidationForSelector(bytes4 selector);
+    error ERC6900ExecutionSelectorNotAllowedForGlobalValidation(
+        ModuleEntity validationModuleEntity,
+        bytes4 executionSelector
+    );
+    error ERC6900InvalidExecuteTarget();
+
     struct Validation {
         EnumerableSet.Bytes32Set selectors;
         ValidationFlags validationFlags;
@@ -168,10 +185,7 @@ abstract contract AccountERC6900 is AccountCore, ERC7739, IERC6900ModularAccount
         ValidationFlags _validationFlags = validation.validationFlags;
         // If a validation function is attempted to be used for user op validation
         // and the flag isUserOpValidation is set to false, validation MUST revert
-        require(
-            !_validationFlags.isUserOpValidation(),
-            ERC6900Utils.ERC6900BadUserOpValidation(validationModuleEntity)
-        );
+        require(!_validationFlags.isUserOpValidation(), ERC6900BadUserOpValidation(validationModuleEntity));
         bytes4 executionSelector = bytes4(userOp.callData[:4]);
         // validation installation MAY specify the isGlobal flag as true
         if (_validationFlags.isGlobalValidation()) {
@@ -180,29 +194,26 @@ abstract contract AccountERC6900 is AccountCore, ERC7739, IERC6900ModularAccount
             // execution function with the allowGlobalValidation flag set to true
             require(
                 !execution.allowGlobalValidation,
-                ERC6900Utils.ERC6900ExecutionSelectorNotAllowedForGlobalValidation(
-                    validationModuleEntity,
-                    executionSelector
-                )
+                ERC6900ExecutionSelectorNotAllowedForGlobalValidation(validationModuleEntity, executionSelector)
             );
         } else {
             // validation functions have a configurable range of applicability.
             // This can be configured with selectors installed to a validation
             require(
                 !validation.selectors.contains(executionSelector),
-                ERC6900Utils.ERC6900MissingValidationForSelector(executionSelector)
+                ERC6900MissingValidationForSelector(executionSelector)
             );
         }
         // If the selector being checked is execute or executeBatch,
         // it MUST perform additional checking on target.
         if (executionSelector == IERC6900ModularAccount.execute.selector) {
             (address target, , ) = abi.decode(userOp.callData[4:], (address, uint256, bytes));
-            require(target != address(this), ERC6900Utils.ERC6900InvalidExecuteTarget());
+            require(target != address(this), ERC6900InvalidExecuteTarget());
         }
         if (executionSelector == IERC6900ModularAccount.executeBatch.selector) {
             Call[] memory calls = abi.decode(userOp.callData[4:], (Call[]));
             for (uint256 i = 0; i < calls.length; i++) {
-                require(calls[i].target != address(this), ERC6900Utils.ERC6900InvalidExecuteTarget());
+                require(calls[i].target != address(this), ERC6900InvalidExecuteTarget());
             }
         }
         return
@@ -228,7 +239,7 @@ abstract contract AccountERC6900 is AccountCore, ERC7739, IERC6900ModularAccount
         // and the flag isSignatureValidation is set to false, validation MUST revert
         require(
             !_validations[validationModuleEntity].validationFlags.isSignatureValidation(),
-            ERC6900Utils.ERC6900BadSignatureValidation(validationModuleEntity)
+            ERC6900BadSignatureValidation(validationModuleEntity)
         );
 
         return
@@ -271,14 +282,14 @@ abstract contract AccountERC6900 is AccountCore, ERC7739, IERC6900ModularAccount
         // Modules MUST implement ERC-165 for IModule.
         require(
             ERC165Checker.supportsInterface(module, type(IERC6900Module).interfaceId),
-            ERC6900Utils.ERC6900ModuleInterfaceNotSupported(module, type(IERC6900Module).interfaceId)
+            ERC6900ModuleInterfaceNotSupported(module, type(IERC6900Module).interfaceId)
         );
         Validation storage validation = _validations[moduleEntity];
         // The account MUST configure the validation function to validate all of the selectors specified by the user.
         for (uint256 i = 0; i < selectors.length; i++) {
             require(
                 validation.selectors.add(selectors[i]),
-                ERC6900Utils.ERC6900AlreadySetSelectorForValidation(moduleEntity, selectors[i])
+                ERC6900AlreadySetSelectorForValidation(moduleEntity, selectors[i])
             );
         }
         // - The account MUST install all validation hooks specified by the user and SHOULD call onInstall
@@ -294,21 +305,21 @@ abstract contract AccountERC6900 is AccountCore, ERC7739, IERC6900ModularAccount
                 expectedInterface = type(IERC6900ValidationModule).interfaceId;
                 require(
                     validation.validationHooks.add(bytes32(hook[:24])),
-                    ERC6900Utils.ERC6900AlreadySetValidationHookForValidation()
+                    ERC6900AlreadySetValidationHookForValidation()
                 );
             } else {
                 // Is execution hook
                 expectedInterface = type(IERC6900ExecutionModule).interfaceId;
                 require(
                     validation.executionHooks.add(bytes32(hook[:25])),
-                    ERC6900Utils.ERC6900AlreadySetExecutionHookForValidation()
+                    ERC6900AlreadySetExecutionHookForValidation()
                 );
             }
             // TODO: Firstly check interface is supported
             if (hookModule.code.length > 0) {
                 require(
                     ERC165Checker.supportsInterface(hookModule, expectedInterface),
-                    ERC6900Utils.ERC6900ModuleInterfaceNotSupported(hookModule, expectedInterface)
+                    ERC6900ModuleInterfaceNotSupported(hookModule, expectedInterface)
                 );
                 //IERC6900Module(hookModule).onInstall(installData); //TODO Enable
             }
@@ -329,7 +340,7 @@ abstract contract AccountERC6900 is AccountCore, ERC7739, IERC6900ModularAccount
         // Modules MUST implement ERC-165 for IModule.
         require(
             IERC6900Module(module).supportsInterface(type(IERC6900Module).interfaceId), //TODO Use checker
-            ERC6900Utils.ERC6900ModuleInterfaceNotSupported(module, type(IERC6900Module).interfaceId)
+            ERC6900ModuleInterfaceNotSupported(module, type(IERC6900Module).interfaceId)
         );
         // The account MUST install all execution functions and set flags and fields as specified in the manifest.
         ManifestExecutionFunction[] memory executionFunctions = manifest.executionFunctions;
@@ -340,16 +351,16 @@ abstract contract AccountERC6900 is AccountCore, ERC7739, IERC6900ModularAccount
             // An execution function selector MUST be unique in the account.
             require(
                 execution.module == address(0),
-                ERC6900Utils.ERC6900AlreadyUsedModuleFunctionExecutionSelector(executionSelector)
+                ERC6900AlreadyUsedModuleFunctionExecutionSelector(executionSelector)
             );
             // An execution function selector MUST not conflict with native ERC-4337 and ERC-6900 functions.
             require(
                 IAccount.validateUserOp.selector != executionSelector, // TODO Check other ERC-4337 functions
-                ERC6900Utils.ERC6900ExecutionSelectorConflictingWithERC4337Function(module, executionSelector)
+                ERC6900ExecutionSelectorConflictingWithERC4337Function(module, executionSelector)
             );
             require(
                 IERC6900ModularAccount.execute.selector != executionSelector, // TODO Check other ERC-6900 functions
-                ERC6900Utils.ERC6900ExecutionSelectorConflictingWithERC6900Function(module, executionSelector)
+                ERC6900ExecutionSelectorConflictingWithERC6900Function(module, executionSelector)
             );
             execution.module = module;
             execution.skipRuntimeValidation = executionFunction.skipRuntimeValidation;
@@ -367,7 +378,7 @@ abstract contract AccountERC6900 is AccountCore, ERC7739, IERC6900ModularAccount
             Execution storage execution = _executions[executionSelector];
             require(
                 execution.executionHooks.add(bytes32(abi.encodePacked(module, entityId, isPreHook, isPostHook))),
-                ERC6900Utils.ERC6900AlreadySetExecutionHookForExecution()
+                ERC6900AlreadySetExecutionHookForExecution()
             );
         }
         // The account SHOULD add all supported interfaces as specified in the manifest.
