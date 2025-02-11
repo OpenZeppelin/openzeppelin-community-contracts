@@ -110,6 +110,7 @@ function shouldBehaveLikeAccountERC6900() {
         const isPreHook = true;
         const isPostHook = true;
         const interfaceId = ethers.hexlify('0x11223377');
+        /*
         const executionManifest = ethers.AbiCoder.defaultAbiCoder().encode(
           ['tuple(tuple(bytes4,bool,bool)[],tuple(bytes4,uint32,bool,bool)[],bytes4[])'],
           [
@@ -120,6 +121,7 @@ function shouldBehaveLikeAccountERC6900() {
             ],
           ],
         );
+        */
         await expect(
           this.mockFromEntrypoint.installExecutionFlat(
             moduleId,
