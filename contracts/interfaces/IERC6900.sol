@@ -47,6 +47,7 @@ struct Call {
     // The calldata for the call.
     bytes data;
 }
+
 interface IERC6900ModularAccount {
     event ExecutionInstalled(address indexed module, ExecutionManifest manifest);
     event ExecutionUninstalled(address indexed module, bool onUninstallSucceeded, ExecutionManifest manifest);
