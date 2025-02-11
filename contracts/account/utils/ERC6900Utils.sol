@@ -109,10 +109,6 @@ library ERC6900Utils {
         return uint32(Packing.extract_32_4(HookConfig.unwrap(hookConfig), 20));
     }
 
-    function getHookData(bytes calldata hook) internal pure returns (bytes calldata) {
-        return hook[:25];
-    }
-
     // function pack(
     //     address module,
     //     uint32 entityId,
