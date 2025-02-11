@@ -244,13 +244,10 @@ abstract contract AccountERC6900 is AccountCore, ERC7739, IERC6900ModularAccount
     /**
      * @dev ERC-6900 execution logic.
      *
-     * Reverts if the call type is not supported.
      */
     function _execute(address target, uint256 value, bytes calldata data) internal virtual returns (bytes memory) {
         (bool success, bytes memory returndata) = target.call{value: value}(data);
-
-        require(success, ERC6900Utils.ERC6900ExecutionFailed(target, value, data));
-        return returndata;
+        return Address.verifyCallResult(success, returndata);
     }
 
     /**

@@ -32,7 +32,6 @@ library ERC6900Utils {
         bytes4 executionSelector
     );
     error ERC6900InvalidExecuteTarget();
-    error ERC6900ExecutionFailed(address target, uint256 value, bytes data);
 
     // ModuleEntity
 
