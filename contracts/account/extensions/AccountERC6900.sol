@@ -45,7 +45,6 @@ import {AccountCore} from "../AccountCore.sol";
 abstract contract AccountERC6900 is AccountCore, ERC7739, IERC6900ModularAccount {
     using Bytes for *;
     using ERC6900Utils for *;
-    using ERC6900Utils for ModuleEntity;
     using EnumerableSet for *;
     using Packing for bytes32;
 
@@ -116,7 +115,7 @@ abstract contract AccountERC6900 is AccountCore, ERC7739, IERC6900ModularAccount
         // _uninstallModule(moduleTypeId, module, deInitData);
     }
 
-    /// @dev Executes a transaction from the entry point or the account itself. See {_execute}.
+    /// @inheritdoc IERC6900ModularAccount
     function execute(
         address target,
         uint256 value,
@@ -125,6 +124,7 @@ abstract contract AccountERC6900 is AccountCore, ERC7739, IERC6900ModularAccount
         return _execute(target, value, data);
     }
 
+    /// @inheritdoc IERC6900ModularAccount
     function executeBatch(Call[] calldata calls) public payable virtual onlyEntryPointOrSelf returns (bytes[] memory) {
         bytes[] memory returnedData = new bytes[](calls.length);
         for (uint256 i = 0; i < calls.length; i++) {
@@ -133,6 +133,7 @@ abstract contract AccountERC6900 is AccountCore, ERC7739, IERC6900ModularAccount
         return returnedData;
     }
 
+    /// @inheritdoc IERC6900ModularAccount
     function executeWithRuntimeValidation(
         bytes calldata data,
         bytes calldata authorization
