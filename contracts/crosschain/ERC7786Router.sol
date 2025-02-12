@@ -6,6 +6,7 @@ import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import {CAIP2} from "@openzeppelin/contracts/utils/CAIP2.sol";
 import {CAIP10} from "@openzeppelin/contracts/utils/CAIP10.sol";
+import {Pausable} from "@openzeppelin/contracts/utils/Pausable.sol";
 import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 import {IERC7786GatewaySource, IERC7786Receiver} from "../interfaces/IERC7786.sol";
 
@@ -13,7 +14,7 @@ import {IERC7786GatewaySource, IERC7786Receiver} from "../interfaces/IERC7786.so
  * @dev N of M gateway: Sends your message through M independent gateways. It will be delivered to the receiver by an
  * equivalent router on the destination chain if N of the M gateways agree.
  */
-contract ERC7786Router is Ownable, IERC7786GatewaySource, IERC7786Receiver {
+contract ERC7786Router is Ownable, Pausable, IERC7786GatewaySource, IERC7786Receiver {
     using EnumerableSet for *;
     using Strings for *;
 
@@ -78,7 +79,7 @@ contract ERC7786Router is Ownable, IERC7786GatewaySource, IERC7786Receiver {
         string memory receiver, // using memory instead of calldata avoids stack too deep error
         bytes memory payload, // using memory instead of calldata avoids stack too deep error
         bytes[] memory attributes // using memory instead of calldata avoids stack too deep error
-    ) external payable returns (bytes32 outboxId) {
+    ) external payable whenNotPaused returns (bytes32 outboxId) {
         // address of the remote router, revert if not registered
         string memory router = getRemoteRouter(destinationChain);
         string memory sender = CAIP10.local(msg.sender);
@@ -121,7 +122,7 @@ contract ERC7786Router is Ownable, IERC7786GatewaySource, IERC7786Receiver {
         string calldata sender, // CAIP-10 account address (does not include the chain identifier)
         bytes calldata payload,
         bytes[] calldata attributes
-    ) external payable returns (bytes4) {
+    ) external payable whenNotPaused returns (bytes4) {
         // Check sender is a trusted remote router
         require(
             _remoteRouters[sourceChain].equal(sender),
@@ -205,6 +206,14 @@ contract ERC7786Router is Ownable, IERC7786GatewaySource, IERC7786Receiver {
 
     function registerRemoteRouter(string memory caip2, string memory router) public virtual onlyOwner {
         _registerRemoteRouter(caip2, router);
+    }
+
+    function pause() public virtual onlyOwner {
+        _pause();
+    }
+
+    function unpause() public virtual onlyOwner {
+        _unpause();
     }
 
     // ================================================== Internal ===================================================
