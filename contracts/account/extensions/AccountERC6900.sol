@@ -50,7 +50,7 @@ abstract contract AccountERC6900 is AccountCore, ERC7739, IERC6900ModularAccount
 
     mapping(ModuleEntity moduleEntity => Validation) private _validations;
     mapping(bytes4 selector => Execution) private _executions;
-    mapping(bytes4 interfaceId => bool supported) private _interfaceIds;
+    mapping(bytes4 interfaceId => uint256 supported) private _interfaceIds;
 
     error ERC6900ModuleInterfaceNotSupported(address module, bytes4 expectedInterface);
     error ERC6900AlreadySetSelectorForValidation(ModuleEntity validationFunction, bytes4 selector);
@@ -393,9 +393,7 @@ abstract contract AccountERC6900 is AccountCore, ERC7739, IERC6900ModularAccount
         // The account SHOULD add all supported interfaces as specified in the manifest.
         bytes4[] memory interfaceIds = manifest.interfaceIds;
         for (uint256 i = 0; i < interfaceIds.length; i++) {
-            bytes4 interfaceId = interfaceIds[i];
-            require(!_interfaceIds[interfaceId], "Interface already set"); // TODO use custom error
-            _interfaceIds[interfaceId] = true;
+            _interfaceIds[interfaceIds[i]]++;
         }
         // The account SHOULD call onInstall on the execution module to initialize state if specified by the user.
         IERC6900Module(module).onInstall(installData);
