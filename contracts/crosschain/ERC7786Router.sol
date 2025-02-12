@@ -12,8 +12,6 @@ import {IERC7786GatewaySource, IERC7786Receiver} from "../interfaces/IERC7786.so
 /**
  * @dev N of M gateway: Sends your message through M independent gateways. It will be delivered to the receiver by an
  * equivalent router on the destination chain if N of the M gateways agree.
- *
- * NOTE: This contract assumes that both sides of the communication are EVM chains
  */
 contract ERC7786Router is Ownable, IERC7786GatewaySource, IERC7786Receiver {
     using EnumerableSet for *;
@@ -33,39 +31,27 @@ contract ERC7786Router is Ownable, IERC7786GatewaySource, IERC7786Receiver {
     /****************************************************************************************************************
      *                                        S T A T E   V A R I A B L E S                                         *
      ****************************************************************************************************************/
-    /**
-     * @dev EVM address of the matching router for a given CAIP2 chain
-     *
-     * NOTE: storing the address and casting them on the flight is less expensive then loading a precomputed string
-     * that takes 3 slots (length + 42 chars)
-     */
-    mapping(string caip2 => address remote) private _remotes;
 
-    /**
-     * @dev Tracking of the received message pending final delivery
-     */
+    /// @dev address of the matching router for a given CAIP2 chain
+    mapping(string caip2 => string) private _remoteRouters;
+
+    /// @dev Tracking of the received message pending final delivery
     mapping(bytes32 id => Tracker) private _trackers;
 
-    /**
-     * @dev List of authorized IERC7786 gateways (M is the length of this set)
-     */
+    /// @dev List of authorized IERC7786 gateways (M is the length of this set)
     EnumerableSet.AddressSet private _gateways;
 
-    /**
-     * @dev Threshold for message reception (the threshold opf the sending side is applied on the receiving side)
-     */
+    /// @dev Threshold for message reception (the threshold opf the sending side is applied on the receiving side)
     uint8 private _threshold;
 
-    /**
-     * @dev Nonce for message deduplication (internal)
-     */
+    /// @dev Nonce for message deduplication (internal)
     uint256 private _nonce;
 
     /****************************************************************************************************************
      *                                        E V E N T S   &   E R R O R S                                         *
      ****************************************************************************************************************/
-    event RemoteRegistered(uint256 chainId, address remote);
-    error RemoteAlreadyRegistered(uint256 chainId);
+    event RemoteRegistered(string chainId, string router);
+    error RemoteAlreadyRegistered(string chainId);
 
     /****************************************************************************************************************
      *                                              F U N C T I O N S                                               *
@@ -76,6 +62,8 @@ contract ERC7786Router is Ownable, IERC7786GatewaySource, IERC7786Receiver {
         }
         _setThreshold(threshold_);
     }
+
+    // ============================================ IERC7786GatewaySource ============================================
 
     /// @inheritdoc IERC7786GatewaySource
     function supportsAttribute(bytes4 selector) external view returns (bool) {
@@ -125,6 +113,8 @@ contract ERC7786Router is Ownable, IERC7786GatewaySource, IERC7786Receiver {
         emit MessagePosted(outboxId, sender, CAIP10.format(destinationChain, receiver), payload, attributes);
     }
 
+    // ============================================== IERC7786Receiver ===============================================
+
     /// @inheritdoc IERC7786Receiver
     function executeMessage(
         string calldata sourceChain, // CAIP-2 chain identifier
@@ -134,7 +124,7 @@ contract ERC7786Router is Ownable, IERC7786GatewaySource, IERC7786Receiver {
     ) external payable returns (bytes4) {
         // Check sender is a trusted remote router
         require(
-            _remotes[sourceChain] == sender.parseAddress(),
+            _remoteRouters[sourceChain].equal(sender),
             "ERC7786Router message must originated from a registered remote router"
         );
 
@@ -151,6 +141,9 @@ contract ERC7786Router is Ownable, IERC7786GatewaySource, IERC7786Receiver {
         // Parse payload
         (, uint8 threshold, string memory originalSender, string memory receiver, bytes memory unwrappedPayload) = abi
             .decode(payload, (uint256, uint8, string, string, bytes));
+
+        // Threshold must be at least 1 to avoid arbitrary calls to be executed without any gateway confirmation.
+        require(threshold > 0, "ERC7786Router invalid threshold");
 
         // If ready to execute, and not yet executed
         if (tracker.countReceived >= threshold && !tracker.executed) {
@@ -176,24 +169,10 @@ contract ERC7786Router is Ownable, IERC7786GatewaySource, IERC7786Receiver {
         return IERC7786Receiver.executeMessage.selector;
     }
 
-    // TODO: expose that publicly ?
-    function _addGateway(address gateway) internal virtual {
-        require(!_gateways.add(gateway), "ERC7786Router gateway already present");
-        // TODO: add event
-    }
+    // =================================================== Getters ===================================================
 
-    // TODO: expose that publicly ?
-    function _removeGateway(address gateway) internal virtual {
-        require(!_gateways.remove(gateway), "ERC7786Router gateway not present");
-        require(_gateways.length() >= _threshold, "ERC7786 threshold exceeds the number of gateways");
-        // TODO: add event
-    }
-
-    // TODO: expose that publicly ?
-    function _setThreshold(uint8 newThreshold) internal virtual {
-        require(newThreshold <= _gateways.length(), "ERC7786 threshold exceeds the number of gateways");
-        _threshold = newThreshold;
-        // TODO: add event
+    function getGateways() public view virtual returns (address[] memory) {
+        return _gateways.values();
     }
 
     function getThreshold() public view virtual returns (uint8) {
@@ -201,17 +180,58 @@ contract ERC7786Router is Ownable, IERC7786GatewaySource, IERC7786Receiver {
     }
 
     function getRemoteRouter(string calldata caip2) public view virtual returns (string memory) {
-        address router = _remotes[caip2];
-        require(router != address(0), "No remote router known for this destination chain");
-        return router.toChecksumHexString();
+        string memory router = _remoteRouters[caip2];
+        require(bytes(router).length == 0, "No remote router known for this destination chain");
+        return router;
     }
 
-    function registerRemoteRouter(uint256 chainId, address remote) public virtual onlyOwner {
-        string memory caip2 = CAIP2.format("eip155", chainId.toString());
+    // =================================================== Setters ===================================================
 
-        require(_remotes[caip2] == address(0), RemoteAlreadyRegistered(chainId));
-        _remotes[caip2] = remote;
+    function addGateway(address gateway) public virtual onlyOwner {
+        _addGateway(gateway);
+    }
 
-        emit RemoteRegistered(chainId, remote);
+    function removeGateway(address gateway) public virtual onlyOwner {
+        _removeGateway(gateway);
+    }
+
+    function setThreshold(uint8 newThreshold) public virtual onlyOwner {
+        _setThreshold(newThreshold);
+    }
+
+    function registerRemoteRouter(uint256 chainId, address router) public virtual onlyOwner {
+        _registerRemoteRouter(CAIP2.format("eip155", chainId.toString()), router.toChecksumHexString());
+    }
+
+    function registerRemoteRouter(string memory caip2, string memory router) public virtual onlyOwner {
+        _registerRemoteRouter(caip2, router);
+    }
+
+    // ================================================== Internal ===================================================
+
+    function _addGateway(address gateway) internal virtual {
+        require(!_gateways.add(gateway), "ERC7786Router gateway already present");
+        // TODO: add event
+    }
+
+    function _removeGateway(address gateway) internal virtual {
+        require(!_gateways.remove(gateway), "ERC7786Router gateway not present");
+        require(_threshold <= _gateways.length(), "ERC7786 threshold exceeds the number of gateways");
+        // TODO: add event
+    }
+
+    function _setThreshold(uint8 newThreshold) internal virtual {
+        require(newThreshold > 0, "ERC7786 threshold cannot be 0");
+        require(newThreshold <= _gateways.length(), "ERC7786 threshold exceeds the number of gateways");
+        _threshold = newThreshold;
+        // TODO: add event
+    }
+
+    // NOTE: once a router is registered for a given chainId, it cannot be updated
+    function _registerRemoteRouter(string memory caip2, string memory router) internal virtual {
+        require(bytes(_remoteRouters[caip2]).length == 0, RemoteAlreadyRegistered(caip2));
+        _remoteRouters[caip2] = router;
+
+        emit RemoteRegistered(caip2, router);
     }
 }
