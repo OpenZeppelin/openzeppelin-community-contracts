@@ -223,8 +223,8 @@ abstract contract AccountERC6900 is AccountCore, ERC7739, IERC6900ModularAccount
     /**
      * @dev Lowest-level signature validation function. See {ERC7739-_rawSignatureValidation}.
      *
-     * This function delegates the signature validation to a validation module if the first 20 bytes of the
-     * signature correspond to an installed validator module.
+     * This function delegates the signature validation to a validation module if the first 24 bytes of the
+     * signature correspond to an installed validation module entity.
      *
      * See {_extractSignatureValidator} for the module extraction logic.
      */
