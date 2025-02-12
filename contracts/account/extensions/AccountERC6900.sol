@@ -157,6 +157,7 @@ abstract contract AccountERC6900 is AccountCore, ERC7739, IERC6900ModularAccount
     ) public payable virtual onlyEntryPointOrSelf returns (bytes memory) {
         ModuleEntity validationModuleEntity = ModuleEntity.wrap(bytes24(authorization[:24]));
         bytes calldata validationAuth = authorization[24:];
+        _checkValidationApplicability(data);
         IERC6900ValidationModule(validationModuleEntity.module()).validateRuntime(
             address(this),
             validationModuleEntity.entityId(),
@@ -204,20 +205,28 @@ abstract contract AccountERC6900 is AccountCore, ERC7739, IERC6900ModularAccount
                 ERC6900MissingValidationForSelector(executionSelector)
             );
         }
-        // If the selector being checked is execute or executeBatch,
-        // it MUST perform additional checking on target.
+        _checkValidationApplicability(userOp.callData);
+        return
+            IERC6900ValidationModule(module).validateUserOp(entityId, userOp, _signableUserOpHash(userOp, userOpHash));
+    }
+
+    /**
+     * @dev If the selector being checked is execute or executeBatch, it MUST perform
+     *  additional checking on target.
+     */
+    function _checkValidationApplicability(bytes calldata callData) internal view {
+        bytes4 executionSelector = bytes4(callData[:4]);
+        bytes memory data = callData[4:];
         if (executionSelector == IERC6900ModularAccount.execute.selector) {
-            (address target, , ) = abi.decode(userOp.callData[4:], (address, uint256, bytes));
+            (address target, , ) = abi.decode(data, (address, uint256, bytes));
             require(target != address(this), ERC6900InvalidExecuteTarget());
         }
         if (executionSelector == IERC6900ModularAccount.executeBatch.selector) {
-            Call[] memory calls = abi.decode(userOp.callData[4:], (Call[]));
+            Call[] memory calls = abi.decode(data, (Call[]));
             for (uint256 i = 0; i < calls.length; i++) {
                 require(calls[i].target != address(this), ERC6900InvalidExecuteTarget());
             }
         }
-        return
-            IERC6900ValidationModule(module).validateUserOp(entityId, userOp, _signableUserOpHash(userOp, userOpHash));
     }
 
     /**
