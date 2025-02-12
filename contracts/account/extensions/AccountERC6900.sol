@@ -51,7 +51,6 @@ abstract contract AccountERC6900 is AccountCore, ERC7739, IERC6900ModularAccount
     mapping(ModuleEntity moduleEntity => Validation) private _validations;
     mapping(bytes4 selector => Execution) private _executions;
     mapping(bytes4 interfaceId => bool supported) private _interfaceIds;
-    mapping(bytes4 selector => address) private _fallbacks;
 
     error ERC6900ModuleInterfaceNotSupported(address module, bytes4 expectedInterface);
     error ERC6900AlreadySetSelectorForValidation(ModuleEntity validationFunction, bytes4 selector);
@@ -69,6 +68,7 @@ abstract contract AccountERC6900 is AccountCore, ERC7739, IERC6900ModularAccount
         bytes4 executionSelector
     );
     error ERC6900InvalidExecuteTarget();
+    error ERC6900MissingFallbackExecutionModule(address module);
 
     struct Validation {
         EnumerableSet.Bytes32Set selectors;
@@ -409,16 +409,19 @@ abstract contract AccountERC6900 is AccountCore, ERC7739, IERC6900ModularAccount
     }
 
     /**
-     * @dev Fallback function that delegates the call to the installed handler for the given selector.
+     * @dev Fallback function that delegates the call to the installed execution module for the given selector.
      *
      */
     function _fallback() internal virtual returns (bytes memory) {
-        // TODO
+        address module = _fallbackExecutionModule(msg.sig);
+        require(module != address(0), ERC6900MissingFallbackExecutionModule(module));
+        (bool success, bytes memory returndata) = module.call{value: msg.value}(msg.data);
+        return Address.verifyCallResult(success, returndata);
     }
 
-    /// @dev Returns the fallback handler for the given selector. Returns `address(0)` if not installed.
-    function _fallbackHandler(bytes4 selector) internal view virtual returns (address) {
-        return _fallbacks[selector];
+    /// @dev Returns the fallback execution module for the given selector. Returns `address(0)` if not installed.
+    function _fallbackExecutionModule(bytes4 selector) internal view virtual returns (address) {
+        return _executions[selector].module;
     }
 
     function _decodeValidationConfig(
@@ -453,21 +456,6 @@ abstract contract AccountERC6900 is AccountCore, ERC7739, IERC6900ModularAccount
         bytes calldata signature
     ) internal pure virtual returns (ModuleEntity moduleEntity, bytes calldata innerSignature) {
         return (ModuleEntity.wrap(bytes24(signature[0:24])), signature[24:]);
-    }
-
-    /**
-     * @dev Extract the function selector from initData/deInitData for MODULE_TYPE_FALLBACK
-     *
-     * NOTE: If we had calldata here, we would could use calldata slice which are cheaper to manipulate and don't
-     * require actual copy. However, this would require `_installModule` to get a calldata bytes object instead of a
-     * memory bytes object. This would prevent calling `_installModule` from a contract constructor and would force
-     * the use of external initializers. That may change in the future, as most accounts will probably be deployed as
-     * clones/proxy/ERC-7702 delegates and therefore rely on initializers anyway.
-     */
-    function _decodeFallbackData(
-        bytes memory data
-    ) internal pure virtual returns (bytes4 selector, bytes memory remaining) {
-        return (bytes4(data), data.slice(4));
     }
 
     // TODO: Remove flat function and update test
