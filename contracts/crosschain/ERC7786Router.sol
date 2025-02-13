@@ -4,6 +4,7 @@ pragma solidity ^0.8.27;
 
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
+import {Address} from "@openzeppelin/contracts/utils/Address.sol";
 import {CAIP2} from "@openzeppelin/contracts/utils/CAIP2.sol";
 import {CAIP10} from "@openzeppelin/contracts/utils/CAIP10.sol";
 import {Pausable} from "@openzeppelin/contracts/utils/Pausable.sol";
@@ -80,6 +81,7 @@ contract ERC7786Router is IERC7786GatewaySource, IERC7786Receiver, Ownable, Paus
         bytes memory payload, // using memory instead of calldata avoids stack too deep error
         bytes[] memory attributes // using memory instead of calldata avoids stack too deep error
     ) external payable whenNotPaused returns (bytes32 outboxId) {
+        require(msg.value == 0, "ERC7786Router: value not supported");
         // address of the remote router, revert if not registered
         string memory router = getRemoteRouter(destinationChain);
         string memory sender = CAIP10.local(msg.sender);
@@ -132,6 +134,9 @@ contract ERC7786Router is IERC7786GatewaySource, IERC7786Receiver, Ownable, Paus
         // Message reception tracker
         Tracker storage tracker = _trackers[keccak256(abi.encode(sourceChain, sender, payload, attributes))];
 
+        // revert early is execution is already in progress (of done)
+        require(!tracker.executed, "ERC7786Router message already executed");
+
         // Count number of time received
         if (_gateways.contains(msg.sender) && !tracker.receivedBy[msg.sender]) {
             tracker.receivedBy[msg.sender] = true;
@@ -146,7 +151,10 @@ contract ERC7786Router is IERC7786GatewaySource, IERC7786Receiver, Ownable, Paus
         );
 
         // If ready to execute, and not yet executed
-        if (tracker.countReceived >= getThreshold() && !tracker.executed) {
+        if (tracker.countReceived >= getThreshold()) {
+            // prevent re-entry
+            tracker.executed = true;
+            // slither-disable-next-line reentrancy-no-eth
             try
                 IERC7786Receiver(receiver.parseAddress()).executeMessage(
                     sourceChain,
@@ -156,12 +164,15 @@ contract ERC7786Router is IERC7786GatewaySource, IERC7786Receiver, Ownable, Paus
                 )
             returns (bytes4 magic) {
                 if (magic == IERC7786Receiver.executeMessage.selector) {
-                    tracker.executed = true;
                     // TODO emit event (success)
                 } else {
+                    // roolback to enable retry
+                    tracker.executed = false;
                     // TODO emit event (failure)
                 }
             } catch {
+                // rollback to enable retry
+                tracker.executed = false;
                 // TODO emit event (failure)
             }
         }
@@ -213,6 +224,11 @@ contract ERC7786Router is IERC7786GatewaySource, IERC7786Receiver, Ownable, Paus
 
     function unpause() public virtual onlyOwner {
         _unpause();
+    }
+
+    /// @dev Recovery method in case ether is ever received through {executeMessage}
+    function drainEth(address payable to) public virtual onlyOwner {
+        Address.sendValue(to, address(this).balance);
     }
 
     // ================================================== Internal ===================================================
