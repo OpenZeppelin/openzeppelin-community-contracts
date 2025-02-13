@@ -12,7 +12,6 @@ import {Calldata} from "@openzeppelin/contracts/utils/Calldata.sol";
 import {ERC165Checker} from "@openzeppelin/contracts/utils/introspection/ERC165Checker.sol";
 import {IERC6900ModularAccount, IERC6900Module, IERC6900ValidationModule, IERC6900ExecutionModule, ValidationConfig, ModuleEntity, ValidationFlags, HookConfig, ExecutionManifest, ManifestExecutionHook, ManifestExecutionFunction, Call} from "../../interfaces/IERC6900.sol";
 import {ERC6900Utils} from "../utils/ERC6900Utils.sol";
-import {ERC7739} from "../../utils/cryptography/ERC7739.sol";
 import {AccountCore} from "../AccountCore.sol";
 
 /**
@@ -42,7 +41,7 @@ import {AccountCore} from "../AccountCore.sol";
  *
  */
 
-abstract contract AccountERC6900 is AccountCore, ERC7739, IERC6900ModularAccount {
+abstract contract AccountERC6900 is AccountCore, IERC1271, IERC6900ModularAccount {
     using Bytes for *;
     using ERC6900Utils for *;
     using EnumerableSet for *;
@@ -230,10 +229,16 @@ abstract contract AccountERC6900 is AccountCore, ERC7739, IERC6900ModularAccount
     }
 
     /**
-     * @dev Lowest-level signature validation function. See {ERC7739-_rawSignatureValidation}.
-     *
-     * This function delegates the signature validation to a validation module if the first 24 bytes of the
-     * signature correspond to an installed validation module entity.
+     * Signature validation happens within the account's implementation of the function
+     * isValidSignature, defined in ERC-1271.
+     */
+    function isValidSignature(bytes32 hash, bytes calldata signature) public view override returns (bytes4 magicValue) {
+        return _rawSignatureValidation(hash, signature) ? IERC1271.isValidSignature.selector : bytes4(0xffffffff);
+    }
+
+    /**
+     * This function delegates the signature validation to a validation module if the
+     * first 24 bytes of the signature correspond to an installed validation module entity.
      *
      * See {_extractSignatureValidator} for the module extraction logic.
      */
