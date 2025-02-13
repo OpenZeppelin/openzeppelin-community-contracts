@@ -85,7 +85,7 @@ contract ERC7786Router is Ownable, Pausable, IERC7786GatewaySource, IERC7786Rece
         string memory sender = CAIP10.local(msg.sender);
 
         // wrapping the payload
-        bytes memory wrappedPayload = abi.encode(++_nonce, getThreshold(), sender, receiver, payload);
+        bytes memory wrappedPayload = abi.encode(++_nonce, sender, receiver, payload);
 
         // Post on all gateways
         Outbox[] memory outbox = new Outbox[](_gateways.length());
@@ -140,14 +140,13 @@ contract ERC7786Router is Ownable, Pausable, IERC7786GatewaySource, IERC7786Rece
         }
 
         // Parse payload
-        (, uint8 threshold, string memory originalSender, string memory receiver, bytes memory unwrappedPayload) = abi
-            .decode(payload, (uint256, uint8, string, string, bytes));
-
-        // Threshold must be at least 1 to avoid arbitrary calls to be executed without any gateway confirmation.
-        require(threshold > 0, "ERC7786Router invalid threshold");
+        (, string memory originalSender, string memory receiver, bytes memory unwrappedPayload) = abi.decode(
+            payload,
+            (uint256, string, string, bytes)
+        );
 
         // If ready to execute, and not yet executed
-        if (tracker.countReceived >= threshold && !tracker.executed) {
+        if (tracker.countReceived >= getThreshold() && !tracker.executed) {
             try
                 IERC7786Receiver(receiver.parseAddress()).executeMessage(
                     sourceChain,
