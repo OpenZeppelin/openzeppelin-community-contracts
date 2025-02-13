@@ -14,7 +14,7 @@ import {IERC7786GatewaySource, IERC7786Receiver} from "../interfaces/IERC7786.so
  * @dev N of M gateway: Sends your message through M independent gateways. It will be delivered to the receiver by an
  * equivalent router on the destination chain if N of the M gateways agree.
  */
-contract ERC7786Router is Ownable, Pausable, IERC7786GatewaySource, IERC7786Receiver {
+contract ERC7786Router is IERC7786GatewaySource, IERC7786Receiver, Ownable, Pausable {
     using EnumerableSet for *;
     using Strings for *;
 
