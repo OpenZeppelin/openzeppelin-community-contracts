@@ -92,6 +92,10 @@ abstract contract PaymasterERC20 is PaymasterCore {
      * * Getting the (signed) values through the userOp's paymasterData
      *
      * The paymaster can also decide to not support guarantors, and always return address(0) for that part.
+     *
+     * NOTE: If a guarantor is supported, make sure that it can't be used arbitrarily to pay operations.
+     * Concretely, if the guarantor is extracted from the `userOp`, make sure that it provided explicit consent to 
+     * support that user operation, for example by verifying a signature.
      */
     function _fetchDetails(
         PackedUserOperation calldata userOp,
