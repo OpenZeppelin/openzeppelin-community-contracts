@@ -7,8 +7,8 @@ const { ERC4337Helper } = require('../../helpers/erc4337');
 const { shouldBehaveLikePaymaster } = require('./Paymaster.behavior');
 
 for (const [name, opts] of Object.entries({
-  PaymasterCore: { postOp: true },
-  PaymasterCoreContextNoPostOp: { postOp: false },
+  PaymasterSigner: { postOp: true, timeRange: true },
+  PaymasterSignerContextNoPostOp: { postOp: false, timeRange: true },
 })) {
   async function fixture() {
     // EOAs and environment
@@ -43,8 +43,8 @@ for (const [name, opts] of Object.entries({
         )
         .then(signature => Object.assign(userOp, { signature }));
 
-    const paymasterSignUserOp = (userOp, validAfter, validUntil) =>
-      paymasterSigner
+    const paymasterSignUserOp = (signer, userOp, validAfter, validUntil) =>
+      signer
         .signTypedData(
           {
             name: 'MyPaymasterECDSASigner',
@@ -75,7 +75,8 @@ for (const [name, opts] of Object.entries({
       account,
       paymaster,
       signUserOp,
-      paymasterSignUserOp,
+      paymasterSignUserOp: (...args) => paymasterSignUserOp(paymasterSigner, ...args), // sign using the correct key
+      paymasterSignUserOpInvalid: (...args) => paymasterSignUserOp(other, ...args), // sign using the wrong key
       ...env,
     };
   }
