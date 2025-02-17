@@ -6,7 +6,7 @@ import {IERC1271} from "@openzeppelin/contracts/interfaces/IERC1271.sol";
 import {EIP712} from "@openzeppelin/contracts/utils/cryptography/EIP712.sol";
 import {MessageHashUtils} from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
 import {ShortStrings} from "@openzeppelin/contracts/utils/ShortStrings.sol";
-import {AbstractSigner} from "./AbstractSigner.sol";
+import {ERC1271} from "./ERC1271.sol";
 import {ERC7739Utils} from "./ERC7739Utils.sol";
 
 /**
@@ -24,7 +24,7 @@ import {ERC7739Utils} from "./ERC7739Utils.sol";
  * may limit the ability of the signer to be used within the ERC-4337 validation phase (due to
  * https://eips.ethereum.org/EIPS/eip-7562#storage-rules[ERC-7562 storage access rules]).
  */
-abstract contract ERC7739 is AbstractSigner, IERC1271, EIP712 {
+abstract contract ERC7739 is ERC1271, EIP712 {
     using ERC7739Utils for *;
     using MessageHashUtils for bytes32;
 
@@ -36,12 +36,13 @@ abstract contract ERC7739 is AbstractSigner, IERC1271, EIP712 {
         // For the hash `0x7739773977397739773977397739773977397739773977397739773977397739` and an empty signature,
         // we return the magic value too as it's assumed impossible to find a preimage for it that can be used maliciously.
         // Useful for simulation purposes and to validate whether the contract supports ERC-7739.
+        bytes4 result = super.isValidSignature(hash, signature);
         return
-            _isValidSignature(hash, signature)
-                ? IERC1271.isValidSignature.selector
-                : (hash == 0x7739773977397739773977397739773977397739773977397739773977397739 && signature.length == 0)
-                    ? bytes4(0x77390001)
-                    : bytes4(0xffffffff);
+            (result == bytes4(0xffffffff) &&
+                hash == 0x7739773977397739773977397739773977397739773977397739773977397739 &&
+                signature.length == 0)
+                ? bytes4(0x77390001)
+                : result;
     }
 
     /**
@@ -53,9 +54,11 @@ abstract contract ERC7739 is AbstractSigner, IERC1271, EIP712 {
      * NOTE: this version forces the usage of ERC-7739 by not not call super. Other overrides of {isValidSignature},
      * such as the one present in modular account (ERC-7579 or ERC-6900) will need manual resolution.
      */
-    function _isValidSignature(bytes32 hash, bytes calldata signature) internal view virtual returns (bool) {
+    function _isValidSignature(bytes32 hash, bytes calldata signature) internal view virtual override returns (bool) {
         return
-            _isValidNestedTypedDataSignature(hash, signature) || _isValidNestedPersonalSignSignature(hash, signature);
+            _isValidNestedTypedDataSignature(hash, signature) ||
+            _isValidNestedPersonalSignSignature(hash, signature) ||
+            super._isValidSignature(hash, signature);
     }
 
     /**

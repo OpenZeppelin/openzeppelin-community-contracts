@@ -8,6 +8,7 @@ import {Account} from "../../account/Account.sol";
 import {AccountERC7579} from "../../account/extensions/AccountERC7579.sol";
 import {ERC7821} from "../../account/extensions/ERC7821.sol";
 import {AbstractSigner} from "../../utils/cryptography/AbstractSigner.sol";
+import {ERC1271} from "../../utils/cryptography/ERC1271.sol";
 import {SignerERC7702} from "../../utils/cryptography/SignerERC7702.sol";
 
 abstract contract AccountERC7702WithModulesMock is Account, AccountERC7579, SignerERC7702 {
@@ -18,12 +19,11 @@ abstract contract AccountERC7702WithModulesMock is Account, AccountERC7579, Sign
         return super._validateUserOp(userOp, userOpHash);
     }
 
-    /// @dev Override the default ERC-1271 (included in AccountCore) with ERC-7739 (that is part of Account).
     function isValidSignature(
         bytes32 hash,
         bytes calldata signature
-    ) public view virtual override(Account, AccountCore) returns (bytes4) {
-        return Account.isValidSignature(hash, signature);
+    ) public view virtual override(ERC1271, Account) returns (bytes4) {
+        return super.isValidSignature(hash, signature);
     }
 
     /// @dev Override the default ERC-1271 (included in Account) with ERC-7739.
@@ -31,7 +31,7 @@ abstract contract AccountERC7702WithModulesMock is Account, AccountERC7579, Sign
         bytes32 hash,
         bytes calldata signature
     ) internal view virtual override(Account, AccountERC7579) returns (bool) {
-        return Account._isValidSignature(hash, signature) || AccountERC7579._isValidSignature(hash, signature);
+        return super._isValidSignature(hash, signature);
     }
 
     /// @dev Enable signature using the ERC-7702 signer.

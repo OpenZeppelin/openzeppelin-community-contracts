@@ -6,6 +6,7 @@ import {PackedUserOperation} from "@openzeppelin/contracts/interfaces/draft-IERC
 import {EIP712} from "@openzeppelin/contracts/utils/cryptography/EIP712.sol";
 import {ERC721Holder} from "@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol";
 import {ERC1155Holder} from "@openzeppelin/contracts/token/ERC1155/utils/ERC1155Holder.sol";
+import {ERC1271} from "../utils/cryptography/ERC1271.sol";
 import {ERC7739} from "../utils/cryptography/ERC7739.sol";
 import {AccountCore} from "./AccountCore.sol";
 
@@ -58,15 +59,15 @@ abstract contract Account is AccountCore, EIP712, ERC721Holder, ERC1155Holder, E
     function isValidSignature(
         bytes32 hash,
         bytes calldata signature
-    ) public view virtual override(AccountCore, ERC7739) returns (bytes4) {
-        return ERC7739.isValidSignature(hash, signature);
+    ) public view virtual override(ERC1271, ERC7739) returns (bytes4) {
+        return super.isValidSignature(hash, signature);
     }
 
     /// @dev Override the default ERC-1271 (included in AccountCore) with ERC-7739.
     function _isValidSignature(
         bytes32 hash,
         bytes calldata signature
-    ) internal view virtual override(AccountCore, ERC7739) returns (bool) {
-        return ERC7739._isValidSignature(hash, signature);
+    ) internal view virtual override(ERC1271, ERC7739) returns (bool) {
+        return super._isValidSignature(hash, signature);
     }
 }
