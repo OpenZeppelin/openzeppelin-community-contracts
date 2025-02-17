@@ -5,7 +5,7 @@ const { NonNativeSigner, P256SigningKey } = require('../helpers/signers');
 const { PackedUserOperation } = require('../helpers/eip712-types');
 
 const { shouldBehaveLikeAccountCore, shouldBehaveLikeAccountHolder } = require('./Account.behavior');
-const { shouldBehaveLikeERC7739 } = require('../utils/cryptography/ERC7739.behavior');
+const { shouldBehaveLikeERC1271 } = require('../utils/cryptography/ERC1271.behavior');
 const { shouldBehaveLikeERC7821 } = require('./extensions/ERC7821.behavior');
 
 async function fixture() {
@@ -49,13 +49,6 @@ describe('AccountP256', function () {
 
   shouldBehaveLikeAccountCore();
   shouldBehaveLikeAccountHolder();
+  shouldBehaveLikeERC1271({ erc7739: true });
   shouldBehaveLikeERC7821();
-
-  describe('ERC7739', function () {
-    beforeEach(async function () {
-      this.mock = await this.mock.deploy();
-    });
-
-    shouldBehaveLikeERC7739();
-  });
 });

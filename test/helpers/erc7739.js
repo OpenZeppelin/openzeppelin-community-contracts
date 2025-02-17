@@ -26,8 +26,8 @@ class PersonalSignHelper {
     return message.prefixed ? ethers.keccak256(message.prefixed) : ethers.hashMessage(message);
   }
 
-  static sign(signTypedData, data, signerDomain) {
-    return signTypedData(signerDomain, this.types, data.prefixed ? data : this.prepare(data));
+  static sign(signer, data, signerDomain) {
+    return signer.signTypedData(signerDomain, this.types, data.prefixed ? data : this.prepare(data));
   }
 }
 
@@ -72,8 +72,8 @@ class TypedDataSignHelper {
       : ethers.TypedDataEncoder.hash(domain, this.contentsTypes, message);
   }
 
-  sign(signTypedData, domain, message) {
-    return Promise.resolve(signTypedData(domain, this.allTypes, message)).then(signature =>
+  sign(signer, domain, message) {
+    return Promise.resolve(signer.signTypedData(domain, this.allTypes, message)).then(signature =>
       ethers.concat([
         signature,
         ethers.TypedDataEncoder.hashDomain(domain), // appDomainSeparator
