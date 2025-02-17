@@ -3,8 +3,10 @@ const { expect } = require('chai');
 const { Permit, formatType, getDomain } = require('@openzeppelin/contracts/test/helpers/eip712');
 const { PersonalSignHelper, TypedDataSignHelper } = require('../../helpers/erc7739');
 
+const MAGIC_VALUE = '0x1626ba7e';
+
 function shouldBehaveLikeERC1271({ erc7739 = false } = {}) {
-  const MAGIC_VALUE = '0x1626ba7e';
+  if (erc7739) shouldBehaveLikeERC1271();
 
   describe(`supports ERC-${erc7739 ? 7739 : 1271}`, function () {
     beforeEach(async function () {
