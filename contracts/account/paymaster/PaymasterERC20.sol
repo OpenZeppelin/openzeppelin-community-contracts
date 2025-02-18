@@ -36,7 +36,7 @@ abstract contract PaymasterERC20 is PaymasterCore {
         bytes32 userOpHash,
         uint256 maxCost
     ) internal virtual override returns (bytes memory context, uint256 validationData) {
-        (IERC20 token, uint48 validAfter, uint48 validUntil, uint256 tokenPrice, address guarantor) = _fetchDetails(
+        (uint256 validationData_, IERC20 token, uint256 tokenPrice, address guarantor) = _fetchDetails(
             userOp,
             userOpHash
         );
@@ -45,12 +45,19 @@ abstract contract PaymasterERC20 is PaymasterCore {
             (guarantor == address(0)).ternary(POST_OP_COST, POST_OP_COST_WITH_GUARANTOR) *
             userOp.maxFeePerGas()).mulDiv(tokenPrice, _tokenPriceDenominator());
 
-        return (
-            abi.encodePacked(userOpHash, token, prefundAmount, tokenPrice, userOp.sender, guarantor),
-            token
-                .trySafeTransferFrom(guarantor == address(0) ? userOp.sender : guarantor, address(this), prefundAmount)
-                .packValidationData(validAfter, validUntil)
-        );
+        // if validation is obviously failed, don't even try to do the ERC-20 transfer
+        return
+            (validationData_ != ERC4337Utils.SIG_VALIDATION_FAILED &&
+                token.trySafeTransferFrom(
+                    guarantor == address(0) ? userOp.sender : guarantor,
+                    address(this),
+                    prefundAmount
+                ))
+                ? (
+                    abi.encodePacked(userOpHash, token, prefundAmount, tokenPrice, userOp.sender, guarantor),
+                    validationData_
+                )
+                : (bytes(""), ERC4337Utils.SIG_VALIDATION_FAILED);
     }
 
     /// @inheritdoc PaymasterCore
@@ -86,7 +93,29 @@ abstract contract PaymasterERC20 is PaymasterCore {
     /**
      * @dev Internal function that returns the repayment details for a given user operation
      *
-     * This may be implemented in any number of ways, including
+     * Returns values are
+     * * `validationData`: standard ERC-4337 validation data. This allows to specify that the fetching was
+     *   unsuccessful. If also includes `validAfter` and `validUntil` that can be used to restrict the time validity
+     *   of the the information being passed (if the tokenPrice expires)
+     * * `token`: the address of the ERC-20 token used for payment, by the user to the paymaster.
+     * * `tokenPrice`: the price, in native currency, of the token being used for payments. This is a fixed point
+     *    value which scaling is described by the {_tokenPriceDenominator} function.
+     * * `guarantor`: the address of a guarantor that can advance the funds if a user doesn't have them, and will
+     *   receive the tokens necessary for payment as part of the user operation execution. If the user doesn't get
+     *   the funds, or doesn't approve them to the paymaster, then the guarantor will be the one paying the for the
+     *   user operation.
+     *
+     * Example of token price:
+     * Lets say the token used for payment is USDC (worth $1) and we are one ethereum mainnet, where the native
+     * currency is ETH (worth $2524.86 in this example). Each USDC token is worth 0.0003960615638094785 ETH. Given
+     * that USDC has 6 decimal places, and that each ETH is composed of 1e18 WEI, each USDC "unit" is worth
+     * 396061563.8094785 WEI. With {_tokenPriceDenominator} being set to `1e18` (default value), then the `tokenPrice`
+     * should be 396061563809478515454115840.
+     *
+     * General formula is:
+     * (<ERC-20 token price in $> / 10**<ERC-20 decimals>)/(<Native token price in $> / 1e18) * <_tokenPriceDenominator>
+     *
+     * This function may be implemented in any number of ways, including
      * * Hardcoding values (only one token supported)
      * * Getting the price from an onchain oracle
      * * Getting the (signed) values through the userOp's paymasterData
@@ -94,17 +123,13 @@ abstract contract PaymasterERC20 is PaymasterCore {
      * The paymaster can also decide to not support guarantors, and always return address(0) for that part.
      *
      * NOTE: If a guarantor is supported, make sure that it can't be used arbitrarily to pay operations.
-     * Concretely, if the guarantor is extracted from the `userOp`, make sure that it provided explicit consent to 
+     * Concretely, if the guarantor is extracted from the `userOp`, make sure that it provided explicit consent to
      * support that user operation, for example by verifying a signature.
      */
     function _fetchDetails(
         PackedUserOperation calldata userOp,
         bytes32 userOpHash
-    )
-        internal
-        view
-        virtual
-        returns (IERC20 token, uint48 validAfter, uint48 validUntil, uint256 tokenPrice, address guarantor);
+    ) internal view virtual returns (uint256 validationData, IERC20 token, uint256 tokenPrice, address guarantor);
 
     /// @dev Denominator used for interpreting the `tokenPrice` returned by {_fetchDetails} as "fixed point".
     function _tokenPriceDenominator() internal view virtual returns (uint256) {

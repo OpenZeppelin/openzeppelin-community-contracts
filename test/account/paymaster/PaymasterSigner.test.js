@@ -43,29 +43,31 @@ for (const [name, opts] of Object.entries({
         )
         .then(signature => Object.assign(userOp, { signature }));
 
-    const paymasterSignUserOp = (signer, userOp, validAfter, validUntil) =>
-      signer
-        .signTypedData(
-          {
-            name: 'MyPaymasterECDSASigner',
-            version: '1',
-            chainId: env.chainId,
-            verifyingContract: paymaster.target,
-          },
-          { UserOperationRequest },
-          {
-            ...userOp.packed,
-            paymasterVerificationGasLimit: userOp.paymasterVerificationGasLimit,
-            paymasterPostOpGasLimit: userOp.paymasterPostOpGasLimit,
-            validAfter,
-            validUntil,
-          },
-        )
-        .then(signature =>
-          Object.assign(userOp, {
-            paymasterData: ethers.solidityPacked(['uint48', 'uint48', 'bytes'], [validAfter, validUntil, signature]),
-          }),
-        );
+    const paymasterSignUserOp =
+      signer =>
+      (userOp, { validAfter = 0n, validUntil = 0n } = {}) =>
+        signer
+          .signTypedData(
+            {
+              name: 'MyPaymasterECDSASigner',
+              version: '1',
+              chainId: env.chainId,
+              verifyingContract: paymaster.target,
+            },
+            { UserOperationRequest },
+            {
+              ...userOp.packed,
+              paymasterVerificationGasLimit: userOp.paymasterVerificationGasLimit,
+              paymasterPostOpGasLimit: userOp.paymasterPostOpGasLimit,
+              validAfter,
+              validUntil,
+            },
+          )
+          .then(signature =>
+            Object.assign(userOp, {
+              paymasterData: ethers.solidityPacked(['uint48', 'uint48', 'bytes'], [validAfter, validUntil, signature]),
+            }),
+          );
 
     return {
       admin,
@@ -75,8 +77,8 @@ for (const [name, opts] of Object.entries({
       account,
       paymaster,
       signUserOp,
-      paymasterSignUserOp: (...args) => paymasterSignUserOp(paymasterSigner, ...args), // sign using the correct key
-      paymasterSignUserOpInvalid: (...args) => paymasterSignUserOp(other, ...args), // sign using the wrong key
+      paymasterSignUserOp: paymasterSignUserOp(paymasterSigner), // sign using the correct key
+      paymasterSignUserOpInvalid: paymasterSignUserOp(other), // sign using the wrong key
       ...env,
     };
   }

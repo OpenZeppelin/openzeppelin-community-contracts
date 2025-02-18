@@ -37,7 +37,7 @@ function shouldBehaveLikePaymaster({ postOp, timeRange }) {
               }),
             ]),
           })
-          .then(op => this.paymasterSignUserOp(op, 0n, 0n))
+          .then(op => this.paymasterSignUserOp(op))
           .then(op => this.signUserOp(op));
 
         // before
@@ -92,7 +92,7 @@ function shouldBehaveLikePaymaster({ postOp, timeRange }) {
                 }),
               ]),
             })
-            .then(op => this.paymasterSignUserOp(op, MAX_UINT48, 0n)) // validAfter MAX_UINT48 is in the future
+            .then(op => this.paymasterSignUserOp(op, { validAfter: MAX_UINT48 })) // validAfter MAX_UINT48 is in the future
             .then(op => this.signUserOp(op));
 
           await expect(entrypoint.handleOps([signedUserOp.packed], this.receiver))
@@ -112,7 +112,7 @@ function shouldBehaveLikePaymaster({ postOp, timeRange }) {
                 }),
               ]),
             })
-            .then(op => this.paymasterSignUserOp(op, 0n, 1n)) // validUntil 1n is in the past
+            .then(op => this.paymasterSignUserOp(op, { validUntil: 1n })) // validUntil 1n is in the past
             .then(op => this.signUserOp(op));
 
           await expect(entrypoint.handleOps([signedUserOp.packed], this.receiver))

@@ -4,6 +4,7 @@ const { loadFixture } = require('@nomicfoundation/hardhat-network-helpers');
 const { anyValue } = require('@nomicfoundation/hardhat-chai-matchers/withArgs');
 
 const { encodeBatch, encodeMode, CALL_TYPE_BATCH } = require('@openzeppelin/contracts/test/helpers/erc7579');
+const { formatType } = require('@openzeppelin/contracts/test/helpers/eip712-types');
 const { PackedUserOperation } = require('../../helpers/eip712-types');
 const { ERC4337Helper } = require('../../helpers/erc4337');
 
@@ -19,6 +20,7 @@ async function fixture() {
 
   // signers
   const accountSigner = ethers.Wallet.createRandom();
+  const oracleSigner = ethers.Wallet.createRandom();
 
   // ERC-4337 account
   const helper = new ERC4337Helper();
@@ -27,7 +29,9 @@ async function fixture() {
   await account.deploy();
 
   // ERC-4337 paymaster
-  const paymaster = await ethers.deployContract(`$PaymasterERC20Mock`, [admin]);
+  const paymaster = await ethers.deployContract(`$PaymasterERC20Mock`, ['PaymasterERC20', '1']);
+  await paymaster.$_grantRole(ethers.id('ORACLE_ROLE'), oracleSigner);
+  await paymaster.$_grantRole(ethers.id('WITHDRAWER_ROLE'), admin);
 
   const signUserOp = userOp =>
     accountSigner
@@ -43,6 +47,72 @@ async function fixture() {
       )
       .then(signature => Object.assign(userOp, { signature }));
 
+  // [0x00:0x14                      ] token                 (IERC20)
+  // [0x14:0x1a                      ] validAfter            (uint48)
+  // [0x1a:0x20                      ] validUntil            (uint48)
+  // [0x20:0x40                      ] tokenPrice            (uint256)
+  // [0x40:0x54                      ] oracle                (address)
+  // [0x54:0x68                      ] guarantor             (address) (optional: 0 if no guarantor)
+  // [0x68:0x6a                      ] oracleSignatureLength (uint16)
+  // [0x6a:0x6a+oracleSignatureLength] oracleSignature       (bytes)
+  // [0x6a+oracleSignatureLength:    ] guarantorSignature    (bytes)
+  const paymasterSignUserOp =
+    oracle =>
+    (
+      userOp,
+      { validAfter = 0n, validUntil = 0n, tokenPrice = ethers.WeiPerEther, guarantor = undefined, erc20 = token } = {},
+    ) => {
+      userOp.paymasterData = ethers.solidityPacked(
+        ['address', 'uint48', 'uint48', 'uint256', 'address', 'address'],
+        [erc20.target, validAfter, validUntil, tokenPrice, oracle.address, guarantor?.address ?? ethers.ZeroAddress],
+      );
+      return Promise.all([
+        oracle.signTypedData(
+          {
+            name: 'PaymasterERC20',
+            version: '1',
+            chainId: env.chainId,
+            verifyingContract: paymaster.target,
+          },
+          {
+            TokenPrice: formatType({
+              token: 'address',
+              validAfter: 'uint48',
+              validUntil: 'uint48',
+              tokenPrice: 'uint256',
+            }),
+          },
+          {
+            token: erc20.target,
+            validAfter,
+            validUntil,
+            tokenPrice,
+          },
+        ),
+        guarantor
+          ? guarantor.signTypedData(
+              {
+                name: 'PaymasterERC20',
+                version: '1',
+                chainId: env.chainId,
+                verifyingContract: paymaster.target,
+              },
+              { PackedUserOperation },
+              userOp.packed,
+            )
+          : '0x',
+      ]).then(([oracleSignature, guarantorSignature]) => {
+        userOp.paymasterData = ethers.concat([
+          userOp.paymasterData,
+          ethers.solidityPacked(
+            ['uint16', 'bytes', 'bytes'],
+            [ethers.getBytes(oracleSignature).length, oracleSignature, guarantorSignature],
+          ),
+        ]);
+        return userOp;
+      });
+    };
+
   return {
     admin,
     receiver,
@@ -53,6 +123,8 @@ async function fixture() {
     account,
     paymaster,
     signUserOp,
+    paymasterSignUserOp: paymasterSignUserOp(oracleSigner), // sign using the correct key
+    paymasterSignUserOpInvalid: paymasterSignUserOp(other), // sign using the wrong key
     ...env,
   };
 }
@@ -66,24 +138,6 @@ describe('PaymasterERC20', function () {
     beforeEach(async function () {
       await this.token.$_mint(this.account, value);
       await this.token.$_approve(this.account, this.paymaster, ethers.MaxUint256);
-
-      // use token
-      this.paymasterSignUserOp = (userOp, validAfter, validUntil) =>
-        Object.assign(userOp, {
-          paymasterData: ethers.solidityPacked(
-            ['address', 'uint48', 'uint48', 'uint256', 'address'],
-            [this.token.target, validAfter, validUntil, ethers.WeiPerEther, ethers.ZeroAddress],
-          ),
-        });
-
-      // use invalid token contract
-      this.paymasterSignUserOpInvalid = (userOp, validAfter, validUntil) =>
-        Object.assign(userOp, {
-          paymasterData: ethers.solidityPacked(
-            ['address', 'uint48', 'uint48', 'uint256', 'address'],
-            [this.other.address, validAfter, validUntil, ethers.WeiPerEther, ethers.ZeroAddress],
-          ),
-        });
     });
 
     shouldBehaveLikePaymaster({ timeRange: true });
@@ -176,18 +230,13 @@ describe('PaymasterERC20', function () {
               data: this.target.interface.encodeFunctionData('mockFunctionExtra'),
             }),
           ]),
-          paymasterData: ethers.solidityPacked(
-            ['address', 'uint48', 'uint48', 'uint256', 'address'],
-            [
-              this.token.target,
-              0n,
-              0n,
-              2n * ethers.WeiPerEther,
-              this.withGuarantor ? this.guarantor.address : ethers.ZeroAddress,
-            ],
-          ),
         })
-        // sign it
+        .then(op =>
+          this.paymasterSignUserOp(op, {
+            tokenPrice: 2n * ethers.WeiPerEther,
+            guarantor: this.withGuarantor ? this.guarantor : undefined,
+          }),
+        )
         .then(op => this.signUserOp(op));
 
       // send it to the entrypoint
