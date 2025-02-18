@@ -64,7 +64,14 @@ async function fixture() {
     ) => {
       userOp.paymasterData = ethers.solidityPacked(
         ['address', 'uint48', 'uint48', 'uint256', 'address', 'address'],
-        [erc20.target, validAfter, validUntil, tokenPrice, oracle.address, guarantor?.address ?? ethers.ZeroAddress],
+        [
+          erc20.target ?? erc20.address ?? erc20,
+          validAfter,
+          validUntil,
+          tokenPrice,
+          oracle.target ?? oracle.address ?? oracle,
+          guarantor?.address ?? ethers.ZeroAddress,
+        ],
       );
       return Promise.all([
         oracle.signTypedData(
@@ -83,7 +90,7 @@ async function fixture() {
             }),
           },
           {
-            token: erc20.target,
+            token: erc20.target ?? erc20.address ?? erc20,
             validAfter,
             validUntil,
             tokenPrice,
@@ -146,138 +153,186 @@ describe('PaymasterERC20', function () {
   describe('pays with ERC-20 tokens', function () {
     beforeEach(async function () {
       await this.paymaster.deposit({ value });
-
       this.userOp ??= {};
       this.userOp.paymaster = this.paymaster;
     });
 
-    it('from account', async function () {
-      // fund account
-      await this.token.$_mint(this.account, value);
-      await this.token.$_approve(this.account, this.paymaster, ethers.MaxUint256);
+    describe('success', function () {
+      it('from account', async function () {
+        // fund account
+        await this.token.$_mint(this.account, value);
+        await this.token.$_approve(this.account, this.paymaster, ethers.MaxUint256);
 
-      this.extraCalls = [];
-      this.withGuarantor = false;
-      this.guarantorPays = false;
-      this.tokenMovements = [
-        { account: this.account, factor: -1n },
-        { account: this.paymaster, factor: 1n },
-      ];
-    });
+        this.extraCalls = [];
+        this.withGuarantor = false;
+        this.guarantorPays = false;
+        this.tokenMovements = [
+          { account: this.account, factor: -1n },
+          { account: this.paymaster, factor: 1n },
+        ];
+      });
 
-    it('from account, with guarantor refund', async function () {
-      // fund guarantor. account has no asset to pay for at the beginning of the transaction, but will get them during execution.
-      await this.token.$_mint(this.guarantor, value);
-      await this.token.$_approve(this.guarantor, this.paymaster, ethers.MaxUint256);
+      it('from account, with guarantor refund', async function () {
+        // fund guarantor. account has no asset to pay for at the beginning of the transaction, but will get them during execution.
+        await this.token.$_mint(this.guarantor, value);
+        await this.token.$_approve(this.guarantor, this.paymaster, ethers.MaxUint256);
 
-      this.extraCalls = [
-        { target: this.token, data: this.token.interface.encodeFunctionData('$_mint', [this.account.target, value]) },
-        {
-          target: this.token,
-          data: this.token.interface.encodeFunctionData('approve', [this.paymaster.target, ethers.MaxUint256]),
-        },
-      ];
-      this.withGuarantor = true;
-      this.guarantorPays = false;
-      this.tokenMovements = [
-        { account: this.account, factor: -1n, offset: value },
-        { account: this.guarantor, factor: 0n },
-        { account: this.paymaster, factor: 1n },
-      ];
-    });
+        this.extraCalls = [
+          { target: this.token, data: this.token.interface.encodeFunctionData('$_mint', [this.account.target, value]) },
+          {
+            target: this.token,
+            data: this.token.interface.encodeFunctionData('approve', [this.paymaster.target, ethers.MaxUint256]),
+          },
+        ];
+        this.withGuarantor = true;
+        this.guarantorPays = false;
+        this.tokenMovements = [
+          { account: this.account, factor: -1n, offset: value },
+          { account: this.guarantor, factor: 0n },
+          { account: this.paymaster, factor: 1n },
+        ];
+      });
 
-    it('from account, with guarantor refund (cold storage)', async function () {
-      // fund guarantor and account beforeend. All balances and allowances are cold, making it the worst cas for postOp gas costs
-      await this.token.$_mint(this.account, value);
-      await this.token.$_mint(this.guarantor, value);
-      await this.token.$_approve(this.account, this.paymaster, ethers.MaxUint256);
-      await this.token.$_approve(this.guarantor, this.paymaster, ethers.MaxUint256);
+      it('from account, with guarantor refund (cold storage)', async function () {
+        // fund guarantor and account beforeend. All balances and allowances are cold, making it the worst cas for postOp gas costs
+        await this.token.$_mint(this.account, value);
+        await this.token.$_mint(this.guarantor, value);
+        await this.token.$_approve(this.account, this.paymaster, ethers.MaxUint256);
+        await this.token.$_approve(this.guarantor, this.paymaster, ethers.MaxUint256);
 
-      this.extraCalls = [];
-      this.withGuarantor = true;
-      this.guarantorPays = false;
-      this.tokenMovements = [
-        { account: this.account, factor: -1n },
-        { account: this.guarantor, factor: 0n },
-        { account: this.paymaster, factor: 1n },
-      ];
-    });
+        this.extraCalls = [];
+        this.withGuarantor = true;
+        this.guarantorPays = false;
+        this.tokenMovements = [
+          { account: this.account, factor: -1n },
+          { account: this.guarantor, factor: 0n },
+          { account: this.paymaster, factor: 1n },
+        ];
+      });
 
-    it('from guarantor, when account fails to pay', async function () {
-      // fund guarantor. account has no asset to pay for at the beginning of the transaction, and will not get them. guarantor ends up covering the cost.
-      await this.token.$_mint(this.guarantor, value);
-      await this.token.$_approve(this.guarantor, this.paymaster, ethers.MaxUint256);
+      it('from guarantor, when account fails to pay', async function () {
+        // fund guarantor. account has no asset to pay for at the beginning of the transaction, and will not get them. guarantor ends up covering the cost.
+        await this.token.$_mint(this.guarantor, value);
+        await this.token.$_approve(this.guarantor, this.paymaster, ethers.MaxUint256);
 
-      this.extraCalls = [];
-      this.withGuarantor = true;
-      this.guarantorPays = true;
-      this.tokenMovements = [
-        { account: this.account, factor: 0n },
-        { account: this.guarantor, factor: -1n },
-        { account: this.paymaster, factor: 1n },
-      ];
-    });
+        this.extraCalls = [];
+        this.withGuarantor = true;
+        this.guarantorPays = true;
+        this.tokenMovements = [
+          { account: this.account, factor: 0n },
+          { account: this.guarantor, factor: -1n },
+          { account: this.paymaster, factor: 1n },
+        ];
+      });
 
-    afterEach(async function () {
-      const signedUserOp = await this.account
-        // prepare user operation, with paymaster data
-        .createUserOp({
-          ...this.userOp,
-          callData: this.account.interface.encodeFunctionData('execute', [
-            encodeMode({ callType: CALL_TYPE_BATCH }),
-            encodeBatch(...this.extraCalls, {
-              target: this.target,
-              data: this.target.interface.encodeFunctionData('mockFunctionExtra'),
+      afterEach(async function () {
+        const signedUserOp = await this.account
+          // prepare user operation, with paymaster data
+          .createUserOp({
+            ...this.userOp,
+            callData: this.account.interface.encodeFunctionData('execute', [
+              encodeMode({ callType: CALL_TYPE_BATCH }),
+              encodeBatch(...this.extraCalls, {
+                target: this.target,
+                data: this.target.interface.encodeFunctionData('mockFunctionExtra'),
+              }),
+            ]),
+          })
+          .then(op =>
+            this.paymasterSignUserOp(op, {
+              tokenPrice: 2n * ethers.WeiPerEther,
+              guarantor: this.withGuarantor ? this.guarantor : undefined,
             }),
-          ]),
-        })
-        .then(op =>
-          this.paymasterSignUserOp(op, {
-            tokenPrice: 2n * ethers.WeiPerEther,
-            guarantor: this.withGuarantor ? this.guarantor : undefined,
-          }),
-        )
-        .then(op => this.signUserOp(op));
+          )
+          .then(op => this.signUserOp(op));
 
-      // send it to the entrypoint
-      const txPromise = entrypoint.handleOps([signedUserOp.packed], this.receiver);
+        // send it to the entrypoint
+        const txPromise = entrypoint.handleOps([signedUserOp.packed], this.receiver);
 
-      // check main events (target call and sponsoring)
-      await expect(txPromise)
-        .to.emit(this.paymaster, 'UserOperationSponsored')
-        .withArgs(
-          signedUserOp.hash(),
-          this.account,
-          this.withGuarantor ? this.guarantor.address : ethers.ZeroAddress,
-          anyValue,
-          2n * ethers.WeiPerEther,
-          this.guarantorPays,
-        )
-        .to.emit(this.target, 'MockFunctionCalledExtra')
-        .withArgs(this.account, 0n);
+        // check main events (target call and sponsoring)
+        await expect(txPromise)
+          .to.emit(this.paymaster, 'UserOperationSponsored')
+          .withArgs(
+            signedUserOp.hash(),
+            this.account,
+            this.withGuarantor ? this.guarantor.address : ethers.ZeroAddress,
+            anyValue,
+            2n * ethers.WeiPerEther,
+            this.guarantorPays,
+          )
+          .to.emit(this.target, 'MockFunctionCalledExtra')
+          .withArgs(this.account, 0n);
 
-      // parse logs:
-      // - get tokenAmount repaid for the paymaster event
-      // - get the actual gas cost from the entrypoint event
-      const { logs } = await txPromise.then(tx => tx.wait());
-      const { tokenAmount } = logs.map(ev => this.paymaster.interface.parseLog(ev)).find(Boolean).args;
-      const { actualGasCost } = logs.find(ev => ev.fragment?.name == 'UserOperationEvent').args;
-      // check token balances moved as expected
-      await expect(txPromise).to.changeTokenBalances(
-        this.token,
-        this.tokenMovements.map(({ account }) => account),
-        this.tokenMovements.map(({ factor = 0n, offset = 0n }) => offset + tokenAmount * factor),
-      );
-      // check that ether moved as expected
-      await expect(txPromise).to.changeEtherBalances([entrypoint, this.receiver], [-actualGasCost, actualGasCost]);
+        // parse logs:
+        // - get tokenAmount repaid for the paymaster event
+        // - get the actual gas cost from the entrypoint event
+        const { logs } = await txPromise.then(tx => tx.wait());
+        const { tokenAmount } = logs.map(ev => this.paymaster.interface.parseLog(ev)).find(Boolean).args;
+        const { actualGasCost } = logs.find(ev => ev.fragment?.name == 'UserOperationEvent').args;
+        // check token balances moved as expected
+        await expect(txPromise).to.changeTokenBalances(
+          this.token,
+          this.tokenMovements.map(({ account }) => account),
+          this.tokenMovements.map(({ factor = 0n, offset = 0n }) => offset + tokenAmount * factor),
+        );
+        // check that ether moved as expected
+        await expect(txPromise).to.changeEtherBalances([entrypoint, this.receiver], [-actualGasCost, actualGasCost]);
 
-      // check token cost is within the expected values
-      // skip gas consumption tests when running coverage (significantly affects the postOp costs)
-      if (!process.env.COVERAGE) {
-        expect(tokenAmount)
-          .to.be.greaterThan(actualGasCost * 2n)
-          .to.be.lessThan((actualGasCost * 2n * 110n) / 100n); // covers costs with no more than 10% overcost
-      }
+        // check token cost is within the expected values
+        // skip gas consumption tests when running coverage (significantly affects the postOp costs)
+        if (!process.env.COVERAGE) {
+          expect(tokenAmount)
+            .to.be.greaterThan(actualGasCost * 2n)
+            .to.be.lessThan((actualGasCost * 2n * 110n) / 100n); // covers costs with no more than 10% overcost
+        }
+      });
+    });
+
+    describe('error cases', function () {
+      it('invalid token', async function () {
+        // prepare user operation, with paymaster data
+        const signedUserOp = await this.account
+          .createUserOp(this.userOp)
+          .then(op => this.paymasterSignUserOp(op, { token: this.other })) // not a token
+          .then(op => this.signUserOp(op));
+
+        // send it to the entrypoint
+        await expect(entrypoint.handleOps([signedUserOp.packed], this.receiver))
+          .to.be.revertedWithCustomError(entrypoint, 'FailedOp')
+          .withArgs(0n, 'AA34 signature error');
+      });
+
+      it('insufficient balance', async function () {
+        await this.token.$_mint(this.account, 1n); // not enough
+        await this.token.$_approve(this.account, this.paymaster, ethers.MaxUint256);
+
+        // prepare user operation, with paymaster data
+        const signedUserOp = await this.account
+          .createUserOp(this.userOp)
+          .then(op => this.paymasterSignUserOp(op))
+          .then(op => this.signUserOp(op));
+
+        // send it to the entrypoint
+        await expect(entrypoint.handleOps([signedUserOp.packed], this.receiver))
+          .to.be.revertedWithCustomError(entrypoint, 'FailedOp')
+          .withArgs(0n, 'AA34 signature error');
+      });
+
+      it('insufficient approval', async function () {
+        await this.token.$_mint(this.account, value);
+        await this.token.$_approve(this.account, this.paymaster, 1n);
+
+        // prepare user operation, with paymaster data
+        const signedUserOp = await this.account
+          .createUserOp(this.userOp)
+          .then(op => this.paymasterSignUserOp(op))
+          .then(op => this.signUserOp(op));
+
+        // send it to the entrypoint
+        await expect(entrypoint.handleOps([signedUserOp.packed], this.receiver))
+          .to.be.revertedWithCustomError(entrypoint, 'FailedOp')
+          .withArgs(0n, 'AA34 signature error');
+      });
     });
   });
 
