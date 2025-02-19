@@ -116,7 +116,7 @@ abstract contract PaymasterERC20 is PaymasterCore {
      * (<ERC-20 token price in $> / 10**<ERC-20 decimals>)/(<Native token price in $> / 1e18) * <_tokenPriceDenominator>
      *
      * This function may be implemented in any number of ways, including
-     * * Hardcoding values (only one token supported)
+     * * Hardcoding the address of the token (only one token supported)
      * * Getting the price from an onchain oracle
      * * Getting the (signed) values through the userOp's paymasterData
      *
