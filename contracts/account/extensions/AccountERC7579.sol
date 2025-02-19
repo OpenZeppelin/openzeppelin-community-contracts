@@ -40,7 +40,13 @@ import {AccountCore} from "../AccountCore.sol";
  *   following common practices. However, this part is not standardized in ERC-7579 (or in any follow-up ERC). Some
  *   accounts may want to override these internal functions.
  */
-abstract contract AccountERC7579 is AccountCore, IERC7579Execution, IERC7579AccountConfig, IERC7579ModuleConfig {
+abstract contract AccountERC7579 is
+    AccountCore,
+    IERC1271,
+    IERC7579Execution,
+    IERC7579AccountConfig,
+    IERC7579ModuleConfig
+{
     using Bytes for *;
     using ERC7579Utils for *;
     using EnumerableSet for *;
@@ -178,8 +184,7 @@ abstract contract AccountERC7579 is AccountCore, IERC7579Execution, IERC7579Acco
                 } catch {}
             }
         }
-        // if module based validation failed, fallback
-        return super.isValidSignature(hash, signature);
+        return bytes4(0xffffffff);
     }
 
     /**

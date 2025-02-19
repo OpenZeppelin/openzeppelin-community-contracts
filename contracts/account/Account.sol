@@ -52,12 +52,4 @@ abstract contract Account is AccountCore, ERC721Holder, ERC1155Holder, ERC7739 {
                 )
             );
     }
-
-    /// @dev Override the default ERC-1271 (included in AccountCore) with ERC-7739.
-    function isValidSignature(
-        bytes32 hash,
-        bytes calldata signature
-    ) public view virtual override(AccountCore, ERC7739) returns (bytes4) {
-        return ERC7739.isValidSignature(hash, signature);
-    }
 }

@@ -2,7 +2,6 @@
 
 pragma solidity ^0.8.20;
 
-import {IERC1271} from "@openzeppelin/contracts/interfaces/IERC1271.sol";
 import {PackedUserOperation, IAccount, IEntryPoint} from "@openzeppelin/contracts/interfaces/draft-IERC4337.sol";
 import {ERC4337Utils} from "@openzeppelin/contracts/account/utils/draft-ERC4337Utils.sol";
 import {AbstractSigner} from "../utils/cryptography/AbstractSigner.sol";
@@ -22,7 +21,7 @@ import {AbstractSigner} from "../utils/cryptography/AbstractSigner.sol";
  * attacker to bypass the account's security measures. Check out {SignerECDSA}, {SignerP256}, or {SignerRSA} for
  * digital signature validation implementations.
  */
-abstract contract AccountCore is AbstractSigner, IAccount, IERC1271 {
+abstract contract AccountCore is AbstractSigner, IAccount {
     /**
      * @dev Unauthorized call to the account.
      */
@@ -63,11 +62,6 @@ abstract contract AccountCore is AbstractSigner, IAccount, IERC1271 {
      */
     function getNonce(uint192 key) public view virtual returns (uint256) {
         return entryPoint().getNonce(address(this), key);
-    }
-
-    /// @inheritdoc IERC1271
-    function isValidSignature(bytes32 hash, bytes calldata signature) public view virtual returns (bytes4 result) {
-        return _rawSignatureValidation(hash, signature) ? IERC1271.isValidSignature.selector : bytes4(0xffffffff);
     }
 
     /**
