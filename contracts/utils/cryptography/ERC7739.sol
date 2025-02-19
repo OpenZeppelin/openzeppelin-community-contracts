@@ -24,15 +24,19 @@ import {ERC7739Utils} from "./ERC7739Utils.sol";
  * may limit the ability of the signer to be used within the ERC-4337 validation phase (due to
  * https://eips.ethereum.org/EIPS/eip-7562#storage-rules[ERC-7562 storage access rules]).
  */
-abstract contract ERC7739 is AbstractSigner, IERC1271, EIP712 {
+abstract contract ERC7739 is AbstractSigner, EIP712, IERC1271 {
     using ERC7739Utils for *;
     using MessageHashUtils for bytes32;
 
     /**
      * @dev Attempts validating the signature in a nested EIP-712 type.
      *
+     * A nested EIP-712 type might be presented in 2 different ways:
+     *
+     * - As a nested EIP-712 typed data
+     * - As a _personal_ signature (an EIP-712 mimic of the `eth_personalSign` for a smart contract)
      */
-    function isValidSignature(bytes32 hash, bytes calldata signature) public view virtual override returns (bytes4) {
+    function isValidSignature(bytes32 hash, bytes calldata signature) public view virtual returns (bytes4 result) {
         // For the hash `0x7739773977397739773977397739773977397739773977397739773977397739` and an empty signature,
         // we return the magic value too as it's assumed impossible to find a preimage for it that can be used maliciously.
         // Useful for simulation purposes and to validate whether the contract supports ERC-7739.
