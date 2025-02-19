@@ -1,7 +1,7 @@
 const { ethers } = require('hardhat');
 const { expect } = require('chai');
 const { Permit, formatType, getDomain } = require('@openzeppelin/contracts/test/helpers/eip712');
-const { PersonalSignHelper, TypedDataSignHelper } = require('../../helpers/erc7739');
+const { ERC7739Signer } = require('../../helpers/erc7739');
 
 function shouldBehaveLikeERC1271({ erc7739 = false } = {}) {
   const MAGIC_VALUE = '0x1626ba7e';
@@ -12,9 +12,9 @@ function shouldBehaveLikeERC1271({ erc7739 = false } = {}) {
       if (this.mock.deploy) {
         await ethers.provider.getCode(this.mock.address).then(code => code != '0x' || this.mock.deploy());
       }
-      if (erc7739) {
-        this.domain ??= await getDomain(this.mock);
-      }
+      this._signer = erc7739
+        ? new ERC7739Signer(this.signer, this.domain ?? (await getDomain(this.mock)))
+        : this.signer;
     });
 
     describe('PersonalSign', function () {
@@ -22,9 +22,7 @@ function shouldBehaveLikeERC1271({ erc7739 = false } = {}) {
         const text = 'Hello, world!';
 
         const hash = ethers.hashMessage(text);
-        const signature = await (erc7739
-          ? PersonalSignHelper.sign(this.signer, text, this.domain)
-          : this.signer.signMessage(text));
+        const signature = await this._signer.signMessage(text);
 
         await expect(this.mock.isValidSignature(hash, signature)).to.eventually.equal(MAGIC_VALUE);
       });
@@ -34,9 +32,7 @@ function shouldBehaveLikeERC1271({ erc7739 = false } = {}) {
         const otherMessage = 'Message signed is different';
 
         const hash = ethers.hashMessage(message);
-        const signature = await (erc7739
-          ? PersonalSignHelper.sign(this.signer, otherMessage, this.domain)
-          : this.signer.signMessage(otherMessage));
+        const signature = await this._signer.signMessage(otherMessage);
 
         await expect(this.mock.isValidSignature(hash, signature)).to.eventually.not.equal(MAGIC_VALUE);
       });
@@ -65,14 +61,7 @@ function shouldBehaveLikeERC1271({ erc7739 = false } = {}) {
         };
 
         const hash = ethers.TypedDataEncoder.hash(this.appDomain, { Permit }, contents);
-        const signature = await (erc7739
-          ? TypedDataSignHelper.sign(
-              this.signer,
-              this.appDomain,
-              { Permit },
-              TypedDataSignHelper.prepare(contents, this.domain),
-            )
-          : this.signer.signTypedData(this.appDomain, { Permit }, contents));
+        const signature = await this._signer.signTypedData(this.appDomain, { Permit }, contents);
 
         await expect(this.mock.isValidSignature(hash, signature)).to.eventually.equal(MAGIC_VALUE);
       });
@@ -87,14 +76,7 @@ function shouldBehaveLikeERC1271({ erc7739 = false } = {}) {
         const contents = { z: { a: { v: 1n } } };
 
         const hash = ethers.TypedDataEncoder.hash(this.appDomain, contentsTypes, contents);
-        const signature = await (erc7739
-          ? TypedDataSignHelper.sign(
-              this.signer,
-              this.appDomain,
-              contentsTypes,
-              TypedDataSignHelper.prepare(contents, this.domain),
-            )
-          : this.signer.signTypedData(this.appDomain, contentsTypes, contents));
+        const signature = await this._signer.signTypedData(this.appDomain, contentsTypes, contents);
 
         await expect(this.mock.isValidSignature(hash, signature)).to.eventually.equal(MAGIC_VALUE);
       });
@@ -110,14 +92,7 @@ function shouldBehaveLikeERC1271({ erc7739 = false } = {}) {
 
         const hash = ethers.TypedDataEncoder.hash(this.appDomain, { Permit }, contents);
         // message signed by the user is for a lower amount.
-        const signature = await (erc7739
-          ? TypedDataSignHelper.sign(
-              this.signer,
-              this.appDomain,
-              { Permit },
-              TypedDataSignHelper.prepare({ ...contents, value: 1_000n }, this.domain),
-            )
-          : this.signer.signTypedData(this.appDomain, { Permit }, { ...contents, value: 1_000n }));
+        const signature = await this._signer.signTypedData(this.appDomain, { Permit }, { ...contents, value: 1_000n });
 
         await expect(this.mock.isValidSignature(hash, signature)).to.eventually.not.equal(MAGIC_VALUE);
       });
