@@ -67,15 +67,7 @@ abstract contract AccountCore is AbstractSigner, IAccount, IERC1271 {
 
     /// @inheritdoc IERC1271
     function isValidSignature(bytes32 hash, bytes calldata signature) public view virtual returns (bytes4 result) {
-        return _isValidSignature(hash, signature) ? IERC1271.isValidSignature.selector : bytes4(0xffffffff);
-    }
-
-    /**
-     * @dev Internal version of {IERC1271-isValidSignature} that returns a boolean. This can be override to custom
-     * validation logic while supporting simple boolean returns that can easily be combined
-     */
-    function _isValidSignature(bytes32 hash, bytes calldata signature) internal view virtual returns (bool) {
-        return _rawSignatureValidation(hash, signature);
+        return _rawSignatureValidation(hash, signature) ? IERC1271.isValidSignature.selector : bytes4(0xffffffff);
     }
 
     /**

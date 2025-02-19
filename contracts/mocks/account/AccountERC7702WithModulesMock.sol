@@ -18,20 +18,15 @@ abstract contract AccountERC7702WithModulesMock is Account, AccountERC7579, Sign
         return super._validateUserOp(userOp, userOpHash);
     }
 
-    /// @dev Override the default ERC-1271 (included in AccountCore) with ERC-7739 (that is part of Account).
+    /// @dev Resolve the ERC-7739 (from Account) and the ERC-7579 (from AccountERC7579) to support both schemes.
     function isValidSignature(
         bytes32 hash,
         bytes calldata signature
-    ) public view virtual override(Account, AccountCore) returns (bytes4) {
-        return Account.isValidSignature(hash, signature);
-    }
-
-    /// @dev Override the default ERC-1271 (included in Account) with ERC-7739.
-    function _isValidSignature(
-        bytes32 hash,
-        bytes calldata signature
-    ) internal view virtual override(Account, AccountERC7579) returns (bool) {
-        return Account._isValidSignature(hash, signature) || AccountERC7579._isValidSignature(hash, signature);
+    ) public view virtual override(Account, AccountERC7579) returns (bytes4) {
+        // ERC-7739 can return the fn selector (success), 0xffffffff (invalid) or 0x77390001 (detection).
+        // If the return is 0xffffffff, we fallback to validation using ERC-7579 modules.
+        bytes4 erc7739magic = Account.isValidSignature(hash, signature);
+        return erc7739magic == bytes4(0xffffffff) ? AccountERC7579.isValidSignature(hash, signature) : erc7739magic;
     }
 
     /// @dev Enable signature using the ERC-7702 signer.

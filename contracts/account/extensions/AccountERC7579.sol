@@ -164,7 +164,7 @@ abstract contract AccountERC7579 is AccountCore, IERC7579Execution, IERC7579Acco
      * NOTE: when combined with {ERC7739} (for example through {Account}), resolution ordering may have an impact
      * ({ERC7739} does not call super). Manual resolution might be necessary.
      */
-    function _isValidSignature(bytes32 hash, bytes calldata signature) internal view virtual override returns (bool) {
+    function isValidSignature(bytes32 hash, bytes calldata signature) public view virtual override returns (bytes4) {
         // check signature length is enough for extraction
         if (signature.length >= 20) {
             (address module, bytes calldata innerSignature) = _extractSignatureValidator(signature);
@@ -174,12 +174,12 @@ abstract contract AccountERC7579 is AccountCore, IERC7579Execution, IERC7579Acco
                 try IERC7579Validator(module).isValidSignatureWithSender(address(this), hash, innerSignature) returns (
                     bytes4 magic
                 ) {
-                    if (magic == IERC1271.isValidSignature.selector) return true;
+                    if (magic == IERC1271.isValidSignature.selector) return magic;
                 } catch {}
             }
         }
         // if module based validation failed, fallback
-        return super._isValidSignature(hash, signature);
+        return super.isValidSignature(hash, signature);
     }
 
     /**
