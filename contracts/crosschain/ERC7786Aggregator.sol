@@ -30,6 +30,14 @@ contract ERC7786Aggregator is IERC7786GatewaySource, IERC7786Receiver, Ownable, 
         bool executed;
     }
 
+    event OutboxDetails(bytes32 indexed outboxId, Outbox[] outbox);
+    event Received(bytes32 indexed receiveId, address gateway);
+    event ExecutionSuccess(bytes32 indexed receiveId);
+    event ExecutionFailed(bytes32 indexed receiveId);
+    event GatewayAdded(address indexed gateway);
+    event GatewayRemoved(address indexed gateway);
+    event ThresholdUpdated(uint8 threshold);
+
     /****************************************************************************************************************
      *                                        S T A T E   V A R I A B L E S                                         *
      ****************************************************************************************************************/
@@ -84,10 +92,9 @@ contract ERC7786Aggregator is IERC7786GatewaySource, IERC7786Receiver, Ownable, 
         require(msg.value == 0, "ERC7786Router: value not supported");
         // address of the remote router, revert if not registered
         string memory router = getRemoteRouter(destinationChain);
-        string memory sender = CAIP10.local(msg.sender);
 
         // wrapping the payload
-        bytes memory wrappedPayload = abi.encode(++_nonce, sender, receiver, payload);
+        bytes memory wrappedPayload = abi.encode(++_nonce, msg.sender.toChecksumHexString(), receiver, payload);
 
         // Post on all gateways
         Outbox[] memory outbox = new Outbox[](_gateways.length());
@@ -110,10 +117,16 @@ contract ERC7786Aggregator is IERC7786GatewaySource, IERC7786Receiver, Ownable, 
 
         if (needsId) {
             outboxId = keccak256(abi.encode(outbox));
-            // TODO store outbox ? emit event ?
+            emit OutboxDetails(outboxId, outbox);
         }
 
-        emit MessagePosted(outboxId, sender, CAIP10.format(destinationChain, receiver), payload, attributes);
+        emit MessagePosted(
+            outboxId,
+            CAIP10.local(msg.sender),
+            CAIP10.format(destinationChain, receiver),
+            payload,
+            attributes
+        );
     }
 
     // ============================================== IERC7786Receiver ===============================================
@@ -132,48 +145,50 @@ contract ERC7786Aggregator is IERC7786GatewaySource, IERC7786Receiver, Ownable, 
         );
 
         // Message reception tracker
-        Tracker storage tracker = _trackers[keccak256(abi.encode(sourceChain, sender, payload, attributes))];
+        bytes32 id = keccak256(abi.encode(sourceChain, sender, payload, attributes));
+        Tracker storage tracker = _trackers[id];
 
-        // revert early is execution is already in progress (of done)
-        require(!tracker.executed, "ERC7786Router message already executed");
+        // NOTE: should we revert or return early ?
+        // reverting will signal an error to the gateways that relay after the N treshold was reached
+        if (!tracker.executed) {
+            // Count number of time received
+            if (_gateways.contains(msg.sender) && !tracker.receivedBy[msg.sender]) {
+                tracker.receivedBy[msg.sender] = true;
+                ++tracker.countReceived;
+                emit Received(id, msg.sender);
+            }
 
-        // Count number of time received
-        if (_gateways.contains(msg.sender) && !tracker.receivedBy[msg.sender]) {
-            tracker.receivedBy[msg.sender] = true;
-            ++tracker.countReceived;
-            // TODO emit event (got message)
-        }
+            // Parse payload
+            (, string memory originalSender, string memory receiver, bytes memory unwrappedPayload) = abi.decode(
+                payload,
+                (uint256, string, string, bytes)
+            );
 
-        // Parse payload
-        (, string memory originalSender, string memory receiver, bytes memory unwrappedPayload) = abi.decode(
-            payload,
-            (uint256, string, string, bytes)
-        );
-
-        // If ready to execute, and not yet executed
-        if (tracker.countReceived >= getThreshold()) {
-            // prevent re-entry
-            tracker.executed = true;
-            // slither-disable-next-line reentrancy-no-eth
-            try
-                IERC7786Receiver(receiver.parseAddress()).executeMessage(
-                    sourceChain,
-                    originalSender,
-                    unwrappedPayload,
-                    attributes
-                )
-            returns (bytes4 magic) {
-                if (magic == IERC7786Receiver.executeMessage.selector) {
-                    // TODO emit event (success)
-                } else {
-                    // roolback to enable retry
+            // If ready to execute, and not yet executed
+            if (tracker.countReceived >= getThreshold()) {
+                // prevent re-entry
+                tracker.executed = true;
+                // slither-disable-next-line reentrancy-no-eth
+                try
+                    IERC7786Receiver(receiver.parseAddress()).executeMessage(
+                        sourceChain,
+                        originalSender,
+                        unwrappedPayload,
+                        attributes
+                    )
+                returns (bytes4 magic) {
+                    if (magic == IERC7786Receiver.executeMessage.selector) {
+                        emit ExecutionSuccess(id);
+                    } else {
+                        // roolback to enable retry
+                        tracker.executed = false;
+                        emit ExecutionFailed(id);
+                    }
+                } catch {
+                    // rollback to enable retry
                     tracker.executed = false;
-                    // TODO emit event (failure)
+                    emit ExecutionFailed(id);
                 }
-            } catch {
-                // rollback to enable retry
-                tracker.executed = false;
-                // TODO emit event (failure)
             }
         }
 
@@ -192,7 +207,7 @@ contract ERC7786Aggregator is IERC7786GatewaySource, IERC7786Receiver, Ownable, 
 
     function getRemoteRouter(string calldata caip2) public view virtual returns (string memory) {
         string memory router = _remoteRouters[caip2];
-        require(bytes(router).length == 0, "No remote router known for this destination chain");
+        require(bytes(router).length > 0, "No remote router known for this destination chain");
         return router;
     }
 
@@ -208,10 +223,6 @@ contract ERC7786Aggregator is IERC7786GatewaySource, IERC7786Receiver, Ownable, 
 
     function setThreshold(uint8 newThreshold) public virtual onlyOwner {
         _setThreshold(newThreshold);
-    }
-
-    function registerRemoteRouter(uint256 chainId, address router) public virtual onlyOwner {
-        _registerRemoteRouter(CAIP2.format("eip155", chainId.toString()), router.toChecksumHexString());
     }
 
     function registerRemoteRouter(string memory caip2, string memory router) public virtual onlyOwner {
@@ -234,21 +245,21 @@ contract ERC7786Aggregator is IERC7786GatewaySource, IERC7786Receiver, Ownable, 
     // ================================================== Internal ===================================================
 
     function _addGateway(address gateway) internal virtual {
-        require(!_gateways.add(gateway), "ERC7786Router gateway already present");
-        // TODO: add event
+        require(_gateways.add(gateway), "ERC7786Router gateway already present");
+        emit GatewayAdded(gateway);
     }
 
     function _removeGateway(address gateway) internal virtual {
-        require(!_gateways.remove(gateway), "ERC7786Router gateway not present");
+        require(_gateways.remove(gateway), "ERC7786Router gateway not present");
         require(_threshold <= _gateways.length(), "ERC7786 threshold exceeds the number of gateways");
-        // TODO: add event
+        emit GatewayRemoved(gateway);
     }
 
     function _setThreshold(uint8 newThreshold) internal virtual {
         require(newThreshold > 0, "ERC7786 threshold cannot be 0");
         require(newThreshold <= _gateways.length(), "ERC7786 threshold exceeds the number of gateways");
         _threshold = newThreshold;
-        // TODO: add event
+        emit ThresholdUpdated(newThreshold);
     }
 
     // NOTE: once a router is registered for a given chainId, it cannot be updated
