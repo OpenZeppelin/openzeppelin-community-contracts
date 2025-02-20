@@ -77,25 +77,20 @@ describe('ERC7786Aggregator', function () {
       .to.emit(this.receiver, 'MessageReceived')
       .withArgs(this.aggregatorB, this.CAIP2, getAddress(this.sender), payload, attributes)
       .to.emit(this.aggregatorB, 'ExecutionSuccess')
-      .withArgs(resultId);
+      .withArgs(resultId)
+      .to.not.emit(this.aggregatorB, 'ExecutionFailed');
 
-    // MessagePosted to all gateways on the A side
-    for (const { gatewayA } of this.protocoles) {
+    // MessagePosted to all gateways on the A side and received from all gateways on the B side
+    for (const { gatewayA, gatewayB } of this.protocoles) {
       await expect(tx)
         .to.emit(gatewayA, 'MessagePosted')
-        .withArgs(
-          ethers.ZeroHash,
-          this.asCAIP10(this.aggregatorA),
-          this.asCAIP10(this.aggregatorB),
-          anyValue,
-          anyValue,
-        );
+        .withArgs(ethers.ZeroHash, this.asCAIP10(this.aggregatorA), this.asCAIP10(this.aggregatorB), anyValue, anyValue)
+        .to.emit(this.aggregatorB, 'Received')
+        .withArgs(resultId, gatewayB);
     }
 
-    // Message Received from first N gateways on B side
-    for (const { gatewayB } of this.protocoles.slice(0, N)) {
-      await expect(tx).to.emit(this.aggregatorB, 'Received').withArgs(resultId, gatewayB);
-    }
+    // Number of times the execution succeded
+    expect(logs.filter(ev => ev?.fragment?.name == 'ExecutionSuccess').length).to.equal(1);
   });
 
   it('invalid receiver - bad return value', async function () {
@@ -113,9 +108,10 @@ describe('ERC7786Aggregator', function () {
       .to.emit(this.aggregatorA, 'MessagePosted')
       .withArgs(ethers.ZeroHash, this.asCAIP10(this.sender), this.asCAIP10(this.invalidReceiver), payload, attributes)
       .to.emit(this.aggregatorB, 'ExecutionFailed')
-      .withArgs(resultId);
+      .withArgs(resultId)
+      .to.not.emit(this.aggregatorB, 'ExecutionSuccess');
 
-    // MessagePosted to all gateways on the A side and receive from all gateways on the B side
+    // MessagePosted to all gateways on the A side and received from all gateways on the B side
     for (const { gatewayA, gatewayB } of this.protocoles) {
       await expect(tx)
         .to.emit(gatewayA, 'MessagePosted')
