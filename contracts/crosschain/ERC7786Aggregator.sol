@@ -148,47 +148,49 @@ contract ERC7786Aggregator is IERC7786GatewaySource, IERC7786Receiver, Ownable, 
         bytes32 id = keccak256(abi.encode(sourceChain, sender, payload, attributes));
         Tracker storage tracker = _trackers[id];
 
-        // NOTE: should we revert or return early ?
-        // reverting will signal an error to the gateways that relay after the N treshold was reached
-        if (!tracker.executed) {
-            // Count number of time received
-            if (_gateways.contains(msg.sender) && !tracker.receivedBy[msg.sender]) {
-                tracker.receivedBy[msg.sender] = true;
-                ++tracker.countReceived;
-                emit Received(id, msg.sender);
-            }
+        // Count number of time received
+        if (_gateways.contains(msg.sender) && !tracker.receivedBy[msg.sender]) {
+            tracker.receivedBy[msg.sender] = true;
+            ++tracker.countReceived;
+            emit Received(id, msg.sender);
 
-            // Parse payload
-            (, string memory originalSender, string memory receiver, bytes memory unwrappedPayload) = abi.decode(
-                payload,
-                (uint256, string, string, bytes)
-            );
+            // if already executed, leave gracefully
+            if (tracker.executed) return IERC7786Receiver.executeMessage.selector;
+        } else {
+            // if already executed, revert
+            require(!tracker.executed, "ERC7786Router message already executed");
+        }
 
-            // If ready to execute, and not yet executed
-            if (tracker.countReceived >= getThreshold()) {
-                // prevent re-entry
-                tracker.executed = true;
-                // slither-disable-next-line reentrancy-no-eth
-                try
-                    IERC7786Receiver(receiver.parseAddress()).executeMessage(
-                        sourceChain,
-                        originalSender,
-                        unwrappedPayload,
-                        attributes
-                    )
-                returns (bytes4 magic) {
-                    if (magic == IERC7786Receiver.executeMessage.selector) {
-                        emit ExecutionSuccess(id);
-                    } else {
-                        // roolback to enable retry
-                        tracker.executed = false;
-                        emit ExecutionFailed(id);
-                    }
-                } catch {
-                    // rollback to enable retry
+        // Parse payload
+        (, string memory originalSender, string memory receiver, bytes memory unwrappedPayload) = abi.decode(
+            payload,
+            (uint256, string, string, bytes)
+        );
+
+        // If ready to execute, and not yet executed
+        if (tracker.countReceived >= getThreshold()) {
+            // prevent re-entry
+            tracker.executed = true;
+            // slither-disable-next-line reentrancy-no-eth
+            try
+                IERC7786Receiver(receiver.parseAddress()).executeMessage(
+                    sourceChain,
+                    originalSender,
+                    unwrappedPayload,
+                    attributes
+                )
+            returns (bytes4 magic) {
+                if (magic == IERC7786Receiver.executeMessage.selector) {
+                    emit ExecutionSuccess(id);
+                } else {
+                    // roolback to enable retry
                     tracker.executed = false;
                     emit ExecutionFailed(id);
                 }
+            } catch {
+                // rollback to enable retry
+                tracker.executed = false;
+                emit ExecutionFailed(id);
             }
         }
 
