@@ -38,6 +38,15 @@ contract ERC7786Aggregator is IERC7786GatewaySource, IERC7786Receiver, Ownable, 
     event GatewayRemoved(address indexed gateway);
     event ThresholdUpdated(uint8 threshold);
 
+    error ERC7786AggregatorValueNotSupported();
+    error ERC7786AggregatorInvalidCrosschainSender();
+    error ERC7786AggregatorAlreadyExecuted();
+    error ERC7786AggregatorRemoteAlreadyRegistered(string caip2);
+    error ERC7786AggregatorRemoteNotRegistered(string caip2);
+    error ERC7786AggregatorGatewayAlreadyRegistered(address gateway);
+    error ERC7786AggregatorGatewayNotRegistered(address gateway);
+    error ERC7786AggregatorThresholdViolation();
+
     /****************************************************************************************************************
      *                                        S T A T E   V A R I A B L E S                                         *
      ****************************************************************************************************************/
@@ -89,7 +98,7 @@ contract ERC7786Aggregator is IERC7786GatewaySource, IERC7786Receiver, Ownable, 
         bytes memory payload, // using memory instead of calldata avoids stack too deep error
         bytes[] memory attributes // using memory instead of calldata avoids stack too deep error
     ) external payable whenNotPaused returns (bytes32 outboxId) {
-        require(msg.value == 0, "ERC7786Router: value not supported");
+        if (msg.value > 0) revert ERC7786AggregatorValueNotSupported();
         // address of the remote router, revert if not registered
         string memory router = getRemoteRouter(destinationChain);
 
@@ -139,10 +148,7 @@ contract ERC7786Aggregator is IERC7786GatewaySource, IERC7786Receiver, Ownable, 
         bytes[] calldata attributes
     ) external payable whenNotPaused returns (bytes4) {
         // Check sender is a trusted remote router
-        require(
-            _remoteRouters[sourceChain].equal(sender),
-            "ERC7786Router message must originated from a registered remote router"
-        );
+        if (!_remoteRouters[sourceChain].equal(sender)) revert ERC7786AggregatorInvalidCrosschainSender();
 
         // Message reception tracker
         bytes32 id = keccak256(abi.encode(sourceChain, sender, payload, attributes));
@@ -158,7 +164,7 @@ contract ERC7786Aggregator is IERC7786GatewaySource, IERC7786Receiver, Ownable, 
             if (tracker.executed) return IERC7786Receiver.executeMessage.selector;
         } else {
             // if already executed, revert
-            require(!tracker.executed, "ERC7786Router message already executed");
+            if (tracker.executed) revert ERC7786AggregatorAlreadyExecuted();
         }
 
         // Parse payload
@@ -209,7 +215,7 @@ contract ERC7786Aggregator is IERC7786GatewaySource, IERC7786Receiver, Ownable, 
 
     function getRemoteRouter(string calldata caip2) public view virtual returns (string memory) {
         string memory router = _remoteRouters[caip2];
-        require(bytes(router).length > 0, "No remote router known for this destination chain");
+        if (bytes(router).length == 0) revert ERC7786AggregatorRemoteNotRegistered(caip2);
         return router;
     }
 
@@ -247,26 +253,25 @@ contract ERC7786Aggregator is IERC7786GatewaySource, IERC7786Receiver, Ownable, 
     // ================================================== Internal ===================================================
 
     function _addGateway(address gateway) internal virtual {
-        require(_gateways.add(gateway), "ERC7786Router gateway already present");
+        if (!_gateways.add(gateway)) revert ERC7786AggregatorGatewayAlreadyRegistered(gateway);
         emit GatewayAdded(gateway);
     }
 
     function _removeGateway(address gateway) internal virtual {
-        require(_gateways.remove(gateway), "ERC7786Router gateway not present");
-        require(_threshold <= _gateways.length(), "ERC7786 threshold exceeds the number of gateways");
+        if (!_gateways.remove(gateway)) revert ERC7786AggregatorGatewayNotRegistered(gateway);
+        if (_threshold > _gateways.length()) revert ERC7786AggregatorThresholdViolation();
         emit GatewayRemoved(gateway);
     }
 
     function _setThreshold(uint8 newThreshold) internal virtual {
-        require(newThreshold > 0, "ERC7786 threshold cannot be 0");
-        require(newThreshold <= _gateways.length(), "ERC7786 threshold exceeds the number of gateways");
+        if (newThreshold == 0 || _threshold > _gateways.length()) revert ERC7786AggregatorThresholdViolation();
         _threshold = newThreshold;
         emit ThresholdUpdated(newThreshold);
     }
 
     // NOTE: once a router is registered for a given chainId, it cannot be updated
     function _registerRemoteRouter(string memory caip2, string memory router) internal virtual {
-        require(bytes(_remoteRouters[caip2]).length == 0, RemoteAlreadyRegistered(caip2));
+        if (bytes(_remoteRouters[caip2]).length > 0) revert ERC7786AggregatorRemoteAlreadyRegistered(caip2);
         _remoteRouters[caip2] = router;
 
         emit RemoteRegistered(caip2, router);
