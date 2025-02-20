@@ -1,18 +1,74 @@
 const { ethers } = require('hardhat');
 const { formatType } = require('@openzeppelin/contracts/test/helpers/eip712');
 
-const DEFAULT_DOMAIN = {
-  name: '',
-  version: '',
-  chainId: 0,
-  verifyingContract: ethers.ZeroAddress,
-  salt: ethers.ZeroHash,
-};
+const PersonalSign = formatType({ prefixed: 'bytes' });
+const TypedDataSign = contentsTypeName =>
+  formatType({
+    contents: contentsTypeName,
+    name: 'string',
+    version: 'string',
+    chainId: 'uint256',
+    verifyingContract: 'address',
+    salt: 'bytes32',
+  });
 
-class PersonalSignHelper {
-  static types = { PersonalSign: formatType({ prefixed: 'bytes' }) };
+class ERC7739Signer extends ethers.AbstractSigner {
+  #signer;
+  #domain;
 
-  static prepare(message) {
+  constructor(signer, domain) {
+    super(signer.provider);
+    this.#signer = signer;
+    this.#domain = domain;
+  }
+
+  static from(signer, domain) {
+    return new this(signer, domain);
+  }
+
+  get signingKey() {
+    return this.#signer.signingKey;
+  }
+
+  get privateKey() {
+    return this.#signer.privateKey;
+  }
+
+  async getAddress() {
+    return this.#signer.getAddress();
+  }
+
+  connect(provider) {
+    this.#signer.connect(provider);
+  }
+
+  async signTransaction(tx) {
+    return this.#signer.signTransaction(tx);
+  }
+
+  async signMessage(message) {
+    return this.#signer.signTypedData(this.#domain, { PersonalSign }, ERC4337Utils.preparePersonalSign(message));
+  }
+
+  async signTypedData(domain, types, value) {
+    const { allTypes, contentsTypeName, contentsDescr } = ERC4337Utils.getContentsDetail(types);
+
+    return Promise.resolve(
+      this.#signer.signTypedData(domain, allTypes, ERC4337Utils.prepareSignTypedData(value, this.#domain)),
+    ).then(signature =>
+      ethers.concat([
+        signature,
+        ethers.TypedDataEncoder.hashDomain(domain), // appDomainSeparator
+        ethers.TypedDataEncoder.hashStruct(contentsTypeName, types, value), // contentsHash
+        ethers.toUtf8Bytes(contentsDescr),
+        ethers.toBeHex(contentsDescr.length, 2),
+      ]),
+    );
+  }
+}
+
+class ERC4337Utils {
+  static preparePersonalSign(message) {
     return {
       prefixed: ethers.concat([
         ethers.toUtf8Bytes(ethers.MessagePrefix),
@@ -22,94 +78,41 @@ class PersonalSignHelper {
     };
   }
 
-  static hash(message) {
-    return message.prefixed ? ethers.keccak256(message.prefixed) : ethers.hashMessage(message);
-  }
-
-  static sign(signTypedData, data, signerDomain) {
-    return signTypedData(signerDomain, this.types, data.prefixed ? data : this.prepare(data));
-  }
-}
-
-class TypedDataSignHelper {
-  constructor(contentsTypes, contentsTypeName = Object.keys(contentsTypes).at(0)) {
-    this.contentsTypeName = contentsTypeName;
-    this.contentsTypes = contentsTypes;
-    this.allTypes = {
-      TypedDataSign: formatType({
-        contents: contentsTypeName,
-        name: 'string',
-        version: 'string',
-        chainId: 'uint256',
-        verifyingContract: 'address',
-        salt: 'bytes32',
-      }),
-      ...contentsTypes,
-    };
-  }
-
-  static from(contentsTypes, contentsTypeName = Object.keys(contentsTypes).at(0)) {
-    return new TypedDataSignHelper(contentsTypes, contentsTypeName);
-  }
-
-  static prepare(contents, signerDomain) {
+  static prepareSignTypedData(contents, signerDomain) {
     return {
-      ...DEFAULT_DOMAIN,
-      ...signerDomain,
+      name: signerDomain.name ?? '',
+      version: signerDomain.version ?? '',
+      chainId: signerDomain.chainId ?? 0,
+      verifyingContract: signerDomain.verifyingContract ?? ethers.ZeroAddress,
+      salt: signerDomain.salt ?? ethers.ZeroHash,
       contents,
     };
   }
 
-  hashStruct(name, message) {
-    return message.contents
-      ? ethers.TypedDataEncoder.hashStruct(name, this.allTypes, message)
-      : ethers.TypedDataEncoder.hashStruct(name, this.contentsTypes, message);
-  }
-
-  hash(domain, message) {
-    return message.contents
-      ? ethers.TypedDataEncoder.hash(domain, this.allTypes, message)
-      : ethers.TypedDataEncoder.hash(domain, this.contentsTypes, message);
-  }
-
-  sign(signTypedData, domain, message) {
-    return Promise.resolve(signTypedData(domain, this.allTypes, message)).then(signature =>
-      ethers.concat([
-        signature,
-        ethers.TypedDataEncoder.hashDomain(domain), // appDomainSeparator
-        this.hashStruct(this.contentsTypeName, message.contents), // contentsHash
-        ethers.toUtf8Bytes(this.contentDescr),
-        ethers.toBeHex(this.contentDescr.length, 2),
-      ]),
-    );
-  }
-
-  static hashStruct(name, types, message) {
-    return TypedDataSignHelper.from(types).hashStruct(name, message);
-  }
-
-  static hash(domain, types, message) {
-    return TypedDataSignHelper.from(types).hash(domain, message);
-  }
-
-  static sign(signer, domain, types, message) {
-    return TypedDataSignHelper.from(types).sign(signer, domain, message);
-  }
-
-  get contentDescr() {
+  static getContentsDetail(contentsTypes, contentsTypeName = Object.keys(contentsTypes).at(0)) {
     // Examples values
     //
     // contentsTypeName         B
     // typedDataSignType        TypedDataSign(B contents,...)A(uint256 v)B(Z z)Z(A a)
     // contentsType             A(uint256 v)B(Z z)Z(A a)
     // contentsDescr            A(uint256 v)B(Z z)Z(A a)B
-    const typedDataSignType = ethers.TypedDataEncoder.from(this.allTypes).encodeType('TypedDataSign');
+    const allTypes = { TypedDataSign: TypedDataSign(contentsTypeName), ...contentsTypes };
+    const typedDataSignType = ethers.TypedDataEncoder.from(allTypes).encodeType('TypedDataSign');
     const contentsType = typedDataSignType.slice(typedDataSignType.indexOf(')') + 1); // Remove TypedDataSign (first object)
-    return contentsType + (contentsType.startsWith(this.contentsTypeName) ? '' : this.contentsTypeName);
+    const contentsDescr = contentsType + (contentsType.startsWith(contentsTypeName) ? '' : contentsTypeName);
+
+    return {
+      allTypes,
+      contentsTypes,
+      contentsTypeName,
+      contentsDescr,
+    };
   }
 }
 
 module.exports = {
-  PersonalSignHelper,
-  TypedDataSignHelper,
+  ERC7739Signer,
+  ERC4337Utils,
+  PersonalSign,
+  TypedDataSign,
 };

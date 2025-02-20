@@ -207,7 +207,6 @@ Receive Ether.
 
 Unauthorized call to the account.
 
-:_PACKED_USER_OPERATION: pass:normal[xref:#Account-_PACKED_USER_OPERATION-bytes32[`++_PACKED_USER_OPERATION++`]]
 :_signableUserOpHash: pass:normal[xref:#Account-_signableUserOpHash-struct-PackedUserOperation-bytes32-[`++_signableUserOpHash++`]]
 
 [.contract]
@@ -243,6 +242,17 @@ implemented using a specific signature verification algorithm. See {SignerECDSA}
 .IERC1271
 
 [.contract-subindex-inherited]
+.EIP712
+* `++_domainSeparatorV4()++`
+* `++_hashTypedDataV4(structHash)++`
+* `++eip712Domain()++`
+* `++_EIP712Name()++`
+* `++_EIP712Version()++`
+
+[.contract-subindex-inherited]
+.IERC5267
+
+[.contract-subindex-inherited]
 .ERC1155Holder
 * `++supportsInterface(interfaceId)++`
 * `++onERC1155Received(, , , , )++`
@@ -260,17 +270,6 @@ implemented using a specific signature verification algorithm. See {SignerECDSA}
 [.contract-subindex-inherited]
 .ERC721Holder
 * `++onERC721Received(, , , )++`
-
-[.contract-subindex-inherited]
-.EIP712
-* `++_domainSeparatorV4()++`
-* `++_hashTypedDataV4(structHash)++`
-* `++eip712Domain()++`
-* `++_EIP712Name()++`
-* `++_EIP712Version()++`
-
-[.contract-subindex-inherited]
-.IERC5267
 
 [.contract-subindex-inherited]
 .IERC721Receiver
@@ -307,6 +306,13 @@ implemented using a specific signature verification algorithm. See {SignerECDSA}
 .IERC1271
 
 [.contract-subindex-inherited]
+.EIP712
+
+[.contract-subindex-inherited]
+.IERC5267
+* `++EIP712DomainChanged()++`
+
+[.contract-subindex-inherited]
 .ERC1155Holder
 
 [.contract-subindex-inherited]
@@ -320,13 +326,6 @@ implemented using a specific signature verification algorithm. See {SignerECDSA}
 
 [.contract-subindex-inherited]
 .ERC721Holder
-
-[.contract-subindex-inherited]
-.EIP712
-
-[.contract-subindex-inherited]
-.IERC5267
-* `++EIP712DomainChanged()++`
 
 [.contract-subindex-inherited]
 .IERC721Receiver
@@ -353,6 +352,12 @@ implemented using a specific signature verification algorithm. See {SignerECDSA}
 .IERC1271
 
 [.contract-subindex-inherited]
+.EIP712
+
+[.contract-subindex-inherited]
+.IERC5267
+
+[.contract-subindex-inherited]
 .ERC1155Holder
 
 [.contract-subindex-inherited]
@@ -366,12 +371,6 @@ implemented using a specific signature verification algorithm. See {SignerECDSA}
 
 [.contract-subindex-inherited]
 .ERC721Holder
-
-[.contract-subindex-inherited]
-.EIP712
-
-[.contract-subindex-inherited]
-.IERC5267
 
 [.contract-subindex-inherited]
 .IERC721Receiver
@@ -388,52 +387,6 @@ implemented using a specific signature verification algorithm. See {SignerECDSA}
 
 --
 
-[.contract-index]
-.Internal Variables
---
-* `++bytes32 constant _PACKED_USER_OPERATION++`
-
-[.contract-subindex-inherited]
-.ERC7739
-
-[.contract-subindex-inherited]
-.IERC1271
-
-[.contract-subindex-inherited]
-.ERC1155Holder
-
-[.contract-subindex-inherited]
-.IERC1155Receiver
-
-[.contract-subindex-inherited]
-.ERC165
-
-[.contract-subindex-inherited]
-.IERC165
-
-[.contract-subindex-inherited]
-.ERC721Holder
-
-[.contract-subindex-inherited]
-.EIP712
-
-[.contract-subindex-inherited]
-.IERC5267
-
-[.contract-subindex-inherited]
-.IERC721Receiver
-
-[.contract-subindex-inherited]
-.AccountCore
-
-[.contract-subindex-inherited]
-.IAccount
-
-[.contract-subindex-inherited]
-.AbstractSigner
-
---
-
 [.contract-item]
 [[Account-_signableUserOpHash-struct-PackedUserOperation-bytes32-]]
 ==== `[.contract-item-name]#++_signableUserOpHash++#++(struct PackedUserOperation userOp, bytes32) → bytes32++` [.item-kind]#internal#
@@ -441,10 +394,6 @@ implemented using a specific signature verification algorithm. See {SignerECDSA}
 Specialization of {AccountCore-_signableUserOpHash} that returns a typehash following EIP-712 typed data
 hashing for readability. This assumes the underlying signature scheme implements `signTypedData`, which will be
 the case when combined with {SignerECDSA} or {SignerERC7702}.
-
-[.contract-item]
-[[Account-_PACKED_USER_OPERATION-bytes32]]
-==== `bytes32 [.contract-item-name]#++_PACKED_USER_OPERATION++#` [.item-kind]#internal constant#
 
 == Extensions
 

@@ -11,7 +11,6 @@ import {Bytes} from "@openzeppelin/contracts/utils/Bytes.sol";
 import {Packing} from "@openzeppelin/contracts/utils/Packing.sol";
 import {Address} from "@openzeppelin/contracts/utils/Address.sol";
 import {Calldata} from "@openzeppelin/contracts/utils/Calldata.sol";
-import {ERC7739} from "../../utils/cryptography/ERC7739.sol";
 import {AccountCore} from "../AccountCore.sol";
 
 /**
@@ -43,7 +42,7 @@ import {AccountCore} from "../AccountCore.sol";
  */
 abstract contract AccountERC7579 is
     AccountCore,
-    ERC7739,
+    IERC1271,
     IERC7579Execution,
     IERC7579AccountConfig,
     IERC7579ModuleConfig
@@ -145,12 +144,12 @@ abstract contract AccountERC7579 is
         return false;
     }
 
-    /// @dev Executes a transaction from the entry point or the account itself. See {_execute}.
+    /// @inheritdoc IERC7579Execution
     function execute(bytes32 mode, bytes calldata executionCalldata) public payable virtual onlyEntryPointOrSelf {
         _execute(Mode.wrap(mode), executionCalldata);
     }
 
-    /// @dev Executes a transaction from the executor module. See {_execute}.
+    /// @inheritdoc IERC7579Execution
     function executeFromExecutor(
         bytes32 mode,
         bytes calldata executionCalldata
@@ -162,6 +161,30 @@ abstract contract AccountERC7579 is
         returns (bytes[] memory returnData)
     {
         return _execute(Mode.wrap(mode), executionCalldata);
+    }
+
+    /**
+     * @dev Implement ERC-1271 through IERC7579Validator modules. If module based validation fails, fallback to
+     * "native" validation by the abstract signer.
+     *
+     * NOTE: when combined with {ERC7739} (for example through {Account}), resolution ordering may have an impact
+     * ({ERC7739} does not call super). Manual resolution might be necessary.
+     */
+    function isValidSignature(bytes32 hash, bytes calldata signature) public view virtual override returns (bytes4) {
+        // check signature length is enough for extraction
+        if (signature.length >= 20) {
+            (address module, bytes calldata innerSignature) = _extractSignatureValidator(signature);
+            // if module is not installed, skip
+            if (isModuleInstalled(MODULE_TYPE_VALIDATOR, module, Calldata.emptyBytes())) {
+                // try validation, skip any revert
+                try IERC7579Validator(module).isValidSignatureWithSender(address(this), hash, innerSignature) returns (
+                    bytes4 magic
+                ) {
+                    if (magic == IERC1271.isValidSignature.selector) return magic;
+                } catch {}
+            }
+        }
+        return bytes4(0xffffffff);
     }
 
     /**
@@ -180,26 +203,6 @@ abstract contract AccountERC7579 is
             isModuleInstalled(MODULE_TYPE_VALIDATOR, module, Calldata.emptyBytes())
                 ? IERC7579Validator(module).validateUserOp(userOp, _signableUserOpHash(userOp, userOpHash))
                 : super._validateUserOp(userOp, userOpHash);
-    }
-
-    /**
-     * @dev Lowest-level signature validation function. See {ERC7739-_rawSignatureValidation}.
-     *
-     * This function delegates the signature validation to a validation module if the first 20 bytes of the
-     * signature correspond to an installed validator module.
-     *
-     * See {_extractSignatureValidator} for the module extraction logic.
-     */
-    function _rawSignatureValidation(
-        bytes32 hash,
-        bytes calldata signature
-    ) internal view virtual override returns (bool) {
-        if (signature.length < 20) return false;
-        (address module, bytes calldata innerSignature) = _extractSignatureValidator(signature);
-        return
-            isModuleInstalled(MODULE_TYPE_VALIDATOR, module, Calldata.emptyBytes()) &&
-            IERC7579Validator(module).isValidSignatureWithSender(address(this), hash, innerSignature) ==
-            IERC1271.isValidSignature.selector;
     }
 
     /**
@@ -386,5 +389,13 @@ abstract contract AccountERC7579 is
         bytes memory data
     ) internal pure virtual returns (bytes4 selector, bytes memory remaining) {
         return (bytes4(data), data.slice(4));
+    }
+
+    /// @dev By default, only use the modules for validation of userOp and signature. Disable raw signatures.
+    function _rawSignatureValidation(
+        bytes32 /*hash*/,
+        bytes calldata /*signature*/
+    ) internal view virtual override returns (bool) {
+        return false;
     }
 }
