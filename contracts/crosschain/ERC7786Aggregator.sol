@@ -154,8 +154,9 @@ contract ERC7786Aggregator is IERC7786GatewaySource, IERC7786Receiver, Ownable, 
         bytes32 id = keccak256(abi.encode(sourceChain, sender, payload, attributes));
         Tracker storage tracker = _trackers[id];
 
-        // Count number of time received
+        // If call originates from a trusted gateway
         if (_gateways.contains(msg.sender) && !tracker.receivedBy[msg.sender]) {
+            // Count number of time received
             tracker.receivedBy[msg.sender] = true;
             ++tracker.countReceived;
             emit Received(id, msg.sender);
@@ -177,23 +178,21 @@ contract ERC7786Aggregator is IERC7786GatewaySource, IERC7786Receiver, Ownable, 
         if (tracker.countReceived >= getThreshold()) {
             // prevent re-entry
             tracker.executed = true;
+
+            bytes memory call = abi.encodeCall(
+                IERC7786Receiver.executeMessage,
+                (sourceChain, originalSender, unwrappedPayload, attributes)
+            );
             // slither-disable-next-line reentrancy-no-eth
-            try
-                IERC7786Receiver(receiver.parseAddress()).executeMessage(
-                    sourceChain,
-                    originalSender,
-                    unwrappedPayload,
-                    attributes
-                )
-            returns (bytes4 magic) {
-                if (magic == IERC7786Receiver.executeMessage.selector) {
-                    emit ExecutionSuccess(id);
-                } else {
-                    // roolback to enable retry
-                    tracker.executed = false;
-                    emit ExecutionFailed(id);
-                }
-            } catch {
+            (bool success, bytes memory returndata) = receiver.parseAddress().call(call);
+
+            if (
+                success &&
+                returndata.length >= 32 &&
+                abi.decode(returndata, (bytes4)) == IERC7786Receiver.executeMessage.selector
+            ) {
+                emit ExecutionSuccess(id);
+            } else {
                 // rollback to enable retry
                 tracker.executed = false;
                 emit ExecutionFailed(id);

@@ -60,75 +60,80 @@ describe('ERC7786Aggregator', function () {
     await expect(this.aggregatorB.getRemoteRouter(this.CAIP2)).to.eventually.equal(getAddress(this.aggregatorA));
   });
 
-  it('workflow', async function () {
-    const payload = ethers.randomBytes(128);
-    const attributes = [];
+  describe('cross chain call', function () {
+    it('valid receiver', async function () {
+      this.destination = this.receiver;
+      this.payload = ethers.randomBytes(128);
+      this.attributes = [];
+      this.success = true;
+    });
 
-    const tx = await this.aggregatorA
-      .connect(this.sender)
-      .sendMessage(this.CAIP2, getAddress(this.receiver), payload, attributes);
-    const { logs } = await tx.wait();
-    const [resultId] = logs.find(ev => ev?.fragment?.name == 'Received').args;
+    it('invalid receiver - bad return value', async function () {
+      this.destination = this.invalidReceiver;
+      this.payload = ethers.randomBytes(128);
+      this.attributes = [];
+      this.success = false;
+    });
 
-    // Message posted by aggregator and received by the receiver
-    await expect(tx)
-      .to.emit(this.aggregatorA, 'MessagePosted')
-      .withArgs(ethers.ZeroHash, this.asCAIP10(this.sender), this.asCAIP10(this.receiver), payload, attributes)
-      .to.emit(this.receiver, 'MessageReceived')
-      .withArgs(this.aggregatorB, this.CAIP2, getAddress(this.sender), payload, attributes)
-      .to.emit(this.aggregatorB, 'ExecutionSuccess')
-      .withArgs(resultId)
-      .to.not.emit(this.aggregatorB, 'ExecutionFailed');
+    it('invalid receiver - EOA', async function () {
+      this.destination = this.accounts[0];
+      this.payload = ethers.randomBytes(128);
+      this.attributes = [];
+      this.success = false;
+    });
 
-    // MessagePosted to all gateways on the A side and received from all gateways on the B side
-    for (const { gatewayA, gatewayB } of this.protocoles) {
-      await expect(tx)
-        .to.emit(gatewayA, 'MessagePosted')
-        .withArgs(ethers.ZeroHash, this.asCAIP10(this.aggregatorA), this.asCAIP10(this.aggregatorB), anyValue, anyValue)
-        .to.emit(this.aggregatorB, 'Received')
-        .withArgs(resultId, gatewayB);
-    }
-
-    // Number of times the execution succeded
-    expect(logs.filter(ev => ev?.fragment?.name == 'ExecutionSuccess').length).to.equal(1);
-  });
-
-  it('invalid receiver - bad return value', async function () {
-    const payload = ethers.randomBytes(128);
-    const attributes = [];
-
-    const tx = await this.aggregatorA
-      .connect(this.sender)
-      .sendMessage(this.CAIP2, getAddress(this.invalidReceiver), payload, attributes);
-    const { logs } = await tx.wait();
-    const [resultId] = logs.find(ev => ev?.fragment?.name == 'Received').args;
-
-    // Message posted by aggregator
-    await expect(tx)
-      .to.emit(this.aggregatorA, 'MessagePosted')
-      .withArgs(ethers.ZeroHash, this.asCAIP10(this.sender), this.asCAIP10(this.invalidReceiver), payload, attributes)
-      .to.emit(this.aggregatorB, 'ExecutionFailed')
-      .withArgs(resultId)
-      .to.not.emit(this.aggregatorB, 'ExecutionSuccess');
-
-    // MessagePosted to all gateways on the A side and received from all gateways on the B side
-    for (const { gatewayA, gatewayB } of this.protocoles) {
-      await expect(tx)
-        .to.emit(gatewayA, 'MessagePosted')
-        .withArgs(ethers.ZeroHash, this.asCAIP10(this.aggregatorA), this.asCAIP10(this.aggregatorB), anyValue, anyValue)
-        .to.emit(this.aggregatorB, 'Received')
-        .withArgs(resultId, gatewayB);
-    }
-
-    // Number of times the execution tried and failed
-    expect(logs.filter(ev => ev?.fragment?.name == 'ExecutionFailed').length).to.equal(M - N + 1);
-  });
-
-  it('invalid receiver - EOA', async function () {
-    await expect(
-      this.aggregatorA
+    afterEach(async function () {
+      const tx = await this.aggregatorA
         .connect(this.sender)
-        .sendMessage(this.CAIP2, getAddress(this.accounts[0]), ethers.randomBytes(128), []),
-    ).to.be.revertedWithoutReason();
+        .sendMessage(this.CAIP2, getAddress(this.destination), this.payload, this.attributes);
+      const { logs } = await tx.wait();
+      const [resultId] = logs.find(ev => ev?.fragment?.name == 'Received').args;
+
+      // Message was posted
+      await expect(tx)
+        .to.emit(this.aggregatorA, 'MessagePosted')
+        .withArgs(
+          ethers.ZeroHash,
+          this.asCAIP10(this.sender),
+          this.asCAIP10(this.destination),
+          this.payload,
+          this.attributes,
+        );
+
+      // MessagePosted to all gateways on the A side and received from all gateways on the B side
+      for (const { gatewayA, gatewayB } of this.protocoles) {
+        await expect(tx)
+          .to.emit(gatewayA, 'MessagePosted')
+          .withArgs(
+            ethers.ZeroHash,
+            this.asCAIP10(this.aggregatorA),
+            this.asCAIP10(this.aggregatorB),
+            anyValue,
+            anyValue,
+          )
+          .to.emit(this.aggregatorB, 'Received')
+          .withArgs(resultId, gatewayB);
+      }
+
+      if (this.success) {
+        await expect(tx)
+          .to.emit(this.destination, 'MessageReceived')
+          .withArgs(this.aggregatorB, this.CAIP2, getAddress(this.sender), this.payload, this.attributes)
+          .to.emit(this.aggregatorB, 'ExecutionSuccess')
+          .withArgs(resultId)
+          .to.not.emit(this.aggregatorB, 'ExecutionFailed');
+
+        // Number of times the execution succeeded
+        expect(logs.filter(ev => ev?.fragment?.name == 'ExecutionSuccess').length).to.equal(1);
+      } else {
+        await expect(tx)
+          .to.emit(this.aggregatorB, 'ExecutionFailed')
+          .withArgs(resultId)
+          .to.not.emit(this.aggregatorB, 'ExecutionSuccess');
+
+        // Number of times the execution failed
+        expect(logs.filter(ev => ev?.fragment?.name == 'ExecutionFailed').length).to.equal(M - N + 1);
+      }
+    });
   });
 });
