@@ -47,7 +47,8 @@
   },
   "devDependencies": {
     "@openzeppelin/contracts": "file:lib/@openzeppelin-contracts",
-    "husky": "^9.1.7"
+    "husky": "^9.1.7",
+    "solhint-plugin-openzeppelin": "file:lib/@openzeppelin-contracts/scripts/solhint-custom"
   },
   "lint-staged": {
     "*.{js,ts}": [

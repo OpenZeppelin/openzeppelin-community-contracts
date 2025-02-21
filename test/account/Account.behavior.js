@@ -30,7 +30,7 @@ function shouldBehaveLikeAccountCore() {
         .withArgs(this.other);
     });
 
-    describe('when the caller is the canonical entrypoint', function () {
+    describe('when the caller is the canxonical entrypoint', function () {
       beforeEach(async function () {
         this.mockFromEntrypoint = this.mock.connect(await impersonate(entrypoint.target));
       });
