@@ -3,27 +3,21 @@ const { expect } = require('chai');
 const { loadFixture } = require('@nomicfoundation/hardhat-network-helpers');
 const { anyValue } = require('@nomicfoundation/hardhat-chai-matchers/withArgs');
 
+const AxelarHelper = require('./AxelarHelper');
+
 const getAddress = account => ethers.getAddress(account.target ?? account.address ?? account);
 
 async function fixture() {
   const [owner, sender, ...accounts] = await ethers.getSigners();
 
-  const { chainId } = await ethers.provider.getNetwork();
-  const CAIP2 = `eip155:${chainId}`;
-  const asCAIP10 = account => `eip155:${chainId}:${getAddress(account)}`;
+  const { CAIP2, axelar, gatewayA, gatewayB } = await AxelarHelper.deploy(owner);
 
-  const axelar = await ethers.deployContract('$AxelarGatewayMock');
-  const srcGateway = await ethers.deployContract('$AxelarGatewaySource', [owner, axelar]);
-  const dstGateway = await ethers.deployContract('$AxelarGatewayDestination', [owner, axelar, axelar]);
-  const receiver = await ethers.deployContract('$ERC7786ReceiverMock', [dstGateway]);
+  const receiver = await ethers.deployContract('$ERC7786ReceiverMock', [gatewayB]);
   const invalidReceiver = await ethers.deployContract('$ERC7786ReceiverInvalidMock');
 
-  await srcGateway.registerChainEquivalence(CAIP2, 'local');
-  await dstGateway.registerChainEquivalence(CAIP2, 'local');
-  await srcGateway.registerRemoteGateway(CAIP2, getAddress(dstGateway));
-  await dstGateway.registerRemoteGateway(CAIP2, getAddress(srcGateway));
+  const asCAIP10 = account => `${CAIP2}:${getAddress(account)}`;
 
-  return { owner, sender, accounts, CAIP2, asCAIP10, axelar, srcGateway, dstGateway, receiver, invalidReceiver };
+  return { owner, sender, accounts, CAIP2, asCAIP10, axelar, gatewayA, gatewayB, receiver, invalidReceiver };
 }
 
 describe('AxelarGateway', function () {
@@ -32,13 +26,13 @@ describe('AxelarGateway', function () {
   });
 
   it('initial setup', async function () {
-    await expect(this.srcGateway.localGateway()).to.eventually.equal(this.axelar);
-    await expect(this.srcGateway.getEquivalentChain(this.CAIP2)).to.eventually.equal('local');
-    await expect(this.srcGateway.getRemoteGateway(this.CAIP2)).to.eventually.equal(getAddress(this.dstGateway));
+    await expect(this.gatewayA.localGateway()).to.eventually.equal(this.axelar);
+    await expect(this.gatewayA.getEquivalentChain(this.CAIP2)).to.eventually.equal('local');
+    await expect(this.gatewayA.getRemoteGateway(this.CAIP2)).to.eventually.equal(getAddress(this.gatewayB));
 
-    await expect(this.dstGateway.localGateway()).to.eventually.equal(this.axelar);
-    await expect(this.dstGateway.getEquivalentChain(this.CAIP2)).to.eventually.equal('local');
-    await expect(this.dstGateway.getRemoteGateway(this.CAIP2)).to.eventually.equal(getAddress(this.srcGateway));
+    await expect(this.gatewayB.localGateway()).to.eventually.equal(this.axelar);
+    await expect(this.gatewayB.getEquivalentChain(this.CAIP2)).to.eventually.equal('local');
+    await expect(this.gatewayB.getRemoteGateway(this.CAIP2)).to.eventually.equal(getAddress(this.gatewayA));
   });
 
   it('workflow', async function () {
@@ -52,29 +46,29 @@ describe('AxelarGateway', function () {
     );
 
     await expect(
-      this.srcGateway.connect(this.sender).sendMessage(this.CAIP2, getAddress(this.receiver), payload, attributes),
+      this.gatewayA.connect(this.sender).sendMessage(this.CAIP2, getAddress(this.receiver), payload, attributes),
     )
-      .to.emit(this.srcGateway, 'MessagePosted')
+      .to.emit(this.gatewayA, 'MessagePosted')
       .withArgs(ethers.ZeroHash, srcCAIP10, dstCAIP10, payload, attributes)
       .to.emit(this.axelar, 'ContractCall')
-      .withArgs(this.srcGateway, 'local', getAddress(this.dstGateway), ethers.keccak256(encoded), encoded)
+      .withArgs(this.gatewayA, 'local', getAddress(this.gatewayB), ethers.keccak256(encoded), encoded)
       .to.emit(this.axelar, 'ContractCallExecuted')
       .withArgs(anyValue)
       .to.emit(this.receiver, 'MessageReceived')
-      .withArgs(this.dstGateway, this.CAIP2, getAddress(this.sender), payload, attributes);
+      .withArgs(this.gatewayB, this.CAIP2, getAddress(this.sender), payload, attributes);
   });
 
   it('invalid receiver - bad return value', async function () {
     await expect(
-      this.srcGateway
+      this.gatewayA
         .connect(this.sender)
         .sendMessage(this.CAIP2, getAddress(this.invalidReceiver), ethers.randomBytes(128), []),
-    ).to.be.revertedWithCustomError(this.dstGateway, 'ReceiverExecutionFailed');
+    ).to.be.revertedWithCustomError(this.gatewayB, 'ReceiverExecutionFailed');
   });
 
   it('invalid receiver - EOA', async function () {
     await expect(
-      this.srcGateway
+      this.gatewayA
         .connect(this.sender)
         .sendMessage(this.CAIP2, getAddress(this.accounts[0]), ethers.randomBytes(128), []),
     ).to.be.revertedWithoutReason();
