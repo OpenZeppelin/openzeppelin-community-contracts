@@ -1,3 +1,8 @@
+## XX-XX-XXXX
+
+- `PaymasterNFT`: Extension of `PaymasterCore` that approves sponsoring of user operation based on ownership of an ERC-721 NFT.
+- `PaymasterERC20`: Extension of `PaymasterCore` that sponsors user operations against payment in ERC-20 tokens.
+
 ## 31-01-2025
 
 - `PaymasterCore`: Add a simple ERC-4337 paymaster implementation with minimal logic.
