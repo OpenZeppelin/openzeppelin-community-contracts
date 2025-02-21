@@ -11,14 +11,13 @@ import {AccountERC7579} from "../AccountERC7579.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
 /**
- * @title Implements a Social Recovery Executor module following ERC-7579
+ * @dev Implements a Social Recovery Executor module following ERC-7579
  *
- * @dev Features:
- * - Timelocked Guardian-based recovery
- * - Recovery Execution Scope is limited to reconfiguring installed Validator Modules
- * - Recovery Reconfiguration can only be performed by the ERC-7579 Account
+ * Features:
+ * - Timelocked Guardian n of m recovery
+ * - Recovery Execution Scope is restricted to reconfiguring installed Validator Modules
+ * - Recovery Reconfiguration can only be performed by the installer ERC-7579 Account
  * - Guardian Signatures replay attack protection via EIP-712 typed data signing
- * - Replay Attack protection includes: chains, accounts, executors, and recovery attempts
  */
 contract SocialRecoveryExecutor is IERC7579Module, EIP712, ReentrancyGuard {
     using EnumerableSet for EnumerableSet.AddressSet;
@@ -148,6 +147,7 @@ contract SocialRecoveryExecutor is IERC7579Module, EIP712, ReentrancyGuard {
             revert InvalidTimelock();
         }
 
+        // add guardians to the recovery config
         for (uint256 i = 0; i < _guardians.length; i++) {
             if (_guardians[i] == address(0)) {
                 revert InvalidGuardian();
@@ -204,11 +204,11 @@ contract SocialRecoveryExecutor is IERC7579Module, EIP712, ReentrancyGuard {
             revert InvalidGuardianSignatures();
         }
 
-        // increment nonce.
-        _recoveryConfigs[account].nonce++;
-
         // set recovery start time.
         _recoveryConfigs[account].recoveryStart = block.timestamp;
+
+        // increment nonce.
+        _recoveryConfigs[account].nonce++;
 
         emit RecoveryStarted(account);
     }
@@ -230,12 +230,15 @@ contract SocialRecoveryExecutor is IERC7579Module, EIP712, ReentrancyGuard {
             revert InvalidGuardianSignatures();
         }
 
-        // exection data should be at least:20 bytes for targetValidatorModule, 32 for value and 4 for recovery selector.
+        // exection data should be at least:
+        // targetValidatorModule: 20 bytes,
+        // value: 32 bytes,
+        // recovery selector: 4 bytes.
         if (executionCalldata.length < 56) {
             revert InvalidRecoveryCallData();
         }
 
-        // @TBD sending value to the validator module.
+        // @TBD implement sending value to the validator module.
         // Rationale: In some very specific scenarios, the validator module might need to be paid for the recovery,
         // or the recovery logic includes to take all the balance of the account.
         (address targetValidatorModule, , ) = ERC7579Utils.decodeSingle(executionCalldata);
@@ -253,11 +256,11 @@ contract SocialRecoveryExecutor is IERC7579Module, EIP712, ReentrancyGuard {
             ModePayload.wrap(bytes22(0)) // no payload needed
         );
 
-        // increment nonce.
-        _recoveryConfigs[account].nonce++;
-
         // reset recovery status.
         _recoveryConfigs[account].recoveryStart = 0;
+
+        // increment nonce.
+        _recoveryConfigs[account].nonce++;
 
         // execute the recovery.
         AccountERC7579(payable(account)).executeFromExecutor(Mode.unwrap(mode), executionCalldata);
@@ -289,7 +292,7 @@ contract SocialRecoveryExecutor is IERC7579Module, EIP712, ReentrancyGuard {
     }
 
     /// @notice Verifies multiple guardian signatures
-    /// @dev Checks each signature against the current recovery digest
+    /// @dev Checks each signature against the current recovery digest and ensures no duplicates
     /// @param account The account the signatures are for
     /// @param guardianSignatures Array of guardian signatures to verify
     /// @return True if all signatures are valid, false otherwise
@@ -306,7 +309,8 @@ contract SocialRecoveryExecutor is IERC7579Module, EIP712, ReentrancyGuard {
             if (!guardianSignatureIsValid(account, guardianSignatures[i])) {
                 return false;
             }
-            // check for signature duplication @TBD optimize O(n^2)
+            // check for signature duplication
+            // @TBD optimize O(n^2)
             address currentSigner = guardianSignatures[i].signer;
             for (uint256 j = 0; j < i; j++) {
                 if (guardianSignatures[j].signer == currentSigner) {

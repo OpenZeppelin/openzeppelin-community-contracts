@@ -546,10 +546,8 @@ describe('SocialRecoveryExecutorModule', function () {
         });
 
         describe('cancel recovery', async function () {
-          /**
-           * @dev Cancel recovery requires the transaction sender to be the account whose recovery is being cancelled.
-           * Thus, the only way to cancel recovery is via the Account being called by the Canonical EntryPoint, and validated through a Validator Module.
-           */
+          // Cancel recovery requires the transaction sender to be the account whose recovery is being cancelled.
+          // Thus, the only way to cancel recovery is via the Account being called by the Canonical EntryPoint, and validated through a Validator Module.
           it('should fail if a guardian or any non-signer attempts to cancel recovery', async function () {
             const operation = await this.accountMock
               .createUserOp(this.userOp)
