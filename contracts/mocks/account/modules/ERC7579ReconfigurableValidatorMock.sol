@@ -10,7 +10,7 @@ import {IERC7579Module} from "@openzeppelin/contracts/interfaces/draft-IERC7579.
 import {IERC1271} from "@openzeppelin/contracts/interfaces/IERC1271.sol";
 import {ERC7579ModuleMock} from "./ERC7579ModuleMock.sol";
 
-contract ERC7579ReconfigurableValidatorMock is ERC7579ModuleMock(MODULE_TYPE_VALIDATOR), IERC7579Validator {
+abstract contract ERC7579ReconfigurableValidatorMock is ERC7579ModuleMock(MODULE_TYPE_VALIDATOR), IERC7579Validator {
     mapping(address sender => address signer) private _associatedSigners;
 
     function onInstall(bytes calldata data) public virtual override(IERC7579Module, ERC7579ModuleMock) {

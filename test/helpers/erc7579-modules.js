@@ -11,6 +11,7 @@ const SocialRecoveryExecutorHelper = {
     ],
   },
 };
+
 module.exports = {
   SocialRecoveryExecutorHelper,
 };
