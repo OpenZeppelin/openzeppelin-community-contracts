@@ -1,14 +1,13 @@
+const { Enum } = require('@openzeppelin/contracts/test/helpers/enums');
+const { formatType } = require('@openzeppelin/contracts/test/helpers/eip712');
+
 const SocialRecoveryExecutorHelper = {
-  RecoveryStatus: {
-    NotStarted: 0,
-    Started: 1,
-    Cancelled: 2,
+  RecoveryStatus: Enum('NotStarted', 'Started', 'Ready'),
+  START_RECOVERY_TYPEHASH: {
+    StartRecovery: formatType({ account: 'address', executionCalldata: 'bytes', nonce: 'uint256' }),
   },
-  RECOVERY_MESSAGE_TYPE: {
-    RecoveryMessage: [
-      { name: 'account', type: 'address' },
-      { name: 'nonce', type: 'uint256' },
-    ],
+  CANCEL_RECOVERY_TYPEHASH: {
+    CancelRecovery: formatType({ account: 'address', nonce: 'uint256' }),
   },
 };
 
