@@ -24,9 +24,9 @@ async function fixture() {
   const newSigner = ethers.Wallet.createRandom();
 
   // ERC-4337 account
-  const helper = new ERC4337Helper();
-  const env = await helper.wait();
-  const accountMock = await helper.newAccount('$AccountERC7579Mock', [
+  const erc4337Helper = new ERC4337Helper();
+  const env = await erc4337Helper.wait();
+  const accountMock = await erc4337Helper.newAccount('$AccountERC7579Mock', [
     'AccountERC7579',
     '1',
     validatorMock.target,
@@ -55,15 +55,15 @@ async function fixture() {
   // impersonate ERC-4337 Canonical Entrypoint
   const accountMockFromEntrypoint = accountMock.connect(await impersonate(entrypoint.target));
 
+  // ERC-7579 Social Recovery Executor Module
+  const mock = await ethers.deployContract('$SocialRecoveryExecutor', ['SocialRecoveryExecutor', '0.0.1']);
+
   // ERC-7579 Social Recovery Executor Module Initial Config
   const recoveryConfig = {
     guardians: new Array(3).fill(null).map(() => ethers.Wallet.createRandom()),
     threshold: 2,
     timelock: time.duration.days(1),
   };
-
-  // ERC-7579 Social Recovery Executor Module
-  const mock = await ethers.deployContract('$SocialRecoveryExecutor', ['SocialRecoveryExecutor', '0.0.1']);
 
   return {
     ...env,
@@ -149,14 +149,33 @@ describe('SocialRecoveryExecutorModule', function () {
         const message = 'Hello Social Recovery';
         const digest = ethers.hashMessage(message);
 
-        const guardianSignatures = invalidGuardians.map(g => ({
+        const guardianSignatures = SocialRecoveryExecutorHelper.sortGuardianSignatures(
+          invalidGuardians.map(g => ({
+            signer: g.address,
+            signature: g.signMessage(message),
+          })),
+        );
+
+        await expect(
+          this.mock.validateGuardianSignatures(this.accountMock.target, guardianSignatures, digest),
+        ).to.be.revertedWithCustomError(this.mock, 'InvalidGuardianSignature');
+      });
+
+      it('should invalidate unsorted guardian signatures', async function () {
+        const guardians = this.recoveryConfig.guardians.slice(0, 2);
+        const reversedGuardians = guardians.sort().reverse();
+
+        const message = 'Hello Social Recovery';
+        const digest = ethers.hashMessage(message);
+
+        const guardianSignatures = reversedGuardians.map(g => ({
           signer: g.address,
           signature: g.signMessage(message),
         }));
 
         await expect(
           this.mock.validateGuardianSignatures(this.accountMock.target, guardianSignatures, digest),
-        ).to.be.revertedWithCustomError(this.mock, 'InvalidGuardianSignature');
+        ).to.be.revertedWithCustomError(this.mock, 'DuplicatedOrUnsortedGuardianSignatures');
       });
 
       it('should invalidate duplicate guardian signatures', async function () {
@@ -166,14 +185,16 @@ describe('SocialRecoveryExecutorModule', function () {
         const message = 'Hello Social Recovery';
         const digest = ethers.hashMessage(message);
 
-        const guardianSignatures = identicalGuardians.map(g => ({
-          signer: g.address,
-          signature: g.signMessage(message),
-        }));
+        const guardianSignatures = SocialRecoveryExecutorHelper.sortGuardianSignatures(
+          identicalGuardians.map(g => ({
+            signer: g.address,
+            signature: g.signMessage(message),
+          })),
+        );
 
         await expect(
           this.mock.validateGuardianSignatures(this.accountMock.target, guardianSignatures, digest),
-        ).to.be.revertedWithCustomError(this.mock, 'DuplicateGuardianSignature');
+        ).to.be.revertedWithCustomError(this.mock, 'DuplicatedOrUnsortedGuardianSignatures');
       });
 
       it('should fail if threshold is not met', async function () {
@@ -181,10 +202,12 @@ describe('SocialRecoveryExecutorModule', function () {
         const message = 'Hello Social Recovery';
         const digest = ethers.hashMessage(message);
 
-        const guardianSignatures = insufficientGuardians.map(g => ({
-          signer: g.address,
-          signature: g.signMessage(message),
-        }));
+        const guardianSignatures = SocialRecoveryExecutorHelper.sortGuardianSignatures(
+          insufficientGuardians.map(g => ({
+            signer: g.address,
+            signature: g.signMessage(message),
+          })),
+        );
 
         await expect(
           this.mock.validateGuardianSignatures(this.accountMock.target, guardianSignatures, digest),
@@ -196,10 +219,12 @@ describe('SocialRecoveryExecutorModule', function () {
         const message = 'Hello Social Recovery';
         const digest = ethers.hashMessage(message);
 
-        const guardianSignatures = guardians.map(g => ({
-          signer: g.address,
-          signature: g.signMessage(message),
-        }));
+        const guardianSignatures = SocialRecoveryExecutorHelper.sortGuardianSignatures(
+          guardians.map(g => ({
+            signer: g.address,
+            signature: g.signMessage(message),
+          })),
+        );
 
         await expect(this.mock.validateGuardianSignatures(this.accountMock.target, guardianSignatures, digest)).to.not
           .be.reverted;
@@ -232,10 +257,12 @@ describe('SocialRecoveryExecutorModule', function () {
             executionCalldata: executionCalldata,
           };
 
-          const guardianSignatures = guardians.map(g => ({
-            signer: g.address,
-            signature: g.signTypedData(domain, SocialRecoveryExecutorHelper.START_RECOVERY_TYPEHASH, message),
-          }));
+          const guardianSignatures = SocialRecoveryExecutorHelper.sortGuardianSignatures(
+            guardians.map(g => ({
+              signer: g.address,
+              signature: g.signTypedData(domain, SocialRecoveryExecutorHelper.START_RECOVERY_TYPEHASH, message),
+            })),
+          );
 
           await expect(this.mock.startRecovery(this.accountMock.target, guardianSignatures, executionCalldata))
             .to.emit(this.mock, 'RecoveryStarted')
@@ -353,10 +380,12 @@ describe('SocialRecoveryExecutorModule', function () {
                 nonce: await this.mock.nonces(this.accountMock.target),
               };
 
-              const guardianSignatures = guardians.map(g => ({
-                signer: g.address,
-                signature: g.signTypedData(domain, SocialRecoveryExecutorHelper.CANCEL_RECOVERY_TYPEHASH, message),
-              }));
+              const guardianSignatures = SocialRecoveryExecutorHelper.sortGuardianSignatures(
+                guardians.map(g => ({
+                  signer: g.address,
+                  signature: g.signTypedData(domain, SocialRecoveryExecutorHelper.CANCEL_RECOVERY_TYPEHASH, message),
+                })),
+              );
 
               await expect(this.mock.cancelRecovery(this.accountMock.target, guardianSignatures))
                 .to.emit(this.mock, 'RecoveryCancelled')
@@ -418,10 +447,12 @@ describe('SocialRecoveryExecutorModule', function () {
                 executionCalldata: executionCalldata,
               };
 
-              const guardianSignatures = guardians.map(g => ({
-                signer: g.address,
-                signature: g.signTypedData(domain, SocialRecoveryExecutorHelper.START_RECOVERY_TYPEHASH, message),
-              }));
+              const guardianSignatures = SocialRecoveryExecutorHelper.sortGuardianSignatures(
+                guardians.map(g => ({
+                  signer: g.address,
+                  signature: g.signTypedData(domain, SocialRecoveryExecutorHelper.START_RECOVERY_TYPEHASH, message),
+                })),
+              );
 
               await expect(
                 this.mock.startRecovery(this.accountMock.target, guardianSignatures, executionCalldata),

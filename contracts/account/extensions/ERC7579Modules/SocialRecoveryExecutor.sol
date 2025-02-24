@@ -82,8 +82,8 @@ contract SocialRecoveryExecutor is IERC7579Module, EIP712, Nonces {
     error TooManyGuardians();
     error AlreadyGuardian();
 
+    error DuplicatedOrUnsortedGuardianSignatures();
     error ExecutionDiffersFromPending();
-    error DuplicateGuardianSignature();
     error TooManyGuardianSignatures();
     error InvalidGuardianSignature();
     error ThresholdNotMet();
@@ -329,9 +329,9 @@ contract SocialRecoveryExecutor is IERC7579Module, EIP712, Nonces {
     //////////////////////////////////////////////////////////////////////////*/
 
     /// @notice Verifies multiple guardian signatures for a given digest
-    /// @dev Ensures each signer is an unique guardian, and threshold is met
+    /// @dev Ensures signatures are unique, and threshold is met
     /// @param account The account the signatures are for
-    /// @param guardianSignatures Array of guardian signatures to verify
+    /// @param guardianSignatures Array of guardian signatures sorted by signer address in ascending order
     /// @param digest The digest to verify the signatures against
     function _validateGuardianSignatures(
         address account,
@@ -357,12 +357,9 @@ contract SocialRecoveryExecutor is IERC7579Module, EIP712, Nonces {
             ) {
                 revert InvalidGuardianSignature();
             }
-            // @TBD optimize O(n^2): check for signature duplication
-            address currentSigner = guardianSignatures[i].signer;
-            for (uint256 j = 0; j < i; j++) {
-                if (guardianSignatures[j].signer == currentSigner) {
-                    revert DuplicateGuardianSignature();
-                }
+            // ensures signers are unique in O(n), requires sorted signatures by signer address in ascending order
+            if (i > 0 && uint160(guardianSignatures[i].signer) <= uint160(guardianSignatures[i - 1].signer)) {
+                revert DuplicatedOrUnsortedGuardianSignatures();
             }
         }
     }
