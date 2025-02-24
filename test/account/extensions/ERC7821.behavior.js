@@ -4,7 +4,7 @@ const { expect } = require('chai');
 const { CALL_TYPE_BATCH, encodeMode, encodeBatch } = require('@openzeppelin/contracts/test/helpers/erc7579');
 
 function shouldBehaveLikeERC7821({ deployable = true } = {}) {
-  describe('execute', function () {
+  describe('supports ERC-7821', function () {
     beforeEach(async function () {
       // give eth to the account (before deployment)
       await this.other.sendTransaction({ to: this.mock.target, value: ethers.parseEther('1') });

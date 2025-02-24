@@ -9,11 +9,8 @@ import {Account} from "../../account/Account.sol";
 
 abstract contract AccountMock is Account, ERC7821 {
     /// Validates a user operation with a boolean signature.
-    function _rawSignatureValidation(
-        bytes32 /* userOpHash */,
-        bytes calldata signature
-    ) internal pure override returns (bool) {
-        return bytes1(signature[0:1]) == bytes1(0x01);
+    function _rawSignatureValidation(bytes32 hash, bytes calldata signature) internal pure override returns (bool) {
+        return signature.length >= 32 && bytes32(signature) == hash;
     }
 
     /// @inheritdoc ERC7821
