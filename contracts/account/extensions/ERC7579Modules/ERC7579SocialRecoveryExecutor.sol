@@ -69,9 +69,8 @@ contract ERC7579SocialRecoveryExecutor is IERC7579Module, EIP712, Nonces {
     event GuardianRemoved(address indexed account, address guardian);
     event GuardianAdded(address indexed account, address guardian);
 
+    error InvalidGuardianLength();
     error InvalidThreshold();
-    error InvalidGuardians();
-    error InvalidGuardian();
     error InvalidTimelock();
 
     error CannotRemoveGuardian();
@@ -135,7 +134,7 @@ contract ERC7579SocialRecoveryExecutor is IERC7579Module, EIP712, Nonces {
         );
 
         if (_guardians.length == 0) {
-            revert InvalidGuardians();
+            revert InvalidGuardianLength();
         }
 
         for (uint256 i = 0; i < _guardians.length; i++) {
@@ -391,9 +390,6 @@ contract ERC7579SocialRecoveryExecutor is IERC7579Module, EIP712, Nonces {
     /// @param account The ERC-7579 Account to add the guardian to
     /// @param guardian Address of the new guardian
     function _addGuardian(address account, address guardian) internal virtual {
-        if (guardian == address(0)) {
-            revert InvalidGuardian();
-        }
         if (_recoveryConfigs[account].guardians.length() >= maxGuardians()) {
             revert TooManyGuardians();
         }
