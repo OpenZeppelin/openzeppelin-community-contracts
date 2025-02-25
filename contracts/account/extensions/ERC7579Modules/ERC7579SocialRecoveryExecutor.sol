@@ -1,15 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import {IERC7579Module, IERC7579ModuleConfig, MODULE_TYPE_EXECUTOR, MODULE_TYPE_VALIDATOR} from "@openzeppelin/contracts/interfaces/draft-IERC7579.sol";
-import {ERC7579Utils, Mode, CallType, ModeSelector, ExecType, ModePayload} from "@openzeppelin/contracts/account/utils/draft-ERC7579Utils.sol";
-import {MessageHashUtils} from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
+import {IERC7579Module, MODULE_TYPE_EXECUTOR} from "@openzeppelin/contracts/interfaces/draft-IERC7579.sol";
 import {SignatureChecker} from "@openzeppelin/contracts/utils/cryptography/SignatureChecker.sol";
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import {EIP712} from "@openzeppelin/contracts/utils/cryptography/EIP712.sol";
 import {Address} from "@openzeppelin/contracts/utils/Address.sol";
 import {Nonces} from "@openzeppelin/contracts/utils/Nonces.sol";
-import {AccountERC7579} from "../AccountERC7579.sol";
 
 /**
  * @title Social Recovery Executor Module
@@ -67,10 +64,10 @@ contract ERC7579SocialRecoveryExecutor is IERC7579Module, EIP712, Nonces {
     event RecoveryExecuted(address indexed account);
     event RecoveryStarted(address indexed account);
 
-    event ThresholdChanged(address indexed account, uint256 indexed threshold);
-    event TimelockChanged(address indexed account, uint256 indexed timelock);
-    event GuardianRemoved(address indexed account, address indexed guardian);
-    event GuardianAdded(address indexed account, address indexed guardian);
+    event ThresholdChanged(address indexed account, uint256 threshold);
+    event TimelockChanged(address indexed account, uint256 timelock);
+    event GuardianRemoved(address indexed account, address guardian);
+    event GuardianAdded(address indexed account, address guardian);
 
     error InvalidThreshold();
     error InvalidGuardians();
@@ -133,7 +130,7 @@ contract ERC7579SocialRecoveryExecutor is IERC7579Module, EIP712, Nonces {
     /// @notice Initializes the module with initial recovery configuration
     /// @dev Called by the ERC-7579 Account during module installation
     /// @param data initData ABI encoded (address[] guardians, uint256 threshold, uint256 timelock)
-    function onInstall(bytes calldata data) public virtual override {
+    function onInstall(bytes memory data) public virtual override {
         address account = msg.sender;
 
         (address[] memory _guardians, uint256 _threshold, uint256 _timelock) = abi.decode(
