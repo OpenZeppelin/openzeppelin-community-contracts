@@ -11,13 +11,13 @@ const {
 } = require('@openzeppelin/contracts/test/helpers/erc7579');
 const { PackedUserOperation } = require('../../../helpers/eip712-types');
 const { ERC4337Helper } = require('../../../helpers/erc4337');
-const { SocialRecoveryExecutorHelper } = require('../../../helpers/erc7579-modules');
+const { ERC7579SocialRecoveryExecutorHelper } = require('../../../helpers/erc7579-modules');
 const { SIG_VALIDATION_SUCCESS, SIG_VALIDATION_FAILURE } = require('@openzeppelin/contracts/test/helpers/erc4337');
 const { getDomain } = require('@openzeppelin/contracts/test/helpers/eip712');
 
 async function fixture() {
   // ERC-7579 validator
-  const validatorMock = await ethers.deployContract('$ERC7579ReconfigurableValidatorMock');
+  const validatorMock = await ethers.deployContract('$ERC7579ValidatorMock');
 
   // ERC-4337 signers
   const initialSigner = ethers.Wallet.createRandom();
@@ -56,7 +56,10 @@ async function fixture() {
   const accountMockFromEntrypoint = accountMock.connect(await impersonate(entrypoint.target));
 
   // ERC-7579 Social Recovery Executor Module
-  const mock = await ethers.deployContract('$SocialRecoveryExecutor', ['SocialRecoveryExecutor', '0.0.1']);
+  const mock = await ethers.deployContract('$ERC7579SocialRecoveryExecutorMock', [
+    'ERC7579SocialRecoveryExecutorMock',
+    '0.0.1',
+  ]);
 
   // ERC-7579 Social Recovery Executor Module Initial Config
   const recoveryConfig = {
@@ -142,14 +145,14 @@ describe('SocialRecoveryExecutorModule', function () {
       });
 
       it('should invalidate signatures from invalid guardians', async function () {
-        const guardians = this.recoveryConfig.guardians.slice(0, 2);
+        const guardians = this.recoveryConfig.guardians.slice(0, 3);
         const invalidGuardian = ethers.Wallet.createRandom();
         const invalidGuardians = [...guardians, invalidGuardian];
 
         const message = 'Hello Social Recovery';
         const digest = ethers.hashMessage(message);
 
-        const guardianSignatures = SocialRecoveryExecutorHelper.sortGuardianSignatures(
+        const guardianSignatures = ERC7579SocialRecoveryExecutorHelper.sortGuardianSignatures(
           invalidGuardians.map(g => ({
             signer: g.address,
             signature: g.signMessage(message),
@@ -162,8 +165,10 @@ describe('SocialRecoveryExecutorModule', function () {
       });
 
       it('should invalidate unsorted guardian signatures', async function () {
-        const guardians = this.recoveryConfig.guardians.slice(0, 2);
-        const reversedGuardians = guardians.sort().reverse();
+        const guardians = this.recoveryConfig.guardians.slice(0, 3);
+        const reversedGuardians = [...guardians]
+          .sort((a, b) => (BigInt(a.address) > BigInt(b.address) ? 1 : -1))
+          .reverse();
 
         const message = 'Hello Social Recovery';
         const digest = ethers.hashMessage(message);
@@ -185,7 +190,7 @@ describe('SocialRecoveryExecutorModule', function () {
         const message = 'Hello Social Recovery';
         const digest = ethers.hashMessage(message);
 
-        const guardianSignatures = SocialRecoveryExecutorHelper.sortGuardianSignatures(
+        const guardianSignatures = ERC7579SocialRecoveryExecutorHelper.sortGuardianSignatures(
           identicalGuardians.map(g => ({
             signer: g.address,
             signature: g.signMessage(message),
@@ -202,7 +207,7 @@ describe('SocialRecoveryExecutorModule', function () {
         const message = 'Hello Social Recovery';
         const digest = ethers.hashMessage(message);
 
-        const guardianSignatures = SocialRecoveryExecutorHelper.sortGuardianSignatures(
+        const guardianSignatures = ERC7579SocialRecoveryExecutorHelper.sortGuardianSignatures(
           insufficientGuardians.map(g => ({
             signer: g.address,
             signature: g.signMessage(message),
@@ -219,7 +224,7 @@ describe('SocialRecoveryExecutorModule', function () {
         const message = 'Hello Social Recovery';
         const digest = ethers.hashMessage(message);
 
-        const guardianSignatures = SocialRecoveryExecutorHelper.sortGuardianSignatures(
+        const guardianSignatures = ERC7579SocialRecoveryExecutorHelper.sortGuardianSignatures(
           guardians.map(g => ({
             signer: g.address,
             signature: g.signMessage(message),
@@ -234,7 +239,7 @@ describe('SocialRecoveryExecutorModule', function () {
     describe('recovery', function () {
       it('status should be not started', async function () {
         const status = await this.mock.getRecoveryStatus(this.accountMock.target);
-        expect(status).to.equal(SocialRecoveryExecutorHelper.RecoveryStatus.NotStarted);
+        expect(status).to.equal(ERC7579SocialRecoveryExecutorHelper.RecoveryStatus.NotStarted);
       });
 
       describe('with recovery started', function () {
@@ -242,7 +247,7 @@ describe('SocialRecoveryExecutorModule', function () {
           const guardians = this.recoveryConfig.guardians.slice(0, this.recoveryConfig.threshold);
           const domain = await getDomain(this.mock);
 
-          const encodedCallToValidatorModule = this.validatorMock.interface.encodeFunctionData('changeSigner', [
+          const encodedCallToValidatorModule = this.validatorMock.interface.encodeFunctionData('updateSigner', [
             this.newSigner.address,
           ]);
           const recoveryCallData = encodeSingle(this.validatorMock.target, 0, encodedCallToValidatorModule);
@@ -257,10 +262,10 @@ describe('SocialRecoveryExecutorModule', function () {
             executionCalldata: executionCalldata,
           };
 
-          const guardianSignatures = SocialRecoveryExecutorHelper.sortGuardianSignatures(
+          const guardianSignatures = ERC7579SocialRecoveryExecutorHelper.sortGuardianSignatures(
             guardians.map(g => ({
               signer: g.address,
-              signature: g.signTypedData(domain, SocialRecoveryExecutorHelper.START_RECOVERY_TYPEHASH, message),
+              signature: g.signTypedData(domain, ERC7579SocialRecoveryExecutorHelper.START_RECOVERY_TYPEHASH, message),
             })),
           );
 
@@ -271,7 +276,7 @@ describe('SocialRecoveryExecutorModule', function () {
 
         it('status should be started', async function () {
           const status = await this.mock.getRecoveryStatus(this.accountMock.target);
-          expect(status).to.equal(SocialRecoveryExecutorHelper.RecoveryStatus.Started);
+          expect(status).to.equal(ERC7579SocialRecoveryExecutorHelper.RecoveryStatus.Started);
         });
 
         it('should not be able to start recovery again', async function () {
@@ -297,7 +302,7 @@ describe('SocialRecoveryExecutorModule', function () {
             it('should fail if the execution calldata differs from the signed by guardians', async function () {
               const differentNewSigner = ethers.Wallet.createRandom();
 
-              const encodedCallToValidatorModule = this.validatorMock.interface.encodeFunctionData('changeSigner', [
+              const encodedCallToValidatorModule = this.validatorMock.interface.encodeFunctionData('updateSigner', [
                 differentNewSigner.address,
               ]);
               const recoveryCallData = encodeSingle(this.validatorMock.target, 0, encodedCallToValidatorModule);
@@ -323,7 +328,7 @@ describe('SocialRecoveryExecutorModule', function () {
 
             describe('with recovery executed successfully', function () {
               beforeEach(async function () {
-                const encodedCallToValidatorModule = this.validatorMock.interface.encodeFunctionData('changeSigner', [
+                const encodedCallToValidatorModule = this.validatorMock.interface.encodeFunctionData('updateSigner', [
                   this.newSigner.address,
                 ]);
                 const recoveryCallData = encodeSingle(this.validatorMock.target, 0, encodedCallToValidatorModule);
@@ -339,7 +344,7 @@ describe('SocialRecoveryExecutorModule', function () {
 
               it('should change recovery status to NotStarted', async function () {
                 const status = await this.mock.getRecoveryStatus(this.accountMock.target);
-                expect(status).to.equal(SocialRecoveryExecutorHelper.RecoveryStatus.NotStarted);
+                expect(status).to.equal(ERC7579SocialRecoveryExecutorHelper.RecoveryStatus.NotStarted);
               });
 
               it('should change the account validator module signer', async function () {
@@ -380,10 +385,14 @@ describe('SocialRecoveryExecutorModule', function () {
                 nonce: await this.mock.nonces(this.accountMock.target),
               };
 
-              const guardianSignatures = SocialRecoveryExecutorHelper.sortGuardianSignatures(
+              const guardianSignatures = ERC7579SocialRecoveryExecutorHelper.sortGuardianSignatures(
                 guardians.map(g => ({
                   signer: g.address,
-                  signature: g.signTypedData(domain, SocialRecoveryExecutorHelper.CANCEL_RECOVERY_TYPEHASH, message),
+                  signature: g.signTypedData(
+                    domain,
+                    ERC7579SocialRecoveryExecutorHelper.CANCEL_RECOVERY_TYPEHASH,
+                    message,
+                  ),
                 })),
               );
 
@@ -394,7 +403,7 @@ describe('SocialRecoveryExecutorModule', function () {
 
             it('should change recovery status to NotStarted', async function () {
               const status = await this.mock.getRecoveryStatus(this.accountMock.target);
-              expect(status).to.equal(SocialRecoveryExecutorHelper.RecoveryStatus.NotStarted);
+              expect(status).to.equal(ERC7579SocialRecoveryExecutorHelper.RecoveryStatus.NotStarted);
             });
 
             it('should not be able to cancel again', async function () {
@@ -421,7 +430,7 @@ describe('SocialRecoveryExecutorModule', function () {
 
             it('should change recovery status to NotStarted', async function () {
               const status = await this.mock.getRecoveryStatus(this.accountMock.target);
-              expect(status).to.equal(SocialRecoveryExecutorHelper.RecoveryStatus.NotStarted);
+              expect(status).to.equal(ERC7579SocialRecoveryExecutorHelper.RecoveryStatus.NotStarted);
             });
 
             it('should resist replay attacks via nonce protection', async function () {
@@ -430,7 +439,7 @@ describe('SocialRecoveryExecutorModule', function () {
               const guardians = this.recoveryConfig.guardians;
               const domain = await getDomain(this.mock);
 
-              const encodedCallToValidatorModule = this.validatorMock.interface.encodeFunctionData('changeSigner', [
+              const encodedCallToValidatorModule = this.validatorMock.interface.encodeFunctionData('updateSigner', [
                 this.newSigner.address,
               ]);
 
@@ -447,10 +456,14 @@ describe('SocialRecoveryExecutorModule', function () {
                 executionCalldata: executionCalldata,
               };
 
-              const guardianSignatures = SocialRecoveryExecutorHelper.sortGuardianSignatures(
+              const guardianSignatures = ERC7579SocialRecoveryExecutorHelper.sortGuardianSignatures(
                 guardians.map(g => ({
                   signer: g.address,
-                  signature: g.signTypedData(domain, SocialRecoveryExecutorHelper.START_RECOVERY_TYPEHASH, message),
+                  signature: g.signTypedData(
+                    domain,
+                    ERC7579SocialRecoveryExecutorHelper.START_RECOVERY_TYPEHASH,
+                    message,
+                  ),
                 })),
               );
 
@@ -501,7 +514,7 @@ describe('SocialRecoveryExecutorModule', function () {
           expect(isGuardian).to.equal(false);
         });
 
-        it('should be able to change the threshold', async function () {
+        it('should be able to update the threshold', async function () {
           const newThreshold = this.recoveryConfig.threshold + 1;
           await expect(
             this.accountMockFromEntrypoint.execute(
@@ -509,7 +522,7 @@ describe('SocialRecoveryExecutorModule', function () {
               encodeSingle(
                 this.mock.target,
                 0,
-                this.mock.interface.encodeFunctionData('changeThreshold', [newThreshold]),
+                this.mock.interface.encodeFunctionData('updateThreshold', [newThreshold]),
               ),
             ),
           )
@@ -520,17 +533,17 @@ describe('SocialRecoveryExecutorModule', function () {
           expect(threshold).to.equal(newThreshold);
         });
 
-        describe('changing timelock', function () {
+        describe('updating timelock', function () {
           it('should fail if timelock is zero', async function () {
             await expect(
               this.accountMockFromEntrypoint.execute(
                 encodeMode(CALL_TYPE_SINGLE, EXEC_TYPE_DEFAULT),
-                encodeSingle(this.mock.target, 0, this.mock.interface.encodeFunctionData('changeTimelock', [0])),
+                encodeSingle(this.mock.target, 0, this.mock.interface.encodeFunctionData('updateTimelock', [0])),
               ),
             ).to.be.revertedWithCustomError(this.mock, 'InvalidTimelock');
           });
 
-          it('should be able to change the timelock', async function () {
+          it('should be able to update the timelock', async function () {
             const newTimelock = this.recoveryConfig.timelock + 1;
             await expect(
               this.accountMockFromEntrypoint.execute(
@@ -538,7 +551,7 @@ describe('SocialRecoveryExecutorModule', function () {
                 encodeSingle(
                   this.mock.target,
                   0,
-                  this.mock.interface.encodeFunctionData('changeTimelock', [newTimelock]),
+                  this.mock.interface.encodeFunctionData('updateTimelock', [newTimelock]),
                 ),
               ),
             )

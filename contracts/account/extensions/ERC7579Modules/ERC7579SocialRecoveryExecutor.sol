@@ -23,7 +23,7 @@ import {AccountERC7579} from "../AccountERC7579.sol";
  * - Configure guardian designations and thresholds
  * - Protect against unauthorized recovery attempts
  */
-contract SocialRecoveryExecutor is IERC7579Module, EIP712, Nonces {
+contract ERC7579SocialRecoveryExecutor is IERC7579Module, EIP712, Nonces {
     using EnumerableSet for EnumerableSet.AddressSet;
 
     enum RecoveryStatus {
@@ -123,32 +123,34 @@ contract SocialRecoveryExecutor is IERC7579Module, EIP712, Nonces {
 
     constructor(string memory name, string memory version) EIP712(name, version) {}
 
+    /// @notice Checks if the module is of a certain type
+    /// @param moduleTypeId The module type ID to check
+    /// @return true if the module is of the given type, false otherwise
+    function isModuleType(uint256 moduleTypeId) external pure returns (bool) {
+        return moduleTypeId == MODULE_TYPE_EXECUTOR;
+    }
+
     /// @notice Initializes the module with initial recovery configuration
     /// @dev Called by the ERC-7579 Account during module installation
     /// @param data initData ABI encoded (address[] guardians, uint256 threshold, uint256 timelock)
-    function onInstall(bytes calldata data) external virtual override {
+    function onInstall(bytes calldata data) public virtual override {
         address account = msg.sender;
 
         (address[] memory _guardians, uint256 _threshold, uint256 _timelock) = abi.decode(
             data,
             (address[], uint256, uint256)
         );
+
         if (_guardians.length == 0) {
             revert InvalidGuardians();
-        }
-        if (_threshold == 0 || _threshold > _guardians.length) {
-            revert InvalidThreshold();
-        }
-        if (_timelock == 0) {
-            revert InvalidTimelock();
         }
 
         for (uint256 i = 0; i < _guardians.length; i++) {
             _addGuardian(account, _guardians[i]);
         }
 
-        _recoveryConfigs[account].threshold = _threshold;
-        _recoveryConfigs[account].timelock = _timelock;
+        _setThreshold(account, _threshold);
+        _setTimelock(account, _timelock);
 
         emit ModuleInstalledReceived(account, data);
     }
@@ -156,7 +158,7 @@ contract SocialRecoveryExecutor is IERC7579Module, EIP712, Nonces {
     /// @notice Uninstalls the module, clearing all recovery configuration
     /// @dev Called by the ERC-7579 Account during module uninstallation
     /// @param data Additional data
-    function onUninstall(bytes calldata data) external virtual override {
+    function onUninstall(bytes calldata data) public virtual override {
         address account = msg.sender;
 
         // clear the guardian EnumerableSet.
@@ -182,7 +184,7 @@ contract SocialRecoveryExecutor is IERC7579Module, EIP712, Nonces {
         address account,
         GuardianSignature[] calldata guardianSignatures,
         bytes calldata executionCalldata
-    ) external virtual whenRecoveryIsNotStarted(account) {
+    ) public virtual whenRecoveryIsNotStarted(account) {
         bytes32 digest = _getStartRecoveryDigest(account, executionCalldata);
         _validateGuardianSignatures(account, guardianSignatures, digest);
         _useNonce(account);
@@ -202,7 +204,7 @@ contract SocialRecoveryExecutor is IERC7579Module, EIP712, Nonces {
     function executeRecovery(
         address account,
         bytes calldata executionCalldata
-    ) external virtual whenRecoveryIsReady(account) {
+    ) public virtual whenRecoveryIsReady(account) {
         if (keccak256(executionCalldata) != _recoveryConfigs[account].pendingExecutionHash) {
             revert ExecutionDiffersFromPending();
         }
@@ -221,7 +223,7 @@ contract SocialRecoveryExecutor is IERC7579Module, EIP712, Nonces {
     /// @notice Cancels an ongoing recovery process
     /// @dev Can only be called by the account itself
     /// @custom:security Direct account control takes precedence over recovery process
-    function cancelRecovery() external virtual whenRecoveryIsStartedOrReady(msg.sender) {
+    function cancelRecovery() public virtual whenRecoveryIsStartedOrReady(msg.sender) {
         _cancelRecovery(msg.sender);
     }
 
@@ -233,25 +235,12 @@ contract SocialRecoveryExecutor is IERC7579Module, EIP712, Nonces {
     function cancelRecovery(
         address account,
         GuardianSignature[] calldata guardianSignatures
-    ) external virtual whenRecoveryIsStartedOrReady(account) {
+    ) public virtual whenRecoveryIsStartedOrReady(account) {
         bytes32 digest = _getCancelRecoveryDigest(account, nonces(account));
         _validateGuardianSignatures(account, guardianSignatures, digest);
         _useNonce(account);
 
         _cancelRecovery(account);
-    }
-
-    /// @notice Validates guardian signatures for a given digest
-    /// @dev Helper function for clients to validate signatures
-    /// @param account The ERC-7579 Account to validate signatures for
-    /// @param guardianSignatures Array of guardian signatures to validate
-    /// @param digest The digest to validate the signatures against
-    function validateGuardianSignatures(
-        address account,
-        GuardianSignature[] calldata guardianSignatures,
-        bytes32 digest
-    ) external view {
-        _validateGuardianSignatures(account, guardianSignatures, digest);
     }
 
     /*//////////////////////////////////////////////////////////////////////////
@@ -261,29 +250,29 @@ contract SocialRecoveryExecutor is IERC7579Module, EIP712, Nonces {
     /// @notice Adds a new guardian to the account's recovery configuration
     /// @dev Only callable by the account itself
     /// @param guardian Address of the new guardian
-    function addGuardian(address guardian) external {
+    function addGuardian(address guardian) public virtual {
         _addGuardian(msg.sender, guardian);
     }
 
     /// @notice Removes a guardian from the account's recovery configuration
     /// @dev Only callable by the account itself
     /// @param guardian Address of the guardian to remove
-    function removeGuardian(address guardian) external {
+    function removeGuardian(address guardian) public virtual {
         _removeGuardian(msg.sender, guardian);
     }
 
     /// @notice Changes the number of required guardian signatures
     /// @dev Only callable by the account itself
     /// @param threshold New threshold value
-    function changeThreshold(uint256 threshold) external {
-        _changeThreshold(msg.sender, threshold);
+    function updateThreshold(uint256 threshold) public virtual {
+        _setThreshold(msg.sender, threshold);
     }
 
     /// @notice Changes the timelock duration for recovery
     /// @dev Only callable by the account itself
     /// @param timelock New timelock duration in seconds
-    function changeTimelock(uint256 timelock) external {
-        _changeTimelock(msg.sender, timelock);
+    function updateTimelock(uint256 timelock) public virtual {
+        _setTimelock(msg.sender, timelock);
     }
 
     /*//////////////////////////////////////////////////////////////////////////
@@ -304,22 +293,37 @@ contract SocialRecoveryExecutor is IERC7579Module, EIP712, Nonces {
         return RecoveryStatus.Ready;
     }
 
-    function isGuardian(address account, address guardian) public view returns (bool) {
+    /// @notice Checks if an address is a guardian for an ERC-7579 Account
+    /// @param account The ERC-7579 Account to check guardians for
+    /// @param guardian The address to check as a guardian
+    /// @return true if the address is a guardian, false otherwise
+    function isGuardian(address account, address guardian) public view virtual returns (bool) {
         return _recoveryConfigs[account].guardians.contains(guardian);
     }
 
-    function getGuardians(address account) public view returns (address[] memory) {
+    /// @notice Gets all guardians for an ERC-7579 Account
+    /// @param account The ERC-7579 Account to get guardians for
+    /// @return An array of all guardians
+    function getGuardians(address account) public view virtual returns (address[] memory) {
         return _recoveryConfigs[account].guardians.values();
     }
 
-    function getThreshold(address account) public view returns (uint256) {
+    /// @notice Gets the threshold for an ERC-7579 Account
+    /// @param account The ERC-7579 Account to get the threshold for
+    /// @return The threshold value
+    function getThreshold(address account) public view virtual returns (uint256) {
         return _recoveryConfigs[account].threshold;
     }
 
-    function getTimelock(address account) public view returns (uint256) {
+    /// @notice Gets the timelock for an ERC-7579 Account
+    /// @param account The ERC-7579 Account to get the timelock for
+    /// @return The timelock value
+    function getTimelock(address account) public view virtual returns (uint256) {
         return _recoveryConfigs[account].timelock;
     }
 
+    /// @notice Gets the maximum number of guardians for an ERC-7579 Account
+    /// @return The maximum number of guardians
     function maxGuardians() public pure virtual returns (uint256) {
         return 32;
     }
@@ -327,6 +331,29 @@ contract SocialRecoveryExecutor is IERC7579Module, EIP712, Nonces {
     /*//////////////////////////////////////////////////////////////////////////
                                 INTERNAL FUNCTIONS
     //////////////////////////////////////////////////////////////////////////*/
+
+    /// @notice EIP-712 digest for starting recovery
+    /// @param account The ERC-7579 Account to start recovery for
+    /// @param executionCalldata The calldata to execute during recovery
+    /// @return The EIP-712 digest for starting recovery
+    function _getStartRecoveryDigest(
+        address account,
+        bytes calldata executionCalldata
+    ) internal view returns (bytes32) {
+        bytes32 structHash = keccak256(
+            abi.encode(START_RECOVERY_TYPEHASH, account, keccak256(executionCalldata), nonces(account))
+        );
+        return _hashTypedDataV4(structHash);
+    }
+
+    /// @notice EIP-712 digest for cancelling recovery
+    /// @param account The ERC-7579 Account to cancel recovery for
+    /// @param nonce The nonce of the account
+    /// @return The EIP-712 digest for cancelling recovery
+    function _getCancelRecoveryDigest(address account, uint256 nonce) internal view returns (bytes32) {
+        bytes32 structHash = keccak256(abi.encode(CANCEL_RECOVERY_TYPEHASH, account, nonce));
+        return _hashTypedDataV4(structHash);
+    }
 
     /// @notice Verifies multiple guardian signatures for a given digest
     /// @dev Ensures signatures are unique, and threshold is met
@@ -346,42 +373,20 @@ contract SocialRecoveryExecutor is IERC7579Module, EIP712, Nonces {
             revert ThresholdNotMet();
         }
 
+        address lastSigner = address(0);
         for (uint256 i = 0; i < guardianSignatures.length; i++) {
+            address signer = guardianSignatures[i].signer;
             if (
-                !isGuardian(account, guardianSignatures[i].signer) ||
-                !SignatureChecker.isValidSignatureNow(
-                    guardianSignatures[i].signer,
-                    digest,
-                    guardianSignatures[i].signature
-                )
+                !isGuardian(account, signer) ||
+                !SignatureChecker.isValidSignatureNow(signer, digest, guardianSignatures[i].signature)
             ) {
                 revert InvalidGuardianSignature();
             }
-            // ensures signers are unique in O(n), requires sorted signatures by signer address in ascending order
-            if (i > 0 && uint160(guardianSignatures[i].signer) <= uint160(guardianSignatures[i - 1].signer)) {
+            if (uint160(signer) <= uint160(lastSigner)) {
                 revert DuplicatedOrUnsortedGuardianSignatures();
             }
+            lastSigner = signer;
         }
-    }
-
-    /// @notice EIP-712 digest for starting recovery
-    /// @param account The ERC-7579 Account to start recovery for
-    /// @param executionCalldata The calldata to execute during recovery
-    /// @return The EIP-712 digest for starting recovery
-    function _getStartRecoveryDigest(address account, bytes memory executionCalldata) internal view returns (bytes32) {
-        bytes32 structHash = keccak256(
-            abi.encode(START_RECOVERY_TYPEHASH, account, keccak256(executionCalldata), nonces(account))
-        );
-        return _hashTypedDataV4(structHash);
-    }
-
-    /// @notice EIP-712 digest for cancelling recovery
-    /// @param account The ERC-7579 Account to cancel recovery for
-    /// @param nonce The nonce of the account
-    /// @return The EIP-712 digest for cancelling recovery
-    function _getCancelRecoveryDigest(address account, uint256 nonce) internal view returns (bytes32) {
-        bytes32 structHash = keccak256(abi.encode(CANCEL_RECOVERY_TYPEHASH, account, nonce));
-        return _hashTypedDataV4(structHash);
     }
 
     /// @notice Cancels an ongoing recovery process
@@ -426,7 +431,7 @@ contract SocialRecoveryExecutor is IERC7579Module, EIP712, Nonces {
     /// @dev Cannot be set to zero and cannot be greater than the current number of guardians
     /// @param account The ERC-7579 Account to change the threshold for
     /// @param threshold New threshold value
-    function _changeThreshold(address account, uint256 threshold) internal virtual {
+    function _setThreshold(address account, uint256 threshold) internal virtual {
         if (threshold == 0 || threshold > _recoveryConfigs[account].guardians.length()) {
             revert InvalidThreshold();
         }
@@ -438,22 +443,11 @@ contract SocialRecoveryExecutor is IERC7579Module, EIP712, Nonces {
     /// @dev Cannot be set to zero
     /// @param account The ERC-7579 Account to change the timelock for
     /// @param timelock New timelock duration in seconds
-    function _changeTimelock(address account, uint256 timelock) internal virtual {
+    function _setTimelock(address account, uint256 timelock) internal virtual {
         if (timelock == 0) {
             revert InvalidTimelock();
         }
         _recoveryConfigs[account].timelock = timelock;
         emit TimelockChanged(account, timelock);
-    }
-
-    /*//////////////////////////////////////////////////////////////////////////
-                                MODULE METADATA
-    //////////////////////////////////////////////////////////////////////////*/
-
-    /// @notice Checks if the module is of a certain type
-    /// @param moduleTypeId The module type ID to check
-    /// @return true if the module is of the given type, false otherwise
-    function isModuleType(uint256 moduleTypeId) external pure override returns (bool) {
-        return moduleTypeId == MODULE_TYPE_EXECUTOR;
     }
 }
