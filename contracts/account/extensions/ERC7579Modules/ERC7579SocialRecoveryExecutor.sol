@@ -120,16 +120,12 @@ contract ERC7579SocialRecoveryExecutor is IERC7579Module, EIP712, Nonces {
 
     constructor(string memory name, string memory version) EIP712(name, version) {}
 
-    /// @notice Checks if the module is of a certain type
-    /// @param moduleTypeId The module type ID to check
-    /// @return true if the module is of the given type, false otherwise
+    /// @inheritdoc IERC7579Module
     function isModuleType(uint256 moduleTypeId) external pure returns (bool) {
         return moduleTypeId == MODULE_TYPE_EXECUTOR;
     }
 
-    /// @notice Initializes the module with initial recovery configuration
-    /// @dev Called by the ERC-7579 Account during module installation
-    /// @param data initData ABI encoded (address[] guardians, uint256 threshold, uint256 timelock)
+    /// @inheritdoc IERC7579Module
     function onInstall(bytes memory data) public virtual override {
         address account = msg.sender;
 
@@ -152,9 +148,7 @@ contract ERC7579SocialRecoveryExecutor is IERC7579Module, EIP712, Nonces {
         emit ModuleInstalledReceived(account, data);
     }
 
-    /// @notice Uninstalls the module, clearing all recovery configuration
-    /// @dev Called by the ERC-7579 Account during module uninstallation
-    /// @param data Additional data
+    /// @inheritdoc IERC7579Module
     function onUninstall(bytes calldata data) public virtual override {
         address account = msg.sender;
 
@@ -182,9 +176,8 @@ contract ERC7579SocialRecoveryExecutor is IERC7579Module, EIP712, Nonces {
         GuardianSignature[] calldata guardianSignatures,
         bytes calldata executionCalldata
     ) public virtual whenRecoveryIsNotStarted(account) {
-        bytes32 digest = _getStartRecoveryDigest(account, executionCalldata);
+        bytes32 digest = _getStartRecoveryDigest(account, executionCalldata, _useNonce(account));
         _validateGuardianSignatures(account, guardianSignatures, digest);
-        _useNonce(account);
 
         // store and start the recovery process.
         _recoveryConfigs[account].pendingExecutionHash = keccak256(executionCalldata);
@@ -233,9 +226,8 @@ contract ERC7579SocialRecoveryExecutor is IERC7579Module, EIP712, Nonces {
         address account,
         GuardianSignature[] calldata guardianSignatures
     ) public virtual whenRecoveryIsStartedOrReady(account) {
-        bytes32 digest = _getCancelRecoveryDigest(account, nonces(account));
+        bytes32 digest = _getCancelRecoveryDigest(account, _useNonce(account));
         _validateGuardianSignatures(account, guardianSignatures, digest);
-        _useNonce(account);
 
         _cancelRecovery(account);
     }
@@ -335,10 +327,11 @@ contract ERC7579SocialRecoveryExecutor is IERC7579Module, EIP712, Nonces {
     /// @return The EIP-712 digest for starting recovery
     function _getStartRecoveryDigest(
         address account,
-        bytes calldata executionCalldata
-    ) internal view returns (bytes32) {
+        bytes calldata executionCalldata,
+        uint256 nonce
+    ) internal view virtual returns (bytes32) {
         bytes32 structHash = keccak256(
-            abi.encode(START_RECOVERY_TYPEHASH, account, keccak256(executionCalldata), nonces(account))
+            abi.encode(START_RECOVERY_TYPEHASH, account, keccak256(executionCalldata), nonce)
         );
         return _hashTypedDataV4(structHash);
     }
@@ -347,7 +340,7 @@ contract ERC7579SocialRecoveryExecutor is IERC7579Module, EIP712, Nonces {
     /// @param account The ERC-7579 Account to cancel recovery for
     /// @param nonce The nonce of the account
     /// @return The EIP-712 digest for cancelling recovery
-    function _getCancelRecoveryDigest(address account, uint256 nonce) internal view returns (bytes32) {
+    function _getCancelRecoveryDigest(address account, uint256 nonce) internal view virtual returns (bytes32) {
         bytes32 structHash = keccak256(abi.encode(CANCEL_RECOVERY_TYPEHASH, account, nonce));
         return _hashTypedDataV4(structHash);
     }
