@@ -11,24 +11,24 @@ import {Nonces} from "@openzeppelin/contracts/utils/Nonces.sol";
 /**
  * @title Social Recovery Executor Module
  *
- * @dev Implementation of a social recovery mechanism for ERC-7579 Accounts that enables
- * account recovery through a guardian-based consensus mechanism. Provides M-of-N guardian
- * approval with timelock protection, recovery cancellation, and configurable security parameters.
- *
- * The module allows accounts to:
- * - Recover access through guardian approval
- * - Configure guardian designations and thresholds
- * - Protect against unauthorized recovery attempts
+ * @dev Social recovery module enabling account reconfiguration through a timelocked
+ * guardian-based consensus mechanism. Provides M-of-N guardian multi-signature with
+ * timelock protection, recovery cancellation, and configurable security parameters.
  */
 contract ERC7579SocialRecoveryExecutor is IERC7579Module, EIP712, Nonces {
     using EnumerableSet for EnumerableSet.AddressSet;
 
+    /// @dev Status of the recovery process used to determine what actions are currently allowed
+    /// @param NotStarted No recovery process has started
+    /// @param Started Recovery process has started but timelock hasn't expired
+    /// @param Ready Recovery process has passed timelock and is ready for execution
     enum RecoveryStatus {
         NotStarted,
         Started,
         Ready
     }
 
+    /// @dev Recovery configuration for an ERC-7579 Account containing all necessary information for the recovery process
     struct RecoveryConfig {
         EnumerableSet.AddressSet guardians;
         bytes32 pendingExecutionHash;
@@ -37,6 +37,9 @@ contract ERC7579SocialRecoveryExecutor is IERC7579Module, EIP712, Nonces {
         uint256 timelock;
     }
 
+    /// @dev Structure representing a guardian's signature used for verification in recovery operations
+    /// @param signature The cryptographic signature bytes
+    /// @param signer The address of the guardian who signed
     struct GuardianSignature {
         bytes signature;
         address signer;
@@ -69,15 +72,6 @@ contract ERC7579SocialRecoveryExecutor is IERC7579Module, EIP712, Nonces {
     event GuardianRemoved(address indexed account, address guardian);
     event GuardianAdded(address indexed account, address guardian);
 
-    error InvalidGuardianLength();
-    error InvalidThreshold();
-    error InvalidTimelock();
-
-    error CannotRemoveGuardian();
-    error GuardianNotFound();
-    error TooManyGuardians();
-    error AlreadyGuardian();
-
     error DuplicatedOrUnsortedGuardianSignatures();
     error ExecutionDiffersFromPending();
     error TooManyGuardianSignatures();
@@ -88,10 +82,20 @@ contract ERC7579SocialRecoveryExecutor is IERC7579Module, EIP712, Nonces {
     error RecoveryNotStarted();
     error RecoveryNotReady();
 
+    error InvalidGuardianLength();
+    error InvalidThreshold();
+    error InvalidTimelock();
+
+    error CannotRemoveGuardian();
+    error GuardianNotFound();
+    error TooManyGuardians();
+    error AlreadyGuardian();
+
     /*///////////////////////////////////////////////////////////////////////////
                                 MODIFIERS
     //////////////////////////////////////////////////////////////////////////*/
 
+    /// @dev Reverts if the recovery process has already started.
     modifier whenRecoveryIsNotStarted(address account) {
         if (getRecoveryStatus(account) != RecoveryStatus.NotStarted) {
             revert RecoveryAlreadyStarted();
@@ -99,6 +103,7 @@ contract ERC7579SocialRecoveryExecutor is IERC7579Module, EIP712, Nonces {
         _;
     }
 
+    /// @dev Reverts if the recovery process is not ready to be executed.
     modifier whenRecoveryIsReady(address account) {
         if (getRecoveryStatus(account) != RecoveryStatus.Ready) {
             revert RecoveryNotReady();
@@ -106,6 +111,7 @@ contract ERC7579SocialRecoveryExecutor is IERC7579Module, EIP712, Nonces {
         _;
     }
 
+    /// @dev Reverts if the recovery process is not started or ready.
     modifier whenRecoveryIsStartedOrReady(address account) {
         if (getRecoveryStatus(account) == RecoveryStatus.NotStarted) {
             revert RecoveryNotStarted();
@@ -117,6 +123,7 @@ contract ERC7579SocialRecoveryExecutor is IERC7579Module, EIP712, Nonces {
                                 MODULE SETUP CONFIGURATION
     //////////////////////////////////////////////////////////////////////////*/
 
+    /// @dev Initializes the module with a name and version.
     constructor(string memory name, string memory version) EIP712(name, version) {}
 
     /// @inheritdoc IERC7579Module
@@ -164,11 +171,10 @@ contract ERC7579SocialRecoveryExecutor is IERC7579Module, EIP712, Nonces {
                                 MODULE MAIN LOGIC
     //////////////////////////////////////////////////////////////////////////*/
 
-    /// @notice Starts the recovery process for an ERC-7579 Account
-    /// @dev Requires threshold number of valid guardian signatures and commits execution hash
+    /// @dev Starts the recovery process for an ERC-7579 Account. Requires threshold number of valid guardian signatures and commits the hash of the approved execution calldata for recovery.
     /// @param account The ERC-7579 Account to start recovery for
-    /// @param guardianSignatures Array of guardian signatures authorizing the recovery
-    /// @param executionCalldata The calldata to execute during recovery
+    /// @param guardianSignatures Array of guardian signatures authorizing the recovery. Each signature contains a signature and the signer's address, sorted by signer address in ascending order.
+    /// @param executionCalldata The calldata to execute during recovery. This defines the account reconfiguration to perform.
     /// @custom:security Uses EIP-712 for signature verification and nonces for replay protection
     function startRecovery(
         address account,
@@ -185,11 +191,10 @@ contract ERC7579SocialRecoveryExecutor is IERC7579Module, EIP712, Nonces {
         emit RecoveryStarted(account);
     }
 
-    /// @notice Executes the recovery process after timelock period
-    /// @dev Only callable when recovery status is Ready
+    /// @dev Executes the recovery process after timelock period has passed. Only callable when recovery status is Ready. Validates that execution matches the hash committed during startRecovery and resets recovery state afterward.
     /// @param account The account to execute recovery for
-    /// @param executionCalldata The calldata to execute, must match the pending recovery digest
-    /// @custom:security Validates execution matches the hash committed during startRecovery
+    /// @param executionCalldata The calldata to execute, must match the pending recovery hash stored during startRecovery
+    /// @custom:security Validates execution matches the hash committed during startRecovery and resets recovery state afterward
     function executeRecovery(
         address account,
         bytes calldata executionCalldata
@@ -209,18 +214,17 @@ contract ERC7579SocialRecoveryExecutor is IERC7579Module, EIP712, Nonces {
         emit RecoveryExecuted(account);
     }
 
-    /// @notice Cancels an ongoing recovery process
-    /// @dev Can only be called by the account itself
+    /// @dev Cancels an ongoing recovery process. Can only be called by the account itself for self-cancellation.
     /// @custom:security Direct account control takes precedence over recovery process
     function cancelRecovery() public virtual whenRecoveryIsStartedOrReady(msg.sender) {
         _cancelRecovery(msg.sender);
     }
 
-    /// @notice Overload: Allows guardians to cancel a recovery process
-    /// @dev Requires threshold signatures, similar to starting recovery
+    /// @dev Allows guardians to cancel a recovery process. Requires threshold signatures from guardians, similar to starting recovery.
+    /// Uses same signature threshold and verification process as recovery initiation.
     /// @param account The account to cancel recovery for
-    /// @param guardianSignatures Array of guardian signatures authorizing cancellation
-    /// @custom:security Uses same signature threshold as recovery initiation
+    /// @param guardianSignatures Array of guardian signatures authorizing cancellation, sorted by signer address
+    /// @custom:security Uses same signature threshold and verification process as recovery initiation
     function cancelRecovery(
         address account,
         GuardianSignature[] calldata guardianSignatures
@@ -235,29 +239,25 @@ contract ERC7579SocialRecoveryExecutor is IERC7579Module, EIP712, Nonces {
                                 MODULE MANAGEMENT
     //////////////////////////////////////////////////////////////////////////*/
 
-    /// @notice Adds a new guardian to the account's recovery configuration
-    /// @dev Only callable by the account itself
+    /// @dev Adds a new guardian to the account's recovery configuration. Only callable by the account itself.
     /// @param guardian Address of the new guardian
     function addGuardian(address guardian) public virtual {
         _addGuardian(msg.sender, guardian);
     }
 
-    /// @notice Removes a guardian from the account's recovery configuration
-    /// @dev Only callable by the account itself
+    /// @dev Removes a guardian from the account's recovery configuration. Only callable by the account itself.
     /// @param guardian Address of the guardian to remove
     function removeGuardian(address guardian) public virtual {
         _removeGuardian(msg.sender, guardian);
     }
 
-    /// @notice Changes the number of required guardian signatures
-    /// @dev Only callable by the account itself
+    /// @dev Changes the number of required guardian signatures. Only callable by the account itself.
     /// @param threshold New threshold value
     function updateThreshold(uint256 threshold) public virtual {
         _setThreshold(msg.sender, threshold);
     }
 
-    /// @notice Changes the timelock duration for recovery
-    /// @dev Only callable by the account itself
+    /// @dev Changes the timelock duration for recovery. Only callable by the account itself.
     /// @param timelock New timelock duration in seconds
     function updateTimelock(uint256 timelock) public virtual {
         _setTimelock(msg.sender, timelock);
@@ -267,9 +267,9 @@ contract ERC7579SocialRecoveryExecutor is IERC7579Module, EIP712, Nonces {
                                 VIEW FUNCTIONS
     //////////////////////////////////////////////////////////////////////////*/
 
-    /// @notice Gets the current recovery status of an ERC-7579 Account
+    /// @dev Gets the current recovery status of an ERC-7579 Account. Determines status based on recoveryStart timestamp and timelock duration.
     /// @param account The ERC-7579 Account to get the recovery status for
-    /// @return The current recovery status
+    /// @return Status enum value: NotStarted (0), Started (1), or Ready (2)
     function getRecoveryStatus(address account) public view virtual returns (RecoveryStatus) {
         uint256 recoveryStart = _recoveryConfigs[account].recoveryStart;
         if (recoveryStart == 0) {
@@ -281,7 +281,7 @@ contract ERC7579SocialRecoveryExecutor is IERC7579Module, EIP712, Nonces {
         return RecoveryStatus.Ready;
     }
 
-    /// @notice Checks if an address is a guardian for an ERC-7579 Account
+    /// @dev Checks if an address is a guardian for an ERC-7579 Account.
     /// @param account The ERC-7579 Account to check guardians for
     /// @param guardian The address to check as a guardian
     /// @return true if the address is a guardian, false otherwise
@@ -289,30 +289,30 @@ contract ERC7579SocialRecoveryExecutor is IERC7579Module, EIP712, Nonces {
         return _recoveryConfigs[account].guardians.contains(guardian);
     }
 
-    /// @notice Gets all guardians for an ERC-7579 Account
+    /// @dev Gets all guardians for an ERC-7579 Account.
     /// @param account The ERC-7579 Account to get guardians for
     /// @return An array of all guardians
     function getGuardians(address account) public view virtual returns (address[] memory) {
         return _recoveryConfigs[account].guardians.values();
     }
 
-    /// @notice Gets the threshold for an ERC-7579 Account
+    /// @dev Gets the threshold for an ERC-7579 Account.
     /// @param account The ERC-7579 Account to get the threshold for
     /// @return The threshold value
     function getThreshold(address account) public view virtual returns (uint256) {
         return _recoveryConfigs[account].threshold;
     }
 
-    /// @notice Gets the timelock for an ERC-7579 Account
+    /// @dev Gets the timelock for an ERC-7579 Account.
     /// @param account The ERC-7579 Account to get the timelock for
     /// @return The timelock value
     function getTimelock(address account) public view virtual returns (uint256) {
         return _recoveryConfigs[account].timelock;
     }
 
-    /// @notice Gets the maximum number of guardians for an ERC-7579 Account
+    /// @dev Gets the maximum number of guardians for an ERC-7579 Account.
     /// @return The maximum number of guardians
-    function maxGuardians() public pure virtual returns (uint256) {
+    function getMaxGuardians() public pure virtual returns (uint256) {
         return 32;
     }
 
@@ -320,7 +320,7 @@ contract ERC7579SocialRecoveryExecutor is IERC7579Module, EIP712, Nonces {
                                 INTERNAL FUNCTIONS
     //////////////////////////////////////////////////////////////////////////*/
 
-    /// @notice EIP-712 digest for starting recovery
+    /// @dev EIP-712 digest for starting recovery.
     /// @param account The ERC-7579 Account to start recovery for
     /// @param executionCalldata The calldata to execute during recovery
     /// @return The EIP-712 digest for starting recovery
@@ -335,7 +335,7 @@ contract ERC7579SocialRecoveryExecutor is IERC7579Module, EIP712, Nonces {
         return _hashTypedDataV4(structHash);
     }
 
-    /// @notice EIP-712 digest for cancelling recovery
+    /// @dev EIP-712 digest for cancelling recovery.
     /// @param account The ERC-7579 Account to cancel recovery for
     /// @param nonce The nonce of the account
     /// @return The EIP-712 digest for cancelling recovery
@@ -344,18 +344,18 @@ contract ERC7579SocialRecoveryExecutor is IERC7579Module, EIP712, Nonces {
         return _hashTypedDataV4(structHash);
     }
 
-    /// @notice Verifies multiple guardian signatures for a given digest
-    /// @dev Ensures signatures are unique, and threshold is met
+    /// @dev Verifies multiple guardian signatures for a given digest. Ensures signatures are unique, properly sorted, and threshold is met.
     /// @param account The account the signatures are for
     /// @param guardianSignatures Array of guardian signatures sorted by signer address in ascending order
-    /// @param digest The digest to verify the signatures against
+    /// @param digest The EIP-712 typed data digest to verify the signatures against
+    /// @custom:security Enforces ascending order of signers to prevent duplicates
     function _validateGuardianSignatures(
         address account,
         GuardianSignature[] calldata guardianSignatures,
         bytes32 digest
     ) internal view virtual {
         // bound `for` cycle
-        if (guardianSignatures.length > maxGuardians()) {
+        if (guardianSignatures.length > getMaxGuardians()) {
             revert TooManyGuardianSignatures();
         }
         if (guardianSignatures.length < _recoveryConfigs[account].threshold) {
@@ -378,7 +378,7 @@ contract ERC7579SocialRecoveryExecutor is IERC7579Module, EIP712, Nonces {
         }
     }
 
-    /// @notice Cancels an ongoing recovery process
+    /// @dev Cancels an ongoing recovery process.
     /// @param account The ERC-7579 Account to cancel recovery for
     function _cancelRecovery(address account) internal virtual {
         _recoveryConfigs[account].pendingExecutionHash = bytes32(0);
@@ -386,11 +386,11 @@ contract ERC7579SocialRecoveryExecutor is IERC7579Module, EIP712, Nonces {
         emit RecoveryCancelled(account);
     }
 
-    /// @notice Adds a new guardian to the account's recovery configuration
+    /// @dev Adds a new guardian to the account's recovery configuration.
     /// @param account The ERC-7579 Account to add the guardian to
     /// @param guardian Address of the new guardian
     function _addGuardian(address account, address guardian) internal virtual {
-        if (_recoveryConfigs[account].guardians.length() >= maxGuardians()) {
+        if (_recoveryConfigs[account].guardians.length() >= getMaxGuardians()) {
             revert TooManyGuardians();
         }
         if (!_recoveryConfigs[account].guardians.add(guardian)) {
@@ -399,8 +399,7 @@ contract ERC7579SocialRecoveryExecutor is IERC7579Module, EIP712, Nonces {
         emit GuardianAdded(account, guardian);
     }
 
-    /// @notice Removes a guardian from the account's recovery configuration
-    /// @dev Cannot remove if it would make threshold unreachable
+    /// @dev Removes a guardian from the account's recovery configuration. Cannot remove if it would make threshold unreachable.
     /// @param account The ERC-7579 Account to remove the guardian from
     /// @param guardian Address of the guardian to remove
     function _removeGuardian(address account, address guardian) internal virtual {
@@ -413,8 +412,7 @@ contract ERC7579SocialRecoveryExecutor is IERC7579Module, EIP712, Nonces {
         emit GuardianRemoved(account, guardian);
     }
 
-    /// @notice Changes the number of required guardian signatures
-    /// @dev Cannot be set to zero and cannot be greater than the current number of guardians
+    /// @dev Changes the number of required guardian signatures. Cannot be set to zero and cannot be greater than the current number of guardians.
     /// @param account The ERC-7579 Account to change the threshold for
     /// @param threshold New threshold value
     function _setThreshold(address account, uint256 threshold) internal virtual {
@@ -425,8 +423,7 @@ contract ERC7579SocialRecoveryExecutor is IERC7579Module, EIP712, Nonces {
         emit ThresholdChanged(account, threshold);
     }
 
-    /// @notice Changes the timelock duration for recovery
-    /// @dev Cannot be set to zero
+    /// @dev Changes the timelock duration for recovery. Cannot be set to zero.
     /// @param account The ERC-7579 Account to change the timelock for
     /// @param timelock New timelock duration in seconds
     function _setTimelock(address account, uint256 timelock) internal virtual {
