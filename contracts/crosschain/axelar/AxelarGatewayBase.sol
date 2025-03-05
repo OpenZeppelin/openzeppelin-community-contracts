@@ -2,7 +2,6 @@
 
 pragma solidity ^0.8.27;
 
-import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {IAxelarGateway} from "@axelar-network/axelar-gmp-sdk-solidity/contracts/interfaces/IAxelarGateway.sol";
 
 /**
@@ -12,7 +11,7 @@ import {IAxelarGateway} from "@axelar-network/axelar-gmp-sdk-solidity/contracts/
  * to Axelar chain identifiers) and remote gateways (i.e. gateways on other chains) to
  * facilitate cross-chain communication.
  */
-abstract contract AxelarGatewayBase is Ownable {
+abstract contract AxelarGatewayBase {
     /// @dev A remote gateway has been registered for a chain.
     event RegisteredRemoteGateway(string caip2, string gatewayAddress);
 
@@ -30,6 +29,12 @@ abstract contract AxelarGatewayBase is Ownable {
 
     mapping(string caip2 => string remoteGateway) private _remoteGateways;
     mapping(string caip2OrAxelar => string axelarOrCaip2) private _chainEquivalence;
+
+    /// @dev Only allows an authorized registrant to call the function. See {_checkRegistrant}.
+    modifier onlyRegistrant() {
+        _checkRegistrant();
+        _;
+    }
 
     /// @dev Sets the local gateway address (i.e. Axelar's official gateway for the current chain).
     constructor(IAxelarGateway _gateway) {
@@ -49,7 +54,10 @@ abstract contract AxelarGatewayBase is Ownable {
     }
 
     /// @dev Registers a chain equivalence between a CAIP-2 chain identifier and an Axelar network identifier.
-    function registerChainEquivalence(string calldata caip2, string calldata axelarSupported) public virtual onlyOwner {
+    function registerChainEquivalence(
+        string calldata caip2,
+        string calldata axelarSupported
+    ) public virtual onlyRegistrant {
         require(bytes(_chainEquivalence[caip2]).length == 0, ChainEquivalenceAlreadyRegistered(caip2));
         _chainEquivalence[caip2] = axelarSupported;
         _chainEquivalence[axelarSupported] = caip2;
@@ -57,9 +65,12 @@ abstract contract AxelarGatewayBase is Ownable {
     }
 
     /// @dev Registers the address string of the remote gateway for a given CAIP-2 chain identifier.
-    function registerRemoteGateway(string calldata caip2, string calldata remoteGateway) public virtual onlyOwner {
+    function registerRemoteGateway(string calldata caip2, string calldata remoteGateway) public virtual onlyRegistrant {
         require(bytes(_remoteGateways[caip2]).length == 0, RemoteGatewayAlreadyRegistered(caip2));
         _remoteGateways[caip2] = remoteGateway;
         emit RegisteredRemoteGateway(caip2, remoteGateway);
     }
+
+    /// @dev Modifier to check if the caller is allowed to register remote gateways and chain equivalences.
+    function _checkRegistrant() internal virtual;
 }
