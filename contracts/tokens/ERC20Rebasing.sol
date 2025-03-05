@@ -23,12 +23,12 @@ abstract contract ERC20Rebasing is ERC4626, IERC1363Receiver
         address, /*operator*/
         address from,
         uint256 assets, /*amount*/
-        bytes memory data
+        bytes calldata data
     ) external virtual returns (bytes4) {
         require(msg.sender == asset());
 
         // decode data
-        (address receiver) = data.length < 0x20 ? (from) : abi.decode(data, (address));
+        (address receiver) = data.length < 0x20 ? (from) : address(bytes20(data[0:20]));
 
         // check max deposit
         uint256 maxAssets = maxDeposit(receiver);
