@@ -180,6 +180,7 @@ contract ERC7786Aggregator is IERC7786GatewaySource, IERC7786Receiver, Ownable, 
      * not revert. Any value accrued that way can be recovered by the admin using the {sweep} function.
      */
     function executeMessage(
+        string calldata /*messageId*/, // gateway specific, empty or unique
         string calldata sourceChain, // CAIP-2 chain identifier
         string calldata sender, // CAIP-10 account address (does not include the chain identifier)
         bytes calldata payload,
@@ -216,9 +217,10 @@ contract ERC7786Aggregator is IERC7786GatewaySource, IERC7786Receiver, Ownable, 
             // prevent re-entry
             tracker.executed = true;
 
+            // TODO: Should the messageId be empty here?
             bytes memory call = abi.encodeCall(
                 IERC7786Receiver.executeMessage,
-                (sourceChain, originalSender, unwrappedPayload, attributes)
+                (uint256(id).toHexString(32), sourceChain, originalSender, unwrappedPayload, attributes)
             );
             // slither-disable-next-line reentrancy-no-eth
             (bool success, bytes memory returndata) = receiver.parseAddress().call(call);

@@ -55,7 +55,7 @@ describe('AxelarGateway', function () {
       .to.emit(this.axelar, 'ContractCallExecuted')
       .withArgs(anyValue)
       .to.emit(this.receiver, 'MessageReceived')
-      .withArgs(this.gatewayB, this.CAIP2, getAddress(this.sender), payload, attributes);
+      .withArgs(this.gatewayB, anyValue, this.CAIP2, getAddress(this.sender), payload, attributes);
   });
 
   it('invalid receiver - bad return value', async function () {
