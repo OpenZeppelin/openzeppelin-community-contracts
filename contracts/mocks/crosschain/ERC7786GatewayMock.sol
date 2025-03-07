@@ -32,7 +32,7 @@ contract ERC7786GatewayMock is IERC7786GatewaySource {
 
         address target = Strings.parseAddress(receiver);
         require(
-            IERC7786Receiver(target).executeMessage(source, sender, payload, attributes) ==
+            IERC7786Receiver(target).executeMessage("", source, sender, payload, attributes) ==
                 IERC7786Receiver.executeMessage.selector,
             "Receiver error"
         );

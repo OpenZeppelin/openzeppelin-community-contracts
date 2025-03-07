@@ -53,7 +53,7 @@ abstract contract AxelarGatewaySource is IERC7786GatewaySource, AxelarGatewayBas
         // Send the message
         string memory axelarDestination = getEquivalentChain(destinationChain);
         string memory remoteGateway = getRemoteGateway(destinationChain);
-        localGateway.callContract(axelarDestination, remoteGateway, adapterPayload);
+        _axelarGateway.callContract(axelarDestination, remoteGateway, adapterPayload);
 
         return outboxId;
     }

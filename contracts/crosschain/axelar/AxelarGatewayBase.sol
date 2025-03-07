@@ -26,14 +26,14 @@ abstract contract AxelarGatewayBase is Ownable {
     error RemoteGatewayAlreadyRegistered(string caip2);
 
     /// @dev Axelar's official gateway for the current chain.
-    IAxelarGateway public immutable localGateway;
+    IAxelarGateway internal immutable _axelarGateway;
 
     mapping(string caip2 => string remoteGateway) private _remoteGateways;
     mapping(string caip2OrAxelar => string axelarOrCaip2) private _chainEquivalence;
 
     /// @dev Sets the local gateway address (i.e. Axelar's official gateway for the current chain).
     constructor(IAxelarGateway _gateway) {
-        localGateway = _gateway;
+        _axelarGateway = _gateway;
     }
 
     /// @dev Returns the equivalent chain given an id that can be either CAIP-2 or an Axelar network identifier.
