@@ -192,7 +192,7 @@ contract ERC7786Aggregator is IERC7786GatewaySource, IERC7786Receiver, Ownable, 
         bytes32 id = keccak256(abi.encode(sourceChain, sender, payload, attributes));
         Tracker storage tracker = _trackers[id];
 
-        // If call originates from a trusted gateway
+        // If call is first from a trusted gateway
         if (_gateways.contains(msg.sender) && !tracker.receivedBy[msg.sender]) {
             // Count number of time received
             tracker.receivedBy[msg.sender] = true;
