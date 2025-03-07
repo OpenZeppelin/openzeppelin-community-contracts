@@ -13,7 +13,7 @@ import {IERC7786GatewaySource, IERC7786Receiver} from "../interfaces/IERC7786.so
 
 /**
  * @dev N of M gateway: Sends your message through M independent gateways. It will be delivered to the receiver by an
- * equivalent router on the destination chain if N of the M gateways agree.
+ * equivalent aggregator on the destination chain if N of the M gateways agree.
  */
 contract ERC7786Aggregator is IERC7786GatewaySource, IERC7786Receiver, Ownable, Pausable {
     using EnumerableSet for *;
@@ -51,8 +51,8 @@ contract ERC7786Aggregator is IERC7786GatewaySource, IERC7786Receiver, Ownable, 
      *                                        S T A T E   V A R I A B L E S                                         *
      ****************************************************************************************************************/
 
-    /// @dev address of the matching router for a given CAIP2 chain
-    mapping(string caip2 => string) private _remoteRouters;
+    /// @dev address of the matching aggregator for a given CAIP2 chain
+    mapping(string caip2 => string) private _remotes;
 
     /// @dev Tracking of the received message pending final delivery
     mapping(bytes32 id => Tracker) private _trackers;
@@ -60,7 +60,7 @@ contract ERC7786Aggregator is IERC7786GatewaySource, IERC7786Receiver, Ownable, 
     /// @dev List of authorized IERC7786 gateways (M is the length of this set)
     EnumerableSet.AddressSet private _gateways;
 
-    /// @dev Threshold for message reception (the threshold opf the sending side is applied on the receiving side)
+    /// @dev Threshold for message reception
     uint8 private _threshold;
 
     /// @dev Nonce for message deduplication (internal)
@@ -69,7 +69,7 @@ contract ERC7786Aggregator is IERC7786GatewaySource, IERC7786Receiver, Ownable, 
     /****************************************************************************************************************
      *                                        E V E N T S   &   E R R O R S                                         *
      ****************************************************************************************************************/
-    event RemoteRegistered(string chainId, string router);
+    event RemoteRegistered(string chainId, string aggregator);
     error RemoteAlreadyRegistered(string chainId);
 
     /****************************************************************************************************************
@@ -90,16 +90,17 @@ contract ERC7786Aggregator is IERC7786GatewaySource, IERC7786Receiver, Ownable, 
     }
 
     /// @inheritdoc IERC7786GatewaySource
+    /// @dev Using memory instead of calldata avoids stack too deep errors
     function sendMessage(
         string calldata destinationChain,
-        string memory receiver, // using memory instead of calldata avoids stack too deep error
-        bytes memory payload, // using memory instead of calldata avoids stack too deep error
-        bytes[] memory attributes // using memory instead of calldata avoids stack too deep error
+        string memory receiver,
+        bytes memory payload,
+        bytes[] memory attributes
     ) public payable virtual whenNotPaused returns (bytes32 outboxId) {
         if (attributes.length > 0) revert UnsupportedAttribute(bytes4(attributes[0]));
         if (msg.value > 0) revert ERC7786AggregatorValueNotSupported();
-        // address of the remote router, revert if not registered
-        string memory router = getRemoteRouter(destinationChain);
+        // address of the remote aggregator, revert if not registered
+        string memory aggregator = getRemoteAggregator(destinationChain);
 
         // wrapping the payload
         bytes memory wrappedPayload = abi.encode(++_nonce, msg.sender.toChecksumHexString(), receiver, payload);
@@ -112,7 +113,7 @@ contract ERC7786Aggregator is IERC7786GatewaySource, IERC7786Receiver, Ownable, 
             // send message
             bytes32 id = IERC7786GatewaySource(gateway).sendMessage(
                 destinationChain,
-                router,
+                aggregator,
                 wrappedPayload,
                 attributes
             );
@@ -146,8 +147,8 @@ contract ERC7786Aggregator is IERC7786GatewaySource, IERC7786Receiver, Ownable, 
         bytes calldata payload,
         bytes[] calldata attributes
     ) public payable virtual whenNotPaused returns (bytes4) {
-        // Check sender is a trusted remote router
-        if (!_remoteRouters[sourceChain].equal(sender)) revert ERC7786AggregatorInvalidCrosschainSender();
+        // Check sender is a trusted remote aggregator
+        if (!_remotes[sourceChain].equal(sender)) revert ERC7786AggregatorInvalidCrosschainSender();
 
         // Message reception tracker
         bytes32 id = keccak256(abi.encode(sourceChain, sender, payload, attributes));
@@ -211,10 +212,10 @@ contract ERC7786Aggregator is IERC7786GatewaySource, IERC7786Receiver, Ownable, 
         return _threshold;
     }
 
-    function getRemoteRouter(string calldata caip2) public view virtual returns (string memory) {
-        string memory router = _remoteRouters[caip2];
-        if (bytes(router).length == 0) revert ERC7786AggregatorRemoteNotRegistered(caip2);
-        return router;
+    function getRemoteAggregator(string calldata caip2) public view virtual returns (string memory) {
+        string memory aggregator = _remotes[caip2];
+        if (bytes(aggregator).length == 0) revert ERC7786AggregatorRemoteNotRegistered(caip2);
+        return aggregator;
     }
 
     // =================================================== Setters ===================================================
@@ -231,8 +232,8 @@ contract ERC7786Aggregator is IERC7786GatewaySource, IERC7786Receiver, Ownable, 
         _setThreshold(newThreshold);
     }
 
-    function registerRemoteRouter(string memory caip2, string memory router) public virtual onlyOwner {
-        _registerRemoteRouter(caip2, router);
+    function registerRemoteAggregator(string memory caip2, string memory aggregator) public virtual onlyOwner {
+        _registerRemoteAggregator(caip2, aggregator);
     }
 
     function pause() public virtual onlyOwner {
@@ -243,8 +244,8 @@ contract ERC7786Aggregator is IERC7786GatewaySource, IERC7786Receiver, Ownable, 
         _unpause();
     }
 
-    /// @dev Recovery method in case ether is ever received through {executeMessage}
-    function drainEth(address payable to) public virtual onlyOwner {
+    /// @dev Recovery method in case value is ever received through {executeMessage}
+    function sweep(address payable to) public virtual onlyOwner {
         Address.sendValue(to, address(this).balance);
     }
 
@@ -267,11 +268,11 @@ contract ERC7786Aggregator is IERC7786GatewaySource, IERC7786Receiver, Ownable, 
         emit ThresholdUpdated(newThreshold);
     }
 
-    // NOTE: once a router is registered for a given chainId, it cannot be updated
-    function _registerRemoteRouter(string memory caip2, string memory router) internal virtual {
-        if (bytes(_remoteRouters[caip2]).length > 0) revert ERC7786AggregatorRemoteAlreadyRegistered(caip2);
-        _remoteRouters[caip2] = router;
+    // NOTE: once an aggregator is registered for a given chainId, it cannot be updated
+    function _registerRemoteAggregator(string memory caip2, string memory aggregator) internal virtual {
+        if (bytes(_remotes[caip2]).length > 0) revert ERC7786AggregatorRemoteAlreadyRegistered(caip2);
+        _remotes[caip2] = aggregator;
 
-        emit RemoteRegistered(caip2, router);
+        emit RemoteRegistered(caip2, aggregator);
     }
 }

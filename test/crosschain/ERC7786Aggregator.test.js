@@ -32,8 +32,8 @@ async function fixture() {
     protocoles.map(({ gatewayB }) => gatewayB),
     N,
   ]);
-  await aggregatorA.registerRemoteRouter(CAIP2, getAddress(aggregatorB));
-  await aggregatorB.registerRemoteRouter(CAIP2, getAddress(aggregatorA));
+  await aggregatorA.registerRemoteAggregator(CAIP2, getAddress(aggregatorB));
+  await aggregatorB.registerRemoteAggregator(CAIP2, getAddress(aggregatorA));
 
   const receiver = await ethers.deployContract('$ERC7786ReceiverMock', [aggregatorB]);
   const invalidReceiver = await ethers.deployContract('$ERC7786ReceiverInvalidMock');
@@ -51,13 +51,13 @@ describe('ERC7786Aggregator', function () {
       this.protocoles.map(({ gatewayA }) => getAddress(gatewayA)),
     );
     await expect(this.aggregatorA.getThreshold()).to.eventually.equal(N);
-    await expect(this.aggregatorA.getRemoteRouter(this.CAIP2)).to.eventually.equal(getAddress(this.aggregatorB));
+    await expect(this.aggregatorA.getRemoteAggregator(this.CAIP2)).to.eventually.equal(getAddress(this.aggregatorB));
 
     await expect(this.aggregatorB.getGateways()).to.eventually.deep.equal(
       this.protocoles.map(({ gatewayB }) => getAddress(gatewayB)),
     );
     await expect(this.aggregatorB.getThreshold()).to.eventually.equal(N);
-    await expect(this.aggregatorB.getRemoteRouter(this.CAIP2)).to.eventually.equal(getAddress(this.aggregatorA));
+    await expect(this.aggregatorB.getRemoteAggregator(this.CAIP2)).to.eventually.equal(getAddress(this.aggregatorA));
   });
 
   describe('cross chain call', function () {
