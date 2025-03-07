@@ -46,6 +46,7 @@ contract ERC7786Aggregator is IERC7786GatewaySource, IERC7786Receiver, Ownable, 
     error ERC7786AggregatorGatewayAlreadyRegistered(address gateway);
     error ERC7786AggregatorGatewayNotRegistered(address gateway);
     error ERC7786AggregatorThresholdViolation();
+    error ERC7786AggregatorInvalidExecutionReturnValue();
 
     /****************************************************************************************************************
      *                                        S T A T E   V A R I A B L E S                                         *
@@ -186,16 +187,18 @@ contract ERC7786Aggregator is IERC7786GatewaySource, IERC7786Receiver, Ownable, 
             // slither-disable-next-line reentrancy-no-eth
             (bool success, bytes memory returndata) = receiver.parseAddress().call(call);
 
-            if (
-                success &&
-                returndata.length >= 32 &&
-                abi.decode(returndata, (bytes4)) == IERC7786Receiver.executeMessage.selector
-            ) {
-                emit ExecutionSuccess(id);
-            } else {
+            if (!success) {
                 // rollback to enable retry
                 tracker.executed = false;
                 emit ExecutionFailed(id);
+            } else if (
+                returndata.length >= 32 && abi.decode(returndata, (bytes4)) == IERC7786Receiver.executeMessage.selector
+            ) {
+                // call successfull and correct value returned
+                emit ExecutionSuccess(id);
+            } else {
+                // call successfull but invalid value returned, we need to revert the subcall
+                revert ERC7786AggregatorInvalidExecutionReturnValue();
             }
         }
 
