@@ -305,7 +305,6 @@ contract ERC7786Aggregator is IERC7786GatewaySource, IERC7786Receiver, Ownable, 
         emit ThresholdUpdated(newThreshold);
     }
 
-    // NOTE: once an aggregator is registered for a given chainId, it cannot be updated
     function _registerRemoteAggregator(string memory caip2, string memory aggregator) internal virtual {
         _remotes[caip2] = aggregator;
 
