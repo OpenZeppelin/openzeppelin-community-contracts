@@ -7,8 +7,8 @@ const { ERC4337Helper } = require('../../helpers/erc4337');
 const { shouldBehaveLikePaymaster } = require('./Paymaster.behavior');
 
 for (const [name, opts] of Object.entries({
-  PaymasterCore: { postOp: true },
-  PaymasterCoreContextNoPostOp: { postOp: false },
+  PaymasterSigner: { postOp: true, timeRange: true },
+  PaymasterSignerContextNoPostOp: { postOp: false, timeRange: true },
 })) {
   async function fixture() {
     // EOAs and environment
@@ -43,29 +43,31 @@ for (const [name, opts] of Object.entries({
         )
         .then(signature => Object.assign(userOp, { signature }));
 
-    const paymasterSignUserOp = (userOp, validAfter, validUntil) =>
-      paymasterSigner
-        .signTypedData(
-          {
-            name: 'MyPaymasterECDSASigner',
-            version: '1',
-            chainId: env.chainId,
-            verifyingContract: paymaster.target,
-          },
-          { UserOperationRequest },
-          {
-            ...userOp.packed,
-            paymasterVerificationGasLimit: userOp.paymasterVerificationGasLimit,
-            paymasterPostOpGasLimit: userOp.paymasterPostOpGasLimit,
-            validAfter,
-            validUntil,
-          },
-        )
-        .then(signature =>
-          Object.assign(userOp, {
-            paymasterData: ethers.solidityPacked(['uint48', 'uint48', 'bytes'], [validAfter, validUntil, signature]),
-          }),
-        );
+    const paymasterSignUserOp =
+      signer =>
+      (userOp, { validAfter = 0n, validUntil = 0n } = {}) =>
+        signer
+          .signTypedData(
+            {
+              name: 'MyPaymasterECDSASigner',
+              version: '1',
+              chainId: env.chainId,
+              verifyingContract: paymaster.target,
+            },
+            { UserOperationRequest },
+            {
+              ...userOp.packed,
+              paymasterVerificationGasLimit: userOp.paymasterVerificationGasLimit,
+              paymasterPostOpGasLimit: userOp.paymasterPostOpGasLimit,
+              validAfter,
+              validUntil,
+            },
+          )
+          .then(signature =>
+            Object.assign(userOp, {
+              paymasterData: ethers.solidityPacked(['uint48', 'uint48', 'bytes'], [validAfter, validUntil, signature]),
+            }),
+          );
 
     return {
       admin,
@@ -75,7 +77,8 @@ for (const [name, opts] of Object.entries({
       account,
       paymaster,
       signUserOp,
-      paymasterSignUserOp,
+      paymasterSignUserOp: paymasterSignUserOp(paymasterSigner), // sign using the correct key
+      paymasterSignUserOpInvalid: paymasterSignUserOp(other), // sign using the wrong key
       ...env,
     };
   }
