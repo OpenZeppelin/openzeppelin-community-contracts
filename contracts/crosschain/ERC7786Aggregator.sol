@@ -140,7 +140,41 @@ contract ERC7786Aggregator is IERC7786GatewaySource, IERC7786Receiver, Ownable, 
 
     // ============================================== IERC7786Receiver ===============================================
 
-    /// @inheritdoc IERC7786Receiver
+    /**
+     * @inheritdoc IERC7786Receiver
+     *
+     * @dev This function serves a dual purpose:
+     *
+     * It will be called by ERC-7786 gateways with message coming from the the corresponding aggregator on the source
+     * chain. These "signals" are tracked until the threshold is reached. At that point the message is sent to the
+     * destination.
+     *
+     * It can also be called by anyone (including an ERC-7786 gateway) to retry the execution. This can be useful if
+     * the automatic execution (that is triggered when the threshold is reached) fails, and someone wants to retry it.
+     *
+     * When a message is forwarded by a known gateway, a {Received} event is emitted. If a known gateway calls this
+     * function more than once (for a given message), only the first call is counts toward the threshold and emits an
+     * {Received} event.
+     *
+     * This function revert if:
+     * * the message is not properly formatted or does not originate from the registered aggregator on the source
+     *   chain.
+     * * someone tries re-execute a message that was already successfully delivered. This includes gateways that call
+     *   this function a second time with a message that was already executed.
+     * * the execution of the message (on the {IERC7786Receiver} receiver) is successful but fails to return the
+     *   executed value.
+     *
+     * This function does not revert if:
+     * * A known gateway delivers a message for the first time, and that message was already executed. In that case
+     *   the message is NOT re-executed, and the correct "magic value" is returned.
+     * * The execution of the message (on the {IERC7786Receiver} receiver) reverts. In that case a {ExecutionFailed}
+     *   event is emitted.
+     *
+     * This function emits:
+     * * {Received} when a known ERC-7786 gateway delivers a message for the first time.
+     * * {ExecutionSuccess} when a message is successfully delivered to the receiver.
+     * * {ExecutionFailed} when a message delivery to the receiver reverted (for example because of OOG error).
+     */
     function executeMessage(
         string calldata sourceChain, // CAIP-2 chain identifier
         string calldata sender, // CAIP-10 account address (does not include the chain identifier)
@@ -190,10 +224,10 @@ contract ERC7786Aggregator is IERC7786GatewaySource, IERC7786Receiver, Ownable, 
                 tracker.executed = false;
                 emit ExecutionFailed(id);
             } else if (abi.decode(returndata, (bytes4)) == IERC7786Receiver.executeMessage.selector) {
-                // call successfull and correct value returned
+                // call successful and correct value returned
                 emit ExecutionSuccess(id);
             } else {
-                // call successfull but invalid value returned, we need to revert the subcall
+                // call successful but invalid value returned, we need to revert the subcall
                 revert ERC7786AggregatorInvalidExecutionReturnValue();
             }
         }
