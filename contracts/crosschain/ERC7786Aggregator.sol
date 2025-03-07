@@ -41,7 +41,6 @@ contract ERC7786Aggregator is IERC7786GatewaySource, IERC7786Receiver, Ownable, 
     error ERC7786AggregatorValueNotSupported();
     error ERC7786AggregatorInvalidCrosschainSender();
     error ERC7786AggregatorAlreadyExecuted();
-    error ERC7786AggregatorRemoteAlreadyRegistered(string caip2);
     error ERC7786AggregatorRemoteNotRegistered(string caip2);
     error ERC7786AggregatorGatewayAlreadyRegistered(address gateway);
     error ERC7786AggregatorGatewayNotRegistered(address gateway);
@@ -164,9 +163,8 @@ contract ERC7786Aggregator is IERC7786GatewaySource, IERC7786Receiver, Ownable, 
 
             // if already executed, leave gracefully
             if (tracker.executed) return IERC7786Receiver.executeMessage.selector;
-        } else {
-            // if already executed, revert
-            if (tracker.executed) revert ERC7786AggregatorAlreadyExecuted();
+        } else if (tracker.executed) {
+            revert ERC7786AggregatorAlreadyExecuted();
         }
 
         // Parse payload
@@ -271,7 +269,6 @@ contract ERC7786Aggregator is IERC7786GatewaySource, IERC7786Receiver, Ownable, 
 
     // NOTE: once an aggregator is registered for a given chainId, it cannot be updated
     function _registerRemoteAggregator(string memory caip2, string memory aggregator) internal virtual {
-        if (bytes(_remotes[caip2]).length > 0) revert ERC7786AggregatorRemoteAlreadyRegistered(caip2);
         _remotes[caip2] = aggregator;
 
         emit RemoteRegistered(caip2, aggregator);
