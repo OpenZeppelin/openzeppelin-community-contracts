@@ -85,10 +85,8 @@ contract ERC7786Aggregator is IERC7786GatewaySource, IERC7786Receiver, Ownable, 
     // ============================================ IERC7786GatewaySource ============================================
 
     /// @inheritdoc IERC7786GatewaySource
-    function supportsAttribute(bytes4 selector) external view returns (bool) {
-        for (uint256 i = 0; i < _gateways.length(); ++i)
-            if (!IERC7786GatewaySource(_gateways.at(i)).supportsAttribute(selector)) return false;
-        return true;
+    function supportsAttribute(bytes4 /*selector*/) public view virtual returns (bool) {
+        return false;
     }
 
     /// @inheritdoc IERC7786GatewaySource
@@ -97,7 +95,8 @@ contract ERC7786Aggregator is IERC7786GatewaySource, IERC7786Receiver, Ownable, 
         string memory receiver, // using memory instead of calldata avoids stack too deep error
         bytes memory payload, // using memory instead of calldata avoids stack too deep error
         bytes[] memory attributes // using memory instead of calldata avoids stack too deep error
-    ) external payable whenNotPaused returns (bytes32 outboxId) {
+    ) public payable virtual whenNotPaused returns (bytes32 outboxId) {
+        if (attributes.length > 0) revert UnsupportedAttribute(bytes4(attributes[0]));
         if (msg.value > 0) revert ERC7786AggregatorValueNotSupported();
         // address of the remote router, revert if not registered
         string memory router = getRemoteRouter(destinationChain);
@@ -146,7 +145,7 @@ contract ERC7786Aggregator is IERC7786GatewaySource, IERC7786Receiver, Ownable, 
         string calldata sender, // CAIP-10 account address (does not include the chain identifier)
         bytes calldata payload,
         bytes[] calldata attributes
-    ) external payable whenNotPaused returns (bytes4) {
+    ) public payable virtual whenNotPaused returns (bytes4) {
         // Check sender is a trusted remote router
         if (!_remoteRouters[sourceChain].equal(sender)) revert ERC7786AggregatorInvalidCrosschainSender();
 
