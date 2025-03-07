@@ -35,10 +35,7 @@ async function fixture() {
   await aggregatorA.registerRemoteAggregator(CAIP2, getAddress(aggregatorB));
   await aggregatorB.registerRemoteAggregator(CAIP2, getAddress(aggregatorA));
 
-  const receiver = await ethers.deployContract('$ERC7786ReceiverMock', [aggregatorB]);
-  const invalidReceiver = await ethers.deployContract('$ERC7786ReceiverInvalidMock');
-
-  return { owner, sender, accounts, CAIP2, asCAIP10, protocoles, aggregatorA, aggregatorB, receiver, invalidReceiver };
+  return { owner, sender, accounts, CAIP2, asCAIP10, protocoles, aggregatorA, aggregatorB };
 }
 
 describe('ERC7786Aggregator', function () {
@@ -62,77 +59,114 @@ describe('ERC7786Aggregator', function () {
 
   describe('cross chain call', function () {
     it('valid receiver', async function () {
-      this.destination = this.receiver;
+      this.destination = await ethers.deployContract('$ERC7786ReceiverMock', [this.aggregatorB]);
       this.payload = ethers.randomBytes(128);
       this.attributes = [];
-      this.success = true;
+      this.opts = {};
+      this.outcome = true; // execution success
+    });
+
+    it('with attributes', async function () {
+      this.destination = this.accounts[0];
+      this.payload = ethers.randomBytes(128);
+      this.attributes = [ethers.randomBytes(32)];
+      this.opts = {};
+      this.outcome = 'UnsupportedAttribute';
+    });
+
+    it('with value', async function () {
+      this.destination = this.accounts[0];
+      this.payload = ethers.randomBytes(128);
+      this.attributes = [];
+      this.opts = { value: 1n };
+      this.outcome = 'ERC7786AggregatorValueNotSupported';
+    });
+
+    it('invalid receiver - receiver revert', async function () {
+      this.destination = await ethers.deployContract('$ERC7786ReceiverRevertMock');
+      this.payload = ethers.randomBytes(128);
+      this.attributes = [];
+      this.opts = {};
+      this.outcome = false; // execution failed
     });
 
     it('invalid receiver - bad return value', async function () {
-      this.destination = this.invalidReceiver;
+      this.destination = await ethers.deployContract('$ERC7786ReceiverInvalidMock');
       this.payload = ethers.randomBytes(128);
       this.attributes = [];
-      this.success = false;
+      this.opts = {};
+      this.outcome = 'ERC7786AggregatorInvalidExecutionReturnValue'; // revert with custom error
     });
 
     it('invalid receiver - EOA', async function () {
       this.destination = this.accounts[0];
       this.payload = ethers.randomBytes(128);
       this.attributes = [];
-      this.success = false;
+      this.opts = {};
+      this.outcome = 'ERC7786AggregatorInvalidExecutionReturnValue'; // revert with custom error
     });
 
     afterEach(async function () {
-      const tx = await this.aggregatorA
+      const txPromise = this.aggregatorA
         .connect(this.sender)
-        .sendMessage(this.CAIP2, getAddress(this.destination), this.payload, this.attributes);
-      const { logs } = await tx.wait();
-      const [resultId] = logs.find(ev => ev?.fragment?.name == 'Received').args;
+        .sendMessage(this.CAIP2, getAddress(this.destination), this.payload, this.attributes, this.opts ?? {});
 
-      // Message was posted
-      await expect(tx)
-        .to.emit(this.aggregatorA, 'MessagePosted')
-        .withArgs(
-          ethers.ZeroHash,
-          this.asCAIP10(this.sender),
-          this.asCAIP10(this.destination),
-          this.payload,
-          this.attributes,
-        );
+      switch (typeof this.outcome) {
+        case 'string': {
+          await expect(txPromise).to.be.revertedWithCustomError(this.aggregatorB, this.outcome);
+          break;
+        }
+        case 'boolean': {
+          const { logs } = await txPromise.then(tx => tx.wait());
+          const [resultId] = logs.find(ev => ev?.fragment?.name == 'Received').args;
 
-      // MessagePosted to all gateways on the A side and received from all gateways on the B side
-      for (const { gatewayA, gatewayB } of this.protocoles) {
-        await expect(tx)
-          .to.emit(gatewayA, 'MessagePosted')
-          .withArgs(
-            ethers.ZeroHash,
-            this.asCAIP10(this.aggregatorA),
-            this.asCAIP10(this.aggregatorB),
-            anyValue,
-            anyValue,
-          )
-          .to.emit(this.aggregatorB, 'Received')
-          .withArgs(resultId, gatewayB);
-      }
+          // Message was posted
+          await expect(txPromise)
+            .to.emit(this.aggregatorA, 'MessagePosted')
+            .withArgs(
+              ethers.ZeroHash,
+              this.asCAIP10(this.sender),
+              this.asCAIP10(this.destination),
+              this.payload,
+              this.attributes,
+            );
 
-      if (this.success) {
-        await expect(tx)
-          .to.emit(this.destination, 'MessageReceived')
-          .withArgs(this.aggregatorB, this.CAIP2, getAddress(this.sender), this.payload, this.attributes)
-          .to.emit(this.aggregatorB, 'ExecutionSuccess')
-          .withArgs(resultId)
-          .to.not.emit(this.aggregatorB, 'ExecutionFailed');
+          // MessagePosted to all gateways on the A side and received from all gateways on the B side
+          for (const { gatewayA, gatewayB } of this.protocoles) {
+            await expect(txPromise)
+              .to.emit(gatewayA, 'MessagePosted')
+              .withArgs(
+                ethers.ZeroHash,
+                this.asCAIP10(this.aggregatorA),
+                this.asCAIP10(this.aggregatorB),
+                anyValue,
+                anyValue,
+              )
+              .to.emit(this.aggregatorB, 'Received')
+              .withArgs(resultId, gatewayB);
+          }
 
-        // Number of times the execution succeeded
-        expect(logs.filter(ev => ev?.fragment?.name == 'ExecutionSuccess').length).to.equal(1);
-      } else {
-        await expect(tx)
-          .to.emit(this.aggregatorB, 'ExecutionFailed')
-          .withArgs(resultId)
-          .to.not.emit(this.aggregatorB, 'ExecutionSuccess');
+          if (this.outcome) {
+            await expect(txPromise)
+              .to.emit(this.destination, 'MessageReceived')
+              .withArgs(this.aggregatorB, this.CAIP2, getAddress(this.sender), this.payload, this.attributes)
+              .to.emit(this.aggregatorB, 'ExecutionSuccess')
+              .withArgs(resultId)
+              .to.not.emit(this.aggregatorB, 'ExecutionFailed');
 
-        // Number of times the execution failed
-        expect(logs.filter(ev => ev?.fragment?.name == 'ExecutionFailed').length).to.equal(M - N + 1);
+            // Number of times the execution succeeded
+            expect(logs.filter(ev => ev?.fragment?.name == 'ExecutionSuccess').length).to.equal(1);
+          } else {
+            await expect(txPromise)
+              .to.emit(this.aggregatorB, 'ExecutionFailed')
+              .withArgs(resultId)
+              .to.not.emit(this.aggregatorB, 'ExecutionSuccess');
+
+            // Number of times the execution failed
+            expect(logs.filter(ev => ev?.fragment?.name == 'ExecutionFailed').length).to.equal(M - N + 1);
+          }
+          break;
+        }
       }
     });
   });
