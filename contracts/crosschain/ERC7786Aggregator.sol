@@ -192,7 +192,7 @@ contract ERC7786Aggregator is IERC7786GatewaySource, IERC7786Receiver, Ownable, 
                 tracker.executed = false;
                 emit ExecutionFailed(id);
             } else if (
-                returndata.length >= 32 && abi.decode(returndata, (bytes4)) == IERC7786Receiver.executeMessage.selector
+                abi.decode(returndata, (bytes4)) == IERC7786Receiver.executeMessage.selector
             ) {
                 // call successfull and correct value returned
                 emit ExecutionSuccess(id);
