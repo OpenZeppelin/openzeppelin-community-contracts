@@ -21,7 +21,7 @@ abstract contract AxelarGatewayDestination is AxelarGatewayBase, IAxelarExecutab
     error ReceiverExecutionFailed();
 
     function gateway() external view returns (IAxelarGateway) {
-        return localGateway;
+        return _axelarGateway;
     }
 
     function execute(
@@ -31,7 +31,7 @@ abstract contract AxelarGatewayDestination is AxelarGatewayBase, IAxelarExecutab
         bytes calldata payload
     ) external {
         require(
-            localGateway.validateContractCall(commandId, sourceChain, sourceAddress, keccak256(payload)),
+            _axelarGateway.validateContractCall(commandId, sourceChain, sourceAddress, keccak256(payload)),
             NotApprovedByGateway()
         );
         _execute(commandId, sourceChain, sourceAddress, payload);

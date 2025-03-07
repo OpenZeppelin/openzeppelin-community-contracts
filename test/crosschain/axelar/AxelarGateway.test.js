@@ -26,11 +26,11 @@ describe('AxelarGateway', function () {
   });
 
   it('initial setup', async function () {
-    await expect(this.gatewayA.localGateway()).to.eventually.equal(this.axelar);
+    await expect(this.gatewayA.gateway()).to.eventually.equal(this.axelar);
     await expect(this.gatewayA.getEquivalentChain(this.CAIP2)).to.eventually.equal('local');
     await expect(this.gatewayA.getRemoteGateway(this.CAIP2)).to.eventually.equal(getAddress(this.gatewayB));
 
-    await expect(this.gatewayB.localGateway()).to.eventually.equal(this.axelar);
+    await expect(this.gatewayB.gateway()).to.eventually.equal(this.axelar);
     await expect(this.gatewayB.getEquivalentChain(this.CAIP2)).to.eventually.equal('local');
     await expect(this.gatewayB.getRemoteGateway(this.CAIP2)).to.eventually.equal(getAddress(this.gatewayA));
   });
