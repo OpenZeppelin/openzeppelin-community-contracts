@@ -22,6 +22,14 @@ abstract contract ERC7579ValidatorMock is ERC7579ModuleMock(MODULE_TYPE_VALIDATO
         super.onUninstall(data);
     }
 
+    function updateSigner(address newSigner) public virtual {
+        _associatedSigners[msg.sender] = newSigner;
+    }
+
+    function getSigner(address sender) public view virtual returns (address) {
+        return _associatedSigners[sender];
+    }
+
     function validateUserOp(
         PackedUserOperation calldata userOp,
         bytes32 userOpHash
