@@ -217,7 +217,6 @@ contract ERC7786Aggregator is IERC7786GatewaySource, IERC7786Receiver, Ownable, 
             // prevent re-entry
             tracker.executed = true;
 
-            // TODO: Should the messageId be empty here?
             bytes memory call = abi.encodeCall(
                 IERC7786Receiver.executeMessage,
                 (uint256(id).toHexString(32), sourceChain, originalSender, unwrappedPayload, attributes)
