@@ -52,7 +52,7 @@ describe('AxelarGateway', function () {
       .withArgs(ethers.ZeroHash, srcCAIP10, dstCAIP10, payload, attributes)
       .to.emit(this.axelar, 'ContractCall')
       .withArgs(this.gatewayA, 'local', getAddress(this.gatewayB), ethers.keccak256(encoded), encoded)
-      .to.emit(this.axelar, 'ContractCallExecuted')
+      .to.emit(this.axelar, 'MessageExecuted')
       .withArgs(anyValue)
       .to.emit(this.receiver, 'MessageReceived')
       .withArgs(this.gatewayB, anyValue, this.CAIP2, getAddress(this.sender), payload, attributes);

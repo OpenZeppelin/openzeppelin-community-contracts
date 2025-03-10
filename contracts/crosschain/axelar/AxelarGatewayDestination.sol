@@ -2,8 +2,7 @@
 
 pragma solidity ^0.8.27;
 
-import {IAxelarGateway} from "@axelar-network/axelar-gmp-sdk-solidity/contracts/interfaces/IAxelarGateway.sol";
-import {IAxelarExecutable} from "@axelar-network/axelar-gmp-sdk-solidity/contracts/interfaces/IAxelarExecutable.sol";
+import {AxelarExecutable} from "@axelar-network/axelar-gmp-sdk-solidity/contracts/executable/AxelarExecutable.sol";
 import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 import {IERC7786Receiver} from "../../interfaces/IERC7786.sol";
 import {AxelarGatewayBase} from "./AxelarGatewayBase.sol";
@@ -14,39 +13,11 @@ import {AxelarGatewayBase} from "./AxelarGatewayBase.sol";
  * The contract implements AxelarExecutable's {_execute} function to execute the message, converting Axelar's native
  * workflow into the standard ERC-7786.
  */
-abstract contract AxelarGatewayDestination is AxelarGatewayBase, IAxelarExecutable {
+abstract contract AxelarGatewayDestination is AxelarGatewayBase, AxelarExecutable {
     using Strings for *;
 
     error InvalidOriginGateway(string sourceChain, string axelarSourceAddress);
     error ReceiverExecutionFailed();
-
-    function gateway() external view returns (IAxelarGateway) {
-        return _axelarGateway;
-    }
-
-    function execute(
-        bytes32 commandId,
-        string calldata sourceChain,
-        string calldata sourceAddress,
-        bytes calldata payload
-    ) external {
-        require(
-            _axelarGateway.validateContractCall(commandId, sourceChain, sourceAddress, keccak256(payload)),
-            NotApprovedByGateway()
-        );
-        _execute(commandId, sourceChain, sourceAddress, payload);
-    }
-
-    function executeWithToken(
-        bytes32 /*commandId*/,
-        string calldata /*sourceChain*/,
-        string calldata /*sourceAddress*/,
-        bytes calldata /*payload*/,
-        string calldata /*tokenSymbol*/,
-        uint256 /*amount*/
-    ) external pure {
-        revert("Not implemented");
-    }
 
     /**
      * @dev Execution of a cross-chain message.
@@ -65,7 +36,7 @@ abstract contract AxelarGatewayDestination is AxelarGatewayBase, IAxelarExecutab
         string calldata axelarSourceChain, // chain of the remote gateway - axelar format
         string calldata axelarSourceAddress, // address of the remote gateway
         bytes calldata adapterPayload
-    ) internal {
+    ) internal override {
         string memory messageId = uint256(commandId).toHexString(32);
 
         // Parse the package

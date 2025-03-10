@@ -3,6 +3,7 @@
 pragma solidity ^0.8.27;
 
 import {IAxelarGateway} from "@axelar-network/axelar-gmp-sdk-solidity/contracts/interfaces/IAxelarGateway.sol";
+import {IBaseAmplifierGateway} from "@axelar-network/axelar-gmp-sdk-solidity/contracts/interfaces/IBaseAmplifierGateway.sol";
 import {IAxelarExecutable} from "@axelar-network/axelar-gmp-sdk-solidity/contracts/interfaces/IAxelarExecutable.sol";
 import {BitMaps} from "@openzeppelin/contracts/utils/structs/BitMaps.sol";
 import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
@@ -64,7 +65,7 @@ contract AxelarGatewayMock {
         if (_pendingCommandIds.get(uint256(commandId))) {
             _pendingCommandIds.unset(uint256(commandId));
 
-            emit IAxelarGateway.ContractCallExecuted(commandId);
+            emit IBaseAmplifierGateway.MessageExecuted(commandId);
 
             return
                 commandId ==
