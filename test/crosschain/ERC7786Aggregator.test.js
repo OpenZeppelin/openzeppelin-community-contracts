@@ -149,7 +149,7 @@ describe('ERC7786Aggregator', function () {
           if (this.outcome) {
             await expect(txPromise)
               .to.emit(this.destination, 'MessageReceived')
-              .withArgs(this.aggregatorB, this.CAIP2, getAddress(this.sender), this.payload, this.attributes)
+              .withArgs(this.aggregatorB, anyValue, this.CAIP2, getAddress(this.sender), this.payload, this.attributes)
               .to.emit(this.aggregatorB, 'ExecutionSuccess')
               .withArgs(resultId)
               .to.not.emit(this.aggregatorB, 'ExecutionFailed');

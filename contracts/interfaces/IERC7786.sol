@@ -60,6 +60,7 @@ interface IERC7786Receiver {
      * This function may be called directly by the gateway.
      */
     function executeMessage(
+        string calldata messageId, // gateway specific, empty or unique
         string calldata sourceChain, // CAIP-2 chain identifier
         string calldata sender, // CAIP-10 account address (does not include the chain identifier)
         bytes calldata payload,

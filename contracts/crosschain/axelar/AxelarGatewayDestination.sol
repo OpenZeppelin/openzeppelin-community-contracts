@@ -14,8 +14,7 @@ import {AxelarGatewayBase} from "./AxelarGatewayBase.sol";
  * workflow into the standard ERC-7786.
  */
 abstract contract AxelarGatewayDestination is AxelarGatewayBase, AxelarExecutable {
-    using Strings for address;
-    using Strings for string;
+    using Strings for *;
 
     error InvalidOriginGateway(string sourceChain, string axelarSourceAddress);
     error ReceiverExecutionFailed();
@@ -33,10 +32,13 @@ abstract contract AxelarGatewayDestination is AxelarGatewayBase, AxelarExecutabl
      * the message)
      */
     function _execute(
+        bytes32 commandId,
         string calldata axelarSourceChain, // chain of the remote gateway - axelar format
         string calldata axelarSourceAddress, // address of the remote gateway
         bytes calldata adapterPayload
     ) internal override {
+        string memory messageId = uint256(commandId).toHexString(32);
+
         // Parse the package
         (string memory sender, string memory receiver, bytes memory payload, bytes[] memory attributes) = abi.decode(
             adapterPayload,
@@ -53,6 +55,7 @@ abstract contract AxelarGatewayDestination is AxelarGatewayBase, AxelarExecutabl
         );
 
         bytes4 result = IERC7786Receiver(receiver.parseAddress()).executeMessage(
+            messageId,
             sourceChain,
             sender,
             payload,

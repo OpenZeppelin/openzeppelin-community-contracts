@@ -43,7 +43,7 @@
     "zeppelin"
   ],
   "dependencies": {
-    "@axelar-network/axelar-gmp-sdk-solidity": "^5.10.0"
+    "@axelar-network/axelar-gmp-sdk-solidity": "^6.0.6"
   },
   "devDependencies": {
     "@openzeppelin/contracts": "file:lib/@openzeppelin-contracts",
