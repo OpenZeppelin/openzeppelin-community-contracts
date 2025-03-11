@@ -33,6 +33,6 @@ describe('ERC7786Receiver', function () {
       .to.emit(this.gateway, 'MessagePosted')
       .withArgs(ethers.ZeroHash, this.toCaip10(this.sender), this.toCaip10(this.receiver), payload, attributes)
       .to.emit(this.receiver, 'MessageReceived')
-      .withArgs(this.gateway, this.caip2, getAddress(this.sender), payload, attributes);
+      .withArgs(this.gateway, '', this.caip2, getAddress(this.sender), payload, attributes); // ERC7786GatewayMock uses empty messageId
   });
 });
