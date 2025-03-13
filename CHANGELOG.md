@@ -1,3 +1,7 @@
+## 07-03-2025
+
+- `ERC7786Aggregator`: Add an aggregator that implements a meta gateway on top of multiple ERC-7786 gateways.
+
 ## 31-01-2025
 
 - `PaymasterCore`: Add a simple ERC-4337 paymaster implementation with minimal logic.
