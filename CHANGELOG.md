@@ -1,3 +1,7 @@
+## XX-XX-XXXX
+
+- `EnumerableSetExtended` and `EnumerableMapExtended`: Extensions of the `EnumerableSet` and `EnumerableMap` libraries with more types, including non-value types.
+
 ## 31-01-2025
 
 - `PaymasterCore`: Add a simple ERC-4337 paymaster implementation with minimal logic.
