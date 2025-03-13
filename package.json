@@ -22,6 +22,7 @@
     "lint:sol": "prettier --log-level warn --ignore-path .gitignore '{contracts,test}/**/*.sol' --check && solhint '{contracts,test}/**/*.sol'",
     "lint:sol:fix": "prettier --log-level warn --ignore-path .gitignore '{contracts,test}/**/*.sol' --write",
     "coverage": "scripts/checks/coverage.sh",
+    "generate": "scripts/generate/run.js",
     "test": "hardhat test",
     "test:inheritance": "scripts/checks/inheritance-ordering.js artifacts/build-info/*",
     "test:pragma": "scripts/checks/pragma-consistency.js artifacts/build-info/*"
