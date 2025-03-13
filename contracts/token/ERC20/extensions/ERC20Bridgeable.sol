@@ -8,7 +8,7 @@ import {IERC7802} from "../../../interfaces/IERC7802.sol";
 
 /**
  * @dev ERC20 extension that implements the standard token interface according to
- * https://github.com/ethereum/ERCs/blob/bcea9feb6c3f3ded391e33690056635d722b101e/ERCS/erc-7802.md[ERC-7802].
+ * https://github.com/ethereum/ERCs/blob/master/ERCS/erc-7802.md[ERC-7802].
  *
  * NOTE: To implement a crosschain gateway for a chain, consider using an implementation if {IERC7786} token
  * bridge (e.g. {AxelarGatewaySource}, {AxelarGatewayDestination}).
