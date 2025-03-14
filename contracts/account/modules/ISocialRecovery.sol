@@ -44,7 +44,7 @@ interface IRecoveryPolicyVerifier {
     ) external view returns (bool succ, uint64 weight);
 }
 
-interface ISocialRecoveryModule {
+interface ISocialRecovery {
     function updateGuardians(RecoveryConfigArg calldata recoveryConfigArg) external;
 
     function startRecovery(bytes calldata recoveryCall, Permission[] calldata permissions) external;

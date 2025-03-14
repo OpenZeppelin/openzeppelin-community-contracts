@@ -26,6 +26,16 @@ module.exports = mapValues(
       validAfter: 'uint48',
       validUntil: 'uint48',
     },
+    StartRecovery: {
+      account: 'address',
+      recovery: 'bytes',
+      nonce: 'uint256',
+    },
+    CancelRecovery: {
+      account: 'address',
+      recovery: 'bytes',
+      nonce: 'uint256',
+    },
   },
   formatType,
 );

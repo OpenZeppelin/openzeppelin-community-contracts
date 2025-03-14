@@ -8,7 +8,7 @@ import {MODULE_TYPE_VALIDATOR} from "@openzeppelin/contracts/interfaces/draft-IE
 import {AccountERC7579} from "../../account/extensions/AccountERC7579.sol";
 
 abstract contract AccountERC7579Mock is EIP712, AccountERC7579 {
-    bytes32 internal constant _PACKED_USER_OPERATION =
+    bytes32 internal constant PACKED_USER_OPERATION =
         keccak256(
             "PackedUserOperation(address sender,uint256 nonce,bytes initCode,bytes callData,bytes32 accountGasLimits,uint256 preVerificationGas,bytes32 gasFees,bytes paymasterAndData)"
         );
@@ -25,7 +25,7 @@ abstract contract AccountERC7579Mock is EIP712, AccountERC7579 {
             _hashTypedDataV4(
                 keccak256(
                     abi.encode(
-                        _PACKED_USER_OPERATION,
+                        PACKED_USER_OPERATION,
                         userOp.sender,
                         userOp.nonce,
                         keccak256(userOp.initCode),
