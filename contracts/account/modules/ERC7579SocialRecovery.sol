@@ -20,15 +20,14 @@ abstract contract ERC7579SocialRecovery is EIP712, Nonces, IERC7579Module, ISoci
 
     bytes32 private constant START_RECOVERY_TYPEHASH =
         keccak256("StartRecovery(address account,bytes recovery,uint256 nonce)");
-    bytes32 private constant CANCEL_RECOVERY_TYPEHASH =
-        keccak256("CancelRecovery(address account,bytes recovery,uint256 nonce)");
+    bytes32 private constant CANCEL_RECOVERY_TYPEHASH = keccak256("CancelRecovery(address account,uint256 nonce)");
 
     struct AccountConfig {
-        address verifier;
         EnumerableMapExtended.BytesToUintMap guardians;
         Checkpoints.Trace160 thresholds;
-        bytes recoveryCall;
+        address verifier;
         uint48 expiryTime;
+        bytes recoveryCall;
     }
 
     mapping(address account => AccountConfig) private _configs;
@@ -148,16 +147,7 @@ abstract contract ERC7579SocialRecovery is EIP712, Nonces, IERC7579Module, ISoci
     function cancelRecoveryByGuardians(address account, Permission[] calldata permissions) public virtual {
         _checkPermissions(
             account,
-            _hashTypedDataV4(
-                keccak256(
-                    abi.encode(
-                        CANCEL_RECOVERY_TYPEHASH,
-                        account,
-                        keccak256(_configs[account].recoveryCall),
-                        _useNonce(account)
-                    )
-                )
-            ),
+            _hashTypedDataV4(keccak256(abi.encode(CANCEL_RECOVERY_TYPEHASH, account, _useNonce(account)))),
             permissions
         );
         _cancelRecovery(account);
@@ -255,8 +245,8 @@ abstract contract ERC7579SocialRecovery is EIP712, Nonces, IERC7579Module, ISoci
 
         // clear remaining
         delete config.verifier;
-        delete config.recoveryCall;
         delete config.expiryTime;
+        delete config.recoveryCall;
 
         emit RecoveryConfigCleared(account);
     }
@@ -305,8 +295,8 @@ abstract contract ERC7579SocialRecovery is EIP712, Nonces, IERC7579Module, ISoci
         uint48 expiryTime = SafeCast.toUint48(block.timestamp + lockPeriod);
 
         // set recovery details
-        _configs[account].recoveryCall = recoveryCall;
         _configs[account].expiryTime = expiryTime;
+        _configs[account].recoveryCall = recoveryCall;
 
         emit RecoveryStarted(account, recoveryCall, expiryTime);
     }
@@ -316,8 +306,8 @@ abstract contract ERC7579SocialRecovery is EIP712, Nonces, IERC7579Module, ISoci
         bytes memory recoveryCall = _configs[account].recoveryCall;
 
         // clean (prevents reentry)
-        delete _configs[account].recoveryCall;
         delete _configs[account].expiryTime;
+        delete _configs[account].recoveryCall;
 
         // perform call
         Address.functionCall(account, recoveryCall);
@@ -327,8 +317,8 @@ abstract contract ERC7579SocialRecovery is EIP712, Nonces, IERC7579Module, ISoci
 
     function _cancelRecovery(address account) internal virtual onlyRecovering(account) {
         // clean
-        delete _configs[account].recoveryCall;
         delete _configs[account].expiryTime;
+        delete _configs[account].recoveryCall;
 
         emit RecoveryCanceled(account);
     }
