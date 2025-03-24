@@ -11,27 +11,24 @@ const parseInitCode = initCode => ({
 /// Global ERC-4337 environment helper.
 class ERC4337Helper {
   constructor() {
-    this.envAsPromise = Promise.all([ethers.provider.getNetwork(), ethers.deployContract('Create2Mock')]).then(
-      ([{ chainId }, factory]) => ({
-        chainId,
-        factory,
-      }),
-    );
+    this.factoryAsPromise = ethers.deployContract('Create2Mock');
   }
 
   async wait() {
-    return (this.env = await this.envAsPromise);
+    this.factory = await this.factoryAsPromise;
+    return this;
   }
 
+  // TODO: Pass the entrypoint in the params (senderCreator has to be discovered accordingly)
   async newAccount(name, extraArgs = [], params = {}) {
-    const { factory, chainId } = await this.wait();
+    const { factory } = await this.wait();
 
     const accountFactory = await ethers.getContractFactory(name);
 
     if (params.erc7702signer) {
       const delegate = await accountFactory.deploy(...extraArgs);
       const instance = await params.erc7702signer.getAddress().then(address => accountFactory.attach(address));
-      return new ERC7702SmartAccount(instance, chainId, delegate);
+      return new ERC7702SmartAccount(instance, delegate);
     } else {
       const initCode = await accountFactory
         .getDeployTransaction(...extraArgs)
@@ -39,20 +36,26 @@ class ERC4337Helper {
           factory.interface.encodeFunctionData('$deploy', [0, params.salt ?? ethers.randomBytes(32), tx.data]),
         )
         .then(deployCode => ethers.concat([factory.target, deployCode]));
-      const instance = await senderCreator.createSender
-        .staticCall(initCode)
+
+      const instance = await ethers.provider
+        .call({
+          from: entrypoint.v08,
+          to: senderCreator.v08,
+          data: senderCreator.v08.interface.encodeFunctionData('createSender', [initCode]),
+        })
+        .then(result => ethers.getAddress(ethers.hexlify(ethers.getBytes(result).slice(-20))))
         .then(address => accountFactory.attach(address));
-      return new SmartAccount(instance, chainId, initCode);
+
+      return new SmartAccount(instance, initCode);
     }
   }
 }
 
 /// Represent one ERC-4337 account contract.
 class SmartAccount extends ethers.BaseContract {
-  constructor(instance, chainId, initCode) {
+  constructor(instance, initCode) {
     super(instance.target, instance.interface, instance.runner, instance.deployTx);
     this.address = instance.target;
-    this.chainId = chainId;
     this.initCode = initCode;
   }
 
@@ -64,7 +67,7 @@ class SmartAccount extends ethers.BaseContract {
 
   async createUserOp(userOp = {}) {
     userOp.sender ??= this;
-    userOp.nonce ??= await entrypoint.getNonce(userOp.sender, 0);
+    userOp.nonce ??= await entrypoint.v08.getNonce(userOp.sender, 0);
     if (ethers.isAddressable(userOp.paymaster)) {
       userOp.paymaster = await ethers.resolveAddress(userOp.paymaster);
       userOp.paymasterVerificationGasLimit ??= 100_000n;
@@ -75,8 +78,8 @@ class SmartAccount extends ethers.BaseContract {
 }
 
 class ERC7702SmartAccount extends SmartAccount {
-  constructor(instance, chainId, delegate) {
-    super(instance, chainId);
+  constructor(instance, delegate) {
+    super(instance);
     this.delegate = delegate;
   }
 
@@ -90,7 +93,6 @@ class UserOperationWithContext extends UserOperation {
   constructor(params) {
     super(params);
     this._initCode = params.sender?.initCode;
-    this._chainId = params.sender?.chainId;
   }
 
   addInitCode() {
@@ -99,7 +101,7 @@ class UserOperationWithContext extends UserOperation {
   }
 
   hash() {
-    return super.hash(entrypoint, this._chainId);
+    return super.hash(entrypoint.v08);
   }
 }
 
