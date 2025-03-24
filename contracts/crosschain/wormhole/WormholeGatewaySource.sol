@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.27;
 
-import {VaaKey} from "wormhole-solidity-sdk/interfaces/IWormholeRelayer.sol"; // VaaKey
+import {VaaKey} from "wormhole-solidity-sdk/interfaces/IWormholeRelayer.sol";
 import {toUniversalAddress, fromUniversalAddress} from "wormhole-solidity-sdk/utils/UniversalAddress.sol";
 import {CAIP2} from "@openzeppelin/contracts/utils/CAIP2.sol";
 import {CAIP10} from "@openzeppelin/contracts/utils/CAIP10.sol";
@@ -91,7 +91,7 @@ abstract contract WormholeGatewaySource is IERC7786GatewaySource, WormholeGatewa
         require(pmsg.sequence != 0, CannotRetryMessage(outboxId));
 
         pmsg.sequence = _wormholeRelayer.resendToEvm(
-            VaaKey(_currentChain, toUniversalAddress(address(this)), pmsg.sequence),
+            VaaKey(_wormholeChainId, toUniversalAddress(address(this)), pmsg.sequence),
             fromCAIP2(pmsg.destinationChain),
             0,
             gasLimit,

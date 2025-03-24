@@ -5,11 +5,11 @@ pragma solidity ^0.8.27;
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {CAIP10} from "@openzeppelin/contracts/utils/CAIP10.sol";
 import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
-import {IWormholeRelayer} from "wormhole-solidity-sdk/interfaces/IWormholeRelayer.sol"; // VaaKey
+import {IWormholeRelayer} from "wormhole-solidity-sdk/interfaces/IWormholeRelayer.sol";
 
 abstract contract WormholeGatewayBase is Ownable {
     IWormholeRelayer internal immutable _wormholeRelayer;
-    uint16 internal immutable _currentChain;
+    uint16 internal immutable _wormholeChainId;
 
     mapping(string caip2 => bytes32 remoteGateway) private _remoteGateways;
     mapping(string caip2 => uint24 wormholeId) private _caipToWormholeEquivalence;
@@ -34,12 +34,12 @@ abstract contract WormholeGatewayBase is Ownable {
         _;
     }
 
-    constructor(IWormholeRelayer wormholeRelayer, uint16 currentChain) {
+    constructor(IWormholeRelayer wormholeRelayer, uint16 wormholeChainId) {
         _wormholeRelayer = wormholeRelayer;
-        _currentChain = currentChain;
+        _wormholeChainId = wormholeChainId;
     }
 
-    function gateway() public view virtual returns (address) {
+    function relayer() public view virtual returns (address) {
         return address(_wormholeRelayer);
     }
 
