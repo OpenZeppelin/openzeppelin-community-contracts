@@ -13,7 +13,6 @@ import {AccountCore} from "./AccountCore.sol";
  *
  * * {ERC721Holder} and {ERC1155Holder} to accept ERC-712 and ERC-1155 token transfers transfers.
  * * {ERC7739} for ERC-1271 signature support with ERC-7739 replay protection
- * * {ERC7821} for performing external calls in batches.
  *
  * TIP: Use {ERC7821} to enable external calls in batches.
  *
