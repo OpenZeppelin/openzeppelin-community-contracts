@@ -72,20 +72,20 @@ describe('ERC7579SocialRecovery', function () {
       ]
         .map(entry =>
           Object.assign(entry, {
-            identity: ethers.solidityPacked(
+            erc7913signer: ethers.solidityPacked(
               ['address', 'bytes'],
-              [entry.signer.target ?? entry.signer.address ?? entry.signer, entry.data ?? '0x'],
+              [entry.signer.target ?? entry.signer.address ?? entry.signer, entry.key ?? '0x'],
             ),
             guardian: ethers.solidityPacked(
               ['uint64', 'address', 'bytes'],
-              [entry.weight, entry.signer.target ?? entry.signer.address ?? entry.signer, entry.data ?? '0x'],
+              [entry.weight, entry.signer.target ?? entry.signer.address ?? entry.signer, entry.key ?? '0x'],
             ),
           }),
         )
         .sort((g1, g2) =>
           comp(
-            ethers.toBigInt(ethers.keccak256(ethers.getBytes(g1.identity))),
-            ethers.toBigInt(ethers.keccak256(ethers.getBytes(g2.identity))),
+            ethers.toBigInt(ethers.keccak256(ethers.getBytes(g1.erc7913signer))),
+            ethers.toBigInt(ethers.keccak256(ethers.getBytes(g2.erc7913signer))),
           ),
         );
 
@@ -105,11 +105,8 @@ describe('ERC7579SocialRecovery', function () {
             MODULE_TYPE_EXECUTOR,
             this.socialRecovery.target,
             this.socialRecovery.interface.encodeFunctionData('updateGuardians', [
-              {
-                verifier: this.socialRecovery.target,
-                guardians: this.guardians.map(({ guardian }) => guardian),
-                thresholds: this.thresholds,
-              },
+              this.guardians.map(({ guardian }) => guardian),
+              this.thresholds,
             ]),
           ]),
           callGas: 1_000_000n, // TODO: estimate ?
@@ -119,7 +116,6 @@ describe('ERC7579SocialRecovery', function () {
 
       // check config
       await expect(this.socialRecovery.getAccountConfigs(ethers.Typed.address(this.mock))).to.eventually.deep.equal([
-        this.socialRecovery.target,
         this.guardians.map(({ guardian }) => guardian),
         this.thresholds.map(Object.values),
       ]);
@@ -140,10 +136,10 @@ describe('ERC7579SocialRecovery', function () {
 
       const signatures = await getDomain(this.socialRecovery).then(domain =>
         Promise.all(
-          this.guardians.map(({ signer, identity }) =>
+          this.guardians.map(({ signer, erc7913signer }) =>
             signer
               .signTypedData(domain, { StartRecovery }, socialRecoveryMessage)
-              .then(signature => ({ identity, signature })),
+              .then(signature => ({ signer: erc7913signer, signature })),
           ),
         ),
       );
