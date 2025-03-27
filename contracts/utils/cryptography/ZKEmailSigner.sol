@@ -11,6 +11,11 @@ import {CommandUtils} from "@zk-email/email-tx-builder/libraries/CommandUtils.so
 import {AbstractSigner} from "./AbstractSigner.sol";
 
 abstract contract ZKEmailSigner is AbstractSigner {
+    bytes32 private _accountSalt;
+    IDKIMRegistry private _registry;
+    IVerifier private _verifier;
+    uint256 private _commandTemplate;
+
     enum EmailProofError {
         NoError,
         CommandTemplate, // The template ID doesn't match
@@ -25,17 +30,38 @@ abstract contract ZKEmailSigner is AbstractSigner {
     error InvalidEmailProof(EmailProofError err);
 
     /// @dev Unique identifier for owner of this contract defined as a hash of an email address and an account code.
-    function accountSalt() public view virtual returns (bytes32);
+    function accountSalt() public view virtual returns (bytes32) {
+        return _accountSalt;
+    }
 
     /// @dev An instance of the DKIM registry contract.
     // solhint-disable-next-line func-name-mixedcase
-    function DKIMRegistry() public view virtual returns (IDKIMRegistry);
+    function DKIMRegistry() public view virtual returns (IDKIMRegistry) {
+        return _registry;
+    }
 
     /// @dev An instance of the Verifier contract.
-    function verifier() public view virtual returns (IVerifier);
+    function verifier() public view virtual returns (IVerifier) {
+        return _verifier;
+    }
 
     /// @dev The templateId of the sign hash command.
-    function commandTemplate() public view virtual returns (uint256);
+    function commandTemplate() public view virtual returns (uint256) {
+        return _commandTemplate;
+    }
+
+    /// @dev Initialize the contract with the account salt, DKIM registry, verifier, and command template.
+    function _setUp(
+        bytes32 accountSalt_,
+        IDKIMRegistry registry_,
+        IVerifier verifier_,
+        uint256 commandTemplate_
+    ) internal virtual {
+        _accountSalt = accountSalt_;
+        _registry = registry_;
+        _verifier = verifier_;
+        _commandTemplate = commandTemplate_;
+    }
 
     /** @dev Authenticate the email sender and authorize the message in the email command.
      *
