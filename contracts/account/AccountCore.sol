@@ -96,7 +96,7 @@ abstract contract AccountCore is AbstractSigner, IAccount {
 
     /**
      * @dev Virtual function that returns the signable hash for a user operations. Since v0.8.0 of the entrypoint,
-     * `userOpHash` is a EIP-712 hash that can be signed directly.
+     * `userOpHash` is an EIP-712 hash that can be signed directly.
      */
     function _signableUserOpHash(
         PackedUserOperation calldata /*userOp*/,
