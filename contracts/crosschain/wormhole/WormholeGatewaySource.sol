@@ -62,6 +62,15 @@ abstract contract WormholeGatewaySource is IERC7786GatewaySource, WormholeGatewa
         );
     }
 
+    function quoteEvmMessage(bytes32 outboxId, uint256 gasLimit) external view returns (uint256) {
+        (uint256 cost, ) = _wormholeRelayer.quoteEVMDeliveryPrice(
+            fromCAIP2(_pending[outboxId].destinationChain),
+            0,
+            gasLimit
+        );
+        return cost;
+    }
+
     function finalizeEvmMessage(bytes32 outboxId, uint256 gasLimit) external payable {
         PendingMessage storage pmsg = _pending[outboxId];
 

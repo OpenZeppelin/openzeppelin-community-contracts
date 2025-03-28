@@ -47,7 +47,10 @@
   },
   "devDependencies": {
     "@openzeppelin/contracts": "file:lib/@openzeppelin-contracts",
-    "husky": "^9.1.7"
+    "conf": "^10.2.0",
+    "husky": "^9.1.7",
+    "p-limit": "^3.1.0",
+    "prompts": "^2.4.2"
   },
   "lint-staged": {
     "*.{js,ts}": [
