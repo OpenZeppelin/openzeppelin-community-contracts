@@ -62,6 +62,15 @@ abstract contract WormholeGatewaySource is IERC7786GatewaySource, WormholeGatewa
         );
     }
 
+    function quoteEvmMessage(string memory destinationChain, uint256 gasLimit) public view returns (uint256) {
+        (uint256 cost, ) = _wormholeRelayer.quoteEVMDeliveryPrice(fromCAIP2(destinationChain), 0, gasLimit);
+        return cost;
+    }
+
+    function quoteEvmMessage(bytes32 outboxId, uint256 gasLimit) external view returns (uint256) {
+        return quoteEvmMessage(_pending[outboxId].destinationChain, gasLimit);
+    }
+
     function finalizeEvmMessage(bytes32 outboxId, uint256 gasLimit) external payable {
         PendingMessage storage pmsg = _pending[outboxId];
 
@@ -85,6 +94,8 @@ abstract contract WormholeGatewaySource is IERC7786GatewaySource, WormholeGatewa
         emit MessagePushed(outboxId);
     }
 
+    // Is this necessary ? How does that work since we are not providing any additional payment ?
+    // Is re-calling finalizeEvmMessage an alternative ?
     function retryEvmMessage(bytes32 outboxId, uint256 gasLimit, address newDeliveryProvider) external {
         PendingMessage storage pmsg = _pending[outboxId];
 

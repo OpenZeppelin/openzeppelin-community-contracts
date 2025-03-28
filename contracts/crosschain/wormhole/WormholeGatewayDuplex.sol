@@ -15,8 +15,8 @@ import {WormholeGatewaySource} from "./WormholeGatewaySource.sol";
 contract WormholeGatewayDuplex is WormholeGatewaySource, WormholeGatewayDestination {
     /// @dev Initializes the contract with the Wormhole gateway and the initial owner.
     constructor(
-        IWormholeRelayer gateway,
+        IWormholeRelayer wormholeRelayer,
         uint16 wormholeChainId,
         address initialOwner
-    ) Ownable(initialOwner) WormholeGatewayBase(gateway, wormholeChainId) {}
+    ) Ownable(initialOwner) WormholeGatewayBase(wormholeRelayer, wormholeChainId) {}
 }
