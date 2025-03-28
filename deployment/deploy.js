@@ -57,7 +57,24 @@ function makeChain(config, { mnemonic, pk }) {
   await wormhole2.getRemoteGateway(chain1.caip2).catch(() => wormhole2.registerRemoteGateway(chain1.caip2, toUniversalAddress(wormhole1.target)).then(tx => tx.wait()));
   process.stdout.write('done\n');
 
-  // RECEIVER
+  /// SETUP AGGREGATOR
+  process.stdout.write('> deploy axelar/wormhole aggregator ... ');
+  const aggregator1 = await chain1.manager.migrate('aggregator', chain1.getFactory('ERC7786Aggregator'), [ chain1.signer.address, [ axelar1.target, wormhole1.target ], 2 ], opts);
+  const aggregator2 = await chain2.manager.migrate('aggregator', chain2.getFactory('ERC7786Aggregator'), [ chain2.signer.address, [ axelar2.target, wormhole2.target ], 2 ], opts);
+  process.stdout.write('done\n');
+
+  process.stdout.write('> configure wormhole gateways ... ');
+  await aggregator1.getRemoteAggregator(chain2.caip2).catch(() => aggregator1.registerRemoteAggregator(chain2.caip2, aggregator2.target).then(tx => tx.wait()));
+  await aggregator2.getRemoteAggregator(chain1.caip2).catch(() => aggregator2.registerRemoteAggregator(chain1.caip2, aggregator1.target).then(tx => tx.wait()));
+  process.stdout.write('done\n');
+
+  /// RECEIVERS
   // const receiver = await chain2.manager.migrate('axelar-receiver', chain2.getFactory('ERC7786ReceiverMock'), [axelar2.target], opts);
   // const receiver = await chain2.manager.migrate('wormhole-receiver', chain2.getFactory('ERC7786ReceiverMock'), [wormhole2.target], opts);
+  // const receiver = await chain2.manager.migrate('aggregator-receiver', chain2.getFactory('ERC7786ReceiverMock'), [aggregator2.target], opts);
+
+  // await aggregator1.sendMessage(chain2.caip2, receiver.target, "0x43377702", []).then(tx => tx.wait()).then(console.log);
+  // const id = "0x0000000000000000000000000000000000000000000000000000000000000003";
+  // const gasLimit = 500_000n;
+  // await wormhole1.quoteEvmMessage(id, gasLimit).then(value => wormhole1.finalizeEvmMessage(id, gasLimit, { value })).then(console.log);
 })();

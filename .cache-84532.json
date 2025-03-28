@@ -6,5 +6,9 @@
 	"wormhole-pending": "0xa27fd2d2a636fcc110a6b670368e3ed5bf9325da83ba7c57232ac1eb32585efe",
 	"wormhole": "0x5012248E1B9C497d232Dd04bb3539563EF72B2cF",
 	"wormhole-receiver-pending": "0x1effe35b77aa4ea6e4c51f90df1438ccc7822a7bf0139805f1e5f832b7872d26",
-	"wormhole-receiver": "0x2CC7EB8D5d8194aF0EB44e9ce483EDA616112dFE"
+	"wormhole-receiver": "0x2CC7EB8D5d8194aF0EB44e9ce483EDA616112dFE",
+	"aggregator-pending": "0x117a24fbeb2d2ebcff0c2aa209019edc1c149d9b9bb79082b9f88e7106194741",
+	"aggregator": "0xA55f645Ac0D482468b2AF5fcc3E475671149f5Ee",
+	"aggregator-receiver-pending": "0x743e4fa7e9436224563838213a0cb6bcd328c186cb9a59152a54fb008cb7cf7f",
+	"aggregator-receiver": "0xeDEB7Ca9421de0ea879f1482843A280324f31D1e"
 }
