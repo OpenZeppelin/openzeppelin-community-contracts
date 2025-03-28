@@ -12,13 +12,9 @@
 :AccountCore: pass:normal[xref:account.adoc#AccountCore[`AccountCore`]]
 :ERC7739: pass:normal[xref:utils.adoc#ERC7739[`ERC7739`]]
 :ERC7821: pass:normal[xref:account.adoc#ERC7821[`ERC7821`]]
-:ERC7821: pass:normal[xref:account.adoc#ERC7821[`ERC7821`]]
 :SignerECDSA: pass:normal[xref:utils.adoc#SignerECDSA[`SignerECDSA`]]
 :SignerP256: pass:normal[xref:utils.adoc#SignerP256[`SignerP256`]]
 :SignerRSA: pass:normal[xref:utils.adoc#SignerRSA[`SignerRSA`]]
-:AccountCore-_signableUserOpHash: pass:normal[xref:account.adoc#AccountCore-_signableUserOpHash-struct-PackedUserOperation-bytes32-[`AccountCore._signableUserOpHash`]]
-:SignerECDSA: pass:normal[xref:utils.adoc#SignerECDSA[`SignerECDSA`]]
-:SignerERC7702: pass:normal[xref:utils.adoc#SignerERC7702[`SignerERC7702`]]
 :AccountCore: pass:normal[xref:account.adoc#AccountCore[`AccountCore`]]
 :ERC7739: pass:normal[xref:utils.adoc#ERC7739[`ERC7739`]]
 :AccountERC7579Hooked: pass:normal[xref:account.adoc#AccountERC7579Hooked[`AccountERC7579Hooked`]]
@@ -98,7 +94,7 @@ digital signature validation implementations.
 * `++getNonce(key)++`
 * `++validateUserOp(userOp, userOpHash, missingAccountFunds)++`
 * `++_validateUserOp(userOp, userOpHash)++`
-* `++_signableUserOpHash(userOp, userOpHash)++`
+* `++_signableUserOpHash(, userOpHash)++`
 * `++_payPrefund(missingAccountFunds)++`
 * `++_checkEntryPoint()++`
 * `++_checkEntryPointOrSelf()++`
@@ -186,11 +182,10 @@ userOp will result in undefined behavior.
 
 [.contract-item]
 [[AccountCore-_signableUserOpHash-struct-PackedUserOperation-bytes32-]]
-==== `[.contract-item-name]#++_signableUserOpHash++#++(struct PackedUserOperation userOp, bytes32 userOpHash) → bytes32++` [.item-kind]#internal#
+==== `[.contract-item-name]#++_signableUserOpHash++#++(struct PackedUserOperation, bytes32 userOpHash) → bytes32++` [.item-kind]#internal#
 
-Virtual function that returns the signable hash for a user operations. Some implementation may return
-`userOpHash` while other may prefer a signer-friendly value such as an EIP-712 hash describing the `userOp`
-details.
+Virtual function that returns the signable hash for a user operations. Since v0.8.0 of the entrypoint,
+`userOpHash` is an EIP-712 hash that can be signed directly.
 
 [.contract-item]
 [[AccountCore-_payPrefund-uint256-]]
@@ -223,8 +218,6 @@ Receive Ether.
 
 Unauthorized call to the account.
 
-:_signableUserOpHash: pass:normal[xref:#Account-_signableUserOpHash-struct-PackedUserOperation-bytes32-[`++_signableUserOpHash++`]]
-
 [.contract]
 [[Account]]
 === `++Account++` link:https://github.com/OpenZeppelin/openzeppelin-community-contracts/blob/master/contracts/account/Account.sol[{github-icon},role=heading-link]
@@ -238,7 +231,6 @@ Extension of {AccountCore} with recommended feature that most account abstractio
 
 * {ERC721Holder} and {ERC1155Holder} to accept ERC-712 and ERC-1155 token transfers transfers.
 * {ERC7739} for ERC-1271 signature support with ERC-7739 replay protection
-* {ERC7821} for performing external calls in batches.
 
 TIP: Use {ERC7821} to enable external calls in batches.
 
@@ -248,7 +240,6 @@ implemented using a specific signature verification algorithm. See {SignerECDSA}
 [.contract-index]
 .Functions
 --
-* `++_signableUserOpHash(userOp, )++`
 
 [.contract-subindex-inherited]
 .ERC7739
@@ -297,6 +288,7 @@ implemented using a specific signature verification algorithm. See {SignerECDSA}
 * `++getNonce(key)++`
 * `++validateUserOp(userOp, userOpHash, missingAccountFunds)++`
 * `++_validateUserOp(userOp, userOpHash)++`
+* `++_signableUserOpHash(, userOpHash)++`
 * `++_payPrefund(missingAccountFunds)++`
 * `++_checkEntryPoint()++`
 * `++_checkEntryPointOrSelf()++`
@@ -402,14 +394,6 @@ implemented using a specific signature verification algorithm. See {SignerECDSA}
 .AbstractSigner
 
 --
-
-[.contract-item]
-[[Account-_signableUserOpHash-struct-PackedUserOperation-bytes32-]]
-==== `[.contract-item-name]#++_signableUserOpHash++#++(struct PackedUserOperation userOp, bytes32) → bytes32++` [.item-kind]#internal#
-
-Specialization of {AccountCore-_signableUserOpHash} that returns a typehash following EIP-712 typed data
-hashing for readability. This assumes the underlying signature scheme implements `signTypedData`, which will be
-the case when combined with {SignerECDSA} or {SignerERC7702}.
 
 == Extensions
 
@@ -521,7 +505,7 @@ NOTE:
 * `++getNonce()++`
 * `++getNonce(key)++`
 * `++validateUserOp(userOp, userOpHash, missingAccountFunds)++`
-* `++_signableUserOpHash(userOp, userOpHash)++`
+* `++_signableUserOpHash(, userOpHash)++`
 * `++_payPrefund(missingAccountFunds)++`
 * `++_checkEntryPoint()++`
 * `++_checkEntryPointOrSelf()++`
@@ -893,7 +877,7 @@ modules or further overriding functions that involve hooks.
 * `++getNonce()++`
 * `++getNonce(key)++`
 * `++validateUserOp(userOp, userOpHash, missingAccountFunds)++`
-* `++_signableUserOpHash(userOp, userOpHash)++`
+* `++_signableUserOpHash(, userOpHash)++`
 * `++_payPrefund(missingAccountFunds)++`
 * `++_checkEntryPoint()++`
 * `++_checkEntryPointOrSelf()++`

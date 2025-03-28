@@ -50,10 +50,10 @@ function shouldBehaveLikeERC7821({ deployable = true } = {}) {
             .then(op => this.signUserOp(op));
 
           // Can't call the account to get its nonce before it's deployed
-          await expect(entrypoint.getNonce(this.mock.target, 0)).to.eventually.equal(0);
-          await expect(entrypoint.handleOps([operation.packed], this.beneficiary))
-            .to.emit(entrypoint, 'AccountDeployed')
-            .withArgs(operation.hash(), this.mock, this.factory, ethers.ZeroAddress)
+          await expect(entrypoint.v08.getNonce(this.mock.target, 0)).to.eventually.equal(0);
+          await expect(entrypoint.v08.handleOps([operation.packed], this.beneficiary))
+            .to.emit(entrypoint.v08, 'AccountDeployed')
+            .withArgs(operation.hash(), this.mock, this.helper.factory, ethers.ZeroAddress)
             .to.emit(this.target, 'MockFunctionCalledExtra')
             .withArgs(this.mock, 17);
           await expect(this.mock.getNonce()).to.eventually.equal(1);
@@ -72,7 +72,7 @@ function shouldBehaveLikeERC7821({ deployable = true } = {}) {
 
           operation.signature = '0x00';
 
-          await expect(entrypoint.handleOps([operation.packed], this.beneficiary)).to.be.reverted;
+          await expect(entrypoint.v08.handleOps([operation.packed], this.beneficiary)).to.be.reverted;
         });
       });
     }
@@ -94,7 +94,7 @@ function shouldBehaveLikeERC7821({ deployable = true } = {}) {
           .then(op => this.signUserOp(op));
 
         await expect(this.mock.getNonce()).to.eventually.equal(0);
-        await expect(entrypoint.handleOps([operation.packed], this.beneficiary))
+        await expect(entrypoint.v08.handleOps([operation.packed], this.beneficiary))
           .to.emit(this.target, 'MockFunctionCalledExtra')
           .withArgs(this.mock, 42);
         await expect(this.mock.getNonce()).to.eventually.equal(1);
@@ -106,7 +106,10 @@ function shouldBehaveLikeERC7821({ deployable = true } = {}) {
           .then(op => this.signUserOp(op));
 
         await expect(this.mock.getNonce()).to.eventually.equal(0);
-        await expect(entrypoint.handleOps([operation.packed], this.beneficiary)).to.changeEtherBalance(this.other, 42);
+        await expect(entrypoint.v08.handleOps([operation.packed], this.beneficiary)).to.changeEtherBalance(
+          this.other,
+          42,
+        );
         await expect(this.mock.getNonce()).to.eventually.equal(1);
       });
 
@@ -128,7 +131,7 @@ function shouldBehaveLikeERC7821({ deployable = true } = {}) {
           .then(op => this.signUserOp(op));
 
         await expect(this.mock.getNonce()).to.eventually.equal(0);
-        const tx = entrypoint.handleOps([operation.packed], this.beneficiary);
+        const tx = entrypoint.v08.handleOps([operation.packed], this.beneficiary);
         await expect(tx).to.changeEtherBalances([this.other, this.target], [value1, value2]);
         await expect(tx).to.emit(this.target, 'MockFunctionCalledExtra').withArgs(this.mock, value2);
         await expect(this.mock.getNonce()).to.eventually.equal(1);
