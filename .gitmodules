@@ -9,3 +9,6 @@
 [submodule "lib/forge-std"]
 	path = lib/forge-std
 	url = https://github.com/foundry-rs/forge-std.git
+[submodule "lib/email-tx-builder"]
+	path = lib/email-tx-builder
+	url = https://github.com/zkemail/email-tx-builder
