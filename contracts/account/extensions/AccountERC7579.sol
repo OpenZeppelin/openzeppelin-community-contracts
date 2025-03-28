@@ -11,10 +11,10 @@ import {Bytes} from "@openzeppelin/contracts/utils/Bytes.sol";
 import {Packing} from "@openzeppelin/contracts/utils/Packing.sol";
 import {Address} from "@openzeppelin/contracts/utils/Address.sol";
 import {Calldata} from "@openzeppelin/contracts/utils/Calldata.sol";
-import {AccountCore} from "../AccountCore.sol";
+import {Account} from "../Account.sol";
 
 /**
- * @dev Extension of {AccountCore} that implements support for ERC-7579 modules.
+ * @dev Extension of {Account} that implements support for ERC-7579 modules.
  *
  * To comply with the ERC-1271 support requirement, this contract implements {ERC7739} as an
  * opinionated layer to avoid signature replayability across accounts controlled by the same key.
@@ -40,13 +40,7 @@ import {AccountCore} from "../AccountCore.sol";
  *   following common practices. However, this part is not standardized in ERC-7579 (or in any follow-up ERC). Some
  *   accounts may want to override these internal functions.
  */
-abstract contract AccountERC7579 is
-    AccountCore,
-    IERC1271,
-    IERC7579Execution,
-    IERC7579AccountConfig,
-    IERC7579ModuleConfig
-{
+abstract contract AccountERC7579 is Account, IERC1271, IERC7579Execution, IERC7579AccountConfig, IERC7579ModuleConfig {
     using Bytes for *;
     using ERC7579Utils for *;
     using EnumerableSet for *;
@@ -190,7 +184,7 @@ abstract contract AccountERC7579 is
     /**
      * @dev Validates a user operation with {_signableUserOpHash} and returns the validation data
      * if the module specified by the first 20 bytes of the nonce key is installed. Falls back to
-     * {AccountCore-_validateUserOp} otherwise.
+     * {Account-_validateUserOp} otherwise.
      *
      * See {_extractUserOpValidator} for the module extraction logic.
      */
