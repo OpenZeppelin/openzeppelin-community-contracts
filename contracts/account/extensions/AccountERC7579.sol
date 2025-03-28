@@ -11,13 +11,13 @@ import {Bytes} from "@openzeppelin/contracts/utils/Bytes.sol";
 import {Packing} from "@openzeppelin/contracts/utils/Packing.sol";
 import {Address} from "@openzeppelin/contracts/utils/Address.sol";
 import {Calldata} from "@openzeppelin/contracts/utils/Calldata.sol";
-import {AccountCore} from "../AccountCore.sol";
+import {Account} from "../Account.sol";
 
 /**
- * @dev Extension of {AccountCore} that implements support for ERC-7579 modules.
+ * @dev Extension of {Account} that implements support for ERC-7579 modules.
  *
- * To comply with the ERC-1271 support requirement, this contract implements {ERC7739} as an
- * opinionated layer to avoid signature replayability across accounts controlled by the same key.
+ * To comply with the ERC-1271 support requirement, this contract defers signature validation to
+ * installed validator modules by calling {IERC7579Validator-isValidSignatureWithSender}.
  *
  * This contract does not implement validation logic for user operations since these functionality
  * is often delegated to self-contained validation modules. Developers must install a validator module
@@ -33,20 +33,16 @@ import {AccountCore} from "../AccountCore.sol";
  * }
  * ```
  *
- * NOTE:
+ * [NOTE]
+ * ====
  * * Hook support is not included. See {AccountERC7579Hooked} for a version that hooks to execution.
  * * Validator selection, when verifying either ERC-1271 signature or ERC-4337 UserOperation is implemented in
  *   internal virtual functions {_extractUserOpValidator} and {_extractSignatureValidator}. Both are implemented
  *   following common practices. However, this part is not standardized in ERC-7579 (or in any follow-up ERC). Some
  *   accounts may want to override these internal functions.
+ * ====
  */
-abstract contract AccountERC7579 is
-    AccountCore,
-    IERC1271,
-    IERC7579Execution,
-    IERC7579AccountConfig,
-    IERC7579ModuleConfig
-{
+abstract contract AccountERC7579 is Account, IERC1271, IERC7579Execution, IERC7579AccountConfig, IERC7579ModuleConfig {
     using Bytes for *;
     using ERC7579Utils for *;
     using EnumerableSet for *;
@@ -170,7 +166,7 @@ abstract contract AccountERC7579 is
      * NOTE: when combined with {ERC7739} (for example through {Account}), resolution ordering may have an impact
      * ({ERC7739} does not call super). Manual resolution might be necessary.
      */
-    function isValidSignature(bytes32 hash, bytes calldata signature) public view virtual override returns (bytes4) {
+    function isValidSignature(bytes32 hash, bytes calldata signature) public view virtual returns (bytes4) {
         // check signature length is enough for extraction
         if (signature.length >= 20) {
             (address module, bytes calldata innerSignature) = _extractSignatureValidator(signature);
@@ -190,7 +186,7 @@ abstract contract AccountERC7579 is
     /**
      * @dev Validates a user operation with {_signableUserOpHash} and returns the validation data
      * if the module specified by the first 20 bytes of the nonce key is installed. Falls back to
-     * {AccountCore-_validateUserOp} otherwise.
+     * {Account-_validateUserOp} otherwise.
      *
      * See {_extractUserOpValidator} for the module extraction logic.
      */
@@ -341,12 +337,12 @@ abstract contract AccountERC7579 is
      * <module address (20 bytes)> | <key (4 bytes)> | <nonce (8 bytes)>
      * ```
      * NOTE: The default behavior of this function replicated the behavior of
-     * [Safe adapter](https://github.com/rhinestonewtf/safe7579/blob/bb29e8b1a66658790c4169e72608e27d220f79be/src/Safe7579.sol#L266) and
-     * [Etherspot's Prime Account](https://github.com/etherspot/etherspot-prime-contracts/blob/cfcdb48c4172cea0d66038324c0bae3288aa8caa/src/modular-etherspot-wallet/wallet/ModularEtherspotWallet.sol#L227).
+     * https://github.com/rhinestonewtf/safe7579/blob/bb29e8b1a66658790c4169e72608e27d220f79be/src/Safe7579.sol#L266[Safe adapter] and
+     * https://github.com/etherspot/etherspot-prime-contracts/blob/cfcdb48c4172cea0d66038324c0bae3288aa8caa/src/modular-etherspot-wallet/wallet/ModularEtherspotWallet.sol#L227[Etherspot's Prime Account].
      *
      * This is not standardized in ERC-7579 (or in any follow-up ERC). Some accounts may want to override these internal functions.
      *
-     * For example, [Biconomy's Nexus](https://github.com/bcnmy/nexus/blob/54f4e19baaff96081a8843672977caf712ef19f4/contracts/lib/NonceLib.sol#L17)
+     * For example, https://github.com/bcnmy/nexus/blob/54f4e19baaff96081a8843672977caf712ef19f4/contracts/lib/NonceLib.sol#L17[Biconomy's Nexus]
      * uses a similar yet incompatible approach (the validator address is also part of the nonce, but not at the same location)
      */
     function _extractUserOpValidator(PackedUserOperation calldata userOp) internal pure virtual returns (address) {
@@ -364,9 +360,9 @@ abstract contract AccountERC7579 is
      * ```
      *
      * NOTE: The default behavior of this function replicated the behavior of
-     * [Safe adapter](https://github.com/rhinestonewtf/safe7579/blob/bb29e8b1a66658790c4169e72608e27d220f79be/src/Safe7579.sol#L350),
-     * [Biconomy's Nexus](https://github.com/bcnmy/nexus/blob/54f4e19baaff96081a8843672977caf712ef19f4/contracts/Nexus.sol#L239) and
-     * [Etherspot's Prime Account](https://github.com/etherspot/etherspot-prime-contracts/blob/cfcdb48c4172cea0d66038324c0bae3288aa8caa/src/modular-etherspot-wallet/wallet/ModularEtherspotWallet.sol#L252)
+     * https://github.com/rhinestonewtf/safe7579/blob/bb29e8b1a66658790c4169e72608e27d220f79be/src/Safe7579.sol#L350[Safe adapter],
+     * https://github.com/bcnmy/nexus/blob/54f4e19baaff96081a8843672977caf712ef19f4/contracts/Nexus.sol#L239[Biconomy's Nexus] and
+     * https://github.com/etherspot/etherspot-prime-contracts/blob/cfcdb48c4172cea0d66038324c0bae3288aa8caa/src/modular-etherspot-wallet/wallet/ModularEtherspotWallet.sol#L252[Etherspot's Prime Account]
      *
      * This is not standardized in ERC-7579 (or in any follow-up ERC). Some accounts may want to override these internal functions.
      */

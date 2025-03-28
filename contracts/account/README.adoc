@@ -4,15 +4,12 @@ NOTE: This document is better viewed at https://docs.openzeppelin.com/community-
 
 This directory includes contracts to build accounts for ERC-4337. These include:
 
- * {AccountCore}: An ERC-4337 smart account implementation that includes the core logic to process user operations.
- * {Account}: An extension of `AccountCore` that implements the recommended features for ERC-4337 smart accounts.
- * {AccountERC7579}: An extension of `AccountCore` that implements support for ERC-7579 modules.
+ * {Account}: An ERC-4337 smart account implementation that includes the core logic to process user operations.
+ * {AccountERC7579}: An extension of `Account` that implements support for ERC-7579 modules.
  * {AccountERC7579Hooked}: An extension of `AccountERC7579` with support for a single hook module (type 4).
  * {ERC7821}: Minimal batch executor implementation contracts. Useful to enable easy batch execution for smart contracts.
 
 == Core
-
-{{AccountCore}}
 
 {{Account}}
 
