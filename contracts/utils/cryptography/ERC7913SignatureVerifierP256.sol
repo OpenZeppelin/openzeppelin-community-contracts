@@ -5,7 +5,11 @@ pragma solidity ^0.8.20;
 import {P256} from "@openzeppelin/contracts/utils/cryptography/P256.sol";
 import {IERC7913SignatureVerifier} from "../../interfaces/IERC7913.sol";
 
+/**
+ * @dev ERC-7913 signature verifier that support P256 (secp256r1) keys.
+ */
 contract ERC7913SignatureVerifierP256 is IERC7913SignatureVerifier {
+    /// @inheritdoc IERC7913SignatureVerifier
     function verify(bytes calldata key, bytes32 hash, bytes calldata signature) external view returns (bytes4) {
         // Signature length may be 0x40 or 0x41.
         if (key.length == 0x40 && signature.length > 0x3f && signature.length < 0x42) {
