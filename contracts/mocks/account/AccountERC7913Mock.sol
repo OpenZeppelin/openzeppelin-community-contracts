@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.20;
+pragma solidity ^0.8.24;
 
 import {Account} from "../../account/Account.sol";
 import {ERC7821} from "../../account/extensions/ERC7821.sol";
