@@ -8,7 +8,7 @@ import {ERC7913Utils} from "./ERC7913Utils.sol";
 /**
  * @dev Implementation of {AbstractSigner} that supports ERC-7913 signers.
  *
- * For {Account} usage, an {_setSigner} function is provided to set the ERC-7913 formated {signer}.
+ * For {Account} usage, an {_setSigner} function is provided to set the ERC-7913 formatted {signer}.
  * Doing so it's easier for a factory, whose likely to use initializable clones of this contract.
  *
  * Example of usage:
