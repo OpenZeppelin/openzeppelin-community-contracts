@@ -10,7 +10,7 @@ import {IERC7913SignatureVerifier} from "../../interfaces/IERC7913.sol";
  */
 contract ERC7913SignatureVerifierP256 is IERC7913SignatureVerifier {
     /// @inheritdoc IERC7913SignatureVerifier
-    function verify(bytes calldata key, bytes32 hash, bytes calldata signature) external view returns (bytes4) {
+    function verify(bytes calldata key, bytes32 hash, bytes calldata signature) public view virtual returns (bytes4) {
         // Signature length may be 0x40 or 0x41.
         if (key.length == 0x40 && signature.length > 0x3f && signature.length < 0x42) {
             bytes32 qx = bytes32(key[0x00:0x20]);
