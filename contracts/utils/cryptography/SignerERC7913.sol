@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.20;
+pragma solidity ^0.8.24;
 
 import {AbstractSigner} from "./AbstractSigner.sol";
 import {ERC7913Utils} from "./ERC7913Utils.sol";
