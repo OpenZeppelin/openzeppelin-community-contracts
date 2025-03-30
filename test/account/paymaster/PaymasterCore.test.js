@@ -1,6 +1,7 @@
-const { ethers } = require('hardhat');
+const { ethers, entrypoint } = require('hardhat');
 const { loadFixture } = require('@nomicfoundation/hardhat-network-helpers');
 
+const { getDomain } = require('@openzeppelin/contracts/test/helpers/eip712');
 const { PackedUserOperation, UserOperationRequest } = require('../../helpers/eip712-types');
 const { ERC4337Helper } = require('../../helpers/erc4337');
 
@@ -21,7 +22,6 @@ for (const [name, opts] of Object.entries({
 
     // ERC-4337 account
     const helper = new ERC4337Helper();
-    const env = await helper.wait();
     const account = await helper.newAccount('$AccountECDSAMock', ['AccountECDSA', '1', accountSigner]);
     await account.deploy();
 
@@ -29,29 +29,19 @@ for (const [name, opts] of Object.entries({
     const paymaster = await ethers.deployContract(`$${name}Mock`, ['MyPaymasterECDSASigner', '1', admin]);
     await paymaster.$_setSigner(paymasterSigner);
 
+    // Domains
+    const entrypointDomain = await getDomain(entrypoint.v08);
+    const paymasterDomain = await getDomain(paymaster);
+
     const signUserOp = userOp =>
       accountSigner
-        .signTypedData(
-          {
-            name: 'AccountECDSA',
-            version: '1',
-            chainId: env.chainId,
-            verifyingContract: account.target,
-          },
-          { PackedUserOperation },
-          userOp.packed,
-        )
+        .signTypedData(entrypointDomain, { PackedUserOperation }, userOp.packed)
         .then(signature => Object.assign(userOp, { signature }));
 
     const paymasterSignUserOp = (userOp, validAfter, validUntil) =>
       paymasterSigner
         .signTypedData(
-          {
-            name: 'MyPaymasterECDSASigner',
-            version: '1',
-            chainId: env.chainId,
-            verifyingContract: paymaster.target,
-          },
+          paymasterDomain,
           { UserOperationRequest },
           {
             ...userOp.packed,
@@ -68,6 +58,7 @@ for (const [name, opts] of Object.entries({
         );
 
     return {
+      helper,
       admin,
       receiver,
       other,
@@ -76,7 +67,6 @@ for (const [name, opts] of Object.entries({
       paymaster,
       signUserOp,
       paymasterSignUserOp,
-      ...env,
     };
   }
 
