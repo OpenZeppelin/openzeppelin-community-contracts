@@ -31,8 +31,8 @@ abstract contract PaymasterNFT is PaymasterCore {
      * @dev Internal validation of whether the paymaster is willing to pay for the user operation.
      * Returns the context to be passed to postOp and the validation data.
      *
-     * NOTE: The `context` returned is `bytes(0)`. Developers overriding this function MUST
-     * override {_postOp} to process the context passed along.
+     * NOTE: The default `context` is `bytes(0)`. Developers that add a context when overriding this function MUST
+     * also override {_postOp} to process the context passed along.
      */
     function _validatePaymasterUserOp(
         PackedUserOperation calldata userOp,
