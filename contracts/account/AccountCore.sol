@@ -47,7 +47,7 @@ abstract contract AccountCore is AbstractSigner, IAccount {
      * @dev Canonical entry point for the account that forwards and validates user operations.
      */
     function entryPoint() public view virtual returns (IEntryPoint) {
-        return ERC4337Utils.ENTRYPOINT_V07;
+        return ERC4337Utils.ENTRYPOINT_V08;
     }
 
     /**
@@ -95,14 +95,15 @@ abstract contract AccountCore is AbstractSigner, IAccount {
     }
 
     /**
-     * @dev Virtual function that returns the signable hash for a user operations. Some implementation may return
-     * `userOpHash` while other may prefer a signer-friendly value such as an EIP-712 hash describing the `userOp`
-     * details.
+     * @dev Virtual function that returns the signable hash for a user operations. Since v0.8.0 of the entrypoint,
+     * `userOpHash` is an EIP-712 hash that can be signed directly.
      */
     function _signableUserOpHash(
-        PackedUserOperation calldata userOp,
+        PackedUserOperation calldata /*userOp*/,
         bytes32 userOpHash
-    ) internal view virtual returns (bytes32);
+    ) internal view virtual returns (bytes32) {
+        return userOpHash;
+    }
 
     /**
      * @dev Sends the missing funds for executing the user operation to the {entrypoint}.

@@ -3,10 +3,9 @@ const { ethers } = require('hardhat');
 const { loadFixture } = require('@nomicfoundation/hardhat-network-helpers');
 
 const { Permit } = require('@openzeppelin/contracts/test/helpers/eip712');
-const { PersonalSignHelper, TypedDataSignHelper } = require('../../helpers/erc7739');
+const { ERC4337Utils, PersonalSign } = require('../../helpers/erc7739');
 
-// Helper for ERC20Permit applications
-const helper = TypedDataSignHelper.from({ Permit });
+const details = ERC4337Utils.getContentsDetail({ Permit });
 
 const fixture = async () => {
   const mock = await ethers.deployContract('$ERC7739Utils');
@@ -42,17 +41,17 @@ describe('ERC7739Utils', function () {
       const signature = ethers.randomBytes(65);
       const appSeparator = ethers.id('SomeApp');
       const contentsHash = ethers.id('SomeData');
-      const contentDescr = 'SomeType()';
+      const contentsDescr = 'SomeType()';
       const encoded = ethers.concat([
         signature,
         appSeparator,
         contentsHash,
-        ethers.toUtf8Bytes(contentDescr),
-        ethers.toBeHex(contentDescr.length, 2),
+        ethers.toUtf8Bytes(contentsDescr),
+        ethers.toBeHex(contentsDescr.length, 2),
       ]);
 
       await expect(
-        this.mock.$encodeTypedDataSig(signature, appSeparator, contentsHash, contentDescr),
+        this.mock.$encodeTypedDataSig(signature, appSeparator, contentsHash, contentsDescr),
       ).to.eventually.equal(encoded);
     });
   });
@@ -62,20 +61,20 @@ describe('ERC7739Utils', function () {
       const signature = ethers.randomBytes(65);
       const appSeparator = ethers.id('SomeApp');
       const contentsHash = ethers.id('SomeData');
-      const contentDescr = 'SomeType()';
+      const contentsDescr = 'SomeType()';
       const encoded = ethers.concat([
         signature,
         appSeparator,
         contentsHash,
-        ethers.toUtf8Bytes(contentDescr),
-        ethers.toBeHex(contentDescr.length, 2),
+        ethers.toUtf8Bytes(contentsDescr),
+        ethers.toBeHex(contentsDescr.length, 2),
       ]);
 
       await expect(this.mock.$decodeTypedDataSig(encoded)).to.eventually.deep.equal([
         ethers.hexlify(signature),
         appSeparator,
         contentsHash,
-        contentDescr,
+        contentsDescr,
       ]);
     });
 
@@ -105,17 +104,17 @@ describe('ERC7739Utils', function () {
       const text = 'Hello, world!';
 
       await expect(this.mock.$personalSignStructHash(ethers.hashMessage(text))).to.eventually.equal(
-        ethers.TypedDataEncoder.hashStruct('PersonalSign', PersonalSignHelper.types, PersonalSignHelper.prepare(text)),
+        ethers.TypedDataEncoder.hashStruct('PersonalSign', { PersonalSign }, ERC4337Utils.preparePersonalSign(text)),
       );
     });
   });
 
   describe('typedDataSignStructHash', function () {
     it('should match the typed data nested struct hash', async function () {
-      const message = TypedDataSignHelper.prepare(this.permit, this.domain);
+      const message = ERC4337Utils.prepareSignTypedData(this.permit, this.domain);
 
-      const contentsHash = helper.hashStruct('Permit', message.contents);
-      const hash = helper.hashStruct('TypedDataSign', message);
+      const contentsHash = ethers.TypedDataEncoder.hashStruct('Permit', { Permit }, this.permit);
+      const hash = ethers.TypedDataEncoder.hashStruct('TypedDataSign', details.allTypes, message);
 
       const domainBytes = ethers.AbiCoder.defaultAbiCoder().encode(
         ['bytes32', 'bytes32', 'uint256', 'address', 'bytes32'],
@@ -130,25 +129,25 @@ describe('ERC7739Utils', function () {
 
       await expect(
         this.mock.$typedDataSignStructHash(
-          helper.contentsTypeName,
-          ethers.Typed.string(helper.contentDescr),
+          details.contentsTypeName,
+          ethers.Typed.string(details.contentsDescr),
           contentsHash,
           domainBytes,
         ),
       ).to.eventually.equal(hash);
       await expect(
-        this.mock.$typedDataSignStructHash(helper.contentDescr, contentsHash, domainBytes),
+        this.mock.$typedDataSignStructHash(details.contentsDescr, contentsHash, domainBytes),
       ).to.eventually.equal(hash);
     });
   });
 
   describe('typedDataSignTypehash', function () {
     it('should match', async function () {
-      const typedDataSignType = ethers.TypedDataEncoder.from(helper.allTypes).encodeType('TypedDataSign');
+      const typedDataSignType = ethers.TypedDataEncoder.from(details.allTypes).encodeType('TypedDataSign');
 
       await expect(
         this.mock.$typedDataSignTypehash(
-          helper.contentsTypeName,
+          details.contentsTypeName,
           typedDataSignType.slice(typedDataSignType.indexOf(')') + 1),
         ),
       ).to.eventually.equal(ethers.keccak256(ethers.toUtf8Bytes(typedDataSignType)));
@@ -158,53 +157,53 @@ describe('ERC7739Utils', function () {
   describe('decodeContentsDescr', function () {
     const forbiddenChars = ', )\x00';
 
-    for (const { descr, contentDescr, contentTypeName, contentType } of [].concat(
+    for (const { descr, contentsDescr, contentTypeName, contentType } of [].concat(
       {
         descr: 'should parse a valid descriptor (implicit)',
-        contentDescr: 'SomeType(address foo,uint256 bar)',
+        contentsDescr: 'SomeType(address foo,uint256 bar)',
         contentTypeName: 'SomeType',
       },
       {
         descr: 'should parse a valid descriptor (explicit)',
-        contentDescr: 'A(C c)B(A a)C(uint256 v)B',
+        contentsDescr: 'A(C c)B(A a)C(uint256 v)B',
         contentTypeName: 'B',
         contentType: 'A(C c)B(A a)C(uint256 v)',
       },
       {
         descr: 'should return nothing for an empty descriptor',
-        contentDescr: '',
+        contentsDescr: '',
         contentTypeName: null,
       },
       {
         descr: 'should return nothing if no [(] is present',
-        contentDescr: 'SomeType',
+        contentsDescr: 'SomeType',
         contentTypeName: null,
       },
       {
         descr: 'should return nothing if starts with [(] (implicit)',
-        contentDescr: '(SomeType(address foo,uint256 bar)',
+        contentsDescr: '(SomeType(address foo,uint256 bar)',
         contentTypeName: null,
       },
       {
         descr: 'should return nothing if starts with [(] (explicit)',
-        contentDescr: '(SomeType(address foo,uint256 bar)(SomeType',
+        contentsDescr: '(SomeType(address foo,uint256 bar)(SomeType',
         contentTypeName: null,
       },
       forbiddenChars.split('').map(char => ({
         descr: `should return nothing if contains [${char}] (implicit)`,
-        contentDescr: `SomeType${char}(address foo,uint256 bar)`,
+        contentsDescr: `SomeType${char}(address foo,uint256 bar)`,
         contentTypeName: null,
       })),
       forbiddenChars.split('').map(char => ({
         descr: `should return nothing if contains [${char}] (explicit)`,
-        contentDescr: `SomeType${char}(address foo,uint256 bar)SomeType${char}`,
+        contentsDescr: `SomeType${char}(address foo,uint256 bar)SomeType${char}`,
         contentTypeName: null,
       })),
     )) {
       it(descr, async function () {
-        await expect(this.mock.$decodeContentsDescr(contentDescr)).to.eventually.deep.equal([
+        await expect(this.mock.$decodeContentsDescr(contentsDescr)).to.eventually.deep.equal([
           contentTypeName ?? '',
-          contentTypeName ? contentType ?? contentDescr : '',
+          contentTypeName ? contentType ?? contentsDescr : '',
         ]);
       });
     }

@@ -3,6 +3,7 @@ const { expect } = require('chai');
 const { loadFixture } = require('@nomicfoundation/hardhat-network-helpers');
 const { anyValue } = require('@nomicfoundation/hardhat-chai-matchers/withArgs');
 
+const { getDomain } = require('@openzeppelin/contracts/test/helpers/eip712');
 const { encodeBatch, encodeMode, CALL_TYPE_BATCH } = require('@openzeppelin/contracts/test/helpers/erc7579');
 const { formatType } = require('@openzeppelin/contracts/test/helpers/eip712-types');
 const { PackedUserOperation } = require('../../helpers/eip712-types');
@@ -24,7 +25,6 @@ async function fixture() {
 
   // ERC-4337 account
   const helper = new ERC4337Helper();
-  const env = await helper.wait();
   const account = await helper.newAccount('$AccountECDSAMock', ['AccountECDSA', '1', accountSigner]);
   await account.deploy();
 
@@ -33,18 +33,13 @@ async function fixture() {
   await paymaster.$_grantRole(ethers.id('ORACLE_ROLE'), oracleSigner);
   await paymaster.$_grantRole(ethers.id('WITHDRAWER_ROLE'), admin);
 
+  // Domains
+  const entrypointDomain = await getDomain(entrypoint.v08);
+  const paymasterDomain = await getDomain(paymaster);
+
   const signUserOp = userOp =>
     accountSigner
-      .signTypedData(
-        {
-          name: 'AccountECDSA',
-          version: '1',
-          chainId: env.chainId,
-          verifyingContract: account.target,
-        },
-        { PackedUserOperation },
-        userOp.packed,
-      )
+      .signTypedData(entrypointDomain, { PackedUserOperation }, userOp.packed)
       .then(signature => Object.assign(userOp, { signature }));
 
   // [0x00:0x14                      ] token                 (IERC20)
@@ -75,12 +70,7 @@ async function fixture() {
       );
       return Promise.all([
         oracle.signTypedData(
-          {
-            name: 'PaymasterERC20',
-            version: '1',
-            chainId: env.chainId,
-            verifyingContract: paymaster.target,
-          },
+          paymasterDomain,
           {
             TokenPrice: formatType({
               token: 'address',
@@ -96,18 +86,7 @@ async function fixture() {
             tokenPrice,
           },
         ),
-        guarantor
-          ? guarantor.signTypedData(
-              {
-                name: 'PaymasterERC20',
-                version: '1',
-                chainId: env.chainId,
-                verifyingContract: paymaster.target,
-              },
-              { PackedUserOperation },
-              userOp.packed,
-            )
-          : '0x',
+        guarantor ? guarantor.signTypedData(paymasterDomain, { PackedUserOperation }, userOp.packed) : '0x',
       ]).then(([oracleSignature, guarantorSignature]) => {
         userOp.paymasterData = ethers.concat([
           userOp.paymasterData,
@@ -132,7 +111,6 @@ async function fixture() {
     signUserOp,
     paymasterSignUserOp: paymasterSignUserOp(oracleSigner), // sign using the correct key
     paymasterSignUserOpInvalid: paymasterSignUserOp(other), // sign using the wrong key
-    ...env,
   };
 }
 
@@ -247,7 +225,7 @@ describe('PaymasterERC20', function () {
           .then(op => this.signUserOp(op));
 
         // send it to the entrypoint
-        const txPromise = entrypoint.handleOps([signedUserOp.packed], this.receiver);
+        const txPromise = entrypoint.v08.handleOps([signedUserOp.packed], this.receiver);
 
         // check main events (target call and sponsoring)
         await expect(txPromise)
@@ -276,7 +254,10 @@ describe('PaymasterERC20', function () {
           this.tokenMovements.map(({ factor = 0n, offset = 0n }) => offset + tokenAmount * factor),
         );
         // check that ether moved as expected
-        await expect(txPromise).to.changeEtherBalances([entrypoint, this.receiver], [-actualGasCost, actualGasCost]);
+        await expect(txPromise).to.changeEtherBalances(
+          [entrypoint.v08, this.receiver],
+          [-actualGasCost, actualGasCost],
+        );
 
         // check token cost is within the expected values
         // skip gas consumption tests when running coverage (significantly affects the postOp costs)
@@ -297,8 +278,8 @@ describe('PaymasterERC20', function () {
           .then(op => this.signUserOp(op));
 
         // send it to the entrypoint
-        await expect(entrypoint.handleOps([signedUserOp.packed], this.receiver))
-          .to.be.revertedWithCustomError(entrypoint, 'FailedOp')
+        await expect(entrypoint.v08.handleOps([signedUserOp.packed], this.receiver))
+          .to.be.revertedWithCustomError(entrypoint.v08, 'FailedOp')
           .withArgs(0n, 'AA34 signature error');
       });
 
@@ -313,8 +294,8 @@ describe('PaymasterERC20', function () {
           .then(op => this.signUserOp(op));
 
         // send it to the entrypoint
-        await expect(entrypoint.handleOps([signedUserOp.packed], this.receiver))
-          .to.be.revertedWithCustomError(entrypoint, 'FailedOp')
+        await expect(entrypoint.v08.handleOps([signedUserOp.packed], this.receiver))
+          .to.be.revertedWithCustomError(entrypoint.v08, 'FailedOp')
           .withArgs(0n, 'AA34 signature error');
       });
 
@@ -329,8 +310,8 @@ describe('PaymasterERC20', function () {
           .then(op => this.signUserOp(op));
 
         // send it to the entrypoint
-        await expect(entrypoint.handleOps([signedUserOp.packed], this.receiver))
-          .to.be.revertedWithCustomError(entrypoint, 'FailedOp')
+        await expect(entrypoint.v08.handleOps([signedUserOp.packed], this.receiver))
+          .to.be.revertedWithCustomError(entrypoint.v08, 'FailedOp')
           .withArgs(0n, 'AA34 signature error');
       });
     });
