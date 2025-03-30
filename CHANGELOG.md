@@ -1,3 +1,9 @@
+## XX-XX-XXXX
+
+- `ERC7913Utils`: Utilities library for verifying signatures by ERC-7913 formatted signers.
+- `SignerERC7913`: Abstract signer that verifies signatures using the ERC-7913 workflow.
+- `ERC7913SignatureVerifierP256` and `ERC7913SignatureVerifierRSA`: Ready to use ERC-7913 verifiers that implement key verification for P256 (secp256r1) and RSA keys.
+
 ## 07-03-2025
 
 - `ERC7786Aggregator`: Add an aggregator that implements a meta gateway on top of multiple ERC-7786 gateways.
