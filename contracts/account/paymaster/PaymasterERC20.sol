@@ -28,7 +28,7 @@ abstract contract PaymasterERC20 is PaymasterCore {
 
     // Over-estimations: ERC-20 balances/allowances may be cold and contracts may not be optimized
     uint256 private constant POST_OP_COST = 30_000;
-    uint256 private constant POST_OP_COST_WITH_GUARANTOR = 50_000;
+    uint256 private constant POST_OP_COST_WITH_GUARANTOR = 45_000;
 
     /// @inheritdoc PaymasterCore
     function _validatePaymasterUserOp(
