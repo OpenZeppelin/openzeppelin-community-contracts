@@ -143,8 +143,11 @@ function shouldBehaveLikeAccountERC7579({ withHooks = false } = {}) {
           await expect(this.mock.isModuleInstalled(moduleTypeId, instance, fullData)).to.eventually.equal(true);
 
           await expect(this.mockFromEntrypoint.installModule(moduleTypeId, instance, fullData))
-            .to.be.revertedWithCustomError(this.mock, 'ERC7579AlreadyInstalledModule')
-            .withArgs(moduleTypeId, instance);
+            .to.be.revertedWithCustomError(
+              this.mock,
+              moduleTypeId == MODULE_TYPE_HOOK ? 'ERC7579HookModuleAlreadyPresent' : 'ERC7579AlreadyInstalledModule',
+            )
+            .withArgs(...[moduleTypeId != MODULE_TYPE_HOOK && moduleTypeId, instance].filter(Boolean));
         });
       }
 

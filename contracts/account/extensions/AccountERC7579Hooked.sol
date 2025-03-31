@@ -21,6 +21,8 @@ import {AccountERC7579} from "./AccountERC7579.sol";
 abstract contract AccountERC7579Hooked is AccountERC7579 {
     address private _hook;
 
+    error ERC7579HookModuleAlreadyPresent(address hook);
+
     /**
      * @dev Calls {IERC7579Hook-preCheck} before executing the modified function and {IERC7579Hook-postCheck}
      * thereafter.
@@ -69,7 +71,7 @@ abstract contract AccountERC7579Hooked is AccountERC7579 {
         bytes memory initData
     ) internal virtual override withHook {
         if (moduleTypeId == MODULE_TYPE_HOOK) {
-            require(_hook == address(0), ERC7579Utils.ERC7579AlreadyInstalledModule(moduleTypeId, module));
+            require(_hook == address(0), ERC7579HookModuleAlreadyPresent(_hook));
             _hook = module;
         }
         super._installModule(moduleTypeId, module, initData);
