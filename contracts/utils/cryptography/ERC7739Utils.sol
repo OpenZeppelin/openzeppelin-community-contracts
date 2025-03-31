@@ -73,13 +73,14 @@ library ERC7739Utils {
         unchecked {
             uint256 sigLength = encodedSignature.length;
 
-            if (sigLength < 4) return (Calldata.emptyBytes(), 0, 0, Calldata.emptyString());
+            // 66 bytes = contentsDescrLength (2 bytes) + contentsHash (32 bytes) + APP_DOMAIN_SEPARATOR (32 bytes).
+            if (sigLength < 66) return (Calldata.emptyBytes(), 0, 0, Calldata.emptyString());
 
             uint256 contentsDescrEnd = sigLength - 2; // Last 2 bytes
             uint256 contentsDescrLength = uint16(bytes2(encodedSignature[contentsDescrEnd:]));
 
-            if (contentsDescrLength + 64 > contentsDescrEnd)
-                return (Calldata.emptyBytes(), 0, 0, Calldata.emptyString());
+            // Check for space for `contentsDescr` in addition to the 66 bytes documented above
+            if (sigLength < 66 + contentsDescrLength) return (Calldata.emptyBytes(), 0, 0, Calldata.emptyString());
 
             uint256 contentsHashEnd = contentsDescrEnd - contentsDescrLength;
             uint256 separatorEnd = contentsHashEnd - 32;
