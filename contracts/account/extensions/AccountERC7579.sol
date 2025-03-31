@@ -185,7 +185,7 @@ abstract contract AccountERC7579 is Account, IERC1271, IERC7579Execution, IERC75
                 try IERC7579Validator(module).isValidSignatureWithSender(msg.sender, hash, innerSignature) returns (
                     bytes4 magic
                 ) {
-                    if (magic == IERC1271.isValidSignature.selector) return magic;
+                    return magic;
                 } catch {}
             }
         }
