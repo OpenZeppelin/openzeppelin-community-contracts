@@ -98,7 +98,7 @@ library ERC7739Utils {
     }
 
     /**
-     * @dev Nests an `ERC-191` digest into a `PersonalSign` EIP-712 struct, and return the corresponding struct hash.
+     * @dev Nests an `ERC-191` digest into a `PersonalSign` EIP-712 struct, and returns the corresponding struct hash.
      * This struct hash must be combined with a domain separator, using {MessageHashUtils-toTypedDataHash} before
      * being verified/recovered.
      *
@@ -109,7 +109,7 @@ library ERC7739Utils {
     }
 
     /**
-     * @dev Nests an `EIP-712` hash (`contents`) into a `TypedDataSign` EIP-712 struct, and return the corresponding
+     * @dev Nests an `EIP-712` hash (`contents`) into a `TypedDataSign` EIP-712 struct, and returns the corresponding
      * struct hash. This struct hash must be combined with a domain separator, using {MessageHashUtils-toTypedDataHash}
      * before being verified/recovered.
      */
@@ -176,7 +176,7 @@ library ERC7739Utils {
         if (buffer.length == 0) {
             // pass through (fail)
         } else if (buffer[buffer.length - 1] == bytes1(")")) {
-            // Implicit mode: read contentsName for the beginning, and keep the complete descr
+            // Implicit mode: read contentsName from the beginning, and keep the complete descr
             for (uint256 i = 0; i < buffer.length; ++i) {
                 bytes1 current = buffer[i];
                 if (current == bytes1("(")) {
@@ -190,7 +190,7 @@ library ERC7739Utils {
                 }
             }
         } else {
-            // Explicit mode: read contentsName for the end, and remove it from the descr
+            // Explicit mode: read contentsName from the end, and remove it from the descr
             for (uint256 i = buffer.length; i > 0; --i) {
                 bytes1 current = buffer[i - 1];
                 if (current == bytes1(")")) {

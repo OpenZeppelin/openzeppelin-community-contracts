@@ -20,7 +20,7 @@ abstract contract ERC7821 is IERC7821 {
      * @dev Executes the calls in `executionData` with no optional `opData` support.
      *
      * NOTE: Access to this function is controlled by {_erc7821AuthorizedExecutor}. Changing access permissions, for
-     * example to approve calls by the ERC-4337 entrypoint, should be implement by overriding it.
+     * example to approve calls by the ERC-4337 entrypoint, should be implemented by overriding it.
      *
      * Reverts and bubbles up error if any call fails.
      */

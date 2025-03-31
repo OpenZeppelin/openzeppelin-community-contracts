@@ -19,7 +19,7 @@ import {Account} from "../Account.sol";
  * To comply with the ERC-1271 support requirement, this contract defers signature validation to
  * installed validator modules by calling {IERC7579Validator-isValidSignatureWithSender}.
  *
- * This contract does not implement validation logic for user operations since these functionality
+ * This contract does not implement validation logic for user operations since this functionality
  * is often delegated to self-contained validation modules. Developers must install a validator module
  * upon initialization (or any other mechanism to enable execution from the account):
  *
@@ -347,7 +347,7 @@ abstract contract AccountERC7579 is Account, IERC1271, IERC7579Execution, IERC75
      * ```
      * <module address (20 bytes)> | <key (4 bytes)> | <nonce (8 bytes)>
      * ```
-     * NOTE: The default behavior of this function replicated the behavior of
+     * NOTE: The default behavior of this function replicates the behavior of
      * https://github.com/rhinestonewtf/safe7579/blob/bb29e8b1a66658790c4169e72608e27d220f79be/src/Safe7579.sol#L266[Safe adapter] and
      * https://github.com/etherspot/etherspot-prime-contracts/blob/cfcdb48c4172cea0d66038324c0bae3288aa8caa/src/modular-etherspot-wallet/wallet/ModularEtherspotWallet.sol#L227[Etherspot's Prime Account].
      * https://github.com/erc7579/erc7579-implementation/blob/16138d1afd4e9711f6c1425133538837bd7787b5/src/MSAAdvanced.sol#L247[ERC7579 reference implementation]
@@ -371,7 +371,7 @@ abstract contract AccountERC7579 is Account, IERC1271, IERC7579Execution, IERC75
      * <module address (20 bytes)> | <signature data>
      * ```
      *
-     * NOTE: The default behavior of this function replicated the behavior of
+     * NOTE: The default behavior of this function replicates the behavior of
      * https://github.com/rhinestonewtf/safe7579/blob/bb29e8b1a66658790c4169e72608e27d220f79be/src/Safe7579.sol#L350[Safe adapter],
      * https://github.com/bcnmy/nexus/blob/54f4e19baaff96081a8843672977caf712ef19f4/contracts/Nexus.sol#L239[Biconomy's Nexus] and
      * https://github.com/etherspot/etherspot-prime-contracts/blob/cfcdb48c4172cea0d66038324c0bae3288aa8caa/src/modular-etherspot-wallet/wallet/ModularEtherspotWallet.sol#L252[Etherspot's Prime Account]
@@ -388,10 +388,10 @@ abstract contract AccountERC7579 is Account, IERC1271, IERC7579Execution, IERC75
     /**
      * @dev Extract the function selector from initData/deInitData for MODULE_TYPE_FALLBACK
      *
-     * NOTE: If we had calldata here, we would could use calldata slice which are cheaper to manipulate and don't
-     * require actual copy. However, this would require `_installModule` to get a calldata bytes object instead of a
-     * memory bytes object. This would prevent calling `_installModule` from a contract constructor and would force
-     * the use of external initializers. That may change in the future, as most accounts will probably be deployed as
+     * NOTE: If we had calldata here, we could use calldata slice which are cheaper to manipulate and don't require
+     * actual copy. However, this would require `_installModule` to get a calldata bytes object instead of a memory
+     * bytes object. This would prevent calling `_installModule` from a contract constructor and would force the use
+     * of external initializers. That may change in the future, as most accounts will probably be deployed as
      * clones/proxy/ERC-7702 delegates and therefore rely on initializers anyway.
      */
     function _decodeFallbackData(
