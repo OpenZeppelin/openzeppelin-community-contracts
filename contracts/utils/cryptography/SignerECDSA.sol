@@ -24,7 +24,7 @@ import {AbstractSigner} from "./AbstractSigner.sol";
  * }
  * ```
  *
- * IMPORTANT: Avoiding to call {_setSigner} either during construction (if used standalone)
+ * IMPORTANT: Failing to call {_setSigner} either during construction (if used standalone)
  * or during initialization (if used as a clone) may leave the signer either front-runnable or unusable.
  */
 abstract contract SignerECDSA is AbstractSigner {

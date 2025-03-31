@@ -40,7 +40,16 @@ import {Account} from "../Account.sol";
  *   internal virtual functions {_extractUserOpValidator} and {_extractSignatureValidator}. Both are implemented
  *   following common practices. However, this part is not standardized in ERC-7579 (or in any follow-up ERC). Some
  *   accounts may want to override these internal functions.
+ * * When combined with {ERC7739}, resolution ordering of {isValidSignature} may have an impact ({ERC7739} does not
+ *   call super). Manual resolution might be necessary.
+ * * Static calls (using callType 0xfe) are currently NOT supported.
  * ====
+ *
+ * [WARNING]
+ * ===
+ * * When uninstalling validation module, users should make sure to keep at least one validation mechanism active.
+ *   Uninstalling all the validation mechanisms would brick the account.
+ * ===
  */
 abstract contract AccountERC7579 is Account, IERC1271, IERC7579Execution, IERC7579AccountConfig, IERC7579ModuleConfig {
     using Bytes for *;
@@ -163,8 +172,8 @@ abstract contract AccountERC7579 is Account, IERC1271, IERC7579Execution, IERC75
      * @dev Implement ERC-1271 through IERC7579Validator modules. If module based validation fails, fallback to
      * "native" validation by the abstract signer.
      *
-     * NOTE: when combined with {ERC7739} (for example through {Account}), resolution ordering may have an impact
-     * ({ERC7739} does not call super). Manual resolution might be necessary.
+     * NOTE: when combined with {ERC7739}, resolution ordering may have an impact ({ERC7739} does not call super).
+     * Manual resolution might be necessary.
      */
     function isValidSignature(bytes32 hash, bytes calldata signature) public view virtual returns (bytes4) {
         // check signature length is enough for extraction
@@ -220,8 +229,8 @@ abstract contract AccountERC7579 is Account, IERC1271, IERC7579Execution, IERC75
     /**
      * @dev Installs a module of the given type with the given initialization data.
      *
-     * For the fallback module type, the `initData` is expected to be a tuple of a 4-byte selector and the
-     * rest of the data to be sent to the handler when calling {IERC7579Module-onInstall}.
+     * For the fallback module type, the `initData` is expected to be the (packed) concatenation of a 4-byte
+     * selector and the rest of the data to be sent to the handler when calling {IERC7579Module-onInstall}.
      *
      * Requirements:
      *
@@ -259,8 +268,8 @@ abstract contract AccountERC7579 is Account, IERC1271, IERC7579Execution, IERC75
     /**
      * @dev Uninstalls a module of the given type with the given de-initialization data.
      *
-     * For the fallback module type, the `deInitData` is expected to be a tuple of a 4-byte selector and the
-     * rest of the data to be sent to the handler when calling {IERC7579Module-onUninstall}.
+     * For the fallback module type, the `deInitData` is expected to be the (packed) concatenation of a 4-byte
+     * selector and the rest of the data to be sent to the handler when calling {IERC7579Module-onUninstall}.
      *
      * Requirements:
      *
@@ -341,6 +350,7 @@ abstract contract AccountERC7579 is Account, IERC1271, IERC7579Execution, IERC75
      * NOTE: The default behavior of this function replicated the behavior of
      * https://github.com/rhinestonewtf/safe7579/blob/bb29e8b1a66658790c4169e72608e27d220f79be/src/Safe7579.sol#L266[Safe adapter] and
      * https://github.com/etherspot/etherspot-prime-contracts/blob/cfcdb48c4172cea0d66038324c0bae3288aa8caa/src/modular-etherspot-wallet/wallet/ModularEtherspotWallet.sol#L227[Etherspot's Prime Account].
+     * https://github.com/erc7579/erc7579-implementation/blob/16138d1afd4e9711f6c1425133538837bd7787b5/src/MSAAdvanced.sol#L247[ERC7579 reference implementation]
      *
      * This is not standardized in ERC-7579 (or in any follow-up ERC). Some accounts may want to override these internal functions.
      *
@@ -365,6 +375,7 @@ abstract contract AccountERC7579 is Account, IERC1271, IERC7579Execution, IERC75
      * https://github.com/rhinestonewtf/safe7579/blob/bb29e8b1a66658790c4169e72608e27d220f79be/src/Safe7579.sol#L350[Safe adapter],
      * https://github.com/bcnmy/nexus/blob/54f4e19baaff96081a8843672977caf712ef19f4/contracts/Nexus.sol#L239[Biconomy's Nexus] and
      * https://github.com/etherspot/etherspot-prime-contracts/blob/cfcdb48c4172cea0d66038324c0bae3288aa8caa/src/modular-etherspot-wallet/wallet/ModularEtherspotWallet.sol#L252[Etherspot's Prime Account]
+     * https://github.com/erc7579/erc7579-implementation/blob/16138d1afd4e9711f6c1425133538837bd7787b5/src/MSAAdvanced.sol#L296[ERC7579 reference implementation]
      *
      * This is not standardized in ERC-7579 (or in any follow-up ERC). Some accounts may want to override these internal functions.
      */

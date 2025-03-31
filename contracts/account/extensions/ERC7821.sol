@@ -7,7 +7,9 @@ import {IERC7821} from "../../interfaces/IERC7821.sol";
 import {Account} from "../Account.sol";
 
 /**
- * @dev Minimal batch executor following ERC-7821. Only supports basic mode (no optional "opData").
+ * @dev Minimal batch executor following ERC-7821.
+ *
+ * Only supports supports single batch mode (0x01000000000000000000). Does not support optional "opData".
  */
 abstract contract ERC7821 is IERC7821 {
     using ERC7579Utils for *;
