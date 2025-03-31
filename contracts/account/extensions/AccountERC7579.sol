@@ -173,7 +173,7 @@ abstract contract AccountERC7579 is Account, IERC1271, IERC7579Execution, IERC75
             // if module is not installed, skip
             if (isModuleInstalled(MODULE_TYPE_VALIDATOR, module, Calldata.emptyBytes())) {
                 // try validation, skip any revert
-                try IERC7579Validator(module).isValidSignatureWithSender(address(this), hash, innerSignature) returns (
+                try IERC7579Validator(module).isValidSignatureWithSender(msg.sender, hash, innerSignature) returns (
                     bytes4 magic
                 ) {
                     if (magic == IERC1271.isValidSignature.selector) return magic;
