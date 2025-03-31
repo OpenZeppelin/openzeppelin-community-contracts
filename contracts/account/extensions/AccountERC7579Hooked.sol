@@ -21,6 +21,7 @@ import {AccountERC7579} from "./AccountERC7579.sol";
 abstract contract AccountERC7579Hooked is AccountERC7579 {
     address private _hook;
 
+    /// @dev A hook module is already present. This contract only supports one hook module.
     error ERC7579HookModuleAlreadyPresent(address hook);
 
     /**
