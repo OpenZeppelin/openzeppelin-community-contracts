@@ -267,6 +267,8 @@ abstract contract AccountERC7579 is Account, IERC1271, IERC7579Execution, IERC75
      * * Module must be already installed. Reverts with {ERC7579UninstalledModule} otherwise.
      */
     function _uninstallModule(uint256 moduleTypeId, address module, bytes memory deInitData) internal virtual {
+        require(supportsModule(moduleTypeId), ERC7579Utils.ERC7579UnsupportedModuleType(moduleTypeId));
+
         if (moduleTypeId == MODULE_TYPE_VALIDATOR) {
             require(_validators.remove(module), ERC7579Utils.ERC7579UninstalledModule(moduleTypeId, module));
         } else if (moduleTypeId == MODULE_TYPE_EXECUTOR) {

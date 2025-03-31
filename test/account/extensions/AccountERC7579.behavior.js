@@ -178,6 +178,12 @@ function shouldBehaveLikeAccountERC7579({ withHooks = false } = {}) {
           .withArgs(this.other);
       });
 
+      it('should revert if the module type is not supported', async function () {
+        await expect(this.mockFromEntrypoint.uninstallModule(MODULE_TYPE_INVALID, this.mock, '0x'))
+          .to.be.revertedWithCustomError(this.mock, 'ERC7579UnsupportedModuleType')
+          .withArgs(MODULE_TYPE_INVALID);
+      });
+
       for (const moduleTypeId of [
         MODULE_TYPE_VALIDATOR,
         MODULE_TYPE_EXECUTOR,
