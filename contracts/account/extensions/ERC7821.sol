@@ -4,7 +4,7 @@ pragma solidity ^0.8.20;
 
 import {ERC7579Utils, Mode, CallType, ExecType, ModeSelector} from "@openzeppelin/contracts/account/utils/draft-ERC7579Utils.sol";
 import {IERC7821} from "../../interfaces/IERC7821.sol";
-import {AccountCore} from "../AccountCore.sol";
+import {Account} from "../Account.sol";
 
 /**
  * @dev Minimal batch executor following ERC-7821. Only supports basic mode (no optional "opData").
@@ -24,7 +24,7 @@ abstract contract ERC7821 is IERC7821 {
      */
     function execute(bytes32 mode, bytes calldata executionData) public payable virtual {
         if (!_erc7821AuthorizedExecutor(msg.sender, mode, executionData))
-            revert AccountCore.AccountUnauthorized(msg.sender);
+            revert Account.AccountUnauthorized(msg.sender);
         if (!supportsExecutionMode(mode)) revert UnsupportedExecutionMode();
         executionData.execBatch(ERC7579Utils.EXECTYPE_DEFAULT);
     }
