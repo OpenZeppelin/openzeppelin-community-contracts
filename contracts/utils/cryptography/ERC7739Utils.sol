@@ -60,7 +60,7 @@ library ERC7739Utils {
      * - `contentsHash` is the hash of the underlying data structure or message.
      * - `contentsDescr` is a descriptor of the "contents" part of the the EIP-712 type of the nested signature.
      *
-     * Note: If decoding fails due to the input format being invalid, this function does not revert and returns empty
+     * NOTE: This function returns empty if the input format is invalid instead of reverting.
      * data instead.
      */
     function decodeTypedDataSig(
