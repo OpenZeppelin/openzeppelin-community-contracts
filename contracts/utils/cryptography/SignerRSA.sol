@@ -45,7 +45,14 @@ abstract contract SignerRSA is AbstractSigner {
         return (_e, _n);
     }
 
-    /// @inheritdoc AbstractSigner
+    /**
+     * @dev See {AbstractSigner-_rawSignatureValidation}. Verifies a PKCSv1.5 signature by calling
+     * https://docs.openzeppelin.com/contracts/5.x/api/utils#RSA-pkcs1Sha256-bytes-bytes-bytes-bytes-[RSA.pkcs1Sha256].
+     *
+     * IMPORTANT: Following the RSASSA-PKCS1-V1_5-VERIFY procedure outlined in RFC8017 (section 8.2.2), the
+     * provided `hash` is used as the `M` (message) and rehashed using SHA256 according to EMSA-PKCS1-v1_5
+     * encoding as per section 9.2 (step 1) of the RFC.
+     */
     function _rawSignatureValidation(
         bytes32 hash,
         bytes calldata signature
