@@ -32,11 +32,6 @@ library ERC7739Utils {
     bytes32 private constant PERSONAL_SIGN_TYPEHASH = keccak256("PersonalSign(bytes prefixed)");
 
     /**
-     * @dev Error when the contents type is invalid. See {tryValidateContentsType}.
-     */
-    error InvalidContentsType();
-
-    /**
      * @dev Nest a signature for a given EIP-712 type into a nested signature for the domain of the app.
      *
      * Counterpart of {decodeTypedDataSig} to extract the original signature and the nested components.
