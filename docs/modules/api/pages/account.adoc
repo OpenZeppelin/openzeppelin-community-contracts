@@ -1,27 +1,19 @@
 :github-icon: pass:[<svg class="icon"><use href="#github-icon"/></svg>]
-:AccountCore: pass:normal[xref:account.adoc#AccountCore[`AccountCore`]]
 :Account: pass:normal[xref:account.adoc#Account[`Account`]]
 :AccountERC7579: pass:normal[xref:account.adoc#AccountERC7579[`AccountERC7579`]]
 :AccountERC7579Hooked: pass:normal[xref:account.adoc#AccountERC7579Hooked[`AccountERC7579Hooked`]]
 :ERC7821: pass:normal[xref:account.adoc#ERC7821[`ERC7821`]]
-:AccountCore-_signableUserOpHash: pass:normal[xref:account.adoc#AccountCore-_signableUserOpHash-struct-PackedUserOperation-bytes32-[`AccountCore._signableUserOpHash`]]
 :AbstractSigner-_rawSignatureValidation: pass:normal[xref:utils.adoc#AbstractSigner-_rawSignatureValidation-bytes32-bytes-[`AbstractSigner._rawSignatureValidation`]]
 :SignerECDSA: pass:normal[xref:utils.adoc#SignerECDSA[`SignerECDSA`]]
 :SignerP256: pass:normal[xref:utils.adoc#SignerP256[`SignerP256`]]
 :SignerRSA: pass:normal[xref:utils.adoc#SignerRSA[`SignerRSA`]]
-:AccountCore: pass:normal[xref:account.adoc#AccountCore[`AccountCore`]]
-:ERC7739: pass:normal[xref:utils.adoc#ERC7739[`ERC7739`]]
-:ERC7821: pass:normal[xref:account.adoc#ERC7821[`ERC7821`]]
-:SignerECDSA: pass:normal[xref:utils.adoc#SignerECDSA[`SignerECDSA`]]
-:SignerP256: pass:normal[xref:utils.adoc#SignerP256[`SignerP256`]]
-:SignerRSA: pass:normal[xref:utils.adoc#SignerRSA[`SignerRSA`]]
-:AccountCore: pass:normal[xref:account.adoc#AccountCore[`AccountCore`]]
-:ERC7739: pass:normal[xref:utils.adoc#ERC7739[`ERC7739`]]
+:AbstractSigner-_rawSignatureValidation: pass:normal[xref:utils.adoc#AbstractSigner-_rawSignatureValidation-bytes32-bytes-[`AbstractSigner._rawSignatureValidation`]]
+:Account: pass:normal[xref:account.adoc#Account[`Account`]]
 :AccountERC7579Hooked: pass:normal[xref:account.adoc#AccountERC7579Hooked[`AccountERC7579Hooked`]]
 :ERC7739: pass:normal[xref:utils.adoc#ERC7739[`ERC7739`]]
 :Account: pass:normal[xref:account.adoc#Account[`Account`]]
 :ERC7739: pass:normal[xref:utils.adoc#ERC7739[`ERC7739`]]
-:AccountCore-_validateUserOp: pass:normal[xref:account.adoc#AccountCore-_validateUserOp-struct-PackedUserOperation-bytes32-[`AccountCore._validateUserOp`]]
+:Account-_validateUserOp: pass:normal[xref:account.adoc#Account-_validateUserOp-struct-PackedUserOperation-bytes32-[`Account._validateUserOp`]]
 :AccountERC7579: pass:normal[xref:account.adoc#AccountERC7579[`AccountERC7579`]]
 :AccountERC7579-supportsModule: pass:normal[xref:account.adoc#AccountERC7579-supportsModule-uint256-[`AccountERC7579.supportsModule`]]
 :AccountERC7579-_installModule: pass:normal[xref:account.adoc#AccountERC7579-_installModule-uint256-address-bytes-[`AccountERC7579._installModule`]]
@@ -34,42 +26,40 @@ NOTE: This document is better viewed at https://docs.openzeppelin.com/community-
 
 This directory includes contracts to build accounts for ERC-4337. These include:
 
- * {AccountCore}: An ERC-4337 smart account implementation that includes the core logic to process user operations.
- * {Account}: An extension of `AccountCore` that implements the recommended features for ERC-4337 smart accounts.
- * {AccountERC7579}: An extension of `AccountCore` that implements support for ERC-7579 modules.
+ * {Account}: An ERC-4337 smart account implementation that includes the core logic to process user operations.
+ * {AccountERC7579}: An extension of `Account` that implements support for ERC-7579 modules.
  * {AccountERC7579Hooked}: An extension of `AccountERC7579` with support for a single hook module (type 4).
  * {ERC7821}: Minimal batch executor implementation contracts. Useful to enable easy batch execution for smart contracts.
 
 == Core
 
-:AccountUnauthorized: pass:normal[xref:#AccountCore-AccountUnauthorized-address-[`++AccountUnauthorized++`]]
-:onlyEntryPointOrSelf: pass:normal[xref:#AccountCore-onlyEntryPointOrSelf--[`++onlyEntryPointOrSelf++`]]
-:onlyEntryPoint: pass:normal[xref:#AccountCore-onlyEntryPoint--[`++onlyEntryPoint++`]]
-:entryPoint: pass:normal[xref:#AccountCore-entryPoint--[`++entryPoint++`]]
-:getNonce: pass:normal[xref:#AccountCore-getNonce--[`++getNonce++`]]
-:getNonce: pass:normal[xref:#AccountCore-getNonce-uint192-[`++getNonce++`]]
-:validateUserOp: pass:normal[xref:#AccountCore-validateUserOp-struct-PackedUserOperation-bytes32-uint256-[`++validateUserOp++`]]
-:_validateUserOp: pass:normal[xref:#AccountCore-_validateUserOp-struct-PackedUserOperation-bytes32-[`++_validateUserOp++`]]
-:_signableUserOpHash: pass:normal[xref:#AccountCore-_signableUserOpHash-struct-PackedUserOperation-bytes32-[`++_signableUserOpHash++`]]
-:_payPrefund: pass:normal[xref:#AccountCore-_payPrefund-uint256-[`++_payPrefund++`]]
-:_checkEntryPoint: pass:normal[xref:#AccountCore-_checkEntryPoint--[`++_checkEntryPoint++`]]
-:_checkEntryPointOrSelf: pass:normal[xref:#AccountCore-_checkEntryPointOrSelf--[`++_checkEntryPointOrSelf++`]]
-:receive: pass:normal[xref:#AccountCore-receive--[`++receive++`]]
+:AccountUnauthorized: pass:normal[xref:#Account-AccountUnauthorized-address-[`++AccountUnauthorized++`]]
+:onlyEntryPointOrSelf: pass:normal[xref:#Account-onlyEntryPointOrSelf--[`++onlyEntryPointOrSelf++`]]
+:onlyEntryPoint: pass:normal[xref:#Account-onlyEntryPoint--[`++onlyEntryPoint++`]]
+:entryPoint: pass:normal[xref:#Account-entryPoint--[`++entryPoint++`]]
+:getNonce: pass:normal[xref:#Account-getNonce--[`++getNonce++`]]
+:getNonce: pass:normal[xref:#Account-getNonce-uint192-[`++getNonce++`]]
+:validateUserOp: pass:normal[xref:#Account-validateUserOp-struct-PackedUserOperation-bytes32-uint256-[`++validateUserOp++`]]
+:_validateUserOp: pass:normal[xref:#Account-_validateUserOp-struct-PackedUserOperation-bytes32-[`++_validateUserOp++`]]
+:_signableUserOpHash: pass:normal[xref:#Account-_signableUserOpHash-struct-PackedUserOperation-bytes32-[`++_signableUserOpHash++`]]
+:_payPrefund: pass:normal[xref:#Account-_payPrefund-uint256-[`++_payPrefund++`]]
+:_checkEntryPoint: pass:normal[xref:#Account-_checkEntryPoint--[`++_checkEntryPoint++`]]
+:_checkEntryPointOrSelf: pass:normal[xref:#Account-_checkEntryPointOrSelf--[`++_checkEntryPointOrSelf++`]]
+:receive: pass:normal[xref:#Account-receive--[`++receive++`]]
 
 [.contract]
-[[AccountCore]]
-=== `++AccountCore++` link:https://github.com/OpenZeppelin/openzeppelin-community-contracts/blob/master/contracts/account/AccountCore.sol[{github-icon},role=heading-link]
+[[Account]]
+=== `++Account++` link:https://github.com/OpenZeppelin/openzeppelin-community-contracts/blob/master/contracts/account/Account.sol[{github-icon},role=heading-link]
 
 [.hljs-theme-light.nopadding]
 ```solidity
-import "@openzeppelin/community-contracts/account/AccountCore.sol";
+import "@openzeppelin/community-contracts/account/Account.sol";
 ```
 
 A simple ERC4337 account implementation. This base implementation only includes the minimal logic to process
 user operations.
 
-Developers must implement the {AccountCore-_signableUserOpHash} and {AbstractSigner-_rawSignatureValidation}
-functions to define the account's validation logic.
+Developers must implement the {AbstractSigner-_rawSignatureValidation} function to define the account's validation logic.
 
 NOTE: This core account doesn't include any mechanism for performing arbitrary external calls. This is an essential
 feature that all Account should have. We leave it up to the developers to implement the mechanism of their choice.
@@ -123,37 +113,37 @@ digital signature validation implementations.
 --
 
 [.contract-item]
-[[AccountCore-onlyEntryPointOrSelf--]]
+[[Account-onlyEntryPointOrSelf--]]
 ==== `[.contract-item-name]#++onlyEntryPointOrSelf++#++()++` [.item-kind]#modifier#
 
 Revert if the caller is not the entry point or the account itself.
 
 [.contract-item]
-[[AccountCore-onlyEntryPoint--]]
+[[Account-onlyEntryPoint--]]
 ==== `[.contract-item-name]#++onlyEntryPoint++#++()++` [.item-kind]#modifier#
 
 Revert if the caller is not the entry point.
 
 [.contract-item]
-[[AccountCore-entryPoint--]]
+[[Account-entryPoint--]]
 ==== `[.contract-item-name]#++entryPoint++#++() → contract IEntryPoint++` [.item-kind]#public#
 
 Canonical entry point for the account that forwards and validates user operations.
 
 [.contract-item]
-[[AccountCore-getNonce--]]
+[[Account-getNonce--]]
 ==== `[.contract-item-name]#++getNonce++#++() → uint256++` [.item-kind]#public#
 
 Return the account nonce for the canonical sequence.
 
 [.contract-item]
-[[AccountCore-getNonce-uint192-]]
+[[Account-getNonce-uint192-]]
 ==== `[.contract-item-name]#++getNonce++#++(uint192 key) → uint256++` [.item-kind]#public#
 
 Return the account nonce for a given sequence (key).
 
 [.contract-item]
-[[AccountCore-validateUserOp-struct-PackedUserOperation-bytes32-uint256-]]
+[[Account-validateUserOp-struct-PackedUserOperation-bytes32-uint256-]]
 ==== `[.contract-item-name]#++validateUserOp++#++(struct PackedUserOperation userOp, bytes32 userOpHash, uint256 missingAccountFunds) → uint256++` [.item-kind]#public#
 
 Validates a user operation.
@@ -171,229 +161,52 @@ Returns an encoded packed validation data that is composed of the following elem
 - `validAfter` (`uint48`): The UserOp is valid only after this time.
 
 [.contract-item]
-[[AccountCore-_validateUserOp-struct-PackedUserOperation-bytes32-]]
+[[Account-_validateUserOp-struct-PackedUserOperation-bytes32-]]
 ==== `[.contract-item-name]#++_validateUserOp++#++(struct PackedUserOperation userOp, bytes32 userOpHash) → uint256++` [.item-kind]#internal#
 
 Returns the validationData for a given user operation. By default, this checks the signature of the
-signable hash (produced by {_signableUserOpHash}) using the abstract signer ({_rawSignatureValidation}).
+signable hash (produced by {_signableUserOpHash}) using the abstract signer ({AbstractSigner-_rawSignatureValidation}).
 
 NOTE: The userOpHash is assumed to be correct. Calling this function with a userOpHash that does not match the
 userOp will result in undefined behavior.
 
 [.contract-item]
-[[AccountCore-_signableUserOpHash-struct-PackedUserOperation-bytes32-]]
+[[Account-_signableUserOpHash-struct-PackedUserOperation-bytes32-]]
 ==== `[.contract-item-name]#++_signableUserOpHash++#++(struct PackedUserOperation, bytes32 userOpHash) → bytes32++` [.item-kind]#internal#
 
 Virtual function that returns the signable hash for a user operations. Since v0.8.0 of the entrypoint,
 `userOpHash` is an EIP-712 hash that can be signed directly.
 
 [.contract-item]
-[[AccountCore-_payPrefund-uint256-]]
+[[Account-_payPrefund-uint256-]]
 ==== `[.contract-item-name]#++_payPrefund++#++(uint256 missingAccountFunds)++` [.item-kind]#internal#
 
 Sends the missing funds for executing the user operation to the {entrypoint}.
 The `missingAccountFunds` must be defined by the entrypoint when calling {validateUserOp}.
 
 [.contract-item]
-[[AccountCore-_checkEntryPoint--]]
+[[Account-_checkEntryPoint--]]
 ==== `[.contract-item-name]#++_checkEntryPoint++#++()++` [.item-kind]#internal#
 
 Ensures the caller is the {entrypoint}.
 
 [.contract-item]
-[[AccountCore-_checkEntryPointOrSelf--]]
+[[Account-_checkEntryPointOrSelf--]]
 ==== `[.contract-item-name]#++_checkEntryPointOrSelf++#++()++` [.item-kind]#internal#
 
 Ensures the caller is the {entrypoint} or the account itself.
 
 [.contract-item]
-[[AccountCore-receive--]]
+[[Account-receive--]]
 ==== `[.contract-item-name]#++receive++#++()++` [.item-kind]#external#
 
 Receive Ether.
 
 [.contract-item]
-[[AccountCore-AccountUnauthorized-address-]]
+[[Account-AccountUnauthorized-address-]]
 ==== `[.contract-item-name]#++AccountUnauthorized++#++(address sender)++` [.item-kind]#error#
 
 Unauthorized call to the account.
-
-[.contract]
-[[Account]]
-=== `++Account++` link:https://github.com/OpenZeppelin/openzeppelin-community-contracts/blob/master/contracts/account/Account.sol[{github-icon},role=heading-link]
-
-[.hljs-theme-light.nopadding]
-```solidity
-import "@openzeppelin/community-contracts/account/Account.sol";
-```
-
-Extension of {AccountCore} with recommended feature that most account abstraction implementation will want:
-
-* {ERC721Holder} and {ERC1155Holder} to accept ERC-712 and ERC-1155 token transfers transfers.
-* {ERC7739} for ERC-1271 signature support with ERC-7739 replay protection
-
-TIP: Use {ERC7821} to enable external calls in batches.
-
-NOTE: To use this contract, the {ERC7739-_rawSignatureValidation} function must be
-implemented using a specific signature verification algorithm. See {SignerECDSA}, {SignerP256} or {SignerRSA}.
-
-[.contract-index]
-.Functions
---
-
-[.contract-subindex-inherited]
-.ERC7739
-* `++isValidSignature(hash, signature)++`
-
-[.contract-subindex-inherited]
-.IERC1271
-
-[.contract-subindex-inherited]
-.EIP712
-* `++_domainSeparatorV4()++`
-* `++_hashTypedDataV4(structHash)++`
-* `++eip712Domain()++`
-* `++_EIP712Name()++`
-* `++_EIP712Version()++`
-
-[.contract-subindex-inherited]
-.IERC5267
-
-[.contract-subindex-inherited]
-.ERC1155Holder
-* `++supportsInterface(interfaceId)++`
-* `++onERC1155Received(, , , , )++`
-* `++onERC1155BatchReceived(, , , , )++`
-
-[.contract-subindex-inherited]
-.IERC1155Receiver
-
-[.contract-subindex-inherited]
-.ERC165
-
-[.contract-subindex-inherited]
-.IERC165
-
-[.contract-subindex-inherited]
-.ERC721Holder
-* `++onERC721Received(, , , )++`
-
-[.contract-subindex-inherited]
-.IERC721Receiver
-
-[.contract-subindex-inherited]
-.AccountCore
-* `++entryPoint()++`
-* `++getNonce()++`
-* `++getNonce(key)++`
-* `++validateUserOp(userOp, userOpHash, missingAccountFunds)++`
-* `++_validateUserOp(userOp, userOpHash)++`
-* `++_signableUserOpHash(, userOpHash)++`
-* `++_payPrefund(missingAccountFunds)++`
-* `++_checkEntryPoint()++`
-* `++_checkEntryPointOrSelf()++`
-* `++receive()++`
-
-[.contract-subindex-inherited]
-.IAccount
-
-[.contract-subindex-inherited]
-.AbstractSigner
-* `++_rawSignatureValidation(hash, signature)++`
-
---
-
-[.contract-index]
-.Events
---
-
-[.contract-subindex-inherited]
-.ERC7739
-
-[.contract-subindex-inherited]
-.IERC1271
-
-[.contract-subindex-inherited]
-.EIP712
-
-[.contract-subindex-inherited]
-.IERC5267
-* `++EIP712DomainChanged()++`
-
-[.contract-subindex-inherited]
-.ERC1155Holder
-
-[.contract-subindex-inherited]
-.IERC1155Receiver
-
-[.contract-subindex-inherited]
-.ERC165
-
-[.contract-subindex-inherited]
-.IERC165
-
-[.contract-subindex-inherited]
-.ERC721Holder
-
-[.contract-subindex-inherited]
-.IERC721Receiver
-
-[.contract-subindex-inherited]
-.AccountCore
-
-[.contract-subindex-inherited]
-.IAccount
-
-[.contract-subindex-inherited]
-.AbstractSigner
-
---
-
-[.contract-index]
-.Errors
---
-
-[.contract-subindex-inherited]
-.ERC7739
-
-[.contract-subindex-inherited]
-.IERC1271
-
-[.contract-subindex-inherited]
-.EIP712
-
-[.contract-subindex-inherited]
-.IERC5267
-
-[.contract-subindex-inherited]
-.ERC1155Holder
-
-[.contract-subindex-inherited]
-.IERC1155Receiver
-
-[.contract-subindex-inherited]
-.ERC165
-
-[.contract-subindex-inherited]
-.IERC165
-
-[.contract-subindex-inherited]
-.ERC721Holder
-
-[.contract-subindex-inherited]
-.IERC721Receiver
-
-[.contract-subindex-inherited]
-.AccountCore
-* `++AccountUnauthorized(sender)++`
-
-[.contract-subindex-inherited]
-.IAccount
-
-[.contract-subindex-inherited]
-.AbstractSigner
-
---
 
 == Extensions
 
@@ -430,10 +243,10 @@ implemented using a specific signature verification algorithm. See {SignerECDSA}
 import "@openzeppelin/community-contracts/account/extensions/AccountERC7579.sol";
 ```
 
-Extension of {AccountCore} that implements support for ERC-7579 modules.
+Extension of {Account} that implements support for ERC-7579 modules.
 
-To comply with the ERC-1271 support requirement, this contract implements {ERC7739} as an
-opinionated layer to avoid signature replayability across accounts controlled by the same key.
+To comply with the ERC-1271 support requirement, this contract defers signature validation to
+installed validator modules by calling {IERC7579Validator-isValidSignatureWithSender}.
 
 This contract does not implement validation logic for user operations since these functionality
 is often delegated to self-contained validation modules. Developers must install a validator module
@@ -449,12 +262,14 @@ contract MyAccountERC7579 is AccountERC7579, Initializable {
 }
 ```
 
-NOTE:
+[NOTE]
+====
 * Hook support is not included. See {AccountERC7579Hooked} for a version that hooks to execution.
 * Validator selection, when verifying either ERC-1271 signature or ERC-4337 UserOperation is implemented in
   internal virtual functions {_extractUserOpValidator} and {_extractSignatureValidator}. Both are implemented
   following common practices. However, this part is not standardized in ERC-7579 (or in any follow-up ERC). Some
   accounts may want to override these internal functions.
+====
 
 [.contract-index]
 .Modifiers
@@ -500,7 +315,7 @@ NOTE:
 .IERC1271
 
 [.contract-subindex-inherited]
-.AccountCore
+.Account
 * `++entryPoint()++`
 * `++getNonce()++`
 * `++getNonce(key)++`
@@ -538,7 +353,7 @@ NOTE:
 .IERC1271
 
 [.contract-subindex-inherited]
-.AccountCore
+.Account
 
 [.contract-subindex-inherited]
 .IAccount
@@ -566,7 +381,7 @@ NOTE:
 .IERC1271
 
 [.contract-subindex-inherited]
-.AccountCore
+.Account
 * `++AccountUnauthorized(sender)++`
 
 [.contract-subindex-inherited]
@@ -666,7 +481,7 @@ NOTE: when combined with {ERC7739} (for example through {Account}), resolution o
 
 Validates a user operation with {_signableUserOpHash} and returns the validation data
 if the module specified by the first 20 bytes of the nonce key is installed. Falls back to
-{AccountCore-_validateUserOp} otherwise.
+{Account-_validateUserOp} otherwise.
 
 See {_extractUserOpValidator} for the module extraction logic.
 
@@ -743,12 +558,12 @@ To construct a nonce key, set nonce as follows:
 <module address (20 bytes)> | <key (4 bytes)> | <nonce (8 bytes)>
 ```
 NOTE: The default behavior of this function replicated the behavior of
-[Safe adapter](https://github.com/rhinestonewtf/safe7579/blob/bb29e8b1a66658790c4169e72608e27d220f79be/src/Safe7579.sol#L266) and
-[Etherspot's Prime Account](https://github.com/etherspot/etherspot-prime-contracts/blob/cfcdb48c4172cea0d66038324c0bae3288aa8caa/src/modular-etherspot-wallet/wallet/ModularEtherspotWallet.sol#L227).
+https://github.com/rhinestonewtf/safe7579/blob/bb29e8b1a66658790c4169e72608e27d220f79be/src/Safe7579.sol#L266[Safe adapter] and
+https://github.com/etherspot/etherspot-prime-contracts/blob/cfcdb48c4172cea0d66038324c0bae3288aa8caa/src/modular-etherspot-wallet/wallet/ModularEtherspotWallet.sol#L227[Etherspot's Prime Account].
 
 This is not standardized in ERC-7579 (or in any follow-up ERC). Some accounts may want to override these internal functions.
 
-For example, [Biconomy's Nexus](https://github.com/bcnmy/nexus/blob/54f4e19baaff96081a8843672977caf712ef19f4/contracts/lib/NonceLib.sol#L17)
+For example, https://github.com/bcnmy/nexus/blob/54f4e19baaff96081a8843672977caf712ef19f4/contracts/lib/NonceLib.sol#L17[Biconomy's Nexus]
 uses a similar yet incompatible approach (the validator address is also part of the nonce, but not at the same location)
 
 [.contract-item]
@@ -765,9 +580,9 @@ signature data:
 ```
 
 NOTE: The default behavior of this function replicated the behavior of
-[Safe adapter](https://github.com/rhinestonewtf/safe7579/blob/bb29e8b1a66658790c4169e72608e27d220f79be/src/Safe7579.sol#L350),
-[Biconomy's Nexus](https://github.com/bcnmy/nexus/blob/54f4e19baaff96081a8843672977caf712ef19f4/contracts/Nexus.sol#L239) and
-[Etherspot's Prime Account](https://github.com/etherspot/etherspot-prime-contracts/blob/cfcdb48c4172cea0d66038324c0bae3288aa8caa/src/modular-etherspot-wallet/wallet/ModularEtherspotWallet.sol#L252)
+https://github.com/rhinestonewtf/safe7579/blob/bb29e8b1a66658790c4169e72608e27d220f79be/src/Safe7579.sol#L350[Safe adapter],
+https://github.com/bcnmy/nexus/blob/54f4e19baaff96081a8843672977caf712ef19f4/contracts/Nexus.sol#L239[Biconomy's Nexus] and
+https://github.com/etherspot/etherspot-prime-contracts/blob/cfcdb48c4172cea0d66038324c0bae3288aa8caa/src/modular-etherspot-wallet/wallet/ModularEtherspotWallet.sol#L252[Etherspot's Prime Account]
 
 This is not standardized in ERC-7579 (or in any follow-up ERC). Some accounts may want to override these internal functions.
 
@@ -872,7 +687,7 @@ modules or further overriding functions that involve hooks.
 .IERC1271
 
 [.contract-subindex-inherited]
-.AccountCore
+.Account
 * `++entryPoint()++`
 * `++getNonce()++`
 * `++getNonce(key)++`
@@ -913,7 +728,7 @@ modules or further overriding functions that involve hooks.
 .IERC1271
 
 [.contract-subindex-inherited]
-.AccountCore
+.Account
 
 [.contract-subindex-inherited]
 .IAccount
@@ -944,7 +759,7 @@ modules or further overriding functions that involve hooks.
 .IERC1271
 
 [.contract-subindex-inherited]
-.AccountCore
+.Account
 * `++AccountUnauthorized(sender)++`
 
 [.contract-subindex-inherited]

@@ -2,20 +2,27 @@
 
 pragma solidity ^0.8.24;
 
-import {PackedUserOperation} from "@openzeppelin/contracts/interfaces/draft-IERC4337.sol";
-import {AccountCore} from "../../account/AccountCore.sol";
+import {AbstractSigner} from "../../utils/cryptography/AbstractSigner.sol";
 import {Account} from "../../account/Account.sol";
 import {AccountERC7579} from "../../account/extensions/AccountERC7579.sol";
-import {ERC7821} from "../../account/extensions/ERC7821.sol";
-import {AbstractSigner} from "../../utils/cryptography/AbstractSigner.sol";
+import {ERC721Holder} from "@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol";
+import {ERC1155Holder} from "@openzeppelin/contracts/token/ERC1155/utils/ERC1155Holder.sol";
 import {ERC7739} from "../../utils/cryptography/ERC7739.sol";
+import {PackedUserOperation} from "@openzeppelin/contracts/interfaces/draft-IERC4337.sol";
 import {SignerERC7702} from "../../utils/cryptography/SignerERC7702.sol";
 
-abstract contract AccountERC7702WithModulesMock is Account, AccountERC7579, SignerERC7702 {
+abstract contract AccountERC7702WithModulesMock is
+    Account,
+    AccountERC7579,
+    SignerERC7702,
+    ERC7739,
+    ERC721Holder,
+    ERC1155Holder
+{
     function _validateUserOp(
         PackedUserOperation calldata userOp,
         bytes32 userOpHash
-    ) internal virtual override(AccountCore, AccountERC7579) returns (uint256) {
+    ) internal virtual override(Account, AccountERC7579) returns (uint256) {
         return super._validateUserOp(userOp, userOpHash);
     }
 
