@@ -89,41 +89,32 @@ abstract contract PaymasterERC20 is PaymasterCore {
         }
     }
 
-    /**
-     * @dev Internal function that returns the repayment details for a given user operation
+   /**
+     * @dev Retrieves payment details for a user operation
      *
-     * Returns values are
-     * * `validationData`: standard ERC-4337 validation data. This allows to specify that the fetching was
-     *   unsuccessful. If also includes `validAfter` and `validUntil` that can be used to restrict the time validity
-     *   of the the information being passed (if the tokenPrice expires)
-     * * `token`: the address of the ERC-20 token used for payment, by the user to the paymaster.
-     * * `tokenPrice`: the price, in native currency, of the token being used for payments. This is a fixed point
-     *    value which scaling is described by the {_tokenPriceDenominator} function.
-     * * `guarantor`: the address of a guarantor that can advance the funds if a user doesn't have them, and will
-     *   receive the tokens necessary for payment as part of the user operation execution. If the user doesn't get
-     *   the funds, or doesn't approve them to the paymaster, then the guarantor will be the one paying the for the
-     *   user operation.
+     * The values returned by this internal function are:
+     * * `validationData`: ERC-4337 validation data, indicating success/failure and optional time validity (`validAfter`, `validUntil`).
+     * * `token`: Address of the ERC-20 token used for payment to the paymaster.
+     * * `tokenPrice`: Price of the token in native currency, scaled by `_tokenPriceDenominator()`.
+     * * `guarantor`: Address of an entity advancing funds if the user lacks them; receives tokens during execution or pays if the user can't.
      *
-     * Example of token price:
-     * Lets say the token used for payment is USDC (worth $1) and we are one ethereum mainnet, where the native
-     * currency is ETH (worth $2524.86 in this example). Each USDC token is worth 0.0003960615638094785 ETH. Given
-     * that USDC has 6 decimal places, and that each ETH is composed of 1e18 WEI, each USDC "unit" is worth
-     * 396061563.8094785 WEI. With {_tokenPriceDenominator} being set to `1e18` (default value), then the `tokenPrice`
-     * should be 396061563809478515454115840.
+     * ==== Calculating the token price
      *
-     * General formula is:
-     * (<ERC-20 token price in $> / 10**<ERC-20 decimals>)/(<Native token price in $> / 1e18) * <_tokenPriceDenominator>
+     * Given gas fees are paid in native currency, developers can use the `ERC20 price unit / native price unit` ratio to
+     * calculate the price of an ERC20 token price in native currency. However, the token may have a different number of decimals
+     * than the native currency. For a a generalized formula considering prices in USD and decimals, consider using:
      *
-     * This function may be implemented in any number of ways, including
-     * * Hardcoding the address of the token (only one token supported)
-     * * Getting the price from an onchain oracle
-     * * Getting the (signed) values through the userOp's paymasterData
+     * `(<ERC-20 token price in $> / 10**<ERC-20 decimals>) / (<Native token price in $> / 1e18) * _tokenPriceDenominator()`
      *
-     * The paymaster can also decide to not support guarantors, and always return address(0) for that part.
+     * For example, suppose token is USDC ($1 with 6 decimals) and native currency is ETH (assuming $2524.86 with 18 decimals),
+     * then each unit (1e-6) of USDC is worth `(1 / 1e6) / ((252486 / 1e2) / 1e18) = 396061563.8094785` wei. The `_tokenPriceDenominator()`
+     * ensures precision by avoiding fractional value loss. (i.e. the 0.8094785 part).
      *
-     * NOTE: If a guarantor is supported, make sure that it can't be used arbitrarily to pay operations.
-     * Concretely, if the guarantor is extracted from the `userOp`, make sure that it provided explicit consent to
-     * support that user operation, for example by verifying a signature.
+     * ==== Guarantor
+     *
+     * To support a guarantor, developers can use the `paymasterData` field to store the guarantor's address. Developers can disable
+     * support for a guarantor by returning `address(0)`. If supported, ensure explicit consent (e.g., signature verification) to prevent
+     * unauthorized use.
      */
     function _fetchDetails(
         PackedUserOperation calldata userOp,
