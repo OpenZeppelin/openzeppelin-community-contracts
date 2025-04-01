@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.24;
+pragma solidity ^0.8.27;
 
 import {IERC7579Hook, MODULE_TYPE_HOOK} from "@openzeppelin/contracts/interfaces/draft-IERC7579.sol";
 import {ERC7579Utils, Mode} from "@openzeppelin/contracts/account/utils/draft-ERC7579Utils.sol";
@@ -21,6 +21,9 @@ import {AccountERC7579} from "./AccountERC7579.sol";
 abstract contract AccountERC7579Hooked is AccountERC7579 {
     address private _hook;
 
+    /// @dev A hook module is already present. This contract only supports one hook module.
+    error ERC7579HookModuleAlreadyPresent(address hook);
+
     /**
      * @dev Calls {IERC7579Hook-preCheck} before executing the modified function and {IERC7579Hook-postCheck}
      * thereafter.
@@ -33,6 +36,12 @@ abstract contract AccountERC7579Hooked is AccountERC7579 {
         if (hook_ != address(0)) hookData = IERC7579Hook(hook_).preCheck(msg.sender, msg.value, msg.data);
         _;
         if (hook_ != address(0)) IERC7579Hook(hook_).postCheck(hookData);
+    }
+
+    /// @inheritdoc AccountERC7579
+    function accountId() public view virtual override returns (string memory) {
+        // vendorname.accountname.semver
+        return "@openzeppelin/community-contracts.AccountERC7579Hooked.v0.0.0";
     }
 
     /// @dev Returns the hook module address if installed, or `address(0)` otherwise.
@@ -63,7 +72,7 @@ abstract contract AccountERC7579Hooked is AccountERC7579 {
         bytes memory initData
     ) internal virtual override withHook {
         if (moduleTypeId == MODULE_TYPE_HOOK) {
-            require(_hook == address(0), ERC7579Utils.ERC7579AlreadyInstalledModule(moduleTypeId, module));
+            require(_hook == address(0), ERC7579HookModuleAlreadyPresent(_hook));
             _hook = module;
         }
         super._installModule(moduleTypeId, module, initData);

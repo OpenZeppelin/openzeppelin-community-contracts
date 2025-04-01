@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.24;
+pragma solidity ^0.8.27;
 
 import {PackedUserOperation} from "@openzeppelin/contracts/interfaces/draft-IERC4337.sol";
 import {IERC1271} from "@openzeppelin/contracts/interfaces/IERC1271.sol";
@@ -19,7 +19,7 @@ import {Account} from "../Account.sol";
  * To comply with the ERC-1271 support requirement, this contract defers signature validation to
  * installed validator modules by calling {IERC7579Validator-isValidSignatureWithSender}.
  *
- * This contract does not implement validation logic for user operations since these functionality
+ * This contract does not implement validation logic for user operations since this functionality
  * is often delegated to self-contained validation modules. Developers must install a validator module
  * upon initialization (or any other mechanism to enable execution from the account):
  *
@@ -40,7 +40,12 @@ import {Account} from "../Account.sol";
  *   internal virtual functions {_extractUserOpValidator} and {_extractSignatureValidator}. Both are implemented
  *   following common practices. However, this part is not standardized in ERC-7579 (or in any follow-up ERC). Some
  *   accounts may want to override these internal functions.
+ * * When combined with {ERC7739}, resolution ordering of {isValidSignature} may have an impact ({ERC7739} does not
+ *   call super). Manual resolution might be necessary.
+ * * Static calls (using callType `0xfe`) are currently NOT supported.
  * ====
+ *
+ * WARNING: Removing all validator modules will render the account inoperable, as no user operations can be validated thereafter.
  */
 abstract contract AccountERC7579 is Account, IERC1271, IERC7579Execution, IERC7579AccountConfig, IERC7579ModuleConfig {
     using Bytes for *;
@@ -163,8 +168,8 @@ abstract contract AccountERC7579 is Account, IERC1271, IERC7579Execution, IERC75
      * @dev Implement ERC-1271 through IERC7579Validator modules. If module based validation fails, fallback to
      * "native" validation by the abstract signer.
      *
-     * NOTE: when combined with {ERC7739} (for example through {Account}), resolution ordering may have an impact
-     * ({ERC7739} does not call super). Manual resolution might be necessary.
+     * NOTE: when combined with {ERC7739}, resolution ordering may have an impact ({ERC7739} does not call super).
+     * Manual resolution might be necessary.
      */
     function isValidSignature(bytes32 hash, bytes calldata signature) public view virtual returns (bytes4) {
         // check signature length is enough for extraction
@@ -173,10 +178,10 @@ abstract contract AccountERC7579 is Account, IERC1271, IERC7579Execution, IERC75
             // if module is not installed, skip
             if (isModuleInstalled(MODULE_TYPE_VALIDATOR, module, Calldata.emptyBytes())) {
                 // try validation, skip any revert
-                try IERC7579Validator(module).isValidSignatureWithSender(address(this), hash, innerSignature) returns (
+                try IERC7579Validator(module).isValidSignatureWithSender(msg.sender, hash, innerSignature) returns (
                     bytes4 magic
                 ) {
-                    if (magic == IERC1271.isValidSignature.selector) return magic;
+                    return magic;
                 } catch {}
             }
         }
@@ -220,8 +225,8 @@ abstract contract AccountERC7579 is Account, IERC1271, IERC7579Execution, IERC75
     /**
      * @dev Installs a module of the given type with the given initialization data.
      *
-     * For the fallback module type, the `initData` is expected to be a tuple of a 4-byte selector and the
-     * rest of the data to be sent to the handler when calling {IERC7579Module-onInstall}.
+     * For the fallback module type, the `initData` is expected to be the (packed) concatenation of a 4-byte
+     * selector and the rest of the data to be sent to the handler when calling {IERC7579Module-onInstall}.
      *
      * Requirements:
      *
@@ -259,14 +264,16 @@ abstract contract AccountERC7579 is Account, IERC1271, IERC7579Execution, IERC75
     /**
      * @dev Uninstalls a module of the given type with the given de-initialization data.
      *
-     * For the fallback module type, the `deInitData` is expected to be a tuple of a 4-byte selector and the
-     * rest of the data to be sent to the handler when calling {IERC7579Module-onUninstall}.
+     * For the fallback module type, the `deInitData` is expected to be the (packed) concatenation of a 4-byte
+     * selector and the rest of the data to be sent to the handler when calling {IERC7579Module-onUninstall}.
      *
      * Requirements:
      *
      * * Module must be already installed. Reverts with {ERC7579UninstalledModule} otherwise.
      */
     function _uninstallModule(uint256 moduleTypeId, address module, bytes memory deInitData) internal virtual {
+        require(supportsModule(moduleTypeId), ERC7579Utils.ERC7579UnsupportedModuleType(moduleTypeId));
+
         if (moduleTypeId == MODULE_TYPE_VALIDATOR) {
             require(_validators.remove(module), ERC7579Utils.ERC7579UninstalledModule(moduleTypeId, module));
         } else if (moduleTypeId == MODULE_TYPE_EXECUTOR) {
@@ -336,9 +343,10 @@ abstract contract AccountERC7579 is Account, IERC1271, IERC7579Execution, IERC75
      * ```
      * <module address (20 bytes)> | <key (4 bytes)> | <nonce (8 bytes)>
      * ```
-     * NOTE: The default behavior of this function replicated the behavior of
-     * https://github.com/rhinestonewtf/safe7579/blob/bb29e8b1a66658790c4169e72608e27d220f79be/src/Safe7579.sol#L266[Safe adapter] and
-     * https://github.com/etherspot/etherspot-prime-contracts/blob/cfcdb48c4172cea0d66038324c0bae3288aa8caa/src/modular-etherspot-wallet/wallet/ModularEtherspotWallet.sol#L227[Etherspot's Prime Account].
+     * NOTE: The default behavior of this function replicates the behavior of
+     * https://github.com/rhinestonewtf/safe7579/blob/bb29e8b1a66658790c4169e72608e27d220f79be/src/Safe7579.sol#L266[Safe adapter],
+     * https://github.com/etherspot/etherspot-prime-contracts/blob/cfcdb48c4172cea0d66038324c0bae3288aa8caa/src/modular-etherspot-wallet/wallet/ModularEtherspotWallet.sol#L227[Etherspot's Prime Account], and
+     * https://github.com/erc7579/erc7579-implementation/blob/16138d1afd4e9711f6c1425133538837bd7787b5/src/MSAAdvanced.sol#L247[ERC7579 reference implementation].
      *
      * This is not standardized in ERC-7579 (or in any follow-up ERC). Some accounts may want to override these internal functions.
      *
@@ -359,10 +367,11 @@ abstract contract AccountERC7579 is Account, IERC1271, IERC7579Execution, IERC75
      * <module address (20 bytes)> | <signature data>
      * ```
      *
-     * NOTE: The default behavior of this function replicated the behavior of
+     * NOTE: The default behavior of this function replicates the behavior of
      * https://github.com/rhinestonewtf/safe7579/blob/bb29e8b1a66658790c4169e72608e27d220f79be/src/Safe7579.sol#L350[Safe adapter],
-     * https://github.com/bcnmy/nexus/blob/54f4e19baaff96081a8843672977caf712ef19f4/contracts/Nexus.sol#L239[Biconomy's Nexus] and
-     * https://github.com/etherspot/etherspot-prime-contracts/blob/cfcdb48c4172cea0d66038324c0bae3288aa8caa/src/modular-etherspot-wallet/wallet/ModularEtherspotWallet.sol#L252[Etherspot's Prime Account]
+     * https://github.com/bcnmy/nexus/blob/54f4e19baaff96081a8843672977caf712ef19f4/contracts/Nexus.sol#L239[Biconomy's Nexus],
+     * https://github.com/etherspot/etherspot-prime-contracts/blob/cfcdb48c4172cea0d66038324c0bae3288aa8caa/src/modular-etherspot-wallet/wallet/ModularEtherspotWallet.sol#L252[Etherspot's Prime Account], and
+     * https://github.com/erc7579/erc7579-implementation/blob/16138d1afd4e9711f6c1425133538837bd7787b5/src/MSAAdvanced.sol#L296[ERC7579 reference implementation].
      *
      * This is not standardized in ERC-7579 (or in any follow-up ERC). Some accounts may want to override these internal functions.
      */
@@ -375,10 +384,10 @@ abstract contract AccountERC7579 is Account, IERC1271, IERC7579Execution, IERC75
     /**
      * @dev Extract the function selector from initData/deInitData for MODULE_TYPE_FALLBACK
      *
-     * NOTE: If we had calldata here, we would could use calldata slice which are cheaper to manipulate and don't
-     * require actual copy. However, this would require `_installModule` to get a calldata bytes object instead of a
-     * memory bytes object. This would prevent calling `_installModule` from a contract constructor and would force
-     * the use of external initializers. That may change in the future, as most accounts will probably be deployed as
+     * NOTE: If we had calldata here, we could use calldata slice which are cheaper to manipulate and don't require
+     * actual copy. However, this would require `_installModule` to get a calldata bytes object instead of a memory
+     * bytes object. This would prevent calling `_installModule` from a contract constructor and would force the use
+     * of external initializers. That may change in the future, as most accounts will probably be deployed as
      * clones/proxy/ERC-7702 delegates and therefore rely on initializers anyway.
      */
     function _decodeFallbackData(
