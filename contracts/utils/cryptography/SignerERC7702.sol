@@ -10,7 +10,7 @@ import {AbstractSigner} from "./AbstractSigner.sol";
  */
 abstract contract SignerERC7702 is AbstractSigner {
     /**
-     * @dev Validates the signature using the EOA's address (ie. `address(this)`).
+     * @dev Validates the signature using the EOA's address (i.e. `address(this)`).
      */
     function _rawSignatureValidation(
         bytes32 hash,

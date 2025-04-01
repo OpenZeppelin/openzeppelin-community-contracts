@@ -14,6 +14,7 @@
 :Account: pass:normal[xref:account.adoc#Account[`Account`]]
 :AbstractSigner: pass:normal[xref:utils.adoc#AbstractSigner[`AbstractSigner`]]
 :Account: pass:normal[xref:account.adoc#Account[`Account`]]
+:AbstractSigner-_rawSignatureValidation: pass:normal[xref:utils.adoc#AbstractSigner-_rawSignatureValidation-bytes32-bytes-[`AbstractSigner._rawSignatureValidation`]]
 = Utilities
 
 [.readme-notice]
@@ -142,7 +143,6 @@ A nested EIP-712 type might be presented in 2 different ways:
 - As a nested EIP-712 typed data
 - As a _personal_ signature (an EIP-712 mimic of the `eth_personalSign` for a smart contract)
 
-:InvalidContentsType: pass:normal[xref:#ERC7739Utils-InvalidContentsType--[`++InvalidContentsType++`]]
 :encodeTypedDataSig: pass:normal[xref:#ERC7739Utils-encodeTypedDataSig-bytes-bytes32-bytes32-string-[`++encodeTypedDataSig++`]]
 :decodeTypedDataSig: pass:normal[xref:#ERC7739Utils-decodeTypedDataSig-bytes-[`++decodeTypedDataSig++`]]
 :personalSignStructHash: pass:normal[xref:#ERC7739Utils-personalSignStructHash-bytes32-[`++personalSignStructHash++`]]
@@ -185,17 +185,10 @@ example specified for https://docs.openzeppelin.com/contracts/api/utils#EIP712[E
 * `++encodeTypedDataSig(signature, appSeparator, contentsHash, contentsDescr)++`
 * `++decodeTypedDataSig(encodedSignature)++`
 * `++personalSignStructHash(contents)++`
-* `++typedDataSignStructHash(contentsTypeName, contentsType, contentsHash, domainBytes)++`
+* `++typedDataSignStructHash(contentsName, contentsType, contentsHash, domainBytes)++`
 * `++typedDataSignStructHash(contentsDescr, contentsHash, domainBytes)++`
-* `++typedDataSignTypehash(contentsTypeName, contentsType)++`
+* `++typedDataSignTypehash(contentsName, contentsType)++`
 * `++decodeContentsDescr(contentsDescr)++`
-
---
-
-[.contract-index]
-.Errors
---
-* `++InvalidContentsType()++`
 
 --
 
@@ -215,18 +208,23 @@ Parses a nested signature into its components.
 
 Constructed as follows:
 
-`signature ‖ DOMAIN_SEPARATOR ‖ contentsHash ‖ contentsDescr ‖ uint16(contentsDescr.length)`
+`signature ‖ APP_DOMAIN_SEPARATOR ‖ contentsHash ‖ contentsDescr ‖ uint16(contentsDescr.length)`
 
-- `signature` is the original signature for the nested struct hash that includes the "contents" hash
-- `DOMAIN_SEPARATOR` is the EIP-712 {EIP712-_domainSeparatorV4} of the smart contract verifying the signature
-- `contentsHash` is the hash of the underlying data structure or message
-- `contentsDescr` is a descriptor of the "contents" part of the the EIP-712 type of the nested signature
+- `signature` is the signature for the (ERC-7739) nested struct hash. This signature indirectly signs over the
+  original "contents" hash (from the app) and the account's domain separator.
+- `APP_DOMAIN_SEPARATOR` is the EIP-712 {EIP712-_domainSeparatorV4} of the application smart contract that is
+  requesting the signature verification (though ERC-1271).
+- `contentsHash` is the hash of the underlying data structure or message.
+- `contentsDescr` is a descriptor of the "contents" part of the the EIP-712 type of the nested signature.
+
+NOTE: This function returns empty if the input format is invalid instead of reverting.
+data instead.
 
 [.contract-item]
 [[ERC7739Utils-personalSignStructHash-bytes32-]]
 ==== `[.contract-item-name]#++personalSignStructHash++#++(bytes32 contents) → bytes32++` [.item-kind]#internal#
 
-Nests an `ERC-191` digest into a `PersonalSign` EIP-712 struct, and return the corresponding struct hash.
+Nests an `ERC-191` digest into a `PersonalSign` EIP-712 struct, and returns the corresponding struct hash.
 This struct hash must be combined with a domain separator, using {MessageHashUtils-toTypedDataHash} before
 being verified/recovered.
 
@@ -234,9 +232,9 @@ This is used to simulates the `personal_sign` RPC method in the context of smart
 
 [.contract-item]
 [[ERC7739Utils-typedDataSignStructHash-string-string-bytes32-bytes-]]
-==== `[.contract-item-name]#++typedDataSignStructHash++#++(string contentsTypeName, string contentsType, bytes32 contentsHash, bytes domainBytes) → bytes32 result++` [.item-kind]#internal#
+==== `[.contract-item-name]#++typedDataSignStructHash++#++(string contentsName, string contentsType, bytes32 contentsHash, bytes domainBytes) → bytes32 result++` [.item-kind]#internal#
 
-Nests an `EIP-712` hash (`contents`) into a `TypedDataSign` EIP-712 struct, and return the corresponding
+Nests an `EIP-712` hash (`contents`) into a `TypedDataSign` EIP-712 struct, and returns the corresponding
 struct hash. This struct hash must be combined with a domain separator, using {MessageHashUtils-toTypedDataHash}
 before being verified/recovered.
 
@@ -244,33 +242,27 @@ before being verified/recovered.
 [[ERC7739Utils-typedDataSignStructHash-string-bytes32-bytes-]]
 ==== `[.contract-item-name]#++typedDataSignStructHash++#++(string contentsDescr, bytes32 contentsHash, bytes domainBytes) → bytes32 result++` [.item-kind]#internal#
 
-Variant of {typedDataSignStructHash-string-string-bytes32-string-bytes} that takes a content descriptor
-and decodes the `contentsTypeName` and `contentsType` out of it.
+Variant of {typedDataSignStructHash-string-string-bytes32-bytes} that takes a content descriptor
+and decodes the `contentsName` and `contentsType` out of it.
 
 [.contract-item]
 [[ERC7739Utils-typedDataSignTypehash-string-string-]]
-==== `[.contract-item-name]#++typedDataSignTypehash++#++(string contentsTypeName, string contentsType) → bytes32++` [.item-kind]#internal#
+==== `[.contract-item-name]#++typedDataSignTypehash++#++(string contentsName, string contentsType) → bytes32++` [.item-kind]#internal#
 
 Compute the EIP-712 typehash of the `TypedDataSign` structure for a given type (and typename).
 
 [.contract-item]
 [[ERC7739Utils-decodeContentsDescr-string-]]
-==== `[.contract-item-name]#++decodeContentsDescr++#++(string contentsDescr) → string contentsTypeName, string contentsType++` [.item-kind]#internal#
+==== `[.contract-item-name]#++decodeContentsDescr++#++(string contentsDescr) → string contentsName, string contentsType++` [.item-kind]#internal#
 
 Parse the type name out of the ERC-7739 contents type description. Supports both the implicit and explicit
 modes.
 
-Following ERC-7739 specifications, a `contentsTypeName` is considered invalid if it's empty or it contains
+Following ERC-7739 specifications, a `contentsName` is considered invalid if it's empty or it contains
 any of the following bytes , )\x00
 
 If the `contentsType` is invalid, this returns an empty string. Otherwise, the return string has non-zero
 length.
-
-[.contract-item]
-[[ERC7739Utils-InvalidContentsType--]]
-==== `[.contract-item-name]#++InvalidContentsType++#++()++` [.item-kind]#error#
-
-Error when the contents type is invalid. See {tryValidateContentsType}.
 
 :_setSigner: pass:normal[xref:#SignerECDSA-_setSigner-address-[`++_setSigner++`]]
 :signer: pass:normal[xref:#SignerECDSA-signer--[`++signer++`]]
@@ -288,8 +280,8 @@ import "@openzeppelin/community-contracts/utils/cryptography/SignerECDSA.sol";
 Implementation of {AbstractSigner} using
 https://docs.openzeppelin.com/contracts/api/utils#ECDSA[ECDSA] signatures.
 
-For {Account} usage, an {_setSigner} function is provided to set the {signer} address.
-Doing so it's easier for a factory, whose likely to use initializable clones of this contract.
+For {Account} usage, a {_setSigner} function is provided to set the {signer} address.
+Doing so is easier for a factory, who is likely to use initializable clones of this contract.
 
 Example of usage:
 
@@ -303,7 +295,7 @@ contract MyAccountECDSA is Account, SignerECDSA, Initializable {
 }
 ```
 
-IMPORTANT: Avoiding to call {_setSigner} either during construction (if used standalone)
+IMPORTANT: Failing to call {_setSigner} either during construction (if used standalone)
 or during initialization (if used as a clone) may leave the signer either front-runnable or unusable.
 
 [.contract-index]
@@ -323,7 +315,7 @@ or during initialization (if used as a clone) may leave the signer either front-
 ==== `[.contract-item-name]#++_setSigner++#++(address signerAddr)++` [.item-kind]#internal#
 
 Sets the signer with the address of the native signer. This function should be called during construction
-or through an initializater.
+or through an initializer.
 
 [.contract-item]
 [[SignerECDSA-signer--]]
@@ -359,8 +351,8 @@ import "@openzeppelin/community-contracts/utils/cryptography/SignerP256.sol";
 Implementation of {AbstractSigner} using
 https://docs.openzeppelin.com/contracts/api/utils#P256[P256] signatures.
 
-For {Account} usage, an {_setSigner} function is provided to set the {signer} public key.
-Doing so it's easier for a factory, whose likely to use initializable clones of this contract.
+For {Account} usage, a {_setSigner} function is provided to set the {signer} public key.
+Doing so is easier for a factory, who is likely to use initializable clones of this contract.
 
 Example of usage:
 
@@ -374,7 +366,7 @@ contract MyAccountP256 is Account, SignerP256, Initializable {
 }
 ```
 
-IMPORTANT: Avoiding to call {_setSigner} either during construction (if used standalone)
+IMPORTANT: Failing to call {_setSigner} either during construction (if used standalone)
 or during initialization (if used as a clone) may leave the signer either front-runnable or unusable.
 
 [.contract-index]
@@ -404,7 +396,7 @@ or during initialization (if used as a clone) may leave the signer either front-
 ==== `[.contract-item-name]#++_setSigner++#++(bytes32 qx, bytes32 qy)++` [.item-kind]#internal#
 
 Sets the signer with a P256 public key. This function should be called during construction
-or through an initializater.
+or through an initializer.
 
 [.contract-item]
 [[SignerP256-signer--]]
@@ -443,8 +435,8 @@ import "@openzeppelin/community-contracts/utils/cryptography/SignerRSA.sol";
 Implementation of {AbstractSigner} using
 https://docs.openzeppelin.com/contracts/api/utils#RSA[RSA] signatures.
 
-For {Account} usage, an {_setSigner} function is provided to set the {signer} public key.
-Doing so it's easier for a factory, whose likely to use initializable clones of this contract.
+For {Account} usage, a {_setSigner} function is provided to set the {signer} public key.
+Doing so is easier for a factory, who is likely to use initializable clones of this contract.
 
 Example of usage:
 
@@ -458,7 +450,7 @@ contract MyAccountRSA is Account, SignerRSA, Initializable {
 }
 ```
 
-IMPORTANT: Avoiding to call {_setSigner} either during construction (if used standalone)
+IMPORTANT: Failing to call {_setSigner} either during construction (if used standalone)
 or during initialization (if used as a clone) may leave the signer either front-runnable or unusable.
 
 [.contract-index]
@@ -478,7 +470,7 @@ or during initialization (if used as a clone) may leave the signer either front-
 ==== `[.contract-item-name]#++_setSigner++#++(bytes e, bytes n)++` [.item-kind]#internal#
 
 Sets the signer with a RSA public key. This function should be called during construction
-or through an initializater.
+or through an initializer.
 
 [.contract-item]
 [[SignerRSA-signer--]]
@@ -490,12 +482,12 @@ Return the signer's RSA public key.
 [[SignerRSA-_rawSignatureValidation-bytes32-bytes-]]
 ==== `[.contract-item-name]#++_rawSignatureValidation++#++(bytes32 hash, bytes signature) → bool++` [.item-kind]#internal#
 
-Signature validation algorithm.
+See {AbstractSigner-_rawSignatureValidation}. Verifies a PKCSv1.5 signature by calling
+https://docs.openzeppelin.com/contracts/5.x/api/utils#RSA-pkcs1Sha256-bytes-bytes-bytes-bytes-[RSA.pkcs1Sha256].
 
-WARNING: Implementing a signature validation algorithm is a security-sensitive operation as it involves
-cryptographic verification. It is important to review and test thoroughly before deployment. Consider
-using one of the signature verification libraries (https://docs.openzeppelin.com/contracts/api/utils#ECDSA[ECDSA],
-https://docs.openzeppelin.com/contracts/api/utils#P256[P256] or https://docs.openzeppelin.com/contracts/api/utils#RSA[RSA]).
+IMPORTANT: Following the RSASSA-PKCS1-V1_5-VERIFY procedure outlined in RFC8017 (section 8.2.2), the
+provided `hash` is used as the `M` (message) and rehashed using SHA256 according to EMSA-PKCS1-v1_5
+encoding as per section 9.2 (step 1) of the RFC.
 
 == Libraries
 

@@ -11,7 +11,8 @@
 :Account: pass:normal[xref:account.adoc#Account[`Account`]]
 :AccountERC7579Hooked: pass:normal[xref:account.adoc#AccountERC7579Hooked[`AccountERC7579Hooked`]]
 :ERC7739: pass:normal[xref:utils.adoc#ERC7739[`ERC7739`]]
-:Account: pass:normal[xref:account.adoc#Account[`Account`]]
+:ERC7739: pass:normal[xref:utils.adoc#ERC7739[`ERC7739`]]
+:ERC7739: pass:normal[xref:utils.adoc#ERC7739[`ERC7739`]]
 :ERC7739: pass:normal[xref:utils.adoc#ERC7739[`ERC7739`]]
 :Account-_validateUserOp: pass:normal[xref:account.adoc#Account-_validateUserOp-struct-PackedUserOperation-bytes32-[`Account._validateUserOp`]]
 :AccountERC7579: pass:normal[xref:account.adoc#AccountERC7579[`AccountERC7579`]]
@@ -248,7 +249,7 @@ Extension of {Account} that implements support for ERC-7579 modules.
 To comply with the ERC-1271 support requirement, this contract defers signature validation to
 installed validator modules by calling {IERC7579Validator-isValidSignatureWithSender}.
 
-This contract does not implement validation logic for user operations since these functionality
+This contract does not implement validation logic for user operations since this functionality
 is often delegated to self-contained validation modules. Developers must install a validator module
 upon initialization (or any other mechanism to enable execution from the account):
 
@@ -269,7 +270,12 @@ contract MyAccountERC7579 is AccountERC7579, Initializable {
   internal virtual functions {_extractUserOpValidator} and {_extractSignatureValidator}. Both are implemented
   following common practices. However, this part is not standardized in ERC-7579 (or in any follow-up ERC). Some
   accounts may want to override these internal functions.
+* When combined with {ERC7739}, resolution ordering of {isValidSignature} may have an impact ({ERC7739} does not
+  call super). Manual resolution might be necessary.
+* Static calls (using callType `0xfe`) are currently NOT supported.
 ====
+
+WARNING: Removing all validator modules will render the account inoperable, as no user operations can be validated thereafter.
 
 [.contract-index]
 .Modifiers
@@ -472,8 +478,8 @@ Executes a transaction on behalf of the account.
 Implement ERC-1271 through IERC7579Validator modules. If module based validation fails, fallback to
 "native" validation by the abstract signer.
 
-NOTE: when combined with {ERC7739} (for example through {Account}), resolution ordering may have an impact
-({ERC7739} does not call super). Manual resolution might be necessary.
+NOTE: when combined with {ERC7739}, resolution ordering may have an impact ({ERC7739} does not call super).
+Manual resolution might be necessary.
 
 [.contract-item]
 [[AccountERC7579-_validateUserOp-struct-PackedUserOperation-bytes32-]]
@@ -499,8 +505,8 @@ Reverts if the call type is not supported.
 
 Installs a module of the given type with the given initialization data.
 
-For the fallback module type, the `initData` is expected to be a tuple of a 4-byte selector and the
-rest of the data to be sent to the handler when calling {IERC7579Module-onInstall}.
+For the fallback module type, the `initData` is expected to be the (packed) concatenation of a 4-byte
+selector and the rest of the data to be sent to the handler when calling {IERC7579Module-onInstall}.
 
 Requirements:
 
@@ -516,8 +522,8 @@ Emits a {ModuleInstalled} event.
 
 Uninstalls a module of the given type with the given de-initialization data.
 
-For the fallback module type, the `deInitData` is expected to be a tuple of a 4-byte selector and the
-rest of the data to be sent to the handler when calling {IERC7579Module-onUninstall}.
+For the fallback module type, the `deInitData` is expected to be the (packed) concatenation of a 4-byte
+selector and the rest of the data to be sent to the handler when calling {IERC7579Module-onUninstall}.
 
 Requirements:
 
@@ -557,9 +563,10 @@ To construct a nonce key, set nonce as follows:
 ```
 <module address (20 bytes)> | <key (4 bytes)> | <nonce (8 bytes)>
 ```
-NOTE: The default behavior of this function replicated the behavior of
-https://github.com/rhinestonewtf/safe7579/blob/bb29e8b1a66658790c4169e72608e27d220f79be/src/Safe7579.sol#L266[Safe adapter] and
-https://github.com/etherspot/etherspot-prime-contracts/blob/cfcdb48c4172cea0d66038324c0bae3288aa8caa/src/modular-etherspot-wallet/wallet/ModularEtherspotWallet.sol#L227[Etherspot's Prime Account].
+NOTE: The default behavior of this function replicates the behavior of
+https://github.com/rhinestonewtf/safe7579/blob/bb29e8b1a66658790c4169e72608e27d220f79be/src/Safe7579.sol#L266[Safe adapter],
+https://github.com/etherspot/etherspot-prime-contracts/blob/cfcdb48c4172cea0d66038324c0bae3288aa8caa/src/modular-etherspot-wallet/wallet/ModularEtherspotWallet.sol#L227[Etherspot's Prime Account], and
+https://github.com/erc7579/erc7579-implementation/blob/16138d1afd4e9711f6c1425133538837bd7787b5/src/MSAAdvanced.sol#L247[ERC7579 reference implementation].
 
 This is not standardized in ERC-7579 (or in any follow-up ERC). Some accounts may want to override these internal functions.
 
@@ -579,10 +586,11 @@ signature data:
 <module address (20 bytes)> | <signature data>
 ```
 
-NOTE: The default behavior of this function replicated the behavior of
+NOTE: The default behavior of this function replicates the behavior of
 https://github.com/rhinestonewtf/safe7579/blob/bb29e8b1a66658790c4169e72608e27d220f79be/src/Safe7579.sol#L350[Safe adapter],
-https://github.com/bcnmy/nexus/blob/54f4e19baaff96081a8843672977caf712ef19f4/contracts/Nexus.sol#L239[Biconomy's Nexus] and
-https://github.com/etherspot/etherspot-prime-contracts/blob/cfcdb48c4172cea0d66038324c0bae3288aa8caa/src/modular-etherspot-wallet/wallet/ModularEtherspotWallet.sol#L252[Etherspot's Prime Account]
+https://github.com/bcnmy/nexus/blob/54f4e19baaff96081a8843672977caf712ef19f4/contracts/Nexus.sol#L239[Biconomy's Nexus],
+https://github.com/etherspot/etherspot-prime-contracts/blob/cfcdb48c4172cea0d66038324c0bae3288aa8caa/src/modular-etherspot-wallet/wallet/ModularEtherspotWallet.sol#L252[Etherspot's Prime Account], and
+https://github.com/erc7579/erc7579-implementation/blob/16138d1afd4e9711f6c1425133538837bd7787b5/src/MSAAdvanced.sol#L296[ERC7579 reference implementation].
 
 This is not standardized in ERC-7579 (or in any follow-up ERC). Some accounts may want to override these internal functions.
 
@@ -592,10 +600,10 @@ This is not standardized in ERC-7579 (or in any follow-up ERC). Some accounts ma
 
 Extract the function selector from initData/deInitData for MODULE_TYPE_FALLBACK
 
-NOTE: If we had calldata here, we would could use calldata slice which are cheaper to manipulate and don't
-require actual copy. However, this would require `_installModule` to get a calldata bytes object instead of a
-memory bytes object. This would prevent calling `_installModule` from a contract constructor and would force
-the use of external initializers. That may change in the future, as most accounts will probably be deployed as
+NOTE: If we had calldata here, we could use calldata slice which are cheaper to manipulate and don't require
+actual copy. However, this would require `_installModule` to get a calldata bytes object instead of a memory
+bytes object. This would prevent calling `_installModule` from a contract constructor and would force the use
+of external initializers. That may change in the future, as most accounts will probably be deployed as
 clones/proxy/ERC-7702 delegates and therefore rely on initializers anyway.
 
 [.contract-item]
@@ -610,7 +618,9 @@ By default, only use the modules for validation of userOp and signature. Disable
 
 The account's {fallback} was called with a selector that doesn't have an installed handler.
 
+:ERC7579HookModuleAlreadyPresent: pass:normal[xref:#AccountERC7579Hooked-ERC7579HookModuleAlreadyPresent-address-[`++ERC7579HookModuleAlreadyPresent++`]]
 :withHook: pass:normal[xref:#AccountERC7579Hooked-withHook--[`++withHook++`]]
+:accountId: pass:normal[xref:#AccountERC7579Hooked-accountId--[`++accountId++`]]
 :hook: pass:normal[xref:#AccountERC7579Hooked-hook--[`++hook++`]]
 :supportsModule: pass:normal[xref:#AccountERC7579Hooked-supportsModule-uint256-[`++supportsModule++`]]
 :isModuleInstalled: pass:normal[xref:#AccountERC7579Hooked-isModuleInstalled-uint256-address-bytes-[`++isModuleInstalled++`]]
@@ -648,6 +658,7 @@ modules or further overriding functions that involve hooks.
 [.contract-index]
 .Functions
 --
+* `++accountId()++`
 * `++hook()++`
 * `++supportsModule(moduleTypeId)++`
 * `++isModuleInstalled(moduleTypeId, module, data)++`
@@ -659,7 +670,6 @@ modules or further overriding functions that involve hooks.
 [.contract-subindex-inherited]
 .AccountERC7579
 * `++fallback()++`
-* `++accountId()++`
 * `++supportsExecutionMode(encodedMode)++`
 * `++installModule(moduleTypeId, module, initData)++`
 * `++uninstallModule(moduleTypeId, module, deInitData)++`
@@ -741,6 +751,7 @@ modules or further overriding functions that involve hooks.
 [.contract-index]
 .Errors
 --
+* `++ERC7579HookModuleAlreadyPresent(hook)++`
 
 [.contract-subindex-inherited]
 .AccountERC7579
@@ -776,6 +787,12 @@ modules or further overriding functions that involve hooks.
 
 Calls {IERC7579Hook-preCheck} before executing the modified function and {IERC7579Hook-postCheck}
 thereafter.
+
+[.contract-item]
+[[AccountERC7579Hooked-accountId--]]
+==== `[.contract-item-name]#++accountId++#++() → string++` [.item-kind]#public#
+
+Returns the account id of the smart account
 
 [.contract-item]
 [[AccountERC7579Hooked-hook--]]
@@ -819,6 +836,12 @@ Hooked version of {AccountERC7579-_execute}.
 
 Hooked version of {AccountERC7579-_fallback}.
 
+[.contract-item]
+[[AccountERC7579Hooked-ERC7579HookModuleAlreadyPresent-address-]]
+==== `[.contract-item-name]#++ERC7579HookModuleAlreadyPresent++#++(address hook)++` [.item-kind]#error#
+
+A hook module is already present. This contract only supports one hook module.
+
 :UnsupportedExecutionMode: pass:normal[xref:#ERC7821-UnsupportedExecutionMode--[`++UnsupportedExecutionMode++`]]
 :execute: pass:normal[xref:#ERC7821-execute-bytes32-bytes-[`++execute++`]]
 :supportsExecutionMode: pass:normal[xref:#ERC7821-supportsExecutionMode-bytes32-[`++supportsExecutionMode++`]]
@@ -833,7 +856,9 @@ Hooked version of {AccountERC7579-_fallback}.
 import "@openzeppelin/community-contracts/account/extensions/ERC7821.sol";
 ```
 
-Minimal batch executor following ERC-7821. Only supports basic mode (no optional "opData").
+Minimal batch executor following ERC-7821.
+
+Only supports supports single batch mode (`0x01000000000000000000`). Does not support optional "opData".
 
 [.contract-index]
 .Functions
@@ -864,7 +889,7 @@ Minimal batch executor following ERC-7821. Only supports basic mode (no optional
 Executes the calls in `executionData` with no optional `opData` support.
 
 NOTE: Access to this function is controlled by {_erc7821AuthorizedExecutor}. Changing access permissions, for
-example to approve calls by the ERC-4337 entrypoint, should be implement by overriding it.
+example to approve calls by the ERC-4337 entrypoint, should be implemented by overriding it.
 
 Reverts and bubbles up error if any call fails.
 
