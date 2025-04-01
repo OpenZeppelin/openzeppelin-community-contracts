@@ -7,7 +7,6 @@ import {IERC20, SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeE
 import {EIP712} from "@openzeppelin/contracts/utils/cryptography/EIP712.sol";
 import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 import {PaymasterCore} from "./PaymasterCore.sol";
-import {AbstractSigner} from "../../utils/cryptography/AbstractSigner.sol";
 
 /**
  * @dev Extension of {PaymasterCore} that enables users to pay gas with ERC-20 tokens.
