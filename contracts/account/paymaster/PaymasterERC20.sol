@@ -89,7 +89,7 @@ abstract contract PaymasterERC20 is PaymasterCore {
         }
     }
 
-   /**
+    /**
      * @dev Retrieves payment details for a user operation
      *
      * The values returned by this internal function are:
