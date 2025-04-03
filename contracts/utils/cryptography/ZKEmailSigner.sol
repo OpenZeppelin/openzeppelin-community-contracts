@@ -9,29 +9,27 @@ import {IVerifier, EmailProof} from "@zk-email/email-tx-builder/interfaces/IVeri
 import {EmailAuthMsg} from "@zk-email/email-tx-builder/interfaces/IEmailTypes.sol";
 import {CommandUtils} from "@zk-email/email-tx-builder/libraries/CommandUtils.sol";
 import {AbstractSigner} from "./AbstractSigner.sol";
+import {ZKEmailUtils} from "./ZKEmailUtils.sol";
 
 abstract contract ZKEmailSigner is AbstractSigner {
     using Strings for string;
+    using ZKEmailUtils for EmailAuthMsg;
 
     bytes32 private _accountSalt;
     IDKIMRegistry private _registry;
     IVerifier private _verifier;
     uint256 private _commandTemplate;
 
-    enum EmailProofError {
-        NoError,
-        CommandTemplate, // The template ID doesn't match
-        DKIMPublicKeyHash, // The DKIM public key hash verification fails
-        AccountSalt, // The account salt doesn't match
-        MaskedCommandLength, // The masked command length exceeds the maximum
-        SkippedCommandPrefixSize, // The skipped command prefix size is invalid
-        Command, // The command format is invalid
-        EmailProof // The email proof verification fails
-    }
+    /// @dev Proof verification error.
+    error InvalidEmailProof(ZKEmailUtils.EmailProofError err);
 
-    error InvalidEmailProof(EmailProofError err);
-
-    /// @dev Unique identifier for owner of this contract defined as a hash of an email address and an account code.
+    /*
+     * @dev Unique identifier for owner of this contract defined as a hash of an email address and an account code.
+     *
+     * An account code is a random integer in a finite scalar field of BN254 curve.
+     * It is a private randomness to derive a CREATE2 salt of the user’s Ethereum address
+     * from the email address, i.e., userEtherAddr := CREATE2(hash(userEmailAddr, accountCode)).
+     */
     function accountSalt() public view virtual returns (bytes32) {
         return _accountSalt;
     }
@@ -52,16 +50,23 @@ abstract contract ZKEmailSigner is AbstractSigner {
         return _commandTemplate;
     }
 
-    /// @dev Initialize the contract with the account salt, DKIM registry, verifier, and command template.
-    function _setUp(
-        bytes32 accountSalt_,
-        IDKIMRegistry registry_,
-        IVerifier verifier_,
-        uint256 commandTemplate_
-    ) internal virtual {
+    /// @dev Set the {accountSalt}.
+    function _setAccountSalt(bytes32 accountSalt_) internal virtual {
         _accountSalt = accountSalt_;
+    }
+
+    /// @dev Set the {DKIMRegistry} contract address.
+    function _setDKIMRegistry(IDKIMRegistry registry_) internal virtual {
         _registry = registry_;
+    }
+
+    /// @dev Set the {verifier} contract address.
+    function _setVerifier(IVerifier verifier_) internal virtual {
         _verifier = verifier_;
+    }
+
+    /// @dev Set the {commandTemplate} ID.
+    function _setCommandTemplate(uint256 commandTemplate_) internal virtual {
         _commandTemplate = commandTemplate_;
     }
 
@@ -72,7 +77,7 @@ abstract contract ZKEmailSigner is AbstractSigner {
      * to prevent replay attacks, similar to how nonces are used with ECDSA signatures.
      */
     function verifyEmail(EmailAuthMsg memory emailAuthMsg) public view virtual {
-        (bool verified, EmailProofError err) = _verifyEmail(emailAuthMsg);
+        (bool verified, ZKEmailUtils.EmailProofError err) = emailAuthMsg.isValidZKEmail(DKIMRegistry(), verifier());
         if (!verified) revert InvalidEmailProof(err);
     }
 
@@ -81,42 +86,16 @@ abstract contract ZKEmailSigner is AbstractSigner {
         bytes32 hash,
         bytes calldata signature
     ) internal view virtual override returns (bool) {
-        // signature is a serialized EmailAuthMsg
         EmailAuthMsg memory emailAuthMsg = abi.decode(signature, (EmailAuthMsg));
-        (bool verified, ) = _verifyEmail(emailAuthMsg);
-        return verified && abi.decode(emailAuthMsg.commandParams[0], (bytes32)) == hash;
-    }
-
-    /// @dev Internal function to verify an email authenticated message that doesn't revert and returns a boolean and the error instead.
-    function _verifyEmail(EmailAuthMsg memory emailAuthMsg) internal view virtual returns (bool, EmailProofError) {
-        if (commandTemplate() != emailAuthMsg.templateId) return (false, EmailProofError.CommandTemplate);
-        string[] memory signHashTemplate = new string[](2);
-        signHashTemplate[0] = "signHash";
-        signHashTemplate[1] = "{uint}";
-
-        if (!DKIMRegistry().isDKIMPublicKeyHashValid(emailAuthMsg.proof.domainName, emailAuthMsg.proof.publicKeyHash))
-            return (false, EmailProofError.DKIMPublicKeyHash);
-        if (accountSalt() != emailAuthMsg.proof.accountSalt) return (false, EmailProofError.AccountSalt);
-        if (bytes(emailAuthMsg.proof.maskedCommand).length > verifier().commandBytes())
-            return (false, EmailProofError.MaskedCommandLength);
-        if (emailAuthMsg.skippedCommandPrefix >= verifier().commandBytes())
-            return (false, EmailProofError.SkippedCommandPrefixSize);
-
-        // Construct an expectedCommand from template and the values of emailAuthMsg.commandParams.
-        string memory trimmedMaskedCommand = CommandUtils.removePrefix(
-            emailAuthMsg.proof.maskedCommand,
-            emailAuthMsg.skippedCommandPrefix
-        );
-        for (uint256 stringCase = 0; stringCase < 2; stringCase++) {
-            if (
-                CommandUtils.computeExpectedCommand(emailAuthMsg.commandParams, signHashTemplate, stringCase).equal(
-                    trimmedMaskedCommand
-                )
-            ) {
-                if (verifier().verifyEmailProof(emailAuthMsg.proof)) return (true, EmailProofError.NoError);
-                else return (false, EmailProofError.EmailProof);
-            }
+        if (
+            abi.decode(emailAuthMsg.commandParams[0], (bytes32)) == hash &&
+            emailAuthMsg.templateId == commandTemplate() &&
+            emailAuthMsg.proof.accountSalt == accountSalt()
+        ) {
+            (bool verified, ) = emailAuthMsg.isValidZKEmail(DKIMRegistry(), verifier());
+            return verified;
+        } else {
+            return false;
         }
-        return (false, EmailProofError.Command);
     }
 }
