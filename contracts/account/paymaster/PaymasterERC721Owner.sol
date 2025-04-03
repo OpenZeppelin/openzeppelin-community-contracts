@@ -27,11 +27,6 @@ abstract contract PaymasterERC721Owner is PaymasterCore {
         return _token;
     }
 
-    /// @dev Minimum balance necessary. Default: 1 (having a single token is sufficient).
-    function minimumBalance() public view virtual returns (uint256) {
-        return 1;
-    }
-
     /// @dev Sets the ERC-721 token used to validate the user operation.
     function _setToken(IERC721 token_) internal virtual {
         _token = token_;
@@ -54,7 +49,7 @@ abstract contract PaymasterERC721Owner is PaymasterCore {
             bytes(""),
             // balanceOf reverts if the `userOp.sender` is the address(0), so this becomes unreachable with address(0)
             // assuming a compliant entrypoint (`_validatePaymasterUserOp` is called after `validateUserOp`),
-            token().balanceOf(userOp.sender) < minimumBalance()
+            token().balanceOf(userOp.sender) == 0
                 ? ERC4337Utils.SIG_VALIDATION_FAILED
                 : ERC4337Utils.SIG_VALIDATION_SUCCESS
         );
