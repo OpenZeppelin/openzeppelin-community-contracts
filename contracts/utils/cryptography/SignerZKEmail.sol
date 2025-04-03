@@ -26,7 +26,7 @@ import {ZKEmailUtils} from "./ZKEmailUtils.sol";
  * Example of usage:
  *
  * ```solidity
- * contract MyAccountZKEmail is Account, ZKEmailSigner, Initializable {
+ * contract MyAccountZKEmail is Account, SignerZKEmail, Initializable {
  *     constructor(bytes32 accountSalt, IDKIMRegistry registry, IVerifier verifier, uint256 templateId) {
  *       // Will revert if the signer is already initialized
  *       _setAccountSalt(accountSalt);
@@ -41,7 +41,7 @@ import {ZKEmailUtils} from "./ZKEmailUtils.sol";
  * either during construction (if used standalone) or during initialization (if used as a clone) may
  * leave the signer either front-runnable or unusable.
  */
-abstract contract ZKEmailSigner is AbstractSigner {
+abstract contract SignerZKEmail is AbstractSigner {
     using ZKEmailUtils for EmailAuthMsg;
 
     bytes32 private _accountSalt;
