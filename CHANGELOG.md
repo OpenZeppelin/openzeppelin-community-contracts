@@ -1,3 +1,8 @@
+## 28-03-2025
+
+- Deprecate `Account` and rename `AccountCore` to `Account`.
+- Update `Account` and `Paymaster` to support entrypoint v0.8.0.
+
 ## 07-03-2025
 
 - `ERC7786Aggregator`: Add an aggregator that implements a meta gateway on top of multiple ERC-7786 gateways.

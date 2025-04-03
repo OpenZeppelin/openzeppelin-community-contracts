@@ -8,14 +8,13 @@ These capabilities can be supercharged with a modularity approach following stan
 
 == Smart Accounts
 
-OpenZeppelin provides an abstract xref:api:account.adoc#AccountCore[`AccountCore`] contract that implements the basic logic to handle user operations in compliance with ERC-4337. Developers who want to build their own account can use this to bootstrap.
+OpenZeppelin provides an abstract xref:api:account.adoc#Account[`Account`] contract that implements the basic logic to handle user operations in compliance with ERC-4337. Developers who want to build their own account can use this to bootstrap.
 
-User operations are validated using an xref:api:utils.adoc#AbstractSigner[`AbstractSigner`], which requires to implement the internal xref:api:utils.adoc#AbstractSigner-_rawSignatureValidation[`_rawSignatureValidation`] function. This is the lowest-level signature validation layer and is used to wrap other validation methods like the Account's xref:api:account.adoc#AccountCore-validateUserOp-struct-PackedUserOperation-bytes32-uint256-[`validateUserOp`].
+User operations are validated using an xref:api:utils.adoc#AbstractSigner[`AbstractSigner`], which requires to implement the internal xref:api:utils.adoc#AbstractSigner-_rawSignatureValidation[`_rawSignatureValidation`] function. This is the lowest-level signature validation layer and is used to wrap other validation methods like the Account's xref:api:account.adoc#Account-validateUserOp-struct-PackedUserOperation-bytes32-uint256-[`validateUserOp`].
 
-A more opinionated version is the xref:api:account.adoc#Account[`Account`] contract, which also inherits from:
+NOTE: Accounts don't support https://eips.ethereum.org/EIPS/eip-721[ERC-721] and https://eips.ethereum.org/EIPS/eip-1155[ERC-1155] tokens natively since these require the receiving address to implement an acceptance check. You can inherit https://docs.openzeppelin.com/contracts/api/token/erc721#ERC721Holder[ERC721Holder], https://docs.openzeppelin.com/contracts/api/token/erc1155#ERC1155Holder[ERC1155Holder] to include these checks in your account.
 
-* xref:api:utils.adoc#ERC7739Signer[ERC7739Signer]: An implementation of the https://eips.ethereum.org/EIPS/eip-1271[ERC-1271] interface for smart contract signatures. This layer adds a defensive rehashing mechanism that prevents signatures for this account to be replayed in another account controlled by the same signer. See xref:account-abstraction.adoc#erc7739_signatures[ERC-7739 signatures].
-* https://docs.openzeppelin.com/contracts/api/token/erc721#ERC721Holder[ERC721Holder], https://docs.openzeppelin.com/contracts/api/token/erc1155#ERC1155Holder[ERC1155Holder]: Allows the account to hold https://eips.ethereum.org/EIPS/eip-721[ERC-721] and https://eips.ethereum.org/EIPS/eip-1155[ERC-1155] tokens.
+NOTE: Regularly, accounts implement https://eips.ethereum.org/EIPS/eip-1271[ERC-1271] to enable arbitrary signature verification. We recommend using xref:api:utils.adoc#ERC7739[ERC7739] to avoid replayability across accounts. This defensive rehashing mechanism that prevents signatures for this account to be replayed in another account controlled by the same signer.
 
 NOTE: The Account doesn't include an execution mechanism. Using xref:api:account.adoc#ERC7821[`ERC7821`] is a recommended solution with the minimal logic to batch multiple calls in a single execution. This is useful to execute multiple calls within a single user operation (e.g. approve and transfer).
 
@@ -26,7 +25,7 @@ include::api:example$account/MyAccount.sol[]
 
 === Setting up an account
 
-To setup an account, you can either bring your own validation logic and start with xref:api:account.adoc#Account[`Account`] or xref:api:account.adoc#AccountCore[`AccountCore`], or import any of the predefined signers that can be used to control an account.
+To setup an account, you can either bring your own validation logic and start with xref:api:account.adoc#Account[`Account`], or import any of the predefined signers that can be used to control an account.
 
 === Selecting a signer
 
@@ -174,7 +173,7 @@ To prevent this, developers may use xref:api:account#ERC7739Signer[`ERC7739Signe
 
 === ERC-7562 Validation Rules
 
-To process a bundle of `UserOperations`, bundlers call xref:api:account.adoc#AccountCore-validateUserOp-struct-PackedUserOperation-bytes32-uint256-[`validateUserOp`] on each operation sender to check whether the operation can be executed. However, the bundler has no guarantee that the state of the blockchain will remain the same after the validation phase. To overcome this problem, https://eips.ethereum.org/EIPS/eip-7562[ERC-7562] proposes a set of limitations to EVM code so that bundlers (or node operators) are protected from unexpected state changes.
+To process a bundle of `UserOperations`, bundlers call xref:api:account.adoc#Account-validateUserOp-struct-PackedUserOperation-bytes32-uint256-[`validateUserOp`] on each operation sender to check whether the operation can be executed. However, the bundler has no guarantee that the state of the blockchain will remain the same after the validation phase. To overcome this problem, https://eips.ethereum.org/EIPS/eip-7562[ERC-7562] proposes a set of limitations to EVM code so that bundlers (or node operators) are protected from unexpected state changes.
 
 These rules outline the requirements for operations to be processed by the canonical mempool.
 
