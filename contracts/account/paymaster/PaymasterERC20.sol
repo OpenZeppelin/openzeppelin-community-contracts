@@ -10,6 +10,17 @@ import {PaymasterCore} from "./PaymasterCore.sol";
 
 /**
  * @dev Extension of {PaymasterCore} that enables users to pay gas with ERC-20 tokens.
+ *
+ * To enable this feature, developers must implement the {fetchDetails} function:
+ *
+ * ```solidity
+ * function _fetchDetails(
+ *     PackedUserOperation calldata userOp,
+ *     bytes32 userOpHash
+ * ) internal view override returns (uint256 validationData, IERC20 token, uint256 tokenPrice, address guarantor) {
+ *     // Implement logic to fetch the token, token price, and guarantor address from the userOp
+ * }
+ * ```
  */
 abstract contract PaymasterERC20 is PaymasterCore {
     using ERC4337Utils for *;

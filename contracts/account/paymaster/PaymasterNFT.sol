@@ -7,21 +7,27 @@ import {ERC4337Utils, PackedUserOperation} from "@openzeppelin/contracts/account
 import {PaymasterCore} from "./PaymasterCore.sol";
 
 /**
- * @dev Extension of {PaymasterCore} that supports account based on ownership of an ERC-721 token
+ * @dev Extension of {PaymasterCore} that supports account based on ownership of an ERC-721 token.
+ *
+ * This paymaster will sponsor user operations if the user has at least 1 token of the token specified
+ * during construction (or via {_setToken}).
  */
 abstract contract PaymasterNFT is PaymasterCore {
     IERC721 private _token;
 
+    /// @dev Emitted when the paymaster token is set.
     event PaymasterNFTTokenSet(IERC721 token);
 
     constructor(IERC721 token_) {
         _setToken(token_);
     }
 
+    /// @dev ERC-721 token used to validate the user operation.
     function token() public virtual returns (IERC721) {
         return _token;
     }
 
+    /// @dev Sets the ERC-721 token used to validate the user operation.
     function _setToken(IERC721 token_) internal virtual {
         _token = token_;
         emit PaymasterNFTTokenSet(token_);
@@ -41,6 +47,8 @@ abstract contract PaymasterNFT is PaymasterCore {
     ) internal virtual override returns (bytes memory context, uint256 validationData) {
         return (
             bytes(""),
+            // balanceOf reverts if the `userOp.sender` is the address(0), so this becomes unreachable with address(0)
+            // assuming a compliant entrypoint (`_validatePaymasterUserOp` is called after `validateUserOp`),
             token().balanceOf(userOp.sender) == 0
                 ? ERC4337Utils.SIG_VALIDATION_FAILED
                 : ERC4337Utils.SIG_VALIDATION_SUCCESS
