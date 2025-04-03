@@ -28,7 +28,7 @@ abstract contract PaymasterERC721Owner is PaymasterCore {
     }
 
     /// @dev Minimum balance necessary. Default: 1 (having a single token is sufficient).
-    function minimumBalance() public virtual returns (uint256) {
+    function minimumBalance() public view virtual returns (uint256) {
         return 1;
     }
 
