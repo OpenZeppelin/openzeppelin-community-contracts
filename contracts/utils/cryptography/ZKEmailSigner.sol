@@ -26,7 +26,7 @@ abstract contract ZKEmailSigner is AbstractSigner {
     /*
      * @dev Unique identifier for owner of this contract defined as a hash of an email address and an account code.
      *
-     * An account code is a random integer in a finite scalar field of BN254 curve.
+     * An account code is a random integer in a finite scalar field of https://neuromancer.sk/std/bn/bn254[BN254] curve.
      * It is a private randomness to derive a CREATE2 salt of the user’s Ethereum address
      * from the email address, i.e., userEtherAddr := CREATE2(hash(userEmailAddr, accountCode)).
      */
