@@ -4,8 +4,8 @@
 pragma solidity ^0.8.20;
 
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
-import {PaymasterCore} from "../../../../account/paymaster/PaymasterCore.sol";
 import {PackedUserOperation} from "@openzeppelin/contracts/interfaces/draft-IERC4337.sol";
+import {PaymasterCore} from "../../../../account/paymaster/PaymasterCore.sol";
 
 contract MyPaymaster is PaymasterCore, Ownable {
     constructor(address withdrawer) Ownable(withdrawer) {}
