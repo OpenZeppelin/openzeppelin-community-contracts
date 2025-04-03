@@ -11,6 +11,8 @@ import {CommandUtils} from "@zk-email/email-tx-builder/libraries/CommandUtils.so
 import {AbstractSigner} from "./AbstractSigner.sol";
 
 abstract contract ZKEmailSigner is AbstractSigner {
+    using Strings for string;
+
     bytes32 private _accountSalt;
     IDKIMRegistry private _registry;
     IVerifier private _verifier;
@@ -105,22 +107,16 @@ abstract contract ZKEmailSigner is AbstractSigner {
             emailAuthMsg.proof.maskedCommand,
             emailAuthMsg.skippedCommandPrefix
         );
-        string memory expectedCommand = "";
-        for (uint256 stringCase = 0; stringCase < 3; stringCase++) {
-            expectedCommand = CommandUtils.computeExpectedCommand(
-                emailAuthMsg.commandParams,
-                signHashTemplate,
-                stringCase
-            );
-            if (Strings.equal(expectedCommand, trimmedMaskedCommand)) {
-                break;
-            }
-            if (stringCase == 2) {
-                return (false, EmailProofError.Command);
+        for (uint256 stringCase = 0; stringCase < 2; stringCase++) {
+            if (
+                CommandUtils.computeExpectedCommand(emailAuthMsg.commandParams, signHashTemplate, stringCase).equal(
+                    trimmedMaskedCommand
+                )
+            ) {
+                if (verifier().verifyEmailProof(emailAuthMsg.proof)) return (true, EmailProofError.NoError);
+                else return (false, EmailProofError.EmailProof);
             }
         }
-
-        if (!verifier().verifyEmailProof(emailAuthMsg.proof)) return (false, EmailProofError.EmailProof);
-        return (true, EmailProofError.NoError);
+        return (false, EmailProofError.Command);
     }
 }
