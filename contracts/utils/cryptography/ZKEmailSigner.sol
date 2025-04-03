@@ -2,7 +2,6 @@
 
 pragma solidity ^0.8.20;
 
-import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 import {IDKIMRegistry} from "@zk-email/contracts/DKIMRegistry.sol";
 import {IVerifier, EmailProof} from "@zk-email/email-tx-builder/interfaces/IVerifier.sol";
 import {EmailAuthMsg} from "@zk-email/email-tx-builder/interfaces/IEmailTypes.sol";
@@ -10,7 +9,6 @@ import {AbstractSigner} from "./AbstractSigner.sol";
 import {ZKEmailUtils} from "./ZKEmailUtils.sol";
 
 abstract contract ZKEmailSigner is AbstractSigner {
-    using Strings for string;
     using ZKEmailUtils for EmailAuthMsg;
 
     bytes32 private _accountSalt;
