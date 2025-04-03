@@ -12,11 +12,11 @@ import {PaymasterCore} from "./PaymasterCore.sol";
  * This paymaster will sponsor user operations if the user has at least 1 token of the token specified
  * during construction (or via {_setToken}).
  */
-abstract contract PaymasterNFT is PaymasterCore {
+abstract contract PaymasterERC721Owner is PaymasterCore {
     IERC721 private _token;
 
     /// @dev Emitted when the paymaster token is set.
-    event PaymasterNFTTokenSet(IERC721 token);
+    event PaymasterERC721OwnerTokenSet(IERC721 token);
 
     constructor(IERC721 token_) {
         _setToken(token_);
@@ -27,10 +27,15 @@ abstract contract PaymasterNFT is PaymasterCore {
         return _token;
     }
 
+    /// @dev Minimum balance necessary. Default: 1 (having a single token is sufficient).
+    function minimumBalance() public virtual returns (uint256) {
+        return 1;
+    }
+
     /// @dev Sets the ERC-721 token used to validate the user operation.
     function _setToken(IERC721 token_) internal virtual {
         _token = token_;
-        emit PaymasterNFTTokenSet(token_);
+        emit PaymasterERC721OwnerTokenSet(token_);
     }
 
     /**
@@ -49,7 +54,7 @@ abstract contract PaymasterNFT is PaymasterCore {
             bytes(""),
             // balanceOf reverts if the `userOp.sender` is the address(0), so this becomes unreachable with address(0)
             // assuming a compliant entrypoint (`_validatePaymasterUserOp` is called after `validateUserOp`),
-            token().balanceOf(userOp.sender) == 0
+            token().balanceOf(userOp.sender) < minimumBalance()
                 ? ERC4337Utils.SIG_VALIDATION_FAILED
                 : ERC4337Utils.SIG_VALIDATION_SUCCESS
         );
