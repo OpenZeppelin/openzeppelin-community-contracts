@@ -26,6 +26,7 @@ import {AbstractSigner} from "./AbstractSigner.sol";
  * mechanism to ensure the email was actually sent and received without revealing its contents. Defined by an `IVerifier` interface.
  */
 library ZKEmailUtils {
+    using CommandUtils for bytes[];
     using Strings for string;
 
     /// @dev Enumeration of possible email proof validation errors.
@@ -34,32 +35,58 @@ library ZKEmailUtils {
         DKIMPublicKeyHash, // The DKIM public key hash verification fails
         MaskedCommandLength, // The masked command length exceeds the maximum
         SkippedCommandPrefixSize, // The skipped command prefix size is invalid
-        Command, // The command format is invalid
+        MismatchedCommand, // The command does not match the proof command
         EmailProof // The email proof verification fails
     }
 
-    /**
-     * @dev Validates a ZK-Email authentication message.
-     *
-     * Requirements:
-     *
-     * - The DKIM public key hash must be valid according to the registry
-     * - The masked command length must not exceed the verifier's limit
-     * - The skipped command prefix size must be valid
-     * - The command format and parameters must be valid
-     * - The email proof must be verified by the verifier
-     *
-     * This function takes an email authentication message, a DKIM registry contract, and a verifier contract
-     * as inputs. It performs several validation checks and returns a tuple containing a boolean success flag
-     * and an {EmailProofError} if validation failed. The function will return true with {EmailProofError.NoError}
-     * if all validations pass, or false with a specific {EmailProofError} indicating which validation check failed.
-     *
-     * NOTE: Validates `["signHash", "{uint}"]` command template by default.
-     */
+    /// @dev Enumeration of possible string cases used to compare the command with the expected proven command.
+    enum Case {
+        LOWERCASE, // Converts the command to hex lowercase.
+        UPPERCASE, // Converts the command to hex uppercase.
+        CHECKSUM, // Computes a checksum of the command.
+        ANY
+    }
+
+    /// @dev Variant of {isValidZKEmail} that validates the `["signHash", "{uint}"]` command template.
     function isValidZKEmail(
         EmailAuthMsg memory emailAuthMsg,
         IDKIMRegistry dkimregistry,
         IVerifier verifier
+    ) internal view returns (EmailProofError) {
+        string[] memory signHashTemplate = new string[](2);
+        signHashTemplate[0] = "signHash";
+        signHashTemplate[1] = CommandUtils.UINT_MATCHER;
+
+        // UINT_MATCHER is always lowercase
+        return isValidZKEmail(emailAuthMsg, dkimregistry, verifier, signHashTemplate, Case.LOWERCASE);
+    }
+
+    /**
+     * @dev Validates a ZKEmail authentication message.
+     *
+     * This function takes an email authentication message, a DKIM registry contract, and a verifier contract
+     * as inputs. It performs several validation checks and returns a tuple containing a boolean success flag
+     * and an {EmailProofError} if validation failed. Returns {EmailProofError.NoError} if all validations pass,
+     * or false with a specific {EmailProofError} indicating which validation check failed.
+     *
+     * NOTE: Attempts to validate the command for all possible string {Case} values.
+     */
+    function isValidZKEmail(
+        EmailAuthMsg memory emailAuthMsg,
+        IDKIMRegistry dkimregistry,
+        IVerifier verifier,
+        string[] memory template
+    ) internal view returns (EmailProofError) {
+        return isValidZKEmail(emailAuthMsg, dkimregistry, verifier, template, Case.ANY);
+    }
+
+    /// @dev Variant of {isValidZKEmail} that validates a template with a specific string {Case}.
+    function isValidZKEmail(
+        EmailAuthMsg memory emailAuthMsg,
+        IDKIMRegistry dkimregistry,
+        IVerifier verifier,
+        string[] memory template,
+        Case stringCase
     ) internal view returns (EmailProofError) {
         if (!dkimregistry.isDKIMPublicKeyHashValid(emailAuthMsg.proof.domainName, emailAuthMsg.proof.publicKeyHash)) {
             return EmailProofError.DKIMPublicKeyHash;
@@ -67,29 +94,25 @@ library ZKEmailUtils {
             return EmailProofError.MaskedCommandLength;
         } else if (emailAuthMsg.skippedCommandPrefix >= verifier.commandBytes()) {
             return EmailProofError.SkippedCommandPrefixSize;
+        } else if (!_commandMatch(emailAuthMsg, template, stringCase)) {
+            return EmailProofError.MismatchedCommand;
         } else {
-            string[] memory signHashTemplate = new string[](2);
-            signHashTemplate[0] = "signHash";
-            signHashTemplate[1] = CommandUtils.UINT_MATCHER;
-
-            // Construct an expectedCommand from template and the values of emailAuthMsg.commandParams.
-            string memory trimmedMaskedCommand = CommandUtils.removePrefix(
-                emailAuthMsg.proof.maskedCommand,
-                emailAuthMsg.skippedCommandPrefix
-            );
-            for (uint256 stringCase = 0; stringCase < 3; stringCase++) {
-                if (
-                    CommandUtils.computeExpectedCommand(emailAuthMsg.commandParams, signHashTemplate, stringCase).equal(
-                        trimmedMaskedCommand
-                    )
-                ) {
-                    return
-                        verifier.verifyEmailProof(emailAuthMsg.proof)
-                            ? EmailProofError.NoError
-                            : EmailProofError.EmailProof;
-                }
-            }
-            return EmailProofError.Command;
+            return verifier.verifyEmailProof(emailAuthMsg.proof) ? EmailProofError.NoError : EmailProofError.EmailProof;
         }
+    }
+
+    function _commandMatch(
+        EmailAuthMsg memory emailAuthMsg,
+        string[] memory template,
+        Case stringCase
+    ) private pure returns (bool) {
+        bytes[] memory commandParams = emailAuthMsg.commandParams; // Not a memory copy
+        string memory maskedCommand = emailAuthMsg.proof.maskedCommand; // Not a memory copy
+        return
+            stringCase == Case.ANY
+                ? (commandParams.computeExpectedCommand(template, uint8(Case.LOWERCASE)).equal(maskedCommand) ||
+                    commandParams.computeExpectedCommand(template, uint8(Case.UPPERCASE)).equal(maskedCommand) ||
+                    commandParams.computeExpectedCommand(template, uint8(Case.CHECKSUM)).equal(maskedCommand))
+                : commandParams.computeExpectedCommand(template, uint8(stringCase)).equal(maskedCommand);
     }
 }
