@@ -44,7 +44,9 @@ function shouldBehaveLikeAccountERC7579({ withHooks = false } = {}) {
     describe('accountId', function () {
       it('should return the account ID', async function () {
         await expect(this.mock.accountId()).to.eventually.equal(
-          '@openzeppelin/community-contracts.AccountERC7579.v0.0.0',
+          withHooks
+            ? '@openzeppelin/community-contracts.AccountERC7579Hooked.v0.0.0'
+            : '@openzeppelin/community-contracts.AccountERC7579.v0.0.0',
         );
       });
     });
@@ -141,8 +143,11 @@ function shouldBehaveLikeAccountERC7579({ withHooks = false } = {}) {
           await expect(this.mock.isModuleInstalled(moduleTypeId, instance, fullData)).to.eventually.equal(true);
 
           await expect(this.mockFromEntrypoint.installModule(moduleTypeId, instance, fullData))
-            .to.be.revertedWithCustomError(this.mock, 'ERC7579AlreadyInstalledModule')
-            .withArgs(moduleTypeId, instance);
+            .to.be.revertedWithCustomError(
+              this.mock,
+              moduleTypeId == MODULE_TYPE_HOOK ? 'ERC7579HookModuleAlreadyPresent' : 'ERC7579AlreadyInstalledModule',
+            )
+            .withArgs(...[moduleTypeId != MODULE_TYPE_HOOK && moduleTypeId, instance].filter(Boolean));
         });
       }
 
@@ -176,6 +181,12 @@ function shouldBehaveLikeAccountERC7579({ withHooks = false } = {}) {
         await expect(this.mock.connect(this.other).uninstallModule(MODULE_TYPE_VALIDATOR, this.mock, '0x'))
           .to.be.revertedWithCustomError(this.mock, 'AccountUnauthorized')
           .withArgs(this.other);
+      });
+
+      it('should revert if the module type is not supported', async function () {
+        await expect(this.mockFromEntrypoint.uninstallModule(MODULE_TYPE_INVALID, this.mock, '0x'))
+          .to.be.revertedWithCustomError(this.mock, 'ERC7579UnsupportedModuleType')
+          .withArgs(MODULE_TYPE_INVALID);
       });
 
       for (const moduleTypeId of [
