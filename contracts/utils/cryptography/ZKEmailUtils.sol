@@ -76,6 +76,7 @@ library ZKEmailUtils {
         string[] memory template
     ) internal view returns (EmailProofError) {
         EmailProofError err = validateDKIMAndCommandFormat(emailAuthMsg, dkimregistry, verifier);
+        if (err != EmailProofError.NoError) return err;
         for (uint256 i = 0; i < uint8(type(Case).max) && err != EmailProofError.NoError; i++) {
             err = validateExpectedCommandAndProof(emailAuthMsg, verifier, template, Case(i));
         }
