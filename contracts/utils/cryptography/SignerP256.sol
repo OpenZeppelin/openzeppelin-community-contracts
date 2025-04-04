@@ -9,8 +9,8 @@ import {AbstractSigner} from "./AbstractSigner.sol";
  * @dev Implementation of {AbstractSigner} using
  * https://docs.openzeppelin.com/contracts/api/utils#P256[P256] signatures.
  *
- * For {Account} usage, an {_setSigner} function is provided to set the {signer} public key.
- * Doing so it's easier for a factory, whose likely to use initializable clones of this contract.
+ * For {Account} usage, a {_setSigner} function is provided to set the {signer} public key.
+ * Doing so is easier for a factory, who is likely to use initializable clones of this contract.
  *
  * Example of usage:
  *
@@ -24,7 +24,7 @@ import {AbstractSigner} from "./AbstractSigner.sol";
  * }
  * ```
  *
- * IMPORTANT: Avoiding to call {_setSigner} either during construction (if used standalone)
+ * IMPORTANT: Failing to call {_setSigner} either during construction (if used standalone)
  * or during initialization (if used as a clone) may leave the signer either front-runnable or unusable.
  */
 abstract contract SignerP256 is AbstractSigner {
@@ -35,7 +35,7 @@ abstract contract SignerP256 is AbstractSigner {
 
     /**
      * @dev Sets the signer with a P256 public key. This function should be called during construction
-     * or through an initializater.
+     * or through an initializer.
      */
     function _setSigner(bytes32 qx, bytes32 qy) internal {
         if (!P256.isValidPublicKey(qx, qy)) revert SignerP256InvalidPublicKey(qx, qy);
@@ -43,9 +43,7 @@ abstract contract SignerP256 is AbstractSigner {
         _qy = qy;
     }
 
-    /**
-     * @dev Return the signer's P256 public key.
-     */
+    /// @dev Return the signer's P256 public key.
     function signer() public view virtual returns (bytes32 qx, bytes32 qy) {
         return (_qx, _qy);
     }
