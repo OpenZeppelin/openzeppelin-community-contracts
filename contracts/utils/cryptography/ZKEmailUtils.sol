@@ -2,6 +2,7 @@
 
 pragma solidity ^0.8.20;
 
+import {Bytes} from "@openzeppelin/contracts/utils/Bytes.sol";
 import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 import {IDKIMRegistry} from "@zk-email/contracts/DKIMRegistry.sol";
 import {IVerifier, EmailProof} from "@zk-email/email-tx-builder/interfaces/IVerifier.sol";
@@ -27,6 +28,7 @@ import {AbstractSigner} from "./AbstractSigner.sol";
  */
 library ZKEmailUtils {
     using CommandUtils for bytes[];
+    using Bytes for bytes;
     using Strings for string;
 
     /// @dev Enumeration of possible email proof validation errors.
@@ -101,18 +103,20 @@ library ZKEmailUtils {
         }
     }
 
+    /// @dev Compares the command in the email authentication message with the expected command.
     function _commandMatch(
         EmailAuthMsg memory emailAuthMsg,
         string[] memory template,
         Case stringCase
     ) private pure returns (bool) {
         bytes[] memory commandParams = emailAuthMsg.commandParams; // Not a memory copy
-        string memory maskedCommand = emailAuthMsg.proof.maskedCommand; // Not a memory copy
+        uint256 skippedCommandPrefix = emailAuthMsg.proof.skippedCommandPrefix; // Not a memory copy
+        string memory command = string(bytes(emailAuthMsg.proof.maskedCommand).slice(skippedCommandPrefix)); // Not a memory copy
         return
             stringCase == Case.ANY
-                ? (commandParams.computeExpectedCommand(template, uint8(Case.LOWERCASE)).equal(maskedCommand) ||
-                    commandParams.computeExpectedCommand(template, uint8(Case.UPPERCASE)).equal(maskedCommand) ||
-                    commandParams.computeExpectedCommand(template, uint8(Case.CHECKSUM)).equal(maskedCommand))
-                : commandParams.computeExpectedCommand(template, uint8(stringCase)).equal(maskedCommand);
+                ? (commandParams.computeExpectedCommand(template, uint8(Case.LOWERCASE)).equal(command) ||
+                    commandParams.computeExpectedCommand(template, uint8(Case.UPPERCASE)).equal(command) ||
+                    commandParams.computeExpectedCommand(template, uint8(Case.CHECKSUM)).equal(command))
+                : commandParams.computeExpectedCommand(template, uint8(stringCase)).equal(command);
     }
 }
