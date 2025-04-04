@@ -9,9 +9,12 @@ Miscellaneous contracts and libraries containing utility functions you can use t
  * {ERC7739}: An abstract contract to validate signatures following the rehashing scheme from `ERC7739Utils`.
  * {ERC7739Utils}: Utilities library that implements a defensive rehashing mechanism to prevent replayability of smart contract signatures based on ERC-7739.
  * {ERC7913Utils}: utilities library that implements ERC-7913 signature verification with fallback to ERC-1271 and ECDSA.
- * {SignerECDSA}, {SignerERC7913}, {SignerP256}, {SignerRSA}: Implementations of an {AbstractSigner} with specific signature validation algorithms.
  * {ERC7913SignatureVerifierP256}, {ERC7913SignatureVerifierRSA}: Ready to use ERC-7913 signature verifiers for P256 and RSA keys
+ * {ERC7913SignatureVerifierZKEmail}: Ready to use ERC-7913 signature verifiers for P256 and RSA keys
+ * {SignerECDSA}, {SignerERC7913}, {SignerP256}, {SignerRSA}: Implementations of an {AbstractSigner} with specific signature validation algorithms.
+ * {SignerZKEmail}: Implementation of an {AbstractSigner} that enables email-based authentication through zero-knowledge proofs.
  * {Masks}: Library to handle `bytes32` masks.
+ * {ZKEmailUtils}: Library for ZKEmail signature validation utilities, enabling email-based authentication through zero-knowledge proofs.
 
 == Cryptography
 
@@ -31,6 +34,10 @@ Miscellaneous contracts and libraries containing utility functions you can use t
 
 {{SignerRSA}}
 
+{{SignerZKEmail}}
+
+{{ZKEmailUtils}}
+
 === ERC-7913
 
 {{ERC7913Utils}}
@@ -38,6 +45,8 @@ Miscellaneous contracts and libraries containing utility functions you can use t
 {{ERC7913SignatureVerifierP256}}
 
 {{ERC7913SignatureVerifierRSA}}
+
+{{ERC7913SignatureVerifierZKEmail}}
 
 == Libraries
 
