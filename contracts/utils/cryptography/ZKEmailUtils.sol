@@ -28,7 +28,6 @@ import {AbstractSigner} from "./AbstractSigner.sol";
 library ZKEmailUtils {
     using CommandUtils for bytes[];
     using Strings for string;
-    using CommandUtils for bytes[];
 
     /// @dev Enumeration of possible email proof validation errors.
     enum EmailProofError {
