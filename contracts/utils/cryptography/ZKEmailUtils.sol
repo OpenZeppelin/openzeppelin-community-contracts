@@ -34,8 +34,23 @@ library ZKEmailUtils {
         DKIMPublicKeyHash, // The DKIM public key hash verification fails
         MaskedCommandLength, // The masked command length exceeds the maximum
         SkippedCommandPrefixSize, // The skipped command prefix size is invalid
-        Command, // The command format is invalid
+        InvalidCommand, // The command format is invalid
         EmailProof // The email proof verification fails
+    }
+
+    /**
+     * @dev Variant of {isValidZKEmail} that validates the `["signHash", "{uint}"]` command template.
+     */
+    function isValidZKEmail(
+        EmailAuthMsg memory emailAuthMsg,
+        IDKIMRegistry dkimregistry,
+        IVerifier verifier
+    ) internal view returns (EmailProofError) {
+        string[] memory signHashTemplate = new string[](2);
+        signHashTemplate[0] = "signHash";
+        signHashTemplate[1] = CommandUtils.UINT_MATCHER;
+
+        return isValidZKEmail(emailAuthMsg, dkimregistry, verifier);
     }
 
     /**
@@ -53,13 +68,12 @@ library ZKEmailUtils {
      * as inputs. It performs several validation checks and returns a tuple containing a boolean success flag
      * and an {EmailProofError} if validation failed. The function will return true with {EmailProofError.NoError}
      * if all validations pass, or false with a specific {EmailProofError} indicating which validation check failed.
-     *
-     * NOTE: Validates `["signHash", "{uint}"]` command template by default.
      */
     function isValidZKEmail(
         EmailAuthMsg memory emailAuthMsg,
         IDKIMRegistry dkimregistry,
-        IVerifier verifier
+        IVerifier verifier,
+        string[] memory template
     ) internal view returns (EmailProofError) {
         if (!dkimregistry.isDKIMPublicKeyHashValid(emailAuthMsg.proof.domainName, emailAuthMsg.proof.publicKeyHash)) {
             return EmailProofError.DKIMPublicKeyHash;
@@ -67,29 +81,16 @@ library ZKEmailUtils {
             return EmailProofError.MaskedCommandLength;
         } else if (emailAuthMsg.skippedCommandPrefix >= verifier.commandBytes()) {
             return EmailProofError.SkippedCommandPrefixSize;
+        } else if (
+            !CommandUtils.computeExpectedCommand(emailAuthMsg.commandParams, template, 0).equal(
+                CommandUtils.removePrefix(emailAuthMsg.proof.maskedCommand, emailAuthMsg.skippedCommandPrefix)
+            )
+        ) {
+            return EmailProofError.InvalidCommand;
+        } else if (verifier.verifyEmailProof(emailAuthMsg.proof)) {
+            return EmailProofError.NoError;
         } else {
-            string[] memory signHashTemplate = new string[](2);
-            signHashTemplate[0] = "signHash";
-            signHashTemplate[1] = CommandUtils.UINT_MATCHER;
-
-            // Construct an expectedCommand from template and the values of emailAuthMsg.commandParams.
-            string memory trimmedMaskedCommand = CommandUtils.removePrefix(
-                emailAuthMsg.proof.maskedCommand,
-                emailAuthMsg.skippedCommandPrefix
-            );
-            for (uint256 stringCase = 0; stringCase < 3; stringCase++) {
-                if (
-                    CommandUtils.computeExpectedCommand(emailAuthMsg.commandParams, signHashTemplate, stringCase).equal(
-                        trimmedMaskedCommand
-                    )
-                ) {
-                    return
-                        verifier.verifyEmailProof(emailAuthMsg.proof)
-                            ? EmailProofError.NoError
-                            : EmailProofError.EmailProof;
-                }
-            }
-            return EmailProofError.Command;
+            return EmailProofError.EmailProof;
         }
     }
 }
