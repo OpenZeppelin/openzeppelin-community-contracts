@@ -42,7 +42,8 @@ library ZKEmailUtils {
     enum Case {
         LOWERCASE, // Converts the command to hex lowercase.
         UPPERCASE, // Converts the command to hex uppercase.
-        CHECKSUM // Computes a checksum of the command.
+        CHECKSUM, // Computes a checksum of the command.
+        ANY
     }
 
     /// @dev Variant of {isValidZKEmail} that validates the `["signHash", "{uint}"]` command template.
@@ -64,8 +65,8 @@ library ZKEmailUtils {
      *
      * This function takes an email authentication message, a DKIM registry contract, and a verifier contract
      * as inputs. It performs several validation checks and returns a tuple containing a boolean success flag
-     * and an {EmailProofError} if validation failed. See {validateDKIMAndCommandFormat} and {validateExpectedCommandAndProof}
-     * for more details on the validation checks performed.
+     * and an {EmailProofError} if validation failed. Returns {EmailProofError.NoError} if all validations pass,
+     * or false with a specific {EmailProofError} indicating which validation check failed.
      *
      * NOTE: Attempts to validate the command for all possible string {Case} values.
      */
@@ -75,12 +76,7 @@ library ZKEmailUtils {
         IVerifier verifier,
         string[] memory template
     ) internal view returns (EmailProofError) {
-        EmailProofError err = validateDKIMAndCommandFormat(emailAuthMsg, dkimregistry, verifier);
-        if (err != EmailProofError.NoError) return err;
-        for (uint256 i = 0; i < uint8(type(Case).max) && err != EmailProofError.NoError; i++) {
-            err = validateExpectedCommandAndProof(emailAuthMsg, verifier, template, Case(i));
-        }
-        return err;
+        return isValidZKEmail(emailAuthMsg, dkimregistry, verifier, template, Case.ANY);
     }
 
     /// @dev Variant of {isValidZKEmail} that validates a template with a specific string {Case}.
@@ -91,55 +87,45 @@ library ZKEmailUtils {
         string[] memory template,
         Case stringCase
     ) internal view returns (EmailProofError) {
-        EmailProofError err = validateDKIMAndCommandFormat(emailAuthMsg, dkimregistry, verifier);
-        return
-            err == EmailProofError.NoError
-                ? validateExpectedCommandAndProof(emailAuthMsg, verifier, template, stringCase)
-                : err;
-    }
-
-    /**
-     * @dev Validates the email authentication message parameters.
-     *
-     * * Returns {EmailProofError.DKIMPublicKeyHash} if the DKIM public key hash is not valid according to the registry.
-     * * Returns {EmailProofError.MaskedCommandLength} if the proof's `maskedCommand` exceeds the verifier's command bytes.
-     * * Returns {EmailProofError.SkippedCommandPrefixSize} if the proof's `skippedCommandPrefix` exceeds the verifier's command bytes.
-     */
-    function validateDKIMAndCommandFormat(
-        EmailAuthMsg memory emailAuthMsg,
-        IDKIMRegistry dkimregistry,
-        IVerifier verifier
-    ) internal view returns (EmailProofError) {
         if (!dkimregistry.isDKIMPublicKeyHashValid(emailAuthMsg.proof.domainName, emailAuthMsg.proof.publicKeyHash)) {
             return EmailProofError.DKIMPublicKeyHash;
         } else if (bytes(emailAuthMsg.proof.maskedCommand).length > verifier.commandBytes()) {
             return EmailProofError.MaskedCommandLength;
         } else if (emailAuthMsg.skippedCommandPrefix >= verifier.commandBytes()) {
             return EmailProofError.SkippedCommandPrefixSize;
+        } else if (!_commandMatch(emailAuthMsg, template, stringCase)) {
+            return EmailProofError.MismatchedCommand;
+        } else {
+            return verifier.verifyEmailProof(emailAuthMsg.proof) ? EmailProofError.NoError : EmailProofError.EmailProof;
         }
-        return EmailProofError.NoError;
     }
 
-    /**
-     * @dev Validates the command and proof of the email authentication message.
-     *
-     * * Returns {EmailProofError.MismatchedCommand} if the command does not match the proof's command with {stringCase}.
-     * * Returns {EmailProofError.EmailProof} if the email proof is invalid.
-     */
-    function validateExpectedCommandAndProof(
+    function _commandMatch(
         EmailAuthMsg memory emailAuthMsg,
-        IVerifier verifier,
         string[] memory template,
         Case stringCase
-    ) internal view returns (EmailProofError) {
-        string memory expectedCommand = CommandUtils.computeExpectedCommand(
-            emailAuthMsg.commandParams,
-            template,
-            uint8(stringCase)
-        );
-        if (!expectedCommand.equal(emailAuthMsg.proof.maskedCommand)) {
-            return EmailProofError.MismatchedCommand;
-        }
-        return verifier.verifyEmailProof(emailAuthMsg.proof) ? EmailProofError.NoError : EmailProofError.EmailProof;
+    ) private pure returns (bool) {
+        return
+            stringCase == Case.ANY
+                ? _matchAnyCase(emailAuthMsg, template)
+                : _matchCase(emailAuthMsg, template, stringCase);
+    }
+
+    function _matchAnyCase(EmailAuthMsg memory emailAuthMsg, string[] memory template) private pure returns (bool) {
+        return
+            _matchCase(emailAuthMsg, template, Case.LOWERCASE) ||
+            _matchCase(emailAuthMsg, template, Case.UPPERCASE) ||
+            _matchCase(emailAuthMsg, template, Case.CHECKSUM);
+    }
+
+    function _matchCase(
+        EmailAuthMsg memory emailAuthMsg,
+        string[] memory template,
+        Case stringCase
+    ) private pure returns (bool) {
+        return
+            CommandUtils.computeExpectedCommand(emailAuthMsg.commandParams, template, uint8(stringCase)).equal(
+                emailAuthMsg.proof.maskedCommand
+            );
     }
 }
