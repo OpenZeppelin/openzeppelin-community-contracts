@@ -93,24 +93,18 @@ library ZKEmailUtils {
             return EmailProofError.MaskedCommandLength;
         } else if (emailAuthMsg.skippedCommandPrefix >= verifier.commandBytes()) {
             return EmailProofError.SkippedCommandPrefixSize;
-        } else if (!_commandMatch(emailAuthMsg, template, stringCase)) {
-            return EmailProofError.MismatchedCommand;
-        } else {
+        } else if (
+            stringCase == Case.ANY
+                ? _matchAnyCase(emailAuthMsg, template)
+                : _matchCase(emailAuthMsg, template, stringCase)
+        ) {
             return verifier.verifyEmailProof(emailAuthMsg.proof) ? EmailProofError.NoError : EmailProofError.EmailProof;
+        } else {
+            return EmailProofError.MismatchedCommand;
         }
     }
 
-    function _commandMatch(
-        EmailAuthMsg memory emailAuthMsg,
-        string[] memory template,
-        Case stringCase
-    ) private pure returns (bool) {
-        return
-            stringCase == Case.ANY
-                ? _matchAnyCase(emailAuthMsg, template)
-                : _matchCase(emailAuthMsg, template, stringCase);
-    }
-
+    /// @dev Checks if the command matches the expected command for any string case.
     function _matchAnyCase(EmailAuthMsg memory emailAuthMsg, string[] memory template) private pure returns (bool) {
         return
             _matchCase(emailAuthMsg, template, Case.LOWERCASE) ||
