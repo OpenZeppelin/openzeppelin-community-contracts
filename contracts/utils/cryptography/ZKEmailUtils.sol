@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.20;
+pragma solidity ^0.8.24;
 
 import {Bytes} from "@openzeppelin/contracts/utils/Bytes.sol";
 import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
@@ -57,9 +57,7 @@ library ZKEmailUtils {
     ) internal view returns (EmailProofError) {
         string[] memory signHashTemplate = new string[](2);
         signHashTemplate[0] = "signHash";
-        signHashTemplate[1] = CommandUtils.UINT_MATCHER;
-
-        // UINT_MATCHER is always lowercase
+        signHashTemplate[1] = CommandUtils.UINT_MATCHER; // UINT_MATCHER is always lowercase
         return isValidZKEmail(emailAuthMsg, dkimregistry, verifier, signHashTemplate, Case.LOWERCASE);
     }
 
