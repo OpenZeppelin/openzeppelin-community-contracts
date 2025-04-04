@@ -118,6 +118,7 @@ library ZKEmailUtils {
             _matchCase(emailAuthMsg, template, Case.CHECKSUM);
     }
 
+    /// @dev MUST NOT be called with `Case.ANY` to avoid unexpected behavior.
     function _matchCase(
         EmailAuthMsg memory emailAuthMsg,
         string[] memory template,
