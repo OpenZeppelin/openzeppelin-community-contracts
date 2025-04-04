@@ -110,7 +110,7 @@ library ZKEmailUtils {
         Case stringCase
     ) private pure returns (bool) {
         bytes[] memory commandParams = emailAuthMsg.commandParams; // Not a memory copy
-        uint256 skippedCommandPrefix = emailAuthMsg.proof.skippedCommandPrefix; // Not a memory copy
+        uint256 skippedCommandPrefix = emailAuthMsg.skippedCommandPrefix; // Not a memory copy
         string memory command = string(bytes(emailAuthMsg.proof.maskedCommand).slice(skippedCommandPrefix)); // Not a memory copy
         return
             stringCase == Case.ANY
