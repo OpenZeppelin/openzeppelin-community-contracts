@@ -26,16 +26,13 @@ contract ERC7913SignatureVerifierZKEmail is IERC7913SignatureVerifier {
     function verify(bytes calldata key, bytes32 hash, bytes calldata signature) public view virtual returns (bytes4) {
         (IDKIMRegistry registry, bytes32 accountSalt) = abi.decode(key, (IDKIMRegistry, bytes32));
         EmailAuthMsg memory emailAuthMsg = abi.decode(signature, (EmailAuthMsg));
-        if (
-            bytes32(emailAuthMsg.commandParams[0]) == hash &&
-            emailAuthMsg.templateId == commandTemplate &&
-            emailAuthMsg.proof.accountSalt == accountSalt
-        ) {
-            (bool verified, ) = emailAuthMsg.isValidZKEmail(registry, verifier);
-            if (verified) {
-                return IERC7913SignatureVerifier.verify.selector;
-            }
-        }
-        return 0xffffffff;
+
+        return
+            (abi.decode(emailAuthMsg.commandParams[0], (bytes32)) == hash &&
+                emailAuthMsg.templateId == commandTemplate &&
+                emailAuthMsg.proof.accountSalt == accountSalt &&
+                emailAuthMsg.isValidZKEmail(registry, verifier) == ZKEmailUtils.EmailProofError.NoError)
+                ? IERC7913SignatureVerifier.verify.selector
+                : bytes4(0xffffffff);
     }
 }
