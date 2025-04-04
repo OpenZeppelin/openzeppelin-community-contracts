@@ -50,7 +50,7 @@ library ZKEmailUtils {
         signHashTemplate[0] = "signHash";
         signHashTemplate[1] = CommandUtils.UINT_MATCHER;
 
-        return isValidZKEmail(emailAuthMsg, dkimregistry, verifier);
+        return isValidZKEmail(emailAuthMsg, dkimregistry, verifier, signHashTemplate);
     }
 
     /**
@@ -87,10 +87,7 @@ library ZKEmailUtils {
             )
         ) {
             return EmailProofError.InvalidCommand;
-        } else if (verifier.verifyEmailProof(emailAuthMsg.proof)) {
-            return EmailProofError.NoError;
-        } else {
-            return EmailProofError.EmailProof;
         }
+        return verifier.verifyEmailProof(emailAuthMsg.proof) ? EmailProofError.NoError : EmailProofError.EmailProof;
     }
 }
