@@ -26,7 +26,7 @@ contract MyAccountZKEmail is Account, SignerZKEmail, ERC7739, ERC7821, ERC721Hol
         _setAccountSalt(accountSalt_);
         _setDKIMRegistry(registry_);
         _setVerifier(verifier_);
-        _setCommandTemplate(templateId_);
+        _setTemplateId(templateId_);
     }
 
     /// @dev Allows the entry point as an authorized executor.

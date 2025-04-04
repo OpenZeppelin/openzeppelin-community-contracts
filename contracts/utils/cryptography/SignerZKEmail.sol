@@ -21,7 +21,7 @@ import {ZKEmailUtils} from "./ZKEmailUtils.sol";
  * * {accountSalt} - A unique identifier derived from the user's email address and account code.
  * * {DKIMRegistry} - An instance of the DKIM registry contract for domain verification.
  * * {verifier} - An instance of the Verifier contract for zero-knowledge proof validation.
- * * {commandTemplate} - The template ID of the sign hash command, defining the expected format.
+ * * {templateId} - The template ID of the sign hash command, defining the expected format.
  *
  * Example of usage:
  *
@@ -32,12 +32,12 @@ import {ZKEmailUtils} from "./ZKEmailUtils.sol";
  *       _setAccountSalt(accountSalt);
  *       _setDKIMRegistry(registry);
  *       _setVerifier(verifier);
- *       _setCommandTemplate(templateId);
+ *       _setTemplateId(templateId);
  *     }
  * }
  * ```
  *
- * IMPORTANT: Avoiding to call {_setAccountSalt}, {_setDKIMRegistry}, {_setVerifier} and {_setCommandTemplate}
+ * IMPORTANT: Avoiding to call {_setAccountSalt}, {_setDKIMRegistry}, {_setVerifier} and {_setTemplateId}
  * either during construction (if used standalone) or during initialization (if used as a clone) may
  * leave the signer either front-runnable or unusable.
  */
@@ -47,7 +47,7 @@ abstract contract SignerZKEmail is AbstractSigner {
     bytes32 private _accountSalt;
     IDKIMRegistry private _registry;
     IVerifier private _verifier;
-    uint256 private _commandTemplate;
+    uint256 private _templateId;
 
     /// @dev Proof verification error.
     error InvalidEmailProof(ZKEmailUtils.EmailProofError err);
@@ -84,9 +84,9 @@ abstract contract SignerZKEmail is AbstractSigner {
         return _verifier;
     }
 
-    /// @dev The templateId of the sign hash command.
-    function commandTemplate() public view virtual returns (uint256) {
-        return _commandTemplate;
+    /// @dev The command template of the sign hash command.
+    function templateId() public view virtual returns (uint256) {
+        return _templateId;
     }
 
     /// @dev Set the {accountSalt}.
@@ -104,9 +104,9 @@ abstract contract SignerZKEmail is AbstractSigner {
         _verifier = verifier_;
     }
 
-    /// @dev Set the {commandTemplate} ID.
-    function _setCommandTemplate(uint256 commandTemplate_) internal virtual {
-        _commandTemplate = commandTemplate_;
+    /// @dev Set the command's {templateId}.
+    function _setTemplateId(uint256 templateId_) internal virtual {
+        _templateId = templateId_;
     }
 
     /**
@@ -117,6 +117,9 @@ abstract contract SignerZKEmail is AbstractSigner {
      * to prevent replay attacks, similar to how nonces are used with ECDSA signatures.
      */
     function verifyEmail(EmailAuthMsg memory emailAuthMsg) public view virtual {
+        if (emailAuthMsg.templateId != templateId() || emailAuthMsg.proof.accountSalt != accountSalt()) {
+            revert InvalidEmailProof(ZKEmailUtils.EmailProofError.EmailProof);
+        }
         ZKEmailUtils.EmailProofError err = emailAuthMsg.isValidZKEmail(DKIMRegistry(), verifier());
         if (err != ZKEmailUtils.EmailProofError.NoError) revert InvalidEmailProof(err);
     }
@@ -136,7 +139,7 @@ abstract contract SignerZKEmail is AbstractSigner {
     ) internal view virtual override returns (bool) {
         EmailAuthMsg memory emailAuthMsg = abi.decode(signature, (EmailAuthMsg));
         return (abi.decode(emailAuthMsg.commandParams[0], (bytes32)) == hash &&
-            emailAuthMsg.templateId == commandTemplate() &&
+            emailAuthMsg.templateId == templateId() &&
             emailAuthMsg.proof.accountSalt == accountSalt() &&
             emailAuthMsg.isValidZKEmail(DKIMRegistry(), verifier()) == ZKEmailUtils.EmailProofError.NoError);
     }
