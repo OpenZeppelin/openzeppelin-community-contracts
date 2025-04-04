@@ -14,7 +14,3 @@
 
 ## Axelar
 /contracts/crosschain/axelar/ @cjcobb23
-
-## ZKEmail
-/contracts/utils/cryptography/ZKEmailUtils @JohnGuilding @zkfriendly
-/contracts/utils/cryptography/SignerZKEmail @JohnGuilding @zkfriendly
