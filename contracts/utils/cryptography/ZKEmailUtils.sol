@@ -26,6 +26,7 @@ import {AbstractSigner} from "./AbstractSigner.sol";
  * mechanism to ensure the email was actually sent and received without revealing its contents. Defined by an `IVerifier` interface.
  */
 library ZKEmailUtils {
+    using CommandUtils for bytes[];
     using Strings for string;
 
     /// @dev Enumeration of possible email proof validation errors.
@@ -93,34 +94,25 @@ library ZKEmailUtils {
             return EmailProofError.MaskedCommandLength;
         } else if (emailAuthMsg.skippedCommandPrefix >= verifier.commandBytes()) {
             return EmailProofError.SkippedCommandPrefixSize;
-        } else if (
-            stringCase == Case.ANY
-                ? _matchAnyCase(emailAuthMsg, template)
-                : _matchCase(emailAuthMsg, template, stringCase)
-        ) {
-            return verifier.verifyEmailProof(emailAuthMsg.proof) ? EmailProofError.NoError : EmailProofError.EmailProof;
-        } else {
+        } else if (!_commandMatch(emailAuthMsg, template, stringCase)) {
             return EmailProofError.MismatchedCommand;
+        } else {
+            return verifier.verifyEmailProof(emailAuthMsg.proof) ? EmailProofError.NoError : EmailProofError.EmailProof;
         }
     }
 
-    /// @dev Checks if the command matches the expected command for any string case.
-    function _matchAnyCase(EmailAuthMsg memory emailAuthMsg, string[] memory template) private pure returns (bool) {
-        return
-            _matchCase(emailAuthMsg, template, Case.LOWERCASE) ||
-            _matchCase(emailAuthMsg, template, Case.UPPERCASE) ||
-            _matchCase(emailAuthMsg, template, Case.CHECKSUM);
-    }
-
-    /// @dev MUST NOT be called with `Case.ANY` to avoid unexpected behavior.
-    function _matchCase(
+    function _commandMatch(
         EmailAuthMsg memory emailAuthMsg,
         string[] memory template,
         Case stringCase
     ) private pure returns (bool) {
+        bytes[] memory commandParams = emailAuthMsg.commandParams; // Not a memory copy
+        string memory maskedCommand = emailAuthMsg.proof.maskedCommand; // Not a memory copy
         return
-            CommandUtils.computeExpectedCommand(emailAuthMsg.commandParams, template, uint8(stringCase)).equal(
-                emailAuthMsg.proof.maskedCommand
-            );
+            stringCase == Case.ANY
+                ? (commandParams.computeExpectedCommand(template, uint8(Case.LOWERCASE)).equal(maskedCommand) ||
+                    commandParams.computeExpectedCommand(template, uint8(Case.UPPERCASE)).equal(maskedCommand) ||
+                    commandParams.computeExpectedCommand(template, uint8(Case.CHECKSUM)).equal(maskedCommand))
+                : commandParams.computeExpectedCommand(template, uint8(stringCase)).equal(maskedCommand);
     }
 }
