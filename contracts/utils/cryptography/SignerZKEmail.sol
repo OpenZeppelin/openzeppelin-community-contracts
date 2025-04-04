@@ -117,8 +117,8 @@ abstract contract SignerZKEmail is AbstractSigner {
      * to prevent replay attacks, similar to how nonces are used with ECDSA signatures.
      */
     function verifyEmail(EmailAuthMsg memory emailAuthMsg) public view virtual {
-        (bool verified, ZKEmailUtils.EmailProofError err) = emailAuthMsg.isValidZKEmail(DKIMRegistry(), verifier());
-        if (!verified) revert InvalidEmailProof(err);
+        ZKEmailUtils.EmailProofError err = emailAuthMsg.isValidZKEmail(DKIMRegistry(), verifier());
+        if (err != ZKEmailUtils.EmailProofError.NoError) revert InvalidEmailProof(err);
     }
 
     /**
@@ -135,15 +135,9 @@ abstract contract SignerZKEmail is AbstractSigner {
         bytes calldata signature
     ) internal view virtual override returns (bool) {
         EmailAuthMsg memory emailAuthMsg = abi.decode(signature, (EmailAuthMsg));
-        if (
-            abi.decode(emailAuthMsg.commandParams[0], (bytes32)) == hash &&
+        return (abi.decode(emailAuthMsg.commandParams[0], (bytes32)) == hash &&
             emailAuthMsg.templateId == commandTemplate() &&
-            emailAuthMsg.proof.accountSalt == accountSalt()
-        ) {
-            (bool verified, ) = emailAuthMsg.isValidZKEmail(DKIMRegistry(), verifier());
-            return verified;
-        } else {
-            return false;
-        }
+            emailAuthMsg.proof.accountSalt == accountSalt() &&
+            emailAuthMsg.isValidZKEmail(DKIMRegistry(), verifier()) == ZKEmailUtils.EmailProofError.NoError);
     }
 }

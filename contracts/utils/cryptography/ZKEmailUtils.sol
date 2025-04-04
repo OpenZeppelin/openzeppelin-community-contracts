@@ -60,13 +60,13 @@ library ZKEmailUtils {
         EmailAuthMsg memory emailAuthMsg,
         IDKIMRegistry dkimregistry,
         IVerifier verifier
-    ) internal view returns (bool, EmailProofError) {
+    ) internal view returns (EmailProofError) {
         if (!dkimregistry.isDKIMPublicKeyHashValid(emailAuthMsg.proof.domainName, emailAuthMsg.proof.publicKeyHash)) {
-            return (false, EmailProofError.DKIMPublicKeyHash);
+            return EmailProofError.DKIMPublicKeyHash;
         } else if (bytes(emailAuthMsg.proof.maskedCommand).length > verifier.commandBytes()) {
-            return (false, EmailProofError.MaskedCommandLength);
+            return EmailProofError.MaskedCommandLength;
         } else if (emailAuthMsg.skippedCommandPrefix >= verifier.commandBytes()) {
-            return (false, EmailProofError.SkippedCommandPrefixSize);
+            return EmailProofError.SkippedCommandPrefixSize;
         } else {
             string[] memory signHashTemplate = new string[](2);
             signHashTemplate[0] = "signHash";
@@ -77,17 +77,19 @@ library ZKEmailUtils {
                 emailAuthMsg.proof.maskedCommand,
                 emailAuthMsg.skippedCommandPrefix
             );
-            for (uint256 stringCase = 0; stringCase < 2; stringCase++) {
+            for (uint256 stringCase = 0; stringCase < 3; stringCase++) {
                 if (
                     CommandUtils.computeExpectedCommand(emailAuthMsg.commandParams, signHashTemplate, stringCase).equal(
                         trimmedMaskedCommand
                     )
                 ) {
-                    if (verifier.verifyEmailProof(emailAuthMsg.proof)) return (true, EmailProofError.NoError);
-                    else return (false, EmailProofError.EmailProof);
+                    return
+                        verifier.verifyEmailProof(emailAuthMsg.proof)
+                            ? EmailProofError.NoError
+                            : EmailProofError.EmailProof;
                 }
             }
-            return (false, EmailProofError.Command);
+            return EmailProofError.Command;
         }
     }
 }
