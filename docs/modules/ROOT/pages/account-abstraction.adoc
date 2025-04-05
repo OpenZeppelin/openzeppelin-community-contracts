@@ -180,3 +180,20 @@ These rules outline the requirements for operations to be processed by the canon
 Accounts can access its own storage during the validation phase, they might easily violate ERC-7562 storage access rules in undirect ways. For example, most accounts access their public keys from storage when validating a signature, limiting the ability of having accounts that validate operations for other accounts (e.g. via ERC-1271)
 
 TIP: Although any Account that breaks such rules may still be processed by a private bundler, developers should keep in mind the centralization tradeoffs of relying on private infrastructure instead of _permissionless_ execution.
+
+=== EIP-7702 Delegation
+
+EIP-7702 enables EOAs to temporarily delegate their execution capabilities to smart contracts. This is particularly useful for:
+
+* Batching multiple operations in a single transaction
+* Sponsoring transactions for other users
+* Implementing privilege de-escalation (e.g., sub-keys with limited permissions)
+
+xref:api:utils.adoc#SignerERC7702[`SignerERC7702`] helps implement EIP-7702 delegation in smart contract accounts by validating signatures using the EOA's address (i.e., `address(this)`).
+
+[source,solidity]
+----
+include::api:example$account/MyAccountERC7702.sol[]
+----
+
+TIP: Users can delegate to an instance of xref:api:account.adoc#ERC7821[`ERC7821`] for a minimal batch executor that does not use ERC-4337 related code.

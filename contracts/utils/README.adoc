@@ -23,6 +23,8 @@ Miscellaneous contracts and libraries containing utility functions you can use t
 
 {{SignerP256}}
 
+{{SignerERC7702}}
+
 {{SignerRSA}}
 
 == Libraries
