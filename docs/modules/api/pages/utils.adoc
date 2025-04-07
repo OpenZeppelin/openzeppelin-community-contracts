@@ -13,6 +13,7 @@
 :AbstractSigner: pass:normal[xref:utils.adoc#AbstractSigner[`AbstractSigner`]]
 :Account: pass:normal[xref:account.adoc#Account[`Account`]]
 :AbstractSigner: pass:normal[xref:utils.adoc#AbstractSigner[`AbstractSigner`]]
+:AbstractSigner: pass:normal[xref:utils.adoc#AbstractSigner[`AbstractSigner`]]
 :Account: pass:normal[xref:account.adoc#Account[`Account`]]
 :AbstractSigner-_rawSignatureValidation: pass:normal[xref:utils.adoc#AbstractSigner-_rawSignatureValidation-bytes32-bytes-[`AbstractSigner._rawSignatureValidation`]]
 = Utilities
@@ -418,6 +419,35 @@ https://docs.openzeppelin.com/contracts/api/utils#P256[P256] or https://docs.ope
 [.contract-item]
 [[SignerP256-SignerP256InvalidPublicKey-bytes32-bytes32-]]
 ==== `[.contract-item-name]#++SignerP256InvalidPublicKey++#++(bytes32 qx, bytes32 qy)++` [.item-kind]#error#
+
+:_rawSignatureValidation: pass:normal[xref:#SignerERC7702-_rawSignatureValidation-bytes32-bytes-[`++_rawSignatureValidation++`]]
+
+[.contract]
+[[SignerERC7702]]
+=== `++SignerERC7702++` link:https://github.com/OpenZeppelin/openzeppelin-community-contracts/blob/master/contracts/utils/cryptography/SignerERC7702.sol[{github-icon},role=heading-link]
+
+[.hljs-theme-light.nopadding]
+```solidity
+import "@openzeppelin/community-contracts/utils/cryptography/SignerERC7702.sol";
+```
+
+Implementation of {AbstractSigner} for implementation for an EOA. Useful for ERC-7702 accounts.
+
+[.contract-index]
+.Functions
+--
+* `++_rawSignatureValidation(hash, signature)++`
+
+[.contract-subindex-inherited]
+.AbstractSigner
+
+--
+
+[.contract-item]
+[[SignerERC7702-_rawSignatureValidation-bytes32-bytes-]]
+==== `[.contract-item-name]#++_rawSignatureValidation++#++(bytes32 hash, bytes signature) → bool++` [.item-kind]#internal#
+
+Validates the signature using the EOA's address (i.e. `address(this)`).
 
 :_setSigner: pass:normal[xref:#SignerRSA-_setSigner-bytes-bytes-[`++_setSigner++`]]
 :signer: pass:normal[xref:#SignerRSA-signer--[`++signer++`]]
