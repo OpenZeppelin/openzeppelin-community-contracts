@@ -12,9 +12,11 @@ import {ZKEmailUtils} from "./ZKEmailUtils.sol";
  * @dev Implementation of {AbstractSigner} using https://docs.zk.email[ZKEmail] signatures.
  *
  * ZKEmail enables secure authentication and authorization through email messages, leveraging
- * DKIM signatures from a trusted {DKIMRegistry} and zero-knowledge proofs enabled by a {verifier}
- * contract that ensures email authenticity without revealing sensitive information. This contract
- * implements the core functionality for validating email-based signatures in smart contracts.
+ * DKIM signatures from a {DKIMRegistry} and zero-knowledge proofs enabled by a {verifier}
+ * contract that ensures email authenticity without revealing sensitive information. The DKIM
+ * registry is trusted to correctly update DKIM keys, but users can override this behaviour and
+ * set their own keys. This contract implements the core functionality for validating email-based
+ * signatures in smart contracts.
  *
  * Developers must set the following components during contract initialization:
  *
@@ -61,7 +63,7 @@ abstract contract SignerZKEmail is AbstractSigner {
      *
      * The account salt is used for:
      *
-     * * User Identification: Links the email address to a specific Ethereum address securely and deterministically.
+     * * Privacy: Enables email address privacy on-chain so long as the randomly generated account code is not revealed to an adversary.
      * * Security: Provides a unique identifier that cannot be easily guessed or brute-forced, as it's derived
      *   from both the email address and a random account code.
      * * Deterministic Address Generation: Enables the creation of deterministic addresses based on email addresses,
