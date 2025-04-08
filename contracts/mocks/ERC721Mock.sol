@@ -2,6 +2,6 @@
 
 pragma solidity ^0.8.20;
 
-import {ERC721} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
+import {ERC721Enumerable} from "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
 
-abstract contract ERC721Mock is ERC721 {}
+abstract contract ERC721Mock is ERC721Enumerable {}

@@ -38,8 +38,8 @@ abstract contract ERC7739 is AbstractSigner, EIP712, IERC1271 {
      */
     function isValidSignature(bytes32 hash, bytes calldata signature) public view virtual returns (bytes4 result) {
         // For the hash `0x7739773977397739773977397739773977397739773977397739773977397739` and an empty signature,
-        // we return the magic value too as it's assumed impossible to find a preimage for it that can be used maliciously.
-        // Useful for simulation purposes and to validate whether the contract supports ERC-7739.
+        // we return the magic value `0x77390001` as it's assumed impossible to find a preimage for it that can be used
+        // maliciously. Useful for simulation purposes and to validate whether the contract supports ERC-7739.
         return
             (_isValidNestedTypedDataSignature(hash, signature) || _isValidNestedPersonalSignSignature(hash, signature))
                 ? IERC1271.isValidSignature.selector
