@@ -18,11 +18,12 @@ abstract contract PaymasterERC20Guarantor is PaymasterERC20 {
         bytes32 userOpHash,
         uint256 maxCost
     ) internal virtual override returns (bytes memory context, uint256 validationData) {
-        // emit additional `UserOperationGuaranteed` in case there is a guarantor, default behavior otherwise.
+        // emit additional `UserOperationGuaranteed` in case there is a guarantor, default to inherited behavior otherwise.
         (uint256 validationData_, address guarantor) = _fetchGuarantor(userOp);
         if (validationData_ == ERC4337Utils.SIG_VALIDATION_SUCCESS && guarantor != address(0)) {
             emit UserOperationGuaranteed(userOpHash, userOp.sender, guarantor);
         }
+
         return super._validatePaymasterUserOp(userOp, userOpHash, maxCost);
     }
 
@@ -42,14 +43,14 @@ abstract contract PaymasterERC20Guarantor is PaymasterERC20 {
         ) = _decodeContext(context);
         uint256 actualAmount = _erc20Cost(actualGasCost, actualUserOpFeePerGas, tokenPrice);
 
-        // handle guarantor re-payment in case there is such
+        // Handle guarantor re-payment in case there is such.
         if (prefundPayer != userOpSender) {
-            // attempt to pay the actualAmount from the userOpSender to this paymaster
+            // Attempt to pay the actualAmount from the userOpSender to this paymaster.
             if (token.trySafeTransferFrom(userOpSender, address(this), actualAmount)) {
-                // if successful, re-pay the prefundAmount back to the guarantor
+                // If successful, pay back the prefundAmount to the guarantor.
                 token.safeTransfer(prefundPayer, prefundAmount);
             } else {
-                // otherwise, refund the prefund remainder to the guarantor
+                // Otherwise, refund the prefund remainder to the guarantor.
                 token.safeTransfer(prefundPayer, prefundAmount - actualAmount);
             }
         }

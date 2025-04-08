@@ -18,8 +18,6 @@ abstract contract PaymasterERC721Owner is PaymasterCore {
     /// @dev Emitted when the paymaster token is set.
     event PaymasterERC721OwnerTokenSet(IERC721 token);
 
-    event UserOperationSponsored(bytes32 indexed userOpHash, address indexed user);
-
     constructor(IERC721 token_) {
         _setToken(token_);
     }
@@ -44,27 +42,16 @@ abstract contract PaymasterERC721Owner is PaymasterCore {
      */
     function _validatePaymasterUserOp(
         PackedUserOperation calldata userOp,
-        bytes32 userOpHash,
+        bytes32 /* userOpHash */,
         uint256 /* maxCost */
     ) internal virtual override returns (bytes memory context, uint256 validationData) {
         return (
-            abi.encodePacked(userOpHash, userOp.sender),
+            bytes(""),
             // balanceOf reverts if the `userOp.sender` is the address(0), so this becomes unreachable with address(0)
             // assuming a compliant entrypoint (`_validatePaymasterUserOp` is called after `validateUserOp`),
             token().balanceOf(userOp.sender) == 0
                 ? ERC4337Utils.SIG_VALIDATION_FAILED
                 : ERC4337Utils.SIG_VALIDATION_SUCCESS
         );
-    }
-
-    function _postOp(
-        PostOpMode /* mode */,
-        bytes calldata context,
-        uint256 /* actualGasCost */,
-        uint256 /* actualUserOpFeePerGas */
-    ) internal virtual override {
-        bytes32 userOpHash = bytes32(context[0x00:0x20]);
-        address user = address(bytes20(context[0x20:0x34]));
-        emit UserOperationSponsored(userOpHash, user);
     }
 }

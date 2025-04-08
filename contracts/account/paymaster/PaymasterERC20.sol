@@ -42,8 +42,8 @@ abstract contract PaymasterERC20 is PaymasterCore {
     ) internal virtual override returns (bytes memory context, uint256 validationData) {
         (uint256 validationData_, IERC20 token, uint256 tokenPrice) = _fetchDetails(userOp, userOpHash);
 
-        address prefundPayer = _prefundPayer(userOp);
         uint256 prefundAmount = _erc20Cost(maxCost, userOp.maxFeePerGas(), tokenPrice);
+        address prefundPayer = _prefundPayer(userOp);
 
         // if validation is obviously failed, don't even try to do the ERC-20 transfer
         return
@@ -71,6 +71,7 @@ abstract contract PaymasterERC20 is PaymasterCore {
             address userOpSender,
             address prefundPayer
         ) = _decodeContext(context);
+
         uint256 actualAmount = _erc20Cost(actualGasCost, actualUserOpFeePerGas, tokenPrice);
 
         if (prefundPayer == userOpSender) {
@@ -106,7 +107,7 @@ abstract contract PaymasterERC20 is PaymasterCore {
         bytes32 userOpHash
     ) internal view virtual returns (uint256 validationData, IERC20 token, uint256 tokenPrice);
 
-    // @dev Decodes the context of the user operation.
+    // @dev Utility function to decode the context of the userOp.
     function _decodeContext(
         bytes calldata context
     )
