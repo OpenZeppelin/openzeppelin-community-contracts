@@ -112,21 +112,6 @@ abstract contract SignerZKEmail is AbstractSigner {
     }
 
     /**
-     * @dev Authenticates the email sender and authorizes the message in the email command.
-     *
-     * NOTE: This function only verifies the authenticity of the email and command, without
-     * handling replay protection. The calling contract should implement its own mechanisms
-     * to prevent replay attacks, similar to how nonces are used with ECDSA signatures.
-     */
-    function verifyEmail(EmailAuthMsg memory emailAuthMsg) public view virtual {
-        if (emailAuthMsg.templateId != templateId() || emailAuthMsg.proof.accountSalt != accountSalt()) {
-            revert InvalidEmailProof(ZKEmailUtils.EmailProofError.EmailProof);
-        }
-        ZKEmailUtils.EmailProofError err = emailAuthMsg.isValidZKEmail(DKIMRegistry(), verifier());
-        if (err != ZKEmailUtils.EmailProofError.NoError) revert InvalidEmailProof(err);
-    }
-
-    /**
      * @dev See {AbstractSigner-_rawSignatureValidation}. Validates a raw signature by:
      *
      * 1. Decoding the email authentication message from the signature
