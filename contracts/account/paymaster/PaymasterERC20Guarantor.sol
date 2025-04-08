@@ -28,13 +28,13 @@ abstract contract PaymasterERC20Guarantor is PaymasterERC20 {
     }
 
     function _postOp(
-        PostOpMode mode,
+        PostOpMode /* mode */,
         bytes calldata context,
         uint256 actualGasCost,
         uint256 actualUserOpFeePerGas
     ) internal virtual override {
         (
-            ,
+            bytes32 userOpHash,
             IERC20 token,
             uint256 prefundAmount,
             uint256 tokenPrice,
@@ -44,18 +44,19 @@ abstract contract PaymasterERC20Guarantor is PaymasterERC20 {
         uint256 actualAmount = _erc20Cost(actualGasCost, actualUserOpFeePerGas, tokenPrice);
 
         // Handle guarantor re-payment in case there is such.
-        if (prefundPayer != userOpSender) {
-            // Attempt to pay the actualAmount from the userOpSender to this paymaster.
-            if (token.trySafeTransferFrom(userOpSender, address(this), actualAmount)) {
-                // If successful, pay back the prefundAmount to the guarantor.
-                token.safeTransfer(prefundPayer, prefundAmount);
-            } else {
-                // Otherwise, refund the prefund remainder to the guarantor.
-                token.safeTransfer(prefundPayer, prefundAmount - actualAmount);
-            }
+        if (prefundPayer == userOpSender) {
+            token.safeTransfer(userOpSender, prefundAmount - actualAmount);
+        }
+        // Attempt to pay the actualAmount from the userOpSender to this paymaster.
+        else if (token.trySafeTransferFrom(userOpSender, address(this), actualAmount)) {
+            // If successful, pay back the prefundAmount to the guarantor.
+            token.safeTransfer(prefundPayer, prefundAmount);
+        } else {
+            // Otherwise, refund the prefund remainder to the guarantor.
+            token.safeTransfer(prefundPayer, prefundAmount - actualAmount);
         }
 
-        super._postOp(mode, context, actualGasCost, actualUserOpFeePerGas);
+        emit UserOperationSponsored(userOpHash, userOpSender, actualAmount, tokenPrice);
     }
 
     function _prefundPayer(PackedUserOperation calldata userOp) internal view virtual override returns (address) {

@@ -68,15 +68,13 @@ abstract contract PaymasterERC20 is PaymasterCore {
             IERC20 token,
             uint256 prefundAmount,
             uint256 tokenPrice,
-            address userOpSender,
-            address prefundPayer
+            address userOpSender /* address prefundPayer */,
+
         ) = _decodeContext(context);
 
         uint256 actualAmount = _erc20Cost(actualGasCost, actualUserOpFeePerGas, tokenPrice);
 
-        if (prefundPayer == userOpSender) {
-            token.safeTransfer(userOpSender, prefundAmount - actualAmount);
-        }
+        token.safeTransfer(userOpSender, prefundAmount - actualAmount);
 
         emit UserOperationSponsored(userOpHash, userOpSender, actualAmount, tokenPrice);
     }
