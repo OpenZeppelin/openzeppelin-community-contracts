@@ -91,7 +91,6 @@ abstract contract PaymasterERC20Mock is EIP712, PaymasterERC20, AccessControl {
         if (guarantor == address(0)) {
             validationData = ERC4337Utils.SIG_VALIDATION_SUCCESS;
         } else {
-            /// Here we are implicitly assuming the guarantor signature is the same length as the oracle signature.?
             // parse guarantor signature
             uint16 oracleSignatureLength = uint16(bytes2(paymasterData[0x68:0x6a]));
             bytes calldata guarantorSignature = paymasterData[0x6a + oracleSignatureLength:];
