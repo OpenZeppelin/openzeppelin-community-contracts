@@ -22,6 +22,8 @@ contract ZKEmailUtilsTest is Test {
     bytes32 private _emailNullifier;
     bytes private _mockProof;
 
+    string private constant SIGN_HASH_COMMAND = "signHash ";
+
     function setUp() public {
         // Deploy DKIM Registry
         _dkimRegistry = IDKIMRegistry(address(new MockDKIMRegistry()));
@@ -37,15 +39,16 @@ contract ZKEmailUtilsTest is Test {
         _mockProof = abi.encodePacked(bytes1(0x01));
     }
 
-    function buildEmailAuthMsg(bytes32 hash) public view returns (EmailAuthMsg memory emailAuthMsg) {
-        bytes[] memory commandParams = new bytes[](1);
-        commandParams[0] = abi.encode(hash);
-
+    function buildEmailAuthMsg(
+        string memory command,
+        bytes[] memory params,
+        uint256 skippedPrefix
+    ) public view returns (EmailAuthMsg memory emailAuthMsg) {
         EmailProof memory emailProof = EmailProof({
             domainName: "gmail.com",
             publicKeyHash: _publicKeyHash,
             timestamp: block.timestamp,
-            maskedCommand: string.concat("signHash ", uint256(hash).toString()),
+            maskedCommand: command,
             emailNullifier: _emailNullifier,
             accountSalt: _accountSalt,
             isCodeExist: true,
@@ -54,8 +57,8 @@ contract ZKEmailUtilsTest is Test {
 
         emailAuthMsg = EmailAuthMsg({
             templateId: _templateId,
-            commandParams: commandParams,
-            skippedCommandPrefix: 0,
+            commandParams: params,
+            skippedCommandPrefix: skippedPrefix,
             proof: emailProof
         });
     }
@@ -71,7 +74,14 @@ contract ZKEmailUtilsTest is Test {
         bytes memory proof
     ) public view {
         // Build email auth message with fuzzed parameters
-        EmailAuthMsg memory emailAuthMsg = buildEmailAuthMsg(hash);
+        bytes[] memory commandParams = new bytes[](1);
+        commandParams[0] = abi.encode(hash);
+
+        EmailAuthMsg memory emailAuthMsg = buildEmailAuthMsg(
+            string.concat(SIGN_HASH_COMMAND, uint256(hash).toString()),
+            commandParams,
+            0
+        );
 
         // Override with fuzzed values
         emailAuthMsg.proof.domainName = domainName;
@@ -100,9 +110,17 @@ contract ZKEmailUtilsTest is Test {
         bytes32 emailNullifier,
         bytes32 accountSalt,
         bool isCodeExist,
-        bytes memory proof
+        bytes memory proof,
+        string memory commandPrefix
     ) public view {
-        EmailAuthMsg memory emailAuthMsg = buildEmailAuthMsg(hash);
+        bytes[] memory commandParams = new bytes[](1);
+        commandParams[0] = abi.encode(hash);
+
+        EmailAuthMsg memory emailAuthMsg = buildEmailAuthMsg(
+            string.concat(commandPrefix, " ", uint256(hash).toString()),
+            commandParams,
+            0
+        );
 
         // Override with fuzzed values
         emailAuthMsg.proof.domainName = domainName;
@@ -114,7 +132,7 @@ contract ZKEmailUtilsTest is Test {
         emailAuthMsg.proof.proof = proof;
 
         string[] memory template = new string[](2);
-        template[0] = "signHash";
+        template[0] = commandPrefix;
         template[1] = CommandUtils.UINT_MATCHER;
 
         ZKEmailUtils.EmailProofError err = ZKEmailUtils.isValidZKEmail(
@@ -135,9 +153,17 @@ contract ZKEmailUtilsTest is Test {
         bytes32 emailNullifier,
         bytes32 accountSalt,
         bool isCodeExist,
-        bytes memory proof
-    ) public {
-        EmailAuthMsg memory emailAuthMsg = buildEmailAuthMsg(hash);
+        bytes memory proof,
+        string memory commandPrefix
+    ) public view {
+        bytes[] memory commandParams = new bytes[](1);
+        commandParams[0] = abi.encode(hash);
+
+        EmailAuthMsg memory emailAuthMsg = buildEmailAuthMsg(
+            string.concat(commandPrefix, " ", uint256(hash).toString()),
+            commandParams,
+            0
+        );
 
         // Override with fuzzed values
         emailAuthMsg.proof.domainName = domainName;
@@ -149,7 +175,7 @@ contract ZKEmailUtilsTest is Test {
         emailAuthMsg.proof.proof = proof;
 
         string[] memory template = new string[](2);
-        template[0] = "signHash";
+        template[0] = commandPrefix;
         template[1] = CommandUtils.UINT_MATCHER;
 
         // Test with different cases
@@ -174,9 +200,17 @@ contract ZKEmailUtilsTest is Test {
         bytes32 emailNullifier,
         bytes32 accountSalt,
         bool isCodeExist,
-        bytes memory proof
-    ) public {
-        EmailAuthMsg memory emailAuthMsg = buildEmailAuthMsg(hash);
+        bytes memory proof,
+        string memory commandPrefix
+    ) public view {
+        bytes[] memory commandParams = new bytes[](1);
+        commandParams[0] = abi.encode(hash);
+
+        EmailAuthMsg memory emailAuthMsg = buildEmailAuthMsg(
+            string.concat(commandPrefix, " ", uint256(hash).toString()),
+            commandParams,
+            0
+        );
 
         // Override with fuzzed values
         emailAuthMsg.proof.domainName = domainName;
@@ -188,21 +222,8 @@ contract ZKEmailUtilsTest is Test {
         emailAuthMsg.proof.proof = proof;
 
         string[] memory template = new string[](2);
-        template[0] = "signHash";
+        template[0] = commandPrefix;
         template[1] = CommandUtils.UINT_MATCHER;
-
-        // Mock responses
-        vm.mockCall(
-            address(_dkimRegistry),
-            abi.encodeCall(IDKIMRegistry.isDKIMPublicKeyHashValid, (domainName, publicKeyHash)),
-            abi.encode(true)
-        );
-
-        vm.mockCall(
-            address(_verifier),
-            abi.encodeCall(IVerifier.verifyEmailProof, (emailAuthMsg.proof)),
-            abi.encode(true)
-        );
 
         ZKEmailUtils.EmailProofError err = ZKEmailUtils.isValidZKEmail(
             emailAuthMsg,
@@ -216,7 +237,15 @@ contract ZKEmailUtilsTest is Test {
     }
 
     function testInvalidDKIMPublicKeyHash(bytes32 hash, string memory domainName, bytes32 publicKeyHash) public {
-        EmailAuthMsg memory emailAuthMsg = buildEmailAuthMsg(hash);
+        bytes[] memory commandParams = new bytes[](1);
+        commandParams[0] = abi.encode(hash);
+
+        EmailAuthMsg memory emailAuthMsg = buildEmailAuthMsg(
+            string.concat(SIGN_HASH_COMMAND, uint256(hash).toString()),
+            commandParams,
+            0
+        );
+
         emailAuthMsg.proof.domainName = domainName;
         emailAuthMsg.proof.publicKeyHash = publicKeyHash;
 
@@ -239,8 +268,10 @@ contract ZKEmailUtilsTest is Test {
     function testInvalidMaskedCommandLength(bytes32 hash, uint256 length) public view {
         length = bound(length, 606, 1000); // Assuming commandBytes is 605
 
-        EmailAuthMsg memory emailAuthMsg = buildEmailAuthMsg(hash);
-        emailAuthMsg.proof.maskedCommand = string(new bytes(length));
+        bytes[] memory commandParams = new bytes[](1);
+        commandParams[0] = abi.encode(hash);
+
+        EmailAuthMsg memory emailAuthMsg = buildEmailAuthMsg(string(new bytes(length)), commandParams, 0);
 
         ZKEmailUtils.EmailProofError err = ZKEmailUtils.isValidZKEmail(
             emailAuthMsg,
@@ -256,8 +287,14 @@ contract ZKEmailUtilsTest is Test {
 
         vm.mockCall(address(_verifier), abi.encodeCall(IVerifier.commandBytes, ()), abi.encode(skippedPrefix));
 
-        EmailAuthMsg memory emailAuthMsg = buildEmailAuthMsg(hash);
-        emailAuthMsg.skippedCommandPrefix = skippedPrefix;
+        bytes[] memory commandParams = new bytes[](1);
+        commandParams[0] = abi.encode(hash);
+
+        EmailAuthMsg memory emailAuthMsg = buildEmailAuthMsg(
+            string.concat(SIGN_HASH_COMMAND, uint256(hash).toString()),
+            commandParams,
+            skippedPrefix
+        );
 
         ZKEmailUtils.EmailProofError err = ZKEmailUtils.isValidZKEmail(
             emailAuthMsg,
@@ -269,8 +306,10 @@ contract ZKEmailUtilsTest is Test {
     }
 
     function testMismatchedCommand(bytes32 hash, string memory invalidCommand) public view {
-        EmailAuthMsg memory emailAuthMsg = buildEmailAuthMsg(hash);
-        emailAuthMsg.proof.maskedCommand = invalidCommand;
+        bytes[] memory commandParams = new bytes[](1);
+        commandParams[0] = abi.encode(hash);
+
+        EmailAuthMsg memory emailAuthMsg = buildEmailAuthMsg(invalidCommand, commandParams, 0);
 
         ZKEmailUtils.EmailProofError err = ZKEmailUtils.isValidZKEmail(
             emailAuthMsg,
@@ -282,7 +321,15 @@ contract ZKEmailUtilsTest is Test {
     }
 
     function testInvalidEmailProof(bytes32 hash, bytes memory invalidProof) public {
-        EmailAuthMsg memory emailAuthMsg = buildEmailAuthMsg(hash);
+        bytes[] memory commandParams = new bytes[](1);
+        commandParams[0] = abi.encode(hash);
+
+        EmailAuthMsg memory emailAuthMsg = buildEmailAuthMsg(
+            string.concat(SIGN_HASH_COMMAND, uint256(hash).toString()),
+            commandParams,
+            0
+        );
+
         emailAuthMsg.proof.proof = invalidProof;
 
         // Mock verifier to return false
