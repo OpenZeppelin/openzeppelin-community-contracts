@@ -8,6 +8,7 @@ import {EmailAuthMsg} from "@zk-email/email-tx-builder/interfaces/IEmailTypes.so
 import {IDKIMRegistry} from "@zk-email/contracts/DKIMRegistry.sol";
 import {IVerifier, EmailProof} from "@zk-email/email-tx-builder/interfaces/IVerifier.sol";
 import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
+import {CommandUtils} from "@zk-email/email-tx-builder/libraries/CommandUtils.sol";
 
 contract ZKEmailUtilsTest is Test {
     using Strings for uint256;
@@ -86,6 +87,129 @@ contract ZKEmailUtilsTest is Test {
             emailAuthMsg,
             IDKIMRegistry(_dkimRegistry),
             IVerifier(_verifier)
+        );
+
+        assertEq(uint256(err), uint256(ZKEmailUtils.EmailProofError.NoError));
+    }
+
+    function testIsValidZKEmailWithTemplate(
+        bytes32 hash,
+        string memory domainName,
+        bytes32 publicKeyHash,
+        uint256 timestamp,
+        bytes32 emailNullifier,
+        bytes32 accountSalt,
+        bool isCodeExist,
+        bytes memory proof
+    ) public view {
+        EmailAuthMsg memory emailAuthMsg = buildEmailAuthMsg(hash);
+
+        // Override with fuzzed values
+        emailAuthMsg.proof.domainName = domainName;
+        emailAuthMsg.proof.publicKeyHash = publicKeyHash;
+        emailAuthMsg.proof.timestamp = timestamp;
+        emailAuthMsg.proof.emailNullifier = emailNullifier;
+        emailAuthMsg.proof.accountSalt = accountSalt;
+        emailAuthMsg.proof.isCodeExist = isCodeExist;
+        emailAuthMsg.proof.proof = proof;
+
+        string[] memory template = new string[](2);
+        template[0] = "signHash";
+        template[1] = CommandUtils.UINT_MATCHER;
+
+        ZKEmailUtils.EmailProofError err = ZKEmailUtils.isValidZKEmail(
+            emailAuthMsg,
+            IDKIMRegistry(_dkimRegistry),
+            IVerifier(_verifier),
+            template
+        );
+
+        assertEq(uint256(err), uint256(ZKEmailUtils.EmailProofError.NoError));
+    }
+
+    function testCommandMatchWithDifferentCases(
+        bytes32 hash,
+        string memory domainName,
+        bytes32 publicKeyHash,
+        uint256 timestamp,
+        bytes32 emailNullifier,
+        bytes32 accountSalt,
+        bool isCodeExist,
+        bytes memory proof
+    ) public {
+        EmailAuthMsg memory emailAuthMsg = buildEmailAuthMsg(hash);
+
+        // Override with fuzzed values
+        emailAuthMsg.proof.domainName = domainName;
+        emailAuthMsg.proof.publicKeyHash = publicKeyHash;
+        emailAuthMsg.proof.timestamp = timestamp;
+        emailAuthMsg.proof.emailNullifier = emailNullifier;
+        emailAuthMsg.proof.accountSalt = accountSalt;
+        emailAuthMsg.proof.isCodeExist = isCodeExist;
+        emailAuthMsg.proof.proof = proof;
+
+        string[] memory template = new string[](2);
+        template[0] = "signHash";
+        template[1] = CommandUtils.UINT_MATCHER;
+
+        // Test with different cases
+        for (uint256 i = 0; i < uint8(type(ZKEmailUtils.Case).max) - 1; i++) {
+            ZKEmailUtils.Case stringCase = ZKEmailUtils.Case(i);
+            ZKEmailUtils.EmailProofError err = ZKEmailUtils.isValidZKEmail(
+                emailAuthMsg,
+                IDKIMRegistry(_dkimRegistry),
+                IVerifier(_verifier),
+                template,
+                stringCase
+            );
+            assertEq(uint256(err), uint256(ZKEmailUtils.EmailProofError.NoError));
+        }
+    }
+
+    function testCommandMatchWithAnyCase(
+        bytes32 hash,
+        string memory domainName,
+        bytes32 publicKeyHash,
+        uint256 timestamp,
+        bytes32 emailNullifier,
+        bytes32 accountSalt,
+        bool isCodeExist,
+        bytes memory proof
+    ) public {
+        EmailAuthMsg memory emailAuthMsg = buildEmailAuthMsg(hash);
+
+        // Override with fuzzed values
+        emailAuthMsg.proof.domainName = domainName;
+        emailAuthMsg.proof.publicKeyHash = publicKeyHash;
+        emailAuthMsg.proof.timestamp = timestamp;
+        emailAuthMsg.proof.emailNullifier = emailNullifier;
+        emailAuthMsg.proof.accountSalt = accountSalt;
+        emailAuthMsg.proof.isCodeExist = isCodeExist;
+        emailAuthMsg.proof.proof = proof;
+
+        string[] memory template = new string[](2);
+        template[0] = "signHash";
+        template[1] = CommandUtils.UINT_MATCHER;
+
+        // Mock responses
+        vm.mockCall(
+            address(_dkimRegistry),
+            abi.encodeCall(IDKIMRegistry.isDKIMPublicKeyHashValid, (domainName, publicKeyHash)),
+            abi.encode(true)
+        );
+
+        vm.mockCall(
+            address(_verifier),
+            abi.encodeCall(IVerifier.verifyEmailProof, (emailAuthMsg.proof)),
+            abi.encode(true)
+        );
+
+        ZKEmailUtils.EmailProofError err = ZKEmailUtils.isValidZKEmail(
+            emailAuthMsg,
+            IDKIMRegistry(_dkimRegistry),
+            IVerifier(_verifier),
+            template,
+            ZKEmailUtils.Case.ANY
         );
 
         assertEq(uint256(err), uint256(ZKEmailUtils.EmailProofError.NoError));
