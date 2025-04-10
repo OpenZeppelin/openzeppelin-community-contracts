@@ -3,7 +3,7 @@
 pragma solidity ^0.8.24;
 
 import {IDKIMRegistry} from "@zk-email/contracts/DKIMRegistry.sol";
-import {IVerifier, EmailProof} from "@zk-email/email-tx-builder/interfaces/IVerifier.sol";
+import {IVerifier} from "@zk-email/email-tx-builder/interfaces/IVerifier.sol";
 import {EmailAuthMsg} from "@zk-email/email-tx-builder/interfaces/IEmailTypes.sol";
 import {AbstractSigner} from "./AbstractSigner.sol";
 import {ZKEmailUtils} from "./ZKEmailUtils.sol";
