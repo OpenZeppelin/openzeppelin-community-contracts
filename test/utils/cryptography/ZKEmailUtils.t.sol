@@ -369,22 +369,16 @@ contract ZKEmailUtilsTest is Test {
     }
 
     function _createVerifier() private returns (IVerifier) {
-        Verifier verifierImpl = new Verifier();
+        Verifier verifier = new Verifier();
         Groth16Verifier groth16Verifier = new Groth16Verifier();
-        ERC1967Proxy verifierProxy = new ERC1967Proxy(
-            address(verifierImpl),
-            abi.encodeCall(verifierImpl.initialize, (msg.sender, address(groth16Verifier)))
-        );
-        return Verifier(address(verifierProxy));
+        verifier.initialize(msg.sender, address(groth16Verifier));
+        return verifier;
     }
 
     function _createECDSAOwnedDKIMRegistry() private returns (IDKIMRegistry) {
-        ECDSAOwnedDKIMRegistry ecdsaDkimImpl = new ECDSAOwnedDKIMRegistry();
-        ERC1967Proxy ecdsaDkimProxy = new ERC1967Proxy(
-            address(ecdsaDkimImpl),
-            abi.encodeCall(ecdsaDkimImpl.initialize, (msg.sender, msg.sender))
-        );
-        return ECDSAOwnedDKIMRegistry(address(ecdsaDkimProxy));
+        ECDSAOwnedDKIMRegistry ecdsaDkim = new ECDSAOwnedDKIMRegistry();
+        ecdsaDkim.initialize(msg.sender, msg.sender);
+        return ecdsaDkim;
     }
 
     function _mockIsDKIMPublicKeyHashValid(string memory domainName, bytes32 publicKeyHash) private {
