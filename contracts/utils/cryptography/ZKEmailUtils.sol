@@ -87,14 +87,16 @@ library ZKEmailUtils {
         string[] memory template,
         Case stringCase
     ) internal view returns (EmailProofError) {
-        if (!dkimregistry.isDKIMPublicKeyHashValid(emailAuthMsg.proof.domainName, emailAuthMsg.proof.publicKeyHash)) {
-            return EmailProofError.DKIMPublicKeyHash;
+        if (emailAuthMsg.skippedCommandPrefix >= verifier.commandBytes()) {
+            return EmailProofError.SkippedCommandPrefixSize;
         } else if (bytes(emailAuthMsg.proof.maskedCommand).length > verifier.commandBytes()) {
             return EmailProofError.MaskedCommandLength;
-        } else if (emailAuthMsg.skippedCommandPrefix >= verifier.commandBytes()) {
-            return EmailProofError.SkippedCommandPrefixSize;
         } else if (!_commandMatch(emailAuthMsg, template, stringCase)) {
             return EmailProofError.MismatchedCommand;
+        } else if (
+            !dkimregistry.isDKIMPublicKeyHashValid(emailAuthMsg.proof.domainName, emailAuthMsg.proof.publicKeyHash)
+        ) {
+            return EmailProofError.DKIMPublicKeyHash;
         } else {
             return verifier.verifyEmailProof(emailAuthMsg.proof) ? EmailProofError.NoError : EmailProofError.EmailProof;
         }
