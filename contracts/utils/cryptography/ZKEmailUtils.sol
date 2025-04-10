@@ -111,11 +111,12 @@ library ZKEmailUtils {
         bytes[] memory commandParams = emailAuthMsg.commandParams; // Not a memory copy
         uint256 skippedCommandPrefix = emailAuthMsg.skippedCommandPrefix; // Not a memory copy
         string memory command = string(bytes(emailAuthMsg.proof.maskedCommand).slice(skippedCommandPrefix)); // Not a memory copy
+
+        if (stringCase != Case.ANY)
+            return commandParams.computeExpectedCommand(template, uint8(stringCase)).equal(command);
         return
-            stringCase == Case.ANY
-                ? (commandParams.computeExpectedCommand(template, uint8(Case.LOWERCASE)).equal(command) ||
-                    commandParams.computeExpectedCommand(template, uint8(Case.UPPERCASE)).equal(command) ||
-                    commandParams.computeExpectedCommand(template, uint8(Case.CHECKSUM)).equal(command))
-                : commandParams.computeExpectedCommand(template, uint8(stringCase)).equal(command);
+            commandParams.computeExpectedCommand(template, uint8(Case.LOWERCASE)).equal(command) ||
+            commandParams.computeExpectedCommand(template, uint8(Case.UPPERCASE)).equal(command) ||
+            commandParams.computeExpectedCommand(template, uint8(Case.CHECKSUM)).equal(command);
     }
 }
