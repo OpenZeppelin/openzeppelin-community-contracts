@@ -43,17 +43,33 @@ abstract contract PaymasterERC20 is PaymasterCore {
         (uint256 validationData_, IERC20 token, uint256 tokenPrice) = _fetchDetails(userOp, userOpHash);
 
         uint256 prefundAmount = _erc20Cost(maxCost, userOp.maxFeePerGas(), tokenPrice);
-        address prefundPayer = _prefundPayer(userOp);
+        (bool prefundSuccess, bytes memory prefundContext) = _prefund(
+            userOp,
+            userOpHash,
+            userOp.sender,
+            token,
+            prefundAmount
+        );
 
-        // if validation is obviously failed, don't even try to do the ERC-20 transfer
         return
-            (validationData_ != ERC4337Utils.SIG_VALIDATION_FAILED &&
-                token.trySafeTransferFrom(prefundPayer, address(this), prefundAmount))
+            (validationData_ != ERC4337Utils.SIG_VALIDATION_FAILED && prefundSuccess)
                 ? (
-                    abi.encodePacked(userOpHash, token, prefundAmount, tokenPrice, userOp.sender, prefundPayer),
+                    abi.encodePacked(userOpHash, token, prefundAmount, tokenPrice, userOp.sender, prefundContext),
                     validationData_
                 )
                 : (bytes(""), ERC4337Utils.SIG_VALIDATION_FAILED);
+    }
+
+    /// @dev Prefunds the user operation.
+    /// Takes userOp and userOpHash for maximun customization in overrides.
+    function _prefund(
+        PackedUserOperation calldata /* userOp */,
+        bytes32 /* userOpHash */,
+        address prefunder,
+        IERC20 token,
+        uint256 prefundAmount
+    ) internal virtual returns (bool success, bytes memory context) {
+        return (token.trySafeTransferFrom(prefunder, address(this), prefundAmount), bytes(""));
     }
 
     /// @inheritdoc PaymasterCore
@@ -63,19 +79,28 @@ abstract contract PaymasterERC20 is PaymasterCore {
         uint256 actualGasCost,
         uint256 actualUserOpFeePerGas
     ) internal virtual override {
-        (
-            bytes32 userOpHash,
-            IERC20 token,
-            uint256 prefundAmount,
-            uint256 tokenPrice,
-            address userOpSender /* address prefundPayer */,
-
-        ) = _decodeContext(context);
+        bytes32 userOpHash = bytes32(context[0x00:0x20]); // essential for event emission
+        address userOpSender = address(bytes20(context[0x74:0x88])); // essential for event emission
+        IERC20 token = IERC20(address(bytes20(context[0x20:0x34]))); // essential for refund
+        uint256 prefundAmount = uint256(bytes32(context[0x34:0x54])); // essential for refund
+        uint256 tokenPrice = uint256(bytes32(context[0x54:0x74])); // essential for event emission
+        bytes calldata prefundContext = context[0x88:];
 
         uint256 actualAmount = _erc20Cost(actualGasCost, actualUserOpFeePerGas, tokenPrice);
-        token.safeTransfer(userOpSender, prefundAmount - actualAmount);
+        _refund(userOpSender, token, prefundAmount, actualAmount, prefundContext);
 
         emit UserOperationSponsored(userOpHash, userOpSender, actualAmount, tokenPrice);
+    }
+
+    /// @dev Refunds the user operation.
+    function _refund(
+        address prefunder,
+        IERC20 token,
+        uint256 prefundAmount,
+        uint256 actualAmount,
+        bytes calldata /* prefundContext */
+    ) internal virtual {
+        token.safeTransfer(prefunder, prefundAmount - actualAmount);
     }
 
     /**
@@ -104,40 +129,9 @@ abstract contract PaymasterERC20 is PaymasterCore {
         bytes32 userOpHash
     ) internal view virtual returns (uint256 validationData, IERC20 token, uint256 tokenPrice);
 
-    // @dev Utility function to decode the context of the userOp.
-    function _decodeContext(
-        bytes calldata context
-    )
-        internal
-        view
-        virtual
-        returns (
-            bytes32 userOpHash,
-            IERC20 token,
-            uint256 prefundAmount,
-            uint256 tokenPrice,
-            address userOpSender,
-            address prefundPayer
-        )
-    {
-        return (
-            bytes32(context[0x00:0x20]), // userOpHash
-            IERC20(address(bytes20(context[0x20:0x34]))), // token
-            uint256(bytes32(context[0x34:0x54])), // prefundAmount
-            uint256(bytes32(context[0x54:0x74])), // tokenPrice
-            address(bytes20(context[0x74:0x88])), // userOpSender
-            address(bytes20(context[0x88:0x9C])) // prefundPayer
-        );
-    }
-
-    // @dev Over-estimates the cost of the post-operation logic.
+    /// @dev Over-estimates the cost of the post-operation logic.
     function _postOpCost() internal view virtual returns (uint256) {
         return 30_000;
-    }
-
-    // @dev Returns the address that will pay the prefunding of the user operation.
-    function _prefundPayer(PackedUserOperation calldata userOp) internal view virtual returns (address) {
-        return userOp.sender;
     }
 
     /// @dev Denominator used for interpreting the `tokenPrice` returned by {_fetchDetails} as "fixed point".
@@ -145,7 +139,7 @@ abstract contract PaymasterERC20 is PaymasterCore {
         return 1e18;
     }
 
-    // @dev Calculates the cost of the user operation in ERC-20 tokens.
+    /// @dev Calculates the cost of the user operation in ERC-20 tokens.
     function _erc20Cost(uint256 cost, uint256 feePerGas, uint256 tokenPrice) internal view virtual returns (uint256) {
         return (cost + _postOpCost() * feePerGas).mulDiv(tokenPrice, _tokenPriceDenominator());
     }

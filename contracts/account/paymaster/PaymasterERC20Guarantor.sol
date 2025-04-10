@@ -11,59 +11,54 @@ import {PaymasterERC20} from "./PaymasterERC20.sol";
 abstract contract PaymasterERC20Guarantor is PaymasterERC20 {
     using SafeERC20 for IERC20;
 
-    event UserOperationGuaranteed(bytes32 indexed userOpHash, address indexed user, address indexed guarantor);
+    event UserOperationGuaranteed(
+        bytes32 indexed userOpHash,
+        address indexed user,
+        address indexed guarantor,
+        uint256 prefundAmount
+    );
 
-    function _validatePaymasterUserOp(
+    function _prefund(
         PackedUserOperation calldata userOp,
         bytes32 userOpHash,
-        uint256 maxCost
-    ) internal virtual override returns (bytes memory context, uint256 validationData) {
-        // emit additional `UserOperationGuaranteed` event in case there is a guarantor, default to inherited behavior otherwise.
+        address /* prefunder */,
+        IERC20 token,
+        uint256 prefundAmount
+    ) internal virtual override returns (bool success, bytes memory context) {
         (uint256 validationData_, address guarantor) = _fetchGuarantor(userOp);
         if (validationData_ == ERC4337Utils.SIG_VALIDATION_SUCCESS && guarantor != address(0)) {
-            emit UserOperationGuaranteed(userOpHash, userOp.sender, guarantor);
+            // If the Guarantor validation is successful, guarantor prefunds the user operation.
+            (bool success_, ) = super._prefund(userOp, userOpHash, guarantor, token, prefundAmount);
+            if (success_) {
+                emit UserOperationGuaranteed(userOpHash, userOp.sender, guarantor, prefundAmount);
+                return (success_, abi.encodePacked(guarantor));
+            }
         }
-        return super._validatePaymasterUserOp(userOp, userOpHash, maxCost);
+        // If the Guarantor validation or guarantor payment is not successful, fallback to the user prefunding.
+        return super._prefund(userOp, userOpHash, userOp.sender, token, prefundAmount);
     }
 
-    function _postOp(
-        PostOpMode /* mode */,
-        bytes calldata context,
-        uint256 actualGasCost,
-        uint256 actualUserOpFeePerGas
+    function _refund(
+        address userOpSender,
+        IERC20 token,
+        uint256 prefundAmount,
+        uint256 actualAmount,
+        bytes calldata prefundContext
     ) internal virtual override {
-        (
-            bytes32 userOpHash,
-            IERC20 token,
-            uint256 prefundAmount,
-            uint256 tokenPrice,
-            address userOpSender,
-            address prefundPayer
-        ) = _decodeContext(context);
-        uint256 actualAmount = _erc20Cost(actualGasCost, actualUserOpFeePerGas, tokenPrice);
-
-        // If the prefundPayer was the userOpSender, refund the remainder.
-        if (prefundPayer == userOpSender) {
-            token.safeTransfer(userOpSender, prefundAmount - actualAmount);
-        }
-        // Otherwise, attempt to deduct the actualAmount from the userOpSender to this paymaster.
-        else if (token.trySafeTransferFrom(userOpSender, address(this), actualAmount)) {
-            // If successful, pay back the guarantor the prefundAmount.
-            token.safeTransfer(prefundPayer, prefundAmount);
+        if (prefundContext.length == 0) {
+            // If there's no guarantor, fallback to the user refunding.
+            super._refund(userOpSender, token, prefundAmount, actualAmount, prefundContext);
         } else {
-            // Otherwise, refund the guarantor the prefund remainder.
-            token.safeTransfer(prefundPayer, prefundAmount - actualAmount);
+            address guarantor = address(bytes20(prefundContext[0x00:0x20])); // Should we add more checks of the guarantor variable or is assumed to be right?
+            // Attempt to debt the userOpSender the actualAmount into the paymaster
+            if (token.trySafeTransferFrom(userOpSender, address(this), actualAmount)) {
+                // If successful, pay back the guarantor the prefundAmount.
+                token.safeTransfer(guarantor, prefundAmount);
+            } else {
+                // Otherwise, refund the guarantor the prefund remainder (he absorbs the actualAmount payment loss)
+                super._refund(guarantor, token, prefundAmount, actualAmount, prefundContext);
+            }
         }
-
-        emit UserOperationSponsored(userOpHash, userOpSender, actualAmount, tokenPrice);
-    }
-
-    function _prefundPayer(PackedUserOperation calldata userOp) internal view virtual override returns (address) {
-        (uint256 validationData, address guarantor) = _fetchGuarantor(userOp);
-        return
-            (validationData == ERC4337Utils.SIG_VALIDATION_SUCCESS && guarantor != address(0))
-                ? guarantor
-                : userOp.sender;
     }
 
     function _postOpCost() internal view virtual override returns (uint256) {
