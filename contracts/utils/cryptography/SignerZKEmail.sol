@@ -141,7 +141,7 @@ abstract contract SignerZKEmail is AbstractSigner {
         //   - `proof` is a dynamic bytes (32 bytes offset).
         // There are 128 bytes for the EmailAuthMsg type and 256 bytes for the proof.
         // Considering all dynamic elements are empty (i.e. `commandParams` = [], `domainName` = "", `maskedCommand` = "", `proof` = []),
-        // then we have 128 bytes for the EmailAuthMsg type, 256 bytes for the proof and 4 * 32 for the lenght of the dynamic elements.
+        // then we have 128 bytes for the EmailAuthMsg type, 256 bytes for the proof and 4 * 32 for the length of the dynamic elements.
         // So the minimum length is 128 + 256 + 4 * 32 = 512 bytes.
         if (signature.length < 512) return false;
         EmailAuthMsg memory emailAuthMsg = abi.decode(signature, (EmailAuthMsg));
