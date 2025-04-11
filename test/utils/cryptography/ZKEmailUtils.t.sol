@@ -168,7 +168,7 @@ contract ZKEmailUtilsTest is Test {
                 0
             );
 
-            // Override with fuzzed valuess
+            // Override with fuzzed values
             emailAuthMsg.proof.timestamp = timestamp;
             emailAuthMsg.proof.emailNullifier = emailNullifier;
             emailAuthMsg.proof.accountSalt = accountSalt;
