@@ -11,7 +11,7 @@ import {IDKIMRegistry} from "@zk-email/contracts/DKIMRegistry.sol";
 import {IVerifier, EmailProof} from "@zk-email/email-tx-builder/interfaces/IVerifier.sol";
 import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 import {CommandUtils} from "@zk-email/email-tx-builder/libraries/CommandUtils.sol";
-import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
+import {MessageHashUtils} from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
 
 contract ZKEmailUtilsTest is Test {
     using Strings for *;
@@ -24,8 +24,11 @@ contract ZKEmailUtilsTest is Test {
     IVerifier private _verifier;
     bytes32 private _accountSalt;
     uint256 private _templateId;
-    bytes32 private _publicKeyHash;
-    bytes32 private _emailNullifier;
+    // From https://github.com/zkemail/email-tx-builder/blob/main/packages/contracts/test/helpers/DeploymentHelper.sol#L36-L41
+    string private _selector = "1234";
+    string private _domainName = "gmail.com";
+    bytes32 private _publicKeyHash = 0x0ea9c777dc7110e5a9e89b13f0cfc540e3845ba120b2b6dc24024d61488d4788;
+    bytes32 private _emailNullifier = 0x00a83fce3d4b1c9ef0f600644c1ecc6c8115b57b1596e0e3295e2c5105fbfd8a;
     bytes private _mockProof;
 
     string private constant SIGN_HASH_COMMAND = "signHash ";
@@ -40,8 +43,6 @@ contract ZKEmailUtilsTest is Test {
         // Generate test data
         _accountSalt = keccak256("test@example.com");
         _templateId = 1;
-        _publicKeyHash = keccak256("publicKey");
-        _emailNullifier = keccak256("emailNullifier");
         _mockProof = abi.encodePacked(bytes1(0x01));
     }
 
@@ -51,7 +52,7 @@ contract ZKEmailUtilsTest is Test {
         uint256 skippedPrefix
     ) public view returns (EmailAuthMsg memory emailAuthMsg) {
         EmailProof memory emailProof = EmailProof({
-            domainName: "gmail.com",
+            domainName: _domainName,
             publicKeyHash: _publicKeyHash,
             timestamp: block.timestamp,
             maskedCommand: command,
@@ -71,8 +72,6 @@ contract ZKEmailUtilsTest is Test {
 
     function testIsValidZKEmailSignHash(
         bytes32 hash,
-        string memory domainName,
-        bytes32 publicKeyHash,
         uint256 timestamp,
         bytes32 emailNullifier,
         bytes32 accountSalt,
@@ -90,15 +89,12 @@ contract ZKEmailUtilsTest is Test {
         );
 
         // Override with fuzzed values
-        emailAuthMsg.proof.domainName = domainName;
-        emailAuthMsg.proof.publicKeyHash = publicKeyHash;
         emailAuthMsg.proof.timestamp = timestamp;
         emailAuthMsg.proof.emailNullifier = emailNullifier;
         emailAuthMsg.proof.accountSalt = accountSalt;
         emailAuthMsg.proof.isCodeExist = isCodeExist;
         emailAuthMsg.proof.proof = proof;
 
-        _mockIsDKIMPublicKeyHashValid(emailAuthMsg.proof.domainName, emailAuthMsg.proof.publicKeyHash);
         _mockVerifyEmailProof(emailAuthMsg.proof);
 
         // Test validation
@@ -113,8 +109,6 @@ contract ZKEmailUtilsTest is Test {
 
     function testIsValidZKEmailWithTemplate(
         bytes32 hash,
-        string memory domainName,
-        bytes32 publicKeyHash,
         uint256 timestamp,
         bytes32 emailNullifier,
         bytes32 accountSalt,
@@ -132,8 +126,6 @@ contract ZKEmailUtilsTest is Test {
         );
 
         // Override with fuzzed values
-        emailAuthMsg.proof.domainName = domainName;
-        emailAuthMsg.proof.publicKeyHash = publicKeyHash;
         emailAuthMsg.proof.timestamp = timestamp;
         emailAuthMsg.proof.emailNullifier = emailNullifier;
         emailAuthMsg.proof.accountSalt = accountSalt;
@@ -144,7 +136,6 @@ contract ZKEmailUtilsTest is Test {
         template[0] = commandPrefix;
         template[1] = CommandUtils.UINT_MATCHER;
 
-        _mockIsDKIMPublicKeyHashValid(emailAuthMsg.proof.domainName, emailAuthMsg.proof.publicKeyHash);
         _mockVerifyEmailProof(emailAuthMsg.proof);
 
         ZKEmailUtils.EmailProofError err = ZKEmailUtils.isValidZKEmail(
@@ -159,8 +150,6 @@ contract ZKEmailUtilsTest is Test {
 
     function testCommandMatchWithDifferentCases(
         address addr,
-        string memory domainName,
-        bytes32 publicKeyHash,
         uint256 timestamp,
         bytes32 emailNullifier,
         bytes32 accountSalt,
@@ -179,16 +168,13 @@ contract ZKEmailUtilsTest is Test {
                 0
             );
 
-            // Override with fuzzed values
-            emailAuthMsg.proof.domainName = domainName;
-            emailAuthMsg.proof.publicKeyHash = publicKeyHash;
+            // Override with fuzzed valuess
             emailAuthMsg.proof.timestamp = timestamp;
             emailAuthMsg.proof.emailNullifier = emailNullifier;
             emailAuthMsg.proof.accountSalt = accountSalt;
             emailAuthMsg.proof.isCodeExist = isCodeExist;
             emailAuthMsg.proof.proof = proof;
 
-            _mockIsDKIMPublicKeyHashValid(emailAuthMsg.proof.domainName, emailAuthMsg.proof.publicKeyHash);
             _mockVerifyEmailProof(emailAuthMsg.proof);
 
             string[] memory template = new string[](2);
@@ -208,8 +194,6 @@ contract ZKEmailUtilsTest is Test {
 
     function testCommandMatchWithAnyCase(
         address addr,
-        string memory domainName,
-        bytes32 publicKeyHash,
         uint256 timestamp,
         bytes32 emailNullifier,
         bytes32 accountSalt,
@@ -227,8 +211,6 @@ contract ZKEmailUtilsTest is Test {
         );
 
         // Override with fuzzed values
-        emailAuthMsg.proof.domainName = domainName;
-        emailAuthMsg.proof.publicKeyHash = publicKeyHash;
         emailAuthMsg.proof.timestamp = timestamp;
         emailAuthMsg.proof.emailNullifier = emailNullifier;
         emailAuthMsg.proof.accountSalt = accountSalt;
@@ -239,7 +221,6 @@ contract ZKEmailUtilsTest is Test {
         template[0] = commandPrefix;
         template[1] = CommandUtils.ETH_ADDR_MATCHER;
 
-        _mockIsDKIMPublicKeyHashValid(emailAuthMsg.proof.domainName, emailAuthMsg.proof.publicKeyHash);
         _mockVerifyEmailProof(emailAuthMsg.proof);
 
         ZKEmailUtils.EmailProofError err = ZKEmailUtils.isValidZKEmail(
@@ -334,7 +315,7 @@ contract ZKEmailUtilsTest is Test {
         uint256[2] memory pA,
         uint256[2][2] memory pB,
         uint256[2] memory pC
-    ) public {
+    ) public view {
         // TODO: Remove these when the Verifier wrapper does not revert.
         pA[0] = bound(pA[0], 1, Q - 1);
         pA[1] = bound(pA[1], 1, Q - 1);
@@ -356,8 +337,6 @@ contract ZKEmailUtilsTest is Test {
 
         emailAuthMsg.proof.proof = abi.encode(pA, pB, pC);
 
-        _mockIsDKIMPublicKeyHashValid(emailAuthMsg.proof.domainName, emailAuthMsg.proof.publicKeyHash);
-
         ZKEmailUtils.EmailProofError err = ZKEmailUtils.isValidZKEmail(
             emailAuthMsg,
             IDKIMRegistry(_dkimRegistry),
@@ -376,16 +355,13 @@ contract ZKEmailUtilsTest is Test {
 
     function _createECDSAOwnedDKIMRegistry() private returns (IDKIMRegistry) {
         ECDSAOwnedDKIMRegistry ecdsaDkim = new ECDSAOwnedDKIMRegistry();
-        ecdsaDkim.initialize(msg.sender, msg.sender);
+        (address alice, uint256 alicePk) = makeAddrAndKey("alice");
+        ecdsaDkim.initialize(alice, alice);
+        string memory prefix = ecdsaDkim.SET_PREFIX();
+        string memory message = ecdsaDkim.computeSignedMsg(prefix, _domainName, _publicKeyHash);
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(alicePk, MessageHashUtils.toEthSignedMessageHash(bytes(message)));
+        ecdsaDkim.setDKIMPublicKeyHash(_selector, _domainName, _publicKeyHash, abi.encodePacked(r, s, v));
         return ecdsaDkim;
-    }
-
-    function _mockIsDKIMPublicKeyHashValid(string memory domainName, bytes32 publicKeyHash) private {
-        vm.mockCall(
-            address(_dkimRegistry),
-            abi.encodeCall(IDKIMRegistry.isDKIMPublicKeyHashValid, (domainName, publicKeyHash)),
-            abi.encode(true)
-        );
     }
 
     function _mockVerifyEmailProof(EmailProof memory emailProof) private {
