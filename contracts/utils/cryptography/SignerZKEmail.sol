@@ -63,7 +63,8 @@ abstract contract SignerZKEmail is AbstractSigner {
      *
      * The account salt is used for:
      *
-     * * Privacy: Enables email address privacy on-chain so long as the randomly generated account code is not revealed to an adversary.
+     * * Privacy: Enables email address privacy on-chain so long as the randomly generated account code is not revealed
+     *   to an adversary.
      * * Security: Provides a unique identifier that cannot be easily guessed or brute-forced, as it's derived
      *   from both the email address and a random account code.
      * * Deterministic Address Generation: Enables the creation of deterministic addresses based on email addresses,
@@ -124,6 +125,25 @@ abstract contract SignerZKEmail is AbstractSigner {
         bytes32 hash,
         bytes calldata signature
     ) internal view virtual override returns (bool) {
+        // Check if the signature is long enough to contain the EmailAuthMsg
+        // The minimum length is 512 bytes (initial part + pointer offsets)
+        // - `templateId` is a uint256 (32 bytes).
+        // - `commandParams` is a dynamic array of bytes32 (32 bytes offset).
+        // - `skippedCommandPrefixSize` is a uint256 (32 bytes).
+        // - `proof` is a struct with the following fields (32 bytes offset):
+        //   - `domainName` is a dynamic string (32 bytes offset).
+        //   - `publicKeyHash` is a bytes32 (32 bytes).
+        //   - `timestamp` is a uint256 (32 bytes).
+        //   - `maskedCommand` is a dynamic string (32 bytes offset).
+        //   - `emailNullifier` is a bytes32 (32 bytes).
+        //   - `accountSalt` is a bytes32 (32 bytes).
+        //   - `isCodeExist` is a boolean, so its length is 1 byte padded to 32 bytes.
+        //   - `proof` is a dynamic bytes (32 bytes offset).
+        // There are 128 bytes for the EmailAuthMsg type and 256 bytes for the proof.
+        // Considering all dynamic elements are empty (i.e. `commandParams` = [], `domainName` = "", `maskedCommand` = "", `proof` = []),
+        // then we have 128 bytes for the EmailAuthMsg type, 256 bytes for the proof and 4 * 32 for the lenght of the dynamic elements.
+        // So the minimum length is 128 + 256 + 4 * 32 = 512 bytes.
+        if (signature.length < 512) return false;
         EmailAuthMsg memory emailAuthMsg = abi.decode(signature, (EmailAuthMsg));
         return (abi.decode(emailAuthMsg.commandParams[0], (bytes32)) == hash &&
             emailAuthMsg.templateId == templateId() &&
