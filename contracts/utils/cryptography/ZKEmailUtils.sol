@@ -42,9 +42,9 @@ library ZKEmailUtils {
 
     /// @dev Enumeration of possible string cases used to compare the command with the expected proven command.
     enum Case {
+        CHECKSUM, // Computes a checksum of the command.
         LOWERCASE, // Converts the command to hex lowercase.
         UPPERCASE, // Converts the command to hex uppercase.
-        CHECKSUM, // Computes a checksum of the command.
         ANY
     }
 
@@ -79,7 +79,11 @@ library ZKEmailUtils {
         return isValidZKEmail(emailAuthMsg, dkimregistry, verifier, template, Case.ANY);
     }
 
-    /// @dev Variant of {isValidZKEmail} that validates a template with a specific string {Case}.
+    /**
+     * @dev Variant of {isValidZKEmail} that validates a template with a specific string {Case}.
+     *
+     * Useful for templates with Ethereum address matchers (i.e. `{ethAddr}`), which are case-sensitive (e.g., `["someCommand", "{address}"]`).
+     */
     function isValidZKEmail(
         EmailAuthMsg memory emailAuthMsg,
         IDKIMRegistry dkimregistry,
