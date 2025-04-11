@@ -221,7 +221,7 @@ contract ZKEmailUtilsTest is Test {
         commandParams[0] = abi.encode(addr);
 
         EmailAuthMsg memory emailAuthMsg = buildEmailAuthMsg(
-            string.concat(commandPrefix, " ", Strings.toHexString(addr)),
+            string.concat(commandPrefix, " ", addr.toHexString()),
             commandParams,
             0
         );
