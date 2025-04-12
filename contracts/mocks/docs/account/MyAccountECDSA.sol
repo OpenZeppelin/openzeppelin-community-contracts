@@ -3,13 +3,16 @@
 
 pragma solidity ^0.8.20;
 
-import {Initializable} from "@openzeppelin/contracts/proxy/utils/Initializable.sol";
-import {EIP712} from "@openzeppelin/contracts/utils/cryptography/EIP712.sol";
 import {Account} from "../../../account/Account.sol";
+import {EIP712} from "@openzeppelin/contracts/utils/cryptography/EIP712.sol";
+import {ERC721Holder} from "@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol";
+import {ERC1155Holder} from "@openzeppelin/contracts/token/ERC1155/utils/ERC1155Holder.sol";
+import {ERC7739} from "../../../utils/cryptography/ERC7739.sol";
 import {ERC7821} from "../../../account/extensions/ERC7821.sol";
+import {Initializable} from "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 import {SignerECDSA} from "../../../utils/cryptography/SignerECDSA.sol";
 
-contract MyAccountECDSA is Initializable, Account, SignerECDSA, ERC7821 {
+contract MyAccountECDSA is Account, SignerECDSA, ERC7739, ERC7821, ERC721Holder, ERC1155Holder, Initializable {
     constructor() EIP712("MyAccountECDSA", "1") {}
 
     function initialize(address signerAddr) public initializer {

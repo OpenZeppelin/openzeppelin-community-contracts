@@ -9,10 +9,40 @@ import {Hashes} from "@openzeppelin/contracts/utils/cryptography/Hashes.sol";
 
 /**
  * @dev Library for managing
- * https://en.wikipedia.org/wiki/Set_(abstract_data_type)[sets] of primitive
+ * https://en.wikipedia.org/wiki/Set_(abstract_data_type)[sets] of non-value
  * types.
  *
- * Note: Extensions of openzeppelin/contracts/utils/struct/EnumerableSet.sol.
+ * Sets have the following properties:
+ *
+ * - Elements are added, removed, and checked for existence in constant time
+ * (O(1)).
+ * - Elements are enumerated in O(n). No guarantees are made on the ordering.
+ * - Set can be cleared (all elements removed) in O(n).
+ *
+ * \`\`\`solidity
+ * contract Example {
+ *     // Add the library methods
+ *     using EnumerableSetExtended for EnumerableSetExtended.StringSet;
+ *
+ *     // Declare a set state variable
+ *     EnumerableSetExtended.StringSet private mySet;
+ * }
+ * \`\`\`
+ *
+ * Sets of type \`string\` (\`StringSet\`), \`bytes\` (\`BytesSet\`) and 
+ * \`bytes32[2]\` (\`Bytes32x2Set\`) are supported.
+ *
+ * [WARNING]
+ * ====
+ * Trying to delete such a structure from storage will likely result in data corruption, rendering the structure
+ * unusable.
+ * See https://github.com/ethereum/solidity/pull/11843[ethereum/solidity#11843] for more info.
+ *
+ * In order to clean an EnumerableSet, you can either remove all elements one by one or create a fresh instance using an
+ * array of EnumerableSet.
+ * ====
+ *
+ * NOTE: This is an extension of openzeppelin/contracts/utils/struct/EnumerableSet.sol.
  */
 `;
 
@@ -21,12 +51,12 @@ struct ${name} {
     // Storage of set values
     ${value.type}[] _values;
     // Position is the index of the value in the \`values\` array plus 1.
-    // Position 0 is used to mean a value is not in the self.
+    // Position 0 is used to mean a value is not in the set.
     mapping(${value.type} value => uint256) _positions;
 }
 
 /**
- * @dev Add a value to a self. O(1).
+ * @dev Add a value to a set. O(1).
  *
  * Returns true if the value was added to the set, that is if it was not
  * already present.
@@ -44,7 +74,7 @@ function add(${name} storage self, ${value.type} memory value) internal returns 
 }
 
 /**
- * @dev Removes a value from a self. O(1).
+ * @dev Removes a value from a set. O(1).
  *
  * Returns true if the value was removed from the set, that is if it was
  * present.
@@ -98,21 +128,21 @@ function clear(${name} storage set) internal {
 }
 
 /**
- * @dev Returns true if the value is in the self. O(1).
+ * @dev Returns true if the value is in the set. O(1).
  */
 function contains(${name} storage self, ${value.type} memory value) internal view returns (bool) {
     return self._positions[value] != 0;
 }
 
 /**
- * @dev Returns the number of values on the self. O(1).
+ * @dev Returns the number of values on the set. O(1).
  */
 function length(${name} storage self) internal view returns (uint256) {
     return self._values.length;
 }
 
 /**
- * @dev Returns the value stored at position \`index\` in the self. O(1).
+ * @dev Returns the value stored at position \`index\` in the set. O(1).
  *
  * Note that there are no guarantees on the ordering of values inside the
  * array, and it may change when more values are added or removed.
@@ -143,12 +173,12 @@ struct ${name} {
     // Storage of set values
     ${value.type}[] _values;
     // Position is the index of the value in the \`values\` array plus 1.
-    // Position 0 is used to mean a value is not in the self.
+    // Position 0 is used to mean a value is not in the set.
     mapping(bytes32 valueHash => uint256) _positions;
 }
 
 /**
- * @dev Add a value to a self. O(1).
+ * @dev Add a value to a set. O(1).
  *
  * Returns true if the value was added to the set, that is if it was not
  * already present.
@@ -166,7 +196,7 @@ function add(${name} storage self, ${value.type} memory value) internal returns 
 }
 
 /**
- * @dev Removes a value from a self. O(1).
+ * @dev Removes a value from a set. O(1).
  *
  * Returns true if the value was removed from the set, that is if it was
  * present.
@@ -225,21 +255,21 @@ function clear(${name} storage self) internal {
 }
 
 /**
- * @dev Returns true if the value is in the self. O(1).
+ * @dev Returns true if the value is in the set. O(1).
  */
 function contains(${name} storage self, ${value.type} memory value) internal view returns (bool) {
     return self._positions[_hash(value)] != 0;
 }
 
 /**
- * @dev Returns the number of values on the self. O(1).
+ * @dev Returns the number of values on the set. O(1).
  */
 function length(${name} storage self) internal view returns (uint256) {
     return self._values.length;
 }
 
 /**
- * @dev Returns the value stored at position \`index\` in the self. O(1).
+ * @dev Returns the value stored at position \`index\` in the set. O(1).
  *
  * Note that there are no guarantees on the ordering of values inside the
  * array, and it may change when more values are added or removed.

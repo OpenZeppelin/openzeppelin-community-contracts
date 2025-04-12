@@ -1,5 +1,7 @@
-const { ethers } = require('hardhat');
+const { ethers, entrypoint } = require('hardhat');
 const { loadFixture } = require('@nomicfoundation/hardhat-network-helpers');
+
+const { getDomain } = require('@openzeppelin/contracts/test/helpers/eip712');
 const { ERC4337Helper } = require('../helpers/erc4337');
 const { NonNativeSigner, P256SigningKey } = require('../helpers/signers');
 const { PackedUserOperation } = require('../helpers/eip712-types');
@@ -18,7 +20,6 @@ async function fixture() {
 
   // ERC-4337 account
   const helper = new ERC4337Helper();
-  const env = await helper.wait();
   const mock = await helper.newAccount('$AccountP256Mock', [
     'AccountP256',
     '1',
@@ -26,20 +27,23 @@ async function fixture() {
     signer.signingKey.publicKey.qy,
   ]);
 
+  // ERC-4337 Entrypoint domain
+  const entrypointDomain = await getDomain(entrypoint.v08);
+
   // domain cannot be fetched using getDomain(mock) before the mock is deployed
   const domain = {
     name: 'AccountP256',
     version: '1',
-    chainId: env.chainId,
+    chainId: entrypointDomain.chainId,
     verifyingContract: mock.address,
   };
 
   const signUserOp = userOp =>
     signer
-      .signTypedData(domain, { PackedUserOperation }, userOp.packed)
+      .signTypedData(entrypointDomain, { PackedUserOperation }, userOp.packed)
       .then(signature => Object.assign(userOp, { signature }));
 
-  return { ...env, mock, domain, signer, target, beneficiary, other, signUserOp };
+  return { helper, mock, domain, signer, target, beneficiary, other, signUserOp };
 }
 
 describe('AccountP256', function () {

@@ -13,7 +13,7 @@ function getVersion(path) {
   }
 }
 
-function generateFromTemplate(file, template, outputPrefix = '', lint = false) {
+function generateFromTemplate(file, template, outputPrefix = '') {
   const script = path.relative(path.join(__dirname, '../..'), __filename);
   const input = path.join(path.dirname(script), template);
   const output = path.join(outputPrefix, file);
@@ -26,16 +26,13 @@ function generateFromTemplate(file, template, outputPrefix = '', lint = false) {
     require(template).trimEnd(),
   );
   fs.writeFileSync(output, content);
-  lint && cp.execFileSync('prettier', ['--write', output]);
+  cp.execFileSync('prettier', ['--write', output]);
 }
-
-// Some templates needs to go through the linter after generation
-const needsLinter = ['utils/structs/EnumerableMapExtended.sol'];
 
 // Contracts
 for (const [file, template] of Object.entries({
   'utils/structs/EnumerableSetExtended.sol': './templates/EnumerableSetExtended.js',
   'utils/structs/EnumerableMapExtended.sol': './templates/EnumerableMapExtended.js',
 })) {
-  generateFromTemplate(file, template, './contracts/', needsLinter.indexOf(file) != -1);
+  generateFromTemplate(file, template, './contracts/');
 }

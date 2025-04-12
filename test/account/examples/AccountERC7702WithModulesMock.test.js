@@ -1,5 +1,7 @@
-const { ethers } = require('hardhat');
+const { ethers, entrypoint } = require('hardhat');
 const { loadFixture } = require('@nomicfoundation/hardhat-network-helpers');
+
+const { getDomain } = require('@openzeppelin/contracts/test/helpers/eip712');
 const { ERC4337Helper } = require('../../helpers/erc4337');
 const { PackedUserOperation } = require('../../helpers/eip712-types');
 
@@ -21,20 +23,22 @@ async function fixture() {
 
   // ERC-4337 account
   const helper = new ERC4337Helper();
-  const env = await helper.wait();
   const mock = await helper.newAccount('$AccountERC7702WithModulesMock', ['AccountERC7702WithModulesMock', '1'], {
     erc7702signer: eoa,
   });
+
+  // ERC-4337 Entrypoint domain
+  const entrypointDomain = await getDomain(entrypoint.v08);
 
   // domain cannot be fetched using getDomain(mock) before the mock is deployed
   const domain = {
     name: 'AccountERC7702WithModulesMock',
     version: '1',
-    chainId: env.chainId,
+    chainId: entrypointDomain.chainId,
     verifyingContract: mock.address,
   };
 
-  return { ...env, mock, domain, eoa, validator, target, anotherTarget, beneficiary, other };
+  return { helper, validator, mock, domain, entrypointDomain, eoa, target, anotherTarget, beneficiary, other };
 }
 
 describe('AccountERC7702WithModules: ERC-7702 account with ERC-7579 modules supports', function () {
@@ -47,7 +51,7 @@ describe('AccountERC7702WithModules: ERC-7702 account with ERC-7579 modules supp
       this.signer = this.eoa;
       this.signUserOp = userOp =>
         this.signer
-          .signTypedData(this.domain, { PackedUserOperation }, userOp.packed)
+          .signTypedData(this.entrypointDomain, { PackedUserOperation }, userOp.packed)
           .then(signature => Object.assign(userOp, { signature }));
     });
 
@@ -72,7 +76,7 @@ describe('AccountERC7702WithModules: ERC-7702 account with ERC-7579 modules supp
 
       this.signUserOp = userOp =>
         ethers.Wallet.prototype.signTypedData
-          .bind(this.signer)(this.domain, { PackedUserOperation }, userOp.packed)
+          .bind(this.signer)(this.entrypointDomain, { PackedUserOperation }, userOp.packed)
           .then(signature => Object.assign(userOp, { signature }));
 
       // Use the first 20 bytes from the nonce key (24 bytes) to identify the validator module
