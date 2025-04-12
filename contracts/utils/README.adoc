@@ -23,6 +23,8 @@ Miscellaneous contracts and libraries containing utility functions you can use t
 
 {{ERC7739Utils}}
 
+{{ZKEmailUtils}}
+
 === Abstract Signers
 
 {{AbstractSigner}}
@@ -38,8 +40,6 @@ Miscellaneous contracts and libraries containing utility functions you can use t
 {{SignerRSA}}
 
 {{SignerZKEmail}}
-
-{{ZKEmailUtils}}
 
 === ERC-7913
 
