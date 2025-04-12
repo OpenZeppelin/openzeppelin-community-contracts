@@ -8,7 +8,7 @@ import {IERC7802} from "../../../interfaces/IERC7802.sol";
 
 /**
  * @dev ERC20 extension that implements the standard token interface according to
- * https://github.com/ethereum/ERCs/blob/bcea9feb6c3f3ded391e33690056635d722b101e/ERCS/erc-7802.md[ERC-7802].
+ * https://eips.ethereum.org/EIPS/eip-7802[ERC-7802].
  *
  * NOTE: To implement a crosschain gateway for a chain, consider using an implementation if {IERC7786} token
  * bridge (e.g. {AxelarGatewaySource}, {AxelarGatewayDestination}).
@@ -16,6 +16,8 @@ import {IERC7802} from "../../../interfaces/IERC7802.sol";
 abstract contract ERC20Bridgeable is ERC20, ERC165, IERC7802 {
     /// @dev Modifier to restrict access to the token bridge.
     modifier onlyTokenBridge() {
+        // Token bridge should never be impersonated using a relayer/forwarder. Using msg.sender is preferable to
+        // _msgSender() here, both for cost and security reasons.
         _checkTokenBridge(msg.sender);
         _;
     }
@@ -30,7 +32,7 @@ abstract contract ERC20Bridgeable is ERC20, ERC165, IERC7802 {
      */
     function crosschainMint(address to, uint256 value) public virtual override onlyTokenBridge {
         _mint(to, value);
-        emit CrosschainMint(to, value, msg.sender);
+        emit CrosschainMint(to, value, _msgSender());
     }
 
     /**
@@ -38,7 +40,7 @@ abstract contract ERC20Bridgeable is ERC20, ERC165, IERC7802 {
      */
     function crosschainBurn(address from, uint256 value) public virtual override onlyTokenBridge {
         _burn(from, value);
-        emit CrosschainBurn(from, value, msg.sender);
+        emit CrosschainBurn(from, value, _msgSender());
     }
 
     /**

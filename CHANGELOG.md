@@ -1,3 +1,37 @@
+## 11-04-2025
+
+- `EnumerableSetExtended` and `EnumerableMapExtended`: Extensions of the `EnumerableSet` and `EnumerableMap` libraries with more types, including non-value types.
+
+## 03-04-2025
+
+- `PaymasterERC20`: Extension of `PaymasterCore` that sponsors user operations against payment in ERC-20 tokens.
+- `PaymasterERC721Owner`: Extension of `PaymasterCore` that approves sponsoring of user operation based on ownership of an ERC-721 NFT.
+
+## 28-03-2025
+
+- Deprecate `Account` and rename `AccountCore` to `Account`.
+- Update `Account` and `Paymaster` to support entrypoint v0.8.0.
+
+## 07-03-2025
+
+- `ERC7786Aggregator`: Add an aggregator that implements a meta gateway on top of multiple ERC-7786 gateways.
+
+## 31-01-2025
+
+- `PaymasterCore`: Add a simple ERC-4337 paymaster implementation with minimal logic.
+- `PaymasterSigner`: Extension of `PaymasterCore` that approves sponsoring of user operation based on a cryptographic signature verified by the paymaster.
+
+## 15-01-2025
+
+- `AccountCore`: Add an internal `_validateUserOp` function to validate user operations.
+- `AccountERC7579`: Extension of `AccountCore` that implements support for ERC-7579 modules of type executor, validator, and fallback handler.
+- `AccountERC7579Hooked`: Extension of `AccountERC7579` that implements support for ERC-7579 hook modules.
+
+## 13-01-2025
+
+- Rename `ERC7739Signer` into `ERC7739` to avoid confusion with the `AbstractSigner` family of contracts.
+- Remove `AccountERC7821` in favor of `ERC7821`, an ERC-7821 implementation that doesn't rely on (but is compatible with) `AccountCore`.
+
 ## 23-12-2024
 
 - `AccountERC7821`: Account implementation that implements ERC-7821 for minimal batch execution interface. No support for additional `opData` is included.
@@ -7,7 +41,7 @@
 - `AccountCore`: Added a simple ERC-4337 account implementation with minimal logic to process user operations.
 - `Account`: Extensions of AccountCore with recommended features that most accounts should have.
 - `AbstractSigner`, `SignerECDSA`, `SignerP256`, and `SignerRSA`: Add an abstract contract, and various implementations, for contracts that deal with signature verification. Used by AccountCore and `ERC7739Utils.
-- `AccountSignerERC7702`: Implementation of `AbstractSigner` for ERC-7702 compatible accounts.
+- `SignerERC7702`: Implementation of `AbstractSigner` for Externally Owned Accounts (EOAs). Useful with ERC-7702.
 
 ## 13-12-2024
 

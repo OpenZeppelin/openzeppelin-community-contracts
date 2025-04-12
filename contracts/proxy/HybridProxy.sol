@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.20;
+pragma solidity ^0.8.22;
 
 import {IBeacon} from "@openzeppelin/contracts/proxy/beacon/IBeacon.sol";
 import {ERC1967Utils} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Utils.sol";
@@ -11,7 +11,9 @@ import {Address} from "@openzeppelin/contracts/utils/Address.sol";
  * @dev A version of an ERC-1967 proxy that uses the address stored in the implementation slot as a beacon.
  *
  * The design allows to set an initial beacon that the contract may quit by upgrading to its own implementation
- * afterwards.
+ * afterwards. Transition between the "beacon mode" and the "direct mode" require implementation that expose an
+ * upgrade mechanism that writes to the ERC-1967 implementation slot. Note that UUPSUpgradable includes security
+ * checks that are not compatible with this proxy design.
  *
  * WARNING: The fallback mechanism relies on the implementation not to define the {IBeacon-implementation} function.
  * Consider that if your implementation has this function, it'll be assumed as the beacon address, meaning that

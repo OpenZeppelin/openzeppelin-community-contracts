@@ -83,7 +83,7 @@ class P256SigningKey {
   }
 
   static random() {
-    return new P256SigningKey(secp256r1.utils.randomPrivateKey());
+    return new this(secp256r1.utils.randomPrivateKey());
   }
 
   get privateKey() {
@@ -124,7 +124,7 @@ class RSASigningKey {
   }
 
   static random(modulusLength = 2048) {
-    return new RSASigningKey(generateKeyPairSync('rsa', { modulusLength }));
+    return new this(generateKeyPairSync('rsa', { modulusLength }));
   }
 
   get privateKey() {
@@ -150,10 +150,6 @@ class RSASigningKey {
 }
 
 class RSASHA256SigningKey extends RSASigningKey {
-  static random(modulusLength = 2048) {
-    return new RSASHA256SigningKey(generateKeyPairSync('rsa', { modulusLength }));
-  }
-
   sign(digest /*: BytesLike*/) /*: Signature*/ {
     assertArgument(dataLength(digest) === 32, 'invalid digest length', 'digest', digest);
     return super.sign(sha256(getBytes(digest)));

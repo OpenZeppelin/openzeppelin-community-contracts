@@ -1,146 +1,250 @@
-// const { ethers } = require('hardhat');
-// const { expect } = require('chai');
-// const { loadFixture } = require('@nomicfoundation/hardhat-network-helpers');
+const { ethers } = require('hardhat');
+const { expect } = require('chai');
+const { loadFixture } = require('@nomicfoundation/hardhat-network-helpers');
+const { mapValues } = require('@openzeppelin/contracts/test/helpers/iterate');
 
-// const { impersonate } = require('../../helpers/account');
-// const time = require('../../helpers/time');
+// Mask helpers
+const toHexString = i => '0x' + i.toString(16).padStart(64, 0);
+const toMask = i => toHexString(1n << BigInt(i));
+const combine = (...masks) => toHexString(masks.reduce((acc, m) => acc | BigInt(m), 0n));
 
-// async function fixture() {
-//   const [admin, roleMember, other] = await ethers.getSigners();
+const Roles = { admin: 0x00, public: 0xff };
+const Masks = mapValues(Roles, toMask);
 
-//   const authority = await ethers.deployContract('$AccessManager', [admin]);
-//   const managed = await ethers.deployContract('$AccessManagedTarget', [authority]);
+async function fixture() {
+  const [admin, user, target, other] = await ethers.getSigners();
 
-//   const anotherAuthority = await ethers.deployContract('$AccessManager', [admin]);
-//   const authorityObserveIsConsuming = await ethers.deployContract('$AuthorityObserveIsConsuming');
+  const authority = await ethers.deployContract('$AccessManagerLight', [admin]);
 
-//   await impersonate(authority.target);
-//   const authorityAsSigner = await ethers.getSigner(authority.target);
+  return {
+    admin,
+    user,
+    target,
+    other,
+    authority,
+  };
+}
 
-//   return {
-//     roleMember,
-//     other,
-//     authorityAsSigner,
-//     authority,
-//     managed,
-//     authorityObserveIsConsuming,
-//     anotherAuthority,
-//   };
-// }
+describe('AccessManaged', function () {
+  beforeEach(async function () {
+    Object.assign(this, await loadFixture(fixture));
+  });
 
-// describe('AccessManaged', function () {
-//   beforeEach(async function () {
-//     Object.assign(this, await loadFixture(fixture));
-//   });
+  describe('Permission Manager', function () {
+    const selector = ethers.hexlify(ethers.randomBytes(4));
+    const group = 17n;
+    const adminGroup = 42n;
+    const groups = [13n, 69n, 128n];
 
-//   it('sets authority and emits AuthorityUpdated event during construction', async function () {
-//     await expect(this.managed.deploymentTransaction())
-//       .to.emit(this.managed, 'AuthorityUpdated')
-//       .withArgs(this.authority);
-//   });
+    describe('canCall', function () {
+      describe('simple case: one group', async function () {
+        it('Requirements set and Permissions set', async function () {
+          this.withRequirements = true;
+          this.withPermission = true;
+        });
 
-//   describe('restricted modifier', function () {
-//     beforeEach(async function () {
-//       this.selector = this.managed.fnRestricted.getFragment().selector;
-//       this.role = 42n;
-//       await this.authority.$_setTargetFunctionRole(this.managed, this.selector, this.role);
-//       await this.authority.$_grantRole(this.role, this.roleMember, 0, 0);
-//     });
+        it('Requirements set and Permissions not set', async function () {
+          this.withRequirements = true;
+          this.withPermission = false;
+        });
 
-//     it('succeeds when role is granted without execution delay', async function () {
-//       await this.managed.connect(this.roleMember)[this.selector]();
-//     });
+        it('Requirements not set and Permissions set', async function () {
+          this.withRequirements = false;
+          this.withPermission = true;
+        });
 
-//     it('reverts when role is not granted', async function () {
-//       await expect(this.managed.connect(this.other)[this.selector]())
-//         .to.be.revertedWithCustomError(this.managed, 'AccessManagedUnauthorized')
-//         .withArgs(this.other);
-//     });
+        it('Requirements not set and Permissions not set', async function () {
+          this.withRequirements = false;
+          this.withPermission = false;
+        });
 
-//     it('panics in short calldata', async function () {
-//       // We avoid adding the `restricted` modifier to the fallback function because other tests may depend on it
-//       // being accessible without restrictions. We check for the internal `_checkCanCall` instead.
-//       await expect(this.managed.$_checkCanCall(this.roleMember, '0x1234')).to.be.reverted;
-//     });
+        afterEach(async function () {
+          if (this.withRequirements) {
+            await this.authority.setRequirements(this.target, [selector], [group]);
+          }
+          if (this.withPermission) {
+            await this.authority.addGroup(this.user, group);
+          }
+          await expect(this.authority.canCall(this.user, this.target, selector)).to.eventually.equal(
+            this.withRequirements && this.withPermission,
+          );
+        });
+      });
 
-//     describe('when role is granted with execution delay', function () {
-//       beforeEach(async function () {
-//         const executionDelay = 911n;
-//         await this.authority.$_grantRole(this.role, this.roleMember, 0, executionDelay);
-//       });
+      describe('complexe case: one of many groups', async function () {
+        it('some intersection', async function () {
+          this.userGroups = [32, 42, 94, 128]; // User has all these groups
+          this.targetGroups = [17, 35, 42, 69, 91]; // Target accepts any of these groups
+        });
 
-//       it('reverts if the operation is not scheduled', async function () {
-//         const fn = this.managed.interface.getFunction(this.selector);
-//         const calldata = this.managed.interface.encodeFunctionData(fn, []);
-//         const opId = await this.authority.hashOperation(this.roleMember, this.managed, calldata);
+        it('no intersection', async function () {
+          this.userGroups = [32, 50, 94, 128]; // User has all these groups
+          this.targetGroups = [17, 35, 42, 69, 91]; // Target accepts any of these groups
+        });
 
-//         await expect(this.managed.connect(this.roleMember)[this.selector]())
-//           .to.be.revertedWithCustomError(this.authority, 'AccessManagerNotScheduled')
-//           .withArgs(opId);
-//       });
+        afterEach(async function () {
+          // set permissions and requirements
+          await Promise.all([
+            this.authority.setRequirements(this.target, [selector], this.targetGroups),
+            ...this.userGroups.map(group => this.authority.addGroup(this.user, group)),
+          ]);
 
-//       it('succeeds if the operation is scheduled', async function () {
-//         // Arguments
-//         const delay = time.duration.hours(12);
-//         const fn = this.managed.interface.getFunction(this.selector);
-//         const calldata = this.managed.interface.encodeFunctionData(fn, []);
+          // check can call
+          await expect(this.authority.canCall(this.user, this.target, selector)).to.eventually.equal(
+            this.userGroups.some(g => this.targetGroups.includes(g)),
+          );
+        });
+      });
+    });
 
-//         // Schedule
-//         const scheduledAt = (await time.clock.timestamp()) + 1n;
-//         const when = scheduledAt + delay;
-//         await time.increaseTo.timestamp(scheduledAt, false);
-//         await this.authority.connect(this.roleMember).schedule(this.managed, calldata, when);
+    describe('addGroup', function () {
+      it('authorized', async function () {
+        await expect(this.authority.connect(this.admin).addGroup(this.user, group))
+          .to.emit(this.authority, 'GroupAdded')
+          .withArgs(this.user, group);
+      });
 
-//         // Set execution date
-//         await time.increaseTo.timestamp(when, false);
+      it('restricted', async function () {
+        await expect(this.authority.connect(this.other).addGroup(this.user, group))
+          .to.revertedWithCustomError(this.authority, 'MissingPermissions')
+          .withArgs(this.other, Masks.public, Masks.admin);
+      });
 
-//         // Shouldn't revert
-//         await this.managed.connect(this.roleMember)[this.selector]();
-//       });
-//     });
-//   });
+      it('with role admin', async function () {
+        await this.authority.connect(this.admin).addGroup(this.other, adminGroup);
 
-//   describe('setAuthority', function () {
-//     it('reverts if the caller is not the authority', async function () {
-//       await expect(this.managed.connect(this.other).setAuthority(this.other))
-//         .to.be.revertedWithCustomError(this.managed, 'AccessManagedUnauthorized')
-//         .withArgs(this.other);
-//     });
+        await expect(this.authority.connect(this.other).addGroup(this.user, group))
+          .to.revertedWithCustomError(this.authority, 'MissingPermissions')
+          .withArgs(this.other, combine(Masks.public, toMask(adminGroup)), Masks.admin);
 
-//     it('reverts if the new authority is not a valid authority', async function () {
-//       await expect(this.managed.connect(this.authorityAsSigner).setAuthority(this.other))
-//         .to.be.revertedWithCustomError(this.managed, 'AccessManagedInvalidAuthority')
-//         .withArgs(this.other);
-//     });
+        await expect(this.authority.setGroupAdmins(group, [adminGroup]))
+          .to.emit(this.authority, 'GroupAdmins')
+          .withArgs(group, toMask(adminGroup));
 
-//     it('sets authority and emits AuthorityUpdated event', async function () {
-//       await expect(this.managed.connect(this.authorityAsSigner).setAuthority(this.anotherAuthority))
-//         .to.emit(this.managed, 'AuthorityUpdated')
-//         .withArgs(this.anotherAuthority);
+        await expect(this.authority.connect(this.other).addGroup(this.user, group))
+          .to.emit(this.authority, 'GroupAdded')
+          .withArgs(this.user, group);
+      });
 
-//       expect(await this.managed.authority()).to.equal(this.anotherAuthority);
-//     });
-//   });
+      it('effect', async function () {
+        await expect(this.authority.getGroups(this.user)).to.eventually.equal(Masks.public);
 
-//   describe('isConsumingScheduledOp', function () {
-//     beforeEach(async function () {
-//       await this.managed.connect(this.authorityAsSigner).setAuthority(this.authorityObserveIsConsuming);
-//     });
+        await expect(this.authority.connect(this.admin).addGroup(this.user, group))
+          .to.emit(this.authority, 'GroupAdded')
+          .withArgs(this.user, group);
 
-//     it('returns bytes4(0) when not consuming operation', async function () {
-//       expect(await this.managed.isConsumingScheduledOp()).to.equal('0x00000000');
-//     });
+        await expect(this.authority.getGroups(this.user)).to.eventually.equal(combine(Masks.public, toMask(group)));
+      });
+    });
 
-//     it('returns isConsumingScheduledOp selector when consuming operation', async function () {
-//       const isConsumingScheduledOp = this.managed.interface.getFunction('isConsumingScheduledOp()');
-//       const fnRestricted = this.managed.fnRestricted.getFragment();
-//       await expect(this.managed.connect(this.other).fnRestricted())
-//         .to.emit(this.authorityObserveIsConsuming, 'ConsumeScheduledOpCalled')
-//         .withArgs(
-//           this.other,
-//           this.managed.interface.encodeFunctionData(fnRestricted, []),
-//           isConsumingScheduledOp.selector,
-//         );
-//     });
-//   });
-// });
+    describe('remGroup', function () {
+      beforeEach(async function () {
+        await this.authority.connect(this.admin).addGroup(this.user, group);
+      });
+
+      it('authorized', async function () {
+        await expect(this.authority.connect(this.admin).remGroup(this.user, group))
+          .to.emit(this.authority, 'GroupRemoved')
+          .withArgs(this.user, group);
+      });
+
+      it('restricted', async function () {
+        await expect(this.authority.connect(this.other).remGroup(this.user, group))
+          .to.revertedWithCustomError(this.authority, 'MissingPermissions')
+          .withArgs(this.other, Masks.public, Masks.admin);
+      });
+
+      it('with role admin', async function () {
+        await this.authority.connect(this.admin).addGroup(this.other, adminGroup);
+
+        await expect(this.authority.connect(this.other).addGroup(this.user, group))
+          .to.revertedWithCustomError(this.authority, 'MissingPermissions')
+          .withArgs(this.other, combine(Masks.public, toMask(adminGroup)), Masks.admin);
+
+        await expect(this.authority.setGroupAdmins(group, [adminGroup]))
+          .to.emit(this.authority, 'GroupAdmins')
+          .withArgs(group, toMask(adminGroup));
+
+        await expect(this.authority.connect(this.other).remGroup(this.user, group))
+          .to.emit(this.authority, 'GroupRemoved')
+          .withArgs(this.user, group);
+      });
+
+      it('effect', async function () {
+        await expect(this.authority.getGroups(this.user)).to.eventually.equal(combine(Masks.public, toMask(group)));
+
+        await expect(this.authority.connect(this.admin).remGroup(this.user, group))
+          .to.emit(this.authority, 'GroupRemoved')
+          .withArgs(this.user, group);
+
+        await expect(this.authority.getGroups(this.user)).to.eventually.equal(Masks.public);
+      });
+    });
+
+    describe('setGroupAdmins', function () {
+      it('authorized', async function () {
+        await expect(this.authority.connect(this.admin).setGroupAdmins(group, groups))
+          .to.emit(this.authority, 'GroupAdmins')
+          .withArgs(group, combine(...groups.map(toMask)));
+      });
+
+      it('restricted', async function () {
+        await expect(this.authority.connect(this.other).setGroupAdmins(group, groups))
+          .to.revertedWithCustomError(this.authority, 'MissingPermissions')
+          .withArgs(this.other, Masks.public, Masks.admin);
+      });
+
+      it('effect', async function () {
+        // Set some previous value
+        await this.authority.connect(this.admin).setGroupAdmins(group, [group]);
+
+        // Check previous value is set
+        await expect(this.authority.getGroupAdmins(group)).to.eventually.equal(combine(Masks.admin, toMask(group)));
+
+        // Set some new values
+        await expect(this.authority.connect(this.admin).setGroupAdmins(group, groups))
+          .to.emit(this.authority, 'GroupAdmins')
+          .withArgs(group, combine(...groups.map(toMask)));
+
+        // Check the new values are set, and the previous is removed
+        await expect(this.authority.getGroupAdmins(group)).to.eventually.equal(
+          combine(Masks.admin, ...groups.map(toMask)),
+        );
+      });
+    });
+
+    describe('setRequirements', function () {
+      it('authorized', async function () {
+        await expect(this.authority.connect(this.admin).setRequirements(this.target, [selector], groups))
+          .to.emit(this.authority, 'RequirementsSet')
+          .withArgs(this.target, selector, combine(...groups.map(toMask)));
+      });
+
+      it('restricted', async function () {
+        await expect(this.authority.connect(this.other).setRequirements(this.target, [selector], groups))
+          .to.revertedWithCustomError(this.authority, 'MissingPermissions')
+          .withArgs(this.other, Masks.public, Masks.admin);
+      });
+
+      it('effect', async function () {
+        // Set some previous value
+        await this.authority.connect(this.admin).setRequirements(this.target, [selector], [group]);
+
+        // Check previous value is set
+        await expect(this.authority.getRequirements(this.target, selector)).to.eventually.equal(
+          combine(Masks.admin, toMask(group)),
+        );
+
+        // Set some new values
+        await expect(this.authority.connect(this.admin).setRequirements(this.target, [selector], groups))
+          .to.emit(this.authority, 'RequirementsSet')
+          .withArgs(this.target, selector, combine(...groups.map(toMask)));
+
+        // Check the new values are set, and the previous is removed
+        await expect(this.authority.getRequirements(this.target, selector)).to.eventually.equal(
+          combine(Masks.admin, ...groups.map(toMask)),
+        );
+      });
+    });
+  });
+});
