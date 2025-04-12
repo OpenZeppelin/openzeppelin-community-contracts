@@ -1,13 +1,19 @@
 ## XX-XX-XXXX
 
-- `ERC7913Utils`: Utilities library for verifying signatures by ERC-7913 formatted signers.
 - `SignerERC7913`: Abstract signer that verifies signatures using the ERC-7913 workflow.
 - `ERC7913SignatureVerifierP256` and `ERC7913SignatureVerifierRSA`: Ready to use ERC-7913 verifiers that implement key verification for P256 (secp256r1) and RSA keys.
+## 12-04-2025
+
+- `ERC7913Utils`: Utilities library for verifying signatures by ERC-7913 formatted signers.
+
+## 11-04-2025
+
+- `EnumerableSetExtended` and `EnumerableMapExtended`: Extensions of the `EnumerableSet` and `EnumerableMap` libraries with more types, including non-value types.
 
 ## 03-04-2025
 
-- `PaymasterNFT`: Extension of `PaymasterCore` that approves sponsoring of user operation based on ownership of an ERC-721 NFT.
 - `PaymasterERC20`: Extension of `PaymasterCore` that sponsors user operations against payment in ERC-20 tokens.
+- `PaymasterERC721Owner`: Extension of `PaymasterCore` that approves sponsoring of user operation based on ownership of an ERC-721 NFT.
 
 ## 28-03-2025
 

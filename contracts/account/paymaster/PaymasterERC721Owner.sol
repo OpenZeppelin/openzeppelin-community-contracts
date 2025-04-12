@@ -12,11 +12,11 @@ import {PaymasterCore} from "./PaymasterCore.sol";
  * This paymaster will sponsor user operations if the user has at least 1 token of the token specified
  * during construction (or via {_setToken}).
  */
-abstract contract PaymasterNFT is PaymasterCore {
+abstract contract PaymasterERC721Owner is PaymasterCore {
     IERC721 private _token;
 
     /// @dev Emitted when the paymaster token is set.
-    event PaymasterNFTTokenSet(IERC721 token);
+    event PaymasterERC721OwnerTokenSet(IERC721 token);
 
     constructor(IERC721 token_) {
         _setToken(token_);
@@ -30,7 +30,7 @@ abstract contract PaymasterNFT is PaymasterCore {
     /// @dev Sets the ERC-721 token used to validate the user operation.
     function _setToken(IERC721 token_) internal virtual {
         _token = token_;
-        emit PaymasterNFTTokenSet(token_);
+        emit PaymasterERC721OwnerTokenSet(token_);
     }
 
     /**
