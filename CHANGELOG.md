@@ -1,3 +1,7 @@
+## 12-04-2025
+
+- `ERC7913Utils`: Utilities library for verifying signatures by ERC-7913 formatted signers.
+
 ## 11-04-2025
 
 - `EnumerableSetExtended` and `EnumerableMapExtended`: Extensions of the `EnumerableSet` and `EnumerableMap` libraries with more types, including non-value types.
