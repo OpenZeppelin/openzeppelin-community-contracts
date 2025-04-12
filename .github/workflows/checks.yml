@@ -45,6 +45,8 @@ jobs:
         run: npm run test:inheritance
       - name: Check pragma consistency between files
         run: npm run test:pragma
+      - name: Check procedurally generated contracts are up-to-date
+        run: npm run test:generation
 
   coverage:
     runs-on: ubuntu-latest
