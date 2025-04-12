@@ -9,7 +9,7 @@ const WRONG_MESSAGE = ethers.id('Nope');
 const WRONG_MESSAGE_HASH = ethers.hashMessage(WRONG_MESSAGE);
 
 async function fixture() {
-  const [signer, other] = await ethers.getSigners();
+  const [, signer, other] = await ethers.getSigners();
   const mock = await ethers.deployContract('$ERC7913Utils');
 
   // Deploy a mock ERC-1271 wallet

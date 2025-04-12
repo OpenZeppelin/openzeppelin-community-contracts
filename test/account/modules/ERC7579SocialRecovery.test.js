@@ -32,21 +32,14 @@ async function fixture() {
   const helper = new ERC4337Helper();
   const env = await helper.wait();
   const mock = await helper.newAccount('$AccountERC7579Mock', [
-    'AccountERC7579',
-    '1',
     validator,
     ethers.solidityPacked(['address'], [signer.address]),
   ]);
 
-  // domain cannot be fetched using getDomain(mock) before the mock is deployed
-  const domain = {
-    name: 'AccountERC7579',
-    version: '1',
-    chainId: env.chainId,
-    verifyingContract: mock.address,
-  };
+  // ERC-4337 Entrypoint domain
+  const entrypointDomain = await getDomain(entrypoint.v08);
 
-  return { ...env, validator, socialRecovery, domain, mock, signer, other, accounts };
+  return { ...env, validator, socialRecovery, entrypointDomain, mock, signer, other, accounts };
 }
 
 describe('ERC7579SocialRecovery', function () {
@@ -56,7 +49,7 @@ describe('ERC7579SocialRecovery', function () {
     this.userOp = { nonce: ethers.zeroPadBytes(ethers.hexlify(this.validator.target), 32) };
     this.signUserOp = (userOp, signer = this.signer) =>
       signer
-        .signTypedData(this.domain, { PackedUserOperation }, userOp.packed)
+        .signTypedData(this.entrypointDomain, { PackedUserOperation }, userOp.packed)
         .then(signature => Object.assign(userOp, { signature }));
   });
 
@@ -112,7 +105,7 @@ describe('ERC7579SocialRecovery', function () {
           callGas: 1_000_000n, // TODO: estimate ?
         })
         .then(op => this.signUserOp(op))
-        .then(op => entrypoint.handleOps([op.packed], this.other));
+        .then(op => entrypoint.v08.handleOps([op.packed], this.other));
 
       // check config
       await expect(this.socialRecovery.getAccountConfigs(ethers.Typed.address(this.mock))).to.eventually.deep.equal([
