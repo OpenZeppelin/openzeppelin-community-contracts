@@ -29,13 +29,10 @@ function generateFromTemplate(file, template, outputPrefix = '') {
   cp.execFileSync('prettier', ['--write', output]);
 }
 
-// Some templates needs to go through the linter after generation
-const needsLinter = ['utils/structs/EnumerableMapExtended.sol'];
-
 // Contracts
 for (const [file, template] of Object.entries({
   'utils/structs/EnumerableSetExtended.sol': './templates/EnumerableSetExtended.js',
   'utils/structs/EnumerableMapExtended.sol': './templates/EnumerableMapExtended.js',
 })) {
-  generateFromTemplate(file, template, './contracts/', needsLinter.indexOf(file) != -1);
+  generateFromTemplate(file, template, './contracts/');
 }
