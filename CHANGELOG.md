@@ -1,4 +1,4 @@
-## XX-XX-XXXX
+## 11-04-2025
 
 - `EnumerableSetExtended` and `EnumerableMapExtended`: Extensions of the `EnumerableSet` and `EnumerableMap` libraries with more types, including non-value types.
 
