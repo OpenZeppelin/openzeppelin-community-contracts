@@ -10,9 +10,41 @@ import {EnumerableSetExtended} from "./EnumerableSetExtended.sol";
 /**
  * @dev Library for managing an enumerable variant of Solidity's
  * https://solidity.readthedocs.io/en/latest/types.html#mapping-types[\`mapping\`]
- * type.
+ * type for non-value types as keys.
  *
- * Note: Extensions of openzeppelin/contracts/utils/struct/EnumerableMap.sol.
+ * Maps have the following properties:
+ *
+ * - Entries are added, removed, and checked for existence in constant time
+ * (O(1)).
+ * - Entries are enumerated in O(n). No guarantees are made on the ordering.
+ * - Map can be cleared (all entries removed) in O(n).
+ *
+ * \`\`\`solidity
+ * contract Example {
+ *     // Add the library methods
+ *     using EnumerableMapExtended for EnumerableMapExtended.BytesToUintMap;
+ *
+ *     // Declare a set state variable
+ *     EnumerableMapExtended.BytesToUintMap private myMap;
+ * }
+ * \`\`\`
+ *
+ * The following map types are supported:
+ *
+ * - \`bytes -> uint256\` (\`BytesToUintMap\`)
+ * - \`string -> string\` (\`StringToStringMap\`)
+ *
+ * [WARNING]
+ * ====
+ * Trying to delete such a structure from storage will likely result in data corruption, rendering the structure
+ * unusable.
+ * See https://github.com/ethereum/solidity/pull/11843[ethereum/solidity#11843] for more info.
+ *
+ * In order to clean an EnumerableMap, you can either remove all elements one by one or create a fresh instance using an
+ * array of EnumerableMap.
+ * ====
+ *
+ * NOTE: Extensions of openzeppelin/contracts/utils/struct/EnumerableMap.sol.
  */
 `;
 

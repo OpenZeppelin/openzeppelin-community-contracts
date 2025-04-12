@@ -23,9 +23,6 @@ const toMapTypeDescr = ({ key, value }) => ({
 });
 
 const SET_TYPES = [
-  // { type: 'bytes32' }, // part of the vanilla repo
-  // { type: 'address' }, // part of the vanilla repo
-  // { type: 'uint256' }, // part of the vanilla repo
   { type: 'bytes32', size: 2 },
   { type: 'string', memory: true },
   { type: 'bytes', memory: true },
@@ -34,25 +31,11 @@ const SET_TYPES = [
   .map(toSetTypeDescr);
 
 const MAP_TYPES = [
-  // { key: { type: 'uint256' }, value: { type: 'uint256' } }, // part of the vanilla repo
-  // { key: { type: 'uint256' }, value: { type: 'address' } }, // part of the vanilla repo
-  // { key: { type: 'uint256' }, value: { type: 'bytes32' } }, // part of the vanilla repo
-  // { key: { type: 'address' }, value: { type: 'uint256' } }, // part of the vanilla repo
-  // { key: { type: 'address' }, value: { type: 'address' } }, // part of the vanilla repo
-  // { key: { type: 'address' }, value: { type: 'bytes32' } }, // part of the vanilla repo
-  // { key: { type: 'bytes32' }, value: { type: 'uint256' } }, // part of the vanilla repo
-  // { key: { type: 'bytes32' }, value: { type: 'address' } }, // part of the vanilla repo
   { key: { type: 'bytes', memory: true }, value: { type: 'uint256' } },
   { key: { type: 'string', memory: true }, value: { type: 'string', memory: true } },
 ]
   .map(entry => mapValues(entry, typeDescr))
   .map(toMapTypeDescr);
-
-/// Sanity - Disabled because some types might be provided by the vanilla repository.
-// MAP_TYPES.forEach(entry => {
-//   if (!SET_TYPES.some(set => set.structName == entry.key.structName))
-//     throw new Error(`${entry.structName} requires a "${entry.key.structName}" set of "${entry.key.type}"`);
-// });
 
 module.exports = {
   SET_TYPES,
