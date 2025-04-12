@@ -6,6 +6,8 @@
 :SignerP256: pass:normal[xref:utils.adoc#SignerP256[`SignerP256`]]
 :SignerRSA: pass:normal[xref:utils.adoc#SignerRSA[`SignerRSA`]]
 :AbstractSigner: pass:normal[xref:utils.adoc#AbstractSigner[`AbstractSigner`]]
+:EnumerableSetExtended: pass:normal[xref:utils.adoc#EnumerableSetExtended[`EnumerableSetExtended`]]
+:EnumerableMapExtended: pass:normal[xref:utils.adoc#EnumerableMapExtended[`EnumerableMapExtended`]]
 :Masks: pass:normal[xref:utils.adoc#Masks[`Masks`]]
 :ERC7739Utils: pass:normal[xref:utils.adoc#ERC7739Utils[`ERC7739Utils`]]
 :AbstractSigner: pass:normal[xref:utils.adoc#AbstractSigner[`AbstractSigner`]]
@@ -27,6 +29,7 @@ Miscellaneous contracts and libraries containing utility functions you can use t
  * {ERC7739}: An abstract contract to validate signatures following the rehashing scheme from `ERC7739Utils`.
  * {ERC7739Utils}: Utilities library that implements a defensive rehashing mechanism to prevent replayability of smart contract signatures based on ERC-7739.
  * {SignerECDSA}, {SignerP256}, {SignerRSA}: Implementations of an {AbstractSigner} with specific signature validation algorithms.
+ * {EnumerableSetExtended} and {EnumerableMapExtended}: Extensions of the `EnumerableSet` and `EnumerableMap` libraries with more types, including non-value types.
  * {Masks}: Library to handle `bytes32` masks.
 
 == Cryptography
@@ -518,6 +521,568 @@ https://docs.openzeppelin.com/contracts/5.x/api/utils#RSA-pkcs1Sha256-bytes-byte
 IMPORTANT: Following the RSASSA-PKCS1-V1_5-VERIFY procedure outlined in RFC8017 (section 8.2.2), the
 provided `hash` is used as the `M` (message) and rehashed using SHA256 according to EMSA-PKCS1-v1_5
 encoding as per section 9.2 (step 1) of the RFC.
+
+== Structs
+
+:StringSet: pass:normal[xref:#EnumerableSetExtended-StringSet[`++StringSet++`]]
+:add: pass:normal[xref:#EnumerableSetExtended-add-struct-EnumerableSetExtended-StringSet-string-[`++add++`]]
+:remove: pass:normal[xref:#EnumerableSetExtended-remove-struct-EnumerableSetExtended-StringSet-string-[`++remove++`]]
+:clear: pass:normal[xref:#EnumerableSetExtended-clear-struct-EnumerableSetExtended-StringSet-[`++clear++`]]
+:contains: pass:normal[xref:#EnumerableSetExtended-contains-struct-EnumerableSetExtended-StringSet-string-[`++contains++`]]
+:length: pass:normal[xref:#EnumerableSetExtended-length-struct-EnumerableSetExtended-StringSet-[`++length++`]]
+:at: pass:normal[xref:#EnumerableSetExtended-at-struct-EnumerableSetExtended-StringSet-uint256-[`++at++`]]
+:values: pass:normal[xref:#EnumerableSetExtended-values-struct-EnumerableSetExtended-StringSet-[`++values++`]]
+:BytesSet: pass:normal[xref:#EnumerableSetExtended-BytesSet[`++BytesSet++`]]
+:add: pass:normal[xref:#EnumerableSetExtended-add-struct-EnumerableSetExtended-BytesSet-bytes-[`++add++`]]
+:remove: pass:normal[xref:#EnumerableSetExtended-remove-struct-EnumerableSetExtended-BytesSet-bytes-[`++remove++`]]
+:clear: pass:normal[xref:#EnumerableSetExtended-clear-struct-EnumerableSetExtended-BytesSet-[`++clear++`]]
+:contains: pass:normal[xref:#EnumerableSetExtended-contains-struct-EnumerableSetExtended-BytesSet-bytes-[`++contains++`]]
+:length: pass:normal[xref:#EnumerableSetExtended-length-struct-EnumerableSetExtended-BytesSet-[`++length++`]]
+:at: pass:normal[xref:#EnumerableSetExtended-at-struct-EnumerableSetExtended-BytesSet-uint256-[`++at++`]]
+:values: pass:normal[xref:#EnumerableSetExtended-values-struct-EnumerableSetExtended-BytesSet-[`++values++`]]
+:Bytes32x2Set: pass:normal[xref:#EnumerableSetExtended-Bytes32x2Set[`++Bytes32x2Set++`]]
+:add: pass:normal[xref:#EnumerableSetExtended-add-struct-EnumerableSetExtended-Bytes32x2Set-bytes32-2--[`++add++`]]
+:remove: pass:normal[xref:#EnumerableSetExtended-remove-struct-EnumerableSetExtended-Bytes32x2Set-bytes32-2--[`++remove++`]]
+:clear: pass:normal[xref:#EnumerableSetExtended-clear-struct-EnumerableSetExtended-Bytes32x2Set-[`++clear++`]]
+:contains: pass:normal[xref:#EnumerableSetExtended-contains-struct-EnumerableSetExtended-Bytes32x2Set-bytes32-2--[`++contains++`]]
+:length: pass:normal[xref:#EnumerableSetExtended-length-struct-EnumerableSetExtended-Bytes32x2Set-[`++length++`]]
+:at: pass:normal[xref:#EnumerableSetExtended-at-struct-EnumerableSetExtended-Bytes32x2Set-uint256-[`++at++`]]
+:values: pass:normal[xref:#EnumerableSetExtended-values-struct-EnumerableSetExtended-Bytes32x2Set-[`++values++`]]
+
+[.contract]
+[[EnumerableSetExtended]]
+=== `++EnumerableSetExtended++` link:https://github.com/OpenZeppelin/openzeppelin-community-contracts/blob/master/contracts/utils/structs/EnumerableSetExtended.sol[{github-icon},role=heading-link]
+
+[.hljs-theme-light.nopadding]
+```solidity
+import "@openzeppelin/community-contracts/utils/structs/EnumerableSetExtended.sol";
+```
+
+Library for managing
+https://en.wikipedia.org/wiki/Set_(abstract_data_type)[sets] of non-value
+types.
+
+Sets have the following properties:
+
+- Elements are added, removed, and checked for existence in constant time
+(O(1)).
+- Elements are enumerated in O(n). No guarantees are made on the ordering.
+- Set can be cleared (all elements removed) in O(n).
+
+```solidity
+contract Example {
+    // Add the library methods
+    using EnumerableSetExtended for EnumerableSetExtended.StringSet;
+
+    // Declare a set state variable
+    EnumerableSetExtended.StringSet private mySet;
+}
+```
+
+Sets of type `string` (`StringSet`), `bytes` (`BytesSet`) and
+`bytes32[2]` (`Bytes32x2Set`) are supported.
+
+[WARNING]
+====
+Trying to delete such a structure from storage will likely result in data corruption, rendering the structure
+unusable.
+See https://github.com/ethereum/solidity/pull/11843[ethereum/solidity#11843] for more info.
+
+In order to clean an EnumerableSet, you can either remove all elements one by one or create a fresh instance using an
+array of EnumerableSet.
+====
+
+NOTE: This is an extension of openzeppelin/contracts/utils/struct/EnumerableSet.sol.
+
+[.contract-index]
+.Functions
+--
+* `++add(self, value)++`
+* `++remove(self, value)++`
+* `++clear(set)++`
+* `++contains(self, value)++`
+* `++length(self)++`
+* `++at(self, index)++`
+* `++values(self)++`
+* `++add(self, value)++`
+* `++remove(self, value)++`
+* `++clear(set)++`
+* `++contains(self, value)++`
+* `++length(self)++`
+* `++at(self, index)++`
+* `++values(self)++`
+* `++add(self, value)++`
+* `++remove(self, value)++`
+* `++clear(self)++`
+* `++contains(self, value)++`
+* `++length(self)++`
+* `++at(self, index)++`
+* `++values(self)++`
+
+--
+
+[.contract-item]
+[[EnumerableSetExtended-add-struct-EnumerableSetExtended-StringSet-string-]]
+==== `[.contract-item-name]#++add++#++(struct EnumerableSetExtended.StringSet self, string value) → bool++` [.item-kind]#internal#
+
+Add a value to a set. O(1).
+
+Returns true if the value was added to the set, that is if it was not
+already present.
+
+[.contract-item]
+[[EnumerableSetExtended-remove-struct-EnumerableSetExtended-StringSet-string-]]
+==== `[.contract-item-name]#++remove++#++(struct EnumerableSetExtended.StringSet self, string value) → bool++` [.item-kind]#internal#
+
+Removes a value from a set. O(1).
+
+Returns true if the value was removed from the set, that is if it was
+present.
+
+[.contract-item]
+[[EnumerableSetExtended-clear-struct-EnumerableSetExtended-StringSet-]]
+==== `[.contract-item-name]#++clear++#++(struct EnumerableSetExtended.StringSet set)++` [.item-kind]#internal#
+
+Removes all the values from a set. O(n).
+
+WARNING: Developers should keep in mind that this function has an unbounded cost and using it may render the
+function uncallable if the set grows to the point where clearing it consumes too much gas to fit in a block.
+
+[.contract-item]
+[[EnumerableSetExtended-contains-struct-EnumerableSetExtended-StringSet-string-]]
+==== `[.contract-item-name]#++contains++#++(struct EnumerableSetExtended.StringSet self, string value) → bool++` [.item-kind]#internal#
+
+Returns true if the value is in the set. O(1).
+
+[.contract-item]
+[[EnumerableSetExtended-length-struct-EnumerableSetExtended-StringSet-]]
+==== `[.contract-item-name]#++length++#++(struct EnumerableSetExtended.StringSet self) → uint256++` [.item-kind]#internal#
+
+Returns the number of values on the set. O(1).
+
+[.contract-item]
+[[EnumerableSetExtended-at-struct-EnumerableSetExtended-StringSet-uint256-]]
+==== `[.contract-item-name]#++at++#++(struct EnumerableSetExtended.StringSet self, uint256 index) → string++` [.item-kind]#internal#
+
+Returns the value stored at position `index` in the set. O(1).
+
+Note that there are no guarantees on the ordering of values inside the
+array, and it may change when more values are added or removed.
+
+Requirements:
+
+- `index` must be strictly less than {length}.
+
+[.contract-item]
+[[EnumerableSetExtended-values-struct-EnumerableSetExtended-StringSet-]]
+==== `[.contract-item-name]#++values++#++(struct EnumerableSetExtended.StringSet self) → string[]++` [.item-kind]#internal#
+
+Return the entire set in an array
+
+WARNING: This operation will copy the entire storage to memory, which can be quite expensive. This is designed
+to mostly be used by view accessors that are queried without any gas fees. Developers should keep in mind that
+this function has an unbounded cost, and using it as part of a state-changing function may render the function
+uncallable if the set grows to a point where copying to memory consumes too much gas to fit in a block.
+
+[.contract-item]
+[[EnumerableSetExtended-add-struct-EnumerableSetExtended-BytesSet-bytes-]]
+==== `[.contract-item-name]#++add++#++(struct EnumerableSetExtended.BytesSet self, bytes value) → bool++` [.item-kind]#internal#
+
+Add a value to a set. O(1).
+
+Returns true if the value was added to the set, that is if it was not
+already present.
+
+[.contract-item]
+[[EnumerableSetExtended-remove-struct-EnumerableSetExtended-BytesSet-bytes-]]
+==== `[.contract-item-name]#++remove++#++(struct EnumerableSetExtended.BytesSet self, bytes value) → bool++` [.item-kind]#internal#
+
+Removes a value from a set. O(1).
+
+Returns true if the value was removed from the set, that is if it was
+present.
+
+[.contract-item]
+[[EnumerableSetExtended-clear-struct-EnumerableSetExtended-BytesSet-]]
+==== `[.contract-item-name]#++clear++#++(struct EnumerableSetExtended.BytesSet set)++` [.item-kind]#internal#
+
+Removes all the values from a set. O(n).
+
+WARNING: Developers should keep in mind that this function has an unbounded cost and using it may render the
+function uncallable if the set grows to the point where clearing it consumes too much gas to fit in a block.
+
+[.contract-item]
+[[EnumerableSetExtended-contains-struct-EnumerableSetExtended-BytesSet-bytes-]]
+==== `[.contract-item-name]#++contains++#++(struct EnumerableSetExtended.BytesSet self, bytes value) → bool++` [.item-kind]#internal#
+
+Returns true if the value is in the set. O(1).
+
+[.contract-item]
+[[EnumerableSetExtended-length-struct-EnumerableSetExtended-BytesSet-]]
+==== `[.contract-item-name]#++length++#++(struct EnumerableSetExtended.BytesSet self) → uint256++` [.item-kind]#internal#
+
+Returns the number of values on the set. O(1).
+
+[.contract-item]
+[[EnumerableSetExtended-at-struct-EnumerableSetExtended-BytesSet-uint256-]]
+==== `[.contract-item-name]#++at++#++(struct EnumerableSetExtended.BytesSet self, uint256 index) → bytes++` [.item-kind]#internal#
+
+Returns the value stored at position `index` in the set. O(1).
+
+Note that there are no guarantees on the ordering of values inside the
+array, and it may change when more values are added or removed.
+
+Requirements:
+
+- `index` must be strictly less than {length}.
+
+[.contract-item]
+[[EnumerableSetExtended-values-struct-EnumerableSetExtended-BytesSet-]]
+==== `[.contract-item-name]#++values++#++(struct EnumerableSetExtended.BytesSet self) → bytes[]++` [.item-kind]#internal#
+
+Return the entire set in an array
+
+WARNING: This operation will copy the entire storage to memory, which can be quite expensive. This is designed
+to mostly be used by view accessors that are queried without any gas fees. Developers should keep in mind that
+this function has an unbounded cost, and using it as part of a state-changing function may render the function
+uncallable if the set grows to a point where copying to memory consumes too much gas to fit in a block.
+
+[.contract-item]
+[[EnumerableSetExtended-add-struct-EnumerableSetExtended-Bytes32x2Set-bytes32-2--]]
+==== `[.contract-item-name]#++add++#++(struct EnumerableSetExtended.Bytes32x2Set self, bytes32[2] value) → bool++` [.item-kind]#internal#
+
+Add a value to a set. O(1).
+
+Returns true if the value was added to the set, that is if it was not
+already present.
+
+[.contract-item]
+[[EnumerableSetExtended-remove-struct-EnumerableSetExtended-Bytes32x2Set-bytes32-2--]]
+==== `[.contract-item-name]#++remove++#++(struct EnumerableSetExtended.Bytes32x2Set self, bytes32[2] value) → bool++` [.item-kind]#internal#
+
+Removes a value from a set. O(1).
+
+Returns true if the value was removed from the set, that is if it was
+present.
+
+[.contract-item]
+[[EnumerableSetExtended-clear-struct-EnumerableSetExtended-Bytes32x2Set-]]
+==== `[.contract-item-name]#++clear++#++(struct EnumerableSetExtended.Bytes32x2Set self)++` [.item-kind]#internal#
+
+Removes all the values from a set. O(n).
+
+WARNING: Developers should keep in mind that this function has an unbounded cost and using it may render the
+function uncallable if the set grows to the point where clearing it consumes too much gas to fit in a block.
+
+[.contract-item]
+[[EnumerableSetExtended-contains-struct-EnumerableSetExtended-Bytes32x2Set-bytes32-2--]]
+==== `[.contract-item-name]#++contains++#++(struct EnumerableSetExtended.Bytes32x2Set self, bytes32[2] value) → bool++` [.item-kind]#internal#
+
+Returns true if the value is in the set. O(1).
+
+[.contract-item]
+[[EnumerableSetExtended-length-struct-EnumerableSetExtended-Bytes32x2Set-]]
+==== `[.contract-item-name]#++length++#++(struct EnumerableSetExtended.Bytes32x2Set self) → uint256++` [.item-kind]#internal#
+
+Returns the number of values on the set. O(1).
+
+[.contract-item]
+[[EnumerableSetExtended-at-struct-EnumerableSetExtended-Bytes32x2Set-uint256-]]
+==== `[.contract-item-name]#++at++#++(struct EnumerableSetExtended.Bytes32x2Set self, uint256 index) → bytes32[2]++` [.item-kind]#internal#
+
+Returns the value stored at position `index` in the set. O(1).
+
+Note that there are no guarantees on the ordering of values inside the
+array, and it may change when more values are added or removed.
+
+Requirements:
+
+- `index` must be strictly less than {length}.
+
+[.contract-item]
+[[EnumerableSetExtended-values-struct-EnumerableSetExtended-Bytes32x2Set-]]
+==== `[.contract-item-name]#++values++#++(struct EnumerableSetExtended.Bytes32x2Set self) → bytes32[2][]++` [.item-kind]#internal#
+
+Return the entire set in an array
+
+WARNING: This operation will copy the entire storage to memory, which can be quite expensive. This is designed
+to mostly be used by view accessors that are queried without any gas fees. Developers should keep in mind that
+this function has an unbounded cost, and using it as part of a state-changing function may render the function
+uncallable if the set grows to a point where copying to memory consumes too much gas to fit in a block.
+
+:EnumerableMapNonexistentBytesKey: pass:normal[xref:#EnumerableMapExtended-EnumerableMapNonexistentBytesKey-bytes-[`++EnumerableMapNonexistentBytesKey++`]]
+:BytesToUintMap: pass:normal[xref:#EnumerableMapExtended-BytesToUintMap[`++BytesToUintMap++`]]
+:set: pass:normal[xref:#EnumerableMapExtended-set-struct-EnumerableMapExtended-BytesToUintMap-bytes-uint256-[`++set++`]]
+:remove: pass:normal[xref:#EnumerableMapExtended-remove-struct-EnumerableMapExtended-BytesToUintMap-bytes-[`++remove++`]]
+:clear: pass:normal[xref:#EnumerableMapExtended-clear-struct-EnumerableMapExtended-BytesToUintMap-[`++clear++`]]
+:contains: pass:normal[xref:#EnumerableMapExtended-contains-struct-EnumerableMapExtended-BytesToUintMap-bytes-[`++contains++`]]
+:length: pass:normal[xref:#EnumerableMapExtended-length-struct-EnumerableMapExtended-BytesToUintMap-[`++length++`]]
+:at: pass:normal[xref:#EnumerableMapExtended-at-struct-EnumerableMapExtended-BytesToUintMap-uint256-[`++at++`]]
+:tryGet: pass:normal[xref:#EnumerableMapExtended-tryGet-struct-EnumerableMapExtended-BytesToUintMap-bytes-[`++tryGet++`]]
+:get: pass:normal[xref:#EnumerableMapExtended-get-struct-EnumerableMapExtended-BytesToUintMap-bytes-[`++get++`]]
+:keys: pass:normal[xref:#EnumerableMapExtended-keys-struct-EnumerableMapExtended-BytesToUintMap-[`++keys++`]]
+:EnumerableMapNonexistentStringKey: pass:normal[xref:#EnumerableMapExtended-EnumerableMapNonexistentStringKey-string-[`++EnumerableMapNonexistentStringKey++`]]
+:StringToStringMap: pass:normal[xref:#EnumerableMapExtended-StringToStringMap[`++StringToStringMap++`]]
+:set: pass:normal[xref:#EnumerableMapExtended-set-struct-EnumerableMapExtended-StringToStringMap-string-string-[`++set++`]]
+:remove: pass:normal[xref:#EnumerableMapExtended-remove-struct-EnumerableMapExtended-StringToStringMap-string-[`++remove++`]]
+:clear: pass:normal[xref:#EnumerableMapExtended-clear-struct-EnumerableMapExtended-StringToStringMap-[`++clear++`]]
+:contains: pass:normal[xref:#EnumerableMapExtended-contains-struct-EnumerableMapExtended-StringToStringMap-string-[`++contains++`]]
+:length: pass:normal[xref:#EnumerableMapExtended-length-struct-EnumerableMapExtended-StringToStringMap-[`++length++`]]
+:at: pass:normal[xref:#EnumerableMapExtended-at-struct-EnumerableMapExtended-StringToStringMap-uint256-[`++at++`]]
+:tryGet: pass:normal[xref:#EnumerableMapExtended-tryGet-struct-EnumerableMapExtended-StringToStringMap-string-[`++tryGet++`]]
+:get: pass:normal[xref:#EnumerableMapExtended-get-struct-EnumerableMapExtended-StringToStringMap-string-[`++get++`]]
+:keys: pass:normal[xref:#EnumerableMapExtended-keys-struct-EnumerableMapExtended-StringToStringMap-[`++keys++`]]
+
+[.contract]
+[[EnumerableMapExtended]]
+=== `++EnumerableMapExtended++` link:https://github.com/OpenZeppelin/openzeppelin-community-contracts/blob/master/contracts/utils/structs/EnumerableMapExtended.sol[{github-icon},role=heading-link]
+
+[.hljs-theme-light.nopadding]
+```solidity
+import "@openzeppelin/community-contracts/utils/structs/EnumerableMapExtended.sol";
+```
+
+Library for managing an enumerable variant of Solidity's
+https://solidity.readthedocs.io/en/latest/types.html#mapping-types[`mapping`]
+type for non-value types as keys.
+
+Maps have the following properties:
+
+- Entries are added, removed, and checked for existence in constant time
+(O(1)).
+- Entries are enumerated in O(n). No guarantees are made on the ordering.
+- Map can be cleared (all entries removed) in O(n).
+
+```solidity
+contract Example {
+    // Add the library methods
+    using EnumerableMapExtended for EnumerableMapExtended.BytesToUintMap;
+
+    // Declare a set state variable
+    EnumerableMapExtended.BytesToUintMap private myMap;
+}
+```
+
+The following map types are supported:
+
+- `bytes -> uint256` (`BytesToUintMap`)
+- `string -> string` (`StringToStringMap`)
+
+[WARNING]
+====
+Trying to delete such a structure from storage will likely result in data corruption, rendering the structure
+unusable.
+See https://github.com/ethereum/solidity/pull/11843[ethereum/solidity#11843] for more info.
+
+In order to clean an EnumerableMap, you can either remove all elements one by one or create a fresh instance using an
+array of EnumerableMap.
+====
+
+NOTE: Extensions of openzeppelin/contracts/utils/struct/EnumerableMap.sol.
+
+[.contract-index]
+.Functions
+--
+* `++set(map, key, value)++`
+* `++remove(map, key)++`
+* `++clear(map)++`
+* `++contains(map, key)++`
+* `++length(map)++`
+* `++at(map, index)++`
+* `++tryGet(map, key)++`
+* `++get(map, key)++`
+* `++keys(map)++`
+* `++set(map, key, value)++`
+* `++remove(map, key)++`
+* `++clear(map)++`
+* `++contains(map, key)++`
+* `++length(map)++`
+* `++at(map, index)++`
+* `++tryGet(map, key)++`
+* `++get(map, key)++`
+* `++keys(map)++`
+
+--
+
+[.contract-index]
+.Errors
+--
+* `++EnumerableMapNonexistentBytesKey(key)++`
+* `++EnumerableMapNonexistentStringKey(key)++`
+
+--
+
+[.contract-item]
+[[EnumerableMapExtended-set-struct-EnumerableMapExtended-BytesToUintMap-bytes-uint256-]]
+==== `[.contract-item-name]#++set++#++(struct EnumerableMapExtended.BytesToUintMap map, bytes key, uint256 value) → bool++` [.item-kind]#internal#
+
+Adds a key-value pair to a map, or updates the value for an existing
+key. O(1).
+
+Returns true if the key was added to the map, that is if it was not
+already present.
+
+[.contract-item]
+[[EnumerableMapExtended-remove-struct-EnumerableMapExtended-BytesToUintMap-bytes-]]
+==== `[.contract-item-name]#++remove++#++(struct EnumerableMapExtended.BytesToUintMap map, bytes key) → bool++` [.item-kind]#internal#
+
+Removes a key-value pair from a map. O(1).
+
+Returns true if the key was removed from the map, that is if it was present.
+
+[.contract-item]
+[[EnumerableMapExtended-clear-struct-EnumerableMapExtended-BytesToUintMap-]]
+==== `[.contract-item-name]#++clear++#++(struct EnumerableMapExtended.BytesToUintMap map)++` [.item-kind]#internal#
+
+Removes all the entries from a map. O(n).
+
+WARNING: Developers should keep in mind that this function has an unbounded cost and using it may render the
+function uncallable if the map grows to the point where clearing it consumes too much gas to fit in a block.
+
+[.contract-item]
+[[EnumerableMapExtended-contains-struct-EnumerableMapExtended-BytesToUintMap-bytes-]]
+==== `[.contract-item-name]#++contains++#++(struct EnumerableMapExtended.BytesToUintMap map, bytes key) → bool++` [.item-kind]#internal#
+
+Returns true if the key is in the map. O(1).
+
+[.contract-item]
+[[EnumerableMapExtended-length-struct-EnumerableMapExtended-BytesToUintMap-]]
+==== `[.contract-item-name]#++length++#++(struct EnumerableMapExtended.BytesToUintMap map) → uint256++` [.item-kind]#internal#
+
+Returns the number of key-value pairs in the map. O(1).
+
+[.contract-item]
+[[EnumerableMapExtended-at-struct-EnumerableMapExtended-BytesToUintMap-uint256-]]
+==== `[.contract-item-name]#++at++#++(struct EnumerableMapExtended.BytesToUintMap map, uint256 index) → bytes key, uint256 value++` [.item-kind]#internal#
+
+Returns the key-value pair stored at position `index` in the map. O(1).
+
+Note that there are no guarantees on the ordering of entries inside the
+array, and it may change when more entries are added or removed.
+
+Requirements:
+
+- `index` must be strictly less than {length}.
+
+[.contract-item]
+[[EnumerableMapExtended-tryGet-struct-EnumerableMapExtended-BytesToUintMap-bytes-]]
+==== `[.contract-item-name]#++tryGet++#++(struct EnumerableMapExtended.BytesToUintMap map, bytes key) → bool exists, uint256 value++` [.item-kind]#internal#
+
+Tries to returns the value associated with `key`. O(1).
+Does not revert if `key` is not in the map.
+
+[.contract-item]
+[[EnumerableMapExtended-get-struct-EnumerableMapExtended-BytesToUintMap-bytes-]]
+==== `[.contract-item-name]#++get++#++(struct EnumerableMapExtended.BytesToUintMap map, bytes key) → uint256 value++` [.item-kind]#internal#
+
+Returns the value associated with `key`. O(1).
+
+Requirements:
+
+- `key` must be in the map.
+
+[.contract-item]
+[[EnumerableMapExtended-keys-struct-EnumerableMapExtended-BytesToUintMap-]]
+==== `[.contract-item-name]#++keys++#++(struct EnumerableMapExtended.BytesToUintMap map) → bytes[]++` [.item-kind]#internal#
+
+Return the an array containing all the keys
+
+WARNING: This operation will copy the entire storage to memory, which can be quite expensive. This is designed
+to mostly be used by view accessors that are queried without any gas fees. Developers should keep in mind that
+this function has an unbounded cost, and using it as part of a state-changing function may render the function
+uncallable if the map grows to a point where copying to memory consumes too much gas to fit in a block.
+
+[.contract-item]
+[[EnumerableMapExtended-set-struct-EnumerableMapExtended-StringToStringMap-string-string-]]
+==== `[.contract-item-name]#++set++#++(struct EnumerableMapExtended.StringToStringMap map, string key, string value) → bool++` [.item-kind]#internal#
+
+Adds a key-value pair to a map, or updates the value for an existing
+key. O(1).
+
+Returns true if the key was added to the map, that is if it was not
+already present.
+
+[.contract-item]
+[[EnumerableMapExtended-remove-struct-EnumerableMapExtended-StringToStringMap-string-]]
+==== `[.contract-item-name]#++remove++#++(struct EnumerableMapExtended.StringToStringMap map, string key) → bool++` [.item-kind]#internal#
+
+Removes a key-value pair from a map. O(1).
+
+Returns true if the key was removed from the map, that is if it was present.
+
+[.contract-item]
+[[EnumerableMapExtended-clear-struct-EnumerableMapExtended-StringToStringMap-]]
+==== `[.contract-item-name]#++clear++#++(struct EnumerableMapExtended.StringToStringMap map)++` [.item-kind]#internal#
+
+Removes all the entries from a map. O(n).
+
+WARNING: Developers should keep in mind that this function has an unbounded cost and using it may render the
+function uncallable if the map grows to the point where clearing it consumes too much gas to fit in a block.
+
+[.contract-item]
+[[EnumerableMapExtended-contains-struct-EnumerableMapExtended-StringToStringMap-string-]]
+==== `[.contract-item-name]#++contains++#++(struct EnumerableMapExtended.StringToStringMap map, string key) → bool++` [.item-kind]#internal#
+
+Returns true if the key is in the map. O(1).
+
+[.contract-item]
+[[EnumerableMapExtended-length-struct-EnumerableMapExtended-StringToStringMap-]]
+==== `[.contract-item-name]#++length++#++(struct EnumerableMapExtended.StringToStringMap map) → uint256++` [.item-kind]#internal#
+
+Returns the number of key-value pairs in the map. O(1).
+
+[.contract-item]
+[[EnumerableMapExtended-at-struct-EnumerableMapExtended-StringToStringMap-uint256-]]
+==== `[.contract-item-name]#++at++#++(struct EnumerableMapExtended.StringToStringMap map, uint256 index) → string key, string value++` [.item-kind]#internal#
+
+Returns the key-value pair stored at position `index` in the map. O(1).
+
+Note that there are no guarantees on the ordering of entries inside the
+array, and it may change when more entries are added or removed.
+
+Requirements:
+
+- `index` must be strictly less than {length}.
+
+[.contract-item]
+[[EnumerableMapExtended-tryGet-struct-EnumerableMapExtended-StringToStringMap-string-]]
+==== `[.contract-item-name]#++tryGet++#++(struct EnumerableMapExtended.StringToStringMap map, string key) → bool exists, string value++` [.item-kind]#internal#
+
+Tries to returns the value associated with `key`. O(1).
+Does not revert if `key` is not in the map.
+
+[.contract-item]
+[[EnumerableMapExtended-get-struct-EnumerableMapExtended-StringToStringMap-string-]]
+==== `[.contract-item-name]#++get++#++(struct EnumerableMapExtended.StringToStringMap map, string key) → string value++` [.item-kind]#internal#
+
+Returns the value associated with `key`. O(1).
+
+Requirements:
+
+- `key` must be in the map.
+
+[.contract-item]
+[[EnumerableMapExtended-keys-struct-EnumerableMapExtended-StringToStringMap-]]
+==== `[.contract-item-name]#++keys++#++(struct EnumerableMapExtended.StringToStringMap map) → string[]++` [.item-kind]#internal#
+
+Return the an array containing all the keys
+
+WARNING: This operation will copy the entire storage to memory, which can be quite expensive. This is designed
+to mostly be used by view accessors that are queried without any gas fees. Developers should keep in mind that
+this function has an unbounded cost, and using it as part of a state-changing function may render the function
+uncallable if the map grows to a point where copying to memory consumes too much gas to fit in a block.
+
+[.contract-item]
+[[EnumerableMapExtended-EnumerableMapNonexistentBytesKey-bytes-]]
+==== `[.contract-item-name]#++EnumerableMapNonexistentBytesKey++#++(bytes key)++` [.item-kind]#error#
+
+Query for a nonexistent map key.
+
+[.contract-item]
+[[EnumerableMapExtended-EnumerableMapNonexistentStringKey-string-]]
+==== `[.contract-item-name]#++EnumerableMapNonexistentStringKey++#++(string key)++` [.item-kind]#error#
+
+Query for a nonexistent map key.
 
 == Libraries
 
