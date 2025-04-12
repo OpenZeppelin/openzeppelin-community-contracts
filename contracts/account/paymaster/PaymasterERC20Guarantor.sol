@@ -137,7 +137,8 @@ abstract contract PaymasterERC20Guarantor is PaymasterERC20 {
 
     /**
      * @dev Fetches the guarantor address and validation data from the user operation.
-     * Must be implemented in order to correctly enable guarantor functionality.
+     *
+     * NOTE: Return `address(0)` to disable the guarantor feature.
      */
     function _fetchGuarantor(PackedUserOperation calldata userOp) internal view virtual returns (address guarantor);
 
