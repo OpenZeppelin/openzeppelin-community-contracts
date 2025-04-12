@@ -2,8 +2,6 @@
 
 - `EnumerableSetExtended` and `EnumerableMapExtended`: Extensions of the `EnumerableSet` and `EnumerableMap` libraries with more types, including non-value types.
 
-<<<<<<< HEAD
-=======
 ## 03-04-2025
 
 - `PaymasterERC20`: Extension of `PaymasterCore` that sponsors user operations against payment in ERC-20 tokens.
@@ -14,7 +12,6 @@
 - Deprecate `Account` and rename `AccountCore` to `Account`.
 - Update `Account` and `Paymaster` to support entrypoint v0.8.0.
 
->>>>>>> master
 ## 07-03-2025
 
 - `ERC7786Aggregator`: Add an aggregator that implements a meta gateway on top of multiple ERC-7786 gateways.

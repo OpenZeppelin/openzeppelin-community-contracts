@@ -9,11 +9,6 @@ import {EnumerableSetExtended} from "./EnumerableSetExtended.sol";
 /**
  * @dev Library for managing an enumerable variant of Solidity's
  * https://solidity.readthedocs.io/en/latest/types.html#mapping-types[`mapping`]
-<<<<<<< HEAD
- * type.
- *
- * Note: Extensions of openzeppelin/contracts/utils/struct/EnumerableMap.sol.
-=======
  * type for non-value types as keys.
  *
  * Maps have the following properties:
@@ -49,7 +44,6 @@ import {EnumerableSetExtended} from "./EnumerableSetExtended.sol";
  * ====
  *
  * NOTE: Extensions of openzeppelin/contracts/utils/struct/EnumerableMap.sol.
->>>>>>> master
  */
 library EnumerableMapExtended {
     using EnumerableSet for *;
