@@ -21,7 +21,7 @@ Miscellaneous contracts and libraries containing utility functions you can use t
 
 {{ERC7739Utils}}
 
-=== Abstract signers
+=== Abstract Signers
 
 {{AbstractSigner}}
 
