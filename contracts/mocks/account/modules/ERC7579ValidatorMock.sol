@@ -33,12 +33,12 @@ abstract contract ERC7579ValidatorMock is ERC7579ModuleMock(MODULE_TYPE_VALIDATO
     }
 
     function isValidSignatureWithSender(
-        address sender,
+        address /*sender*/,
         bytes32 hash,
         bytes calldata signature
     ) public view virtual returns (bytes4) {
         return
-            SignatureChecker.isValidSignatureNow(_associatedSigners[sender], hash, signature)
+            SignatureChecker.isValidSignatureNow(_associatedSigners[msg.sender], hash, signature)
                 ? IERC1271.isValidSignature.selector
                 : bytes4(0xffffffff);
     }

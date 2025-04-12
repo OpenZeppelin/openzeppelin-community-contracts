@@ -9,7 +9,7 @@ const deposit = ethers.parseEther('1');
 const value = 42n;
 const delay = time.duration.hours(10);
 
-function shouldBehaveLikePaymaster({ postOp } = { postOp: false }) {
+function shouldBehaveLikePaymaster({ postOp, timeRange }) {
   describe('entryPoint', function () {
     it('should return the canonical entrypoint', async function () {
       await expect(this.paymaster.entryPoint()).to.eventually.equal(entrypoint.v08);
@@ -24,103 +24,102 @@ function shouldBehaveLikePaymaster({ postOp } = { postOp: false }) {
       this.userOp.paymaster = this.paymaster;
     });
 
-    it('sponsors a user operation', async function () {
-      const signedUserOp = await this.account
-        .createUserOp({
-          ...this.userOp,
-          callData: this.account.interface.encodeFunctionData('execute', [
-            encodeMode({ callType: CALL_TYPE_BATCH }),
-            encodeBatch({
-              target: this.target,
-              data: this.target.interface.encodeFunctionData('mockFunctionExtra'),
-            }),
-          ]),
-        })
-        .then(op => this.paymasterSignUserOp(op, 0n, 0n))
-        .then(op => this.signUserOp(op));
+    describe('validation (signature/token ownership/allowance)', function () {
+      it('approved user operation are sponsored', async function () {
+        const signedUserOp = await this.account
+          .createUserOp({
+            ...this.userOp,
+            callData: this.account.interface.encodeFunctionData('execute', [
+              encodeMode({ callType: CALL_TYPE_BATCH }),
+              encodeBatch({
+                target: this.target,
+                data: this.target.interface.encodeFunctionData('mockFunctionExtra'),
+              }),
+            ]),
+          })
+          .then(op => this.paymasterSignUserOp(op))
+          .then(op => this.signUserOp(op));
 
-      // before
-      await expect(entrypoint.v08.getNonce(this.account, 0n)).to.eventually.equal(0n);
-      await expect(entrypoint.v08.balanceOf(this.paymaster)).to.eventually.equal(deposit);
+        // before
+        await expect(entrypoint.v08.getNonce(this.account, 0n)).to.eventually.equal(0n);
+        await expect(entrypoint.v08.balanceOf(this.paymaster)).to.eventually.equal(deposit);
 
-      // execute sponsored user operation
-      const handleOpsTx = entrypoint.v08.handleOps([signedUserOp.packed], this.receiver);
-      await expect(handleOpsTx).to.changeEtherBalance(this.account, 0n); // no balance change
-      await expect(handleOpsTx).to.emit(this.target, 'MockFunctionCalledExtra').withArgs(this.account, 0n);
+        // execute sponsored user operation
+        const handleOpsTx = entrypoint.v08.handleOps([signedUserOp.packed], this.receiver);
+        await expect(handleOpsTx).to.changeEtherBalance(this.account, 0n); // no balance change
+        await expect(handleOpsTx).to.emit(this.target, 'MockFunctionCalledExtra').withArgs(this.account, 0n);
 
-      if (postOp)
-        await expect(handleOpsTx).to.emit(this.paymaster, 'PaymasterDataPostOp').withArgs(signedUserOp.paymasterData);
+        if (postOp)
+          await expect(handleOpsTx).to.emit(this.paymaster, 'PaymasterDataPostOp').withArgs(signedUserOp.callData);
 
-      // after
-      await expect(entrypoint.v08.getNonce(this.account, 0n)).to.eventually.equal(1n);
-      await expect(entrypoint.v08.balanceOf(this.paymaster)).to.eventually.be.lessThan(deposit);
+        // after
+        await expect(entrypoint.v08.getNonce(this.account, 0n)).to.eventually.equal(1n);
+        await expect(entrypoint.v08.balanceOf(this.paymaster)).to.eventually.be.lessThan(deposit);
+      });
+
+      it('revert if missing paymaster validation', async function () {
+        const signedUserOp = await this.account
+          .createUserOp({
+            ...this.userOp,
+            callData: this.account.interface.encodeFunctionData('execute', [
+              encodeMode({ callType: CALL_TYPE_BATCH }),
+              encodeBatch({
+                target: this.target,
+                data: this.target.interface.encodeFunctionData('mockFunctionExtra'),
+              }),
+            ]),
+          })
+          .then(op => this.paymasterSignUserOpInvalid(op, 0n, 0n))
+          .then(op => this.signUserOp(op));
+
+        await expect(entrypoint.v08.handleOps([signedUserOp.packed], this.receiver))
+          .to.be.revertedWithCustomError(entrypoint.v08, 'FailedOp')
+          .withArgs(0n, 'AA34 signature error');
+      });
     });
 
-    it('revert if missing paymaster signature', async function () {
-      const badSignature = await this.other.signMessage('hello world!');
+    timeRange &&
+      describe('time range', function () {
+        it('revert if validation data is too early', async function () {
+          const signedUserOp = await this.account
+            .createUserOp({
+              ...this.userOp,
+              callData: this.account.interface.encodeFunctionData('execute', [
+                encodeMode({ callType: CALL_TYPE_BATCH }),
+                encodeBatch({
+                  target: this.target,
+                  data: this.target.interface.encodeFunctionData('mockFunctionExtra'),
+                }),
+              ]),
+            })
+            .then(op => this.paymasterSignUserOp(op, { validAfter: MAX_UINT48 })) // validAfter MAX_UINT48 is in the future
+            .then(op => this.signUserOp(op));
 
-      const signedUserOp = await this.account
-        .createUserOp({
-          ...this.userOp,
-          callData: this.account.interface.encodeFunctionData('execute', [
-            encodeMode({ callType: CALL_TYPE_BATCH }),
-            encodeBatch({
-              target: this.target,
-              data: this.target.interface.encodeFunctionData('mockFunctionExtra'),
-            }),
-          ]),
-        })
-        .then(op =>
-          Object.assign(op, {
-            paymasterData: ethers.solidityPacked(['uint48', 'uint48', 'bytes'], [0n, 0n, badSignature]),
-          }),
-        )
-        .then(op => this.signUserOp(op));
+          await expect(entrypoint.v08.handleOps([signedUserOp.packed], this.receiver))
+            .to.be.revertedWithCustomError(entrypoint.v08, 'FailedOp')
+            .withArgs(0n, 'AA32 paymaster expired or not due');
+        });
 
-      await expect(entrypoint.v08.handleOps([signedUserOp.packed], this.receiver))
-        .to.be.revertedWithCustomError(entrypoint.v08, 'FailedOp')
-        .withArgs(0n, 'AA34 signature error');
-    });
+        it('revert if validation data is too late', async function () {
+          const signedUserOp = await this.account
+            .createUserOp({
+              ...this.userOp,
+              callData: this.account.interface.encodeFunctionData('execute', [
+                encodeMode({ callType: CALL_TYPE_BATCH }),
+                encodeBatch({
+                  target: this.target,
+                  data: this.target.interface.encodeFunctionData('mockFunctionExtra'),
+                }),
+              ]),
+            })
+            .then(op => this.paymasterSignUserOp(op, { validUntil: 1n })) // validUntil 1n is in the past
+            .then(op => this.signUserOp(op));
 
-    it('revert if validation data is too early', async function () {
-      const signedUserOp = await this.account
-        .createUserOp({
-          ...this.userOp,
-          callData: this.account.interface.encodeFunctionData('execute', [
-            encodeMode({ callType: CALL_TYPE_BATCH }),
-            encodeBatch({
-              target: this.target,
-              data: this.target.interface.encodeFunctionData('mockFunctionExtra'),
-            }),
-          ]),
-        })
-        .then(op => this.paymasterSignUserOp(op, MAX_UINT48, 0n)) // validAfter MAX_UINT48 is in the future
-        .then(op => this.signUserOp(op));
-
-      await expect(entrypoint.v08.handleOps([signedUserOp.packed], this.receiver))
-        .to.be.revertedWithCustomError(entrypoint.v08, 'FailedOp')
-        .withArgs(0n, 'AA32 paymaster expired or not due');
-    });
-
-    it('revert if validation data is too late', async function () {
-      const signedUserOp = await this.account
-        .createUserOp({
-          ...this.userOp,
-          callData: this.account.interface.encodeFunctionData('execute', [
-            encodeMode({ callType: CALL_TYPE_BATCH }),
-            encodeBatch({
-              target: this.target,
-              data: this.target.interface.encodeFunctionData('mockFunctionExtra'),
-            }),
-          ]),
-        })
-        .then(op => this.paymasterSignUserOp(op, 0n, 1n)) // validUntil 1n is in the past
-        .then(op => this.signUserOp(op));
-
-      await expect(entrypoint.v08.handleOps([signedUserOp.packed], this.receiver))
-        .to.be.revertedWithCustomError(entrypoint.v08, 'FailedOp')
-        .withArgs(0n, 'AA32 paymaster expired or not due');
-    });
+          await expect(entrypoint.v08.handleOps([signedUserOp.packed], this.receiver))
+            .to.be.revertedWithCustomError(entrypoint.v08, 'FailedOp')
+            .withArgs(0n, 'AA32 paymaster expired or not due');
+        });
+      });
 
     it('reverts if the caller is not the entrypoint', async function () {
       const operation = await this.account.createUserOp(this.userOp);
