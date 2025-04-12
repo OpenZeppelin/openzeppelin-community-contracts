@@ -29,7 +29,7 @@ To setup an account, you can either bring your own validation logic and start wi
 
 === Selecting a signer
 
-The library includes specializations of the `AbstractSigner` contract that use custom digital signature verification algorithms. These are xref:api:utils.adoc#SignerECDSA[`SignerECDSA`], xref:api:utils.adoc#SignerP256[`SignerP256`] and xref:api:utils.adoc#SignerRSA[`SignerRSA`].
+The library includes specializations of the `AbstractSigner` contract that use custom digital signature verification algorithms. These are xref:api:utils.adoc#SignerECDSA[`SignerECDSA`], xref:api:utils.adoc#SignerP256[`SignerP256`], xref:api:utils.adoc#SignerRSA[`SignerRSA`], xref:api:utils.adoc#SignerERC7702[`SignerERC7702`], and xref:api:utils.adoc#SignerERC7913[`SignerERC7913`].
 
 Since smart accounts are deployed by a factory, the best practice is to create https://docs.openzeppelin.com/contracts/5.x/api/proxy#minimal_clones[minimal clones] of initializable contracts. These signer implementations provide an initializable design by default so that the factory can interact with the account to set it up after deployment in a single transaction.
 
@@ -54,6 +54,13 @@ Similarly, some government and corporate public key infrastructures use RSA for 
 [source,solidity]
 ----
 include::api:example$account/MyAccountRSA.sol[]
+----
+
+For more advanced use cases where you need to support keys that don't have their own Ethereum address (like hardware devices or non-Ethereum cryptographic curves), you can use xref:api:utils.adoc#SignerERC7913[`SignerERC7913`]. This implementation allows for signature verification using ERC-7913 compatible verifiers.
+
+[source,solidity]
+----
+include::api:example$account/MyAccountERC7913.sol[]
 ----
 
 == Account Factory

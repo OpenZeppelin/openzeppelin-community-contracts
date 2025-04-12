@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.20;
+pragma solidity ^0.8.24;
 
 import {SignatureChecker} from "@openzeppelin/contracts/utils/cryptography/SignatureChecker.sol";
+import {Bytes} from "@openzeppelin/contracts/utils/Bytes.sol";
 import {IERC7913SignatureVerifier} from "../../interfaces/IERC7913.sol";
 
 /**
@@ -16,6 +17,8 @@ import {IERC7913SignatureVerifier} from "../../interfaces/IERC7913.sol";
  * See https://eips.ethereum.org/EIPS/eip-7913[ERC-7913].
  */
 library ERC7913Utils {
+    using Bytes for bytes;
+
     /**
      * @dev Verifies a signature for a given signer and hash.
      *
@@ -28,7 +31,7 @@ library ERC7913Utils {
      * - Otherwise: verification is done using {IERC7913SignatureVerifier}
      */
     function isValidSignatureNow(
-        bytes calldata signer,
+        bytes memory signer,
         bytes32 hash,
         bytes memory signature
     ) internal view returns (bool) {
@@ -37,7 +40,7 @@ library ERC7913Utils {
         } else if (signer.length == 20) {
             return SignatureChecker.isValidSignatureNow(address(bytes20(signer)), hash, signature);
         } else {
-            try IERC7913SignatureVerifier(address(bytes20(signer[0:20]))).verify(signer[20:], hash, signature) returns (
+            try IERC7913SignatureVerifier(address(bytes20(signer))).verify(signer.slice(20), hash, signature) returns (
                 bytes4 magic
             ) {
                 return magic == IERC7913SignatureVerifier.verify.selector;

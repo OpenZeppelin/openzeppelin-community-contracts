@@ -2,6 +2,14 @@
 :AbstractSigner: pass:normal[xref:utils.adoc#AbstractSigner[`AbstractSigner`]]
 :ERC7739: pass:normal[xref:utils.adoc#ERC7739[`ERC7739`]]
 :ERC7739Utils: pass:normal[xref:utils.adoc#ERC7739Utils[`ERC7739Utils`]]
+:ERC7913Utils: pass:normal[xref:utils.adoc#ERC7913Utils[`ERC7913Utils`]]
+:SignerECDSA: pass:normal[xref:utils.adoc#SignerECDSA[`SignerECDSA`]]
+:SignerERC7913: pass:normal[xref:utils.adoc#SignerERC7913[`SignerERC7913`]]
+:SignerP256: pass:normal[xref:utils.adoc#SignerP256[`SignerP256`]]
+:SignerRSA: pass:normal[xref:utils.adoc#SignerRSA[`SignerRSA`]]
+:AbstractSigner: pass:normal[xref:utils.adoc#AbstractSigner[`AbstractSigner`]]
+:ERC7913SignatureVerifierP256: pass:normal[xref:utils.adoc#ERC7913SignatureVerifierP256[`ERC7913SignatureVerifierP256`]]
+:ERC7913SignatureVerifierRSA: pass:normal[xref:utils.adoc#ERC7913SignatureVerifierRSA[`ERC7913SignatureVerifierRSA`]]
 :SignerECDSA: pass:normal[xref:utils.adoc#SignerECDSA[`SignerECDSA`]]
 :SignerP256: pass:normal[xref:utils.adoc#SignerP256[`SignerP256`]]
 :SignerRSA: pass:normal[xref:utils.adoc#SignerRSA[`SignerRSA`]]
@@ -10,6 +18,8 @@
 :EnumerableMapExtended: pass:normal[xref:utils.adoc#EnumerableMapExtended[`EnumerableMapExtended`]]
 :Masks: pass:normal[xref:utils.adoc#Masks[`Masks`]]
 :ERC7739Utils: pass:normal[xref:utils.adoc#ERC7739Utils[`ERC7739Utils`]]
+:AbstractSigner: pass:normal[xref:utils.adoc#AbstractSigner[`AbstractSigner`]]
+:Account: pass:normal[xref:account.adoc#Account[`Account`]]
 :AbstractSigner: pass:normal[xref:utils.adoc#AbstractSigner[`AbstractSigner`]]
 :Account: pass:normal[xref:account.adoc#Account[`Account`]]
 :AbstractSigner: pass:normal[xref:utils.adoc#AbstractSigner[`AbstractSigner`]]
@@ -28,44 +38,14 @@ Miscellaneous contracts and libraries containing utility functions you can use t
  * {AbstractSigner}: Abstract contract for internal signature validation in smart contracts.
  * {ERC7739}: An abstract contract to validate signatures following the rehashing scheme from `ERC7739Utils`.
  * {ERC7739Utils}: Utilities library that implements a defensive rehashing mechanism to prevent replayability of smart contract signatures based on ERC-7739.
+ * {ERC7913Utils}: utilities library that implements ERC-7913 signature verification with fallback to ERC-1271 and ECDSA.
+ * {SignerECDSA}, {SignerERC7913}, {SignerP256}, {SignerRSA}: Implementations of an {AbstractSigner} with specific signature validation algorithms.
+ * {ERC7913SignatureVerifierP256}, {ERC7913SignatureVerifierRSA}: Ready to use ERC-7913 signature verifiers for P256 and RSA keys
  * {SignerECDSA}, {SignerP256}, {SignerRSA}: Implementations of an {AbstractSigner} with specific signature validation algorithms.
  * {EnumerableSetExtended} and {EnumerableMapExtended}: Extensions of the `EnumerableSet` and `EnumerableMap` libraries with more types, including non-value types.
  * {Masks}: Library to handle `bytes32` masks.
 
 == Cryptography
-
-:_rawSignatureValidation: pass:normal[xref:#AbstractSigner-_rawSignatureValidation-bytes32-bytes-[`++_rawSignatureValidation++`]]
-
-[.contract]
-[[AbstractSigner]]
-=== `++AbstractSigner++` link:https://github.com/OpenZeppelin/openzeppelin-community-contracts/blob/master/contracts/utils/cryptography/AbstractSigner.sol[{github-icon},role=heading-link]
-
-[.hljs-theme-light.nopadding]
-```solidity
-import "@openzeppelin/community-contracts/utils/cryptography/AbstractSigner.sol";
-```
-
-Abstract contract for signature validation.
-
-Developers must implement {_rawSignatureValidation} and use it as the lowest-level signature validation mechanism.
-
-[.contract-index]
-.Functions
---
-* `++_rawSignatureValidation(hash, signature)++`
-
---
-
-[.contract-item]
-[[AbstractSigner-_rawSignatureValidation-bytes32-bytes-]]
-==== `[.contract-item-name]#++_rawSignatureValidation++#++(bytes32 hash, bytes signature) → bool++` [.item-kind]#internal#
-
-Signature validation algorithm.
-
-WARNING: Implementing a signature validation algorithm is a security-sensitive operation as it involves
-cryptographic verification. It is important to review and test thoroughly before deployment. Consider
-using one of the signature verification libraries (https://docs.openzeppelin.com/contracts/api/utils#ECDSA[ECDSA],
-https://docs.openzeppelin.com/contracts/api/utils#P256[P256] or https://docs.openzeppelin.com/contracts/api/utils#RSA[RSA]).
 
 :isValidSignature: pass:normal[xref:#ERC7739-isValidSignature-bytes32-bytes-[`++isValidSignature++`]]
 
@@ -268,6 +248,41 @@ any of the following bytes , )\x00
 If the `contentsType` is invalid, this returns an empty string. Otherwise, the return string has non-zero
 length.
 
+=== Abstract Signers
+
+:_rawSignatureValidation: pass:normal[xref:#AbstractSigner-_rawSignatureValidation-bytes32-bytes-[`++_rawSignatureValidation++`]]
+
+[.contract]
+[[AbstractSigner]]
+=== `++AbstractSigner++` link:https://github.com/OpenZeppelin/openzeppelin-community-contracts/blob/master/contracts/utils/cryptography/AbstractSigner.sol[{github-icon},role=heading-link]
+
+[.hljs-theme-light.nopadding]
+```solidity
+import "@openzeppelin/community-contracts/utils/cryptography/AbstractSigner.sol";
+```
+
+Abstract contract for signature validation.
+
+Developers must implement {_rawSignatureValidation} and use it as the lowest-level signature validation mechanism.
+
+[.contract-index]
+.Functions
+--
+* `++_rawSignatureValidation(hash, signature)++`
+
+--
+
+[.contract-item]
+[[AbstractSigner-_rawSignatureValidation-bytes32-bytes-]]
+==== `[.contract-item-name]#++_rawSignatureValidation++#++(bytes32 hash, bytes signature) → bool++` [.item-kind]#internal#
+
+Signature validation algorithm.
+
+WARNING: Implementing a signature validation algorithm is a security-sensitive operation as it involves
+cryptographic verification. It is important to review and test thoroughly before deployment. Consider
+using one of the signature verification libraries (https://docs.openzeppelin.com/contracts/api/utils#ECDSA[ECDSA],
+https://docs.openzeppelin.com/contracts/api/utils#P256[P256] or https://docs.openzeppelin.com/contracts/api/utils#RSA[RSA]).
+
 :_setSigner: pass:normal[xref:#SignerECDSA-_setSigner-address-[`++_setSigner++`]]
 :signer: pass:normal[xref:#SignerECDSA-signer--[`++signer++`]]
 :_rawSignatureValidation: pass:normal[xref:#SignerECDSA-_rawSignatureValidation-bytes32-bytes-[`++_rawSignatureValidation++`]]
@@ -337,6 +352,72 @@ WARNING: Implementing a signature validation algorithm is a security-sensitive o
 cryptographic verification. It is important to review and test thoroughly before deployment. Consider
 using one of the signature verification libraries (https://docs.openzeppelin.com/contracts/api/utils#ECDSA[ECDSA],
 https://docs.openzeppelin.com/contracts/api/utils#P256[P256] or https://docs.openzeppelin.com/contracts/api/utils#RSA[RSA]).
+
+:_setSigner: pass:normal[xref:#SignerERC7913-_setSigner-bytes-[`++_setSigner++`]]
+:signer: pass:normal[xref:#SignerERC7913-signer--[`++signer++`]]
+:_rawSignatureValidation: pass:normal[xref:#SignerERC7913-_rawSignatureValidation-bytes32-bytes-[`++_rawSignatureValidation++`]]
+
+[.contract]
+[[SignerERC7913]]
+=== `++SignerERC7913++` link:https://github.com/OpenZeppelin/openzeppelin-community-contracts/blob/master/contracts/utils/cryptography/SignerERC7913.sol[{github-icon},role=heading-link]
+
+[.hljs-theme-light.nopadding]
+```solidity
+import "@openzeppelin/community-contracts/utils/cryptography/SignerERC7913.sol";
+```
+
+Implementation of {AbstractSigner} using
+https://eips.ethereum.org/EIPS/eip-7913[ERC-7913] signature verification.
+
+For {Account} usage, a {_setSigner} function is provided to set the ERC-7913 formatted {signer}.
+Doing so is easier for a factory, who is likely to use initializable clones of this contract.
+
+The signer is a `bytes` object that concatenates a verifier address and a key: `verifier || key`.
+
+Example of usage:
+
+```solidity
+contract MyAccountERC7913 is Account, SignerERC7913, Initializable {
+    constructor() EIP712("MyAccountERC7913", "1") {}
+
+    function initialize(bytes memory signer_) public initializer {
+      _setSigner(signer_);
+    }
+}
+```
+
+IMPORTANT: Failing to call {_setSigner} either during construction (if used standalone)
+or during initialization (if used as a clone) may leave the signer either front-runnable or unusable.
+
+[.contract-index]
+.Functions
+--
+* `++_setSigner(signer_)++`
+* `++signer()++`
+* `++_rawSignatureValidation(hash, signature)++`
+
+[.contract-subindex-inherited]
+.AbstractSigner
+
+--
+
+[.contract-item]
+[[SignerERC7913-_setSigner-bytes-]]
+==== `[.contract-item-name]#++_setSigner++#++(bytes signer_)++` [.item-kind]#internal#
+
+Sets the signer (i.e. `verifier || key`) with an ERC-7913 formatted signer.
+
+[.contract-item]
+[[SignerERC7913-signer--]]
+==== `[.contract-item-name]#++signer++#++() → bytes++` [.item-kind]#public#
+
+Return the ERC-7913 signer (i.e. `verifier || key`).
+
+[.contract-item]
+[[SignerERC7913-_rawSignatureValidation-bytes32-bytes-]]
+==== `[.contract-item-name]#++_rawSignatureValidation++#++(bytes32 hash, bytes signature) → bool++` [.item-kind]#internal#
+
+Verifies a signature using {ERC7913Utils.isValidSignatureNow} with {signer}, `hash` and `signature`.
 
 :SignerP256InvalidPublicKey: pass:normal[xref:#SignerP256-SignerP256InvalidPublicKey-bytes32-bytes32-[`++SignerP256InvalidPublicKey++`]]
 :_setSigner: pass:normal[xref:#SignerP256-_setSigner-bytes32-bytes32-[`++_setSigner++`]]
@@ -521,6 +602,115 @@ https://docs.openzeppelin.com/contracts/5.x/api/utils#RSA-pkcs1Sha256-bytes-byte
 IMPORTANT: Following the RSASSA-PKCS1-V1_5-VERIFY procedure outlined in RFC8017 (section 8.2.2), the
 provided `hash` is used as the `M` (message) and rehashed using SHA256 according to EMSA-PKCS1-v1_5
 encoding as per section 9.2 (step 1) of the RFC.
+
+=== ERC-7913
+
+:isValidSignatureNow: pass:normal[xref:#ERC7913Utils-isValidSignatureNow-bytes-bytes32-bytes-[`++isValidSignatureNow++`]]
+
+[.contract]
+[[ERC7913Utils]]
+=== `++ERC7913Utils++` link:https://github.com/OpenZeppelin/openzeppelin-community-contracts/blob/master/contracts/utils/cryptography/ERC7913Utils.sol[{github-icon},role=heading-link]
+
+[.hljs-theme-light.nopadding]
+```solidity
+import "@openzeppelin/community-contracts/utils/cryptography/ERC7913Utils.sol";
+```
+
+Library that provides common ERC-7913 utility functions.
+
+This library extends the functionality of
+https://docs.openzeppelin.com/contracts/5.x/api/utils#SignatureChecker[SignatureChecker]
+to support signature verification for keys that do not have an Ethereum address of their own
+as with ERC-1271.
+
+See https://eips.ethereum.org/EIPS/eip-7913[ERC-7913].
+
+[.contract-index]
+.Functions
+--
+* `++isValidSignatureNow(signer, hash, signature)++`
+
+--
+
+[.contract-item]
+[[ERC7913Utils-isValidSignatureNow-bytes-bytes32-bytes-]]
+==== `[.contract-item-name]#++isValidSignatureNow++#++(bytes signer, bytes32 hash, bytes signature) → bool++` [.item-kind]#internal#
+
+Verifies a signature for a given signer and hash.
+
+The signer is a `bytes` object that is the concatenation of an address and optionally a key:
+`verifier || key`. A signer must be at least 20 bytes long.
+
+Verification is done as follows:
+- If `signer.length < 20`: verification fails
+- If `signer.length == 20`: verification is done using {SignatureChecker}
+- Otherwise: verification is done using {IERC7913SignatureVerifier}
+
+:verify: pass:normal[xref:#ERC7913SignatureVerifierP256-verify-bytes-bytes32-bytes-[`++verify++`]]
+
+[.contract]
+[[ERC7913SignatureVerifierP256]]
+=== `++ERC7913SignatureVerifierP256++` link:https://github.com/OpenZeppelin/openzeppelin-community-contracts/blob/master/contracts/utils/cryptography/ERC7913SignatureVerifierP256.sol[{github-icon},role=heading-link]
+
+[.hljs-theme-light.nopadding]
+```solidity
+import "@openzeppelin/community-contracts/utils/cryptography/ERC7913SignatureVerifierP256.sol";
+```
+
+ERC-7913 signature verifier that support P256 (secp256r1) keys.
+
+[.contract-index]
+.Functions
+--
+* `++verify(key, hash, signature)++`
+
+[.contract-subindex-inherited]
+.IERC7913SignatureVerifier
+
+--
+
+[.contract-item]
+[[ERC7913SignatureVerifierP256-verify-bytes-bytes32-bytes-]]
+==== `[.contract-item-name]#++verify++#++(bytes key, bytes32 hash, bytes signature) → bytes4++` [.item-kind]#public#
+
+Verifies `signature` as a valid signature of `hash` by `key`.
+
+MUST return the bytes4 magic value IERC7913SignatureVerifier.verify.selector if the signature is valid.
+SHOULD return 0xffffffff or revert if the signature is not valid.
+SHOULD return 0xffffffff or revert if the key is empty
+
+:verify: pass:normal[xref:#ERC7913SignatureVerifierRSA-verify-bytes-bytes32-bytes-[`++verify++`]]
+
+[.contract]
+[[ERC7913SignatureVerifierRSA]]
+=== `++ERC7913SignatureVerifierRSA++` link:https://github.com/OpenZeppelin/openzeppelin-community-contracts/blob/master/contracts/utils/cryptography/ERC7913SignatureVerifierRSA.sol[{github-icon},role=heading-link]
+
+[.hljs-theme-light.nopadding]
+```solidity
+import "@openzeppelin/community-contracts/utils/cryptography/ERC7913SignatureVerifierRSA.sol";
+```
+
+ERC-7913 signature verifier that support RSA keys.
+
+[.contract-index]
+.Functions
+--
+* `++verify(key, hash, signature)++`
+
+[.contract-subindex-inherited]
+.IERC7913SignatureVerifier
+
+--
+
+[.contract-item]
+[[ERC7913SignatureVerifierRSA-verify-bytes-bytes32-bytes-]]
+==== `[.contract-item-name]#++verify++#++(bytes key, bytes32 hash, bytes signature) → bytes4++` [.item-kind]#public#
+
+Verifies `signature` as a valid signature of `hash` by `key`.
+
+MUST return the bytes4 magic value IERC7913SignatureVerifier.verify.selector if the signature is valid.
+SHOULD return 0xffffffff or revert if the signature is not valid.
+SHOULD return 0xffffffff or revert if the key is empty
 
 == Structs
 

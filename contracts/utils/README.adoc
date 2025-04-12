@@ -8,25 +8,40 @@ Miscellaneous contracts and libraries containing utility functions you can use t
  * {AbstractSigner}: Abstract contract for internal signature validation in smart contracts.
  * {ERC7739}: An abstract contract to validate signatures following the rehashing scheme from `ERC7739Utils`.
  * {ERC7739Utils}: Utilities library that implements a defensive rehashing mechanism to prevent replayability of smart contract signatures based on ERC-7739.
+ * {ERC7913Utils}: utilities library that implements ERC-7913 signature verification with fallback to ERC-1271 and ECDSA.
+ * {SignerECDSA}, {SignerERC7913}, {SignerP256}, {SignerRSA}: Implementations of an {AbstractSigner} with specific signature validation algorithms.
+ * {ERC7913SignatureVerifierP256}, {ERC7913SignatureVerifierRSA}: Ready to use ERC-7913 signature verifiers for P256 and RSA keys
  * {SignerECDSA}, {SignerP256}, {SignerRSA}: Implementations of an {AbstractSigner} with specific signature validation algorithms.
  * {EnumerableSetExtended} and {EnumerableMapExtended}: Extensions of the `EnumerableSet` and `EnumerableMap` libraries with more types, including non-value types.
  * {Masks}: Library to handle `bytes32` masks.
 
 == Cryptography
 
-{{AbstractSigner}}
-
 {{ERC7739}}
 
 {{ERC7739Utils}}
 
+=== Abstract Signers
+
+{{AbstractSigner}}
+
 {{SignerECDSA}}
+
+{{SignerERC7913}}
 
 {{SignerP256}}
 
 {{SignerERC7702}}
 
 {{SignerRSA}}
+
+=== ERC-7913
+
+{{ERC7913Utils}}
+
+{{ERC7913SignatureVerifierP256}}
+
+{{ERC7913SignatureVerifierRSA}}
 
 == Structs
 
