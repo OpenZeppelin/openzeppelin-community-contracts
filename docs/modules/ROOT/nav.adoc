@@ -1,3 +1,5 @@
 * xref:index.adoc[Overview]
 * xref:account-abstraction.adoc[Account Abstraction]
+** xref:sending-user-operations.adoc[Sending User Operations]
+** xref:eoa-delegation.adoc[EOA Delegation]
 * xref:utilities.adoc[Utilities]
