@@ -7,7 +7,7 @@ const { argv } = require('yargs/yargs')()
     },
     hardfork: {
       type: 'string',
-      default: 'cancun',
+      default: 'prague',
     },
   });
 

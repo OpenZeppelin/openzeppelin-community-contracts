@@ -49,6 +49,8 @@
   },
   "devDependencies": {
     "@openzeppelin/contracts": "file:lib/@openzeppelin-contracts",
+    "ethers": "^6.13.6-beta.1",
+    "hardhat": "^2.23.0",
     "husky": "^9.1.7"
   },
   "lint-staged": {
