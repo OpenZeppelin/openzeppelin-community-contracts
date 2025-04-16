@@ -15,7 +15,7 @@ async function fixture() {
   const target = await ethers.deployContract('CallReceiverMockExtended');
 
   // ERC-4337 signer
-  const signer = ethers.Wallet.createRandom();
+  const signer = ethers.Wallet.createRandom(ethers.provider);
 
   // ERC-4337 account
   const helper = new ERC4337Helper();

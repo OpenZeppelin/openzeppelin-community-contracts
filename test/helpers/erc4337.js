@@ -1,5 +1,4 @@
-const { ethers, entrypoint, senderCreator } = require('hardhat');
-const { setCode } = require('@nomicfoundation/hardhat-network-helpers');
+const { ethers, config, entrypoint, senderCreator } = require('hardhat');
 
 const { UserOperation } = require('@openzeppelin/contracts/test/helpers/erc4337');
 
@@ -32,7 +31,8 @@ class ERC4337Helper {
     if (params.erc7702signer) {
       const delegate = await accountFactory.deploy(...extraArgs);
       const instance = await params.erc7702signer.getAddress().then(address => accountFactory.attach(address));
-      return new ERC7702SmartAccount(instance, delegate, env);
+      const authorization = await params.erc7702signer.authorize({ address: delegate.target });
+      return new ERC7702SmartAccount(instance, authorization, env);
     } else {
       const initCode = await accountFactory
         .getDeployTransaction(...extraArgs)
@@ -83,13 +83,20 @@ class SmartAccount extends ethers.BaseContract {
 }
 
 class ERC7702SmartAccount extends SmartAccount {
-  constructor(instance, delegate, env) {
+  constructor(instance, authorization, env) {
     super(instance, undefined, env);
-    this.delegate = delegate;
+    this.authorization = authorization;
   }
 
   async deploy() {
-    await ethers.provider.getCode(this.delegate).then(code => setCode(this.target, code));
+    // hardhat signers from @nomicfoundation/hardhat-ethers do not support type 4 txs.
+    // so we rebuild it using "native" ethers
+    await ethers.Wallet.fromPhrase(config.networks.hardhat.accounts.mnemonic, ethers.provider).sendTransaction({
+      to: ethers.ZeroAddress,
+      authorizationList: [this.authorization],
+      gasLimit: 46_000n, // 21,000 base + PER_EMPTY_ACCOUNT_COST
+    });
+
     return this;
   }
 }
@@ -97,13 +104,20 @@ class ERC7702SmartAccount extends SmartAccount {
 class UserOperationWithContext extends UserOperation {
   constructor(userOp, env) {
     super(userOp);
-    this._initCode = userOp.sender?.initCode;
+    this._sender = userOp.sender;
     this._env = env;
   }
 
   addInitCode() {
-    if (!this._initCode) throw new Error('No init code available for the sender of this user operation');
-    return Object.assign(this, parseInitCode(this._initCode));
+    if (this._sender?.initCode) {
+      return Object.assign(this, parseInitCode(this._sender.initCode));
+    } else throw new Error('No init code available for the sender of this user operation');
+  }
+
+  getAuthorization() {
+    if (this._sender?.authorization) {
+      return this._sender.authorization;
+    } else throw new Error('No EIP-7702 authorization available for the sender of this user operation');
   }
 
   hash() {
