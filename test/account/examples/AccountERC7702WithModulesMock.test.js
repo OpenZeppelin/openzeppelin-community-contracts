@@ -1,5 +1,5 @@
 const { ethers, entrypoint } = require('hardhat');
-const { loadFixture } = require('@nomicfoundation/hardhat-network-helpers');
+const { loadFixture, setBalance } = require('@nomicfoundation/hardhat-network-helpers');
 
 const { getDomain } = require('@openzeppelin/contracts/test/helpers/eip712');
 const { ERC4337Helper } = require('../../helpers/erc4337');
@@ -20,7 +20,7 @@ async function fixture() {
 
   // Signer with EIP-7702 support + funding
   const eoa = ethers.Wallet.createRandom(ethers.provider);
-  await other.sendTransaction({ to: eoa, value: ethers.WeiPerEther });
+  await setBalance(eoa.address, ethers.WeiPerEther);
 
   // ERC-7579 validator module
   const validator = await ethers.deployContract('$ERC7579ValidatorMock');

@@ -94,7 +94,7 @@ class ERC7702SmartAccount extends SmartAccount {
     await ethers.Wallet.fromPhrase(config.networks.hardhat.accounts.mnemonic, ethers.provider).sendTransaction({
       to: ethers.ZeroAddress,
       authorizationList: [this.authorization],
-      gasLimit: 46_000n,
+      gasLimit: 46_000n, // 21,000 base + PER_EMPTY_ACCOUNT_COST
     });
 
     return this;
