@@ -12,6 +12,8 @@ Miscellaneous contracts and libraries containing utility functions you can use t
  * {SignerECDSA}, {SignerERC7913}, {SignerP256}, {SignerRSA}: Implementations of an {AbstractSigner} with specific signature validation algorithms.
  * {ERC7913SignatureVerifierP256}, {ERC7913SignatureVerifierRSA}: Ready to use ERC-7913 signature verifiers for P256 and RSA keys
  * {SignerECDSA}, {SignerP256}, {SignerRSA}: Implementations of an {AbstractSigner} with specific signature validation algorithms.
+ * {SignerZKEmail}: Implementation of an {AbstractSigner} that enables email-based authentication through zero-knowledge proofs.
+ * {ZKEmailUtils}: Library for ZKEmail signature validation utilities, enabling email-based authentication through zero-knowledge proofs.
  * {EnumerableSetExtended} and {EnumerableMapExtended}: Extensions of the `EnumerableSet` and `EnumerableMap` libraries with more types, including non-value types.
  * {Masks}: Library to handle `bytes32` masks.
 
@@ -20,6 +22,8 @@ Miscellaneous contracts and libraries containing utility functions you can use t
 {{ERC7739}}
 
 {{ERC7739Utils}}
+
+{{ZKEmailUtils}}
 
 === Abstract Signers
 
@@ -34,6 +38,8 @@ Miscellaneous contracts and libraries containing utility functions you can use t
 {{SignerERC7702}}
 
 {{SignerRSA}}
+
+{{SignerZKEmail}}
 
 === ERC-7913
 

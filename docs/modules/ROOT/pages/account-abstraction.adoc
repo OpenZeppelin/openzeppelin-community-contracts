@@ -56,6 +56,31 @@ Similarly, some government and corporate public key infrastructures use RSA for 
 include::api:example$account/MyAccountRSA.sol[]
 ----
 
+For email-based authentication, the library provides xref:api:utils.adoc#SignerZKEmail[`SignerZKEmail`], which enables secure authentication through email messages using zero-knowledge proofs. This implementation leverages DKIM signatures from a trusted registry and a verifier contract to ensure email authenticity without revealing sensitive information.
+
+The validation process involves several key components:
+
+* A https://docs.zk.email/architecture/dkim-verification[DKIMRegistry] (DomainKeys Identified Mail) verification mechanism to ensure the email was sent from a valid domain
+* A https://docs.zk.email/email-tx-builder/architecture/command-templates[command template] validation mechanism to ensure the email command matches the expected format and parameters
+* A https://docs.zk.email/architecture/zk-proofs#how-zk-email-uses-zero-knowledge-proofs[zero-knowledge proof] verification mechanism to ensure the email was actually sent and received without revealing its contents
+
+To use this signer, developers must set up several components during initialization:
+
+* **accountSalt**: A unique identifier derived from the user's email address and account code. This is used for:
+  * User Identification: Links the email address to a specific Ethereum address securely and deterministically
+  * Security: Provides a unique identifier that cannot be easily guessed or brute-forced
+  * Deterministic Address Generation: Enables the creation of deterministic addresses based on email addresses
+* **DKIMRegistry**: An instance of the DKIM registry contract for domain verification
+* **verifier**: An instance of the Verifier contract for zero-knowledge proof validation
+* **templateId**: The command template of the sign hash command, defining the expected format
+
+[source,solidity]
+----
+include::api:example$account/MyAccountZKEmail.sol[]
+----
+
+WARNING: Leaving any of the required components uninitialized may leave the account unusable since no proper authentication mechanism would be associated with it.
+
 For more advanced use cases where you need to support keys that don't have their own Ethereum address (like hardware devices or non-Ethereum cryptographic curves), you can use xref:api:utils.adoc#SignerERC7913[`SignerERC7913`]. This implementation allows for signature verification using ERC-7913 compatible verifiers.
 
 [source,solidity]

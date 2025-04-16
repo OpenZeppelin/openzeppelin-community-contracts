@@ -14,6 +14,9 @@
 :SignerP256: pass:normal[xref:utils.adoc#SignerP256[`SignerP256`]]
 :SignerRSA: pass:normal[xref:utils.adoc#SignerRSA[`SignerRSA`]]
 :AbstractSigner: pass:normal[xref:utils.adoc#AbstractSigner[`AbstractSigner`]]
+:SignerZKEmail: pass:normal[xref:utils.adoc#SignerZKEmail[`SignerZKEmail`]]
+:AbstractSigner: pass:normal[xref:utils.adoc#AbstractSigner[`AbstractSigner`]]
+:ZKEmailUtils: pass:normal[xref:utils.adoc#ZKEmailUtils[`ZKEmailUtils`]]
 :EnumerableSetExtended: pass:normal[xref:utils.adoc#EnumerableSetExtended[`EnumerableSetExtended`]]
 :EnumerableMapExtended: pass:normal[xref:utils.adoc#EnumerableMapExtended[`EnumerableMapExtended`]]
 :Masks: pass:normal[xref:utils.adoc#Masks[`Masks`]]
@@ -27,6 +30,8 @@
 :AbstractSigner: pass:normal[xref:utils.adoc#AbstractSigner[`AbstractSigner`]]
 :AbstractSigner: pass:normal[xref:utils.adoc#AbstractSigner[`AbstractSigner`]]
 :Account: pass:normal[xref:account.adoc#Account[`Account`]]
+:AbstractSigner-_rawSignatureValidation: pass:normal[xref:utils.adoc#AbstractSigner-_rawSignatureValidation-bytes32-bytes-[`AbstractSigner._rawSignatureValidation`]]
+:AbstractSigner: pass:normal[xref:utils.adoc#AbstractSigner[`AbstractSigner`]]
 :AbstractSigner-_rawSignatureValidation: pass:normal[xref:utils.adoc#AbstractSigner-_rawSignatureValidation-bytes32-bytes-[`AbstractSigner._rawSignatureValidation`]]
 = Utilities
 
@@ -42,6 +47,8 @@ Miscellaneous contracts and libraries containing utility functions you can use t
  * {SignerECDSA}, {SignerERC7913}, {SignerP256}, {SignerRSA}: Implementations of an {AbstractSigner} with specific signature validation algorithms.
  * {ERC7913SignatureVerifierP256}, {ERC7913SignatureVerifierRSA}: Ready to use ERC-7913 signature verifiers for P256 and RSA keys
  * {SignerECDSA}, {SignerP256}, {SignerRSA}: Implementations of an {AbstractSigner} with specific signature validation algorithms.
+ * {SignerZKEmail}: Implementation of an {AbstractSigner} that enables email-based authentication through zero-knowledge proofs.
+ * {ZKEmailUtils}: Library for ZKEmail signature validation utilities, enabling email-based authentication through zero-knowledge proofs.
  * {EnumerableSetExtended} and {EnumerableMapExtended}: Extensions of the `EnumerableSet` and `EnumerableMap` libraries with more types, including non-value types.
  * {Masks}: Library to handle `bytes32` masks.
 
@@ -247,6 +254,72 @@ any of the following bytes , )\x00
 
 If the `contentsType` is invalid, this returns an empty string. Otherwise, the return string has non-zero
 length.
+
+:EmailProofError: pass:normal[xref:#ZKEmailUtils-EmailProofError[`++EmailProofError++`]]
+:Case: pass:normal[xref:#ZKEmailUtils-Case[`++Case++`]]
+:isValidZKEmail: pass:normal[xref:#ZKEmailUtils-isValidZKEmail-struct-EmailAuthMsg-contract-IDKIMRegistry-contract-IVerifier-[`++isValidZKEmail++`]]
+:isValidZKEmail: pass:normal[xref:#ZKEmailUtils-isValidZKEmail-struct-EmailAuthMsg-contract-IDKIMRegistry-contract-IVerifier-string---[`++isValidZKEmail++`]]
+:isValidZKEmail: pass:normal[xref:#ZKEmailUtils-isValidZKEmail-struct-EmailAuthMsg-contract-IDKIMRegistry-contract-IVerifier-string---enum-ZKEmailUtils-Case-[`++isValidZKEmail++`]]
+
+[.contract]
+[[ZKEmailUtils]]
+=== `++ZKEmailUtils++` link:https://github.com/OpenZeppelin/openzeppelin-community-contracts/blob/master/contracts/utils/cryptography/ZKEmailUtils.sol[{github-icon},role=heading-link]
+
+[.hljs-theme-light.nopadding]
+```solidity
+import "@openzeppelin/community-contracts/utils/cryptography/ZKEmailUtils.sol";
+```
+
+Library for https://docs.zk.email[ZKEmail] signature validation utilities.
+
+ZKEmail is a protocol that enables email-based authentication and authorization for smart contracts
+using zero-knowledge proofs. It allows users to prove ownership of an email address without revealing
+the email content or private keys.
+
+The validation process involves several key components:
+
+* A https://docs.zk.email/architecture/dkim-verification[DKIMRegistry] (DomainKeys Identified Mail) verification
+mechanism to ensure the email was sent from a valid domain. Defined by an `IDKIMRegistry` interface.
+* A https://docs.zk.email/email-tx-builder/architecture/command-templates[command template] validation
+mechanism to ensure the email command matches the expected format and parameters.
+* A https://docs.zk.email/architecture/zk-proofs#how-zk-email-uses-zero-knowledge-proofs[zero-knowledge proof] verification
+mechanism to ensure the email was actually sent and received without revealing its contents. Defined by an `IVerifier` interface.
+
+[.contract-index]
+.Functions
+--
+* `++isValidZKEmail(emailAuthMsg, dkimregistry, verifier)++`
+* `++isValidZKEmail(emailAuthMsg, dkimregistry, verifier, template)++`
+* `++isValidZKEmail(emailAuthMsg, dkimregistry, verifier, template, stringCase)++`
+
+--
+
+[.contract-item]
+[[ZKEmailUtils-isValidZKEmail-struct-EmailAuthMsg-contract-IDKIMRegistry-contract-IVerifier-]]
+==== `[.contract-item-name]#++isValidZKEmail++#++(struct EmailAuthMsg emailAuthMsg, contract IDKIMRegistry dkimregistry, contract IVerifier verifier) → enum ZKEmailUtils.EmailProofError++` [.item-kind]#internal#
+
+Variant of {isValidZKEmail} that validates the `["signHash", "{uint}"]` command template.
+
+[.contract-item]
+[[ZKEmailUtils-isValidZKEmail-struct-EmailAuthMsg-contract-IDKIMRegistry-contract-IVerifier-string---]]
+==== `[.contract-item-name]#++isValidZKEmail++#++(struct EmailAuthMsg emailAuthMsg, contract IDKIMRegistry dkimregistry, contract IVerifier verifier, string[] template) → enum ZKEmailUtils.EmailProofError++` [.item-kind]#internal#
+
+Validates a ZKEmail authentication message.
+
+This function takes an email authentication message, a DKIM registry contract, and a verifier contract
+as inputs. It performs several validation checks and returns a tuple containing a boolean success flag
+and an {EmailProofError} if validation failed. Returns {EmailProofError.NoError} if all validations pass,
+or false with a specific {EmailProofError} indicating which validation check failed.
+
+NOTE: Attempts to validate the command for all possible string {Case} values.
+
+[.contract-item]
+[[ZKEmailUtils-isValidZKEmail-struct-EmailAuthMsg-contract-IDKIMRegistry-contract-IVerifier-string---enum-ZKEmailUtils-Case-]]
+==== `[.contract-item-name]#++isValidZKEmail++#++(struct EmailAuthMsg emailAuthMsg, contract IDKIMRegistry dkimregistry, contract IVerifier verifier, string[] template, enum ZKEmailUtils.Case stringCase) → enum ZKEmailUtils.EmailProofError++` [.item-kind]#internal#
+
+Variant of {isValidZKEmail} that validates a template with a specific string {Case}.
+
+Useful for templates with Ethereum address matchers (i.e. `{ethAddr}`), which are case-sensitive (e.g., `["someCommand", "{address}"]`).
 
 === Abstract Signers
 
@@ -602,6 +675,169 @@ https://docs.openzeppelin.com/contracts/5.x/api/utils#RSA-pkcs1Sha256-bytes-byte
 IMPORTANT: Following the RSASSA-PKCS1-V1_5-VERIFY procedure outlined in RFC8017 (section 8.2.2), the
 provided `hash` is used as the `M` (message) and rehashed using SHA256 according to EMSA-PKCS1-v1_5
 encoding as per section 9.2 (step 1) of the RFC.
+
+:InvalidEmailProof: pass:normal[xref:#SignerZKEmail-InvalidEmailProof-enum-ZKEmailUtils-EmailProofError-[`++InvalidEmailProof++`]]
+:accountSalt: pass:normal[xref:#SignerZKEmail-accountSalt--[`++accountSalt++`]]
+:DKIMRegistry: pass:normal[xref:#SignerZKEmail-DKIMRegistry--[`++DKIMRegistry++`]]
+:verifier: pass:normal[xref:#SignerZKEmail-verifier--[`++verifier++`]]
+:templateId: pass:normal[xref:#SignerZKEmail-templateId--[`++templateId++`]]
+:_setAccountSalt: pass:normal[xref:#SignerZKEmail-_setAccountSalt-bytes32-[`++_setAccountSalt++`]]
+:_setDKIMRegistry: pass:normal[xref:#SignerZKEmail-_setDKIMRegistry-contract-IDKIMRegistry-[`++_setDKIMRegistry++`]]
+:_setVerifier: pass:normal[xref:#SignerZKEmail-_setVerifier-contract-IVerifier-[`++_setVerifier++`]]
+:_setTemplateId: pass:normal[xref:#SignerZKEmail-_setTemplateId-uint256-[`++_setTemplateId++`]]
+:_rawSignatureValidation: pass:normal[xref:#SignerZKEmail-_rawSignatureValidation-bytes32-bytes-[`++_rawSignatureValidation++`]]
+
+[.contract]
+[[SignerZKEmail]]
+=== `++SignerZKEmail++` link:https://github.com/OpenZeppelin/openzeppelin-community-contracts/blob/master/contracts/utils/cryptography/SignerZKEmail.sol[{github-icon},role=heading-link]
+
+[.hljs-theme-light.nopadding]
+```solidity
+import "@openzeppelin/community-contracts/utils/cryptography/SignerZKEmail.sol";
+```
+
+Implementation of {AbstractSigner} using https://docs.zk.email[ZKEmail] signatures.
+
+ZKEmail enables secure authentication and authorization through email messages, leveraging
+DKIM signatures from a {DKIMRegistry} and zero-knowledge proofs enabled by a {verifier}
+contract that ensures email authenticity without revealing sensitive information. The DKIM
+registry is trusted to correctly update DKIM keys, but users can override this behaviour and
+set their own keys. This contract implements the core functionality for validating email-based
+signatures in smart contracts.
+
+Developers must set the following components during contract initialization:
+
+* {accountSalt} - A unique identifier derived from the user's email address and account code.
+* {DKIMRegistry} - An instance of the DKIM registry contract for domain verification.
+* {verifier} - An instance of the Verifier contract for zero-knowledge proof validation.
+* {templateId} - The template ID of the sign hash command, defining the expected format.
+
+Example of usage:
+
+```solidity
+contract MyAccountZKEmail is Account, SignerZKEmail, Initializable {
+    constructor(bytes32 accountSalt, IDKIMRegistry registry, IVerifier verifier, uint256 templateId) {
+      // Will revert if the signer is already initialized
+      _setAccountSalt(accountSalt);
+      _setDKIMRegistry(registry);
+      _setVerifier(verifier);
+      _setTemplateId(templateId);
+    }
+}
+```
+
+IMPORTANT: Avoiding to call {_setAccountSalt}, {_setDKIMRegistry}, {_setVerifier} and {_setTemplateId}
+either during construction (if used standalone) or during initialization (if used as a clone) may
+leave the signer either front-runnable or unusable.
+
+[.contract-index]
+.Functions
+--
+* `++accountSalt()++`
+* `++DKIMRegistry()++`
+* `++verifier()++`
+* `++templateId()++`
+* `++_setAccountSalt(accountSalt_)++`
+* `++_setDKIMRegistry(registry_)++`
+* `++_setVerifier(verifier_)++`
+* `++_setTemplateId(templateId_)++`
+* `++_rawSignatureValidation(hash, signature)++`
+
+[.contract-subindex-inherited]
+.AbstractSigner
+
+--
+
+[.contract-index]
+.Errors
+--
+* `++InvalidEmailProof(err)++`
+
+[.contract-subindex-inherited]
+.AbstractSigner
+
+--
+
+[.contract-item]
+[[SignerZKEmail-accountSalt--]]
+==== `[.contract-item-name]#++accountSalt++#++() → bytes32++` [.item-kind]#public#
+
+Unique identifier for owner of this contract defined as a hash of an email address and an account code.
+
+An account code is a random integer in a finite scalar field of https://neuromancer.sk/std/bn/bn254[BN254] curve.
+It is a private randomness to derive a CREATE2 salt of the user's Ethereum address
+from the email address, i.e., userEtherAddr := CREATE2(hash(userEmailAddr, accountCode)).
+
+The account salt is used for:
+
+* Privacy: Enables email address privacy on-chain so long as the randomly generated account code is not revealed
+  to an adversary.
+* Security: Provides a unique identifier that cannot be easily guessed or brute-forced, as it's derived
+  from both the email address and a random account code.
+* Deterministic Address Generation: Enables the creation of deterministic addresses based on email addresses,
+  allowing users to recover their accounts using only their email.
+
+[.contract-item]
+[[SignerZKEmail-DKIMRegistry--]]
+==== `[.contract-item-name]#++DKIMRegistry++#++() → contract IDKIMRegistry++` [.item-kind]#public#
+
+An instance of the DKIM registry contract.
+See https://docs.zk.email/architecture/dkim-verification[DKIM Verification].
+
+[.contract-item]
+[[SignerZKEmail-verifier--]]
+==== `[.contract-item-name]#++verifier++#++() → contract IVerifier++` [.item-kind]#public#
+
+An instance of the Verifier contract.
+See https://docs.zk.email/architecture/zk-proofs#how-zk-email-uses-zero-knowledge-proofs[ZK Proofs].
+
+[.contract-item]
+[[SignerZKEmail-templateId--]]
+==== `[.contract-item-name]#++templateId++#++() → uint256++` [.item-kind]#public#
+
+The command template of the sign hash command.
+
+[.contract-item]
+[[SignerZKEmail-_setAccountSalt-bytes32-]]
+==== `[.contract-item-name]#++_setAccountSalt++#++(bytes32 accountSalt_)++` [.item-kind]#internal#
+
+Set the {accountSalt}.
+
+[.contract-item]
+[[SignerZKEmail-_setDKIMRegistry-contract-IDKIMRegistry-]]
+==== `[.contract-item-name]#++_setDKIMRegistry++#++(contract IDKIMRegistry registry_)++` [.item-kind]#internal#
+
+Set the {DKIMRegistry} contract address.
+
+[.contract-item]
+[[SignerZKEmail-_setVerifier-contract-IVerifier-]]
+==== `[.contract-item-name]#++_setVerifier++#++(contract IVerifier verifier_)++` [.item-kind]#internal#
+
+Set the {verifier} contract address.
+
+[.contract-item]
+[[SignerZKEmail-_setTemplateId-uint256-]]
+==== `[.contract-item-name]#++_setTemplateId++#++(uint256 templateId_)++` [.item-kind]#internal#
+
+Set the command's {templateId}.
+
+[.contract-item]
+[[SignerZKEmail-_rawSignatureValidation-bytes32-bytes-]]
+==== `[.contract-item-name]#++_rawSignatureValidation++#++(bytes32 hash, bytes signature) → bool++` [.item-kind]#internal#
+
+See {AbstractSigner-_rawSignatureValidation}. Validates a raw signature by:
+
+1. Decoding the email authentication message from the signature
+2. Verifying the hash matches the command parameters
+3. Checking the template ID matches
+4. Validating the account salt
+5. Verifying the email proof
+
+[.contract-item]
+[[SignerZKEmail-InvalidEmailProof-enum-ZKEmailUtils-EmailProofError-]]
+==== `[.contract-item-name]#++InvalidEmailProof++#++(enum ZKEmailUtils.EmailProofError err)++` [.item-kind]#error#
+
+Proof verification error.
 
 === ERC-7913
 
