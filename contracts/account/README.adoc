@@ -10,7 +10,7 @@ This directory includes contracts to build accounts for ERC-4337. These include:
  * {ERC7821}: Minimal batch executor implementation contracts. Useful to enable easy batch execution for smart contracts.
  * {PaymasterCore}: An ERC-4337 paymaster implementation that includes the core logic to validate and pay for user operations.
  * {PaymasterERC20}: A paymaster that allows users to pay for user operations using ERC-20 tokens.
- * {PaymasterERC721Owner}: A paymaster that allows users to pay for user operations based on ERC-721 onwership.
+ * {PaymasterERC721Owner}: A paymaster that allows users to pay for user operations based on ERC-721 ownership.
  * {PaymasterSigner}: A paymaster that allows users to pay for user operations using an authorized signature.
 
 == Core
