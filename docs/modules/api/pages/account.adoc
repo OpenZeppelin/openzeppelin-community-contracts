@@ -3,6 +3,10 @@
 :AccountERC7579: pass:normal[xref:account.adoc#AccountERC7579[`AccountERC7579`]]
 :AccountERC7579Hooked: pass:normal[xref:account.adoc#AccountERC7579Hooked[`AccountERC7579Hooked`]]
 :ERC7821: pass:normal[xref:account.adoc#ERC7821[`ERC7821`]]
+:PaymasterCore: pass:normal[xref:account.adoc#PaymasterCore[`PaymasterCore`]]
+:PaymasterERC20: pass:normal[xref:account.adoc#PaymasterERC20[`PaymasterERC20`]]
+:PaymasterERC721Owner: pass:normal[xref:account.adoc#PaymasterERC721Owner[`PaymasterERC721Owner`]]
+:PaymasterSigner: pass:normal[xref:account.adoc#PaymasterSigner[`PaymasterSigner`]]
 :AbstractSigner-_rawSignatureValidation: pass:normal[xref:utils.adoc#AbstractSigner-_rawSignatureValidation-bytes32-bytes-[`AbstractSigner._rawSignatureValidation`]]
 :SignerECDSA: pass:normal[xref:utils.adoc#SignerECDSA[`SignerECDSA`]]
 :SignerP256: pass:normal[xref:utils.adoc#SignerP256[`SignerP256`]]
@@ -21,6 +25,13 @@
 :AccountERC7579-_uninstallModule: pass:normal[xref:account.adoc#AccountERC7579-_uninstallModule-uint256-address-bytes-[`AccountERC7579._uninstallModule`]]
 :AccountERC7579-_execute: pass:normal[xref:account.adoc#AccountERC7579-_execute-Mode-bytes-[`AccountERC7579._execute`]]
 :AccountERC7579-_fallback: pass:normal[xref:account.adoc#AccountERC7579-_fallback--[`AccountERC7579._fallback`]]
+:PaymasterCore-_validatePaymasterUserOp: pass:normal[xref:account.adoc#PaymasterCore-_validatePaymasterUserOp-struct-PackedUserOperation-bytes32-uint256-[`PaymasterCore._validatePaymasterUserOp`]]
+:PaymasterCore: pass:normal[xref:account.adoc#PaymasterCore[`PaymasterCore`]]
+:PaymasterCore: pass:normal[xref:account.adoc#PaymasterCore[`PaymasterCore`]]
+:PaymasterCore: pass:normal[xref:account.adoc#PaymasterCore[`PaymasterCore`]]
+:SignerECDSA: pass:normal[xref:utils.adoc#SignerECDSA[`SignerECDSA`]]
+:SignerP256: pass:normal[xref:utils.adoc#SignerP256[`SignerP256`]]
+:SignerRSA: pass:normal[xref:utils.adoc#SignerRSA[`SignerRSA`]]
 = Account
 [.readme-notice]
 NOTE: This document is better viewed at https://docs.openzeppelin.com/community-contracts/api/account
@@ -31,6 +42,10 @@ This directory includes contracts to build accounts for ERC-4337. These include:
  * {AccountERC7579}: An extension of `Account` that implements support for ERC-7579 modules.
  * {AccountERC7579Hooked}: An extension of `AccountERC7579` with support for a single hook module (type 4).
  * {ERC7821}: Minimal batch executor implementation contracts. Useful to enable easy batch execution for smart contracts.
+ * {PaymasterCore}: An ERC-4337 paymaster implementation that includes the core logic to validate and pay for user operations.
+ * {PaymasterERC20}: A paymaster that allows users to pay for user operations using ERC-20 tokens.
+ * {PaymasterERC721Owner}: A paymaster that allows users to pay for user operations based on ERC-721 ownership.
+ * {PaymasterSigner}: A paymaster that allows users to pay for user operations using an authorized signature.
 
 == Core
 
@@ -925,4 +940,584 @@ function _erc7821AuthorizedExecutor(
 [.contract-item]
 [[ERC7821-UnsupportedExecutionMode--]]
 ==== `[.contract-item-name]#++UnsupportedExecutionMode++#++()++` [.item-kind]#error#
+
+== Paymaster
+
+:PaymasterUnauthorized: pass:normal[xref:#PaymasterCore-PaymasterUnauthorized-address-[`++PaymasterUnauthorized++`]]
+:onlyEntryPoint: pass:normal[xref:#PaymasterCore-onlyEntryPoint--[`++onlyEntryPoint++`]]
+:onlyWithdrawer: pass:normal[xref:#PaymasterCore-onlyWithdrawer--[`++onlyWithdrawer++`]]
+:entryPoint: pass:normal[xref:#PaymasterCore-entryPoint--[`++entryPoint++`]]
+:validatePaymasterUserOp: pass:normal[xref:#PaymasterCore-validatePaymasterUserOp-struct-PackedUserOperation-bytes32-uint256-[`++validatePaymasterUserOp++`]]
+:postOp: pass:normal[xref:#PaymasterCore-postOp-enum-IPaymaster-PostOpMode-bytes-uint256-uint256-[`++postOp++`]]
+:_validatePaymasterUserOp: pass:normal[xref:#PaymasterCore-_validatePaymasterUserOp-struct-PackedUserOperation-bytes32-uint256-[`++_validatePaymasterUserOp++`]]
+:_postOp: pass:normal[xref:#PaymasterCore-_postOp-enum-IPaymaster-PostOpMode-bytes-uint256-uint256-[`++_postOp++`]]
+:deposit: pass:normal[xref:#PaymasterCore-deposit--[`++deposit++`]]
+:withdraw: pass:normal[xref:#PaymasterCore-withdraw-address-payable-uint256-[`++withdraw++`]]
+:addStake: pass:normal[xref:#PaymasterCore-addStake-uint32-[`++addStake++`]]
+:unlockStake: pass:normal[xref:#PaymasterCore-unlockStake--[`++unlockStake++`]]
+:withdrawStake: pass:normal[xref:#PaymasterCore-withdrawStake-address-payable-[`++withdrawStake++`]]
+:_checkEntryPoint: pass:normal[xref:#PaymasterCore-_checkEntryPoint--[`++_checkEntryPoint++`]]
+:_authorizeWithdraw: pass:normal[xref:#PaymasterCore-_authorizeWithdraw--[`++_authorizeWithdraw++`]]
+
+[.contract]
+[[PaymasterCore]]
+=== `++PaymasterCore++` link:https://github.com/OpenZeppelin/openzeppelin-community-contracts/blob/master/contracts/account/paymaster/PaymasterCore.sol[{github-icon},role=heading-link]
+
+[.hljs-theme-light.nopadding]
+```solidity
+import "@openzeppelin/community-contracts/account/paymaster/PaymasterCore.sol";
+```
+
+A simple ERC4337 paymaster implementation. This base implementation only includes the minimal logic to validate
+and pay for user operations.
+
+Developers must implement the {PaymasterCore-_validatePaymasterUserOp} function to define the paymaster's validation
+and payment logic. The `context` parameter is used to pass data between the validation and execution phases.
+
+The paymaster includes support to call the {IEntryPointStake} interface to manage the paymaster's deposits and stakes
+through the internal functions {_deposit}, {_withdraw}, {_addStake}, {_unlockStake} and {_withdrawStake}.
+
+* Deposits are used to pay for user operations.
+* Stakes are used to guarantee the paymaster's reputation and obtain more flexibility in accessing storage.
+
+NOTE: See [Paymaster's unstaked reputation rules](https://eips.ethereum.org/EIPS/eip-7562#unstaked-paymasters-reputation-rules)
+ for more details on the paymaster's storage access limitations.
+
+[.contract-index]
+.Modifiers
+--
+* `++onlyEntryPoint()++`
+* `++onlyWithdrawer()++`
+--
+
+[.contract-index]
+.Functions
+--
+* `++entryPoint()++`
+* `++validatePaymasterUserOp(userOp, userOpHash, maxCost)++`
+* `++postOp(mode, context, actualGasCost, actualUserOpFeePerGas)++`
+* `++_validatePaymasterUserOp(userOp, userOpHash, requiredPreFund)++`
+* `++_postOp(, , , )++`
+* `++deposit()++`
+* `++withdraw(to, value)++`
+* `++addStake(unstakeDelaySec)++`
+* `++unlockStake()++`
+* `++withdrawStake(to)++`
+* `++_checkEntryPoint()++`
+* `++_authorizeWithdraw()++`
+
+[.contract-subindex-inherited]
+.IPaymaster
+
+--
+
+[.contract-index]
+.Errors
+--
+* `++PaymasterUnauthorized(sender)++`
+
+[.contract-subindex-inherited]
+.IPaymaster
+
+--
+
+[.contract-item]
+[[PaymasterCore-onlyEntryPoint--]]
+==== `[.contract-item-name]#++onlyEntryPoint++#++()++` [.item-kind]#modifier#
+
+Revert if the caller is not the entry point.
+
+[.contract-item]
+[[PaymasterCore-onlyWithdrawer--]]
+==== `[.contract-item-name]#++onlyWithdrawer++#++()++` [.item-kind]#modifier#
+
+[.contract-item]
+[[PaymasterCore-entryPoint--]]
+==== `[.contract-item-name]#++entryPoint++#++() → contract IEntryPoint++` [.item-kind]#public#
+
+Canonical entry point for the account that forwards and validates user operations.
+
+[.contract-item]
+[[PaymasterCore-validatePaymasterUserOp-struct-PackedUserOperation-bytes32-uint256-]]
+==== `[.contract-item-name]#++validatePaymasterUserOp++#++(struct PackedUserOperation userOp, bytes32 userOpHash, uint256 maxCost) → bytes context, uint256 validationData++` [.item-kind]#public#
+
+Validates whether the paymaster is willing to pay for the user operation. See
+{IAccount-validateUserOp} for additional information on the return value.
+
+NOTE: Bundlers will reject this method if it modifies the state, unless it's whitelisted.
+
+[.contract-item]
+[[PaymasterCore-postOp-enum-IPaymaster-PostOpMode-bytes-uint256-uint256-]]
+==== `[.contract-item-name]#++postOp++#++(enum IPaymaster.PostOpMode mode, bytes context, uint256 actualGasCost, uint256 actualUserOpFeePerGas)++` [.item-kind]#public#
+
+Verifies the sender is the entrypoint.
+
+[.contract-item]
+[[PaymasterCore-_validatePaymasterUserOp-struct-PackedUserOperation-bytes32-uint256-]]
+==== `[.contract-item-name]#++_validatePaymasterUserOp++#++(struct PackedUserOperation userOp, bytes32 userOpHash, uint256 requiredPreFund) → bytes context, uint256 validationData++` [.item-kind]#internal#
+
+Internal validation of whether the paymaster is willing to pay for the user operation.
+Returns the context to be passed to postOp and the validation data.
+
+The `requiredPreFund` is the amount the paymaster has to pay (in native tokens). It's calculated
+as `requiredGas * userOp.maxFeePerGas`, where `required` gas can be calculated from the user operation
+as `verificationGasLimit + callGasLimit + paymasterVerificationGasLimit + paymasterPostOpGasLimit + preVerificationGas`
+
+[.contract-item]
+[[PaymasterCore-_postOp-enum-IPaymaster-PostOpMode-bytes-uint256-uint256-]]
+==== `[.contract-item-name]#++_postOp++#++(enum IPaymaster.PostOpMode, bytes, uint256, uint256)++` [.item-kind]#internal#
+
+Handles post user operation execution logic. The caller must be the entry point.
+
+It receives the `context` returned by `_validatePaymasterUserOp`. Function is not called if no context
+is returned by {validatePaymasterUserOp}.
+
+NOTE: The `actualUserOpFeePerGas` is not `tx.gasprice`. A user operation can be bundled with other transactions
+making the gas price of the user operation to differ.
+
+[.contract-item]
+[[PaymasterCore-deposit--]]
+==== `[.contract-item-name]#++deposit++#++()++` [.item-kind]#public#
+
+Calls {IEntryPointStake-depositTo}.
+
+[.contract-item]
+[[PaymasterCore-withdraw-address-payable-uint256-]]
+==== `[.contract-item-name]#++withdraw++#++(address payable to, uint256 value)++` [.item-kind]#public#
+
+Calls {IEntryPointStake-withdrawTo}.
+
+[.contract-item]
+[[PaymasterCore-addStake-uint32-]]
+==== `[.contract-item-name]#++addStake++#++(uint32 unstakeDelaySec)++` [.item-kind]#public#
+
+Calls {IEntryPointStake-addStake}.
+
+[.contract-item]
+[[PaymasterCore-unlockStake--]]
+==== `[.contract-item-name]#++unlockStake++#++()++` [.item-kind]#public#
+
+Calls {IEntryPointStake-unlockStake}.
+
+[.contract-item]
+[[PaymasterCore-withdrawStake-address-payable-]]
+==== `[.contract-item-name]#++withdrawStake++#++(address payable to)++` [.item-kind]#public#
+
+Calls {IEntryPointStake-withdrawStake}.
+
+[.contract-item]
+[[PaymasterCore-_checkEntryPoint--]]
+==== `[.contract-item-name]#++_checkEntryPoint++#++()++` [.item-kind]#internal#
+
+Ensures the caller is the {entrypoint}.
+
+[.contract-item]
+[[PaymasterCore-_authorizeWithdraw--]]
+==== `[.contract-item-name]#++_authorizeWithdraw++#++()++` [.item-kind]#internal#
+
+Checks whether `msg.sender` withdraw funds stake or deposit from the entrypoint on paymaster's behalf.
+
+Use of an https://docs.openzeppelin.com/contracts/5.x/access-control[access control]
+modifier such as {Ownable-onlyOwner} is recommended.
+
+```solidity
+function _authorizeUpgrade() internal onlyOwner {}
+```
+
+[.contract-item]
+[[PaymasterCore-PaymasterUnauthorized-address-]]
+==== `[.contract-item-name]#++PaymasterUnauthorized++#++(address sender)++` [.item-kind]#error#
+
+Unauthorized call to the paymaster.
+
+:UserOperationSponsored: pass:normal[xref:#PaymasterERC20-UserOperationSponsored-bytes32-address-address-uint256-uint256-bool-[`++UserOperationSponsored++`]]
+:_validatePaymasterUserOp: pass:normal[xref:#PaymasterERC20-_validatePaymasterUserOp-struct-PackedUserOperation-bytes32-uint256-[`++_validatePaymasterUserOp++`]]
+:_postOp: pass:normal[xref:#PaymasterERC20-_postOp-enum-IPaymaster-PostOpMode-bytes-uint256-uint256-[`++_postOp++`]]
+:_fetchDetails: pass:normal[xref:#PaymasterERC20-_fetchDetails-struct-PackedUserOperation-bytes32-[`++_fetchDetails++`]]
+:_tokenPriceDenominator: pass:normal[xref:#PaymasterERC20-_tokenPriceDenominator--[`++_tokenPriceDenominator++`]]
+:withdrawTokens: pass:normal[xref:#PaymasterERC20-withdrawTokens-contract-IERC20-address-uint256-[`++withdrawTokens++`]]
+
+[.contract]
+[[PaymasterERC20]]
+=== `++PaymasterERC20++` link:https://github.com/OpenZeppelin/openzeppelin-community-contracts/blob/master/contracts/account/paymaster/PaymasterERC20.sol[{github-icon},role=heading-link]
+
+[.hljs-theme-light.nopadding]
+```solidity
+import "@openzeppelin/community-contracts/account/paymaster/PaymasterERC20.sol";
+```
+
+Extension of {PaymasterCore} that enables users to pay gas with ERC-20 tokens.
+
+To enable this feature, developers must implement the {fetchDetails} function:
+
+```solidity
+function _fetchDetails(
+    PackedUserOperation calldata userOp,
+    bytes32 userOpHash
+) internal view override returns (uint256 validationData, IERC20 token, uint256 tokenPrice, address guarantor) {
+    // Implement logic to fetch the token, token price, and guarantor address from the userOp
+}
+```
+
+[.contract-index]
+.Functions
+--
+* `++_validatePaymasterUserOp(userOp, userOpHash, maxCost)++`
+* `++_postOp(, context, actualGasCost, actualUserOpFeePerGas)++`
+* `++_fetchDetails(userOp, userOpHash)++`
+* `++_tokenPriceDenominator()++`
+* `++withdrawTokens(token, recipient, amount)++`
+
+[.contract-subindex-inherited]
+.PaymasterCore
+* `++entryPoint()++`
+* `++validatePaymasterUserOp(userOp, userOpHash, maxCost)++`
+* `++postOp(mode, context, actualGasCost, actualUserOpFeePerGas)++`
+* `++deposit()++`
+* `++withdraw(to, value)++`
+* `++addStake(unstakeDelaySec)++`
+* `++unlockStake()++`
+* `++withdrawStake(to)++`
+* `++_checkEntryPoint()++`
+* `++_authorizeWithdraw()++`
+
+[.contract-subindex-inherited]
+.IPaymaster
+
+--
+
+[.contract-index]
+.Events
+--
+* `++UserOperationSponsored(userOpHash, user, guarantor, tokenAmount, tokenPrice, paidByGuarantor)++`
+
+[.contract-subindex-inherited]
+.PaymasterCore
+
+[.contract-subindex-inherited]
+.IPaymaster
+
+--
+
+[.contract-index]
+.Errors
+--
+
+[.contract-subindex-inherited]
+.PaymasterCore
+* `++PaymasterUnauthorized(sender)++`
+
+[.contract-subindex-inherited]
+.IPaymaster
+
+--
+
+[.contract-item]
+[[PaymasterERC20-_validatePaymasterUserOp-struct-PackedUserOperation-bytes32-uint256-]]
+==== `[.contract-item-name]#++_validatePaymasterUserOp++#++(struct PackedUserOperation userOp, bytes32 userOpHash, uint256 maxCost) → bytes context, uint256 validationData++` [.item-kind]#internal#
+
+Internal validation of whether the paymaster is willing to pay for the user operation.
+Returns the context to be passed to postOp and the validation data.
+
+The `requiredPreFund` is the amount the paymaster has to pay (in native tokens). It's calculated
+as `requiredGas * userOp.maxFeePerGas`, where `required` gas can be calculated from the user operation
+as `verificationGasLimit + callGasLimit + paymasterVerificationGasLimit + paymasterPostOpGasLimit + preVerificationGas`
+
+[.contract-item]
+[[PaymasterERC20-_postOp-enum-IPaymaster-PostOpMode-bytes-uint256-uint256-]]
+==== `[.contract-item-name]#++_postOp++#++(enum IPaymaster.PostOpMode, bytes context, uint256 actualGasCost, uint256 actualUserOpFeePerGas)++` [.item-kind]#internal#
+
+Handles post user operation execution logic. The caller must be the entry point.
+
+It receives the `context` returned by `_validatePaymasterUserOp`. Function is not called if no context
+is returned by {validatePaymasterUserOp}.
+
+NOTE: The `actualUserOpFeePerGas` is not `tx.gasprice`. A user operation can be bundled with other transactions
+making the gas price of the user operation to differ.
+
+[.contract-item]
+[[PaymasterERC20-_fetchDetails-struct-PackedUserOperation-bytes32-]]
+==== `[.contract-item-name]#++_fetchDetails++#++(struct PackedUserOperation userOp, bytes32 userOpHash) → uint256 validationData, contract IERC20 token, uint256 tokenPrice, address guarantor++` [.item-kind]#internal#
+
+Retrieves payment details for a user operation
+
+The values returned by this internal function are:
+* `validationData`: ERC-4337 validation data, indicating success/failure and optional time validity (`validAfter`, `validUntil`).
+* `token`: Address of the ERC-20 token used for payment to the paymaster.
+* `tokenPrice`: Price of the token in native currency, scaled by `_tokenPriceDenominator()`.
+* `guarantor`: Address of an entity advancing funds if the user lacks them; receives tokens during execution or pays if the user can't.
+
+==== Calculating the token price
+
+Given gas fees are paid in native currency, developers can use the `ERC20 price unit / native price unit` ratio to
+calculate the price of an ERC20 token price in native currency. However, the token may have a different number of decimals
+than the native currency. For a a generalized formula considering prices in USD and decimals, consider using:
+
+`(<ERC-20 token price in $> / 10**<ERC-20 decimals>) / (<Native token price in $> / 1e18) * _tokenPriceDenominator()`
+
+For example, suppose token is USDC ($1 with 6 decimals) and native currency is ETH (assuming $2524.86 with 18 decimals),
+then each unit (1e-6) of USDC is worth `(1 / 1e6) / ((252486 / 1e2) / 1e18) = 396061563.8094785` wei. The `_tokenPriceDenominator()`
+ensures precision by avoiding fractional value loss. (i.e. the 0.8094785 part).
+
+==== Guarantor
+
+To support a guarantor, developers can use the `paymasterData` field to store the guarantor's address. Developers can disable
+support for a guarantor by returning `address(0)`. If supported, ensure explicit consent (e.g., signature verification) to prevent
+unauthorized use.
+
+[.contract-item]
+[[PaymasterERC20-_tokenPriceDenominator--]]
+==== `[.contract-item-name]#++_tokenPriceDenominator++#++() → uint256++` [.item-kind]#internal#
+
+Denominator used for interpreting the `tokenPrice` returned by {_fetchDetails} as "fixed point".
+
+[.contract-item]
+[[PaymasterERC20-withdrawTokens-contract-IERC20-address-uint256-]]
+==== `[.contract-item-name]#++withdrawTokens++#++(contract IERC20 token, address recipient, uint256 amount)++` [.item-kind]#public#
+
+Public function that allows the withdrawer to extract ERC-20 tokens resulting from gas payments.
+
+[.contract-item]
+[[PaymasterERC20-UserOperationSponsored-bytes32-address-address-uint256-uint256-bool-]]
+==== `[.contract-item-name]#++UserOperationSponsored++#++(bytes32 indexed userOpHash, address indexed user, address indexed guarantor, uint256 tokenAmount, uint256 tokenPrice, bool paidByGuarantor)++` [.item-kind]#event#
+
+:PaymasterERC721OwnerTokenSet: pass:normal[xref:#PaymasterERC721Owner-PaymasterERC721OwnerTokenSet-contract-IERC721-[`++PaymasterERC721OwnerTokenSet++`]]
+:constructor: pass:normal[xref:#PaymasterERC721Owner-constructor-contract-IERC721-[`++constructor++`]]
+:token: pass:normal[xref:#PaymasterERC721Owner-token--[`++token++`]]
+:_setToken: pass:normal[xref:#PaymasterERC721Owner-_setToken-contract-IERC721-[`++_setToken++`]]
+:_validatePaymasterUserOp: pass:normal[xref:#PaymasterERC721Owner-_validatePaymasterUserOp-struct-PackedUserOperation-bytes32-uint256-[`++_validatePaymasterUserOp++`]]
+
+[.contract]
+[[PaymasterERC721Owner]]
+=== `++PaymasterERC721Owner++` link:https://github.com/OpenZeppelin/openzeppelin-community-contracts/blob/master/contracts/account/paymaster/PaymasterERC721Owner.sol[{github-icon},role=heading-link]
+
+[.hljs-theme-light.nopadding]
+```solidity
+import "@openzeppelin/community-contracts/account/paymaster/PaymasterERC721Owner.sol";
+```
+
+Extension of {PaymasterCore} that supports account based on ownership of an ERC-721 token.
+
+This paymaster will sponsor user operations if the user has at least 1 token of the token specified
+during construction (or via {_setToken}).
+
+[.contract-index]
+.Functions
+--
+* `++constructor(token_)++`
+* `++token()++`
+* `++_setToken(token_)++`
+* `++_validatePaymasterUserOp(userOp, , )++`
+
+[.contract-subindex-inherited]
+.PaymasterCore
+* `++entryPoint()++`
+* `++validatePaymasterUserOp(userOp, userOpHash, maxCost)++`
+* `++postOp(mode, context, actualGasCost, actualUserOpFeePerGas)++`
+* `++_postOp(, , , )++`
+* `++deposit()++`
+* `++withdraw(to, value)++`
+* `++addStake(unstakeDelaySec)++`
+* `++unlockStake()++`
+* `++withdrawStake(to)++`
+* `++_checkEntryPoint()++`
+* `++_authorizeWithdraw()++`
+
+[.contract-subindex-inherited]
+.IPaymaster
+
+--
+
+[.contract-index]
+.Events
+--
+* `++PaymasterERC721OwnerTokenSet(token)++`
+
+[.contract-subindex-inherited]
+.PaymasterCore
+
+[.contract-subindex-inherited]
+.IPaymaster
+
+--
+
+[.contract-index]
+.Errors
+--
+
+[.contract-subindex-inherited]
+.PaymasterCore
+* `++PaymasterUnauthorized(sender)++`
+
+[.contract-subindex-inherited]
+.IPaymaster
+
+--
+
+[.contract-item]
+[[PaymasterERC721Owner-constructor-contract-IERC721-]]
+==== `[.contract-item-name]#++constructor++#++(contract IERC721 token_)++` [.item-kind]#internal#
+
+[.contract-item]
+[[PaymasterERC721Owner-token--]]
+==== `[.contract-item-name]#++token++#++() → contract IERC721++` [.item-kind]#public#
+
+ERC-721 token used to validate the user operation.
+
+[.contract-item]
+[[PaymasterERC721Owner-_setToken-contract-IERC721-]]
+==== `[.contract-item-name]#++_setToken++#++(contract IERC721 token_)++` [.item-kind]#internal#
+
+Sets the ERC-721 token used to validate the user operation.
+
+[.contract-item]
+[[PaymasterERC721Owner-_validatePaymasterUserOp-struct-PackedUserOperation-bytes32-uint256-]]
+==== `[.contract-item-name]#++_validatePaymasterUserOp++#++(struct PackedUserOperation userOp, bytes32, uint256) → bytes context, uint256 validationData++` [.item-kind]#internal#
+
+Internal validation of whether the paymaster is willing to pay for the user operation.
+Returns the context to be passed to postOp and the validation data.
+
+NOTE: The default `context` is `bytes(0)`. Developers that add a context when overriding this function MUST
+also override {_postOp} to process the context passed along.
+
+[.contract-item]
+[[PaymasterERC721Owner-PaymasterERC721OwnerTokenSet-contract-IERC721-]]
+==== `[.contract-item-name]#++PaymasterERC721OwnerTokenSet++#++(contract IERC721 token)++` [.item-kind]#event#
+
+Emitted when the paymaster token is set.
+
+:_signableUserOpHash: pass:normal[xref:#PaymasterSigner-_signableUserOpHash-struct-PackedUserOperation-uint48-uint48-[`++_signableUserOpHash++`]]
+:_validatePaymasterUserOp: pass:normal[xref:#PaymasterSigner-_validatePaymasterUserOp-struct-PackedUserOperation-bytes32-uint256-[`++_validatePaymasterUserOp++`]]
+:_decodePaymasterUserOp: pass:normal[xref:#PaymasterSigner-_decodePaymasterUserOp-struct-PackedUserOperation-[`++_decodePaymasterUserOp++`]]
+
+[.contract]
+[[PaymasterSigner]]
+=== `++PaymasterSigner++` link:https://github.com/OpenZeppelin/openzeppelin-community-contracts/blob/master/contracts/account/paymaster/PaymasterSigner.sol[{github-icon},role=heading-link]
+
+[.hljs-theme-light.nopadding]
+```solidity
+import "@openzeppelin/community-contracts/account/paymaster/PaymasterSigner.sol";
+```
+
+Extension of {PaymasterCore} that adds signature validation. See {SignerECDSA}, {SignerP256} or {SignerRSA}.
+
+Example of usage:
+
+```solidity
+contract MyPaymasterECDSASigner is PaymasterSigner, SignerECDSA {
+    constructor() EIP712("MyPaymasterECDSASigner", "1") {
+      // Will revert if the signer is already initialized
+      _setSigner(signerAddr);
+    }
+}
+```
+
+[.contract-index]
+.Functions
+--
+* `++_signableUserOpHash(userOp, validAfter, validUntil)++`
+* `++_validatePaymasterUserOp(userOp, , )++`
+* `++_decodePaymasterUserOp(userOp)++`
+
+[.contract-subindex-inherited]
+.PaymasterCore
+* `++entryPoint()++`
+* `++validatePaymasterUserOp(userOp, userOpHash, maxCost)++`
+* `++postOp(mode, context, actualGasCost, actualUserOpFeePerGas)++`
+* `++_postOp(, , , )++`
+* `++deposit()++`
+* `++withdraw(to, value)++`
+* `++addStake(unstakeDelaySec)++`
+* `++unlockStake()++`
+* `++withdrawStake(to)++`
+* `++_checkEntryPoint()++`
+* `++_authorizeWithdraw()++`
+
+[.contract-subindex-inherited]
+.IPaymaster
+
+[.contract-subindex-inherited]
+.EIP712
+* `++_domainSeparatorV4()++`
+* `++_hashTypedDataV4(structHash)++`
+* `++eip712Domain()++`
+* `++_EIP712Name()++`
+* `++_EIP712Version()++`
+
+[.contract-subindex-inherited]
+.IERC5267
+
+[.contract-subindex-inherited]
+.AbstractSigner
+* `++_rawSignatureValidation(hash, signature)++`
+
+--
+
+[.contract-index]
+.Events
+--
+
+[.contract-subindex-inherited]
+.PaymasterCore
+
+[.contract-subindex-inherited]
+.IPaymaster
+
+[.contract-subindex-inherited]
+.EIP712
+
+[.contract-subindex-inherited]
+.IERC5267
+* `++EIP712DomainChanged()++`
+
+[.contract-subindex-inherited]
+.AbstractSigner
+
+--
+
+[.contract-index]
+.Errors
+--
+
+[.contract-subindex-inherited]
+.PaymasterCore
+* `++PaymasterUnauthorized(sender)++`
+
+[.contract-subindex-inherited]
+.IPaymaster
+
+[.contract-subindex-inherited]
+.EIP712
+
+[.contract-subindex-inherited]
+.IERC5267
+
+[.contract-subindex-inherited]
+.AbstractSigner
+
+--
+
+[.contract-item]
+[[PaymasterSigner-_signableUserOpHash-struct-PackedUserOperation-uint48-uint48-]]
+==== `[.contract-item-name]#++_signableUserOpHash++#++(struct PackedUserOperation userOp, uint48 validAfter, uint48 validUntil) → bytes32++` [.item-kind]#internal#
+
+Virtual function that returns the signable hash for a user operations. Given the `userOpHash`
+contains the `paymasterAndData` itself, it's not possible to sign that value directly. Instead,
+this function must be used to provide a custom mechanism to authorize an user operation.
+
+[.contract-item]
+[[PaymasterSigner-_validatePaymasterUserOp-struct-PackedUserOperation-bytes32-uint256-]]
+==== `[.contract-item-name]#++_validatePaymasterUserOp++#++(struct PackedUserOperation userOp, bytes32, uint256) → bytes context, uint256 validationData++` [.item-kind]#internal#
+
+Internal validation of whether the paymaster is willing to pay for the user operation.
+Returns the context to be passed to postOp and the validation data.
+
+NOTE: The `context` returned is `bytes(0)`. Developers overriding this function MUST
+override {_postOp} to process the context passed along.
+
+[.contract-item]
+[[PaymasterSigner-_decodePaymasterUserOp-struct-PackedUserOperation-]]
+==== `[.contract-item-name]#++_decodePaymasterUserOp++#++(struct PackedUserOperation userOp) → uint48 validAfter, uint48 validUntil, bytes signature++` [.item-kind]#internal#
+
+Decodes the user operation's data from `paymasterAndData`.
 

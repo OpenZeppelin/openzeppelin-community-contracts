@@ -1,0 +1,947 @@
+:github-icon: pass:[<svg class="icon"><use href="#github-icon"/></svg>]
+:ERC7786Receiver: pass:normal[xref:crosschain.adoc#ERC7786Receiver[`ERC7786Receiver`]]
+:ERC7786Aggregator: pass:normal[xref:crosschain.adoc#ERC7786Aggregator[`ERC7786Aggregator`]]
+:AxelarGatewayBase: pass:normal[xref:crosschain.adoc#AxelarGatewayBase[`AxelarGatewayBase`]]
+:AxelarGatewaySource: pass:normal[xref:crosschain.adoc#AxelarGatewaySource[`AxelarGatewaySource`]]
+:AxelarGatewayDestination: pass:normal[xref:crosschain.adoc#AxelarGatewayDestination[`AxelarGatewayDestination`]]
+:AxelarGatewayDuplex: pass:normal[xref:crosschain.adoc#AxelarGatewayDuplex[`AxelarGatewayDuplex`]]
+= Crosschain
+
+[.readme-notice]
+NOTE: This document is better viewed at https://docs.openzeppelin.com/community-contracts/api/crosschain
+
+Gateways are contracts that enable cross-chain communication. These can either be a message source or a destination according to ERC-7786.
+
+ * {ERC7786Receiver}: ERC-7786 cross-chain message receiver.
+ * {ERC7786Aggregator}: ERC-7786 "N out of M" gateway. Sends a message through M gateways and executes on the destination if N received it.
+
+Developers can access interoperability protocols through gateway adapters. The library includes the following gateway adapters:
+
+ * {AxelarGatewayBase}: Core gateway logic for the https://www.axelar.network/[Axelar] adapter.
+ * {AxelarGatewaySource}: ERC-7786 source gateway adapter (sending side) for Axelar.
+ * {AxelarGatewayDestination}: ERC-7786 destination gateway adapter (receiving side) for Axelar.
+ * {AxelarGatewayDuplex}: ERC-7786 gateway adapter that operates in both directions (i.e. send and receive messages) using the Axelar network.
+
+== Gateways
+
+:Outbox: pass:normal[xref:#ERC7786Aggregator-Outbox[`++Outbox++`]]
+:Tracker: pass:normal[xref:#ERC7786Aggregator-Tracker[`++Tracker++`]]
+:OutboxDetails: pass:normal[xref:#ERC7786Aggregator-OutboxDetails-bytes32-struct-ERC7786Aggregator-Outbox---[`++OutboxDetails++`]]
+:Received: pass:normal[xref:#ERC7786Aggregator-Received-bytes32-address-[`++Received++`]]
+:ExecutionSuccess: pass:normal[xref:#ERC7786Aggregator-ExecutionSuccess-bytes32-[`++ExecutionSuccess++`]]
+:ExecutionFailed: pass:normal[xref:#ERC7786Aggregator-ExecutionFailed-bytes32-[`++ExecutionFailed++`]]
+:GatewayAdded: pass:normal[xref:#ERC7786Aggregator-GatewayAdded-address-[`++GatewayAdded++`]]
+:GatewayRemoved: pass:normal[xref:#ERC7786Aggregator-GatewayRemoved-address-[`++GatewayRemoved++`]]
+:ThresholdUpdated: pass:normal[xref:#ERC7786Aggregator-ThresholdUpdated-uint8-[`++ThresholdUpdated++`]]
+:ERC7786AggregatorValueNotSupported: pass:normal[xref:#ERC7786Aggregator-ERC7786AggregatorValueNotSupported--[`++ERC7786AggregatorValueNotSupported++`]]
+:ERC7786AggregatorInvalidCrosschainSender: pass:normal[xref:#ERC7786Aggregator-ERC7786AggregatorInvalidCrosschainSender--[`++ERC7786AggregatorInvalidCrosschainSender++`]]
+:ERC7786AggregatorAlreadyExecuted: pass:normal[xref:#ERC7786Aggregator-ERC7786AggregatorAlreadyExecuted--[`++ERC7786AggregatorAlreadyExecuted++`]]
+:ERC7786AggregatorRemoteNotRegistered: pass:normal[xref:#ERC7786Aggregator-ERC7786AggregatorRemoteNotRegistered-string-[`++ERC7786AggregatorRemoteNotRegistered++`]]
+:ERC7786AggregatorGatewayAlreadyRegistered: pass:normal[xref:#ERC7786Aggregator-ERC7786AggregatorGatewayAlreadyRegistered-address-[`++ERC7786AggregatorGatewayAlreadyRegistered++`]]
+:ERC7786AggregatorGatewayNotRegistered: pass:normal[xref:#ERC7786Aggregator-ERC7786AggregatorGatewayNotRegistered-address-[`++ERC7786AggregatorGatewayNotRegistered++`]]
+:ERC7786AggregatorThresholdViolation: pass:normal[xref:#ERC7786Aggregator-ERC7786AggregatorThresholdViolation--[`++ERC7786AggregatorThresholdViolation++`]]
+:ERC7786AggregatorInvalidExecutionReturnValue: pass:normal[xref:#ERC7786Aggregator-ERC7786AggregatorInvalidExecutionReturnValue--[`++ERC7786AggregatorInvalidExecutionReturnValue++`]]
+:RemoteRegistered: pass:normal[xref:#ERC7786Aggregator-RemoteRegistered-string-string-[`++RemoteRegistered++`]]
+:RemoteAlreadyRegistered: pass:normal[xref:#ERC7786Aggregator-RemoteAlreadyRegistered-string-[`++RemoteAlreadyRegistered++`]]
+:constructor: pass:normal[xref:#ERC7786Aggregator-constructor-address-address---uint8-[`++constructor++`]]
+:supportsAttribute: pass:normal[xref:#ERC7786Aggregator-supportsAttribute-bytes4-[`++supportsAttribute++`]]
+:sendMessage: pass:normal[xref:#ERC7786Aggregator-sendMessage-string-string-bytes-bytes---[`++sendMessage++`]]
+:executeMessage: pass:normal[xref:#ERC7786Aggregator-executeMessage-string-string-string-bytes-bytes---[`++executeMessage++`]]
+:getGateways: pass:normal[xref:#ERC7786Aggregator-getGateways--[`++getGateways++`]]
+:getThreshold: pass:normal[xref:#ERC7786Aggregator-getThreshold--[`++getThreshold++`]]
+:getRemoteAggregator: pass:normal[xref:#ERC7786Aggregator-getRemoteAggregator-string-[`++getRemoteAggregator++`]]
+:addGateway: pass:normal[xref:#ERC7786Aggregator-addGateway-address-[`++addGateway++`]]
+:removeGateway: pass:normal[xref:#ERC7786Aggregator-removeGateway-address-[`++removeGateway++`]]
+:setThreshold: pass:normal[xref:#ERC7786Aggregator-setThreshold-uint8-[`++setThreshold++`]]
+:registerRemoteAggregator: pass:normal[xref:#ERC7786Aggregator-registerRemoteAggregator-string-string-[`++registerRemoteAggregator++`]]
+:pause: pass:normal[xref:#ERC7786Aggregator-pause--[`++pause++`]]
+:unpause: pass:normal[xref:#ERC7786Aggregator-unpause--[`++unpause++`]]
+:sweep: pass:normal[xref:#ERC7786Aggregator-sweep-address-payable-[`++sweep++`]]
+:_addGateway: pass:normal[xref:#ERC7786Aggregator-_addGateway-address-[`++_addGateway++`]]
+:_removeGateway: pass:normal[xref:#ERC7786Aggregator-_removeGateway-address-[`++_removeGateway++`]]
+:_setThreshold: pass:normal[xref:#ERC7786Aggregator-_setThreshold-uint8-[`++_setThreshold++`]]
+:_registerRemoteAggregator: pass:normal[xref:#ERC7786Aggregator-_registerRemoteAggregator-string-string-[`++_registerRemoteAggregator++`]]
+
+[.contract]
+[[ERC7786Aggregator]]
+=== `++ERC7786Aggregator++` link:https://github.com/OpenZeppelin/openzeppelin-community-contracts/blob/master/contracts/crosschain/ERC7786Aggregator.sol[{github-icon},role=heading-link]
+
+[.hljs-theme-light.nopadding]
+```solidity
+import "@openzeppelin/community-contracts/crosschain/ERC7786Aggregator.sol";
+```
+
+N of M gateway: Sends your message through M independent gateways. It will be delivered to the receiver by an
+equivalent aggregator on the destination chain if N of the M gateways agree.
+
+[.contract-index]
+.Functions
+--
+* `++constructor(owner_, gateways_, threshold_)++`
+* `++supportsAttribute()++`
+* `++sendMessage(destinationChain, receiver, payload, attributes)++`
+* `++executeMessage(, sourceChain, sender, payload, attributes)++`
+* `++getGateways()++`
+* `++getThreshold()++`
+* `++getRemoteAggregator(caip2)++`
+* `++addGateway(gateway)++`
+* `++removeGateway(gateway)++`
+* `++setThreshold(newThreshold)++`
+* `++registerRemoteAggregator(caip2, aggregator)++`
+* `++pause()++`
+* `++unpause()++`
+* `++sweep(to)++`
+* `++_addGateway(gateway)++`
+* `++_removeGateway(gateway)++`
+* `++_setThreshold(newThreshold)++`
+* `++_registerRemoteAggregator(caip2, aggregator)++`
+
+[.contract-subindex-inherited]
+.Pausable
+* `++paused()++`
+* `++_requireNotPaused()++`
+* `++_requirePaused()++`
+* `++_pause()++`
+* `++_unpause()++`
+
+[.contract-subindex-inherited]
+.Ownable
+* `++owner()++`
+* `++_checkOwner()++`
+* `++renounceOwnership()++`
+* `++transferOwnership(newOwner)++`
+* `++_transferOwnership(newOwner)++`
+
+[.contract-subindex-inherited]
+.IERC7786Receiver
+
+[.contract-subindex-inherited]
+.IERC7786GatewaySource
+
+--
+
+[.contract-index]
+.Events
+--
+* `++OutboxDetails(outboxId, outbox)++`
+* `++Received(receiveId, gateway)++`
+* `++ExecutionSuccess(receiveId)++`
+* `++ExecutionFailed(receiveId)++`
+* `++GatewayAdded(gateway)++`
+* `++GatewayRemoved(gateway)++`
+* `++ThresholdUpdated(threshold)++`
+* `++RemoteRegistered(chainId, aggregator)++`
+
+[.contract-subindex-inherited]
+.Pausable
+* `++Paused(account)++`
+* `++Unpaused(account)++`
+
+[.contract-subindex-inherited]
+.Ownable
+* `++OwnershipTransferred(previousOwner, newOwner)++`
+
+[.contract-subindex-inherited]
+.IERC7786Receiver
+
+[.contract-subindex-inherited]
+.IERC7786GatewaySource
+* `++MessagePosted(outboxId, sender, receiver, payload, attributes)++`
+
+--
+
+[.contract-index]
+.Errors
+--
+* `++ERC7786AggregatorValueNotSupported()++`
+* `++ERC7786AggregatorInvalidCrosschainSender()++`
+* `++ERC7786AggregatorAlreadyExecuted()++`
+* `++ERC7786AggregatorRemoteNotRegistered(caip2)++`
+* `++ERC7786AggregatorGatewayAlreadyRegistered(gateway)++`
+* `++ERC7786AggregatorGatewayNotRegistered(gateway)++`
+* `++ERC7786AggregatorThresholdViolation()++`
+* `++ERC7786AggregatorInvalidExecutionReturnValue()++`
+* `++RemoteAlreadyRegistered(chainId)++`
+
+[.contract-subindex-inherited]
+.Pausable
+* `++EnforcedPause()++`
+* `++ExpectedPause()++`
+
+[.contract-subindex-inherited]
+.Ownable
+* `++OwnableUnauthorizedAccount(account)++`
+* `++OwnableInvalidOwner(owner)++`
+
+[.contract-subindex-inherited]
+.IERC7786Receiver
+
+[.contract-subindex-inherited]
+.IERC7786GatewaySource
+* `++UnsupportedAttribute(selector)++`
+
+--
+
+[.contract-item]
+[[ERC7786Aggregator-constructor-address-address---uint8-]]
+==== `[.contract-item-name]#++constructor++#++(address owner_, address[] gateways_, uint8 threshold_)++` [.item-kind]#public#
+
+[.contract-item]
+[[ERC7786Aggregator-supportsAttribute-bytes4-]]
+==== `[.contract-item-name]#++supportsAttribute++#++(bytes4) → bool++` [.item-kind]#public#
+
+Getter to check whether an attribute is supported or not.
+
+[.contract-item]
+[[ERC7786Aggregator-sendMessage-string-string-bytes-bytes---]]
+==== `[.contract-item-name]#++sendMessage++#++(string destinationChain, string receiver, bytes payload, bytes[] attributes) → bytes32 outboxId++` [.item-kind]#public#
+
+Using memory instead of calldata avoids stack too deep errors
+
+[.contract-item]
+[[ERC7786Aggregator-executeMessage-string-string-string-bytes-bytes---]]
+==== `[.contract-item-name]#++executeMessage++#++(string, string sourceChain, string sender, bytes payload, bytes[] attributes) → bytes4++` [.item-kind]#public#
+
+This function serves a dual purpose:
+
+It will be called by ERC-7786 gateways with message coming from the the corresponding aggregator on the source
+chain. These "signals" are tracked until the threshold is reached. At that point the message is sent to the
+destination.
+
+It can also be called by anyone (including an ERC-7786 gateway) to retry the execution. This can be useful if
+the automatic execution (that is triggered when the threshold is reached) fails, and someone wants to retry it.
+
+When a message is forwarded by a known gateway, a {Received} event is emitted. If a known gateway calls this
+function more than once (for a given message), only the first call is counts toward the threshold and emits an
+{Received} event.
+
+This function revert if:
+
+* the message is not properly formatted or does not originate from the registered aggregator on the source
+  chain.
+* someone tries re-execute a message that was already successfully delivered. This includes gateways that call
+  this function a second time with a message that was already executed.
+* the execution of the message (on the {IERC7786Receiver} receiver) is successful but fails to return the
+  executed value.
+
+This function does not revert if:
+
+* A known gateway delivers a message for the first time, and that message was already executed. In that case
+  the message is NOT re-executed, and the correct "magic value" is returned.
+* The execution of the message (on the {IERC7786Receiver} receiver) reverts. In that case a {ExecutionFailed}
+  event is emitted.
+
+This function emits:
+
+* {Received} when a known ERC-7786 gateway delivers a message for the first time.
+* {ExecutionSuccess} when a message is successfully delivered to the receiver.
+* {ExecutionFailed} when a message delivery to the receiver reverted (for example because of OOG error).
+
+NOTE: interface requires this function to be payable. Even if we don't expect any value, a gateway may pass
+some value for unknown reason. In that case we want to register this gateway having delivered the message and
+not revert. Any value accrued that way can be recovered by the admin using the {sweep} function.
+
+[.contract-item]
+[[ERC7786Aggregator-getGateways--]]
+==== `[.contract-item-name]#++getGateways++#++() → address[]++` [.item-kind]#public#
+
+[.contract-item]
+[[ERC7786Aggregator-getThreshold--]]
+==== `[.contract-item-name]#++getThreshold++#++() → uint8++` [.item-kind]#public#
+
+[.contract-item]
+[[ERC7786Aggregator-getRemoteAggregator-string-]]
+==== `[.contract-item-name]#++getRemoteAggregator++#++(string caip2) → string++` [.item-kind]#public#
+
+[.contract-item]
+[[ERC7786Aggregator-addGateway-address-]]
+==== `[.contract-item-name]#++addGateway++#++(address gateway)++` [.item-kind]#public#
+
+[.contract-item]
+[[ERC7786Aggregator-removeGateway-address-]]
+==== `[.contract-item-name]#++removeGateway++#++(address gateway)++` [.item-kind]#public#
+
+[.contract-item]
+[[ERC7786Aggregator-setThreshold-uint8-]]
+==== `[.contract-item-name]#++setThreshold++#++(uint8 newThreshold)++` [.item-kind]#public#
+
+[.contract-item]
+[[ERC7786Aggregator-registerRemoteAggregator-string-string-]]
+==== `[.contract-item-name]#++registerRemoteAggregator++#++(string caip2, string aggregator)++` [.item-kind]#public#
+
+[.contract-item]
+[[ERC7786Aggregator-pause--]]
+==== `[.contract-item-name]#++pause++#++()++` [.item-kind]#public#
+
+[.contract-item]
+[[ERC7786Aggregator-unpause--]]
+==== `[.contract-item-name]#++unpause++#++()++` [.item-kind]#public#
+
+[.contract-item]
+[[ERC7786Aggregator-sweep-address-payable-]]
+==== `[.contract-item-name]#++sweep++#++(address payable to)++` [.item-kind]#public#
+
+Recovery method in case value is ever received through {executeMessage}
+
+[.contract-item]
+[[ERC7786Aggregator-_addGateway-address-]]
+==== `[.contract-item-name]#++_addGateway++#++(address gateway)++` [.item-kind]#internal#
+
+[.contract-item]
+[[ERC7786Aggregator-_removeGateway-address-]]
+==== `[.contract-item-name]#++_removeGateway++#++(address gateway)++` [.item-kind]#internal#
+
+[.contract-item]
+[[ERC7786Aggregator-_setThreshold-uint8-]]
+==== `[.contract-item-name]#++_setThreshold++#++(uint8 newThreshold)++` [.item-kind]#internal#
+
+[.contract-item]
+[[ERC7786Aggregator-_registerRemoteAggregator-string-string-]]
+==== `[.contract-item-name]#++_registerRemoteAggregator++#++(string caip2, string aggregator)++` [.item-kind]#internal#
+
+[.contract-item]
+[[ERC7786Aggregator-OutboxDetails-bytes32-struct-ERC7786Aggregator-Outbox---]]
+==== `[.contract-item-name]#++OutboxDetails++#++(bytes32 indexed outboxId, struct ERC7786Aggregator.Outbox[] outbox)++` [.item-kind]#event#
+
+[.contract-item]
+[[ERC7786Aggregator-Received-bytes32-address-]]
+==== `[.contract-item-name]#++Received++#++(bytes32 indexed receiveId, address gateway)++` [.item-kind]#event#
+
+[.contract-item]
+[[ERC7786Aggregator-ExecutionSuccess-bytes32-]]
+==== `[.contract-item-name]#++ExecutionSuccess++#++(bytes32 indexed receiveId)++` [.item-kind]#event#
+
+[.contract-item]
+[[ERC7786Aggregator-ExecutionFailed-bytes32-]]
+==== `[.contract-item-name]#++ExecutionFailed++#++(bytes32 indexed receiveId)++` [.item-kind]#event#
+
+[.contract-item]
+[[ERC7786Aggregator-GatewayAdded-address-]]
+==== `[.contract-item-name]#++GatewayAdded++#++(address indexed gateway)++` [.item-kind]#event#
+
+[.contract-item]
+[[ERC7786Aggregator-GatewayRemoved-address-]]
+==== `[.contract-item-name]#++GatewayRemoved++#++(address indexed gateway)++` [.item-kind]#event#
+
+[.contract-item]
+[[ERC7786Aggregator-ThresholdUpdated-uint8-]]
+==== `[.contract-item-name]#++ThresholdUpdated++#++(uint8 threshold)++` [.item-kind]#event#
+
+[.contract-item]
+[[ERC7786Aggregator-RemoteRegistered-string-string-]]
+==== `[.contract-item-name]#++RemoteRegistered++#++(string chainId, string aggregator)++` [.item-kind]#event#
+
+[.contract-item]
+[[ERC7786Aggregator-ERC7786AggregatorValueNotSupported--]]
+==== `[.contract-item-name]#++ERC7786AggregatorValueNotSupported++#++()++` [.item-kind]#error#
+
+[.contract-item]
+[[ERC7786Aggregator-ERC7786AggregatorInvalidCrosschainSender--]]
+==== `[.contract-item-name]#++ERC7786AggregatorInvalidCrosschainSender++#++()++` [.item-kind]#error#
+
+[.contract-item]
+[[ERC7786Aggregator-ERC7786AggregatorAlreadyExecuted--]]
+==== `[.contract-item-name]#++ERC7786AggregatorAlreadyExecuted++#++()++` [.item-kind]#error#
+
+[.contract-item]
+[[ERC7786Aggregator-ERC7786AggregatorRemoteNotRegistered-string-]]
+==== `[.contract-item-name]#++ERC7786AggregatorRemoteNotRegistered++#++(string caip2)++` [.item-kind]#error#
+
+[.contract-item]
+[[ERC7786Aggregator-ERC7786AggregatorGatewayAlreadyRegistered-address-]]
+==== `[.contract-item-name]#++ERC7786AggregatorGatewayAlreadyRegistered++#++(address gateway)++` [.item-kind]#error#
+
+[.contract-item]
+[[ERC7786Aggregator-ERC7786AggregatorGatewayNotRegistered-address-]]
+==== `[.contract-item-name]#++ERC7786AggregatorGatewayNotRegistered++#++(address gateway)++` [.item-kind]#error#
+
+[.contract-item]
+[[ERC7786Aggregator-ERC7786AggregatorThresholdViolation--]]
+==== `[.contract-item-name]#++ERC7786AggregatorThresholdViolation++#++()++` [.item-kind]#error#
+
+[.contract-item]
+[[ERC7786Aggregator-ERC7786AggregatorInvalidExecutionReturnValue--]]
+==== `[.contract-item-name]#++ERC7786AggregatorInvalidExecutionReturnValue++#++()++` [.item-kind]#error#
+
+[.contract-item]
+[[ERC7786Aggregator-RemoteAlreadyRegistered-string-]]
+==== `[.contract-item-name]#++RemoteAlreadyRegistered++#++(string chainId)++` [.item-kind]#error#
+
+== Clients
+
+:ERC7786ReceiverInvalidGateway: pass:normal[xref:#ERC7786Receiver-ERC7786ReceiverInvalidGateway-address-[`++ERC7786ReceiverInvalidGateway++`]]
+:ERC7786ReceivePassiveModeValue: pass:normal[xref:#ERC7786Receiver-ERC7786ReceivePassiveModeValue--[`++ERC7786ReceivePassiveModeValue++`]]
+:executeMessage: pass:normal[xref:#ERC7786Receiver-executeMessage-string-string-string-bytes-bytes---[`++executeMessage++`]]
+:_isKnownGateway: pass:normal[xref:#ERC7786Receiver-_isKnownGateway-address-[`++_isKnownGateway++`]]
+:_processMessage: pass:normal[xref:#ERC7786Receiver-_processMessage-address-string-string-string-bytes-bytes---[`++_processMessage++`]]
+
+[.contract]
+[[ERC7786Receiver]]
+=== `++ERC7786Receiver++` link:https://github.com/OpenZeppelin/openzeppelin-community-contracts/blob/master/contracts/crosschain/utils/ERC7786Receiver.sol[{github-icon},role=heading-link]
+
+[.hljs-theme-light.nopadding]
+```solidity
+import "@openzeppelin/community-contracts/crosschain/utils/ERC7786Receiver.sol";
+```
+
+Base implementation of an ERC-7786 compliant cross-chain message receiver.
+
+This abstract contract exposes the `executeMessage` function that is used for communication with (one or multiple)
+destination gateways. This contract leaves two functions unimplemented:
+
+{_isKnownGateway}, an internal getter used to verify whether an address is recognised by the contract as a valid
+ERC-7786 destination gateway. One or multiple gateway can be supported. Note that any malicious address for which
+this function returns true would be able to impersonate any account on any other chain sending any message.
+
+{_processMessage}, the internal function that will be called with any message that has been validated.
+
+[.contract-index]
+.Functions
+--
+* `++executeMessage(messageId, source, sender, payload, attributes)++`
+* `++_isKnownGateway(instance)++`
+* `++_processMessage(gateway, messageId, sourceChain, sender, payload, attributes)++`
+
+[.contract-subindex-inherited]
+.IERC7786Receiver
+
+--
+
+[.contract-index]
+.Errors
+--
+* `++ERC7786ReceiverInvalidGateway(gateway)++`
+* `++ERC7786ReceivePassiveModeValue()++`
+
+[.contract-subindex-inherited]
+.IERC7786Receiver
+
+--
+
+[.contract-item]
+[[ERC7786Receiver-executeMessage-string-string-string-bytes-bytes---]]
+==== `[.contract-item-name]#++executeMessage++#++(string messageId, string source, string sender, bytes payload, bytes[] attributes) → bytes4++` [.item-kind]#public#
+
+Endpoint for receiving cross-chain message.
+
+[.contract-item]
+[[ERC7786Receiver-_isKnownGateway-address-]]
+==== `[.contract-item-name]#++_isKnownGateway++#++(address instance) → bool++` [.item-kind]#internal#
+
+Virtual getter that returns whether an address is a valid ERC-7786 gateway.
+
+[.contract-item]
+[[ERC7786Receiver-_processMessage-address-string-string-string-bytes-bytes---]]
+==== `[.contract-item-name]#++_processMessage++#++(address gateway, string messageId, string sourceChain, string sender, bytes payload, bytes[] attributes)++` [.item-kind]#internal#
+
+Virtual function that should contain the logic to execute when a cross-chain message is received.
+
+[.contract-item]
+[[ERC7786Receiver-ERC7786ReceiverInvalidGateway-address-]]
+==== `[.contract-item-name]#++ERC7786ReceiverInvalidGateway++#++(address gateway)++` [.item-kind]#error#
+
+[.contract-item]
+[[ERC7786Receiver-ERC7786ReceivePassiveModeValue--]]
+==== `[.contract-item-name]#++ERC7786ReceivePassiveModeValue++#++()++` [.item-kind]#error#
+
+== Adapters
+
+=== Axelar
+
+:RegisteredRemoteGateway: pass:normal[xref:#AxelarGatewayBase-RegisteredRemoteGateway-string-string-[`++RegisteredRemoteGateway++`]]
+:RegisteredChainEquivalence: pass:normal[xref:#AxelarGatewayBase-RegisteredChainEquivalence-string-string-[`++RegisteredChainEquivalence++`]]
+:UnsupportedChain: pass:normal[xref:#AxelarGatewayBase-UnsupportedChain-string-[`++UnsupportedChain++`]]
+:ChainEquivalenceAlreadyRegistered: pass:normal[xref:#AxelarGatewayBase-ChainEquivalenceAlreadyRegistered-string-[`++ChainEquivalenceAlreadyRegistered++`]]
+:RemoteGatewayAlreadyRegistered: pass:normal[xref:#AxelarGatewayBase-RemoteGatewayAlreadyRegistered-string-[`++RemoteGatewayAlreadyRegistered++`]]
+:_axelarGateway: pass:normal[xref:#AxelarGatewayBase-_axelarGateway-contract-IAxelarGateway[`++_axelarGateway++`]]
+:constructor: pass:normal[xref:#AxelarGatewayBase-constructor-contract-IAxelarGateway-[`++constructor++`]]
+:getEquivalentChain: pass:normal[xref:#AxelarGatewayBase-getEquivalentChain-string-[`++getEquivalentChain++`]]
+:getRemoteGateway: pass:normal[xref:#AxelarGatewayBase-getRemoteGateway-string-[`++getRemoteGateway++`]]
+:registerChainEquivalence: pass:normal[xref:#AxelarGatewayBase-registerChainEquivalence-string-string-[`++registerChainEquivalence++`]]
+:registerRemoteGateway: pass:normal[xref:#AxelarGatewayBase-registerRemoteGateway-string-string-[`++registerRemoteGateway++`]]
+
+[.contract]
+[[AxelarGatewayBase]]
+=== `++AxelarGatewayBase++` link:https://github.com/OpenZeppelin/openzeppelin-community-contracts/blob/master/contracts/crosschain/axelar/AxelarGatewayBase.sol[{github-icon},role=heading-link]
+
+[.hljs-theme-light.nopadding]
+```solidity
+import "@openzeppelin/community-contracts/crosschain/axelar/AxelarGatewayBase.sol";
+```
+
+Base implementation of a cross-chain gateway adapter for the Axelar Network.
+
+This contract allows developers to register equivalence between chains (i.e. CAIP-2 chain identifiers
+to Axelar chain identifiers) and remote gateways (i.e. gateways on other chains) to
+facilitate cross-chain communication.
+
+[.contract-index]
+.Functions
+--
+* `++constructor(_gateway)++`
+* `++getEquivalentChain(input)++`
+* `++getRemoteGateway(caip2)++`
+* `++registerChainEquivalence(caip2, axelarSupported)++`
+* `++registerRemoteGateway(caip2, remoteGateway)++`
+
+[.contract-subindex-inherited]
+.Ownable
+* `++owner()++`
+* `++_checkOwner()++`
+* `++renounceOwnership()++`
+* `++transferOwnership(newOwner)++`
+* `++_transferOwnership(newOwner)++`
+
+--
+
+[.contract-index]
+.Events
+--
+* `++RegisteredRemoteGateway(caip2, gatewayAddress)++`
+* `++RegisteredChainEquivalence(caip2, destinationChain)++`
+
+[.contract-subindex-inherited]
+.Ownable
+* `++OwnershipTransferred(previousOwner, newOwner)++`
+
+--
+
+[.contract-index]
+.Errors
+--
+* `++UnsupportedChain(caip2)++`
+* `++ChainEquivalenceAlreadyRegistered(caip2)++`
+* `++RemoteGatewayAlreadyRegistered(caip2)++`
+
+[.contract-subindex-inherited]
+.Ownable
+* `++OwnableUnauthorizedAccount(account)++`
+* `++OwnableInvalidOwner(owner)++`
+
+--
+
+[.contract-index]
+.Internal Variables
+--
+* `++contract IAxelarGateway  _axelarGateway++`
+
+[.contract-subindex-inherited]
+.Ownable
+
+--
+
+[.contract-item]
+[[AxelarGatewayBase-constructor-contract-IAxelarGateway-]]
+==== `[.contract-item-name]#++constructor++#++(contract IAxelarGateway _gateway)++` [.item-kind]#internal#
+
+Sets the local gateway address (i.e. Axelar's official gateway for the current chain).
+
+[.contract-item]
+[[AxelarGatewayBase-getEquivalentChain-string-]]
+==== `[.contract-item-name]#++getEquivalentChain++#++(string input) → string output++` [.item-kind]#public#
+
+Returns the equivalent chain given an id that can be either CAIP-2 or an Axelar network identifier.
+
+[.contract-item]
+[[AxelarGatewayBase-getRemoteGateway-string-]]
+==== `[.contract-item-name]#++getRemoteGateway++#++(string caip2) → string remoteGateway++` [.item-kind]#public#
+
+Returns the address string of the remote gateway for a given CAIP-2 chain identifier.
+
+[.contract-item]
+[[AxelarGatewayBase-registerChainEquivalence-string-string-]]
+==== `[.contract-item-name]#++registerChainEquivalence++#++(string caip2, string axelarSupported)++` [.item-kind]#public#
+
+Registers a chain equivalence between a CAIP-2 chain identifier and an Axelar network identifier.
+
+[.contract-item]
+[[AxelarGatewayBase-registerRemoteGateway-string-string-]]
+==== `[.contract-item-name]#++registerRemoteGateway++#++(string caip2, string remoteGateway)++` [.item-kind]#public#
+
+Registers the address string of the remote gateway for a given CAIP-2 chain identifier.
+
+[.contract-item]
+[[AxelarGatewayBase-RegisteredRemoteGateway-string-string-]]
+==== `[.contract-item-name]#++RegisteredRemoteGateway++#++(string caip2, string gatewayAddress)++` [.item-kind]#event#
+
+A remote gateway has been registered for a chain.
+
+[.contract-item]
+[[AxelarGatewayBase-RegisteredChainEquivalence-string-string-]]
+==== `[.contract-item-name]#++RegisteredChainEquivalence++#++(string caip2, string destinationChain)++` [.item-kind]#event#
+
+A chain equivalence has been registered.
+
+[.contract-item]
+[[AxelarGatewayBase-UnsupportedChain-string-]]
+==== `[.contract-item-name]#++UnsupportedChain++#++(string caip2)++` [.item-kind]#error#
+
+Error emitted when an unsupported chain is queried.
+
+[.contract-item]
+[[AxelarGatewayBase-ChainEquivalenceAlreadyRegistered-string-]]
+==== `[.contract-item-name]#++ChainEquivalenceAlreadyRegistered++#++(string caip2)++` [.item-kind]#error#
+
+[.contract-item]
+[[AxelarGatewayBase-RemoteGatewayAlreadyRegistered-string-]]
+==== `[.contract-item-name]#++RemoteGatewayAlreadyRegistered++#++(string caip2)++` [.item-kind]#error#
+
+[.contract-item]
+[[AxelarGatewayBase-_axelarGateway-contract-IAxelarGateway]]
+==== `contract IAxelarGateway [.contract-item-name]#++_axelarGateway++#` [.item-kind]#internal#
+
+Axelar's official gateway for the current chain.
+
+:UnsupportedNativeTransfer: pass:normal[xref:#AxelarGatewaySource-UnsupportedNativeTransfer--[`++UnsupportedNativeTransfer++`]]
+:supportsAttribute: pass:normal[xref:#AxelarGatewaySource-supportsAttribute-bytes4-[`++supportsAttribute++`]]
+:sendMessage: pass:normal[xref:#AxelarGatewaySource-sendMessage-string-string-bytes-bytes---[`++sendMessage++`]]
+
+[.contract]
+[[AxelarGatewaySource]]
+=== `++AxelarGatewaySource++` link:https://github.com/OpenZeppelin/openzeppelin-community-contracts/blob/master/contracts/crosschain/axelar/AxelarGatewaySource.sol[{github-icon},role=heading-link]
+
+[.hljs-theme-light.nopadding]
+```solidity
+import "@openzeppelin/community-contracts/crosschain/axelar/AxelarGatewaySource.sol";
+```
+
+Implementation of an ERC-7786 gateway source adapter for the Axelar Network.
+
+The contract provides a way to send messages to a remote chain via the Axelar Network
+using the {sendMessage} function.
+
+[.contract-index]
+.Functions
+--
+* `++supportsAttribute()++`
+* `++sendMessage(destinationChain, receiver, payload, attributes)++`
+
+[.contract-subindex-inherited]
+.AxelarGatewayBase
+* `++getEquivalentChain(input)++`
+* `++getRemoteGateway(caip2)++`
+* `++registerChainEquivalence(caip2, axelarSupported)++`
+* `++registerRemoteGateway(caip2, remoteGateway)++`
+
+[.contract-subindex-inherited]
+.Ownable
+* `++owner()++`
+* `++_checkOwner()++`
+* `++renounceOwnership()++`
+* `++transferOwnership(newOwner)++`
+* `++_transferOwnership(newOwner)++`
+
+[.contract-subindex-inherited]
+.IERC7786GatewaySource
+
+--
+
+[.contract-index]
+.Events
+--
+
+[.contract-subindex-inherited]
+.AxelarGatewayBase
+* `++RegisteredRemoteGateway(caip2, gatewayAddress)++`
+* `++RegisteredChainEquivalence(caip2, destinationChain)++`
+
+[.contract-subindex-inherited]
+.Ownable
+* `++OwnershipTransferred(previousOwner, newOwner)++`
+
+[.contract-subindex-inherited]
+.IERC7786GatewaySource
+* `++MessagePosted(outboxId, sender, receiver, payload, attributes)++`
+
+--
+
+[.contract-index]
+.Errors
+--
+* `++UnsupportedNativeTransfer()++`
+
+[.contract-subindex-inherited]
+.AxelarGatewayBase
+* `++UnsupportedChain(caip2)++`
+* `++ChainEquivalenceAlreadyRegistered(caip2)++`
+* `++RemoteGatewayAlreadyRegistered(caip2)++`
+
+[.contract-subindex-inherited]
+.Ownable
+* `++OwnableUnauthorizedAccount(account)++`
+* `++OwnableInvalidOwner(owner)++`
+
+[.contract-subindex-inherited]
+.IERC7786GatewaySource
+* `++UnsupportedAttribute(selector)++`
+
+--
+
+[.contract-item]
+[[AxelarGatewaySource-supportsAttribute-bytes4-]]
+==== `[.contract-item-name]#++supportsAttribute++#++(bytes4) → bool++` [.item-kind]#public#
+
+Getter to check whether an attribute is supported or not.
+
+[.contract-item]
+[[AxelarGatewaySource-sendMessage-string-string-bytes-bytes---]]
+==== `[.contract-item-name]#++sendMessage++#++(string destinationChain, string receiver, bytes payload, bytes[] attributes) → bytes32 outboxId++` [.item-kind]#external#
+
+Endpoint for creating a new message. If the message requires further (gateway specific) processing before
+it can be sent to the destination chain, then a non-zero `outboxId` must be returned. Otherwise, the
+message MUST be sent and this function must return 0.
+
+[.contract-item]
+[[AxelarGatewaySource-UnsupportedNativeTransfer--]]
+==== `[.contract-item-name]#++UnsupportedNativeTransfer++#++()++` [.item-kind]#error#
+
+:InvalidOriginGateway: pass:normal[xref:#AxelarGatewayDestination-InvalidOriginGateway-string-string-[`++InvalidOriginGateway++`]]
+:ReceiverExecutionFailed: pass:normal[xref:#AxelarGatewayDestination-ReceiverExecutionFailed--[`++ReceiverExecutionFailed++`]]
+:_execute: pass:normal[xref:#AxelarGatewayDestination-_execute-bytes32-string-string-bytes-[`++_execute++`]]
+
+[.contract]
+[[AxelarGatewayDestination]]
+=== `++AxelarGatewayDestination++` link:https://github.com/OpenZeppelin/openzeppelin-community-contracts/blob/master/contracts/crosschain/axelar/AxelarGatewayDestination.sol[{github-icon},role=heading-link]
+
+[.hljs-theme-light.nopadding]
+```solidity
+import "@openzeppelin/community-contracts/crosschain/axelar/AxelarGatewayDestination.sol";
+```
+
+Implementation of an ERC-7786 gateway destination adapter for the Axelar Network in dual mode.
+
+The contract implements AxelarExecutable's {_execute} function to execute the message, converting Axelar's native
+workflow into the standard ERC-7786.
+
+[.contract-index]
+.Functions
+--
+* `++_execute(commandId, axelarSourceChain, axelarSourceAddress, adapterPayload)++`
+
+[.contract-subindex-inherited]
+.AxelarExecutable
+* `++execute(commandId, sourceChain, sourceAddress, payload)++`
+* `++gateway()++`
+
+[.contract-subindex-inherited]
+.IAxelarExecutable
+
+[.contract-subindex-inherited]
+.AxelarGatewayBase
+* `++getEquivalentChain(input)++`
+* `++getRemoteGateway(caip2)++`
+* `++registerChainEquivalence(caip2, axelarSupported)++`
+* `++registerRemoteGateway(caip2, remoteGateway)++`
+
+[.contract-subindex-inherited]
+.Ownable
+* `++owner()++`
+* `++_checkOwner()++`
+* `++renounceOwnership()++`
+* `++transferOwnership(newOwner)++`
+* `++_transferOwnership(newOwner)++`
+
+--
+
+[.contract-index]
+.Events
+--
+
+[.contract-subindex-inherited]
+.AxelarExecutable
+
+[.contract-subindex-inherited]
+.IAxelarExecutable
+
+[.contract-subindex-inherited]
+.AxelarGatewayBase
+* `++RegisteredRemoteGateway(caip2, gatewayAddress)++`
+* `++RegisteredChainEquivalence(caip2, destinationChain)++`
+
+[.contract-subindex-inherited]
+.Ownable
+* `++OwnershipTransferred(previousOwner, newOwner)++`
+
+--
+
+[.contract-index]
+.Errors
+--
+* `++InvalidOriginGateway(sourceChain, axelarSourceAddress)++`
+* `++ReceiverExecutionFailed()++`
+
+[.contract-subindex-inherited]
+.AxelarExecutable
+
+[.contract-subindex-inherited]
+.IAxelarExecutable
+* `++InvalidAddress()++`
+* `++NotApprovedByGateway()++`
+
+[.contract-subindex-inherited]
+.AxelarGatewayBase
+* `++UnsupportedChain(caip2)++`
+* `++ChainEquivalenceAlreadyRegistered(caip2)++`
+* `++RemoteGatewayAlreadyRegistered(caip2)++`
+
+[.contract-subindex-inherited]
+.Ownable
+* `++OwnableUnauthorizedAccount(account)++`
+* `++OwnableInvalidOwner(owner)++`
+
+--
+
+[.contract-item]
+[[AxelarGatewayDestination-_execute-bytes32-string-string-bytes-]]
+==== `[.contract-item-name]#++_execute++#++(bytes32 commandId, string axelarSourceChain, string axelarSourceAddress, bytes adapterPayload)++` [.item-kind]#internal#
+
+Execution of a cross-chain message.
+
+In this function:
+
+- `axelarSourceChain` is in the Axelar format. It should not be expected to be a proper CAIP-2 format
+- `axelarSourceAddress` is the sender of the Axelar message. That should be the remote gateway on the chain
+  which the message originates from. It is NOT the sender of the ERC-7786 crosschain message.
+
+Proper CAIP-10 encoding of the message sender (including the CAIP-2 name of the origin chain can be found in
+the message)
+
+[.contract-item]
+[[AxelarGatewayDestination-InvalidOriginGateway-string-string-]]
+==== `[.contract-item-name]#++InvalidOriginGateway++#++(string sourceChain, string axelarSourceAddress)++` [.item-kind]#error#
+
+[.contract-item]
+[[AxelarGatewayDestination-ReceiverExecutionFailed--]]
+==== `[.contract-item-name]#++ReceiverExecutionFailed++#++()++` [.item-kind]#error#
+
+:constructor: pass:normal[xref:#AxelarGatewayDuplex-constructor-contract-IAxelarGateway-address-[`++constructor++`]]
+
+[.contract]
+[[AxelarGatewayDuplex]]
+=== `++AxelarGatewayDuplex++` link:https://github.com/OpenZeppelin/openzeppelin-community-contracts/blob/master/contracts/crosschain/axelar/AxelarGatewayDuplex.sol[{github-icon},role=heading-link]
+
+[.hljs-theme-light.nopadding]
+```solidity
+import "@openzeppelin/community-contracts/crosschain/axelar/AxelarGatewayDuplex.sol";
+```
+
+A contract that combines the functionality of both the source and destination gateway
+adapters for the Axelar Network. Allowing to either send or receive messages across chains.
+
+[.contract-index]
+.Functions
+--
+* `++constructor(gateway, initialOwner)++`
+
+[.contract-subindex-inherited]
+.AxelarGatewayDestination
+* `++_execute(commandId, axelarSourceChain, axelarSourceAddress, adapterPayload)++`
+
+[.contract-subindex-inherited]
+.AxelarExecutable
+* `++execute(commandId, sourceChain, sourceAddress, payload)++`
+* `++gateway()++`
+
+[.contract-subindex-inherited]
+.IAxelarExecutable
+
+[.contract-subindex-inherited]
+.AxelarGatewaySource
+* `++supportsAttribute()++`
+* `++sendMessage(destinationChain, receiver, payload, attributes)++`
+
+[.contract-subindex-inherited]
+.AxelarGatewayBase
+* `++getEquivalentChain(input)++`
+* `++getRemoteGateway(caip2)++`
+* `++registerChainEquivalence(caip2, axelarSupported)++`
+* `++registerRemoteGateway(caip2, remoteGateway)++`
+
+[.contract-subindex-inherited]
+.Ownable
+* `++owner()++`
+* `++_checkOwner()++`
+* `++renounceOwnership()++`
+* `++transferOwnership(newOwner)++`
+* `++_transferOwnership(newOwner)++`
+
+[.contract-subindex-inherited]
+.IERC7786GatewaySource
+
+--
+
+[.contract-index]
+.Events
+--
+
+[.contract-subindex-inherited]
+.AxelarGatewayDestination
+
+[.contract-subindex-inherited]
+.AxelarExecutable
+
+[.contract-subindex-inherited]
+.IAxelarExecutable
+
+[.contract-subindex-inherited]
+.AxelarGatewaySource
+
+[.contract-subindex-inherited]
+.AxelarGatewayBase
+* `++RegisteredRemoteGateway(caip2, gatewayAddress)++`
+* `++RegisteredChainEquivalence(caip2, destinationChain)++`
+
+[.contract-subindex-inherited]
+.Ownable
+* `++OwnershipTransferred(previousOwner, newOwner)++`
+
+[.contract-subindex-inherited]
+.IERC7786GatewaySource
+* `++MessagePosted(outboxId, sender, receiver, payload, attributes)++`
+
+--
+
+[.contract-index]
+.Errors
+--
+
+[.contract-subindex-inherited]
+.AxelarGatewayDestination
+* `++InvalidOriginGateway(sourceChain, axelarSourceAddress)++`
+* `++ReceiverExecutionFailed()++`
+
+[.contract-subindex-inherited]
+.AxelarExecutable
+
+[.contract-subindex-inherited]
+.IAxelarExecutable
+* `++InvalidAddress()++`
+* `++NotApprovedByGateway()++`
+
+[.contract-subindex-inherited]
+.AxelarGatewaySource
+* `++UnsupportedNativeTransfer()++`
+
+[.contract-subindex-inherited]
+.AxelarGatewayBase
+* `++UnsupportedChain(caip2)++`
+* `++ChainEquivalenceAlreadyRegistered(caip2)++`
+* `++RemoteGatewayAlreadyRegistered(caip2)++`
+
+[.contract-subindex-inherited]
+.Ownable
+* `++OwnableUnauthorizedAccount(account)++`
+* `++OwnableInvalidOwner(owner)++`
+
+[.contract-subindex-inherited]
+.IERC7786GatewaySource
+* `++UnsupportedAttribute(selector)++`
+
+--
+
+[.contract-item]
+[[AxelarGatewayDuplex-constructor-contract-IAxelarGateway-address-]]
+==== `[.contract-item-name]#++constructor++#++(contract IAxelarGateway gateway, address initialOwner)++` [.item-kind]#public#
+
+Initializes the contract with the Axelar gateway and the initial owner.
+
