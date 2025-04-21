@@ -49,9 +49,9 @@ async function fixture() {
     return Object.assign(userOp, { signature: signer.signingKey.sign(hash).serialized });
   };
 
-  const userOpInvalidSig = async userOp => {
+  const invalidSig = async () => {
     // Create email auth message for the user operation hash
-    const hash = await userOp.hash();
+    const hash = ethers.ZeroHash;
     const timestamp = Math.floor(Date.now() / 1000);
     const command = SIGN_HASH_COMMAND + ' ' + ethers.toBigInt(hash).toString();
     const isCodeExist = true;
@@ -71,7 +71,7 @@ async function fixture() {
     );
   };
 
-  return { helper, mock, dkim, verifier, target, beneficiary, other, signUserOp, userOpInvalidSig, signer };
+  return { helper, mock, dkim, verifier, target, beneficiary, other, signUserOp, invalidSig, signer };
 }
 
 describe('AccountZKEmail', function () {

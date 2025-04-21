@@ -1,3 +1,4 @@
 * xref:index.adoc[Overview]
 * xref:account-abstraction.adoc[Account Abstraction]
+** xref:multisig-account.adoc[Multisig Account]
 * xref:utilities.adoc[Utilities]
