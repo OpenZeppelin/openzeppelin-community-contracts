@@ -40,13 +40,12 @@ library ERC7913Utils {
         } else if (signer.length == 20) {
             return SignatureChecker.isValidSignatureNow(address(bytes20(signer)), hash, signature);
         } else {
-            try IERC7913SignatureVerifier(address(bytes20(signer))).verify(signer.slice(20), hash, signature) returns (
-                bytes4 magic
-            ) {
-                return magic == IERC7913SignatureVerifier.verify.selector;
-            } catch {
-                return false;
-            }
+            (bool success, bytes memory result) = address(bytes20(signer)).staticcall(
+                abi.encodeCall(IERC7913SignatureVerifier.verify, (signer.slice(20), hash, signature))
+            );
+            return (success &&
+                result.length >= 32 &&
+                abi.decode(result, (bytes32)) == bytes32(IERC7913SignatureVerifier.verify.selector));
         }
     }
 }

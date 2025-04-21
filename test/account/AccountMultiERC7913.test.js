@@ -15,6 +15,7 @@ const { PackedUserOperation } = require('../helpers/eip712-types');
 const signerECDSA1 = ethers.Wallet.createRandom();
 const signerECDSA2 = ethers.Wallet.createRandom();
 const signerECDSA3 = ethers.Wallet.createRandom();
+const signerECDSA4 = ethers.Wallet.createRandom(); // Unauthorized signer
 const signerP256 = new NonNativeSigner(P256SigningKey.random());
 const signerRSA = new NonNativeSigner(RSASHA256SigningKey.random());
 
@@ -66,6 +67,8 @@ async function fixture() {
 }
 
 describe('AccountMultiERC7913', function () {
+  const encodeECDSASigner = address => ethers.AbiCoder.defaultAbiCoder().encode(['bytes'], [address]);
+
   beforeEach(async function () {
     Object.assign(this, await loadFixture(fixture));
   });
@@ -122,8 +125,6 @@ describe('AccountMultiERC7913', function () {
   });
 
   describe('Signer management', function () {
-    const encodeECDSASigner = address => ethers.AbiCoder.defaultAbiCoder().encode(['bytes'], [address]);
-
     beforeEach(async function () {
       this.signer = new NonNativeSigner(new MultiERC7913SigningKey([signerECDSA1, signerECDSA2]));
       this.mock = await this.makeMock(
@@ -172,6 +173,64 @@ describe('AccountMultiERC7913', function () {
         this.mock,
         'MultiERC7913UnreachableThreshold',
       );
+    });
+  });
+
+  describe.only('Signature validation', function () {
+    const TEST_MESSAGE = ethers.keccak256(ethers.toUtf8Bytes('Test message'));
+
+    beforeEach(async function () {
+      // Set up mock with authorized signers
+      this.mock = await this.makeMock(
+        [encodeECDSASigner(signerECDSA1.address), encodeECDSASigner(signerECDSA2.address)],
+        1,
+      );
+      await this.mock.deploy();
+    });
+
+    it('rejects signatures from unauthorized signers', async function () {
+      // Create signatures including an unauthorized signer
+      const authorizedSignature = await signerECDSA1.signMessage(ethers.getBytes(TEST_MESSAGE));
+      const unauthorizedSignature = await signerECDSA4.signMessage(ethers.getBytes(TEST_MESSAGE));
+
+      // Prepare signers and signatures arrays
+      const signers = [
+        encodeECDSASigner(signerECDSA1.address),
+        encodeECDSASigner(signerECDSA4.address), // Unauthorized signer
+      ].sort((a, b) => (ethers.toBigInt(ethers.keccak256(a)) < ethers.toBigInt(ethers.keccak256(b)) ? -1 : 1));
+
+      const signatures = signers.map(signer => {
+        if (signer === encodeECDSASigner(signerECDSA1.address)) return authorizedSignature;
+        return unauthorizedSignature;
+      });
+
+      // Encode the multi-signature
+      const multiSignature = ethers.AbiCoder.defaultAbiCoder().encode(['bytes[]', 'bytes[]'], [signers, signatures]);
+
+      // Should fail because one signer is not authorized
+      expect(await this.mock.$_rawSignatureValidation(TEST_MESSAGE, multiSignature)).to.be.false;
+    });
+
+    it('rejects invalid signatures from authorized signers', async function () {
+      // Create a valid signature and an invalid one from authorized signers
+      const validSignature = await signerECDSA1.signMessage(ethers.getBytes(TEST_MESSAGE));
+      const invalidSignature = await signerECDSA2.signMessage(ethers.toUtf8Bytes('Different message')); // Wrong message
+
+      // Prepare signers and signatures arrays
+      const signers = [encodeECDSASigner(signerECDSA1.address), encodeECDSASigner(signerECDSA2.address)].sort((a, b) =>
+        ethers.toBigInt(ethers.keccak256(a)) < ethers.toBigInt(ethers.keccak256(b)) ? -1 : 1,
+      );
+
+      const signatures = signers.map(signer => {
+        if (signer === encodeECDSASigner(signerECDSA1.address)) return validSignature;
+        return invalidSignature;
+      });
+
+      // Encode the multi-signature
+      const multiSignature = ethers.AbiCoder.defaultAbiCoder().encode(['bytes[]', 'bytes[]'], [signers, signatures]);
+
+      // Should fail because one signature is invalid
+      expect(await this.mock.$_rawSignatureValidation(TEST_MESSAGE, multiSignature)).to.be.false;
     });
   });
 });
