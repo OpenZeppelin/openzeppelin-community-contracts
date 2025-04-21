@@ -1,7 +1,7 @@
 // contracts/MyAccountERC7913.sol
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.24;
+pragma solidity ^0.8.27;
 
 import {Account} from "../../../account/Account.sol";
 import {EIP712} from "@openzeppelin/contracts/utils/cryptography/EIP712.sol";
