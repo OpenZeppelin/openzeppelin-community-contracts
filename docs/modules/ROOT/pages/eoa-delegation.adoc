@@ -81,7 +81,7 @@ When implementing delegate contracts, ensure they require signatures over:
 A poorly implemented delegate can allow a malicious actor to take near complete control over a signer's EOA.
 ====
 
-NOTE: xref:api:account.adoc#ERC7821[`ERC7821`] is included to bring batching capabilities to the account, a convenient feature.
+NOTE: xref:api:account.adoc#ERC-7821[`ERC7821`] is included to bring batching capabilities to the account, a convenient feature.
 
 === Sending a UserOp
 
