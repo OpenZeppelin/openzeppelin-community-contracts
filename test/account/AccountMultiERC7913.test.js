@@ -176,7 +176,7 @@ describe('AccountMultiERC7913', function () {
     });
   });
 
-  describe.only('Signature validation', function () {
+  describe('Signature validation', function () {
     const TEST_MESSAGE = ethers.keccak256(ethers.toUtf8Bytes('Test message'));
 
     beforeEach(async function () {
