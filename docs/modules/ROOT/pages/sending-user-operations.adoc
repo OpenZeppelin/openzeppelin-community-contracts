@@ -4,7 +4,7 @@ This walks you through the complete process of preparing and sending xref:accoun
 
 UserOperations are a powerful abstraction layer that enable more sophisticated transaction capabilities compared to traditional Ethereum transactions. To get started, you'll need to an account, which you can get by xref:account-abstraction.adoc#account_factory[deploying a factory] for your implementation.
 
-NOTE: Consider sending native currency (i.e. ETH) to your account if you're not using a xref:account-abstraction.adoc#paymaster[paymaster]
+NOTE: Consider funding your account with native currency (i.e. ETH) if you're not using a xref:account-abstraction.adoc#paymaster[paymaster]
 
 == Bundle a `UserOperation`
 

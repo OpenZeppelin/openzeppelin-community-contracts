@@ -4,13 +4,13 @@ This guide walks you through the process of delegating an https://ethereum.org/e
 
 == Delegating execution
 
-ERC-7702 introduces a new transaction type (`0x4`) that grants externally owned accounts (EOAs) the ability to temporarily execute smart contract operations by setting a delegate contract. This functionality bridges the gap between EOAs and smart account, unlocking capabilities including batch transaction processing, gas fee sponsorship, and managed delegation of access rights.
+ERC-7702 introduces a new transaction type (`0x4`) that grants externally owned accounts (EOAs) the ability to execute smart contract operations by setting a delegate contract. This functionality bridges the gap between EOAs and smart account, unlocking capabilities including batch transaction processing, gas fee sponsorship, and managed delegation of access rights.
 
 === Signing Authorization
 
-To authorize delegation, the EOA owner signs a message containing the chain ID, nonce, delegation address, and signature components (i.e. `[chain_id, address, nonce, y_parity, r, s]`). This signed authorization serves two purposes: it restricts execution to only the approved implementation contract and prevents replay attacks.
+To authorize delegation, the EOA owner signs a message containing the chain ID, nonce, delegation address, and signature components (i.e. `[chain_id, address, nonce, y_parity, r, s]`). This signed authorization serves two purposes: it restricts execution to only the delegate contract and prevents replay attacks.
 
-The EOA maintains a delegation designator for each authorized address, which points to the implementation contract that will handle delegated operations.
+The EOA maintains a delegation designator for each authorized address on each chain, which points to the contract whose code will be executed in the EOA's context to handle delegated operations.
 
 Here's how to construct an authorization with https://viem.sh/[viem]:
 
@@ -54,7 +54,7 @@ const receipt = await walletClient
 console.log(userOpReceipt);
 ----
 
-To remove the delegation and restore your EOA to its original state, you can send a `SET_CODE_TX_TYPE` transaction with an authorization tuple that points to the zero address (`0x0000000000000000000000000000000000000000`). This will clear the account's code and reset its code hash to the empty hash.
+To remove the delegation and restore your EOA to its original state, you can send a `SET_CODE_TX_TYPE` transaction with an authorization tuple that points to the zero address (`0x0000000000000000000000000000000000000000`). This will clear the account's code and reset its code hash to the empty hash, however, be aware that it will not automatically clean the EOA storage.
 
 When changing an account's delegation, ensure the newly delegated code is purposely designed and tested as an upgrade to the old one. To ensure safe migration between delegate contracts, namespaced storage that avoid accidental collisions following ERC-7201. 
 
@@ -63,6 +63,11 @@ WARNING: Updating the delegation designator may render your EOA unusable due to 
 == Using with ERC-4337
 
 The ability to set code to execute logic on an EOA allows users to leverage ERC-4337 infrastructure to process user operations. Developers only need to combine an xref:api:account.adoc#Account[`Account`] contract with an xref:api:utils.adoc#SignerERC7702[`SignerERC7702`] to accomplish ERC-4337 compliance out of the box.
+
+[source,solidity]
+----
+include::api:example$account/MyAccountERC7702.sol[]
+----
 
 [WARNING]
 ====
@@ -76,18 +81,13 @@ When implementing delegate contracts, ensure they require signatures over:
 A poorly implemented delegate can allow a malicious actor to take near complete control over a signer's EOA.
 ====
 
-[source,solidity]
-----
-include::api:example$account/MyAccountERC7702.sol[]
-----
-
 NOTE: xref:api:account.adoc#ERC7821[`ERC7821`] is included to bring batching capabilities to the account, a convenient feature.
 
 === Sending a UserOp
 
 Once your EOA is delegated to an ERC-4337 compatible account, you can send user operations through the entry point contract. The user operation includes all the necessary fields for execution, including gas limits, fees, and the actual call data to execute. The entry point will validate the operation and execute it in the context of your delegated account.
 
-Similar to how xref:sending-user-operations.adoc#bundle_a_useroperation[sending a UserOp] is achieved for factory accounts, here's how you can construct a user op for an EOA who's delegated to an xref:api:account.adoc#Account[`Account`] contract.
+Similar to how xref:sending-user-operations.adoc#bundle_a_useroperation[sending a UserOp] is achieved for factory accounts, here's how you can construct a UserOp for an EOA who's delegated to an xref:api:account.adoc#Account[`Account`] contract.
 
 [source, typescript]
 ----
