@@ -208,7 +208,7 @@ describe('AccountMultiERC7913', function () {
       const multiSignature = ethers.AbiCoder.defaultAbiCoder().encode(['bytes[]', 'bytes[]'], [signers, signatures]);
 
       // Should fail because one signer is not authorized
-      expect(await this.mock.$_rawSignatureValidation(TEST_MESSAGE, multiSignature)).to.be.false;
+      await expect(this.mock.$_rawSignatureValidation(TEST_MESSAGE, multiSignature)).to.eventually.be.false;
     });
 
     it('rejects invalid signatures from authorized signers', async function () {
@@ -230,7 +230,7 @@ describe('AccountMultiERC7913', function () {
       const multiSignature = ethers.AbiCoder.defaultAbiCoder().encode(['bytes[]', 'bytes[]'], [signers, signatures]);
 
       // Should fail because one signature is invalid
-      expect(await this.mock.$_rawSignatureValidation(TEST_MESSAGE, multiSignature)).to.be.false;
+      await expect(this.mock.$_rawSignatureValidation(TEST_MESSAGE, multiSignature)).to.eventually.be.false;
     });
   });
 });
