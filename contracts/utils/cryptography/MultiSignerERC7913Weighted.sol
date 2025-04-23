@@ -91,25 +91,30 @@ abstract contract MultiSignerERC7913Weighted is MultiSignerERC7913 {
         _validateReachableThreshold();
     }
 
-    /// @dev Sets the threshold for the multisignature operation. Internal version without access control.
+    /**
+     * @dev Sets the threshold for the multisignature operation. Internal version without access control.
+     *
+     * NOTE: This function intentionally does not call `super._validateReachableThreshold` because the base implementation
+     * assumes each signer has a weight of 1, which is a subset of this weighted implementation. Consider that multiple
+     * implementations of this function may exist in the contract, so important side effects may be missed
+     * depending on the linearization order.
+     */
     function _validateReachableThreshold() internal view virtual override {
-        // This override intentionally does not call `super._validateReachableThreshold` since that would
-        // perform a comparison of `signers.length >= _threshold`, which is the less-weight per signer
-        // scenario. This would cause a duplicated and unnecessary SLOAD. Since `_validateReachableThreshold` is
-        // a `view` function, there are no state changes that we would miss by not calling super.
-        require(
-            _weightSigners(_signers().values()) >= _threshold(), // TODO: Should there be a max signers?
-            MultiERC7913UnreachableThreshold(_signers().length(), _threshold())
-        );
+        bytes[] memory allSigners = _signers().values(); // TODO: Should there be a max signers?
+        uint256 totalWeight = _weightSigners(allSigners);
+        require(totalWeight >= _threshold(), MultiERC7913UnreachableThreshold(totalWeight, _threshold()));
     }
 
-    /// @dev Overrides the threshold validation to use signer weights.
+    /**
+     * @dev Overrides the threshold validation to use signer weights.
+     *
+     * NOTE: This function intentionally does not call `super._validateReachableThreshold` because the base implementation
+     * assumes each signer has a weight of 1, which is a subset of this weighted implementation. Consider that multiple
+     * implementations of this function may exist in the contract, so important side effects may be missed
+     * depending on the linearization order.
+     */
     function _validateThreshold(bytes[] memory signers) internal view virtual override returns (bool) {
-        // This override intentionally does not call `super._validateThreshold` since that would
-        // perform a comparison of `signers.length >= _threshold`, which is the less-weight per signer
-        // scenario. This would cause a duplicated and unnecessary SLOAD. Since `_validateThreshold` is
-        // a `view` function, there are no state changes that we would miss by not calling super.
-        return _weightSigners(signers) >= _threshold(); /* || super._validateThreshold(signers) */
+        return _weightSigners(signers) >= _threshold();
     }
 
     /// @dev Calculates the total weight of a set of signers.

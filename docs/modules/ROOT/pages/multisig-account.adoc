@@ -151,7 +151,7 @@ The multisig signature is encoded as:
 [source,solidity]
 ----
 abi.encode(
-    bytes[] signers,   // Array of signers in order
+    bytes[] signers,   // Array of signers sorted by `signerId`
     bytes[] signatures // Array of signatures corresponding to each signer
 )
 ----
@@ -163,5 +163,5 @@ Where:
 
 [NOTE]
 ====
-For simplicity, `signers` should match in order with `signatures`. And also, to avoid duplicate usage of a single signature, the contract provides an xref:api:utils.adoc#MultiSignerERC7913-signerId-bytes-[`signerId`] function that exposes a single id for each signer. When providing a signature, the `signers` array should be in ascending order by `signerId`.
+To avoid duplicate signers, the contract provides an xref:api:utils.adoc#MultiSignerERC7913-signerId-bytes-[`signerId`] function that exposes a unique id for each signer. When providing a multisignature, the `signers` array must be sorted in ascending order by `signerId`, and the `signatures` array must match the order of their corresponding signers.
 ====
