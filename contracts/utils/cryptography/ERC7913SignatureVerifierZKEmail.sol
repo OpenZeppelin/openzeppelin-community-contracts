@@ -11,7 +11,7 @@ import {ZKEmailUtils} from "./ZKEmailUtils.sol";
 /**
  * @dev ERC-7913 signature verifier that supports ZKEmail accounts.
  *
- * This verifier validates signatures produced through ZKEmail's zero-knowledge
+ * This contract verifies signatures produced through ZKEmail's zero-knowledge
  * proofs which allows users to authenticate using their email addresses.
  */
 abstract contract ERC7913SignatureVerifierZKEmail is IERC7913SignatureVerifier {
@@ -25,8 +25,10 @@ abstract contract ERC7913SignatureVerifierZKEmail is IERC7913SignatureVerifier {
         _templateId = templateId_;
     }
 
-    /// @dev An instance of the Verifier contract.
-    /// See https://docs.zk.email/architecture/zk-proofs#how-zk-email-uses-zero-knowledge-proofs[ZK Proofs].
+    /**
+     * @dev An instance of the Verifier contract.
+     * See https://docs.zk.email/architecture/zk-proofs#how-zk-email-uses-zero-knowledge-proofs[ZK Proofs].
+     */
     function verifier() public view virtual returns (IVerifier) {
         return _verifier;
     }
