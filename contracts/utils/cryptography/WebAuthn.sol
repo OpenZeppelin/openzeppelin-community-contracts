@@ -54,15 +54,45 @@ library WebAuthn {
      * @dev Verifies a WebAuthn Authentication Assertion as specified in the WebAuthn standard.
      * The function takes a `challenge` provided by the relying party, a flag indicating whether
      * user verification is required, a {WebAuthnAuth} struct containing authentication data,
-     * and the x and y coordinates of the public key, returning true if the
+     * and the `qx` and `qy` coordinates of the public key, returning true if the
      * https://www.w3.org/TR/webauthn-2/#sctn-verifying-assertion[authentication assertion] is valid.
+     *
+     * This implementation verifies:
+     * - Type is "webauthn.get" (confirming this is an authentication, not registration)
+     * - Challenge matches the expected value
+     * - User Present (UP) bit is set
+     * - User Verified (UV) bit is set (when requireUserVerification is true)
+     * - Backup State (BS) and Backup Eligibility (BE) bits are valid (if BE=0, BS must also be 0)
+     * - The cryptographic signature is valid for the given public key
+     *
+     * Unlike some implementations, this verifies the backup state bit relationship
+     * as specified in the WebAuthn standard, which requires that if a credential
+     * is backed up (BS=1), it must also be eligible for backup (BE=1).
+     * Not enforcing this could allow security compromises if backups are not intended.
+     *
+     * For blockchain use cases, the following WebAuthn validations are omitted for valid reasons:
+     *
+     * * Origin validation: We don't verify the origin in clientDataJSON because in blockchain
+     *   contexts, the origin is enforced by the authenticator and dapp frontend. High-quality
+     *   authenticators (like iCloud Keychain, Google Password Manager) properly enforce this.
+     * * RP ID hash validation: We don't verify that rpIdHash in authenticatorData matches the
+     *   expected RP ID hash. This is typically enforced by platform-level protections (like
+     *   Apple App Site Association, Google Asset Links). For additional security, consider
+     *   including an expiry timestamp in signed data.
+     * * Signature counter: We don't verify that the signature counter increases with each
+     *   authentication. While this can help detect credential cloning, on-chain operations
+     *   are frequently replay-protected by their nonce, making this check redundant.
+     * * Extension outputs: We don't verify extension output values, as they're typically not
+     *   critical for the core authentication security model in blockchain applications.
+     * * Attestation: We don't verify attestation objects, as this implementation is designed
+     *   for authentication (webauthn.get) rather than registration ceremonies.
      */
     function verify(
         bytes memory challenge,
         bool requireUserVerification,
         WebAuthnAuth memory auth,
-        uint256 x,
-        uint256 y
+        bytes32 qx,
+        bytes32 qy
     ) internal view returns (bool) {
         // Verify authenticator data has sufficient length (37 bytes minimum):
         // - 32 bytes for rpIdHash
@@ -91,8 +121,8 @@ library WebAuthn {
                 ),
                 bytes32(auth.r),
                 bytes32(auth.s),
-                bytes32(x),
-                bytes32(y)
+                qx,
+                qy
             ); // 20
     }
 
@@ -111,7 +141,18 @@ library WebAuthn {
 
     /**
      * @dev Validates that the https://www.w3.org/TR/webauthn-2/#be[Backup Eligibility (BE)] bit is set
-     * if the https://www.w3.org/TR/webauthn-2/#bs[Backup State (BS)] bit is not set.
+     * if the https://www.w3.org/TR/webauthn-2/#bs[Backup State (BS)] bit is set.
+     *
+     * According to the WebAuthn spec, if a credential is backed up (BS=1), it must also be
+     * eligible for backup (BE=1). This is a security requirement to prevent unauthorized
+     * credential backup.
+     *
+     * The logic returns true if either:
+     * - BE=1 (credential is eligible for backup), regardless of BS value
+     * - BS=0 (credential is not backed up), regardless of BE value
+     *
+     * It only returns false when BE=0 and BS=1, which would indicate a credential
+     * that's backed up but not eligible for backup - an invalid state.
      */
     function validateBackupStateBit(bytes1 flags) internal pure returns (bool) {
         return (flags & AUTH_DATA_FLAGS_BE) != 0 || (flags & AUTH_DATA_FLAGS_BS) == 0;
