@@ -147,6 +147,10 @@ struct PackedUserOperation {
 }
 ```
 
+This process of bundling user operations involves several costs that the bundler must cover, including base transaction fees, calldata serialization, entrypoint execution, and paymaster context costs. To compensate for these expenses, bundlers use the `preVerificationGas` and `gasFees` fields to charge users appropriately.
+
+NOTE: Estimating `preVerificationGas` is not standardized as it varies based on network conditions such as gas prices and the size of the operation bundle.
+
 === Entrypoint
 
 Each `UserOperation` is executed through a contract known as the https://etherscan.io/address/0x0000000071727de22e5e9d8baf0edac6f37da032#code[`EntryPoint`]. This contract is a singleton deployed across multiple networks at the same address although other custom implementations may be used.
@@ -158,6 +162,15 @@ The Entrypoint contracts is considered a trusted entity by the account.
 The bundler is a piece of _offchain_ infrastructure that is in charge of processing an alternative mempool of user operations. Bundlers themselves call the Entrypoint contract's `handleOps` function with an array of UserOperations that are executed and included in a block.
 
 During the process, the bundler pays for the gas of executing the transaction and gets refunded during the execution phase of the Entrypoint contract.
+
+```solidity
+/// @dev Process `userOps` and `beneficiary` receives all
+/// the gas fees collected during the bundle execution.
+function handleOps(
+    PackedUserOperation[] calldata ops,
+    address payable beneficiary
+) external { ... }
+```
 
 === Account Contract
 
