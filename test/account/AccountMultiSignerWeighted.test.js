@@ -32,11 +32,11 @@ async function fixture() {
   const helper = new ERC4337Helper();
   await helper.wait();
   const entrypointDomain = await getDomain(entrypoint.v08);
-  const domain = { name: 'AccountMultiERC7913Weighted', version: '1', chainId: entrypointDomain.chainId }; // Missing verifyingContract
+  const domain = { name: 'AccountMultiSignerWeighted', version: '1', chainId: entrypointDomain.chainId }; // Missing verifyingContract
 
   const makeMock = (signers, weights, threshold) =>
     helper
-      .newAccount('$AccountMultiERC7913WeightedMock', ['AccountMultiERC7913Weighted', '1', signers, weights, threshold])
+      .newAccount('$AccountMultiSignerWeightedMock', ['AccountMultiSignerWeighted', '1', signers, weights, threshold])
       .then(mock => {
         domain.verifyingContract = mock.address;
         return mock;
@@ -67,7 +67,7 @@ async function fixture() {
   };
 }
 
-describe('AccountMultiERC7913Weighted', function () {
+describe('AccountMultiSignerWeighted', function () {
   beforeEach(async function () {
     Object.assign(this, await loadFixture(fixture));
   });
