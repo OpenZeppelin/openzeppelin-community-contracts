@@ -1,0 +1,36 @@
+= Crosschain
+
+[.readme-notice]
+NOTE: This document is better viewed at https://docs.openzeppelin.com/community-contracts/api/crosschain
+
+Gateways are contracts that enable cross-chain communication. These can either be a message source or a destination according to ERC-7786.
+
+ * {ERC7786Receiver}: ERC-7786 cross-chain message receiver.
+ * {ERC7786Aggregator}: ERC-7786 "N out of M" gateway. Sends a message through M gateways and executes on the destination if N received it.
+
+Developers can access interoperability protocols through gateway adapters. The library includes the following gateway adapters:
+
+ * {AxelarGatewayBase}: Core gateway logic for the https://www.axelar.network/[Axelar] adapter.
+ * {AxelarGatewaySource}: ERC-7786 source gateway adapter (sending side) for Axelar.
+ * {AxelarGatewayDestination}: ERC-7786 destination gateway adapter (receiving side) for Axelar.
+ * {AxelarGatewayDuplex}: ERC-7786 gateway adapter that operates in both directions (i.e. send and receive messages) using the Axelar network.
+
+== Gateways
+
+{{ERC7786Aggregator}}
+
+== Clients
+
+{{ERC7786Receiver}}
+
+== Adapters
+
+=== Axelar
+
+{{AxelarGatewayBase}}
+
+{{AxelarGatewaySource}}
+
+{{AxelarGatewayDestination}}
+
+{{AxelarGatewayDuplex}}
