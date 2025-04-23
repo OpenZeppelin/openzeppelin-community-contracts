@@ -379,8 +379,6 @@ Example of usage:
 
 ```solidity
 contract MyAccountECDSA is Account, SignerECDSA, Initializable {
-    constructor() EIP712("MyAccountECDSA", "1") {}
-
     function initialize(address signerAddr) public initializer {
       _setSigner(signerAddr);
     }
@@ -451,8 +449,6 @@ Example of usage:
 
 ```solidity
 contract MyAccountERC7913 is Account, SignerERC7913, Initializable {
-    constructor() EIP712("MyAccountERC7913", "1") {}
-
     function initialize(bytes memory signer_) public initializer {
       _setSigner(signer_);
     }
@@ -516,8 +512,6 @@ Example of usage:
 
 ```solidity
 contract MyAccountP256 is Account, SignerP256, Initializable {
-    constructor() EIP712("MyAccountP256", "1") {}
-
     function initialize(bytes32 qx, bytes32 qy) public initializer {
       _setSigner(qx, qy);
     }
@@ -629,8 +623,6 @@ Example of usage:
 
 ```solidity
 contract MyAccountRSA is Account, SignerRSA, Initializable {
-    constructor() EIP712("MyAccountRSA", "1") {}
-
     function initialize(bytes memory e, bytes memory n) public initializer {
       _setSigner(e, n);
     }
@@ -716,13 +708,18 @@ Example of usage:
 
 ```solidity
 contract MyAccountZKEmail is Account, SignerZKEmail, Initializable {
-    constructor(bytes32 accountSalt, IDKIMRegistry registry, IVerifier verifier, uint256 templateId) {
+  function initialize(
+      bytes32 accountSalt,
+      IDKIMRegistry registry,
+      IVerifier verifier,
+      uint256 templateId
+  ) public initializer {
       // Will revert if the signer is already initialized
       _setAccountSalt(accountSalt);
       _setDKIMRegistry(registry);
       _setVerifier(verifier);
       _setTemplateId(templateId);
-    }
+  }
 }
 ```
 

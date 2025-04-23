@@ -25,8 +25,6 @@ import {Account} from "../Account.sol";
  *
  * ```solidity
  * contract MyAccountERC7579 is AccountERC7579, Initializable {
- *     constructor() EIP712("MyAccountRSA", "1") {}
- *
  *   function initializeAccount(address validator, bytes calldata validatorData) public initializer {
  *     _installModule(MODULE_TYPE_VALIDATOR, validator, validatorData);
  *   }

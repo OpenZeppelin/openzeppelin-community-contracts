@@ -29,13 +29,18 @@ import {ZKEmailUtils} from "./ZKEmailUtils.sol";
  *
  * ```solidity
  * contract MyAccountZKEmail is Account, SignerZKEmail, Initializable {
- *     constructor(bytes32 accountSalt, IDKIMRegistry registry, IVerifier verifier, uint256 templateId) {
+ *   function initialize(
+ *       bytes32 accountSalt,
+ *       IDKIMRegistry registry,
+ *       IVerifier verifier,
+ *       uint256 templateId
+ *   ) public initializer {
  *       // Will revert if the signer is already initialized
  *       _setAccountSalt(accountSalt);
  *       _setDKIMRegistry(registry);
  *       _setVerifier(verifier);
  *       _setTemplateId(templateId);
- *     }
+ *   }
  * }
  * ```
  *
