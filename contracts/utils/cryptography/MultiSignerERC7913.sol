@@ -18,7 +18,7 @@ import {Calldata} from "@openzeppelin/contracts/utils/Calldata.sol";
  * Example of usage:
  *
  * ```solidity
- * contract MyMultiSignerAccount is Account, SignerMultiERC7913, Initializable {
+ * contract MyMultiSignerAccount is Account, MultiSignerERC7913, Initializable {
  *     constructor() EIP712("MyMultiSignerAccount", "1") {}
  *
  *     function initialize(bytes[] memory signers, uint256 threshold) public initializer {
@@ -44,7 +44,7 @@ import {Calldata} from "@openzeppelin/contracts/utils/Calldata.sol";
  * (if used standalone) or during initialization (if used as a clone) may leave the contract
  * either front-runnable or unusable.
  */
-abstract contract SignerMultiERC7913 is AbstractSigner {
+abstract contract MultiSignerERC7913 is AbstractSigner {
     using EnumerableSetExtended for EnumerableSetExtended.BytesSet;
     using ERC7913Utils for bytes;
 

@@ -10,18 +10,18 @@ import {ERC1155Holder} from "@openzeppelin/contracts/token/ERC1155/utils/ERC1155
 import {ERC7739} from "../../../utils/cryptography/ERC7739.sol";
 import {ERC7821} from "../../../account/extensions/ERC7821.sol";
 import {Initializable} from "@openzeppelin/contracts/proxy/utils/Initializable.sol";
-import {SignerMultiERC7913} from "../../../utils/cryptography/SignerMultiERC7913.sol";
+import {MultiSignerERC7913} from "../../../utils/cryptography/MultiSignerERC7913.sol";
 
-contract MyAccountMultiERC7913 is
+contract MyAccountMultiSigner is
     Account,
-    SignerMultiERC7913,
+    MultiSignerERC7913,
     ERC7739,
     ERC7821,
     ERC721Holder,
     ERC1155Holder,
     Initializable
 {
-    constructor() EIP712("MyAccountMultiERC7913", "1") {}
+    constructor() EIP712("MyAccountMultiSigner", "1") {}
 
     function initialize(bytes[] memory signers, uint256 threshold) public initializer {
         _addSigners(signers);

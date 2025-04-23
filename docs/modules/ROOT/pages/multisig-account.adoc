@@ -34,27 +34,27 @@ include::api:example$account/MyAccountERC7913.sol[]
 
 WARNING: Leaving an account uninitialized may leave it unusable since no public key was associated with it.
 
-=== SignerMultiERC7913
+=== MultiSignerERC7913
 
-The xref:api:utils.adoc#SignerMultiERC7913[`SignerMultiERC7913`] contract extends this concept to support multiple signers with a threshold-based signature verification system.
+The xref:api:utils.adoc#MultiSignerERC7913[`MultiSignerERC7913`] contract extends this concept to support multiple signers with a threshold-based signature verification system.
 
 [source,solidity]
 ----
-include::api:example$account/MyAccountMultiERC7913.sol[]
+include::api:example$account/MyAccountMultiSigner.sol[]
 ----
 This implementation is ideal for standard multisig setups where each signer has equal authority, and a fixed number of approvals is required.
 
-The `SignerMultiERC7913` contract provides several key features for managing multi-signature accounts. It maintains a set of authorized signers and implements a threshold-based system that requires a minimum number of signatures to approve operations. The contract includes an internal interface for managing signers, allowing for the addition and removal of authorized parties.
+The `MultiSignerERC7913` contract provides several key features for managing multi-signature accounts. It maintains a set of authorized signers and implements a threshold-based system that requires a minimum number of signatures to approve operations. The contract includes an internal interface for managing signers, allowing for the addition and removal of authorized parties.
 
-NOTE: `SignerMultiERC7913` safeguards to ensure that the threshold remains achievable based on the current number of active signers, preventing situations where operations could become impossible to execute.
+NOTE: `MultiSignerERC7913` safeguards to ensure that the threshold remains achievable based on the current number of active signers, preventing situations where operations could become impossible to execute.
 
-=== SignerMultiERC7913Weighted
+=== MultiSignerERC7913Weighted
 
-For more sophisticated governance structures, the xref:api:utils.adoc#SignerMultiERC7913Weighted[`SignerMultiERC7913Weighted`] contract extends `SignerMultiERC7913` by assigning different weights to each signer.
+For more sophisticated governance structures, the xref:api:utils.adoc#MultiSignerERC7913Weighted[`MultiSignerERC7913Weighted`] contract extends `MultiSignerERC7913` by assigning different weights to each signer.
 
 [source,solidity]
 ----
-include::api:example$account/MyAccountMultiERC7913Weighted.sol[]
+include::api:example$account/MyAccountMultiSignerWeighted.sol[]
 ----
 
 This implementation is perfect for scenarios where different signers should have varying levels of authority, such as:
@@ -63,7 +63,7 @@ This implementation is perfect for scenarios where different signers should have
 * Organizational structures with hierarchical decision-making
 * Hybrid governance systems combining core team and community members
 
-The `SignerMultiERC7913Weighted` contract extends `SignerMultiERC7913` with a weighting system. Each signer can have a custom weight, and operations require the total weight of signing participants to meet or exceed the threshold. Signers without explicit weights default to a weight of 1.
+The `MultiSignerERC7913Weighted` contract extends `MultiSignerERC7913` with a weighting system. Each signer can have a custom weight, and operations require the total weight of signing participants to meet or exceed the threshold. Signers without explicit weights default to a weight of 1.
 
 NOTE: When setting up a weighted multisig, ensure the threshold value matches the scale used for signer weights. For example, if signers have weights like 1, 2, or 3, then a threshold of 4 would require at least two signers (e.g., one with weight 1 and one with weight 3).
 
@@ -162,5 +162,5 @@ Where:
 
 [NOTE]
 ====
-For simplicity, `signers` should match in order with `signatures`. And also, to avoid duplicate usage of a single signature, the contract provides an xref:api:utils.adoc#SignerMultiERC7913-signerId-bytes-[`signerId`] function that exposes a single id for each signer. When providing a signature, the `signers` array should be in ascending order by `signerId`.
+For simplicity, `signers` should match in order with `signatures`. And also, to avoid duplicate usage of a single signature, the contract provides an xref:api:utils.adoc#MultiSignerERC7913-signerId-bytes-[`signerId`] function that exposes a single id for each signer. When providing a signature, the `signers` array should be in ascending order by `signerId`.
 ====

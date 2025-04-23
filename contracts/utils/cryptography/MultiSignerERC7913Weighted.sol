@@ -3,11 +3,11 @@
 pragma solidity ^0.8.27;
 
 import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
-import {SignerMultiERC7913} from "./SignerMultiERC7913.sol";
+import {MultiSignerERC7913} from "./MultiSignerERC7913.sol";
 import {EnumerableSetExtended} from "../../utils/structs/EnumerableSetExtended.sol";
 
 /**
- * @dev Extension of {SignerMultiERC7913} that supports weighted signatures.
+ * @dev Extension of {MultiSignerERC7913} that supports weighted signatures.
  *
  * This contract allows assigning different weights to each signer, enabling more
  * flexible governance schemes. For example, some signers could have higher weight
@@ -16,7 +16,7 @@ import {EnumerableSetExtended} from "../../utils/structs/EnumerableSetExtended.s
  * Example of usage:
  *
  * ```solidity
- * contract MyWeightedMultiSignerAccount is Account, SignerMultiERC7913Weighted, Initializable {
+ * contract MyWeightedMultiSignerAccount is Account, MultiSignerERC7913Weighted, Initializable {
  *     constructor() EIP712("MyWeightedMultiSignerAccount", "1") {}
  *
  *     function initialize(bytes[] memory signers, uint256[] memory weights, uint256 threshold) public initializer {
@@ -47,7 +47,7 @@ import {EnumerableSetExtended} from "../../utils/structs/EnumerableSetExtended.s
  * For example, if signers have weights like 1, 2, or 3, then a threshold of 4 would require at
  * least two signers (e.g., one with weight 1 and one with weight 3). See {signerWeight}.
  */
-abstract contract SignerMultiERC7913Weighted is SignerMultiERC7913 {
+abstract contract MultiSignerERC7913Weighted is MultiSignerERC7913 {
     using EnumerableSetExtended for EnumerableSetExtended.BytesSet;
 
     // Mapping from signer ID to weight

@@ -33,10 +33,10 @@ async function fixture() {
   const helper = new ERC4337Helper();
   await helper.wait();
   const entrypointDomain = await getDomain(entrypoint.v08);
-  const domain = { name: 'AccountMultiERC7913', version: '1', chainId: entrypointDomain.chainId }; // Missing verifyingContract
+  const domain = { name: 'AccountMultiSigner', version: '1', chainId: entrypointDomain.chainId }; // Missing verifyingContract
 
   const makeMock = (signers, threshold) =>
-    helper.newAccount('$AccountMultiERC7913Mock', ['AccountMultiERC7913', '1', signers, threshold]).then(mock => {
+    helper.newAccount('$AccountMultiSignerMock', ['AccountMultiSigner', '1', signers, threshold]).then(mock => {
       domain.verifyingContract = mock.address;
       return mock;
     });
@@ -66,7 +66,7 @@ async function fixture() {
   };
 }
 
-describe('AccountMultiERC7913', function () {
+describe('AccountMultiSigner', function () {
   const encodeECDSASigner = address => ethers.AbiCoder.defaultAbiCoder().encode(['bytes'], [address]);
 
   beforeEach(async function () {

@@ -1,7 +1,7 @@
 ## 21-04-2025
 
-- `SignerMultiERC7913`: Implementation of `AbstractSigner` that supports multiple ERC-7913 signers with a threshold-based signature verification system.
-- `SignerMultiERC7913Weighted`: Extension of `SignerMultiERC7913` that supports assigning different weights to each signer, enabling more flexible governance schemes.
+- `MultiSignerERC7913`: Implementation of `AbstractSigner` that supports multiple ERC-7913 signers with a threshold-based signature verification system.
+- `MultiSignerERC7913Weighted`: Extension of `MultiSignerERC7913` that supports assigning different weights to each signer, enabling more flexible governance schemes.
 
 ## 12-04-2025
 
