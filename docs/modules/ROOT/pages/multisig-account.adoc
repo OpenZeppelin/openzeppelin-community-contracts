@@ -21,7 +21,7 @@ The https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts
 
 == ERC-7913 Signers
 
-https://eips.ethereum.org/EIPS/eip-7913[ERC-7913] addresses these limitations by extending the concept of signer representation to include keys that don't have EVM addresses. OpenZeppelin implements this standard through three contracts:
+https://eips.ethereum.org/EIPS/eip-7913[ERC-7913] extends the concept of signer representation to include keys that don't have EVM addresses, addressing this limitation. OpenZeppelin implements this standard through three contracts:
 
 === SignerERC7913
 
