@@ -1,0 +1,6 @@
+[workspace]
+members = [
+  "scripts/generate-zkemail-proof"
+]
+exclude = ["node_modules/*", "packages/relayer/src/abis"]
+resolver = "2"
