@@ -58,10 +58,10 @@ abstract contract MultiSignerERC7913 is AbstractSigner {
     event ThresholdSet(uint256 threshold);
 
     /// @dev The `signer` already exists.
-    error MultiERC7913SignerAlreadyExists(bytes signer);
+    error MultiSignerERC7913AlreadyExists(bytes signer);
 
     /// @dev The `signer` does not exist.
-    error MultiERC7913SignerNonexistentSigner(bytes signer);
+    error MultiSignerERC7913NonexistentSigner(bytes signer);
 
     /// @dev The `signer` is less than 20 bytes long.
     error MultiERC7913InvalidSigner(bytes signer);
@@ -92,7 +92,7 @@ abstract contract MultiSignerERC7913 is AbstractSigner {
         for (uint256 i = 0; i < signers.length; i++) {
             bytes memory signer = signers[i];
             require(signer.length >= 20, MultiERC7913InvalidSigner(signer));
-            require(_signersSet.add(signer), MultiERC7913SignerAlreadyExists(signer));
+            require(_signersSet.add(signer), MultiSignerERC7913AlreadyExists(signer));
         }
         emit ERC7913SignersAdded(signers);
     }
@@ -101,7 +101,7 @@ abstract contract MultiSignerERC7913 is AbstractSigner {
     function _removeSigners(bytes[] memory signers) internal virtual {
         for (uint256 i = 0; i < signers.length; i++) {
             bytes memory signer = signers[i];
-            require(_signersSet.remove(signer), MultiERC7913SignerNonexistentSigner(signer));
+            require(_signersSet.remove(signer), MultiSignerERC7913NonexistentSigner(signer));
         }
         _validateReachableThreshold();
         emit ERC7913SignersRemoved(signers);

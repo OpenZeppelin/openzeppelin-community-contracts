@@ -192,7 +192,7 @@ describe('AccountMultiSignerWeighted', function () {
 
       // Reverts when setting weight for non-existent signer
       await expect(this.mock.$_setSignerWeights([randomSigner], [1]))
-        .to.be.revertedWithCustomError(this.mock, 'MultiERC7913SignerNonexistentSigner')
+        .to.be.revertedWithCustomError(this.mock, 'MultiSignerERC7913NonexistentSigner')
         .withArgs(randomSigner);
     });
 

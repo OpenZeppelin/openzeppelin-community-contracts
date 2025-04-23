@@ -146,7 +146,7 @@ describe('AccountMultiSigner', function () {
 
       // Reverts if the signer was already added
       await expect(this.mock.$_addSigners(signers))
-        .to.be.revertedWithCustomError(this.mock, 'MultiERC7913SignerAlreadyExists')
+        .to.be.revertedWithCustomError(this.mock, 'MultiSignerERC7913AlreadyExists')
         .withArgs(...signers);
     });
 
@@ -160,7 +160,7 @@ describe('AccountMultiSigner', function () {
 
       // Reverts removing a signer if it doesn't exist
       await expect(this.mock.$_removeSigners(signers))
-        .to.be.revertedWithCustomError(this.mock, 'MultiERC7913SignerNonexistentSigner')
+        .to.be.revertedWithCustomError(this.mock, 'MultiSignerERC7913NonexistentSigner')
         .withArgs(...signers);
     });
 

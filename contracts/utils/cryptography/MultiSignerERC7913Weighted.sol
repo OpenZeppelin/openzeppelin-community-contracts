@@ -72,7 +72,7 @@ abstract contract MultiSignerERC7913Weighted is MultiSignerERC7913 {
      * Requirements:
      *
      * - `signers` and `weights` arrays must have the same length. Reverts with {MultiERC7913WeightedMismatchedLength} on mismatch.
-     * - Each signer must exist in the set of authorized signers. Reverts with {MultiERC7913SignerNonexistentSigner} if not.
+     * - Each signer must exist in the set of authorized signers. Reverts with {MultiSignerERC7913NonexistentSigner} if not.
      * - Each weight must be greater than 0. Reverts with {MultiERC7913WeightedInvalidWeight} if not.
      */
     function _setSignerWeights(bytes[] memory signers, uint256[] memory weights) internal virtual {
@@ -81,7 +81,7 @@ abstract contract MultiSignerERC7913Weighted is MultiSignerERC7913 {
         for (uint256 i = 0; i < signers.length; i++) {
             bytes memory signer = signers[i];
             uint256 weight = weights[i];
-            require(_signers().contains(signer), MultiERC7913SignerNonexistentSigner(signer));
+            require(_signers().contains(signer), MultiSignerERC7913NonexistentSigner(signer));
             require(weight > 0, MultiERC7913WeightedInvalidWeight(signer, weight));
 
             _weights[signerId(signer)] = weight;
