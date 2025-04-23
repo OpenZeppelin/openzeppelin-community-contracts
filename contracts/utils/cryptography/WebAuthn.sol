@@ -1,5 +1,4 @@
 // SPDX-License-Identifier: MIT
-// OpenZeppelin Contracts (last updated v?) (utils/cryptography/WebAuthn.sol)
 
 pragma solidity ^0.8.24;
 
