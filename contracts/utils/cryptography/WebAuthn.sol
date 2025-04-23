@@ -31,9 +31,9 @@ library WebAuthn {
         /// @dev The index at which "type":"..." occurs in `clientDataJSON`.
         uint256 typeIndex;
         /// @dev The r value of secp256r1 signature
-        uint256 r;
+        bytes32 r;
         /// @dev The s value of secp256r1 signature
-        uint256 s;
+        bytes32 s;
     }
 
     /// @dev Bit 0 of the authenticator data flags: "User Present" bit.

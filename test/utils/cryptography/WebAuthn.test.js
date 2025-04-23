@@ -7,8 +7,8 @@ const { loadFixture } = require('@nomicfoundation/hardhat-network-helpers');
 const TEST_VECTORS = {
   safari: {
     challenge: '0xf631058a3ba1116acce12396fad0a125b5041c43f8e15723709f81aa8d5f4ccf',
-    x: '28573233055232466711029625910063034642429572463461595413086259353299906450061',
-    y: '39367742072897599771788408398752356480431855827262528811857788332151452825281',
+    x: '0x3f2be075ef57d6c8374ef412fe54fdd980050f70f4f3a00b5b1b32d2def7d28d',
+    y: '0x57095a365acc2590ade3583fabfe8fbd64a9ed3ec07520da00636fb21f0176c1',
     authenticatorData: '0x49960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d97630500000101',
     clientDataJSON: {
       prefix: '{"type":"webauthn.get","challenge":"',
@@ -16,13 +16,13 @@ const TEST_VECTORS = {
     },
     challengeIndex: 23,
     typeIndex: 1,
-    r: '43684192885701841787131392247364253107519555363555461570655060745499568693242',
-    s: '22655632649588629308599201066602670461698485748654492451178007896016452673579',
+    r: '0x60946081650523acad13c8eff94996a409b1ed60e923c90f9e366aad619adffa',
+    s: '0x3216a237b73765d01b839e0832d73474bc7e63f4c86ef05fbbbfbeb34b35602b',
   },
   chrome: {
     challenge: '0xf631058a3ba1116acce12396fad0a125b5041c43f8e15723709f81aa8d5f4ccf',
-    x: '28573233055232466711029625910063034642429572463461595413086259353299906450061',
-    y: '39367742072897599771788408398752356480431855827262528811857788332151452825281',
+    x: '0x3f2be075ef57d6c8374ef412fe54fdd980050f70f4f3a00b5b1b32d2def7d28d',
+    y: '0x57095a365acc2590ade3583fabfe8fbd64a9ed3ec07520da00636fb21f0176c1',
     authenticatorData: '0x49960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d9763050000010a',
     clientDataJSON: {
       prefix: '{"type":"webauthn.get","challenge":"',
@@ -30,15 +30,15 @@ const TEST_VECTORS = {
     },
     challengeIndex: 23,
     typeIndex: 1,
-    r: '29739767516584490820047863506833955097567272713519339793744591468032609909569',
-    s: '45947455641742997809691064512762075989493430661170736817032030660832793108102',
+    r: '0x41c01ca5ecdfeb23ef70d6cc216fd491ac3aa3d40c480751f3618a3a9ef67b41',
+    s: '0x6595569abf76c2777e832a9252bae14efdb77febd0fa3b919aa16f6208469e86',
   },
   // Invalid cases for testing failure modes
   invalidUp: {
     // User Present bit not set
     challenge: '0xf631058a3ba1116acce12396fad0a125b5041c43f8e15723709f81aa8d5f4ccf',
-    x: '28573233055232466711029625910063034642429572463461595413086259353299906450061',
-    y: '39367742072897599771788408398752356480431855827262528811857788332151452825281',
+    x: '0x3f2be075ef57d6c8374ef412fe54fdd980050f70f4f3a00b5b1b32d2def7d28d',
+    y: '0x57095a365acc2590ade3583fabfe8fbd64a9ed3ec07520da00636fb21f0176c1',
     authenticatorData: '0x49960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d97630500000100', // UP bit not set
     clientDataJSON: {
       prefix: '{"type":"webauthn.get","challenge":"',
@@ -46,14 +46,14 @@ const TEST_VECTORS = {
     },
     challengeIndex: 23,
     typeIndex: 1,
-    r: '43684192885701841787131392247364253107519555363555461570655060745499568693242',
-    s: '22655632649588629308599201066602670461698485748654492451178007896016452673579',
+    r: '0x60946081650523acad13c8eff94996a409b1ed60e923c90f9e366aad619adffa',
+    s: '0x3216a237b73765d01b839e0832d73474bc7e63f4c86ef05fbbbfbeb34b35602b',
   },
   invalidType: {
     // Wrong type - using webauthn.create instead of webauthn.get
     challenge: '0xf631058a3ba1116acce12396fad0a125b5041c43f8e15723709f81aa8d5f4ccf',
-    x: '28573233055232466711029625910063034642429572463461595413086259353299906450061',
-    y: '39367742072897599771788408398752356480431855827262528811857788332151452825281',
+    x: '0x3f2be075ef57d6c8374ef412fe54fdd980050f70f4f3a00b5b1b32d2def7d28d',
+    y: '0x57095a365acc2590ade3583fabfe8fbd64a9ed3ec07520da00636fb21f0176c1',
     authenticatorData: '0x49960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d97630500000101',
     clientDataJSON: {
       prefix: '{"type":"webauthn.create","challenge":"',
@@ -61,8 +61,8 @@ const TEST_VECTORS = {
     },
     challengeIndex: 25, // Adjusted for the longer type string
     typeIndex: 1,
-    r: '43684192885701841787131392247364253107519555363555461570655060745499568693242',
-    s: '22655632649588629308599201066602670461698485748654492451178007896016452673579',
+    r: '0x60946081650523acad13c8eff94996a409b1ed60e923c90f9e366aad619adffa',
+    s: '0x3216a237b73765d01b839e0832d73474bc7e63f4c86ef05fbbbfbeb34b35602b',
   },
 };
 
@@ -84,8 +84,8 @@ const createWebAuthnAuth = (testVector, encodeChallenge = true) => {
     clientDataJSON: clientDataJSON,
     challengeIndex: testVector.challengeIndex,
     typeIndex: testVector.typeIndex,
-    r: BigInt(testVector.r),
-    s: BigInt(testVector.s),
+    r: testVector.r,
+    s: testVector.s,
   };
 };
 
@@ -105,30 +105,30 @@ describe('WebAuthn', function () {
       const vector = TEST_VECTORS.safari;
       const auth = createWebAuthnAuth(vector);
 
-      expect(
-        await this.webAuthnMock.$verify(
+      await expect(
+        this.webAuthnMock.$verify(
           vector.challenge,
           false, // requireUserVerification
           auth,
-          BigInt(vector.x),
-          BigInt(vector.y),
+          vector.x,
+          vector.y,
         ),
-      ).to.be.true;
+      ).to.eventually.be.true;
     });
 
     it('should validate Chrome WebAuthn authentication', async function () {
       const vector = TEST_VECTORS.chrome;
       const auth = createWebAuthnAuth(vector);
 
-      expect(
-        await this.webAuthnMock.$verify(
+      await expect(
+        this.webAuthnMock.$verify(
           vector.challenge,
           false, // requireUserVerification
           auth,
-          BigInt(vector.x),
-          BigInt(vector.y),
+          vector.x,
+          vector.y,
         ),
-      ).to.be.true;
+      ).to.eventually.be.true;
     });
 
     it('should require user verification when specified', async function () {
@@ -136,15 +136,15 @@ describe('WebAuthn', function () {
       const auth = createWebAuthnAuth(vector);
 
       // This should pass because the test vector has UV bit set
-      expect(
-        await this.webAuthnMock.$verify(
+      await expect(
+        this.webAuthnMock.$verify(
           vector.challenge,
           true, // requireUserVerification
           auth,
-          BigInt(vector.x),
-          BigInt(vector.y),
+          vector.x,
+          vector.y,
         ),
-      ).to.be.true;
+      ).to.eventually.be.true;
 
       // Create modified auth data with UV bit cleared (replace bit 2)
       const authNoUV = { ...auth };
@@ -157,31 +157,29 @@ describe('WebAuthn', function () {
       authNoUV.authenticatorData = ethers.hexlify(authDataBytes);
 
       // This should fail because we require UV but the modified auth data doesn't have it
-      expect(
-        await this.webAuthnMock.$verify(
+      await expect(
+        this.webAuthnMock.$verify(
           vector.challenge,
           true, // requireUserVerification
           authNoUV,
-          BigInt(vector.x),
-          BigInt(vector.y),
+          vector.x,
+          vector.y,
         ),
-      ).to.be.false;
+      ).to.eventually.be.false;
     });
 
     it('should reject authentication without user present bit', async function () {
       const vector = TEST_VECTORS.invalidUp;
       const auth = createWebAuthnAuth(vector);
 
-      expect(await this.webAuthnMock.$verify(vector.challenge, false, auth, BigInt(vector.x), BigInt(vector.y))).to.be
-        .false;
+      await expect(this.webAuthnMock.$verify(vector.challenge, false, auth, vector.x, vector.y)).to.eventually.be.false;
     });
 
     it('should reject invalid type in clientDataJSON', async function () {
       const vector = TEST_VECTORS.invalidType;
       const auth = createWebAuthnAuth(vector);
 
-      expect(await this.webAuthnMock.$verify(vector.challenge, false, auth, BigInt(vector.x), BigInt(vector.y))).to.be
-        .false;
+      await expect(this.webAuthnMock.$verify(vector.challenge, false, auth, vector.x, vector.y)).to.eventually.be.false;
     });
 
     it('should reject invalid challenge', async function () {
@@ -189,8 +187,7 @@ describe('WebAuthn', function () {
       // Create auth with wrong challenge encoding
       const auth = createWebAuthnAuth(vector, false);
 
-      expect(await this.webAuthnMock.$verify(vector.challenge, false, auth, BigInt(vector.x), BigInt(vector.y))).to.be
-        .false;
+      await expect(this.webAuthnMock.$verify(vector.challenge, false, auth, vector.x, vector.y)).to.eventually.be.false;
     });
 
     it('should reject if authenticator data is too short', async function () {
@@ -200,47 +197,46 @@ describe('WebAuthn', function () {
       // Truncate authenticator data to make it too short
       auth.authenticatorData = ethers.dataSlice(vector.authenticatorData, 0, 30);
 
-      expect(await this.webAuthnMock.$verify(vector.challenge, false, auth, BigInt(vector.x), BigInt(vector.y))).to.be
-        .false;
+      await expect(this.webAuthnMock.$verify(vector.challenge, false, auth, vector.x, vector.y)).to.eventually.be.false;
     });
   });
 
   describe('Individual validation functions', function () {
     it('should correctly validate user present bit', async function () {
-      expect(await this.webAuthnMock.$validateUserPresentBitSet('0x01')).to.be.true;
-      expect(await this.webAuthnMock.$validateUserPresentBitSet('0x00')).to.be.false;
-      expect(await this.webAuthnMock.$validateUserPresentBitSet('0x05')).to.be.true; // Other bits set too
+      await expect(this.webAuthnMock.$validateUserPresentBitSet('0x01')).to.be.eventually.true;
+      await expect(this.webAuthnMock.$validateUserPresentBitSet('0x00')).to.be.eventually.false;
+      await expect(this.webAuthnMock.$validateUserPresentBitSet('0x05')).to.be.eventually.true; // Other bits set too
     });
 
     it('should correctly validate user verified bit', async function () {
       // When requireUserVerification is true
-      expect(await this.webAuthnMock.$validateUserVerifiedBit('0x04', true)).to.be.true;
-      expect(await this.webAuthnMock.$validateUserVerifiedBit('0x00', true)).to.be.false;
+      await expect(this.webAuthnMock.$validateUserVerifiedBit('0x04', true)).to.be.eventually.true;
+      await expect(this.webAuthnMock.$validateUserVerifiedBit('0x00', true)).to.be.eventually.false;
 
       // When requireUserVerification is false
-      expect(await this.webAuthnMock.$validateUserVerifiedBit('0x04', false)).to.be.true;
-      expect(await this.webAuthnMock.$validateUserVerifiedBit('0x00', false)).to.be.true;
+      await expect(this.webAuthnMock.$validateUserVerifiedBit('0x04', false)).to.be.eventually.true;
+      await expect(this.webAuthnMock.$validateUserVerifiedBit('0x00', false)).to.be.eventually.true;
     });
 
     it('should correctly validate backup state bit logic', async function () {
       // Test all possible combinations of BE and BS bits
 
       // BE=1, BS=0: BE is set, BS is not set (valid)
-      expect(await this.webAuthnMock.$validateBackupStateBit('0x08')).to.be.true;
+      await expect(this.webAuthnMock.$validateBackupStateBit('0x08')).to.eventually.be.true;
 
       // BE=1, BS=1: BE is set, BS is set (valid)
-      expect(await this.webAuthnMock.$validateBackupStateBit('0x18')).to.be.true;
+      await expect(this.webAuthnMock.$validateBackupStateBit('0x18')).to.eventually.be.true;
 
       // BE=0, BS=0: BE is not set, BS is not set (valid)
-      expect(await this.webAuthnMock.$validateBackupStateBit('0x00')).to.be.true;
+      await expect(this.webAuthnMock.$validateBackupStateBit('0x00')).to.eventually.be.true;
 
       // BE=0, BS=1: BE is not set, BS is set (invalid)
-      expect(await this.webAuthnMock.$validateBackupStateBit('0x10')).to.be.false;
+      await expect(this.webAuthnMock.$validateBackupStateBit('0x10')).to.eventually.be.false;
 
       // Test with other bits set too
-      expect(await this.webAuthnMock.$validateBackupStateBit('0x51')).to.be.false; // BE=0, BS=1, others=0x41
-      expect(await this.webAuthnMock.$validateBackupStateBit('0x59')).to.be.true; // BE=1, BS=1, others=0x41
-      expect(await this.webAuthnMock.$validateBackupStateBit('0x41')).to.be.true; // BE=0, BS=0, others=0x41
+      await expect(this.webAuthnMock.$validateBackupStateBit('0x51')).to.eventually.be.false; // BE=0, BS=1, others=0x41
+      await expect(this.webAuthnMock.$validateBackupStateBit('0x59')).to.eventually.be.true; // BE=1, BS=1, others=0x41
+      await expect(this.webAuthnMock.$validateBackupStateBit('0x41')).to.eventually.be.true; // BE=0, BS=0, others=0x41
     });
   });
 });
