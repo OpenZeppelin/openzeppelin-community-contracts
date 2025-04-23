@@ -15,6 +15,7 @@ const { shouldBehaveLikeERC7821 } = require('./extensions/ERC7821.behavior');
 const signerECDSA1 = ethers.Wallet.createRandom();
 const signerECDSA2 = ethers.Wallet.createRandom();
 const signerECDSA3 = ethers.Wallet.createRandom();
+const signerECDSA4 = ethers.Wallet.createRandom();
 const signerP256 = new NonNativeSigner(P256SigningKey.random());
 const signerRSA = new NonNativeSigner(RSASHA256SigningKey.random());
 
@@ -132,7 +133,7 @@ describe('AccountMultiSignerWeighted', function () {
     shouldBehaveLikeERC7821();
   });
 
-  describe.skip('Weight management', function () {
+  describe('Weight management', function () {
     const encodeECDSASigner = address => ethers.AbiCoder.defaultAbiCoder().encode(['bytes'], [address]);
 
     beforeEach(async function () {
@@ -238,7 +239,7 @@ describe('AccountMultiSignerWeighted', function () {
     });
 
     it('reports default weight of 1 for signers without explicit weight', async function () {
-      const signer4 = encodeECDSASigner(signerECDSA3.address);
+      const signer4 = encodeECDSASigner(signerECDSA4.address);
 
       // Add a new signer without setting weight
       await this.mock.$_addSigners([signer4]);
