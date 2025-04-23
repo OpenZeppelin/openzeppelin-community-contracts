@@ -138,7 +138,7 @@ function setupWeightedMultisigAccount() external {
 }
 ----
 
-IMPORTANT: Always ensure that the sum of weights for all active signers meets or exceeds the threshold. Otherwise, it would be impossible to reach the required threshold for approving operations.
+IMPORTANT: The xref:api:utils.adoc#MultiSignerERC7913-_validateReachableThreshold--[`_validateReachableThreshold`] function ensures that the sum of weights for all active signers meets or exceeds the threshold. Any customization built on top of the multisigner contracts must ensure the threshold is always reachable.
 
 == How to Encode a Signature
 
