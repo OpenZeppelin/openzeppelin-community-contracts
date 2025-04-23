@@ -62,6 +62,7 @@ This implementation is perfect for scenarios where different signers should have
 * Board members with different voting powers
 * Organizational structures with hierarchical decision-making
 * Hybrid governance systems combining core team and community members
+* Execution setups like "social recovery" where you trust particular guardians more than others
 
 The `MultiSignerERC7913Weighted` contract extends `MultiSignerERC7913` with a weighting system. Each signer can have a custom weight, and operations require the total weight of signing participants to meet or exceed the threshold. Signers without explicit weights default to a weight of 1.
 
