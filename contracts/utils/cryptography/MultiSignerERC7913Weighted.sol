@@ -3,6 +3,7 @@
 pragma solidity ^0.8.27;
 
 import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
+import {SafeCast} from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import {MultiSignerERC7913} from "./MultiSignerERC7913.sol";
 import {EnumerableSetExtended} from "../../utils/structs/EnumerableSetExtended.sol";
 
@@ -49,9 +50,10 @@ import {EnumerableSetExtended} from "../../utils/structs/EnumerableSetExtended.s
  */
 abstract contract MultiSignerERC7913Weighted is MultiSignerERC7913 {
     using EnumerableSetExtended for EnumerableSetExtended.BytesSet;
+    using SafeCast for uint256;
 
     // Invariant: sum(weights) >= threshold
-    uint256 private _totalWeight;
+    uint128 private _totalWeight;
 
     // Mapping from signer ID to weight
     mapping(bytes32 signedId => uint256) private _weights;
@@ -104,7 +106,7 @@ abstract contract MultiSignerERC7913Weighted is MultiSignerERC7913 {
 
             uint256 oldWeight = _signerWeight(signer);
             _weights[signerId(signer)] = newWeight;
-            _totalWeight = _totalWeight + newWeight - oldWeight;
+            _totalWeight = (_totalWeight + newWeight - oldWeight).toUint128();
             emit ERC7913SignerWeightChanged(signer, newWeight);
         }
 
@@ -114,13 +116,13 @@ abstract contract MultiSignerERC7913Weighted is MultiSignerERC7913 {
     /// @inheritdoc MultiSignerERC7913
     function _addSigners(bytes[] memory newSigners) internal virtual override {
         super._addSigners(newSigners);
-        _totalWeight += newSigners.length; // Each new signer has a default weight of 1
+        _totalWeight += newSigners.length.toUint128(); // Each new signer has a default weight of 1
     }
 
     /// @inheritdoc MultiSignerERC7913
     function _removeSigners(bytes[] memory oldSigners) internal virtual override {
         uint256 removedWeight = _weightSigners(oldSigners);
-        _totalWeight -= removedWeight;
+        _totalWeight -= removedWeight.toUint128();
         // Clean up weights for removed signers
         for (uint256 i = 0; i < oldSigners.length; i++) {
             delete _weights[signerId(oldSigners[i])];

@@ -6,6 +6,7 @@ import {AbstractSigner} from "./AbstractSigner.sol";
 import {ERC7913Utils} from "./ERC7913Utils.sol";
 import {EnumerableSetExtended} from "../../utils/structs/EnumerableSetExtended.sol";
 import {Calldata} from "@openzeppelin/contracts/utils/Calldata.sol";
+import {SafeCast} from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
 /**
  * @dev Implementation of {AbstractSigner} using multiple ERC-7913 signers with a threshold-based
@@ -47,6 +48,7 @@ import {Calldata} from "@openzeppelin/contracts/utils/Calldata.sol";
 abstract contract MultiSignerERC7913 is AbstractSigner {
     using EnumerableSetExtended for EnumerableSetExtended.BytesSet;
     using ERC7913Utils for bytes;
+    using SafeCast for uint256;
 
     /// @dev Emitted when signers are added.
     event ERC7913SignersAdded(bytes[] indexed signers);
@@ -70,7 +72,7 @@ abstract contract MultiSignerERC7913 is AbstractSigner {
     error MultiSignerERC7913UnreachableThreshold(uint256 signers, uint256 threshold);
 
     EnumerableSetExtended.BytesSet private _signersSet;
-    uint256 private _threshold;
+    uint128 private _threshold;
 
     /// @dev Returns the internal id of the `signer`.
     function signerId(bytes memory signer) public view virtual returns (bytes32) {
@@ -125,7 +127,7 @@ abstract contract MultiSignerERC7913 is AbstractSigner {
 
     /// @dev Sets the signatures `threshold` required to approve a multisignature operation. Internal version without access control.
     function _setThreshold(uint256 newThreshold) internal virtual {
-        _threshold = newThreshold;
+        _threshold = newThreshold.toUint128();
         _validateReachableThreshold();
         emit ERC7913ThresholdSet(newThreshold);
     }
