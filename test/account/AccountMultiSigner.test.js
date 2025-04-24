@@ -129,6 +129,11 @@ describe('AccountMultiSigner', function () {
       await this.mock.deploy();
     });
 
+    it('verifies signerId function returns keccak256(signer)', async function () {
+      const signer = signerECDSA1.address;
+      await expect(this.mock.signerId(signer)).to.eventually.equal(ethers.keccak256(signer));
+    });
+
     it('can add signers', async function () {
       const signers = [
         signerECDSA3.address, // ECDSA Signer
@@ -161,6 +166,11 @@ describe('AccountMultiSigner', function () {
       await expect(this.mock.$_removeSigners(signers))
         .to.be.revertedWithCustomError(this.mock, 'MultiSignerERC7913NonexistentSigner')
         .withArgs(...signers.map(s => s.toLowerCase()));
+
+      // Reverts if removing a signer makes the threshold unreachable
+      await expect(this.mock.$_removeSigners([signerECDSA1.address]))
+        .to.be.revertedWithCustomError(this.mock, 'MultiERC7913UnreachableThreshold')
+        .withArgs(0, 1);
     });
 
     it('can change threshold', async function () {

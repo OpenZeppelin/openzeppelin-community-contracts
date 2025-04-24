@@ -143,11 +143,6 @@ describe('AccountMultiSignerWeighted', function () {
       await this.mock.deploy();
     });
 
-    it('verifies signerId function returns keccak256(signer)', async function () {
-      const signer = signerECDSA1.address;
-      await expect(this.mock.signerId(signer)).to.eventually.equal(ethers.keccak256(signer));
-    });
-
     it('can get signer weights', async function () {
       const signer1 = signerECDSA1.address;
       const signer2 = signerECDSA2.address;
@@ -223,6 +218,11 @@ describe('AccountMultiSignerWeighted', function () {
         this.mock,
         'MultiERC7913UnreachableThreshold',
       );
+
+      // Also try to increase threshold to be larger than the total weight
+      await expect(this.mock.$_setThreshold(7))
+        .to.be.revertedWithCustomError(this.mock, 'MultiERC7913UnreachableThreshold')
+        .withArgs(6, 7);
     });
 
     it('reports default weight of 1 for signers without explicit weight', async function () {
@@ -233,6 +233,11 @@ describe('AccountMultiSignerWeighted', function () {
 
       // Should have default weight of 1
       await expect(this.mock.signerWeight(signer4)).to.eventually.equal(1);
+    });
+
+    it('reports weight of 0 for invalid signers', async function () {
+      const randomSigner = ethers.Wallet.createRandom().address;
+      await expect(this.mock.signerWeight(randomSigner)).to.eventually.equal(0);
     });
 
     it('can get total weight of all signers', async function () {
@@ -253,6 +258,20 @@ describe('AccountMultiSignerWeighted', function () {
       // Remove signer - should decrease total weight by current weight (5)
       await this.mock.$_removeSigners([signer4]);
       await expect(this.mock.totalWeight()).to.eventually.equal(6); // 11 - 5
+    });
+
+    it('removing signers should not make threshold unreachable', async function () {
+      // current threshold = 4, totalWeight = 6
+      const signer1 = signerECDSA1.address; // weight 1
+      const signer3 = signerECDSA3.address; // weight 3
+
+      // Removing signer3 should let threshold unreachable and revert. (new totalWeight = 3, threshold = 4)
+      await expect(this.mock.$_removeSigners([signer3]))
+        .to.be.revertedWithCustomError(this.mock, 'MultiERC7913UnreachableThreshold')
+        .withArgs(3, 4);
+
+      // Removing signer1 should not revert (new totalWeight = 5, threshold = 4)
+      await expect(this.mock.$_removeSigners([signer1])).to.not.be.reverted;
     });
   });
 });

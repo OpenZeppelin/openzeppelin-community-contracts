@@ -119,17 +119,17 @@ abstract contract MultiSignerERC7913 is AbstractSigner {
     }
 
     /// @dev Sets the signatures `threshold` required to approve a multisignature operation. Internal version without access control.
-    function _setThreshold(uint256 threshold_) internal virtual {
-        _threshold = threshold_;
+    function _setThreshold(uint256 newThreshold) internal virtual {
+        _threshold = newThreshold;
         _validateReachableThreshold();
-        emit ThresholdSet(threshold_);
+        emit ThresholdSet(newThreshold);
     }
 
     /// @dev Validates the current threshold is reachable.
     function _validateReachableThreshold() internal view virtual {
         uint256 totalSigners = _signers().length();
-        uint256 minThreshold = threshold();
-        require(totalSigners >= minThreshold, MultiERC7913UnreachableThreshold(totalSigners, minThreshold));
+        uint256 currentThreshold = threshold();
+        require(totalSigners >= currentThreshold, MultiERC7913UnreachableThreshold(totalSigners, currentThreshold));
     }
 
     /**

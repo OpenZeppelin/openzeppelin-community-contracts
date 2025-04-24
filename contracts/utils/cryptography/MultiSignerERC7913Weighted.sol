@@ -50,7 +50,7 @@ import {EnumerableSetExtended} from "../../utils/structs/EnumerableSetExtended.s
 abstract contract MultiSignerERC7913Weighted is MultiSignerERC7913 {
     using EnumerableSetExtended for EnumerableSetExtended.BytesSet;
 
-    // Invariant: sum(weights) == threshold
+    // Invariant: sum(weights) >= threshold
     uint256 private _totalWeight;
 
     // Mapping from signer ID to weight
@@ -93,19 +93,19 @@ abstract contract MultiSignerERC7913Weighted is MultiSignerERC7913 {
      * - Each signer must exist in the set of authorized signers. Reverts with {MultiSignerERC7913NonexistentSigner} if not.
      * - Each weight must be greater than 0. Reverts with {MultiERC7913WeightedInvalidWeight} if not.
      */
-    function _setSignerWeights(bytes[] memory signers, uint256[] memory weights) internal virtual {
-        require(signers.length == weights.length, MultiERC7913WeightedMismatchedLength());
+    function _setSignerWeights(bytes[] memory signers, uint256[] memory newWeights) internal virtual {
+        require(signers.length == newWeights.length, MultiERC7913WeightedMismatchedLength());
 
         for (uint256 i = 0; i < signers.length; i++) {
             bytes memory signer = signers[i];
-            uint256 weight = weights[i];
+            uint256 newWeight = newWeights[i];
             require(_signers().contains(signer), MultiSignerERC7913NonexistentSigner(signer));
-            require(weight > 0, MultiERC7913WeightedInvalidWeight(signer, weight));
+            require(newWeight > 0, MultiERC7913WeightedInvalidWeight(signer, newWeight));
 
             uint256 oldWeight = _signerWeight(signer);
-            _weights[signerId(signer)] = weight;
-            _totalWeight = _totalWeight - oldWeight + weight;
-            emit ERC7913SignerWeightChanged(signer, weight);
+            _weights[signerId(signer)] = newWeight;
+            _totalWeight += newWeight - oldWeight;
+            emit ERC7913SignerWeightChanged(signer, newWeight);
         }
 
         _validateReachableThreshold();
@@ -118,15 +118,15 @@ abstract contract MultiSignerERC7913Weighted is MultiSignerERC7913 {
     }
 
     /// @inheritdoc MultiSignerERC7913
-    function _removeSigners(bytes[] memory signers) internal virtual override {
-        uint256 removedWeight = _weightSigners(signers);
-        super._removeSigners(signers);
+    function _removeSigners(bytes[] memory oldSigners) internal virtual override {
+        uint256 removedWeight = _weightSigners(oldSigners);
         _totalWeight -= removedWeight;
         // Clean up weights for removed signers
-        for (uint256 i = 0; i < signers.length; i++) {
-            delete _weights[signerId(signers[i])];
-            emit ERC7913SignerWeightChanged(signers[i], 0);
+        for (uint256 i = 0; i < oldSigners.length; i++) {
+            delete _weights[signerId(oldSigners[i])];
+            emit ERC7913SignerWeightChanged(oldSigners[i], 0);
         }
+        super._removeSigners(oldSigners);
     }
 
     /**
