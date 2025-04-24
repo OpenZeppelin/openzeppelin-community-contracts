@@ -145,7 +145,7 @@ abstract contract MultiSignerERC7913Weighted is MultiSignerERC7913 {
     /**
      * @dev Overrides the threshold validation to use signer weights.
      *
-     * NOTE: This function intentionally does not call `super._validateReachableThreshold` because the base implementation
+     * NOTE: This function intentionally does not call `super. _validateThreshold` because the base implementation
      * assumes each signer has a weight of 1, which is a subset of this weighted implementation. Consider that multiple
      * implementations of this function may exist in the contract, so important side effects may be missed
      * depending on the linearization order.
