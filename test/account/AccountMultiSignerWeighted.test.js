@@ -134,34 +134,24 @@ describe('AccountMultiSignerWeighted', function () {
   });
 
   describe('Weight management', function () {
-    const encodeECDSASigner = address => ethers.AbiCoder.defaultAbiCoder().encode(['bytes'], [address]);
-
     beforeEach(async function () {
       const weights = [1, 2, 3];
       this.signer = new NonNativeSigner(
         new MultiERC7913SigningKey([signerECDSA1, signerECDSA2, signerECDSA3], weights),
       );
-      this.mock = await this.makeMock(
-        [
-          encodeECDSASigner(signerECDSA1.address),
-          encodeECDSASigner(signerECDSA2.address),
-          encodeECDSASigner(signerECDSA3.address),
-        ],
-        weights,
-        4,
-      );
+      this.mock = await this.makeMock([signerECDSA1.address, signerECDSA2.address, signerECDSA3.address], weights, 4);
       await this.mock.deploy();
     });
 
     it('verifies signerId function returns keccak256(signer)', async function () {
-      const signer = encodeECDSASigner(signerECDSA1.address);
+      const signer = signerECDSA1.address;
       await expect(this.mock.signerId(signer)).to.eventually.equal(ethers.keccak256(signer));
     });
 
     it('can get signer weights', async function () {
-      const signer1 = encodeECDSASigner(signerECDSA1.address);
-      const signer2 = encodeECDSASigner(signerECDSA2.address);
-      const signer3 = encodeECDSASigner(signerECDSA3.address);
+      const signer1 = signerECDSA1.address;
+      const signer2 = signerECDSA2.address;
+      const signer3 = signerECDSA3.address;
 
       await expect(this.mock.signerWeight(signer1)).to.eventually.equal(1);
       await expect(this.mock.signerWeight(signer2)).to.eventually.equal(2);
@@ -169,9 +159,9 @@ describe('AccountMultiSignerWeighted', function () {
     });
 
     it('can update signer weights', async function () {
-      const signer1 = encodeECDSASigner(signerECDSA1.address);
-      const signer2 = encodeECDSASigner(signerECDSA2.address);
-      const signer3 = encodeECDSASigner(signerECDSA3.address);
+      const signer1 = signerECDSA1.address;
+      const signer2 = signerECDSA2.address;
+      const signer3 = signerECDSA3.address;
 
       // Successfully updates weights and emits event
       await expect(this.mock.$_setSignerWeights([signer1, signer2], [5, 5]))
@@ -186,26 +176,26 @@ describe('AccountMultiSignerWeighted', function () {
     });
 
     it('cannot set weight to non-existent signer', async function () {
-      const randomSigner = encodeECDSASigner(ethers.Wallet.createRandom().address);
+      const randomSigner = ethers.Wallet.createRandom().address;
 
       // Reverts when setting weight for non-existent signer
       await expect(this.mock.$_setSignerWeights([randomSigner], [1]))
         .to.be.revertedWithCustomError(this.mock, 'MultiSignerERC7913NonexistentSigner')
-        .withArgs(randomSigner);
+        .withArgs(randomSigner.toLowerCase());
     });
 
     it('cannot set weight to 0', async function () {
-      const signer1 = encodeECDSASigner(signerECDSA1.address);
+      const signer1 = signerECDSA1.address;
 
       // Reverts when setting weight to 0
       await expect(this.mock.$_setSignerWeights([signer1], [0]))
         .to.be.revertedWithCustomError(this.mock, 'MultiERC7913WeightedInvalidWeight')
-        .withArgs(signer1, 0);
+        .withArgs(signer1.toLowerCase(), 0);
     });
 
     it('requires signers and weights arrays to have same length', async function () {
-      const signer1 = encodeECDSASigner(signerECDSA1.address);
-      const signer2 = encodeECDSASigner(signerECDSA2.address);
+      const signer1 = signerECDSA1.address;
+      const signer2 = signerECDSA2.address;
 
       // Reverts when arrays have different lengths
       await expect(this.mock.$_setSignerWeights([signer1, signer2], [1])).to.be.revertedWithCustomError(
@@ -215,9 +205,9 @@ describe('AccountMultiSignerWeighted', function () {
     });
 
     it('validates threshold is reachable when updating weights', async function () {
-      const signer1 = encodeECDSASigner(signerECDSA1.address);
-      const signer2 = encodeECDSASigner(signerECDSA2.address);
-      const signer3 = encodeECDSASigner(signerECDSA3.address);
+      const signer1 = signerECDSA1.address;
+      const signer2 = signerECDSA2.address;
+      const signer3 = signerECDSA3.address;
 
       // First, lower the weights so the sum is exactly 6 (just enough for threshold=6)
       await expect(this.mock.$_setSignerWeights([signer1, signer2, signer3], [1, 2, 3])).to.emit(
@@ -236,7 +226,7 @@ describe('AccountMultiSignerWeighted', function () {
     });
 
     it('reports default weight of 1 for signers without explicit weight', async function () {
-      const signer4 = encodeECDSASigner(signerECDSA4.address);
+      const signer4 = signerECDSA4.address;
 
       // Add a new signer without setting weight
       await this.mock.$_addSigners([signer4]);
@@ -250,7 +240,7 @@ describe('AccountMultiSignerWeighted', function () {
     });
 
     it('updates total weight when adding and removing signers', async function () {
-      const signer4 = encodeECDSASigner(signerECDSA4.address);
+      const signer4 = signerECDSA4.address;
 
       // Add a new signer - should increase total weight by default weight (1)
       await this.mock.$_addSigners([signer4]);
