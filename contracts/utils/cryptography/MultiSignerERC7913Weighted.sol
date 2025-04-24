@@ -56,13 +56,23 @@ abstract contract MultiSignerERC7913Weighted is MultiSignerERC7913 {
     /// @dev Emitted when a signer's weight is changed.
     event ERC7913SignerWeightChanged(bytes indexed signer, uint256 weight);
 
-    /// @dev Emitted when a signer's weight is invalid.
+    /// @dev Thrown when a signer's weight is invalid.
     error MultiERC7913WeightedInvalidWeight(bytes signer, uint256 weight);
 
+    /// @dev Thrown when the threshold is unreachable.
     error MultiERC7913WeightedMismatchedLength();
 
-    /// @dev Gets the weight of a signer. Returns 1 if not explicitly set.
+    /// @dev Gets the weight of a signer. Returns 0 if the signer is not authorized.
     function signerWeight(bytes memory signer) public view virtual returns (uint256) {
+        return Math.ternary(_signers().contains(signer), _signerWeight(signer), 0);
+    }
+
+    /**
+     * @dev Gets the weight of the current signer. Returns 1 if not explicitly set.
+     *
+     * NOTE: This internal function doesn't check if the signer is authorized.
+     */
+    function _signerWeight(bytes memory signer) internal view virtual returns (uint256) {
         return Math.max(_weights[signerId(signer)], 1);
     }
 
@@ -115,6 +125,16 @@ abstract contract MultiSignerERC7913Weighted is MultiSignerERC7913 {
      */
     function _validateThreshold(bytes[] memory signers) internal view virtual override returns (bool) {
         return _weightSigners(signers) >= _threshold();
+    }
+
+    /// @inheritdoc MultiSignerERC7913
+    function _removeSigners(bytes[] memory signers) internal virtual override {
+        super._removeSigners(signers);
+        // Clean up weights for removed signers
+        for (uint256 i = 0; i < signers.length; i++) {
+            delete _weights[signerId(signers[i])];
+            emit ERC7913SignerWeightChanged(signers[i], 0);
+        }
     }
 
     /// @dev Calculates the total weight of a set of signers.
