@@ -104,7 +104,7 @@ abstract contract MultiSignerERC7913Weighted is MultiSignerERC7913 {
 
             uint256 oldWeight = _signerWeight(signer);
             _weights[signerId(signer)] = newWeight;
-            _totalWeight += newWeight - oldWeight;
+            _totalWeight = _totalWeight + newWeight - oldWeight;
             emit ERC7913SignerWeightChanged(signer, newWeight);
         }
 

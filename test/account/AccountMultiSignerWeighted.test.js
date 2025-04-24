@@ -219,7 +219,7 @@ describe('AccountMultiSignerWeighted', function () {
         'MultiERC7913UnreachableThreshold',
       );
 
-      // Also try to increase threshold to be larger than the total weight
+      // Try to increase threshold to be larger than the total weight
       await expect(this.mock.$_setThreshold(7))
         .to.be.revertedWithCustomError(this.mock, 'MultiERC7913UnreachableThreshold')
         .withArgs(6, 7);
