@@ -153,6 +153,11 @@ describe('AccountMultiSignerWeighted', function () {
       await this.mock.deploy();
     });
 
+    it('verifies signerId function returns keccak256(signer)', async function () {
+      const signer = encodeECDSASigner(signerECDSA1.address);
+      await expect(this.mock.signerId(signer)).to.eventually.equal(ethers.keccak256(signer));
+    });
+
     it('can get signer weights', async function () {
       const signer1 = encodeECDSASigner(signerECDSA1.address);
       const signer2 = encodeECDSASigner(signerECDSA2.address);
@@ -237,11 +242,11 @@ describe('AccountMultiSignerWeighted', function () {
       await this.mock.$_addSigners([signer4]);
 
       // Should have default weight of 1
-      expect(this.mock.signerWeight(signer4)).to.eventually.equal(1);
+      await expect(this.mock.signerWeight(signer4)).to.eventually.equal(1);
     });
 
     it('can get total weight of all signers', async function () {
-      expect(this.mock.totalWeight()).to.eventually.equal(6); // 1 + 2 + 3
+      await expect(this.mock.totalWeight()).to.eventually.equal(6); // 1 + 2 + 3
     });
 
     it('updates total weight when adding and removing signers', async function () {
@@ -249,15 +254,15 @@ describe('AccountMultiSignerWeighted', function () {
 
       // Add a new signer - should increase total weight by default weight (1)
       await this.mock.$_addSigners([signer4]);
-      expect(this.mock.totalWeight()).to.eventually.equal(7); // 6 + 1
+      await expect(this.mock.totalWeight()).to.eventually.equal(7); // 6 + 1
 
       // Set weight to 5 - should increase total weight by 4
       await this.mock.$_setSignerWeights([signer4], [5]);
-      expect(this.mock.totalWeight()).to.eventually.equal(11); // 7 + 4
+      await expect(this.mock.totalWeight()).to.eventually.equal(11); // 7 + 4
 
       // Remove signer - should decrease total weight by current weight (5)
       await this.mock.$_removeSigners([signer4]);
-      expect(this.mock.totalWeight()).to.eventually.equal(6); // 11 - 5
+      await expect(this.mock.totalWeight()).to.eventually.equal(6); // 11 - 5
     });
   });
 });
