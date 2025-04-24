@@ -48,6 +48,8 @@ The `MultiSignerERC7913` contract provides several key features for managing mul
 
 NOTE: `MultiSignerERC7913` safeguards to ensure that the threshold remains achievable based on the current number of active signers, preventing situations where operations could become impossible to execute.
 
+The contract also provides the public `isSigner(bytes memory signer)` function to check if a given signer is authorized, which is useful when validating signatures or implementing customized access control logic.
+
 === MultiSignerERC7913Weighted
 
 For more sophisticated governance structures, the xref:api:utils.adoc#MultiSignerERC7913Weighted[`MultiSignerERC7913Weighted`] contract extends `MultiSignerERC7913` by assigning different weights to each signer.
