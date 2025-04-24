@@ -184,7 +184,7 @@ describe('AccountMultiSignerWeighted', function () {
 
       // Reverts when setting weight to 0
       await expect(this.mock.$_setSignerWeights([signer1], [0]))
-        .to.be.revertedWithCustomError(this.mock, 'MultiERC7913WeightedInvalidWeight')
+        .to.be.revertedWithCustomError(this.mock, 'MultiSignerERC7913WeightedInvalidWeight')
         .withArgs(signer1.toLowerCase(), 0);
     });
 
@@ -195,7 +195,7 @@ describe('AccountMultiSignerWeighted', function () {
       // Reverts when arrays have different lengths
       await expect(this.mock.$_setSignerWeights([signer1, signer2], [1])).to.be.revertedWithCustomError(
         this.mock,
-        'MultiERC7913WeightedMismatchedLength',
+        'MultiSignerERC7913WeightedMismatchedLength',
       );
     });
 
@@ -211,17 +211,17 @@ describe('AccountMultiSignerWeighted', function () {
       );
 
       // Increase threshold to 6
-      await expect(this.mock.$_setThreshold(6)).to.emit(this.mock, 'ThresholdSet').withArgs(6);
+      await expect(this.mock.$_setThreshold(6)).to.emit(this.mock, 'ERC7913ThresholdSet').withArgs(6);
 
       // Now try to lower weights so their sum is less than the threshold
       await expect(this.mock.$_setSignerWeights([signer1, signer2, signer3], [1, 1, 1])).to.be.revertedWithCustomError(
         this.mock,
-        'MultiERC7913UnreachableThreshold',
+        'MultiSignerERC7913UnreachableThreshold',
       );
 
       // Try to increase threshold to be larger than the total weight
       await expect(this.mock.$_setThreshold(7))
-        .to.be.revertedWithCustomError(this.mock, 'MultiERC7913UnreachableThreshold')
+        .to.be.revertedWithCustomError(this.mock, 'MultiSignerERC7913UnreachableThreshold')
         .withArgs(6, 7);
     });
 
@@ -267,7 +267,7 @@ describe('AccountMultiSignerWeighted', function () {
 
       // Removing signer3 should let threshold unreachable and revert. (new totalWeight = 3, threshold = 4)
       await expect(this.mock.$_removeSigners([signer3]))
-        .to.be.revertedWithCustomError(this.mock, 'MultiERC7913UnreachableThreshold')
+        .to.be.revertedWithCustomError(this.mock, 'MultiSignerERC7913UnreachableThreshold')
         .withArgs(3, 4);
 
       // Removing signer1 should not revert (new totalWeight = 5, threshold = 4)

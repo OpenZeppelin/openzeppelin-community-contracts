@@ -169,18 +169,18 @@ describe('AccountMultiSigner', function () {
 
       // Reverts if removing a signer makes the threshold unreachable
       await expect(this.mock.$_removeSigners([signerECDSA1.address]))
-        .to.be.revertedWithCustomError(this.mock, 'MultiERC7913UnreachableThreshold')
+        .to.be.revertedWithCustomError(this.mock, 'MultiSignerERC7913UnreachableThreshold')
         .withArgs(0, 1);
     });
 
     it('can change threshold', async function () {
       // Reachable threshold is set
-      await expect(this.mock.$_setThreshold(2)).to.emit(this.mock, 'ThresholdSet');
+      await expect(this.mock.$_setThreshold(2)).to.emit(this.mock, 'ERC7913ThresholdSet');
 
       // Unreachable threshold reverts
       await expect(this.mock.$_setThreshold(3)).to.revertedWithCustomError(
         this.mock,
-        'MultiERC7913UnreachableThreshold',
+        'MultiSignerERC7913UnreachableThreshold',
       );
     });
 
@@ -188,7 +188,7 @@ describe('AccountMultiSigner', function () {
       const invalidSigner = '0x123456'; // Too short
 
       await expect(this.mock.$_addSigners([invalidSigner]))
-        .to.be.revertedWithCustomError(this.mock, 'MultiERC7913InvalidSigner')
+        .to.be.revertedWithCustomError(this.mock, 'MultiSignerERC7913InvalidSigner')
         .withArgs(invalidSigner);
     });
 

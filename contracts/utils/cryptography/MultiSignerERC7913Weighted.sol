@@ -60,10 +60,10 @@ abstract contract MultiSignerERC7913Weighted is MultiSignerERC7913 {
     event ERC7913SignerWeightChanged(bytes indexed signer, uint256 weight);
 
     /// @dev Thrown when a signer's weight is invalid.
-    error MultiERC7913WeightedInvalidWeight(bytes signer, uint256 weight);
+    error MultiSignerERC7913WeightedInvalidWeight(bytes signer, uint256 weight);
 
     /// @dev Thrown when the threshold is unreachable.
-    error MultiERC7913WeightedMismatchedLength();
+    error MultiSignerERC7913WeightedMismatchedLength();
 
     /// @dev Gets the weight of a signer. Returns 0 if the signer is not authorized.
     function signerWeight(bytes memory signer) public view virtual returns (uint256) {
@@ -89,18 +89,18 @@ abstract contract MultiSignerERC7913Weighted is MultiSignerERC7913 {
      *
      * Requirements:
      *
-     * - `signers` and `weights` arrays must have the same length. Reverts with {MultiERC7913WeightedMismatchedLength} on mismatch.
+     * - `signers` and `weights` arrays must have the same length. Reverts with {MultiSignerERC7913WeightedMismatchedLength} on mismatch.
      * - Each signer must exist in the set of authorized signers. Reverts with {MultiSignerERC7913NonexistentSigner} if not.
-     * - Each weight must be greater than 0. Reverts with {MultiERC7913WeightedInvalidWeight} if not.
+     * - Each weight must be greater than 0. Reverts with {MultiSignerERC7913WeightedInvalidWeight} if not.
      */
     function _setSignerWeights(bytes[] memory signers, uint256[] memory newWeights) internal virtual {
-        require(signers.length == newWeights.length, MultiERC7913WeightedMismatchedLength());
+        require(signers.length == newWeights.length, MultiSignerERC7913WeightedMismatchedLength());
 
         for (uint256 i = 0; i < signers.length; i++) {
             bytes memory signer = signers[i];
             uint256 newWeight = newWeights[i];
             require(_signers().contains(signer), MultiSignerERC7913NonexistentSigner(signer));
-            require(newWeight > 0, MultiERC7913WeightedInvalidWeight(signer, newWeight));
+            require(newWeight > 0, MultiSignerERC7913WeightedInvalidWeight(signer, newWeight));
 
             uint256 oldWeight = _signerWeight(signer);
             _weights[signerId(signer)] = newWeight;
@@ -139,7 +139,7 @@ abstract contract MultiSignerERC7913Weighted is MultiSignerERC7913 {
      */
     function _validateReachableThreshold() internal view virtual override {
         uint256 weight = totalWeight();
-        require(weight >= threshold(), MultiERC7913UnreachableThreshold(weight, threshold()));
+        require(weight >= threshold(), MultiSignerERC7913UnreachableThreshold(weight, threshold()));
     }
 
     /**

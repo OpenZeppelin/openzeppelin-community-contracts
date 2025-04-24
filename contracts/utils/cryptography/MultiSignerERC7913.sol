@@ -55,7 +55,7 @@ abstract contract MultiSignerERC7913 is AbstractSigner {
     event ERC7913SignersRemoved(bytes[] indexed signers);
 
     /// @dev Emitted when the threshold is updated.
-    event ThresholdSet(uint256 threshold);
+    event ERC7913ThresholdSet(uint256 threshold);
 
     /// @dev The `signer` already exists.
     error MultiSignerERC7913AlreadyExists(bytes signer);
@@ -64,10 +64,10 @@ abstract contract MultiSignerERC7913 is AbstractSigner {
     error MultiSignerERC7913NonexistentSigner(bytes signer);
 
     /// @dev The `signer` is less than 20 bytes long.
-    error MultiERC7913InvalidSigner(bytes signer);
+    error MultiSignerERC7913InvalidSigner(bytes signer);
 
     /// @dev The `threshold` is unreachable given the number of `signers`.
-    error MultiERC7913UnreachableThreshold(uint256 signers, uint256 threshold);
+    error MultiSignerERC7913UnreachableThreshold(uint256 signers, uint256 threshold);
 
     EnumerableSetExtended.BytesSet private _signersSet;
     uint256 private _threshold;
@@ -102,7 +102,7 @@ abstract contract MultiSignerERC7913 is AbstractSigner {
     function _addSigners(bytes[] memory newSigners) internal virtual {
         for (uint256 i = 0; i < newSigners.length; i++) {
             bytes memory signer = newSigners[i];
-            require(signer.length >= 20, MultiERC7913InvalidSigner(signer));
+            require(signer.length >= 20, MultiSignerERC7913InvalidSigner(signer));
             require(_signersSet.add(signer), MultiSignerERC7913AlreadyExists(signer));
         }
         emit ERC7913SignersAdded(newSigners);
@@ -122,14 +122,17 @@ abstract contract MultiSignerERC7913 is AbstractSigner {
     function _setThreshold(uint256 newThreshold) internal virtual {
         _threshold = newThreshold;
         _validateReachableThreshold();
-        emit ThresholdSet(newThreshold);
+        emit ERC7913ThresholdSet(newThreshold);
     }
 
     /// @dev Validates the current threshold is reachable.
     function _validateReachableThreshold() internal view virtual {
         uint256 totalSigners = _signers().length();
         uint256 currentThreshold = threshold();
-        require(totalSigners >= currentThreshold, MultiERC7913UnreachableThreshold(totalSigners, currentThreshold));
+        require(
+            totalSigners >= currentThreshold,
+            MultiSignerERC7913UnreachableThreshold(totalSigners, currentThreshold)
+        );
     }
 
     /**
