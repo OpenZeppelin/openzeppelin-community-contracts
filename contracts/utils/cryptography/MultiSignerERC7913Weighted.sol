@@ -50,6 +50,9 @@ import {EnumerableSetExtended} from "../../utils/structs/EnumerableSetExtended.s
 abstract contract MultiSignerERC7913Weighted is MultiSignerERC7913 {
     using EnumerableSetExtended for EnumerableSetExtended.BytesSet;
 
+    // Invariant: sum(weights) == threshold
+    uint256 private _totalWeight;
+
     // Mapping from signer ID to weight
     mapping(bytes32 signedId => uint256) private _weights;
 
@@ -65,6 +68,11 @@ abstract contract MultiSignerERC7913Weighted is MultiSignerERC7913 {
     /// @dev Gets the weight of a signer. Returns 0 if the signer is not authorized.
     function signerWeight(bytes memory signer) public view virtual returns (uint256) {
         return Math.ternary(_signers().contains(signer), _signerWeight(signer), 0);
+    }
+
+    /// @dev Gets the total weight of all signers.
+    function totalWeight() public view virtual returns (uint256) {
+        return _totalWeight;
     }
 
     /**
@@ -94,11 +102,31 @@ abstract contract MultiSignerERC7913Weighted is MultiSignerERC7913 {
             require(_signers().contains(signer), MultiSignerERC7913NonexistentSigner(signer));
             require(weight > 0, MultiERC7913WeightedInvalidWeight(signer, weight));
 
+            uint256 oldWeight = _signerWeight(signer);
             _weights[signerId(signer)] = weight;
+            _totalWeight = _totalWeight - oldWeight + weight;
             emit ERC7913SignerWeightChanged(signer, weight);
         }
 
         _validateReachableThreshold();
+    }
+
+    /// @inheritdoc MultiSignerERC7913
+    function _addSigners(bytes[] memory newSigners) internal virtual override {
+        super._addSigners(newSigners);
+        _totalWeight += newSigners.length; // Each new signer has a default weight of 1
+    }
+
+    /// @inheritdoc MultiSignerERC7913
+    function _removeSigners(bytes[] memory signers) internal virtual override {
+        uint256 removedWeight = _weightSigners(signers);
+        super._removeSigners(signers);
+        _totalWeight -= removedWeight;
+        // Clean up weights for removed signers
+        for (uint256 i = 0; i < signers.length; i++) {
+            delete _weights[signerId(signers[i])];
+            emit ERC7913SignerWeightChanged(signers[i], 0);
+        }
     }
 
     /**
@@ -110,9 +138,8 @@ abstract contract MultiSignerERC7913Weighted is MultiSignerERC7913 {
      * depending on the linearization order.
      */
     function _validateReachableThreshold() internal view virtual override {
-        bytes[] memory allSigners = _signers().values(); // TODO: Should there be a max signers?
-        uint256 totalWeight = _weightSigners(allSigners);
-        require(totalWeight >= _threshold(), MultiERC7913UnreachableThreshold(totalWeight, _threshold()));
+        uint256 weight = totalWeight();
+        require(weight >= threshold(), MultiERC7913UnreachableThreshold(weight, threshold()));
     }
 
     /**
@@ -124,26 +151,16 @@ abstract contract MultiSignerERC7913Weighted is MultiSignerERC7913 {
      * depending on the linearization order.
      */
     function _validateThreshold(bytes[] memory signers) internal view virtual override returns (bool) {
-        return _weightSigners(signers) >= _threshold();
+        return _weightSigners(signers) >= threshold();
     }
 
-    /// @inheritdoc MultiSignerERC7913
-    function _removeSigners(bytes[] memory signers) internal virtual override {
-        super._removeSigners(signers);
-        // Clean up weights for removed signers
-        for (uint256 i = 0; i < signers.length; i++) {
-            delete _weights[signerId(signers[i])];
-            emit ERC7913SignerWeightChanged(signers[i], 0);
-        }
-    }
-
-    /// @dev Calculates the total weight of a set of signers.
+    /// @dev Calculates the total weight of a set of signers. For all signers weight use {totalWeight}.
     function _weightSigners(bytes[] memory signers) internal view virtual returns (uint256) {
-        uint256 totalWeight = 0;
+        uint256 weight = 0;
         uint256 signersLength = signers.length;
         for (uint256 i = 0; i < signersLength; i++) {
-            totalWeight += signerWeight(signers[i]);
+            weight += signerWeight(signers[i]);
         }
-        return totalWeight;
+        return weight;
     }
 }

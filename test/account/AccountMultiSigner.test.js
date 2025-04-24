@@ -174,6 +174,24 @@ describe('AccountMultiSigner', function () {
         'MultiERC7913UnreachableThreshold',
       );
     });
+
+    it('rejects invalid signer format', async function () {
+      const invalidSigner = '0x123456'; // Too short
+
+      await expect(this.mock.$_addSigners([invalidSigner]))
+        .to.be.revertedWithCustomError(this.mock, 'MultiERC7913InvalidSigner')
+        .withArgs(invalidSigner);
+    });
+
+    it('can read signers and threshold', async function () {
+      const signersArray = await this.mock.signers();
+      expect(signersArray).to.have.lengthOf(2);
+      expect(signersArray).to.include(encodeECDSASigner(signerECDSA1.address));
+      expect(signersArray).to.include(encodeECDSASigner(signerECDSA2.address));
+
+      const currentThreshold = await this.mock.threshold();
+      expect(currentThreshold).to.equal(1);
+    });
   });
 
   describe('Signature validation', function () {

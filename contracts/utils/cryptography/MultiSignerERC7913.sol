@@ -70,11 +70,27 @@ abstract contract MultiSignerERC7913 is AbstractSigner {
     error MultiERC7913UnreachableThreshold(uint256 signers, uint256 threshold);
 
     EnumerableSetExtended.BytesSet private _signersSet;
-    uint256 private _minSigners;
+    uint256 private _threshold;
 
     /// @dev Returns the internal id of the `signer`.
     function signerId(bytes memory signer) public view virtual returns (bytes32) {
         return keccak256(signer);
+    }
+
+    /**
+     * @dev Returns the set of authorized signers. Prefer {_signers} for internal use.
+     *
+     * WARNING: This operation copies the entire signers set to memory, which can be expensive. This is designed
+     * for view accessors queried without gas fees. Using it in state-changing functions may become uncallable
+     * if the signers set grows too large.
+     */
+    function signers() public view virtual returns (bytes[] memory) {
+        return _signersSet.values();
+    }
+
+    /// @dev Returns the minimum number of signers required to approve a multisignature operation.
+    function threshold() public view virtual returns (uint256) {
+        return _threshold;
     }
 
     /// @dev Returns the set of authorized signers.
@@ -82,43 +98,38 @@ abstract contract MultiSignerERC7913 is AbstractSigner {
         return _signersSet;
     }
 
-    /// @dev Returns the minimum number of signers required to approve a multisignature operation.
-    function _threshold() internal view virtual returns (uint256) {
-        return _minSigners;
-    }
-
-    /// @dev Adds the `signers` to those allowed to sign on behalf of this contract. Internal version without access control.
-    function _addSigners(bytes[] memory signers) internal virtual {
-        for (uint256 i = 0; i < signers.length; i++) {
-            bytes memory signer = signers[i];
+    /// @dev Adds the `newSigners` to those allowed to sign on behalf of this contract. Internal version without access control.
+    function _addSigners(bytes[] memory newSigners) internal virtual {
+        for (uint256 i = 0; i < newSigners.length; i++) {
+            bytes memory signer = newSigners[i];
             require(signer.length >= 20, MultiERC7913InvalidSigner(signer));
             require(_signersSet.add(signer), MultiSignerERC7913AlreadyExists(signer));
         }
-        emit ERC7913SignersAdded(signers);
+        emit ERC7913SignersAdded(newSigners);
     }
 
-    /// @dev Removes the `signers` from the authorized signers. Internal version without access control.
-    function _removeSigners(bytes[] memory signers) internal virtual {
-        for (uint256 i = 0; i < signers.length; i++) {
-            bytes memory signer = signers[i];
+    /// @dev Removes the `oldSigners` from the authorized signers. Internal version without access control.
+    function _removeSigners(bytes[] memory oldSigners) internal virtual {
+        for (uint256 i = 0; i < oldSigners.length; i++) {
+            bytes memory signer = oldSigners[i];
             require(_signersSet.remove(signer), MultiSignerERC7913NonexistentSigner(signer));
         }
         _validateReachableThreshold();
-        emit ERC7913SignersRemoved(signers);
+        emit ERC7913SignersRemoved(oldSigners);
     }
 
     /// @dev Sets the signatures `threshold` required to approve a multisignature operation. Internal version without access control.
     function _setThreshold(uint256 threshold_) internal virtual {
-        _minSigners = threshold_;
+        _threshold = threshold_;
         _validateReachableThreshold();
         emit ThresholdSet(threshold_);
     }
 
     /// @dev Validates the current threshold is reachable.
     function _validateReachableThreshold() internal view virtual {
-        uint256 signers = _signers().length();
-        uint256 threshold = _threshold();
-        require(signers >= threshold, MultiERC7913UnreachableThreshold(signers, threshold));
+        uint256 totalSigners = _signers().length();
+        uint256 minThreshold = threshold();
+        require(totalSigners >= minThreshold, MultiERC7913UnreachableThreshold(totalSigners, minThreshold));
     }
 
     /**
@@ -155,9 +166,9 @@ abstract contract MultiSignerERC7913 is AbstractSigner {
         bytes calldata signature
     ) internal view virtual override returns (bool) {
         if (signature.length == 0) return false; // For ERC-7739 compatibility
-        (bytes[] memory signers, bytes[] memory signatures) = abi.decode(signature, (bytes[], bytes[]));
-        if (signers.length != signatures.length) return false;
-        return _validateNSignatures(hash, signers, signatures) && _validateThreshold(signers);
+        (bytes[] memory signingSigners, bytes[] memory signatures) = abi.decode(signature, (bytes[], bytes[]));
+        if (signingSigners.length != signatures.length) return false;
+        return _validateNSignatures(hash, signingSigners, signatures) && _validateThreshold(signingSigners);
     }
 
     /**
@@ -174,15 +185,15 @@ abstract contract MultiSignerERC7913 is AbstractSigner {
      */
     function _validateNSignatures(
         bytes32 hash,
-        bytes[] memory signers,
+        bytes[] memory signingSigners,
         bytes[] memory signatures
     ) internal view virtual returns (bool valid) {
         bytes32 currentSignerId = bytes32(0);
 
-        uint256 signersLength = signers.length;
+        uint256 signersLength = signingSigners.length;
         for (uint256 i = 0; i < signersLength; i++) {
             // Signers must ordered by id to ensure no duplicates
-            bytes memory signer = signers[i];
+            bytes memory signer = signingSigners[i];
             bytes32 id = signerId(signer);
             if (
                 currentSignerId >= id ||
@@ -199,10 +210,10 @@ abstract contract MultiSignerERC7913 is AbstractSigner {
     }
 
     /**
-     * @dev Validates that the number of signers meets the {_threshold} requirement.
+     * @dev Validates that the number of signers meets the {threshold} requirement.
      * Assumes the signers were already validated. See {_validateNSignatures} for more details.
      */
-    function _validateThreshold(bytes[] memory validatedSigners) internal view virtual returns (bool) {
-        return validatedSigners.length >= _threshold();
+    function _validateThreshold(bytes[] memory validatingSigners) internal view virtual returns (bool) {
+        return validatingSigners.length >= threshold();
     }
 }

@@ -158,13 +158,9 @@ describe('AccountMultiSignerWeighted', function () {
       const signer2 = encodeECDSASigner(signerECDSA2.address);
       const signer3 = encodeECDSASigner(signerECDSA3.address);
 
-      const weight1 = await this.mock.signerWeight(signer1);
-      const weight2 = await this.mock.signerWeight(signer2);
-      const weight3 = await this.mock.signerWeight(signer3);
-
-      expect(weight1).to.equal(1);
-      expect(weight2).to.equal(2);
-      expect(weight3).to.equal(3);
+      await expect(this.mock.signerWeight(signer1)).to.eventually.equal(1);
+      await expect(this.mock.signerWeight(signer2)).to.eventually.equal(2);
+      await expect(this.mock.signerWeight(signer3)).to.eventually.equal(3);
     });
 
     it('can update signer weights', async function () {
@@ -179,13 +175,9 @@ describe('AccountMultiSignerWeighted', function () {
         .to.emit(this.mock, 'ERC7913SignerWeightChanged')
         .withArgs(signer2, 5);
 
-      const weight1 = await this.mock.signerWeight(signer1);
-      const weight2 = await this.mock.signerWeight(signer2);
-      const weight3 = await this.mock.signerWeight(signer3);
-
-      expect(weight1).to.equal(5);
-      expect(weight2).to.equal(5);
-      expect(weight3).to.equal(3); // unchanged
+      await expect(this.mock.signerWeight(signer1)).to.eventually.equal(5);
+      await expect(this.mock.signerWeight(signer2)).to.eventually.equal(5);
+      await expect(this.mock.signerWeight(signer3)).to.eventually.equal(3); // unchanged
     });
 
     it('cannot set weight to non-existent signer', async function () {
@@ -245,8 +237,27 @@ describe('AccountMultiSignerWeighted', function () {
       await this.mock.$_addSigners([signer4]);
 
       // Should have default weight of 1
-      const weight4 = await this.mock.signerWeight(signer4);
-      expect(weight4).to.equal(1);
+      expect(this.mock.signerWeight(signer4)).to.eventually.equal(1);
+    });
+
+    it('can get total weight of all signers', async function () {
+      expect(this.mock.totalWeight()).to.eventually.equal(6); // 1 + 2 + 3
+    });
+
+    it('updates total weight when adding and removing signers', async function () {
+      const signer4 = encodeECDSASigner(signerECDSA4.address);
+
+      // Add a new signer - should increase total weight by default weight (1)
+      await this.mock.$_addSigners([signer4]);
+      expect(this.mock.totalWeight()).to.eventually.equal(7); // 6 + 1
+
+      // Set weight to 5 - should increase total weight by 4
+      await this.mock.$_setSignerWeights([signer4], [5]);
+      expect(this.mock.totalWeight()).to.eventually.equal(11); // 7 + 4
+
+      // Remove signer - should decrease total weight by current weight (5)
+      await this.mock.$_removeSigners([signer4]);
+      expect(this.mock.totalWeight()).to.eventually.equal(6); // 11 - 5
     });
   });
 });
