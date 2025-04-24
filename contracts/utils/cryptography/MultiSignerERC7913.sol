@@ -88,6 +88,11 @@ abstract contract MultiSignerERC7913 is AbstractSigner {
         return _signersSet.values();
     }
 
+    /// @dev Returns whether the `signer` is an authorized signer.
+    function isSigner(bytes memory signer) public view virtual returns (bool) {
+        return _signers().contains(signer);
+    }
+
     /// @dev Returns the minimum number of signers required to approve a multisignature operation.
     function threshold() public view virtual returns (uint256) {
         return _threshold;
@@ -198,11 +203,7 @@ abstract contract MultiSignerERC7913 is AbstractSigner {
             // Signers must ordered by id to ensure no duplicates
             bytes memory signer = signingSigners[i];
             bytes32 id = signerId(signer);
-            if (
-                currentSignerId >= id ||
-                !_signers().contains(signer) ||
-                !signer.isValidSignatureNow(hash, signatures[i])
-            ) {
+            if (currentSignerId >= id || !isSigner(signer) || !signer.isValidSignatureNow(hash, signatures[i])) {
                 return false;
             }
 

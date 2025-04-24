@@ -67,7 +67,7 @@ abstract contract MultiSignerERC7913Weighted is MultiSignerERC7913 {
 
     /// @dev Gets the weight of a signer. Returns 0 if the signer is not authorized.
     function signerWeight(bytes memory signer) public view virtual returns (uint256) {
-        return Math.ternary(_signers().contains(signer), _signerWeight(signer), 0);
+        return Math.ternary(isSigner(signer), _signerWeight(signer), 0);
     }
 
     /// @dev Gets the total weight of all signers.
@@ -99,7 +99,7 @@ abstract contract MultiSignerERC7913Weighted is MultiSignerERC7913 {
         for (uint256 i = 0; i < signers.length; i++) {
             bytes memory signer = signers[i];
             uint256 newWeight = newWeights[i];
-            require(_signers().contains(signer), MultiSignerERC7913NonexistentSigner(signer));
+            require(isSigner(signer), MultiSignerERC7913NonexistentSigner(signer));
             require(newWeight > 0, MultiSignerERC7913WeightedInvalidWeight(signer, newWeight));
 
             uint256 oldWeight = _signerWeight(signer);

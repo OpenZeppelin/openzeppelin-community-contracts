@@ -201,6 +201,16 @@ describe('AccountMultiSigner', function () {
       const currentThreshold = await this.mock.threshold();
       expect(currentThreshold).to.equal(1);
     });
+
+    it('checks if an address is a signer', async function () {
+      // Should return true for authorized signers
+      await expect(this.mock.isSigner(signerECDSA1.address)).to.eventually.be.true;
+      await expect(this.mock.isSigner(signerECDSA2.address)).to.eventually.be.true;
+
+      // Should return false for unauthorized signers
+      await expect(this.mock.isSigner(signerECDSA3.address)).to.eventually.be.false;
+      await expect(this.mock.isSigner(signerECDSA4.address)).to.eventually.be.false;
+    });
   });
 
   describe('Signature validation', function () {
