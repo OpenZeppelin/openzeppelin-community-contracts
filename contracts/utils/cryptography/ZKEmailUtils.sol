@@ -5,9 +5,9 @@ pragma solidity ^0.8.24;
 import {Bytes} from "@openzeppelin/contracts/utils/Bytes.sol";
 import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 import {IDKIMRegistry} from "@zk-email/contracts/DKIMRegistry.sol";
-import {IVerifier} from "@zk-email/email-tx-builder/interfaces/IVerifier.sol";
-import {EmailAuthMsg} from "@zk-email/email-tx-builder/interfaces/IEmailTypes.sol";
-import {CommandUtils} from "@zk-email/email-tx-builder/libraries/CommandUtils.sol";
+import {IVerifier} from "@zk-email/email-tx-builder/src/interfaces/IVerifier.sol";
+import {EmailAuthMsg} from "@zk-email/email-tx-builder/src/interfaces/IEmailTypes.sol";
+import {CommandUtils} from "@zk-email/email-tx-builder/src/libraries/CommandUtils.sol";
 
 /**
  * @dev Library for https://docs.zk.email[ZKEmail] signature validation utilities.

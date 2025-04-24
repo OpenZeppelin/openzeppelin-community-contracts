@@ -2,5 +2,5 @@
 @openzeppelin/contracts-upgradeable/=lib/@openzeppelin-contracts-upgradeable/contracts/
 @openzeppelin/community-contracts/=contracts/
 @axelar-network/axelar-gmp-sdk-solidity/=node_modules/@axelar-network/axelar-gmp-sdk-solidity/
-@zk-email/email-tx-builder/=lib/email-tx-builder/packages/contracts/src/
+@zk-email/email-tx-builder/=lib/email-tx-builder/packages/contracts/
 @zk-email/contracts/=node_modules/@zk-email/contracts/
