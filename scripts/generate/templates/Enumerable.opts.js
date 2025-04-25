@@ -11,7 +11,6 @@ const typeDescr = ({ type, size = 0, memory = false }) => {
 };
 
 const toSetTypeDescr = value => ({
-  underlying: value.name.toLowerCase(),
   name: value.name + 'Set',
   value,
 });

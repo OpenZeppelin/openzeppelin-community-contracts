@@ -120,16 +120,8 @@ library EnumerableSetExtended {
         for (uint256 i = 0; i < len; ++i) {
             delete set._positions[set._values[i]];
         }
-        unsafeSetLength(set._values, 0);
-    }
-
-    /**
-     * @dev Helper to set the length of a dynamic array. Directly writing to `.length` is forbidden.
-     *
-     * WARNING: this does not clear elements if length is reduced, of initialize elements if length is increased.
-     */
-    // Replace when these are available in Arrays.sol
-    function unsafeSetLength(string[] storage array, uint256 len) internal {
+        // Replace when these are available in Arrays.sol
+        string[] storage array = set._values;
         assembly ("memory-safe") {
             sstore(array.slot, len)
         }
@@ -252,16 +244,8 @@ library EnumerableSetExtended {
         for (uint256 i = 0; i < len; ++i) {
             delete set._positions[set._values[i]];
         }
-        unsafeSetLength(set._values, 0);
-    }
-
-    /**
-     * @dev Helper to set the length of a dynamic array. Directly writing to `.length` is forbidden.
-     *
-     * WARNING: this does not clear elements if length is reduced, of initialize elements if length is increased.
-     */
-    // Replace when these are available in Arrays.sol
-    function unsafeSetLength(bytes[] storage array, uint256 len) internal {
+        // Replace when these are available in Arrays.sol
+        bytes[] storage array = set._values;
         assembly ("memory-safe") {
             sstore(array.slot, len)
         }

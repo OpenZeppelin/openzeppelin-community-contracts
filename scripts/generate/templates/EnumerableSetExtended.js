@@ -45,7 +45,7 @@ import {Hashes} from "@openzeppelin/contracts/utils/cryptography/Hashes.sol";
  */
 `;
 
-const set = ({ underlying, name, value }) => `\
+const set = ({ name, value }) => `\
 struct ${name} {
     // Storage of set values
     ${value.type}[] _values;
@@ -123,16 +123,8 @@ function clear(${name} storage set) internal {
     for (uint256 i = 0; i < len; ++i) {
         delete set._positions[set._values[i]];
     }
-    unsafeSetLength(set._values, 0);
-}
-
-/**
- * @dev Helper to set the length of a dynamic array. Directly writing to \`.length\` is forbidden.
- * 
- * WARNING: this does not clear elements if length is reduced, of initialize elements if length is increased.
- */
-// Replace when these are available in Arrays.sol
-function unsafeSetLength(${underlying}[] storage array, uint256 len) internal {
+    // Replace when these are available in Arrays.sol
+    ${value.type}[] storage array = set._values;
     assembly ("memory-safe") {
         sstore(array.slot, len)
     }
