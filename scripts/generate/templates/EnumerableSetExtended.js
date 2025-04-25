@@ -4,7 +4,6 @@ const { SET_TYPES } = require('./Enumerable.opts');
 const header = `\
 pragma solidity ^0.8.20;
 
-import {Arrays} from "@openzeppelin/contracts/utils/Arrays.sol";
 import {Hashes} from "@openzeppelin/contracts/utils/cryptography/Hashes.sol";
 
 /**
@@ -46,7 +45,7 @@ import {Hashes} from "@openzeppelin/contracts/utils/cryptography/Hashes.sol";
  */
 `;
 
-const set = ({ name, value }) => `\
+const set = ({ underlying, name, value }) => `\
 struct ${name} {
     // Storage of set values
     ${value.type}[] _values;
@@ -124,7 +123,19 @@ function clear(${name} storage set) internal {
     for (uint256 i = 0; i < len; ++i) {
         delete set._positions[set._values[i]];
     }
-    Arrays.unsafeSetLength(set._values, 0);
+    unsafeSetLength(set._values, 0);
+}
+
+/**
+ * @dev Helper to set the length of a dynamic array. Directly writing to \`.length\` is forbidden.
+ * 
+ * WARNING: this does not clear elements if length is reduced, of initialize elements if length is increased.
+ */
+// Replace when these are available in Arrays.sol
+function unsafeSetLength(${underlying}[] storage array, uint256 len) internal {
+    assembly ("memory-safe") {
+        sstore(array.slot, len)
+    }
 }
 
 /**
