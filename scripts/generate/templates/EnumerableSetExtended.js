@@ -126,7 +126,7 @@ function clear(${name} storage set) internal {
     // Replace when these are available in Arrays.sol
     ${value.type}[] storage array = set._values;
     assembly ("memory-safe") {
-        sstore(array.slot, len)
+        sstore(array.slot, 0)
     }
 }
 
