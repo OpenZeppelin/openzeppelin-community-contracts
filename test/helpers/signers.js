@@ -15,6 +15,7 @@ const {
   sha256,
   toBeHex,
   toBigInt,
+  keccak256,
 } = require('ethers');
 const { secp256r1 } = require('@noble/curves/p256');
 const { generateKeyPairSync, privateEncrypt } = require('crypto');
@@ -191,6 +192,8 @@ class ZKEmailSigningKey {
   }
 
   sign(digest /*: BytesLike*/ /*: Signature*/) {
+    assertArgument(dataLength(digest) === 32, 'invalid digest length', 'digest', digest);
+
     const timestamp = Math.floor(Date.now() / 1000);
     const command = this.SIGN_HASH_COMMAND + ' ' + toBigInt(digest).toString();
     const isCodeExist = true;
@@ -222,10 +225,69 @@ class ZKEmailSigningKey {
   }
 }
 
+class MultiERC7913SigningKey {
+  #signers;
+  #weights;
+
+  constructor(signers, weights = null) {
+    assertArgument(
+      Array.isArray(signers) && signers.length > 0,
+      'signers must be a non-empty array',
+      'signers',
+      signers.length,
+    );
+
+    if (weights !== null) {
+      assertArgument(
+        Array.isArray(weights) && weights.length === signers.length,
+        'weights must be an array with the same length as signers',
+        'weights',
+        weights.length,
+      );
+    }
+
+    this.#signers = signers;
+    this.#weights = weights;
+  }
+
+  get signers() {
+    return this.#signers;
+  }
+
+  get weights() {
+    return this.#weights;
+  }
+
+  sign(digest /*: BytesLike*/ /*: Signature*/) {
+    assertArgument(dataLength(digest) === 32, 'invalid digest length', 'digest', digest);
+
+    const sortedSigners = this.#signers
+      .map(signer => {
+        const signerBytes = typeof signer.address === 'string' ? signer.address : signer.bytes;
+
+        const signerId = keccak256(signerBytes);
+        return {
+          signerId,
+          signer: signerBytes,
+          signature: signer.signingKey.sign(digest).serialized,
+        };
+      })
+      .sort((a, b) => (toBigInt(a.signerId) < toBigInt(b.signerId) ? -1 : 1));
+
+    return {
+      serialized: AbiCoder.defaultAbiCoder().encode(
+        ['bytes[]', 'bytes[]'],
+        [sortedSigners.map(p => p.signer), sortedSigners.map(p => p.signature)],
+      ),
+    };
+  }
+}
+
 module.exports = {
   NonNativeSigner,
   P256SigningKey,
   RSASigningKey,
   RSASHA256SigningKey,
   ZKEmailSigningKey,
+  MultiERC7913SigningKey,
 };

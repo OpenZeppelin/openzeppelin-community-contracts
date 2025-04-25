@@ -2,4 +2,5 @@
 * xref:account-abstraction.adoc[Account Abstraction]
 ** xref:sending-user-operations.adoc[Sending User Operations]
 ** xref:eoa-delegation.adoc[EOA Delegation]
+** xref:multisig-account.adoc[Multisig Account]
 * xref:utilities.adoc[Utilities]

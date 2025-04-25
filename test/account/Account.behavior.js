@@ -47,7 +47,7 @@ function shouldBehaveLikeAccountCore() {
       it('should return SIG_VALIDATION_FAILURE if the signature is invalid', async function () {
         // empty operation (does nothing)
         const operation = await this.mock.createUserOp(this.userOp);
-        operation.signature = '0x00';
+        operation.signature = (await this.invalidSig?.()) ?? '0x00';
 
         expect(await this.mockFromEntrypoint.validateUserOp.staticCall(operation.packed, operation.hash(), 0)).to.eq(
           SIG_VALIDATION_FAILURE,

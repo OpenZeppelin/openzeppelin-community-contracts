@@ -4,9 +4,12 @@
 :ERC7739Utils: pass:normal[xref:utils.adoc#ERC7739Utils[`ERC7739Utils`]]
 :ERC7913Utils: pass:normal[xref:utils.adoc#ERC7913Utils[`ERC7913Utils`]]
 :SignerECDSA: pass:normal[xref:utils.adoc#SignerECDSA[`SignerECDSA`]]
-:SignerERC7913: pass:normal[xref:utils.adoc#SignerERC7913[`SignerERC7913`]]
 :SignerP256: pass:normal[xref:utils.adoc#SignerP256[`SignerP256`]]
 :SignerRSA: pass:normal[xref:utils.adoc#SignerRSA[`SignerRSA`]]
+:AbstractSigner: pass:normal[xref:utils.adoc#AbstractSigner[`AbstractSigner`]]
+:SignerERC7913: pass:normal[xref:utils.adoc#SignerERC7913[`SignerERC7913`]]
+:MultiSignerERC7913: pass:normal[xref:utils.adoc#MultiSignerERC7913[`MultiSignerERC7913`]]
+:MultiSignerERC7913Weighted: pass:normal[xref:utils.adoc#MultiSignerERC7913Weighted[`MultiSignerERC7913Weighted`]]
 :AbstractSigner: pass:normal[xref:utils.adoc#AbstractSigner[`AbstractSigner`]]
 :ERC7913SignatureVerifierP256: pass:normal[xref:utils.adoc#ERC7913SignatureVerifierP256[`ERC7913SignatureVerifierP256`]]
 :ERC7913SignatureVerifierRSA: pass:normal[xref:utils.adoc#ERC7913SignatureVerifierRSA[`ERC7913SignatureVerifierRSA`]]
@@ -26,6 +29,8 @@
 :AbstractSigner: pass:normal[xref:utils.adoc#AbstractSigner[`AbstractSigner`]]
 :Account: pass:normal[xref:account.adoc#Account[`Account`]]
 :AbstractSigner: pass:normal[xref:utils.adoc#AbstractSigner[`AbstractSigner`]]
+:MultiSignerERC7913: pass:normal[xref:utils.adoc#MultiSignerERC7913[`MultiSignerERC7913`]]
+:AbstractSigner: pass:normal[xref:utils.adoc#AbstractSigner[`AbstractSigner`]]
 :Account: pass:normal[xref:account.adoc#Account[`Account`]]
 :AbstractSigner: pass:normal[xref:utils.adoc#AbstractSigner[`AbstractSigner`]]
 :AbstractSigner: pass:normal[xref:utils.adoc#AbstractSigner[`AbstractSigner`]]
@@ -44,7 +49,8 @@ Miscellaneous contracts and libraries containing utility functions you can use t
  * {ERC7739}: An abstract contract to validate signatures following the rehashing scheme from `ERC7739Utils`.
  * {ERC7739Utils}: Utilities library that implements a defensive rehashing mechanism to prevent replayability of smart contract signatures based on ERC-7739.
  * {ERC7913Utils}: utilities library that implements ERC-7913 signature verification with fallback to ERC-1271 and ECDSA.
- * {SignerECDSA}, {SignerERC7913}, {SignerP256}, {SignerRSA}: Implementations of an {AbstractSigner} with specific signature validation algorithms.
+ * {SignerECDSA}, {SignerP256}, {SignerRSA}: Implementations of an {AbstractSigner} with specific signature validation algorithms.
+ * {SignerERC7913}, {MultiSignerERC7913}, {MultiSignerERC7913Weighted}: Implementations of {AbstractSigner} that validate signatures based on ERC-7913. Including a simple and weighted multisignature scheme.
  * {ERC7913SignatureVerifierP256}, {ERC7913SignatureVerifierRSA}: Ready to use ERC-7913 signature verifiers for P256 and RSA keys
  * {SignerECDSA}, {SignerP256}, {SignerRSA}: Implementations of an {AbstractSigner} with specific signature validation algorithms.
  * {SignerZKEmail}: Implementation of an {AbstractSigner} that enables email-based authentication through zero-knowledge proofs.
@@ -487,6 +493,486 @@ Return the ERC-7913 signer (i.e. `verifier || key`).
 ==== `[.contract-item-name]#++_rawSignatureValidation++#++(bytes32 hash, bytes signature) → bool++` [.item-kind]#internal#
 
 Verifies a signature using {ERC7913Utils.isValidSignatureNow} with {signer}, `hash` and `signature`.
+
+:ERC7913SignersAdded: pass:normal[xref:#MultiSignerERC7913-ERC7913SignersAdded-bytes---[`++ERC7913SignersAdded++`]]
+:ERC7913SignersRemoved: pass:normal[xref:#MultiSignerERC7913-ERC7913SignersRemoved-bytes---[`++ERC7913SignersRemoved++`]]
+:ERC7913ThresholdSet: pass:normal[xref:#MultiSignerERC7913-ERC7913ThresholdSet-uint256-[`++ERC7913ThresholdSet++`]]
+:MultiSignerERC7913AlreadyExists: pass:normal[xref:#MultiSignerERC7913-MultiSignerERC7913AlreadyExists-bytes-[`++MultiSignerERC7913AlreadyExists++`]]
+:MultiSignerERC7913NonexistentSigner: pass:normal[xref:#MultiSignerERC7913-MultiSignerERC7913NonexistentSigner-bytes-[`++MultiSignerERC7913NonexistentSigner++`]]
+:MultiSignerERC7913InvalidSigner: pass:normal[xref:#MultiSignerERC7913-MultiSignerERC7913InvalidSigner-bytes-[`++MultiSignerERC7913InvalidSigner++`]]
+:MultiSignerERC7913UnreachableThreshold: pass:normal[xref:#MultiSignerERC7913-MultiSignerERC7913UnreachableThreshold-uint256-uint256-[`++MultiSignerERC7913UnreachableThreshold++`]]
+:signerId: pass:normal[xref:#MultiSignerERC7913-signerId-bytes-[`++signerId++`]]
+:signers: pass:normal[xref:#MultiSignerERC7913-signers--[`++signers++`]]
+:isSigner: pass:normal[xref:#MultiSignerERC7913-isSigner-bytes-[`++isSigner++`]]
+:threshold: pass:normal[xref:#MultiSignerERC7913-threshold--[`++threshold++`]]
+:_signers: pass:normal[xref:#MultiSignerERC7913-_signers--[`++_signers++`]]
+:_addSigners: pass:normal[xref:#MultiSignerERC7913-_addSigners-bytes---[`++_addSigners++`]]
+:_removeSigners: pass:normal[xref:#MultiSignerERC7913-_removeSigners-bytes---[`++_removeSigners++`]]
+:_setThreshold: pass:normal[xref:#MultiSignerERC7913-_setThreshold-uint256-[`++_setThreshold++`]]
+:_validateReachableThreshold: pass:normal[xref:#MultiSignerERC7913-_validateReachableThreshold--[`++_validateReachableThreshold++`]]
+:_rawSignatureValidation: pass:normal[xref:#MultiSignerERC7913-_rawSignatureValidation-bytes32-bytes-[`++_rawSignatureValidation++`]]
+:_validateNSignatures: pass:normal[xref:#MultiSignerERC7913-_validateNSignatures-bytes32-bytes---bytes---[`++_validateNSignatures++`]]
+:_validateThreshold: pass:normal[xref:#MultiSignerERC7913-_validateThreshold-bytes---[`++_validateThreshold++`]]
+
+[.contract]
+[[MultiSignerERC7913]]
+=== `++MultiSignerERC7913++` link:https://github.com/OpenZeppelin/openzeppelin-community-contracts/blob/master/contracts/utils/cryptography/MultiSignerERC7913.sol[{github-icon},role=heading-link]
+
+[.hljs-theme-light.nopadding]
+```solidity
+import "@openzeppelin/community-contracts/utils/cryptography/MultiSignerERC7913.sol";
+```
+
+Implementation of {AbstractSigner} using multiple ERC-7913 signers with a threshold-based
+signature verification system.
+
+This contract allows managing a set of authorized signers and requires a minimum number of
+signatures (threshold) to approve operations. It uses ERC-7913 formatted signers, which
+concatenate a verifier address and a key: `verifier || key`.
+
+Example of usage:
+
+```solidity
+contract MyMultiSignerAccount is Account, MultiSignerERC7913, Initializable {
+    constructor() EIP712("MyMultiSignerAccount", "1") {}
+
+    function initialize(bytes[] memory signers, uint256 threshold) public initializer {
+        _addSigners(signers);
+        _setThreshold(threshold);
+    }
+
+    function addSigners(bytes[] memory signers) public onlyEntryPointOrSelf {
+        _addSigners(signers);
+    }
+
+    function removeSigners(bytes[] memory signers) public onlyEntryPointOrSelf {
+        _removeSigners(signers);
+    }
+
+    function setThreshold(uint256 threshold) public onlyEntryPointOrSelf {
+        _setThreshold(threshold);
+    }
+}
+```
+
+IMPORTANT: Failing to properly initialize the signers and threshold either during construction
+(if used standalone) or during initialization (if used as a clone) may leave the contract
+either front-runnable or unusable.
+
+[.contract-index]
+.Functions
+--
+* `++signerId(signer)++`
+* `++signers()++`
+* `++isSigner(signer)++`
+* `++threshold()++`
+* `++_signers()++`
+* `++_addSigners(newSigners)++`
+* `++_removeSigners(oldSigners)++`
+* `++_setThreshold(newThreshold)++`
+* `++_validateReachableThreshold()++`
+* `++_rawSignatureValidation(hash, signature)++`
+* `++_validateNSignatures(hash, signingSigners, signatures)++`
+* `++_validateThreshold(validatingSigners)++`
+
+[.contract-subindex-inherited]
+.AbstractSigner
+
+--
+
+[.contract-index]
+.Events
+--
+* `++ERC7913SignersAdded(signers)++`
+* `++ERC7913SignersRemoved(signers)++`
+* `++ERC7913ThresholdSet(threshold)++`
+
+[.contract-subindex-inherited]
+.AbstractSigner
+
+--
+
+[.contract-index]
+.Errors
+--
+* `++MultiSignerERC7913AlreadyExists(signer)++`
+* `++MultiSignerERC7913NonexistentSigner(signer)++`
+* `++MultiSignerERC7913InvalidSigner(signer)++`
+* `++MultiSignerERC7913UnreachableThreshold(signers, threshold)++`
+
+[.contract-subindex-inherited]
+.AbstractSigner
+
+--
+
+[.contract-item]
+[[MultiSignerERC7913-signerId-bytes-]]
+==== `[.contract-item-name]#++signerId++#++(bytes signer) → bytes32++` [.item-kind]#public#
+
+Returns the internal id of the `signer`.
+
+[.contract-item]
+[[MultiSignerERC7913-signers--]]
+==== `[.contract-item-name]#++signers++#++() → bytes[]++` [.item-kind]#public#
+
+Returns the set of authorized signers. Prefer {_signers} for internal use.
+
+WARNING: This operation copies the entire signers set to memory, which can be expensive. This is designed
+for view accessors queried without gas fees. Using it in state-changing functions may become uncallable
+if the signers set grows too large.
+
+[.contract-item]
+[[MultiSignerERC7913-isSigner-bytes-]]
+==== `[.contract-item-name]#++isSigner++#++(bytes signer) → bool++` [.item-kind]#public#
+
+Returns whether the `signer` is an authorized signer.
+
+[.contract-item]
+[[MultiSignerERC7913-threshold--]]
+==== `[.contract-item-name]#++threshold++#++() → uint256++` [.item-kind]#public#
+
+Returns the minimum number of signers required to approve a multisignature operation.
+
+[.contract-item]
+[[MultiSignerERC7913-_signers--]]
+==== `[.contract-item-name]#++_signers++#++() → struct EnumerableSetExtended.BytesSet++` [.item-kind]#internal#
+
+Returns the set of authorized signers.
+
+[.contract-item]
+[[MultiSignerERC7913-_addSigners-bytes---]]
+==== `[.contract-item-name]#++_addSigners++#++(bytes[] newSigners)++` [.item-kind]#internal#
+
+Adds the `newSigners` to those allowed to sign on behalf of this contract. Internal version without access control.
+
+[.contract-item]
+[[MultiSignerERC7913-_removeSigners-bytes---]]
+==== `[.contract-item-name]#++_removeSigners++#++(bytes[] oldSigners)++` [.item-kind]#internal#
+
+Removes the `oldSigners` from the authorized signers. Internal version without access control.
+
+[.contract-item]
+[[MultiSignerERC7913-_setThreshold-uint256-]]
+==== `[.contract-item-name]#++_setThreshold++#++(uint256 newThreshold)++` [.item-kind]#internal#
+
+Sets the signatures `threshold` required to approve a multisignature operation. Internal version without access control.
+
+[.contract-item]
+[[MultiSignerERC7913-_validateReachableThreshold--]]
+==== `[.contract-item-name]#++_validateReachableThreshold++#++()++` [.item-kind]#internal#
+
+Validates the current threshold is reachable.
+
+[.contract-item]
+[[MultiSignerERC7913-_rawSignatureValidation-bytes32-bytes-]]
+==== `[.contract-item-name]#++_rawSignatureValidation++#++(bytes32 hash, bytes signature) → bool++` [.item-kind]#internal#
+
+Decodes, validates the signature and checks the signers are authorized.
+See {_validateNSignatures} and {_validateThreshold} for more details.
+
+Example of signature encoding:
+
+```solidity
+// Encode signers (verifier || key)
+bytes memory signer1 = abi.encodePacked(verifier1, key1);
+bytes memory signer2 = abi.encodePacked(verifier2, key2);
+
+// Order signers by their id
+if (keccak256(signer1) > keccak256(signer2)) {
+    (signer1, signer2) = (signer2, signer1);
+    (signature1, signature2) = (signature2, signature1);
+}
+
+// Assign ordered signers and signatures
+bytes[] memory signers = new bytes[](2);
+bytes[] memory signatures = new bytes[](2);
+signers[0] = signer1;
+signatures[0] = signature1;
+signers[1] = signer2;
+signatures[1] = signature2;
+
+// Encode the multi signature
+bytes memory signature = abi.encode(signers, signatures);
+```
+
+[.contract-item]
+[[MultiSignerERC7913-_validateNSignatures-bytes32-bytes---bytes---]]
+==== `[.contract-item-name]#++_validateNSignatures++#++(bytes32 hash, bytes[] signingSigners, bytes[] signatures) → bool valid++` [.item-kind]#internal#
+
+Validates the signatures using the signers and their corresponding signatures.
+Returns whether whether the signers are authorized and the signatures are valid for the given hash.
+
+IMPORTANT: For simplicity, this contract assumes that the signers are ordered by their {signerId} to
+avoid duplication when iterating through the signers (i.e. `signerId(signer1) < signerId(signer2)`).
+The function will return false if the signers are not ordered.
+
+Requirements:
+
+- The `signers` and `signatures` arrays must be of the same length.
+
+[.contract-item]
+[[MultiSignerERC7913-_validateThreshold-bytes---]]
+==== `[.contract-item-name]#++_validateThreshold++#++(bytes[] validatingSigners) → bool++` [.item-kind]#internal#
+
+Validates that the number of signers meets the {threshold} requirement.
+Assumes the signers were already validated. See {_validateNSignatures} for more details.
+
+[.contract-item]
+[[MultiSignerERC7913-ERC7913SignersAdded-bytes---]]
+==== `[.contract-item-name]#++ERC7913SignersAdded++#++(bytes[] indexed signers)++` [.item-kind]#event#
+
+Emitted when signers are added.
+
+[.contract-item]
+[[MultiSignerERC7913-ERC7913SignersRemoved-bytes---]]
+==== `[.contract-item-name]#++ERC7913SignersRemoved++#++(bytes[] indexed signers)++` [.item-kind]#event#
+
+Emitted when signers are removed.
+
+[.contract-item]
+[[MultiSignerERC7913-ERC7913ThresholdSet-uint256-]]
+==== `[.contract-item-name]#++ERC7913ThresholdSet++#++(uint256 threshold)++` [.item-kind]#event#
+
+Emitted when the threshold is updated.
+
+[.contract-item]
+[[MultiSignerERC7913-MultiSignerERC7913AlreadyExists-bytes-]]
+==== `[.contract-item-name]#++MultiSignerERC7913AlreadyExists++#++(bytes signer)++` [.item-kind]#error#
+
+The `signer` already exists.
+
+[.contract-item]
+[[MultiSignerERC7913-MultiSignerERC7913NonexistentSigner-bytes-]]
+==== `[.contract-item-name]#++MultiSignerERC7913NonexistentSigner++#++(bytes signer)++` [.item-kind]#error#
+
+The `signer` does not exist.
+
+[.contract-item]
+[[MultiSignerERC7913-MultiSignerERC7913InvalidSigner-bytes-]]
+==== `[.contract-item-name]#++MultiSignerERC7913InvalidSigner++#++(bytes signer)++` [.item-kind]#error#
+
+The `signer` is less than 20 bytes long.
+
+[.contract-item]
+[[MultiSignerERC7913-MultiSignerERC7913UnreachableThreshold-uint256-uint256-]]
+==== `[.contract-item-name]#++MultiSignerERC7913UnreachableThreshold++#++(uint256 signers, uint256 threshold)++` [.item-kind]#error#
+
+The `threshold` is unreachable given the number of `signers`.
+
+:ERC7913SignerWeightChanged: pass:normal[xref:#MultiSignerERC7913Weighted-ERC7913SignerWeightChanged-bytes-uint256-[`++ERC7913SignerWeightChanged++`]]
+:MultiSignerERC7913WeightedInvalidWeight: pass:normal[xref:#MultiSignerERC7913Weighted-MultiSignerERC7913WeightedInvalidWeight-bytes-uint256-[`++MultiSignerERC7913WeightedInvalidWeight++`]]
+:MultiSignerERC7913WeightedMismatchedLength: pass:normal[xref:#MultiSignerERC7913Weighted-MultiSignerERC7913WeightedMismatchedLength--[`++MultiSignerERC7913WeightedMismatchedLength++`]]
+:signerWeight: pass:normal[xref:#MultiSignerERC7913Weighted-signerWeight-bytes-[`++signerWeight++`]]
+:totalWeight: pass:normal[xref:#MultiSignerERC7913Weighted-totalWeight--[`++totalWeight++`]]
+:_signerWeight: pass:normal[xref:#MultiSignerERC7913Weighted-_signerWeight-bytes-[`++_signerWeight++`]]
+:_setSignerWeights: pass:normal[xref:#MultiSignerERC7913Weighted-_setSignerWeights-bytes---uint256---[`++_setSignerWeights++`]]
+:_addSigners: pass:normal[xref:#MultiSignerERC7913Weighted-_addSigners-bytes---[`++_addSigners++`]]
+:_removeSigners: pass:normal[xref:#MultiSignerERC7913Weighted-_removeSigners-bytes---[`++_removeSigners++`]]
+:_validateReachableThreshold: pass:normal[xref:#MultiSignerERC7913Weighted-_validateReachableThreshold--[`++_validateReachableThreshold++`]]
+:_validateThreshold: pass:normal[xref:#MultiSignerERC7913Weighted-_validateThreshold-bytes---[`++_validateThreshold++`]]
+:_weightSigners: pass:normal[xref:#MultiSignerERC7913Weighted-_weightSigners-bytes---[`++_weightSigners++`]]
+
+[.contract]
+[[MultiSignerERC7913Weighted]]
+=== `++MultiSignerERC7913Weighted++` link:https://github.com/OpenZeppelin/openzeppelin-community-contracts/blob/master/contracts/utils/cryptography/MultiSignerERC7913Weighted.sol[{github-icon},role=heading-link]
+
+[.hljs-theme-light.nopadding]
+```solidity
+import "@openzeppelin/community-contracts/utils/cryptography/MultiSignerERC7913Weighted.sol";
+```
+
+Extension of {MultiSignerERC7913} that supports weighted signatures.
+
+This contract allows assigning different weights to each signer, enabling more
+flexible governance schemes. For example, some signers could have higher weight
+than others, allowing for weighted voting or prioritized authorization.
+
+Example of usage:
+
+```solidity
+contract MyWeightedMultiSignerAccount is Account, MultiSignerERC7913Weighted, Initializable {
+    constructor() EIP712("MyWeightedMultiSignerAccount", "1") {}
+
+    function initialize(bytes[] memory signers, uint256[] memory weights, uint256 threshold) public initializer {
+        _addSigners(signers);
+        _setSignerWeights(signers, weights);
+        _setThreshold(threshold);
+    }
+
+    function addSigners(bytes[] memory signers) public onlyEntryPointOrSelf {
+        _addSigners(signers);
+    }
+
+    function removeSigners(bytes[] memory signers) public onlyEntryPointOrSelf {
+        _removeSigners(signers);
+    }
+
+    function setThreshold(uint256 threshold) public onlyEntryPointOrSelf {
+        _setThreshold(threshold);
+    }
+
+    function setSignerWeights(bytes[] memory signers, uint256[] memory weights) public onlyEntryPointOrSelf {
+        _setSignerWeights(signers, weights);
+    }
+}
+```
+
+IMPORTANT: When setting a threshold value, ensure it matches the scale used for signer weights.
+For example, if signers have weights like 1, 2, or 3, then a threshold of 4 would require at
+least two signers (e.g., one with weight 1 and one with weight 3). See {signerWeight}.
+
+[.contract-index]
+.Functions
+--
+* `++signerWeight(signer)++`
+* `++totalWeight()++`
+* `++_signerWeight(signer)++`
+* `++_setSignerWeights(signers, newWeights)++`
+* `++_addSigners(newSigners)++`
+* `++_removeSigners(oldSigners)++`
+* `++_validateReachableThreshold()++`
+* `++_validateThreshold(signers)++`
+* `++_weightSigners(signers)++`
+
+[.contract-subindex-inherited]
+.MultiSignerERC7913
+* `++signerId(signer)++`
+* `++signers()++`
+* `++isSigner(signer)++`
+* `++threshold()++`
+* `++_signers()++`
+* `++_setThreshold(newThreshold)++`
+* `++_rawSignatureValidation(hash, signature)++`
+* `++_validateNSignatures(hash, signingSigners, signatures)++`
+
+[.contract-subindex-inherited]
+.AbstractSigner
+
+--
+
+[.contract-index]
+.Events
+--
+* `++ERC7913SignerWeightChanged(signer, weight)++`
+
+[.contract-subindex-inherited]
+.MultiSignerERC7913
+* `++ERC7913SignersAdded(signers)++`
+* `++ERC7913SignersRemoved(signers)++`
+* `++ERC7913ThresholdSet(threshold)++`
+
+[.contract-subindex-inherited]
+.AbstractSigner
+
+--
+
+[.contract-index]
+.Errors
+--
+* `++MultiSignerERC7913WeightedInvalidWeight(signer, weight)++`
+* `++MultiSignerERC7913WeightedMismatchedLength()++`
+
+[.contract-subindex-inherited]
+.MultiSignerERC7913
+* `++MultiSignerERC7913AlreadyExists(signer)++`
+* `++MultiSignerERC7913NonexistentSigner(signer)++`
+* `++MultiSignerERC7913InvalidSigner(signer)++`
+* `++MultiSignerERC7913UnreachableThreshold(signers, threshold)++`
+
+[.contract-subindex-inherited]
+.AbstractSigner
+
+--
+
+[.contract-item]
+[[MultiSignerERC7913Weighted-signerWeight-bytes-]]
+==== `[.contract-item-name]#++signerWeight++#++(bytes signer) → uint256++` [.item-kind]#public#
+
+Gets the weight of a signer. Returns 0 if the signer is not authorized.
+
+[.contract-item]
+[[MultiSignerERC7913Weighted-totalWeight--]]
+==== `[.contract-item-name]#++totalWeight++#++() → uint256++` [.item-kind]#public#
+
+Gets the total weight of all signers.
+
+[.contract-item]
+[[MultiSignerERC7913Weighted-_signerWeight-bytes-]]
+==== `[.contract-item-name]#++_signerWeight++#++(bytes signer) → uint256++` [.item-kind]#internal#
+
+Gets the weight of the current signer. Returns 1 if not explicitly set.
+
+NOTE: This internal function doesn't check if the signer is authorized.
+
+[.contract-item]
+[[MultiSignerERC7913Weighted-_setSignerWeights-bytes---uint256---]]
+==== `[.contract-item-name]#++_setSignerWeights++#++(bytes[] signers, uint256[] newWeights)++` [.item-kind]#internal#
+
+Sets weights for multiple signers at once. Internal version without access control.
+
+Requirements:
+
+- `signers` and `weights` arrays must have the same length. Reverts with {MultiSignerERC7913WeightedMismatchedLength} on mismatch.
+- Each signer must exist in the set of authorized signers. Reverts with {MultiSignerERC7913NonexistentSigner} if not.
+- Each weight must be greater than 0. Reverts with {MultiSignerERC7913WeightedInvalidWeight} if not.
+
+[.contract-item]
+[[MultiSignerERC7913Weighted-_addSigners-bytes---]]
+==== `[.contract-item-name]#++_addSigners++#++(bytes[] newSigners)++` [.item-kind]#internal#
+
+Adds the `newSigners` to those allowed to sign on behalf of this contract. Internal version without access control.
+
+[.contract-item]
+[[MultiSignerERC7913Weighted-_removeSigners-bytes---]]
+==== `[.contract-item-name]#++_removeSigners++#++(bytes[] oldSigners)++` [.item-kind]#internal#
+
+Removes the `oldSigners` from the authorized signers. Internal version without access control.
+
+[.contract-item]
+[[MultiSignerERC7913Weighted-_validateReachableThreshold--]]
+==== `[.contract-item-name]#++_validateReachableThreshold++#++()++` [.item-kind]#internal#
+
+Sets the threshold for the multisignature operation. Internal version without access control.
+
+NOTE: This function intentionally does not call `super._validateReachableThreshold` because the base implementation
+assumes each signer has a weight of 1, which is a subset of this weighted implementation. Consider that multiple
+implementations of this function may exist in the contract, so important side effects may be missed
+depending on the linearization order.
+
+[.contract-item]
+[[MultiSignerERC7913Weighted-_validateThreshold-bytes---]]
+==== `[.contract-item-name]#++_validateThreshold++#++(bytes[] signers) → bool++` [.item-kind]#internal#
+
+Overrides the threshold validation to use signer weights.
+
+NOTE: This function intentionally does not call `super. _validateThreshold` because the base implementation
+assumes each signer has a weight of 1, which is a subset of this weighted implementation. Consider that multiple
+implementations of this function may exist in the contract, so important side effects may be missed
+depending on the linearization order.
+
+[.contract-item]
+[[MultiSignerERC7913Weighted-_weightSigners-bytes---]]
+==== `[.contract-item-name]#++_weightSigners++#++(bytes[] signers) → uint256++` [.item-kind]#internal#
+
+Calculates the total weight of a set of signers. For all signers weight use {totalWeight}.
+
+[.contract-item]
+[[MultiSignerERC7913Weighted-ERC7913SignerWeightChanged-bytes-uint256-]]
+==== `[.contract-item-name]#++ERC7913SignerWeightChanged++#++(bytes indexed signer, uint256 weight)++` [.item-kind]#event#
+
+Emitted when a signer's weight is changed.
+
+[.contract-item]
+[[MultiSignerERC7913Weighted-MultiSignerERC7913WeightedInvalidWeight-bytes-uint256-]]
+==== `[.contract-item-name]#++MultiSignerERC7913WeightedInvalidWeight++#++(bytes signer, uint256 weight)++` [.item-kind]#error#
+
+Thrown when a signer's weight is invalid.
+
+[.contract-item]
+[[MultiSignerERC7913Weighted-MultiSignerERC7913WeightedMismatchedLength--]]
+==== `[.contract-item-name]#++MultiSignerERC7913WeightedMismatchedLength++#++()++` [.item-kind]#error#
+
+Thrown when the threshold is unreachable.
 
 :SignerP256InvalidPublicKey: pass:normal[xref:#SignerP256-SignerP256InvalidPublicKey-bytes32-bytes32-[`++SignerP256InvalidPublicKey++`]]
 :_setSigner: pass:normal[xref:#SignerP256-_setSigner-bytes32-bytes32-[`++_setSigner++`]]

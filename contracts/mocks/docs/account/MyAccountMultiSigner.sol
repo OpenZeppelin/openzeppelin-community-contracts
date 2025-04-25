@@ -1,7 +1,7 @@
 // contracts/MyAccountERC7913.sol
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.24;
+pragma solidity ^0.8.27;
 
 import {Account} from "../../../account/Account.sol";
 import {EIP712} from "@openzeppelin/contracts/utils/cryptography/EIP712.sol";
@@ -10,13 +10,34 @@ import {ERC1155Holder} from "@openzeppelin/contracts/token/ERC1155/utils/ERC1155
 import {ERC7739} from "../../../utils/cryptography/ERC7739.sol";
 import {ERC7821} from "../../../account/extensions/ERC7821.sol";
 import {Initializable} from "@openzeppelin/contracts/proxy/utils/Initializable.sol";
-import {SignerERC7913} from "../../../utils/cryptography/SignerERC7913.sol";
+import {MultiSignerERC7913} from "../../../utils/cryptography/MultiSignerERC7913.sol";
 
-contract MyAccountERC7913 is Account, SignerERC7913, ERC7739, ERC7821, ERC721Holder, ERC1155Holder, Initializable {
-    constructor() EIP712("MyAccount7913", "1") {}
+contract MyAccountMultiSigner is
+    Account,
+    MultiSignerERC7913,
+    ERC7739,
+    ERC7821,
+    ERC721Holder,
+    ERC1155Holder,
+    Initializable
+{
+    constructor() EIP712("MyAccountMultiSigner", "1") {}
 
-    function initialize(bytes memory signer) public initializer {
-        _setSigner(signer);
+    function initialize(bytes[] memory signers, uint256 threshold) public initializer {
+        _addSigners(signers);
+        _setThreshold(threshold);
+    }
+
+    function addSigners(bytes[] memory signers) public onlyEntryPointOrSelf {
+        _addSigners(signers);
+    }
+
+    function removeSigners(bytes[] memory signers) public onlyEntryPointOrSelf {
+        _removeSigners(signers);
+    }
+
+    function setThreshold(uint256 threshold) public onlyEntryPointOrSelf {
+        _setThreshold(threshold);
     }
 
     /// @dev Allows the entry point as an authorized executor.
