@@ -266,5 +266,60 @@ describe('AccountMultiSigner', function () {
       // Should fail because one signature is invalid
       await expect(this.mock.$_rawSignatureValidation(TEST_MESSAGE, multiSignature)).to.eventually.be.false;
     });
+
+    it('rejects signatures from unsorted signers', async function () {
+      // Create a valid signature and an invalid one from authorized signers
+      const validSignature1 = await signerECDSA1.signMessage(ethers.getBytes(TEST_MESSAGE));
+      const validSignature2 = await signerECDSA2.signMessage(ethers.getBytes(TEST_MESSAGE));
+
+      // Prepare signers and signatures arrays
+      const signers = [signerECDSA1.address, signerECDSA2.address].sort((a, b) =>
+        ethers.toBigInt(ethers.keccak256(a)) < ethers.toBigInt(ethers.keccak256(b)) ? -1 : 1,
+      );
+      const unsortedSigners = signers.reverse();
+      const signatures = unsortedSigners.map(signer => {
+        if (signer === signerECDSA1.address) return validSignature1;
+        return validSignature2;
+      });
+
+      // Encode the multi-signature
+      const multiSignature = ethers.AbiCoder.defaultAbiCoder().encode(
+        ['bytes[]', 'bytes[]'],
+        [unsortedSigners, signatures],
+      );
+
+      // Should fail because signers are not sorted
+      await expect(this.mock.$_rawSignatureValidation(TEST_MESSAGE, multiSignature)).to.eventually.be.false;
+    });
+
+    it('rejects signatures when signers.length != signatures.length', async function () {
+      // Create a valid signature and an invalid one from authorized signers
+      const validSignature1 = await signerECDSA1.signMessage(ethers.getBytes(TEST_MESSAGE));
+
+      // Prepare signers and signatures arrays
+      const signers = [signerECDSA1.address, signerECDSA2.address];
+      const signatures = [validSignature1];
+
+      // Encode the multi-signature
+      const multiSignature = ethers.AbiCoder.defaultAbiCoder().encode(['bytes[]', 'bytes[]'], [signers, signatures]);
+
+      // Should fail because signers and signatures arrays have different lengths
+      await expect(this.mock.$_rawSignatureValidation(TEST_MESSAGE, multiSignature)).to.eventually.be.false;
+    });
+
+    it('rejects duplicated signers', async function () {
+      // Create a valid signature
+      const validSignature = await signerECDSA1.signMessage(ethers.getBytes(TEST_MESSAGE));
+
+      // Prepare signers and signatures arrays
+      const signers = [signerECDSA1.address, signerECDSA1.address];
+      const signatures = [validSignature, validSignature];
+
+      // Encode the multi-signature
+      const multiSignature = ethers.AbiCoder.defaultAbiCoder().encode(['bytes[]', 'bytes[]'], [signers, signatures]);
+
+      // Should fail because of duplicated signers
+      await expect(this.mock.$_rawSignatureValidation(TEST_MESSAGE, multiSignature)).to.eventually.be.false;
+    });
   });
 });
