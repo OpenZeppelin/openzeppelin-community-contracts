@@ -123,7 +123,7 @@ library EnumerableSetExtended {
         // Replace when these are available in Arrays.sol
         string[] storage array = set._values;
         assembly ("memory-safe") {
-            sstore(array.slot, len)
+            sstore(array.slot, 0)
         }
     }
 
@@ -247,7 +247,7 @@ library EnumerableSetExtended {
         // Replace when these are available in Arrays.sol
         bytes[] storage array = set._values;
         assembly ("memory-safe") {
-            sstore(array.slot, len)
+            sstore(array.slot, 0)
         }
     }
 
