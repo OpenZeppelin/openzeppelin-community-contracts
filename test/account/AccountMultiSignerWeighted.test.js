@@ -241,7 +241,42 @@ describe('AccountMultiSignerWeighted', function () {
     });
 
     it('can get total weight of all signers', async function () {
-      await expect(this.mock.totalWeight()).to.eventually.equal(6); // 1 + 2 + 3
+      await expect(this.mock.totalWeight()).to.eventually.equal(6); // max(_totalWeight, _signers.length) = max(6, 3) = 6
+    });
+
+    it('totalWeight returns correct value when all signers have default weight of 1', async function () {
+      // Deploy a new mock with all signers having default weight (1)
+      const signers = [signerECDSA1.address, signerECDSA2.address, signerECDSA3.address];
+      const defaultWeights = [1, 1, 1]; // All weights are 1 (default)
+      const newMock = await this.makeMock(signers, defaultWeights, 2);
+      await newMock.deploy();
+
+      // totalWeight should return max(3, 3) = 3 when all weights are default
+      await expect(newMock.totalWeight()).to.eventually.equal(3);
+
+      // Clear custom weights to ensure we're using default weights
+      await newMock.$_setSignerWeights(signers, [1, 1, 1]);
+
+      // totalWeight should still be max(3, 3) = 3
+      await expect(newMock.totalWeight()).to.eventually.equal(3);
+    });
+
+    it('_setSignerWeights correctly handles default weights when updating', async function () {
+      const signer1 = signerECDSA1.address;
+
+      // Current weights are [1, 2, 3]
+
+      // Set weight for signer1 from 1 (default) to 5
+      await this.mock.$_setSignerWeights([signer1], [5]);
+
+      // totalWeight should be updated from max(6, 3) to max(10, 3) = 10
+      await expect(this.mock.totalWeight()).to.eventually.equal(10);
+
+      // Reset signer1 to default weight (1)
+      await this.mock.$_setSignerWeights([signer1], [1]);
+
+      // totalWeight should be back to max(6, 3) = 6
+      await expect(this.mock.totalWeight()).to.eventually.equal(6);
     });
 
     it('updates total weight when adding and removing signers', async function () {
@@ -249,28 +284,29 @@ describe('AccountMultiSignerWeighted', function () {
 
       // Add a new signer - should increase total weight by default weight (1)
       await this.mock.$_addSigners([signer4]);
-      await expect(this.mock.totalWeight()).to.eventually.equal(7); // 6 + 1
+      await expect(this.mock.totalWeight()).to.eventually.equal(7); // max(7, 4) = 7
 
       // Set weight to 5 - should increase total weight by 4
       await this.mock.$_setSignerWeights([signer4], [5]);
-      await expect(this.mock.totalWeight()).to.eventually.equal(11); // 7 + 4
+      await expect(this.mock.totalWeight()).to.eventually.equal(11); // max(11, 4) = 11
 
       // Remove signer - should decrease total weight by current weight (5)
       await this.mock.$_removeSigners([signer4]);
-      await expect(this.mock.totalWeight()).to.eventually.equal(6); // 11 - 5
+      await expect(this.mock.totalWeight()).to.eventually.equal(6); // max(6, 3) = 6
     });
 
     it('removing signers should not make threshold unreachable', async function () {
-      // current threshold = 4, totalWeight = 6
+      // current threshold = 4, totalWeight = max(6, 3) = 6
       const signer1 = signerECDSA1.address; // weight 1
       const signer3 = signerECDSA3.address; // weight 3
 
-      // Removing signer3 should let threshold unreachable and revert. (new totalWeight = 3, threshold = 4)
+      // After removing signer3, the threshold is unreachable because totalWeight = max(3, 2) = 3 but threshold = 4
+      // This should revert
       await expect(this.mock.$_removeSigners([signer3]))
         .to.be.revertedWithCustomError(this.mock, 'MultiSignerERC7913UnreachableThreshold')
         .withArgs(3, 4);
 
-      // Removing signer1 should not revert (new totalWeight = 5, threshold = 4)
+      // Removing signer1 should not revert (new totalWeight = max(5, 2) = 5, threshold = 4)
       await expect(this.mock.$_removeSigners([signer1])).to.not.be.reverted;
     });
   });

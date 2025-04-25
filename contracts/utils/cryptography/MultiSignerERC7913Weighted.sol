@@ -74,7 +74,7 @@ abstract contract MultiSignerERC7913Weighted is MultiSignerERC7913 {
 
     /// @dev Gets the total weight of all signers.
     function totalWeight() public view virtual returns (uint256) {
-        return _totalWeight;
+        return Math.max(_totalWeight, _signers().length());
     }
 
     /**
@@ -97,6 +97,7 @@ abstract contract MultiSignerERC7913Weighted is MultiSignerERC7913 {
      */
     function _setSignerWeights(bytes[] memory signers, uint256[] memory newWeights) internal virtual {
         require(signers.length == newWeights.length, MultiSignerERC7913WeightedMismatchedLength());
+        uint128 cachedTotalWeight = _totalWeight;
 
         for (uint256 i = 0; i < signers.length; i++) {
             bytes memory signer = signers[i];
@@ -106,10 +107,11 @@ abstract contract MultiSignerERC7913Weighted is MultiSignerERC7913 {
 
             uint256 oldWeight = _signerWeight(signer);
             _weights[signerId(signer)] = newWeight;
-            _totalWeight = (_totalWeight + newWeight - oldWeight).toUint128();
+            cachedTotalWeight = (cachedTotalWeight + newWeight - oldWeight).toUint128();
             emit ERC7913SignerWeightChanged(signer, newWeight);
         }
 
+        _totalWeight = cachedTotalWeight;
         _validateReachableThreshold();
     }
 
@@ -141,7 +143,8 @@ abstract contract MultiSignerERC7913Weighted is MultiSignerERC7913 {
      */
     function _validateReachableThreshold() internal view virtual override {
         uint256 weight = totalWeight();
-        require(weight >= threshold(), MultiSignerERC7913UnreachableThreshold(weight, threshold()));
+        uint256 currentThreshold = threshold();
+        require(weight >= currentThreshold, MultiSignerERC7913UnreachableThreshold(weight, currentThreshold));
     }
 
     /**
