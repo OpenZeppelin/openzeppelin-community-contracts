@@ -16,8 +16,6 @@ import {AbstractSigner} from "./AbstractSigner.sol";
  *
  * ```solidity
  * contract MyAccountECDSA is Account, SignerECDSA, Initializable {
- *     constructor() EIP712("MyAccountECDSA", "1") {}
- *
  *     function initialize(address signerAddr) public initializer {
  *       _setSigner(signerAddr);
  *     }

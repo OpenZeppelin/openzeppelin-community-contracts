@@ -3,15 +3,16 @@ pragma solidity ^0.8.24;
 
 import {Test} from "forge-std/Test.sol";
 import {ZKEmailUtils} from "../../../contracts/utils/cryptography/ZKEmailUtils.sol";
-import {ECDSAOwnedDKIMRegistry} from "@zk-email/email-tx-builder/utils/ECDSAOwnedDKIMRegistry.sol";
-import {Groth16Verifier} from "@zk-email/email-tx-builder/utils/Groth16Verifier.sol";
-import {Verifier, EmailProof} from "@zk-email/email-tx-builder/utils/Verifier.sol";
-import {EmailAuthMsg} from "@zk-email/email-tx-builder/interfaces/IEmailTypes.sol";
+import {ECDSAOwnedDKIMRegistry} from "@zk-email/email-tx-builder/src/utils/ECDSAOwnedDKIMRegistry.sol";
+import {Groth16Verifier} from "@zk-email/email-tx-builder/test/fixtures/Groth16Verifier.sol";
+import {Verifier, EmailProof} from "@zk-email/email-tx-builder/src/utils/Verifier.sol";
+import {EmailAuthMsg} from "@zk-email/email-tx-builder/src/interfaces/IEmailTypes.sol";
 import {IDKIMRegistry} from "@zk-email/contracts/DKIMRegistry.sol";
-import {IVerifier, EmailProof} from "@zk-email/email-tx-builder/interfaces/IVerifier.sol";
+import {IVerifier, EmailProof} from "@zk-email/email-tx-builder/src/interfaces/IVerifier.sol";
 import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
-import {CommandUtils} from "@zk-email/email-tx-builder/libraries/CommandUtils.sol";
+import {CommandUtils} from "@zk-email/email-tx-builder/src/libraries/CommandUtils.sol";
 import {MessageHashUtils} from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
+import {EmailAuthMsgFixtures, EmailAuthMsg} from "@zk-email/email-tx-builder/test/fixtures/EmailAuthMsgFixtures.sol";
 
 contract ZKEmailUtilsTest is Test {
     using Strings for *;
@@ -46,28 +47,43 @@ contract ZKEmailUtilsTest is Test {
         _mockProof = abi.encodePacked(bytes1(0x01));
     }
 
-    function buildEmailAuthMsg(
-        string memory command,
-        bytes[] memory params,
-        uint256 skippedPrefix
-    ) public view returns (EmailAuthMsg memory emailAuthMsg) {
-        EmailProof memory emailProof = EmailProof({
-            domainName: _domainName,
-            publicKeyHash: _publicKeyHash,
-            timestamp: block.timestamp,
-            maskedCommand: command,
-            emailNullifier: _emailNullifier,
-            accountSalt: _accountSalt,
-            isCodeExist: true,
-            proof: _mockProof
-        });
+    function testFixtureCase1SignHash() public {
+        EmailAuthMsg memory authMsg = EmailAuthMsgFixtures.getCase1();
+        _setupDKIMRegistryForFixture(authMsg);
+        ZKEmailUtils.EmailProofError err = ZKEmailUtils.isValidZKEmail(authMsg, _dkimRegistry, _verifier);
+        assertEq(uint256(err), uint256(ZKEmailUtils.EmailProofError.NoError));
+    }
 
-        emailAuthMsg = EmailAuthMsg({
-            templateId: _templateId,
-            commandParams: params,
-            skippedCommandPrefix: skippedPrefix,
-            proof: emailProof
-        });
+    function testFixtureCase2SignHash() public {
+        EmailAuthMsg memory authMsg = EmailAuthMsgFixtures.getCase2();
+        _setupDKIMRegistryForFixture(authMsg);
+        ZKEmailUtils.EmailProofError err = ZKEmailUtils.isValidZKEmail(authMsg, _dkimRegistry, _verifier);
+        assertEq(uint256(err), uint256(ZKEmailUtils.EmailProofError.NoError));
+    }
+
+    // Skipping EmailAuthMsgFixtures.getCase3()
+    //
+    // The fixture's command string doesn't match what would be constructed from the parameters using the
+    // "Send {uint} ETH to {ethAddr}" template. The masked command must be "Send 100000000000000000 ETH to 0x1234"
+    // as opposed to "Send 0.1 ETH to 0x1234".
+
+    function testFixtureCase4AcceptGuardian() public {
+        EmailAuthMsg memory authMsg = EmailAuthMsgFixtures.getCase4();
+        _setupDKIMRegistryForFixture(authMsg);
+
+        string[] memory template = new string[](3);
+        template[0] = "Accept";
+        template[1] = "guardian request for";
+        template[2] = CommandUtils.ETH_ADDR_MATCHER;
+
+        ZKEmailUtils.EmailProofError err = ZKEmailUtils.isValidZKEmail(
+            authMsg,
+            _dkimRegistry,
+            _verifier,
+            template,
+            ZKEmailUtils.Case.ANY
+        );
+        assertEq(uint256(err), uint256(ZKEmailUtils.EmailProofError.NoError));
     }
 
     function testIsValidZKEmailSignHash(
@@ -82,7 +98,7 @@ contract ZKEmailUtilsTest is Test {
         bytes[] memory commandParams = new bytes[](1);
         commandParams[0] = abi.encode(hash);
 
-        EmailAuthMsg memory emailAuthMsg = buildEmailAuthMsg(
+        EmailAuthMsg memory emailAuthMsg = _buildEmailAuthMsgMock(
             string.concat(SIGN_HASH_COMMAND, uint256(hash).toString()),
             commandParams,
             0
@@ -119,7 +135,7 @@ contract ZKEmailUtilsTest is Test {
         bytes[] memory commandParams = new bytes[](1);
         commandParams[0] = abi.encode(hash);
 
-        EmailAuthMsg memory emailAuthMsg = buildEmailAuthMsg(
+        EmailAuthMsg memory emailAuthMsg = _buildEmailAuthMsgMock(
             string.concat(commandPrefix, " ", uint256(hash).toString()),
             commandParams,
             0
@@ -162,7 +178,7 @@ contract ZKEmailUtilsTest is Test {
 
         // Test with different cases
         for (uint256 i = 0; i < uint8(type(ZKEmailUtils.Case).max) - 1; i++) {
-            EmailAuthMsg memory emailAuthMsg = buildEmailAuthMsg(
+            EmailAuthMsg memory emailAuthMsg = _buildEmailAuthMsgMock(
                 string.concat(commandPrefix, " ", CommandUtils.addressToHexString(addr, i)),
                 commandParams,
                 0
@@ -204,7 +220,7 @@ contract ZKEmailUtilsTest is Test {
         bytes[] memory commandParams = new bytes[](1);
         commandParams[0] = abi.encode(addr);
 
-        EmailAuthMsg memory emailAuthMsg = buildEmailAuthMsg(
+        EmailAuthMsg memory emailAuthMsg = _buildEmailAuthMsgMock(
             string.concat(commandPrefix, " ", addr.toHexString()),
             commandParams,
             0
@@ -238,7 +254,7 @@ contract ZKEmailUtilsTest is Test {
         bytes[] memory commandParams = new bytes[](1);
         commandParams[0] = abi.encode(hash);
 
-        EmailAuthMsg memory emailAuthMsg = buildEmailAuthMsg(
+        EmailAuthMsg memory emailAuthMsg = _buildEmailAuthMsgMock(
             string.concat(SIGN_HASH_COMMAND, uint256(hash).toString()),
             commandParams,
             0
@@ -262,7 +278,7 @@ contract ZKEmailUtilsTest is Test {
         bytes[] memory commandParams = new bytes[](1);
         commandParams[0] = abi.encode(hash);
 
-        EmailAuthMsg memory emailAuthMsg = buildEmailAuthMsg(string(new bytes(length)), commandParams, 0);
+        EmailAuthMsg memory emailAuthMsg = _buildEmailAuthMsgMock(string(new bytes(length)), commandParams, 0);
 
         ZKEmailUtils.EmailProofError err = ZKEmailUtils.isValidZKEmail(
             emailAuthMsg,
@@ -280,7 +296,7 @@ contract ZKEmailUtilsTest is Test {
         bytes[] memory commandParams = new bytes[](1);
         commandParams[0] = abi.encode(hash);
 
-        EmailAuthMsg memory emailAuthMsg = buildEmailAuthMsg(
+        EmailAuthMsg memory emailAuthMsg = _buildEmailAuthMsgMock(
             string.concat(SIGN_HASH_COMMAND, uint256(hash).toString()),
             commandParams,
             skippedPrefix
@@ -299,7 +315,7 @@ contract ZKEmailUtilsTest is Test {
         bytes[] memory commandParams = new bytes[](1);
         commandParams[0] = abi.encode(hash);
 
-        EmailAuthMsg memory emailAuthMsg = buildEmailAuthMsg(invalidCommand, commandParams, 0);
+        EmailAuthMsg memory emailAuthMsg = _buildEmailAuthMsgMock(invalidCommand, commandParams, 0);
 
         ZKEmailUtils.EmailProofError err = ZKEmailUtils.isValidZKEmail(
             emailAuthMsg,
@@ -329,7 +345,7 @@ contract ZKEmailUtilsTest is Test {
         bytes[] memory commandParams = new bytes[](1);
         commandParams[0] = abi.encode(hash);
 
-        EmailAuthMsg memory emailAuthMsg = buildEmailAuthMsg(
+        EmailAuthMsg memory emailAuthMsg = _buildEmailAuthMsgMock(
             string.concat(SIGN_HASH_COMMAND, uint256(hash).toString()),
             commandParams,
             0
@@ -366,5 +382,48 @@ contract ZKEmailUtilsTest is Test {
 
     function _mockVerifyEmailProof(EmailProof memory emailProof) private {
         vm.mockCall(address(_verifier), abi.encodeCall(IVerifier.verifyEmailProof, (emailProof)), abi.encode(true));
+    }
+
+    function _buildEmailAuthMsgMock(
+        string memory command,
+        bytes[] memory params,
+        uint256 skippedPrefix
+    ) private view returns (EmailAuthMsg memory emailAuthMsg) {
+        EmailProof memory emailProof = EmailProof({
+            domainName: _domainName,
+            publicKeyHash: _publicKeyHash,
+            timestamp: block.timestamp,
+            maskedCommand: command,
+            emailNullifier: _emailNullifier,
+            accountSalt: _accountSalt,
+            isCodeExist: true,
+            proof: _mockProof
+        });
+
+        emailAuthMsg = EmailAuthMsg({
+            templateId: _templateId,
+            commandParams: params,
+            skippedCommandPrefix: skippedPrefix,
+            proof: emailProof
+        });
+    }
+
+    function _setupDKIMRegistryForFixture(EmailAuthMsg memory fixture) private {
+        if (!_dkimRegistry.isDKIMPublicKeyHashValid(fixture.proof.domainName, fixture.proof.publicKeyHash)) {
+            (, uint256 alicePk) = makeAddrAndKey("alice");
+            string memory prefix = ECDSAOwnedDKIMRegistry(address(_dkimRegistry)).SET_PREFIX();
+            string memory message = ECDSAOwnedDKIMRegistry(address(_dkimRegistry)).computeSignedMsg(
+                prefix,
+                fixture.proof.domainName,
+                fixture.proof.publicKeyHash
+            );
+            (uint8 v, bytes32 r, bytes32 s) = vm.sign(alicePk, MessageHashUtils.toEthSignedMessageHash(bytes(message)));
+            ECDSAOwnedDKIMRegistry(address(_dkimRegistry)).setDKIMPublicKeyHash(
+                _selector,
+                fixture.proof.domainName,
+                fixture.proof.publicKeyHash,
+                abi.encodePacked(r, s, v)
+            );
+        }
     }
 }

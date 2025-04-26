@@ -3,8 +3,8 @@
 pragma solidity ^0.8.24;
 
 import {IDKIMRegistry} from "@zk-email/contracts/DKIMRegistry.sol";
-import {IVerifier} from "@zk-email/email-tx-builder/interfaces/IVerifier.sol";
-import {EmailAuthMsg} from "@zk-email/email-tx-builder/interfaces/IEmailTypes.sol";
+import {IVerifier} from "@zk-email/email-tx-builder/src/interfaces/IVerifier.sol";
+import {EmailAuthMsg} from "@zk-email/email-tx-builder/src/interfaces/IEmailTypes.sol";
 import {AbstractSigner} from "./AbstractSigner.sol";
 import {ZKEmailUtils} from "./ZKEmailUtils.sol";
 
@@ -29,13 +29,18 @@ import {ZKEmailUtils} from "./ZKEmailUtils.sol";
  *
  * ```solidity
  * contract MyAccountZKEmail is Account, SignerZKEmail, Initializable {
- *     constructor(bytes32 accountSalt, IDKIMRegistry registry, IVerifier verifier, uint256 templateId) {
+ *   function initialize(
+ *       bytes32 accountSalt,
+ *       IDKIMRegistry registry,
+ *       IVerifier verifier,
+ *       uint256 templateId
+ *   ) public initializer {
  *       // Will revert if the signer is already initialized
  *       _setAccountSalt(accountSalt);
  *       _setDKIMRegistry(registry);
  *       _setVerifier(verifier);
  *       _setTemplateId(templateId);
- *     }
+ *   }
  * }
  * ```
  *

@@ -74,7 +74,7 @@ abstract contract MultiSignerERC7913Weighted is MultiSignerERC7913 {
 
     /// @dev Gets the total weight of all signers.
     function totalWeight() public view virtual returns (uint256) {
-        return Math.max(_totalWeight, _signers().length());
+        return _totalWeight; // Doesn't need Mat.max because it's incremented by the default 1 in `_addSigners`
     }
 
     /**

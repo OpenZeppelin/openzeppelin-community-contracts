@@ -4,7 +4,6 @@ const { SET_TYPES } = require('./Enumerable.opts');
 const header = `\
 pragma solidity ^0.8.20;
 
-import {Arrays} from "@openzeppelin/contracts/utils/Arrays.sol";
 import {Hashes} from "@openzeppelin/contracts/utils/cryptography/Hashes.sol";
 
 /**
@@ -124,7 +123,11 @@ function clear(${name} storage set) internal {
     for (uint256 i = 0; i < len; ++i) {
         delete set._positions[set._values[i]];
     }
-    Arrays.unsafeSetLength(set._values, 0);
+    // Replace when these are available in Arrays.sol
+    ${value.type}[] storage array = set._values;
+    assembly ("memory-safe") {
+        sstore(array.slot, 0)
+    }
 }
 
 /**

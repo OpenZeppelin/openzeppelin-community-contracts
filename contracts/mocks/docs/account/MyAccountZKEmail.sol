@@ -12,7 +12,7 @@ import {ERC7821} from "../../../account/extensions/ERC7821.sol";
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import {SignerZKEmail} from "../../../utils/cryptography/SignerZKEmail.sol";
 import {IDKIMRegistry} from "@zk-email/contracts/DKIMRegistry.sol";
-import {IVerifier} from "@zk-email/email-tx-builder/interfaces/IVerifier.sol";
+import {IVerifier} from "@zk-email/email-tx-builder/src/interfaces/IVerifier.sol";
 
 contract MyAccountZKEmail is Account, SignerZKEmail, ERC7739, ERC7821, ERC721Holder, ERC1155Holder, Initializable {
     constructor() EIP712("MyAccountZKEmail", "1") {}

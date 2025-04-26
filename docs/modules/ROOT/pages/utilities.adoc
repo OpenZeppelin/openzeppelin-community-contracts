@@ -35,7 +35,7 @@ In case your smart contract validates signatures, using xref:api:utils.adoc#ERC7
 include::api:example$utils/cryptography/ERC7739SignerECDSA.sol[]
 ----
 
-==== ERC-7913 Signature Verifiers
+=== ERC-7913 Signature Verifiers
 
 ERC-7913 extends the concept of signature verification to support keys that don't have their own Ethereum address. This is particularly useful for integrating non-Ethereum cryptographic curves, hardware devices, or other identity systems into smart accounts.
 

@@ -50,6 +50,9 @@ abstract contract MultiSignerERC7913 is AbstractSigner {
     using ERC7913Utils for bytes;
     using SafeCast for uint256;
 
+    EnumerableSetExtended.BytesSet private _signersSet;
+    uint128 private _threshold;
+
     /// @dev Emitted when signers are added.
     event ERC7913SignersAdded(bytes[] indexed signers);
 
@@ -70,9 +73,6 @@ abstract contract MultiSignerERC7913 is AbstractSigner {
 
     /// @dev The `threshold` is unreachable given the number of `signers`.
     error MultiSignerERC7913UnreachableThreshold(uint256 signers, uint256 threshold);
-
-    EnumerableSetExtended.BytesSet private _signersSet;
-    uint128 private _threshold;
 
     /// @dev Returns the internal id of the `signer`.
     function signerId(bytes memory signer) public view virtual returns (bytes32) {

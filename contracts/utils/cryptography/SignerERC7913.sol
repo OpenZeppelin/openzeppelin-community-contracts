@@ -18,8 +18,6 @@ import {ERC7913Utils} from "./ERC7913Utils.sol";
  *
  * ```solidity
  * contract MyAccountERC7913 is Account, SignerERC7913, Initializable {
- *     constructor() EIP712("MyAccountERC7913", "1") {}
- *
  *     function initialize(bytes memory signer_) public initializer {
  *       _setSigner(signer_);
  *     }
