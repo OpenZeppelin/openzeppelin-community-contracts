@@ -102,6 +102,21 @@ describe('ERC7579SignatureValidator', function () {
     await expect(this.mock.signer(this.mockAccount.address)).to.eventually.equal(signerData);
   });
 
+  it('sets signer correctly with setSigner and emits event', async function () {
+    const signerData = ethers.solidityPacked(['address'], [signerECDSA.address]);
+    await expect(this.mockFromAccount.setSigner(signerData))
+      .to.emit(this.mockFromAccount, 'ERC7579SignatureValidatorSignerSet')
+      .withArgs(this.mockAccount.address, signerData);
+    await expect(this.mock.signer(this.mockAccount.address)).to.eventually.equal(signerData);
+  });
+
+  it('reverts when calling setSigner with invalid signer length', async function () {
+    await expect(this.mock.setSigner('0x0123456789')).to.be.revertedWithCustomError(
+      this.mock,
+      'ERC7579SignatureValidatorInvalidSignerLength',
+    );
+  });
+
   describe('ECDSA key', function () {
     beforeEach(async function () {
       this.signer = signerECDSA;

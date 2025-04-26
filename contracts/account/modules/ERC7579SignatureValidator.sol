@@ -81,9 +81,8 @@ contract ERC7579SignatureValidator is IERC7579Validator {
      * the module's installation. Future installations will revert.
      */
     function onInstall(bytes calldata data) public virtual {
-        require(data.length >= 20, ERC7579SignatureValidatorInvalidSignerLength());
         require(signer(msg.sender).length == 0, ERC7579SignatureValidatorAlreadyInstalled());
-        _setSigner(msg.sender, data);
+        setSigner(data);
     }
 
     /**
@@ -122,6 +121,7 @@ contract ERC7579SignatureValidator is IERC7579Validator {
 
     /// @dev Sets the ERC-7913 signer (i.e. `verifier || key`) for the calling account.
     function setSigner(bytes memory signer_) public virtual {
+        require(signer_.length >= 20, ERC7579SignatureValidatorInvalidSignerLength());
         _setSigner(msg.sender, signer_);
     }
 
