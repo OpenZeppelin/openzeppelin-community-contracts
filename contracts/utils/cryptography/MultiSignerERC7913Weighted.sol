@@ -126,7 +126,7 @@ abstract contract MultiSignerERC7913Weighted is MultiSignerERC7913 {
         uint256 removedWeight = _weightSigners(oldSigners);
         _totalWeight -= removedWeight.toUint128();
         // Clean up weights for removed signers
-        _setSignerWeights(signers, new uint256[](oldSigners.length));
+        _setSignerWeights(oldSigners, new uint256[](oldSigners.length));
         super._removeSigners(oldSigners);
     }
 
