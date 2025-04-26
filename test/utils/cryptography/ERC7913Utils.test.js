@@ -3,10 +3,10 @@ const { ethers } = require('hardhat');
 const { loadFixture } = require('@nomicfoundation/hardhat-network-helpers');
 const { PANIC_CODES } = require('@nomicfoundation/hardhat-chai-matchers/panic');
 
-const TEST_MESSAGE = ethers.id('OpenZeppelin');
+const TEST_MESSAGE = 'OpenZeppelin';
 const TEST_MESSAGE_HASH = ethers.hashMessage(TEST_MESSAGE);
 
-const WRONG_MESSAGE = ethers.id('Nope');
+const WRONG_MESSAGE = 'Nope';
 const WRONG_MESSAGE_HASH = ethers.hashMessage(WRONG_MESSAGE);
 
 async function fixture() {

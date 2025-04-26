@@ -59,6 +59,9 @@ contract ERC7579SignatureValidator is IERC7579Validator {
     /// @dev Thrown when the signer length is less than 20 bytes.
     error ERC7579SignatureValidatorInvalidSignerLength();
 
+    /// @dev Thrown when the module is already installed.
+    error ERC7579SignatureValidatorAlreadyInstalled();
+
     /// @dev Return the ERC-7913 signer (i.e. `verifier || key`).
     function signer(address account) public view virtual returns (bytes memory) {
         return _signers[account];
@@ -69,13 +72,27 @@ contract ERC7579SignatureValidator is IERC7579Validator {
         return moduleTypeId == MODULE_TYPE_VALIDATOR;
     }
 
-    /// @inheritdoc IERC7579Module
+    /**
+     * @dev See {IERC7579Module-onInstall}.
+     * Reverts with {ERC7579SignatureValidatorAlreadyInstalled} if the module is already installed.
+     *
+     * IMPORTANT: A signer will be set for the calling account. In case the account calls this function
+     * directly, the signer will be set to the provided data even if the account didn't track
+     * the module's installation. Future installations will revert.
+     */
     function onInstall(bytes calldata data) public virtual {
         require(data.length >= 20, ERC7579SignatureValidatorInvalidSignerLength());
+        require(signer(msg.sender).length == 0, ERC7579SignatureValidatorAlreadyInstalled());
         _setSigner(msg.sender, data);
     }
 
-    /// @inheritdoc IERC7579Module
+    /**
+     * @dev See {IERC7579Module-onUninstall}.
+     *
+     * WARNING: The signer's key will be removed if the account calls this function, potentially
+     * making the account unusable. As an account operator, make sure to uninstall to a predefined path
+     * in your account that properly side effects of uninstallation.  See {AccountERC7579-uninstallModule}.
+     */
     function onUninstall(bytes calldata) public virtual {
         _setSigner(msg.sender, "");
     }
