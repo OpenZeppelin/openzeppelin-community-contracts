@@ -84,4 +84,18 @@ library ERC7913Utils {
 
         return true;
     }
+
+    /// @dev Overload of {isValidNSignaturesNow} that uses the `keccak256` as the `signerId` function.
+    function isValidNSignaturesNow(
+        bytes32 hash,
+        bytes[] memory signers,
+        bytes[] memory signatures
+    ) internal view returns (bool) {
+        return isValidNSignaturesNow(hash, signers, signatures, _keccak256);
+    }
+
+    /// @dev Computes the keccak256 hash of the given data.
+    function _keccak256(bytes memory data) private pure returns (bytes32) {
+        return keccak256(data);
+    }
 }
