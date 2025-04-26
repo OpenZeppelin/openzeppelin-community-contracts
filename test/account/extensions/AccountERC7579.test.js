@@ -22,7 +22,7 @@ async function fixture() {
   const anotherTarget = await ethers.deployContract('CallReceiverMockExtended');
 
   // ERC-7579 signature validator
-  const signatureValidator = await ethers.deployContract('$ERC7579SignatureValidator');
+  const erc7579Validator = await ethers.deployContract('$ERC7579SignatureValidator');
 
   // ERC-7913 verifiers
   const verifierP256 = await ethers.deployContract('ERC7913SignatureVerifierP256');
@@ -36,31 +36,41 @@ async function fixture() {
     name: 'AccountERC7579',
     version: '1',
     chainId: entrypointDomain.chainId,
-    verifyingContract: signatureValidator.target,
-  };
-
-  const signUserOp = function (userOp) {
-    return this.signer
-      .signTypedData(entrypointDomain, { PackedUserOperation }, userOp.packed)
-      .then(signature => Object.assign(userOp, { signature: ethers.concat([signatureValidator.target, signature]) }));
+    verifyingContract: erc7579Validator.target,
   };
 
   const makeAccount = function (signer) {
-    return this.helper.newAccount('$AccountERC7579Mock', [this.signatureValidator, signer]);
+    return this.helper.newAccount('$AccountERC7579Mock', [this.erc7579Validator, signer]);
   };
 
   return {
     helper,
-    signatureValidator,
+    erc7579Validator,
     verifierP256,
     verifierRSA,
+    entrypointDomain,
     domain,
     target,
     anotherTarget,
     other,
-    signUserOp,
     makeAccount,
+    userOp: {
+      nonce: ethers.zeroPadBytes(ethers.hexlify(erc7579Validator.target), 32),
+    },
   };
+}
+
+function prepareSigner(prototype) {
+  this.signer.signMessage = message =>
+    prototype.signMessage.call(this.signer, message).then(sign => ethers.concat([this.erc7579Validator.target, sign]));
+  this.signer.signTypedData = (domain, types, values) =>
+    prototype.signTypedData
+      .call(this.signer, domain, types, values)
+      .then(sign => ethers.concat([this.erc7579Validator.target, sign]));
+  this.signUserOp = userOp =>
+    prototype.signTypedData
+      .call(this.signer, this.entrypointDomain, { PackedUserOperation }, userOp.packed)
+      .then(signature => Object.assign(userOp, { signature }));
 }
 
 describe('AccountERC7579', function () {
@@ -72,6 +82,7 @@ describe('AccountERC7579', function () {
   describe('ECDSA key', function () {
     beforeEach(async function () {
       this.signer = signerECDSA;
+      prepareSigner.call(this, ethers.Wallet.prototype);
       this.mock = await this.makeAccount(ethers.solidityPacked(['address'], [this.signer.address]));
     });
 
@@ -84,8 +95,9 @@ describe('AccountERC7579', function () {
   describe('P256 key', function () {
     beforeEach(async function () {
       this.signer = signerP256;
+      prepareSigner.call(this, new NonNativeSigner(this.signer.signingKey));
       this.mock = await this.helper.newAccount('$AccountERC7579Mock', [
-        this.signatureValidator,
+        this.erc7579Validator,
         ethers.concat([
           this.verifierP256.target,
           this.signer.signingKey.publicKey.qx,
@@ -103,8 +115,9 @@ describe('AccountERC7579', function () {
   describe('RSA key', function () {
     beforeEach(async function () {
       this.signer = signerRSA;
+      prepareSigner.call(this, new NonNativeSigner(this.signer.signingKey));
       this.mock = await this.helper.newAccount('$AccountERC7579Mock', [
-        this.signatureValidator,
+        this.erc7579Validator,
         ethers.concat([
           this.verifierRSA.target,
           ethers.AbiCoder.defaultAbiCoder().encode(
