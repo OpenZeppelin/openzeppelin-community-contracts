@@ -87,7 +87,7 @@ abstract contract MultiSignerERC7913 is AbstractSigner {
      * if the signers set grows too large.
      */
     function signers() public view virtual returns (bytes[] memory) {
-        return _signersSet.values();
+        return _signers().values();
     }
 
     /// @dev Returns whether the `signer` is an authorized signer.
@@ -118,7 +118,7 @@ abstract contract MultiSignerERC7913 is AbstractSigner {
         for (uint256 i = 0; i < newSigners.length; i++) {
             bytes memory signer = newSigners[i];
             require(signer.length >= 20, MultiSignerERC7913InvalidSigner(signer));
-            require(_signersSet.add(signer), MultiSignerERC7913AlreadyExists(signer));
+            require(_signers().add(signer), MultiSignerERC7913AlreadyExists(signer));
         }
         emit ERC7913SignersAdded(newSigners);
     }
@@ -134,7 +134,7 @@ abstract contract MultiSignerERC7913 is AbstractSigner {
     function _removeSigners(bytes[] memory oldSigners) internal virtual {
         for (uint256 i = 0; i < oldSigners.length; i++) {
             bytes memory signer = oldSigners[i];
-            require(_signersSet.remove(signer), MultiSignerERC7913NonexistentSigner(signer));
+            require(_signers().remove(signer), MultiSignerERC7913NonexistentSigner(signer));
         }
         _validateReachableThreshold();
         emit ERC7913SignersRemoved(oldSigners);
