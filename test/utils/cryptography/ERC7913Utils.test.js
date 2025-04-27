@@ -153,9 +153,9 @@ describe('ERC7913Utils', function () {
     });
   });
 
-  describe('isValidNSignaturesNow', function () {
+  describe('areValidNSignaturesNow', function () {
     it('should validate a single signature', async function () {
-      await expect(this.mock.$isValidNSignaturesNow(TEST_MESSAGE_HASH, [this.eoaSigner], [this.eoaSignature])).to
+      await expect(this.mock.$areValidNSignaturesNow(TEST_MESSAGE_HASH, [this.eoaSigner], [this.eoaSignature])).to
         .eventually.be.true;
     });
 
@@ -181,7 +181,7 @@ describe('ERC7913Utils', function () {
         return ethers.randomBytes(65); // fallback, shouldn't be reached
       });
 
-      await expect(this.mock.$isValidNSignaturesNow(TEST_MESSAGE_HASH, signers, signatures)).to.eventually.be.true;
+      await expect(this.mock.$areValidNSignaturesNow(TEST_MESSAGE_HASH, signers, signatures)).to.eventually.be.true;
     });
 
     it('should validate multiple EOA signatures', async function () {
@@ -196,7 +196,7 @@ describe('ERC7913Utils', function () {
 
       const signatures = signers.map(signer => signatureMap[ethers.hexlify(signer)]);
 
-      await expect(this.mock.$isValidNSignaturesNow(TEST_MESSAGE_HASH, signers, signatures)).to.eventually.be.true;
+      await expect(this.mock.$areValidNSignaturesNow(TEST_MESSAGE_HASH, signers, signatures)).to.eventually.be.true;
     });
 
     it('should validate multiple ERC-1271 wallet signatures', async function () {
@@ -209,7 +209,7 @@ describe('ERC7913Utils', function () {
         signatures.reverse();
       }
 
-      await expect(this.mock.$isValidNSignaturesNow(TEST_MESSAGE_HASH, signers, signatures)).to.eventually.be.true;
+      await expect(this.mock.$areValidNSignaturesNow(TEST_MESSAGE_HASH, signers, signatures)).to.eventually.be.true;
     });
 
     it('should validate multiple ERC-7913 signatures', async function () {
@@ -226,13 +226,13 @@ describe('ERC7913Utils', function () {
 
       const signatures = signers.map(signer => signatureMap[ethers.hexlify(signer)]);
 
-      await expect(this.mock.$isValidNSignaturesNow(TEST_MESSAGE_HASH, signers, signatures)).to.eventually.be.true;
+      await expect(this.mock.$areValidNSignaturesNow(TEST_MESSAGE_HASH, signers, signatures)).to.eventually.be.true;
     });
 
     it('should return false if any signature is invalid', async function () {
       // Use two EOA signers but one signature is for the wrong message
       await expect(
-        this.mock.$isValidNSignaturesNow(
+        this.mock.$areValidNSignaturesNow(
           TEST_MESSAGE_HASH,
           [this.eoaSigner, this.eoaSigner2],
           [this.eoaSignature, this.wrongMessageSignature],
@@ -251,12 +251,12 @@ describe('ERC7913Utils', function () {
         signatures.reverse();
       }
 
-      await expect(this.mock.$isValidNSignaturesNow(TEST_MESSAGE_HASH, signers, signatures)).to.eventually.be.false;
+      await expect(this.mock.$areValidNSignaturesNow(TEST_MESSAGE_HASH, signers, signatures)).to.eventually.be.false;
     });
 
     it('should return false if there are duplicate signers', async function () {
       await expect(
-        this.mock.$isValidNSignaturesNow(
+        this.mock.$areValidNSignaturesNow(
           TEST_MESSAGE_HASH,
           [this.eoaSigner, this.eoaSigner], // Same signer used twice
           [this.eoaSignature, this.eoaSignature],
@@ -266,7 +266,7 @@ describe('ERC7913Utils', function () {
 
     it('should fail if signatures array length does not match signers array length', async function () {
       await expect(
-        this.mock.$isValidNSignaturesNow(
+        this.mock.$areValidNSignaturesNow(
           TEST_MESSAGE_HASH,
           [this.eoaSigner, this.eoaSigner2],
           [this.eoaSignature], // Missing one signature
@@ -275,7 +275,7 @@ describe('ERC7913Utils', function () {
     });
 
     it('should pass with empty arrays', async function () {
-      await expect(this.mock.$isValidNSignaturesNow(TEST_MESSAGE_HASH, [], [])).to.eventually.be.true;
+      await expect(this.mock.$areValidNSignaturesNow(TEST_MESSAGE_HASH, [], [])).to.eventually.be.true;
     });
   });
 });

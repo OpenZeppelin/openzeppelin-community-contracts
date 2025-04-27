@@ -204,7 +204,7 @@ abstract contract MultiSignerERC7913 is AbstractSigner {
                 return false;
             }
         }
-        return hash.isValidNSignaturesNow(signingSigners, signatures, signerId);
+        return hash.areValidNSignaturesNow(signingSigners, signatures, signerId);
     }
 
     /**
