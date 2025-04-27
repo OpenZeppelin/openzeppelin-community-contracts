@@ -31,17 +31,17 @@ import {ERC7913Utils} from "./ERC7913Utils.sol";
 abstract contract SignerERC7913 is AbstractSigner {
     bytes private _signer;
 
-    /// @dev Sets the signer (i.e. `verifier || key`) with an ERC-7913 formatted signer.
-    function _setSigner(bytes memory signer_) internal {
-        _signer = signer_;
-    }
-
     /// @dev Return the ERC-7913 signer (i.e. `verifier || key`).
     function signer() public view virtual returns (bytes memory) {
         return _signer;
     }
 
-    /// @dev Verifies a signature using {ERC7913Utils.isValidSignatureNow} with {signer}, `hash` and `signature`.
+    /// @dev Sets the signer (i.e. `verifier || key`) with an ERC-7913 formatted signer.
+    function _setSigner(bytes memory signer_) internal {
+        _signer = signer_;
+    }
+
+    /// @dev Verifies a signature using {ERC7913Utils-isValidSignatureNow} with {signer}, `hash` and `signature`.
     function _rawSignatureValidation(
         bytes32 hash,
         bytes calldata signature
