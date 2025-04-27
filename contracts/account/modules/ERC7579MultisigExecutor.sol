@@ -27,16 +27,17 @@ import {Mode} from "@openzeppelin/contracts/account/utils/draft-ERC7579Utils.sol
  */
 contract ERC7579MultisigExecutor is ERC7579BaseExecutor {
     using EnumerableSetExtended for EnumerableSetExtended.BytesSet;
+    using ERC7913Utils for bytes32;
     using ERC7913Utils for bytes;
 
     /// @dev Emitted when signers are added.
-    event ERC7913SignersAdded(bytes[] indexed signers);
+    event ERC7913SignersAdded(address indexed account, bytes[] signers);
 
     /// @dev Emitted when signers are removed.
-    event ERC7913SignersRemoved(bytes[] indexed signers);
+    event ERC7913SignersRemoved(address indexed account, bytes[] signers);
 
     /// @dev Emitted when the threshold is updated.
-    event ERC7913ThresholdSet(uint256 threshold);
+    event ERC7913ThresholdSet(address indexed account, uint256 threshold);
 
     /// @dev The `signer` already exists.
     error ERC7579MultisigExecutorAlreadyExists(bytes signer);
@@ -193,7 +194,7 @@ contract ERC7579MultisigExecutor is ERC7579BaseExecutor {
             require(signerSet.add(signer), ERC7579MultisigExecutorAlreadyExists(signer));
         }
 
-        emit ERC7913SignersAdded(newSigners);
+        emit ERC7913SignersAdded(account, newSigners);
     }
 
     /// @dev Removes the `oldSigners` from the authorized signers for the account.
@@ -206,14 +207,14 @@ contract ERC7579MultisigExecutor is ERC7579BaseExecutor {
         }
 
         _validateReachableThreshold(account);
-        emit ERC7913SignersRemoved(oldSigners);
+        emit ERC7913SignersRemoved(account, oldSigners);
     }
 
     /// @dev Sets the signatures `threshold` required to approve a multisignature operation.
     function _setThreshold(address account, uint256 newThreshold) internal virtual {
         _thresholdByAccount[account] = newThreshold;
         _validateReachableThreshold(account);
-        emit ERC7913ThresholdSet(newThreshold);
+        emit ERC7913ThresholdSet(account, newThreshold);
     }
 
     /// @dev Validates the current threshold is reachable with the number of {signers}.
@@ -230,11 +231,12 @@ contract ERC7579MultisigExecutor is ERC7579BaseExecutor {
      * @dev Validates the signatures using the signers and their corresponding signatures.
      * Returns whether the signers are authorized and the signatures are valid for the given hash.
      *
+     * The signers must be ordered by their `signerId` to ensure no duplicates and to optimize
+     * the verification process. The function will return `false` if the signers are not properly ordered.
+     *
      * Requirements:
      *
-     * - The `signers` and `signatures` arrays must be of the same length.
-     * - The signers must be ordered by their {signerId}.
-     * - The number of valid signatures must meet or exceed the threshold.
+     * * The `signatures` array must be at least the `signers` array's length.
      */
     function _validateNSignatures(
         address account,
@@ -242,24 +244,13 @@ contract ERC7579MultisigExecutor is ERC7579BaseExecutor {
         bytes[] memory signingSigners,
         bytes[] memory signatures
     ) internal view virtual returns (bool valid) {
-        bytes32 currentSignerId = bytes32(0);
-
         uint256 signersLength = signingSigners.length;
         for (uint256 i = 0; i < signersLength; i++) {
-            // Signers must be ordered by id to ensure no duplicates
-            bytes memory signer = signingSigners[i];
-            bytes32 id = signerId(signer);
-
-            if (
-                currentSignerId >= id || !isSigner(account, signer) || !signer.isValidSignatureNow(hash, signatures[i])
-            ) {
+            if (!isSigner(account, signingSigners[i])) {
                 return false;
             }
-
-            currentSignerId = id;
         }
-
-        return true;
+        return hash.areValidNSignaturesNow(signingSigners, signatures, signerId);
     }
 
     /**
