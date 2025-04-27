@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
-import {ERC7579BaseExecutor} from "./ERC7579BaseExecutor.sol";
+import {ERC7579DelayedExecutor} from "./ERC7579DelayedExecutor.sol";
 import {ERC7913Utils} from "../../utils/cryptography/ERC7913Utils.sol";
 import {EnumerableSetExtended} from "../../utils/structs/EnumerableSetExtended.sol";
 import {Mode} from "@openzeppelin/contracts/account/utils/draft-ERC7579Utils.sol";
 
 /**
- * @dev Implementation of {ERC7579BaseExecutor} that uses ERC-7913 signers for multisignature
+ * @dev Implementation of {ERC7579DelayedExecutor} that uses ERC-7913 signers for multisignature
  * operation scheduling.
  *
  * This module extends the base time-delayed executor with multisignature capabilities,
@@ -25,7 +25,7 @@ import {Mode} from "@openzeppelin/contracts/account/utils/draft-ERC7579Utils.sol
  * after obtaining approval from a set number of signers (e.g., 3-of-5 guardians),
  * and then execute them after the time delay has passed.
  */
-contract ERC7579MultisigExecutor is ERC7579BaseExecutor {
+contract ERC7579MultisigExecutor is ERC7579DelayedExecutor {
     using EnumerableSetExtended for EnumerableSetExtended.BytesSet;
     using ERC7913Utils for bytes32;
     using ERC7913Utils for bytes;
@@ -59,7 +59,7 @@ contract ERC7579MultisigExecutor is ERC7579BaseExecutor {
 
     /**
      * @dev Sets up the module's initial configuration when installed by an account.
-     * See {ERC7579BaseExecutor-onInstall}. Besides the delay setup, the `initdata` can
+     * See {ERC7579DelayedExecutor-onInstall}. Besides the delay setup, the `initdata` can
      * include `signers` and `threshold`.
      *
      * The initData should be encoded as:
@@ -83,7 +83,7 @@ contract ERC7579MultisigExecutor is ERC7579BaseExecutor {
      * @dev Cleans up module's configuration when uninstalled from an account.
      * Clears all signers and resets the threshold.
      *
-     * See {ERC7579BaseExecutor-onUninstall}.
+     * See {ERC7579DelayedExecutor-onUninstall}.
      *
      * WARNING: This function has unbounded gas costs and may become uncallable if the set grows too large.
      * See {EnumerableSetExtended-clear}.
