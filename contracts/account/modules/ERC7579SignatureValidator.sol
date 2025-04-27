@@ -125,8 +125,8 @@ contract ERC7579SignatureValidator is IERC7579Validator {
         _setSigner(msg.sender, signer_);
     }
 
-    /// @dev Internal version of {setSigner} that takes an `account` as argument.
-    function _setSigner(address account, bytes memory signer_) internal {
+    /// @dev Internal version of {setSigner} that takes an `account` as argument without validating `signer_`.
+    function _setSigner(address account, bytes memory signer_) internal virtual {
         _signers[account] = signer_;
         emit ERC7579SignatureValidatorSignerSet(account, signer_);
     }
