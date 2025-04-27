@@ -87,7 +87,7 @@ abstract contract MultiSignerERC7913 is AbstractSigner {
      * if the signers set grows too large.
      */
     function signers() public view virtual returns (bytes[] memory) {
-        return _signersSet.values();
+        return _signers().values();
     }
 
     /// @dev Returns whether the `signer` is an authorized signer.
@@ -105,34 +105,62 @@ abstract contract MultiSignerERC7913 is AbstractSigner {
         return _signersSet;
     }
 
-    /// @dev Adds the `newSigners` to those allowed to sign on behalf of this contract. Internal version without access control.
+    /**
+     * @dev Adds the `newSigners` to those allowed to sign on behalf of this contract.
+     * Internal version without access control.
+     *
+     * Requirements:
+     *
+     * * Each of `newSigners` must be at least 20 bytes long. Reverts with {MultiSignerERC7913InvalidSigner} if not.
+     * * Each of `newSigners` must not be authorized. See {isSigner}. Reverts with {MultiSignerERC7913AlreadyExists} if so.
+     */
     function _addSigners(bytes[] memory newSigners) internal virtual {
         for (uint256 i = 0; i < newSigners.length; i++) {
             bytes memory signer = newSigners[i];
             require(signer.length >= 20, MultiSignerERC7913InvalidSigner(signer));
-            require(_signersSet.add(signer), MultiSignerERC7913AlreadyExists(signer));
+            require(_signers().add(signer), MultiSignerERC7913AlreadyExists(signer));
         }
         emit ERC7913SignersAdded(newSigners);
     }
 
-    /// @dev Removes the `oldSigners` from the authorized signers. Internal version without access control.
+    /**
+     * @dev Removes the `oldSigners` from the authorized signers. Internal version without access control.
+     *
+     * Requirements:
+     *
+     * * Each of `oldSigners` must be authorized. See {isSigner}. Otherwise {MultiSignerERC7913NonexistentSigner} is thrown.
+     * * See {_validateReachableThreshold} for the threshold validation.
+     */
     function _removeSigners(bytes[] memory oldSigners) internal virtual {
         for (uint256 i = 0; i < oldSigners.length; i++) {
             bytes memory signer = oldSigners[i];
-            require(_signersSet.remove(signer), MultiSignerERC7913NonexistentSigner(signer));
+            require(_signers().remove(signer), MultiSignerERC7913NonexistentSigner(signer));
         }
         _validateReachableThreshold();
         emit ERC7913SignersRemoved(oldSigners);
     }
 
-    /// @dev Sets the signatures `threshold` required to approve a multisignature operation. Internal version without access control.
+    /**
+     * @dev Sets the signatures `threshold` required to approve a multisignature operation.
+     * Internal version without access control.
+     *
+     * Requirements:
+     *
+     * * See {_validateReachableThreshold} for the threshold validation.
+     */
     function _setThreshold(uint256 newThreshold) internal virtual {
         _threshold = newThreshold.toUint128();
         _validateReachableThreshold();
         emit ERC7913ThresholdSet(newThreshold);
     }
 
-    /// @dev Validates the current threshold is reachable.
+    /**
+     * @dev Validates the current threshold is reachable.
+     *
+     * Requirements:
+     *
+     * * The {signers}'s length must be `>=` to the {threshold}. Throws {MultiSignerERC7913UnreachableThreshold} if not.
+     */
     function _validateReachableThreshold() internal view virtual {
         uint256 totalSigners = _signers().length();
         uint256 currentThreshold = threshold();
@@ -170,6 +198,10 @@ abstract contract MultiSignerERC7913 is AbstractSigner {
      * // Encode the multi signature
      * bytes memory signature = abi.encode(signers, signatures);
      * ```
+     *
+     * Requirements:
+     *
+     * * The `signature` must be encoded as `abi.encode(signers, signatures)`.
      */
     function _rawSignatureValidation(
         bytes32 hash,
@@ -191,7 +223,7 @@ abstract contract MultiSignerERC7913 is AbstractSigner {
      *
      * Requirements:
      *
-     * - The `signers` and `signatures` arrays must be of the same length.
+     * * The `signatures` arrays must be at least as large as the `signingSigners` arrays. Panics otherwise.
      */
     function _validateNSignatures(
         bytes32 hash,
@@ -204,7 +236,7 @@ abstract contract MultiSignerERC7913 is AbstractSigner {
                 return false;
             }
         }
-        return hash.isValidNSignaturesNow(signingSigners, signatures, signerId);
+        return hash.areValidNSignaturesNow(signingSigners, signatures, signerId);
     }
 
     /**
