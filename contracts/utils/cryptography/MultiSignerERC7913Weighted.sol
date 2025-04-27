@@ -182,6 +182,8 @@ abstract contract MultiSignerERC7913Weighted is MultiSignerERC7913 {
      * Requirements:
      *
      * * The `newWeights` array must be at least as large as the `signers` array. Panics otherwise.
+     *
+     * Emits {ERC7913SignerWeightChanged} for each signer.
      */
     function _unsafeSetSignerWeights(bytes[] memory signers, uint256[] memory newWeights) private {
         for (uint256 i = 0; i < signers.length; i++) {
