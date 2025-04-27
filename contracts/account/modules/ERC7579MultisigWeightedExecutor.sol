@@ -143,7 +143,7 @@ contract ERC7579MultisigWeightedExecutor is ERC7579MultisigExecutor {
      */
     function _addSigners(address account, bytes[] memory newSigners) internal virtual override {
         super._addSigners(account, newSigners);
-        _totalWeightByAccount[account] += newSigners.length; // Default weight of 1 per signer
+        _totalWeightByAccount[account] += newSigners.length; // Default weight of 1 per signer.
     }
 
     /// @dev Override to handle weight tracking during removal. See {ERC7579MultisigExecutor-_removeSigners}.
