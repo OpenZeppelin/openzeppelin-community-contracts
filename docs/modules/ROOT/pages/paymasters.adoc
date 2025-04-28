@@ -10,7 +10,7 @@ In the context of account abstraction, sponsoring user operations allows a third
 
 The xref:api:utils.adoc#PaymasterSigner[`PaymasterSigner`] enables enables user operation fees sponsorship through signature verification, allowing designated signers to authorize gas payment for users' operations without requiring users to hold native ETH.
 
-TIP: Learn more about xref:accounts.adoc#selecting_a_signer[signers] to explore different approaches to user operation sponsorhip via signatures.
+TIP: Learn more about xref:accounts.adoc#selecting_a_signer[signers] to explore different approaches to user operation sponsorship via signatures.
 
 [source,solidity]
 ----
