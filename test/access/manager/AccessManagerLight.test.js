@@ -71,7 +71,7 @@ describe('AccessManaged', function () {
         });
       });
 
-      describe('complexe case: one of many groups', async function () {
+      describe('complex case: one of many groups', async function () {
         it('some intersection', async function () {
           this.userGroups = [32, 42, 94, 128]; // User has all these groups
           this.targetGroups = [17, 35, 42, 69, 91]; // Target accepts any of these groups
