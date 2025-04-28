@@ -3,7 +3,7 @@
 [.readme-notice]
 NOTE: This document is better viewed at https://docs.openzeppelin.com/community-contracts/token
 
-Set of extensions and utilities for tokens (e.g ERC-20, ERC-721, ERC-1155) and derivated ERCs (e.g. ERC-4626, ERC-1363).
+Set of extensions and utilities for tokens (e.g ERC-20, ERC-721, ERC-1155) and derived ERCs (e.g. ERC-4626, ERC-1363).
 
  * {OnTokenTransferAdapter}: Adapter of the ERC-1363 receiver interface to comply with Chainlink's 667 interface.
  * {ERC20Allowlist}: Extension of ERC20 with transfers and approvals that require users to be registered into an allowlist.
