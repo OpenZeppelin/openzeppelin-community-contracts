@@ -1325,6 +1325,8 @@ Proof verification error.
 === ERC-7913
 
 :isValidSignatureNow: pass:normal[xref:#ERC7913Utils-isValidSignatureNow-bytes-bytes32-bytes-[`++isValidSignatureNow++`]]
+:areValidNSignaturesNow: pass:normal[xref:#ERC7913Utils-areValidNSignaturesNow-bytes32-bytes---bytes---function--bytes--view-returns--bytes32--[`++areValidNSignaturesNow++`]]
+:areValidNSignaturesNow: pass:normal[xref:#ERC7913Utils-areValidNSignaturesNow-bytes32-bytes---bytes---[`++areValidNSignaturesNow++`]]
 
 [.contract]
 [[ERC7913Utils]]
@@ -1348,6 +1350,8 @@ See https://eips.ethereum.org/EIPS/eip-7913[ERC-7913].
 .Functions
 --
 * `++isValidSignatureNow(signer, hash, signature)++`
+* `++areValidNSignaturesNow(hash, signers, signatures, signerId)++`
+* `++areValidNSignaturesNow(hash, signers, signatures)++`
 
 --
 
@@ -1364,6 +1368,28 @@ Verification is done as follows:
 - If `signer.length < 20`: verification fails
 - If `signer.length == 20`: verification is done using {SignatureChecker}
 - Otherwise: verification is done using {IERC7913SignatureVerifier}
+
+[.contract-item]
+[[ERC7913Utils-areValidNSignaturesNow-bytes32-bytes---bytes---function--bytes--view-returns--bytes32--]]
+==== `[.contract-item-name]#++areValidNSignaturesNow++#++(bytes32 hash, bytes[] signers, bytes[] signatures, function (bytes) view returns (bytes32) signerId) → bool++` [.item-kind]#internal#
+
+Verifies multiple `signatures` for a given hash using a set of `signers`.
+
+The signers must be ordered by their `signerId` to ensure no duplicates and to optimize
+the verification process. The function will return `false` if the signers are not properly ordered.
+
+Requirements:
+
+* The `signatures` array must be at least the  `signers` array's length.
+
+NOTE: The `signerId` function argument must be deterministic and should not manipulate
+memory state directly and should follow Solidity memory safety rules to avoid unexpected behavior.
+
+[.contract-item]
+[[ERC7913Utils-areValidNSignaturesNow-bytes32-bytes---bytes---]]
+==== `[.contract-item-name]#++areValidNSignaturesNow++#++(bytes32 hash, bytes[] signers, bytes[] signatures) → bool++` [.item-kind]#internal#
+
+Overload of {areValidNSignaturesNow} that uses the `keccak256` as the `signerId` function.
 
 :verify: pass:normal[xref:#ERC7913SignatureVerifierP256-verify-bytes-bytes32-bytes-[`++verify++`]]
 

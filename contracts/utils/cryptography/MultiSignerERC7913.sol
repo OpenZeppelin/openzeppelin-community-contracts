@@ -47,7 +47,7 @@ import {SafeCast} from "@openzeppelin/contracts/utils/math/SafeCast.sol";
  */
 abstract contract MultiSignerERC7913 is AbstractSigner {
     using EnumerableSetExtended for EnumerableSetExtended.BytesSet;
-    using ERC7913Utils for bytes;
+    using ERC7913Utils for *;
     using SafeCast for uint256;
 
     EnumerableSetExtended.BytesSet private _signersSet;
@@ -198,21 +198,13 @@ abstract contract MultiSignerERC7913 is AbstractSigner {
         bytes[] memory signingSigners,
         bytes[] memory signatures
     ) internal view virtual returns (bool valid) {
-        bytes32 currentSignerId = bytes32(0);
-
         uint256 signersLength = signingSigners.length;
         for (uint256 i = 0; i < signersLength; i++) {
-            // Signers must ordered by id to ensure no duplicates
-            bytes memory signer = signingSigners[i];
-            bytes32 id = signerId(signer);
-            if (currentSignerId >= id || !isSigner(signer) || !signer.isValidSignatureNow(hash, signatures[i])) {
+            if (!isSigner(signingSigners[i])) {
                 return false;
             }
-
-            currentSignerId = id;
         }
-
-        return true;
+        return hash.areValidNSignaturesNow(signingSigners, signatures, signerId);
     }
 
     /**
