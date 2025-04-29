@@ -3,11 +3,11 @@ const { ethers } = require('hardhat');
 const { loadFixture } = require('@nomicfoundation/hardhat-network-helpers');
 const { PANIC_CODES } = require('@nomicfoundation/hardhat-chai-matchers/panic');
 
-const TEST_MESSAGE = 'OpenZeppelin';
-const TEST_MESSAGE_HASH = ethers.hashMessage(TEST_MESSAGE);
+const VALID_SW_KEY_1 = ethers.toUtf8Bytes('valid_key_1');
+const VALID_SW_KEY_2 = ethers.toUtf8Bytes('valid_key_2');
 
-const WRONG_MESSAGE = 'Nope';
-const WRONG_MESSAGE_HASH = ethers.hashMessage(WRONG_MESSAGE);
+const VALID_SW_SIGNATURE_1 = ethers.toUtf8Bytes('valid_signature_1');
+const VALID_SW_SIGNATURE_2 = ethers.toUtf8Bytes('valid_signature_2');
 
 async function fixture() {
   const [, signer, other, extraSigner] = await ethers.getSigners();
@@ -20,60 +20,14 @@ async function fixture() {
   // Deploy a mock ERC-7913 verifier
   const verifier = await ethers.deployContract('ERC7913VerifierMock');
 
-  // Create test keys
-  const validKey = ethers.toUtf8Bytes('valid_key_1');
-  const validKey2 = ethers.toUtf8Bytes('valid_key_2');
-  const invalidKey = ethers.randomBytes(32);
-
-  // Create signer bytes (verifier address + key)
-  const validSignerBytes = ethers.concat([verifier.target, validKey]);
-  const validSignerBytes2 = ethers.concat([verifier.target, validKey2]);
-  const invalidKeySignerBytes = ethers.concat([verifier.target, invalidKey]);
-
-  // Create test signatures
-  const validSignature = ethers.toUtf8Bytes('valid_signature_1');
-  const validSignature2 = ethers.toUtf8Bytes('valid_signature_2');
-  const invalidSignature = ethers.randomBytes(65);
-
-  // Get EOA signatures from the signers
-  const eoaSignature = await signer.signMessage(TEST_MESSAGE);
-  const eoaSignature2 = await extraSigner.signMessage(TEST_MESSAGE);
-  const wrongMessageSignature = await signer.signMessage(WRONG_MESSAGE);
-
-  // Create EOA signers
-  const eoaSigner = ethers.zeroPadValue(signer.address, 20);
-  const eoaSigner2 = ethers.zeroPadValue(extraSigner.address, 20);
-  const wrongSigner = ethers.zeroPadValue(other.address, 20);
-
-  // Create Wallet signers
-  const walletSigner = ethers.zeroPadValue(wallet.target, 20);
-  const walletSigner2 = ethers.zeroPadValue(wallet2.target, 20);
-
   return {
     signer,
-    other,
     extraSigner,
+    other,
     mock,
     wallet,
     wallet2,
     verifier,
-    validKey,
-    validKey2,
-    invalidKey,
-    validSignerBytes,
-    validSignerBytes2,
-    invalidKeySignerBytes,
-    validSignature,
-    validSignature2,
-    invalidSignature,
-    eoaSignature,
-    eoaSignature2,
-    wrongMessageSignature,
-    eoaSigner,
-    eoaSigner2,
-    wrongSigner,
-    walletSigner,
-    walletSigner2,
   };
 }
 
@@ -86,19 +40,24 @@ describe('ERC7913Utils', function () {
     describe('with EOA signer', function () {
       it('with matching signer and signature', async function () {
         const eoaSigner = ethers.zeroPadValue(this.signer.address, 20);
-        await expect(this.mock.$isValidSignatureNow(eoaSigner, TEST_MESSAGE_HASH, this.eoaSignature)).to.eventually.be
+        const message = 'Hello, World!';
+        const signature = await this.signer.signMessage(message);
+        await expect(this.mock.$isValidSignatureNow(eoaSigner, ethers.hashMessage(message), signature)).to.eventually.be
           .true;
       });
 
       it('with invalid signer', async function () {
         const eoaSigner = ethers.zeroPadValue(this.other.address, 20);
-        await expect(this.mock.$isValidSignatureNow(eoaSigner, TEST_MESSAGE_HASH, this.eoaSignature)).to.eventually.be
+        const message = 'Hello, World!';
+        const signature = await this.signer.signMessage(message);
+        await expect(this.mock.$isValidSignatureNow(eoaSigner, ethers.hashMessage(message), signature)).to.eventually.be
           .false;
       });
 
       it('with invalid signature', async function () {
         const eoaSigner = ethers.zeroPadValue(this.signer.address, 20);
-        await expect(this.mock.$isValidSignatureNow(eoaSigner, WRONG_MESSAGE_HASH, this.eoaSignature)).to.eventually.be
+        const signature = await this.signer.signMessage('Hello, World!');
+        await expect(this.mock.$isValidSignatureNow(eoaSigner, ethers.hashMessage('Nope'), signature)).to.eventually.be
           .false;
       });
     });
@@ -106,176 +65,194 @@ describe('ERC7913Utils', function () {
     describe('with ERC-1271 wallet', function () {
       it('with matching signer and signature', async function () {
         const walletSigner = ethers.zeroPadValue(this.wallet.target, 20);
-        await expect(this.mock.$isValidSignatureNow(walletSigner, TEST_MESSAGE_HASH, this.eoaSignature)).to.eventually
+        const message = 'Hello, World!';
+        const signature = await this.signer.signMessage(message);
+        await expect(this.mock.$isValidSignatureNow(walletSigner, ethers.hashMessage(message), signature)).to.eventually
           .be.true;
       });
 
       it('with invalid signer', async function () {
         const walletSigner = ethers.zeroPadValue(this.mock.target, 20);
-        await expect(this.mock.$isValidSignatureNow(walletSigner, TEST_MESSAGE_HASH, this.eoaSignature)).to.eventually
+        const message = 'Hello, World!';
+        const signature = await this.signer.signMessage(message);
+        await expect(this.mock.$isValidSignatureNow(walletSigner, ethers.hashMessage(message), signature)).to.eventually
           .be.false;
       });
 
       it('with invalid signature', async function () {
         const walletSigner = ethers.zeroPadValue(this.wallet.target, 20);
-        await expect(this.mock.$isValidSignatureNow(walletSigner, WRONG_MESSAGE_HASH, this.eoaSignature)).to.eventually
+        const signature = await this.signer.signMessage('Hello, World!');
+        await expect(this.mock.$isValidSignatureNow(walletSigner, ethers.hashMessage('Nope'), signature)).to.eventually
           .be.false;
       });
     });
 
     describe('with ERC-7913 verifier', function () {
       it('with matching signer and signature', async function () {
-        await expect(this.mock.$isValidSignatureNow(this.validSignerBytes, TEST_MESSAGE_HASH, this.validSignature)).to
-          .eventually.be.true;
+        await expect(
+          this.mock.$isValidSignatureNow(
+            ethers.concat([this.verifier.target, VALID_SW_KEY_1]),
+            ethers.hashMessage('Hello, World!'),
+            VALID_SW_SIGNATURE_1,
+          ),
+        ).to.eventually.be.true;
       });
 
       it('with invalid verifier', async function () {
-        const invalidVerifierSigner = ethers.concat([this.mock.target, this.validKey]);
-        await expect(this.mock.$isValidSignatureNow(invalidVerifierSigner, TEST_MESSAGE_HASH, this.validSignature)).to
-          .eventually.be.false;
+        const invalidVerifierSigner = ethers.concat([this.mock.target, VALID_SW_KEY_1]);
+        await expect(
+          this.mock.$isValidSignatureNow(
+            invalidVerifierSigner,
+            ethers.hashMessage('Hello, World!'),
+            VALID_SW_SIGNATURE_1,
+          ),
+        ).to.eventually.be.false;
       });
 
       it('with invalid key', async function () {
-        await expect(this.mock.$isValidSignatureNow(this.invalidKeySignerBytes, TEST_MESSAGE_HASH, this.validSignature))
-          .to.eventually.be.false;
+        await expect(
+          this.mock.$isValidSignatureNow(
+            ethers.concat([this.verifier.target, ethers.randomBytes(32)]),
+            ethers.hashMessage('Hello, World!'),
+            VALID_SW_SIGNATURE_1,
+          ),
+        ).to.eventually.be.false;
       });
 
       it('with invalid signature', async function () {
-        await expect(this.mock.$isValidSignatureNow(this.validSignerBytes, TEST_MESSAGE_HASH, this.invalidSignature)).to
-          .eventually.be.false;
+        await expect(
+          this.mock.$isValidSignatureNow(
+            ethers.concat([this.verifier.target, VALID_SW_KEY_1]),
+            ethers.hashMessage('Hello, World!'),
+            ethers.randomBytes(65),
+          ),
+        ).to.eventually.be.false;
       });
 
       it('with signer too short', async function () {
         const shortSigner = ethers.randomBytes(19);
-        await expect(this.mock.$isValidSignatureNow(shortSigner, TEST_MESSAGE_HASH, this.validSignature)).to.eventually
-          .be.false;
+        await expect(
+          this.mock.$isValidSignatureNow(shortSigner, ethers.hashMessage('Hello, World!'), VALID_SW_SIGNATURE_1),
+        ).to.eventually.be.false;
       });
     });
   });
 
   describe('areValidNSignaturesNow', function () {
     it('should validate a single signature', async function () {
-      await expect(this.mock.$areValidNSignaturesNow(TEST_MESSAGE_HASH, [this.eoaSigner], [this.eoaSignature])).to
-        .eventually.be.true;
+      const message = 'Hello, World!';
+      const signature = await this.signer.signMessage(message);
+      await expect(
+        this.mock.$areValidNSignaturesNow(
+          ethers.hashMessage(message),
+          [ethers.zeroPadValue(this.signer.address, 20)],
+          [signature],
+        ),
+      ).to.eventually.be.true;
     });
 
     it('should validate multiple signatures with different signer types', async function () {
-      // Order signers by ID (using keccak256)
-      const signers = [this.eoaSigner, this.walletSigner, this.validSignerBytes].sort(
-        (a, b) => ethers.keccak256(a) - ethers.keccak256(b),
-      );
-
-      // Create corresponding signatures in the same order
-      const signatures = signers.map(signer => {
-        if (ethers.dataLength(signer) === 20) {
-          // EOA or ERC-1271 wallet
-          if (ethers.getAddress(ethers.hexlify(signer)) === this.signer.address) {
-            return this.eoaSignature;
-          } else if (ethers.hexlify(signer) === ethers.hexlify(this.walletSigner)) {
-            return this.eoaSignature; // wallet uses signer's signature
-          }
-        } else {
-          // ERC-7913 verifier
-          return this.validSignature;
-        }
-        return ethers.randomBytes(65); // fallback, shouldn't be reached
-      });
-
-      await expect(this.mock.$areValidNSignaturesNow(TEST_MESSAGE_HASH, signers, signatures)).to.eventually.be.true;
+      const message = 'Hello, World!';
+      const signature = await this.signer.signMessage(message);
+      const pairs = [
+        [ethers.zeroPadValue(this.signer.address, 20), signature],
+        [ethers.zeroPadValue(this.wallet.target, 20), signature],
+        [ethers.concat([this.verifier.target, VALID_SW_KEY_1]), VALID_SW_SIGNATURE_1],
+      ].sort(([a], [b]) => ethers.keccak256(a) - ethers.keccak256(b));
+      const signers = pairs.map(([signer]) => signer);
+      const signatures = pairs.map(([, signature]) => signature);
+      await expect(this.mock.$areValidNSignaturesNow(ethers.hashMessage(message), signers, signatures)).to.eventually.be
+        .true;
     });
 
     it('should validate multiple EOA signatures', async function () {
-      // Sort by signer ID
-      const signers = [this.eoaSigner, this.eoaSigner2].sort((a, b) => ethers.keccak256(a) - ethers.keccak256(b));
-
-      // Map of signer to signature
-      const signatureMap = {
-        [ethers.hexlify(this.eoaSigner)]: this.eoaSignature,
-        [ethers.hexlify(this.eoaSigner2)]: this.eoaSignature2,
-      };
-
-      const signatures = signers.map(signer => signatureMap[ethers.hexlify(signer)]);
-
-      await expect(this.mock.$areValidNSignaturesNow(TEST_MESSAGE_HASH, signers, signatures)).to.eventually.be.true;
+      const message = 'Helllo, World!';
+      const pairs = [
+        [ethers.zeroPadValue(this.signer.address, 20), await this.signer.signMessage(message)],
+        [ethers.zeroPadValue(this.extraSigner.address, 20), await this.extraSigner.signMessage(message)],
+      ].sort(([a], [b]) => ethers.keccak256(a) - ethers.keccak256(b));
+      const signers = pairs.map(([signer]) => signer);
+      const signatures = pairs.map(([, signature]) => signature);
+      await expect(this.mock.$areValidNSignaturesNow(ethers.hashMessage(message), signers, signatures)).to.eventually.be
+        .true;
     });
 
     it('should validate multiple ERC-1271 wallet signatures', async function () {
-      // Sort by signer ID
-      const signers = [this.walletSigner, this.walletSigner2].sort((a, b) => ethers.keccak256(a) - ethers.keccak256(b));
-
-      // Both wallets use their respective owner's signatures
-      const signatures = [this.eoaSignature, this.eoaSignature2];
-      if (ethers.keccak256(this.walletSigner) - ethers.keccak256(this.walletSigner2) > 0) {
-        signatures.reverse();
-      }
-
-      await expect(this.mock.$areValidNSignaturesNow(TEST_MESSAGE_HASH, signers, signatures)).to.eventually.be.true;
+      const message = 'Helllo, World!';
+      const pairs = [
+        [ethers.zeroPadValue(this.wallet.target, 20), await this.signer.signMessage(message)],
+        [ethers.zeroPadValue(this.wallet2.target, 20), await this.extraSigner.signMessage(message)],
+      ].sort(([a], [b]) => ethers.keccak256(a) - ethers.keccak256(b));
+      const signers = pairs.map(([signer]) => signer);
+      const signatures = pairs.map(([, signature]) => signature);
+      await expect(this.mock.$areValidNSignaturesNow(ethers.hashMessage(message), signers, signatures)).to.eventually.be
+        .true;
     });
 
     it('should validate multiple ERC-7913 signatures', async function () {
-      // Sort by signer ID
-      const signers = [this.validSignerBytes, this.validSignerBytes2].sort(
-        (a, b) => ethers.keccak256(a) - ethers.keccak256(b),
-      );
-
-      // Map of signer to signature
-      const signatureMap = {
-        [ethers.hexlify(this.validSignerBytes)]: this.validSignature,
-        [ethers.hexlify(this.validSignerBytes2)]: this.validSignature2,
-      };
-
-      const signatures = signers.map(signer => signatureMap[ethers.hexlify(signer)]);
-
-      await expect(this.mock.$areValidNSignaturesNow(TEST_MESSAGE_HASH, signers, signatures)).to.eventually.be.true;
+      const pairs = [
+        [ethers.concat([this.verifier.target, VALID_SW_KEY_1]), VALID_SW_SIGNATURE_1],
+        [ethers.concat([this.verifier.target, VALID_SW_KEY_2]), VALID_SW_SIGNATURE_2],
+      ].sort(([a], [b]) => ethers.keccak256(a) - ethers.keccak256(b));
+      const signers = pairs.map(([signer]) => signer);
+      const signatures = pairs.map(([, signature]) => signature);
+      await expect(this.mock.$areValidNSignaturesNow(ethers.hashMessage('Hello, World!'), signers, signatures)).to
+        .eventually.be.true;
     });
 
     it('should return false if any signature is invalid', async function () {
-      // Use two EOA signers but one signature is for the wrong message
+      const message = 'Hello, World!';
       await expect(
         this.mock.$areValidNSignaturesNow(
-          TEST_MESSAGE_HASH,
-          [this.eoaSigner, this.eoaSigner2],
-          [this.eoaSignature, this.wrongMessageSignature],
+          ethers.hashMessage(message),
+          [ethers.zeroPadValue(this.signer.address, 20), await this.extraSigner.signMessage(message)],
+          [await this.signer.signMessage(message), await this.signer.signMessage('Nope')],
         ),
       ).to.eventually.be.false;
     });
 
     it('should return false if signers are not ordered by ID', async function () {
-      // Ensure signers are ordered incorrectly
-      const signers = [this.eoaSigner, this.eoaSigner2];
-      const signatures = [this.eoaSignature, this.eoaSignature2];
+      const message = 'Hello, World!';
+      const pairs = [
+        [ethers.zeroPadValue(this.signer.address, 20), await this.signer.signMessage(message)],
+        [ethers.zeroPadValue(this.extraSigner.address, 20), await this.extraSigner.signMessage(message)],
+      ];
 
-      // If they're already ordered, swap them
-      if (ethers.keccak256(signers[0]) - ethers.keccak256(signers[1])) {
-        signers.reverse();
-        signatures.reverse();
+      if (ethers.keccak256(pairs[0][0]) - ethers.keccak256(pairs[1][0])) {
+        pairs.reverse();
       }
 
-      await expect(this.mock.$areValidNSignaturesNow(TEST_MESSAGE_HASH, signers, signatures)).to.eventually.be.false;
+      const signers = pairs.map(([signer]) => signer);
+      const signatures = pairs.map(([, signature]) => signature);
+      await expect(this.mock.$areValidNSignaturesNow(ethers.hashMessage(message), signers, signatures)).to.eventually.be
+        .false;
     });
 
     it('should return false if there are duplicate signers', async function () {
+      const message = 'Hello, World!';
       await expect(
         this.mock.$areValidNSignaturesNow(
-          TEST_MESSAGE_HASH,
-          [this.eoaSigner, this.eoaSigner], // Same signer used twice
-          [this.eoaSignature, this.eoaSignature],
+          ethers.hashMessage(message),
+          [ethers.zeroPadValue(this.signer.address, 20), ethers.zeroPadValue(this.signer.address, 20)], // Same signer used twice
+          [await this.signer.signMessage(message), await this.signer.signMessage(message)],
         ),
       ).to.eventually.be.false;
     });
 
     it('should fail if signatures array length does not match signers array length', async function () {
+      const message = 'Hello, World!';
       await expect(
         this.mock.$areValidNSignaturesNow(
-          TEST_MESSAGE_HASH,
-          [this.eoaSigner, this.eoaSigner2],
-          [this.eoaSignature], // Missing one signature
+          ethers.hashMessage(message),
+          [ethers.zeroPadValue(this.signer.address, 20), await this.extraSigner.signMessage(message)],
+          [await this.signer.signMessage(message)], // Missing one signature
         ),
       ).to.be.revertedWithPanic(PANIC_CODES.ARRAY_ACCESS_OUT_OF_BOUNDS);
     });
 
     it('should pass with empty arrays', async function () {
-      await expect(this.mock.$areValidNSignaturesNow(TEST_MESSAGE_HASH, [], [])).to.eventually.be.true;
+      await expect(this.mock.$areValidNSignaturesNow(ethers.hashMessage('Hello, World!'), [], [])).to.eventually.be
+        .true;
     });
   });
 });

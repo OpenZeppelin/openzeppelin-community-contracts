@@ -61,11 +61,26 @@ contract ZKEmailUtilsTest is Test {
         assertEq(uint256(err), uint256(ZKEmailUtils.EmailProofError.NoError));
     }
 
-    // Skipping EmailAuthMsgFixtures.getCase3()
-    //
-    // The fixture's command string doesn't match what would be constructed from the parameters using the
-    // "Send {uint} ETH to {ethAddr}" template. The masked command must be "Send 100000000000000000 ETH to 0x1234"
-    // as opposed to "Send 0.1 ETH to 0x1234".
+    function testFixtureCase3SendEthToAddr() public {
+        EmailAuthMsg memory authMsg = EmailAuthMsgFixtures.getCase3();
+        _setupDKIMRegistryForFixture(authMsg);
+
+        string[] memory template = new string[](5);
+        template[0] = "Send";
+        template[1] = CommandUtils.DECIMALS_MATCHER;
+        template[2] = "ETH";
+        template[3] = "to";
+        template[4] = CommandUtils.ETH_ADDR_MATCHER;
+
+        ZKEmailUtils.EmailProofError err = ZKEmailUtils.isValidZKEmail(
+            authMsg,
+            _dkimRegistry,
+            _verifier,
+            template,
+            ZKEmailUtils.Case.ANY
+        );
+        assertEq(uint256(err), uint256(ZKEmailUtils.EmailProofError.NoError));
+    }
 
     function testFixtureCase4AcceptGuardian() public {
         EmailAuthMsg memory authMsg = EmailAuthMsgFixtures.getCase4();
