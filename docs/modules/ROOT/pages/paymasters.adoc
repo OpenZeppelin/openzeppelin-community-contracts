@@ -1,14 +1,14 @@
 = Paymasters
 
-In case you want to sponsor user operation for your users, the ERC-4337 defines a special type of contract called _paymaster_, whose purpose is to pay the gas fees consumed by the user operation.
-
-To enable operation sponsorship, users sign their user operation including a special field called `paymasterAndData` resulting from the concatenation of the paymaster they're using and the calldata that's going to be passed into xref:api:utils.adoc#PaymasterCore-validatePaymasterUserOp[`validatePaymasterUserOp`]. This function will use the passed bytes buffer to determine whether it will pay for the user operation or not.
+In case you want to sponsor user operations for your users, ERC-4337 defines a special type of contract called _paymaster_, whose purpose is to pay the gas fees consumed by the user operation.
 
 In the context of account abstraction, sponsoring user operations allows a third party to pay for transaction gas fees on behalf of users. This can improve user experience by eliminating the need for users to hold native cryptocurrency (like ETH) to pay for transactions.
 
+To enable sponsorship, users sign their user operations including a special field called `paymasterAndData`, resulting from the concatenation of the paymaster address they're intending to use and the associated calldata that's going to be passed into xref:api:utils.adoc#PaymasterCore-validatePaymasterUserOp[`validatePaymasterUserOp`]. The EntryPoint will use this field to determine whether it is willing to pay for the user operation or not.
+
 == Signed Sponsorship
 
-The xref:api:utils.adoc#PaymasterSigner[`PaymasterSigner`] enables enables user operation fees sponsorship through signature verification, allowing designated signers to authorize gas payment for users' operations without requiring users to hold native ETH.
+The xref:api:utils.adoc#PaymasterSigner[`PaymasterSigner`] implements signature-based sponsorship via authorization signatures, allowing designated paymaster signers to authorize and sponsor specific user operations without requiring users to hold native ETH.
 
 TIP: Learn more about xref:accounts.adoc#selecting_a_signer[signers] to explore different approaches to user operation sponsorship via signatures.
 
@@ -17,7 +17,7 @@ TIP: Learn more about xref:accounts.adoc#selecting_a_signer[signers] to explore 
 include::api:example$account/paymaster/PaymasterECDSASigner.sol[]
 ----
 
-TIP: Use https://docs.openzeppelin.com/contracts/5.x/api/account#ERC4337Utils[`ERC4337Utils`] to access paymaster-related fields of the userOp (e.g. `paymasterData`, `paymasterVerificationGasLimit`)
+TIP: Use https://docs.openzeppelin.com/contracts/5.x/api/account#ERC4337Utils[`ERC4337Utils`] to facilitate the access to paymaster-related fields of the userOp (e.g. `paymasterData`, `paymasterVerificationGasLimit`)
 
 To implement signature-based sponsorship, you'll first need to deploy the paymaster contract. This contract will hold the ETH used to pay for user operations and verify signatures from your authorized signer. After deployment, you must fund the paymaster with ETH to cover gas costs for the operations it will sponsor:
 
@@ -108,7 +108,7 @@ userOp.paymasterAndData = encodePacked(
 
 TIP: The `paymasterVerificationGasLimit` and `paymasterPostOpGasLimit` values should be adjusted based on your paymaster's complexity. Higher values increase the gas cost but provide more execution headroom, reducing the risk of out-of-gas errors during validation or post-operation processing.
 
-With the paymaster data attached, the user operation can now be signed by the account owner and submitted to the EntryPoint contract:
+With the paymaster data attached, the user operation can now be signed by the account signer and submitted to the EntryPoint contract:
 
 [source,typescript]
 ----
@@ -275,7 +275,7 @@ function _fetchPrice(
 
 NOTE: An important difference with token-based sponsorship is that the user's smart account must first approve the paymaster to spend their tokens. You might want to incorporate this approval as part of your account initialization process, or check if approval is needed before executing an operation.
 
-By default, the `PaymasterERC20` contract supports a xref:api:account.adoc#guarantor[guarantor], which is a third party that could cover the token payment if the user lacks of funds. For simplicity, our example disallows this, but encoding your `paymasterAndData` will still require to provide an empty signature.
+By default, the `PaymasterERC20` contract supports a xref:api:account.adoc#guarantor[guarantor], which is a third party that could cover the ERC-20 token pre-payment if the user lacks funds, ensuring the Paymaster gets paid back for its services and the transaction success. For simplicity, our example disables the guarantor usage, but encoding your `paymasterAndData` will still require to provide an empty guarantor signature.
 
 [source,typescript]
 ----
@@ -321,11 +321,11 @@ WARNING: Oracle-based pricing relies on the accuracy and freshness of price feed
 
 === Using a Guarantor
 
-There are multiple valid cases where the user might not have enough tokens to pay for the transaction. For example, if the user is claiming an airdrop, they might need their first transaction to be sponsored. For those cases, you can return a `guarantor` address in `_fetchDetails` after validating a signature.
+There are multiple valid cases where the user might not have enough tokens to pay for the transaction before it takes place. For example, if the user is claiming an airdrop, they might need their first transaction to be sponsored. For those cases, you can return a `guarantor` address in `_fetchDetails` after validating a signature.
 
 NOTE: This approach requires the guarantor to approve the paymaster to spend their ERC-20 tokens.
 
-Let's start by adding https://docs.openzeppelin.com/contracts/5.x/api/utils#EIP712[EIP-712] support to ensure the guarantor signatures are specific to this contract:
+Let's start by adding https://docs.openzeppelin.com/contracts/5.x/api/utils#EIP712[EIP-712] support in our example to ensure the guarantor signatures are specific to this contract:
 
 ```diff
 -contract PaymasterUSDCChainlink is PaymasterERC20, Ownable {
@@ -457,7 +457,7 @@ Finally, the `_fetchDetails` must incorporate this changes:
      }
 ```
 
-After deploying the modified version of tyhis contract. The guarantor signs the user operation to authorize payment:
+After deploying the modified version of this contract, the guarantor signs the user operation to authorize the payment:
 
 [source,typescript]
 ----
@@ -495,7 +495,7 @@ const guarantorSignature = await guarantor.signTypedData({
 });
 ----
 
-Then include the guarantor's address and signature in the paymaster data:
+Then, we include the guarantor's address and its signature in the paymaster data:
 
 [source,typescript]
 ----
@@ -525,7 +525,7 @@ When implementing paymasters in production environments, keep these consideratio
 
 3. **Security**: For signature-based paymasters, protect your signing key as it controls who gets subsidized operations.
 
-4. **Price volatility**: For token-based paymasters, consider implementing circuit breakers for extreme market conditions.
+4. **Price volatility**: For token-based paymasters, consider restricting which tokens are accepted, and implementing circuit breakers for extreme market conditions
 
 5. **Spending limits**: Consider implementing daily or per-user limits to prevent abuse of your paymaster.
 
