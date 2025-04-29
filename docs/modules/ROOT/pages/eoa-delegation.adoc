@@ -1,6 +1,6 @@
 = EOA Delegation
 
-https://eips.ethereum.org/EIPS/eip-7702[EIP-7702] introduces a new transaction type (`0x4`) that grants https://ethereum.org/en/developers/docs/accounts/[Externally Owned Accounts (EOAs)] the ability delegate execution to an smart contract. This is particularly useful to enable traditional EVM accounts to:
+https://eips.ethereum.org/EIPS/eip-7702[EIP-7702] introduces a new transaction type (`0x4`) that grants https://ethereum.org/en/developers/docs/accounts/[Externally Owned Accounts (EOAs)] the ability to delegate execution to an smart contract. This is particularly useful to enable traditional EVM accounts to:
 
 * Batch multiple operations in a single transaction (e.g. https://docs.openzeppelin.com/contracts/5.x/api/token/erc20#IERC20-approve-address-uint256-[`approve`] + https://docs.openzeppelin.com/contracts/5.x/api/token/erc20#IERC20-transfer-address-uint256-[`transfer`], yey!)
 * Sponsoring transactions for other users.
@@ -10,7 +10,7 @@ This section walks you through the process of delegating an EOA to a contract fo
 
 == Delegating execution
 
-EIP-7702 enables EOAs to delegate their execution capabilities to smart contracts, effectively bridging the gap between traditional and smart accounts. The xref:api:utils.adoc#SignerERC7702[`SignerERC7702`] utility facilitates this delegation by verifying signatures against the EOA's address (`address(this)`), making it easier to implement EIP-7702 in smart contract accounts.
+EIP-7702 enables EOAs to delegate their execution capabilities to smart contracts, effectively bridging the gap between traditional and xref:accounts.adoc#SmartAccounts[Smart Accounts]. The xref:api:utils.adoc[`SignerERC7702`] utility facilitates this delegation by verifying signatures against the EOA's address (`address(this)`), making it easier to implement EIP-7702 in smart contract accounts.
 
 [source,solidity]
 ----
