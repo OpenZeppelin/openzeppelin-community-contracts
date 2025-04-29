@@ -42,7 +42,7 @@ Suggestively, you can create your own account factory using the https://docs.ope
 include::api:example$account/MyFactoryAccount.sol[]
 ----
 
-You've setup your own account and its corresponding factory. Both are ready to be used with ERC-4337 infrastructure. Customizing the factory to other validation mechanisms must be straightforward.
+Account factories should be carefully implemented to ensure the account address is deterministically tied to the initial owners. This prevents frontrunning attacks where a malicious actor could deploy the account with their own owners before the intended owner does. The factory should include the owner's address in the salt used for address calculation.
 
 ==== Handling initialization
 
