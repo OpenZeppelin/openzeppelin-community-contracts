@@ -335,7 +335,7 @@ Let's start by adding https://docs.openzeppelin.com/contracts/5.x/api/utils#EIP7
  
 +    bytes32 private constant GUARANTEED_PACKED_USER_OPERATION =
 +        keccak256(
-+            "GuaranteedPackedUserOperation(address sender,uint256 nonce,bytes initCode,bytes callData,bytes32 accountGasLimits,uint256 preVerificationGas,bytes32 gasFees,bytes paymasterAndData)"
++            "GuaranteedPackedUserOperation(address sender,uint256 nonce,bytes initCode,bytes callData,bytes32 accountGasLimits,uint256 preVerificationGas,bytes32 gasFees,bytes paymasterData)"
 +        );
 +
      
@@ -362,7 +362,7 @@ Let's start by adding https://docs.openzeppelin.com/contracts/5.x/api/utils#EIP7
 +                    userOp.accountGasLimits,
 +                    userOp.preVerificationGas,
 +                    userOp.gasFees,
-+                    keccak256(userOp.paymasterAndData[:0x48]) // 0x34 (paymasterDataOffset) + 0x14 (token + oracle + guarantor)
++                    keccak256(ERC4337Utils.paymasterData(userOp))
 +                )
 +            );
 +    }
@@ -445,6 +445,15 @@ Finally, the `_fetchDetails` must incorporate this changes:
 -            address(0) // Disabled for now
 +            verifiedGuarantor
          );
+     }
+
+     function _guaranteedPackedOperationStructHash(
+         PackedUserOperation calldata userOp
+     ) internal pure virtual returns (bytes32) {
+
+-                    keccak256(ERC4337Utils.paymasterData(userOp))
++                    keccak256(userOp.paymasterAndData[:0x48]) // 0x34 (paymasterDataOffset) + 0x14 (token + oracle + guarantor)
+
      }
 ```
 
