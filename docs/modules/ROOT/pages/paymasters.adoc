@@ -140,7 +140,9 @@ function _fetchDetails(
 }
 ----
 
-=== Chainlink Price Feeds
+=== Usign an Oracle
+
+==== Chainlink Price Feeds
 
 A popular approach to implement price oracles is to use https://docs.chain.link/data-feeds/using-data-feeds[Chainlink's price feeds]. By using their https://docs.chain.link/data-feeds/api-reference#aggregatorv3interface[`AggregatorV3Interface`] developers determine the token-to-ETH exchange rate dynamically for their paymasters. This ensures fair pricing even as market rates fluctuate.
 
