@@ -140,7 +140,7 @@ function _fetchDetails(
 }
 ----
 
-=== Usign an Oracle
+=== Using an Oracle
 
 ==== Chainlink Price Feeds
 
