@@ -973,7 +973,7 @@ Developers must implement the {PaymasterCore-_validatePaymasterUserOp} function 
 and payment logic. The `context` parameter is used to pass data between the validation and execution phases.
 
 The paymaster includes support to call the {IEntryPointStake} interface to manage the paymaster's deposits and stakes
-through the internal functions {_deposit}, {_withdraw}, {_addStake}, {_unlockStake} and {_withdrawStake}.
+through the internal functions {deposit}, {withdraw}, {addStake}, {unlockStake} and {withdrawStake}.
 
 * Deposits are used to pay for user operations.
 * Stakes are used to guarantee the paymaster's reputation and obtain more flexibility in accessing storage.
@@ -1146,7 +1146,7 @@ import "@openzeppelin/community-contracts/account/paymaster/PaymasterERC20.sol";
 
 Extension of {PaymasterCore} that enables users to pay gas with ERC-20 tokens.
 
-To enable this feature, developers must implement the {fetchDetails} function:
+To enable this feature, developers must implement the {_fetchDetails} function:
 
 ```solidity
 function _fetchDetails(
@@ -1240,6 +1240,7 @@ making the gas price of the user operation to differ.
 Retrieves payment details for a user operation
 
 The values returned by this internal function are:
+
 * `validationData`: ERC-4337 validation data, indicating success/failure and optional time validity (`validAfter`, `validUntil`).
 * `token`: Address of the ERC-20 token used for payment to the paymaster.
 * `tokenPrice`: Price of the token in native currency, scaled by `_tokenPriceDenominator()`.
