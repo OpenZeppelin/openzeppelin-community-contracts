@@ -56,7 +56,7 @@ abstract contract MultiSignerERC7913Weighted is MultiSignerERC7913 {
     uint128 private _totalWeight;
 
     // Mapping from signer ID to weight
-    mapping(bytes32 signedId => uint256) private _weights;
+    mapping(bytes signer => uint256) private _weights;
 
     /// @dev Emitted when a signer's weight is changed.
     event ERC7913SignerWeightChanged(bytes indexed signer, uint256 weight);
@@ -74,7 +74,7 @@ abstract contract MultiSignerERC7913Weighted is MultiSignerERC7913 {
 
     /// @dev Gets the total weight of all signers.
     function totalWeight() public view virtual returns (uint256) {
-        return _totalWeight; // Doesn't need Mat.max because it's incremented by the default 1 in `_addSigners`
+        return _totalWeight; // Doesn't need Math.max because it's incremented by the default 1 in `_addSigners`
     }
 
     /**
@@ -83,7 +83,7 @@ abstract contract MultiSignerERC7913Weighted is MultiSignerERC7913 {
      * NOTE: This internal function doesn't check if the signer is authorized.
      */
     function _signerWeight(bytes memory signer) internal view virtual returns (uint256) {
-        return Math.max(_weights[signerId(signer)], 1);
+        return Math.max(_weights[signer], 1);
     }
 
     /**
@@ -99,14 +99,14 @@ abstract contract MultiSignerERC7913Weighted is MultiSignerERC7913 {
         require(signers.length == newWeights.length, MultiSignerERC7913WeightedMismatchedLength());
         uint128 cachedTotalWeight = _totalWeight;
 
-        for (uint256 i = 0; i < signers.length; i++) {
+        for (uint256 i = 0; i < signers.length; ++i) {
             bytes memory signer = signers[i];
             uint256 newWeight = newWeights[i];
             require(isSigner(signer), MultiSignerERC7913NonexistentSigner(signer));
             require(newWeight > 0, MultiSignerERC7913WeightedInvalidWeight(signer, newWeight));
 
             uint256 oldWeight = _signerWeight(signer);
-            _weights[signerId(signer)] = newWeight;
+            _weights[signer] = newWeight;
             cachedTotalWeight = (cachedTotalWeight + newWeight - oldWeight).toUint128();
             emit ERC7913SignerWeightChanged(signer, newWeight);
         }
@@ -126,8 +126,8 @@ abstract contract MultiSignerERC7913Weighted is MultiSignerERC7913 {
         uint256 removedWeight = _weightSigners(oldSigners);
         _totalWeight -= removedWeight.toUint128();
         // Clean up weights for removed signers
-        for (uint256 i = 0; i < oldSigners.length; i++) {
-            delete _weights[signerId(oldSigners[i])];
+        for (uint256 i = 0; i < oldSigners.length; ++i) {
+            delete _weights[oldSigners[i]];
             emit ERC7913SignerWeightChanged(oldSigners[i], 0);
         }
         super._removeSigners(oldSigners);

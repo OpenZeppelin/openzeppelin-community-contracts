@@ -138,12 +138,12 @@ describe('ERC7913Utils', function () {
     });
   });
 
-  describe('areValidNSignaturesNow', function () {
+  describe('areValidSignaturesNow', function () {
     it('should validate a single signature', async function () {
       const message = 'Hello, World!';
       const signature = await this.signer.signMessage(message);
       await expect(
-        this.mock.$areValidNSignaturesNow(
+        this.mock.$areValidSignaturesNow(
           ethers.hashMessage(message),
           [ethers.zeroPadValue(this.signer.address, 20)],
           [signature],
@@ -161,7 +161,7 @@ describe('ERC7913Utils', function () {
       ].sort(([a], [b]) => ethers.keccak256(a) - ethers.keccak256(b));
       const signers = pairs.map(([signer]) => signer);
       const signatures = pairs.map(([, signature]) => signature);
-      await expect(this.mock.$areValidNSignaturesNow(ethers.hashMessage(message), signers, signatures)).to.eventually.be
+      await expect(this.mock.$areValidSignaturesNow(ethers.hashMessage(message), signers, signatures)).to.eventually.be
         .true;
     });
 
@@ -173,7 +173,7 @@ describe('ERC7913Utils', function () {
       ].sort(([a], [b]) => ethers.keccak256(a) - ethers.keccak256(b));
       const signers = pairs.map(([signer]) => signer);
       const signatures = pairs.map(([, signature]) => signature);
-      await expect(this.mock.$areValidNSignaturesNow(ethers.hashMessage(message), signers, signatures)).to.eventually.be
+      await expect(this.mock.$areValidSignaturesNow(ethers.hashMessage(message), signers, signatures)).to.eventually.be
         .true;
     });
 
@@ -185,7 +185,7 @@ describe('ERC7913Utils', function () {
       ].sort(([a], [b]) => ethers.keccak256(a) - ethers.keccak256(b));
       const signers = pairs.map(([signer]) => signer);
       const signatures = pairs.map(([, signature]) => signature);
-      await expect(this.mock.$areValidNSignaturesNow(ethers.hashMessage(message), signers, signatures)).to.eventually.be
+      await expect(this.mock.$areValidSignaturesNow(ethers.hashMessage(message), signers, signatures)).to.eventually.be
         .true;
     });
 
@@ -196,14 +196,14 @@ describe('ERC7913Utils', function () {
       ].sort(([a], [b]) => ethers.keccak256(a) - ethers.keccak256(b));
       const signers = pairs.map(([signer]) => signer);
       const signatures = pairs.map(([, signature]) => signature);
-      await expect(this.mock.$areValidNSignaturesNow(ethers.hashMessage('Hello, World!'), signers, signatures)).to
+      await expect(this.mock.$areValidSignaturesNow(ethers.hashMessage('Hello, World!'), signers, signatures)).to
         .eventually.be.true;
     });
 
     it('should return false if any signature is invalid', async function () {
       const message = 'Hello, World!';
       await expect(
-        this.mock.$areValidNSignaturesNow(
+        this.mock.$areValidSignaturesNow(
           ethers.hashMessage(message),
           [ethers.zeroPadValue(this.signer.address, 20), await this.extraSigner.signMessage(message)],
           [await this.signer.signMessage(message), await this.signer.signMessage('Nope')],
@@ -224,14 +224,14 @@ describe('ERC7913Utils', function () {
 
       const signers = pairs.map(([signer]) => signer);
       const signatures = pairs.map(([, signature]) => signature);
-      await expect(this.mock.$areValidNSignaturesNow(ethers.hashMessage(message), signers, signatures)).to.eventually.be
+      await expect(this.mock.$areValidSignaturesNow(ethers.hashMessage(message), signers, signatures)).to.eventually.be
         .false;
     });
 
     it('should return false if there are duplicate signers', async function () {
       const message = 'Hello, World!';
       await expect(
-        this.mock.$areValidNSignaturesNow(
+        this.mock.$areValidSignaturesNow(
           ethers.hashMessage(message),
           [ethers.zeroPadValue(this.signer.address, 20), ethers.zeroPadValue(this.signer.address, 20)], // Same signer used twice
           [await this.signer.signMessage(message), await this.signer.signMessage(message)],
@@ -242,7 +242,7 @@ describe('ERC7913Utils', function () {
     it('should fail if signatures array length does not match signers array length', async function () {
       const message = 'Hello, World!';
       await expect(
-        this.mock.$areValidNSignaturesNow(
+        this.mock.$areValidSignaturesNow(
           ethers.hashMessage(message),
           [ethers.zeroPadValue(this.signer.address, 20), await this.extraSigner.signMessage(message)],
           [await this.signer.signMessage(message)], // Missing one signature
@@ -251,8 +251,7 @@ describe('ERC7913Utils', function () {
     });
 
     it('should pass with empty arrays', async function () {
-      await expect(this.mock.$areValidNSignaturesNow(ethers.hashMessage('Hello, World!'), [], [])).to.eventually.be
-        .true;
+      await expect(this.mock.$areValidSignaturesNow(ethers.hashMessage('Hello, World!'), [], [])).to.eventually.be.true;
     });
   });
 });

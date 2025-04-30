@@ -107,7 +107,7 @@ abstract contract MultiSignerERC7913 is AbstractSigner {
 
     /// @dev Adds the `newSigners` to those allowed to sign on behalf of this contract. Internal version without access control.
     function _addSigners(bytes[] memory newSigners) internal virtual {
-        for (uint256 i = 0; i < newSigners.length; i++) {
+        for (uint256 i = 0; i < newSigners.length; ++i) {
             bytes memory signer = newSigners[i];
             require(signer.length >= 20, MultiSignerERC7913InvalidSigner(signer));
             require(_signersSet.add(signer), MultiSignerERC7913AlreadyExists(signer));
@@ -117,7 +117,7 @@ abstract contract MultiSignerERC7913 is AbstractSigner {
 
     /// @dev Removes the `oldSigners` from the authorized signers. Internal version without access control.
     function _removeSigners(bytes[] memory oldSigners) internal virtual {
-        for (uint256 i = 0; i < oldSigners.length; i++) {
+        for (uint256 i = 0; i < oldSigners.length; ++i) {
             bytes memory signer = oldSigners[i];
             require(_signersSet.remove(signer), MultiSignerERC7913NonexistentSigner(signer));
         }
@@ -178,7 +178,7 @@ abstract contract MultiSignerERC7913 is AbstractSigner {
         if (signature.length == 0) return false; // For ERC-7739 compatibility
         (bytes[] memory signingSigners, bytes[] memory signatures) = abi.decode(signature, (bytes[], bytes[]));
         if (signingSigners.length != signatures.length) return false;
-        return _validateNSignatures(hash, signingSigners, signatures) && _validateThreshold(signingSigners);
+        return _validateThreshold(signingSigners) && _validateNSignatures(hash, signingSigners, signatures);
     }
 
     /**
@@ -204,7 +204,7 @@ abstract contract MultiSignerERC7913 is AbstractSigner {
                 return false;
             }
         }
-        return hash.areValidNSignaturesNow(signingSigners, signatures, signerId);
+        return hash.areValidSignaturesNow(signingSigners, signatures, signerId);
     }
 
     /**
