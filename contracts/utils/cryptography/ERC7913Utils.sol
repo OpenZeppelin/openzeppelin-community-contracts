@@ -62,36 +62,36 @@ library ERC7913Utils {
      * NOTE: The `signerId` function argument must be deterministic and should not manipulate
      * memory state directly and should follow Solidity memory safety rules to avoid unexpected behavior.
      */
-    function areValidNSignaturesNow(
+    function areValidSignaturesNow(
         bytes32 hash,
         bytes[] memory signers,
         bytes[] memory signatures,
         function(bytes memory) view returns (bytes32) signerId
     ) internal view returns (bool) {
-        bytes32 currentSignerId = bytes32(0);
+        bytes32 previousId = bytes32(0);
 
         uint256 signersLength = signers.length;
         for (uint256 i = 0; i < signersLength; i++) {
             bytes memory signer = signers[i];
             // Signers must ordered by id to ensure no duplicates
             bytes32 id = signerId(signer);
-            if (currentSignerId >= id || !isValidSignatureNow(signer, hash, signatures[i])) {
+            if (previousId >= id || !isValidSignatureNow(signer, hash, signatures[i])) {
                 return false;
             }
 
-            currentSignerId = id;
+            previousId = id;
         }
 
         return true;
     }
 
-    /// @dev Overload of {areValidNSignaturesNow} that uses the `keccak256` as the `signerId` function.
-    function areValidNSignaturesNow(
+    /// @dev Overload of {areValidSignaturesNow} that uses the `keccak256` as the `signerId` function.
+    function areValidSignaturesNow(
         bytes32 hash,
         bytes[] memory signers,
         bytes[] memory signatures
     ) internal view returns (bool) {
-        return areValidNSignaturesNow(hash, signers, signatures, _keccak256);
+        return areValidSignaturesNow(hash, signers, signatures, _keccak256);
     }
 
     /// @dev Computes the keccak256 hash of the given data.

@@ -210,7 +210,7 @@ abstract contract MultiSignerERC7913 is AbstractSigner {
         if (signature.length == 0) return false; // For ERC-7739 compatibility
         (bytes[] memory signingSigners, bytes[] memory signatures) = abi.decode(signature, (bytes[], bytes[]));
         if (signingSigners.length != signatures.length) return false;
-        return _validateNSignatures(hash, signingSigners, signatures) && _validateThreshold(signingSigners);
+        return _validateThreshold(signingSigners) && _validateNSignatures(hash, signingSigners, signatures);
     }
 
     /**
@@ -236,7 +236,7 @@ abstract contract MultiSignerERC7913 is AbstractSigner {
                 return false;
             }
         }
-        return hash.areValidNSignaturesNow(signingSigners, signatures, signerId);
+        return hash.areValidSignaturesNow(signingSigners, signatures, signerId);
     }
 
     /**
