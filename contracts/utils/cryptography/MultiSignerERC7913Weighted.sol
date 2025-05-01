@@ -99,9 +99,9 @@ abstract contract MultiSignerERC7913Weighted is MultiSignerERC7913 {
      * Emits {ERC7913SignerWeightChanged} for each signer.
      */
     function _setSignerWeights(bytes[] memory signers, uint256[] memory newWeights) internal virtual {
-        require(signers.length == newWeights.length, MultiSignerERC7913WeightedMismatchedLength());
-        uint256 oldWeight = _weightSigners(signers);
         uint256 signersLength = signers.length;
+        require(signersLength == newWeights.length, MultiSignerERC7913WeightedMismatchedLength());
+        uint256 oldWeight = _weightSigners(signers);
 
         for (uint256 i = 0; i < signersLength; i++) {
             bytes memory signer = signers[i];
