@@ -167,7 +167,7 @@ abstract contract MultiSignerERC7913 is AbstractSigner {
 
     /**
      * @dev Decodes, validates the signature and checks the signers are authorized.
-     * See {_validateNSignatures} and {_validateThreshold} for more details.
+     * See {_validateSignatures} and {_validateThreshold} for more details.
      *
      * Example of signature encoding:
      *
@@ -205,7 +205,7 @@ abstract contract MultiSignerERC7913 is AbstractSigner {
         if (signature.length == 0) return false; // For ERC-7739 compatibility
         (bytes[] memory signingSigners, bytes[] memory signatures) = abi.decode(signature, (bytes[], bytes[]));
         if (signingSigners.length != signatures.length) return false;
-        return _validateThreshold(signingSigners) && _validateNSignatures(hash, signingSigners, signatures);
+        return _validateThreshold(signingSigners) && _validateSignatures(hash, signingSigners, signatures);
     }
 
     /**
@@ -236,7 +236,7 @@ abstract contract MultiSignerERC7913 is AbstractSigner {
 
     /**
      * @dev Validates that the number of signers meets the {threshold} requirement.
-     * Assumes the signers were already validated. See {_validateNSignatures} for more details.
+     * Assumes the signers were already validated. See {_validateSignatures} for more details.
      */
     function _validateThreshold(bytes[] memory validatingSigners) internal view virtual returns (bool) {
         return validatingSigners.length >= threshold();
