@@ -74,11 +74,6 @@ abstract contract MultiSignerERC7913 is AbstractSigner {
     /// @dev The `threshold` is unreachable given the number of `signers`.
     error MultiSignerERC7913UnreachableThreshold(uint256 signers, uint256 threshold);
 
-    /// @dev Returns the internal id of the `signer`.
-    function signerId(bytes memory signer) public view virtual returns (bytes32) {
-        return keccak256(signer);
-    }
-
     /**
      * @dev Returns the set of authorized signers. Prefer {_signers} for internal use.
      *
@@ -217,8 +212,8 @@ abstract contract MultiSignerERC7913 is AbstractSigner {
      * @dev Validates the signatures using the signers and their corresponding signatures.
      * Returns whether whether the signers are authorized and the signatures are valid for the given hash.
      *
-     * IMPORTANT: For simplicity, this contract assumes that the signers are ordered by their {signerId} to
-     * avoid duplication when iterating through the signers (i.e. `signerId(signer1) < signerId(signer2)`).
+     * IMPORTANT: For simplicity, this contract assumes that the signers are ordered by their `keccak256` hash
+     * to avoid duplication when iterating through the signers (i.e. `keccak256(signer1) < keccak256(signer2)`).
      * The function will return false if the signers are not ordered.
      *
      * Requirements:
@@ -236,7 +231,7 @@ abstract contract MultiSignerERC7913 is AbstractSigner {
                 return false;
             }
         }
-        return hash.areValidSignaturesNow(signingSigners, signatures, signerId);
+        return hash.areValidSignaturesNow(signingSigners, signatures);
     }
 
     /**

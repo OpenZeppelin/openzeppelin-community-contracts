@@ -55,8 +55,8 @@ abstract contract MultiSignerERC7913Weighted is MultiSignerERC7913 {
     // Invariant: sum(weights) >= threshold
     uint128 private _totalWeight;
 
-    // Mapping from signer ID to weight
-    mapping(bytes32 signedId => uint256) private _weights;
+    // Mapping from signer to weight
+    mapping(bytes signer => uint256) private _weights;
 
     /// @dev Emitted when a signer's weight is changed.
     event ERC7913SignerWeightChanged(bytes indexed signer, uint256 weight);
@@ -83,7 +83,7 @@ abstract contract MultiSignerERC7913Weighted is MultiSignerERC7913 {
      * NOTE: This internal function doesn't check if the signer is authorized.
      */
     function _signerWeight(bytes memory signer) internal view virtual returns (uint256) {
-        return Math.max(_weights[signerId(signer)], 1);
+        return Math.max(_weights[signer], 1);
     }
 
     /**
@@ -187,7 +187,7 @@ abstract contract MultiSignerERC7913Weighted is MultiSignerERC7913 {
      */
     function _unsafeSetSignerWeights(bytes[] memory signers, uint256[] memory newWeights) private {
         for (uint256 i = 0; i < signers.length; i++) {
-            _weights[signerId(signers[i])] = newWeights[i];
+            _weights[signers[i]] = newWeights[i];
             emit ERC7913SignerWeightChanged(signers[i], newWeights[i]);
         }
     }

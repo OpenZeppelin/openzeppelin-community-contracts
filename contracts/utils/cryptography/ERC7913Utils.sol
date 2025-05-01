@@ -52,21 +52,17 @@ library ERC7913Utils {
     /**
      * @dev Verifies multiple `signatures` for a given hash using a set of `signers`.
      *
-     * The signers must be ordered by their `signerId` to ensure no duplicates and to optimize
+     * The signers must be ordered by their `keccak256` hash to ensure no duplicates and to optimize
      * the verification process. The function will return `false` if the signers are not properly ordered.
      *
      * Requirements:
      *
      * * The `signatures` array must be at least the  `signers` array's length.
-     *
-     * NOTE: The `signerId` function argument must be deterministic and should not manipulate
-     * memory state directly and should follow Solidity memory safety rules to avoid unexpected behavior.
      */
     function areValidSignaturesNow(
         bytes32 hash,
         bytes[] memory signers,
-        bytes[] memory signatures,
-        function(bytes memory) view returns (bytes32) signerId
+        bytes[] memory signatures
     ) internal view returns (bool) {
         bytes32 previousId = bytes32(0);
 
@@ -74,7 +70,7 @@ library ERC7913Utils {
         for (uint256 i = 0; i < signersLength; i++) {
             bytes memory signer = signers[i];
             // Signers must ordered by id to ensure no duplicates
-            bytes32 id = signerId(signer);
+            bytes32 id = keccak256(signer);
             if (previousId >= id || !isValidSignatureNow(signer, hash, signatures[i])) {
                 return false;
             }
@@ -83,19 +79,5 @@ library ERC7913Utils {
         }
 
         return true;
-    }
-
-    /// @dev Overload of {areValidSignaturesNow} that uses the `keccak256` as the `signerId` function.
-    function areValidSignaturesNow(
-        bytes32 hash,
-        bytes[] memory signers,
-        bytes[] memory signatures
-    ) internal view returns (bool) {
-        return areValidSignaturesNow(hash, signers, signatures, _keccak256);
-    }
-
-    /// @dev Computes the keccak256 hash of the given data.
-    function _keccak256(bytes memory data) private pure returns (bytes32) {
-        return keccak256(data);
     }
 }
