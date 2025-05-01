@@ -110,7 +110,8 @@ abstract contract MultiSignerERC7913 is AbstractSigner {
      * * Each of `newSigners` must not be authorized. See {isSigner}. Reverts with {MultiSignerERC7913AlreadyExists} if so.
      */
     function _addSigners(bytes[] memory newSigners) internal virtual {
-        for (uint256 i = 0; i < newSigners.length; i++) {
+        uint256 newSignersLength = newSigners.length;
+        for (uint256 i = 0; i < newSignersLength; i++) {
             bytes memory signer = newSigners[i];
             require(signer.length >= 20, MultiSignerERC7913InvalidSigner(signer));
             require(_signers().add(signer), MultiSignerERC7913AlreadyExists(signer));
@@ -127,7 +128,8 @@ abstract contract MultiSignerERC7913 is AbstractSigner {
      * * See {_validateReachableThreshold} for the threshold validation.
      */
     function _removeSigners(bytes[] memory oldSigners) internal virtual {
-        for (uint256 i = 0; i < oldSigners.length; i++) {
+        uint256 oldSignersLength = oldSigners.length;
+        for (uint256 i = 0; i < oldSignersLength; i++) {
             bytes memory signer = oldSigners[i];
             require(_signers().remove(signer), MultiSignerERC7913NonexistentSigner(signer));
         }
