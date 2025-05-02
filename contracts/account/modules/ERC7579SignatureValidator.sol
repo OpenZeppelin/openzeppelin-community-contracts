@@ -87,7 +87,7 @@ contract ERC7579SignatureValidator is ERC7579Validator {
      * making the account unusable. As an account operator, make sure to uninstall to a predefined path
      * in your account that properly side effects of uninstallation.  See {AccountERC7579-uninstallModule}.
      */
-    function onUninstall(bytes calldata data) public virtual override(ERC7579Module, IERC7579Module) {
+    function onUninstall(bytes calldata data) public virtual override(IERC7579Module, ERC7579Module) {
         _setSigner(msg.sender, "");
         super.onUninstall(data);
     }
