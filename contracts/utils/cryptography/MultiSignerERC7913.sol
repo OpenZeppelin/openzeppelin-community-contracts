@@ -74,11 +74,6 @@ abstract contract MultiSignerERC7913 is AbstractSigner {
     /// @dev The `threshold` is unreachable given the number of `signers`.
     error MultiSignerERC7913UnreachableThreshold(uint256 signers, uint256 threshold);
 
-    /// @dev Returns the internal id of the `signer`.
-    function signerId(bytes memory signer) public view virtual returns (bytes32) {
-        return keccak256(signer);
-    }
-
     /**
      * @dev Returns the set of authorized signers. Prefer {_signers} for internal use.
      *
@@ -87,7 +82,7 @@ abstract contract MultiSignerERC7913 is AbstractSigner {
      * if the signers set grows too large.
      */
     function signers() public view virtual returns (bytes[] memory) {
-        return _signersSet.values();
+        return _signers().values();
     }
 
     /// @dev Returns whether the `signer` is an authorized signer.
@@ -105,34 +100,64 @@ abstract contract MultiSignerERC7913 is AbstractSigner {
         return _signersSet;
     }
 
-    /// @dev Adds the `newSigners` to those allowed to sign on behalf of this contract. Internal version without access control.
+    /**
+     * @dev Adds the `newSigners` to those allowed to sign on behalf of this contract.
+     * Internal version without access control.
+     *
+     * Requirements:
+     *
+     * * Each of `newSigners` must be at least 20 bytes long. Reverts with {MultiSignerERC7913InvalidSigner} if not.
+     * * Each of `newSigners` must not be authorized. See {isSigner}. Reverts with {MultiSignerERC7913AlreadyExists} if so.
+     */
     function _addSigners(bytes[] memory newSigners) internal virtual {
-        for (uint256 i = 0; i < newSigners.length; i++) {
+        uint256 newSignersLength = newSigners.length;
+        for (uint256 i = 0; i < newSignersLength; i++) {
             bytes memory signer = newSigners[i];
             require(signer.length >= 20, MultiSignerERC7913InvalidSigner(signer));
-            require(_signersSet.add(signer), MultiSignerERC7913AlreadyExists(signer));
+            require(_signers().add(signer), MultiSignerERC7913AlreadyExists(signer));
         }
         emit ERC7913SignersAdded(newSigners);
     }
 
-    /// @dev Removes the `oldSigners` from the authorized signers. Internal version without access control.
+    /**
+     * @dev Removes the `oldSigners` from the authorized signers. Internal version without access control.
+     *
+     * Requirements:
+     *
+     * * Each of `oldSigners` must be authorized. See {isSigner}. Otherwise {MultiSignerERC7913NonexistentSigner} is thrown.
+     * * See {_validateReachableThreshold} for the threshold validation.
+     */
     function _removeSigners(bytes[] memory oldSigners) internal virtual {
-        for (uint256 i = 0; i < oldSigners.length; i++) {
+        uint256 oldSignersLength = oldSigners.length;
+        for (uint256 i = 0; i < oldSignersLength; i++) {
             bytes memory signer = oldSigners[i];
-            require(_signersSet.remove(signer), MultiSignerERC7913NonexistentSigner(signer));
+            require(_signers().remove(signer), MultiSignerERC7913NonexistentSigner(signer));
         }
         _validateReachableThreshold();
         emit ERC7913SignersRemoved(oldSigners);
     }
 
-    /// @dev Sets the signatures `threshold` required to approve a multisignature operation. Internal version without access control.
+    /**
+     * @dev Sets the signatures `threshold` required to approve a multisignature operation.
+     * Internal version without access control.
+     *
+     * Requirements:
+     *
+     * * See {_validateReachableThreshold} for the threshold validation.
+     */
     function _setThreshold(uint256 newThreshold) internal virtual {
         _threshold = newThreshold.toUint128();
         _validateReachableThreshold();
         emit ERC7913ThresholdSet(newThreshold);
     }
 
-    /// @dev Validates the current threshold is reachable.
+    /**
+     * @dev Validates the current threshold is reachable.
+     *
+     * Requirements:
+     *
+     * * The {signers}'s length must be `>=` to the {threshold}. Throws {MultiSignerERC7913UnreachableThreshold} if not.
+     */
     function _validateReachableThreshold() internal view virtual {
         uint256 totalSigners = _signers().length();
         uint256 currentThreshold = threshold();
@@ -144,7 +169,7 @@ abstract contract MultiSignerERC7913 is AbstractSigner {
 
     /**
      * @dev Decodes, validates the signature and checks the signers are authorized.
-     * See {_validateNSignatures} and {_validateThreshold} for more details.
+     * See {_validateSignatures} and {_validateThreshold} for more details.
      *
      * Example of signature encoding:
      *
@@ -170,6 +195,10 @@ abstract contract MultiSignerERC7913 is AbstractSigner {
      * // Encode the multi signature
      * bytes memory signature = abi.encode(signers, signatures);
      * ```
+     *
+     * Requirements:
+     *
+     * * The `signature` must be encoded as `abi.encode(signers, signatures)`.
      */
     function _rawSignatureValidation(
         bytes32 hash,
@@ -178,22 +207,22 @@ abstract contract MultiSignerERC7913 is AbstractSigner {
         if (signature.length == 0) return false; // For ERC-7739 compatibility
         (bytes[] memory signingSigners, bytes[] memory signatures) = abi.decode(signature, (bytes[], bytes[]));
         if (signingSigners.length != signatures.length) return false;
-        return _validateNSignatures(hash, signingSigners, signatures) && _validateThreshold(signingSigners);
+        return _validateThreshold(signingSigners) && _validateSignatures(hash, signingSigners, signatures);
     }
 
     /**
      * @dev Validates the signatures using the signers and their corresponding signatures.
      * Returns whether whether the signers are authorized and the signatures are valid for the given hash.
      *
-     * IMPORTANT: For simplicity, this contract assumes that the signers are ordered by their {signerId} to
-     * avoid duplication when iterating through the signers (i.e. `signerId(signer1) < signerId(signer2)`).
+     * IMPORTANT: For simplicity, this contract assumes that the signers are ordered by their `keccak256` hash
+     * to avoid duplication when iterating through the signers (i.e. `keccak256(signer1) < keccak256(signer2)`).
      * The function will return false if the signers are not ordered.
      *
      * Requirements:
      *
-     * - The `signers` and `signatures` arrays must be of the same length.
+     * * The `signatures` arrays must be at least as large as the `signingSigners` arrays. Panics otherwise.
      */
-    function _validateNSignatures(
+    function _validateSignatures(
         bytes32 hash,
         bytes[] memory signingSigners,
         bytes[] memory signatures
@@ -204,12 +233,12 @@ abstract contract MultiSignerERC7913 is AbstractSigner {
                 return false;
             }
         }
-        return hash.areValidNSignaturesNow(signingSigners, signatures, signerId);
+        return hash.areValidSignaturesNow(signingSigners, signatures);
     }
 
     /**
      * @dev Validates that the number of signers meets the {threshold} requirement.
-     * Assumes the signers were already validated. See {_validateNSignatures} for more details.
+     * Assumes the signers were already validated. See {_validateSignatures} for more details.
      */
     function _validateThreshold(bytes[] memory validatingSigners) internal view virtual returns (bool) {
         return validatingSigners.length >= threshold();

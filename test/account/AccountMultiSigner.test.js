@@ -129,11 +129,6 @@ describe('AccountMultiSigner', function () {
       await this.mock.deploy();
     });
 
-    it('verifies signerId function returns keccak256(signer)', async function () {
-      const signer = signerECDSA1.address;
-      await expect(this.mock.signerId(signer)).to.eventually.equal(ethers.keccak256(signer));
-    });
-
     it('can add signers', async function () {
       const signers = [
         signerECDSA3.address, // ECDSA Signer
