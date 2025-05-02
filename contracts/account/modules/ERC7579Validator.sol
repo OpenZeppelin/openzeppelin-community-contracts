@@ -20,10 +20,14 @@ import {IERC1271} from "@openzeppelin/contracts/interfaces/IERC1271.sol";
  * contract MyValidatorModule is ERC7579Validator {
  *     function onInstall(bytes calldata data) public override {
  *         // Install logic here
+ *         ...
+ *         super.onInstall(data);
  *     }
  *
  *     function onUninstall(bytes calldata data) public override {
  *         // Uninstall logic here
+ *         ...
+ *         super.onUninstall(data);
  *     }
  *
  *     function _isValidSignatureWithSender(

@@ -18,10 +18,14 @@ import {IERC7579Module} from "@openzeppelin/contracts/interfaces/draft-IERC7579.
  * contract MyExecutorModule is ERC7579Module(MODULE_TYPE_EXECUTOR) {
  *     function onInstall(bytes calldata data) public override {
  *         // Install logic here
+ *         ...
+ *         super.onInstall(data);
  *     }
  *
  *     function onUninstall(bytes calldata data) public override {
  *         // Uninstall logic here
+ *         ...
+ *         super.onUninstall(data);
  *     }
  *
  * }
