@@ -7,16 +7,14 @@
 :SignerP256: pass:normal[xref:utils.adoc#SignerP256[`SignerP256`]]
 :SignerRSA: pass:normal[xref:utils.adoc#SignerRSA[`SignerRSA`]]
 :AbstractSigner: pass:normal[xref:utils.adoc#AbstractSigner[`AbstractSigner`]]
+:SignerERC7702: pass:normal[xref:utils.adoc#SignerERC7702[`SignerERC7702`]]
+:AbstractSigner: pass:normal[xref:utils.adoc#AbstractSigner[`AbstractSigner`]]
 :SignerERC7913: pass:normal[xref:utils.adoc#SignerERC7913[`SignerERC7913`]]
 :MultiSignerERC7913: pass:normal[xref:utils.adoc#MultiSignerERC7913[`MultiSignerERC7913`]]
 :MultiSignerERC7913Weighted: pass:normal[xref:utils.adoc#MultiSignerERC7913Weighted[`MultiSignerERC7913Weighted`]]
 :AbstractSigner: pass:normal[xref:utils.adoc#AbstractSigner[`AbstractSigner`]]
 :ERC7913SignatureVerifierP256: pass:normal[xref:utils.adoc#ERC7913SignatureVerifierP256[`ERC7913SignatureVerifierP256`]]
 :ERC7913SignatureVerifierRSA: pass:normal[xref:utils.adoc#ERC7913SignatureVerifierRSA[`ERC7913SignatureVerifierRSA`]]
-:SignerECDSA: pass:normal[xref:utils.adoc#SignerECDSA[`SignerECDSA`]]
-:SignerP256: pass:normal[xref:utils.adoc#SignerP256[`SignerP256`]]
-:SignerRSA: pass:normal[xref:utils.adoc#SignerRSA[`SignerRSA`]]
-:AbstractSigner: pass:normal[xref:utils.adoc#AbstractSigner[`AbstractSigner`]]
 :SignerZKEmail: pass:normal[xref:utils.adoc#SignerZKEmail[`SignerZKEmail`]]
 :AbstractSigner: pass:normal[xref:utils.adoc#AbstractSigner[`AbstractSigner`]]
 :ZKEmailUtils: pass:normal[xref:utils.adoc#ZKEmailUtils[`ZKEmailUtils`]]
@@ -52,9 +50,9 @@ Miscellaneous contracts and libraries containing utility functions you can use t
  * {ERC7739Utils}: Utilities library that implements a defensive rehashing mechanism to prevent replayability of smart contract signatures based on ERC-7739.
  * {ERC7913Utils}: utilities library that implements ERC-7913 signature verification with fallback to ERC-1271 and ECDSA.
  * {SignerECDSA}, {SignerP256}, {SignerRSA}: Implementations of an {AbstractSigner} with specific signature validation algorithms.
+ * {SignerERC7702}: Implementation of {AbstractSigner} that validates signatures using the contract's own address as the signer, useful for delegated accounts following EIP-7702.
  * {SignerERC7913}, {MultiSignerERC7913}, {MultiSignerERC7913Weighted}: Implementations of {AbstractSigner} that validate signatures based on ERC-7913. Including a simple and weighted multisignature scheme.
  * {ERC7913SignatureVerifierP256}, {ERC7913SignatureVerifierRSA}: Ready to use ERC-7913 signature verifiers for P256 and RSA keys
- * {SignerECDSA}, {SignerP256}, {SignerRSA}: Implementations of an {AbstractSigner} with specific signature validation algorithms.
  * {SignerZKEmail}: Implementation of an {AbstractSigner} that enables email-based authentication through zero-knowledge proofs.
  * {ZKEmailUtils}: Library for ZKEmail signature validation utilities, enabling email-based authentication through zero-knowledge proofs.
  * {EnumerableSetExtended} and {EnumerableMapExtended}: Extensions of the `EnumerableSet` and `EnumerableMap` libraries with more types, including non-value types.
