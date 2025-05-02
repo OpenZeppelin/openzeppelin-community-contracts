@@ -108,7 +108,9 @@ contract ERC7579SignatureValidator is ERC7579Validator {
     }
 
     /**
-     * @dev Validates a `signature` using ERC-7913 verification.
+     * @dev See {ERC7579Validator-_isValidSignatureWithSender}.
+     *
+     * Validates a `signature` using ERC-7913 verification.
      *
      * This base implementation ignores the `sender` parameter and validates using
      * the account's stored signer. Derived contracts can override this to implement
