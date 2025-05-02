@@ -10,12 +10,12 @@ import {IERC7579Module} from "@openzeppelin/contracts/interfaces/draft-IERC7579.
 abstract contract ERC7579ValidatorMock is ERC7579Validator {
     mapping(address sender => address signer) private _associatedSigners;
 
-    function onInstall(bytes calldata data) public virtual override(ERC7579Module, IERC7579Module) {
+    function onInstall(bytes calldata data) public virtual override(IERC7579Module, ERC7579Module) {
         _associatedSigners[msg.sender] = address(bytes20(data[0:20]));
         super.onInstall(data);
     }
 
-    function onUninstall(bytes calldata data) public virtual override(ERC7579Module, IERC7579Module) {
+    function onUninstall(bytes calldata data) public virtual override(IERC7579Module, ERC7579Module) {
         delete _associatedSigners[msg.sender];
         super.onUninstall(data);
     }
