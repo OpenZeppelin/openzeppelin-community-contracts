@@ -2,7 +2,6 @@
 
 pragma solidity ^0.8.27;
 
-import {ERC7579Module} from "./ERC7579Module.sol";
 import {ERC7579Validator} from "./ERC7579Validator.sol";
 import {ERC7913Utils} from "../../utils/cryptography/ERC7913Utils.sol";
 import {IERC7579Module} from "@openzeppelin/contracts/interfaces/draft-IERC7579.sol";
@@ -74,10 +73,9 @@ contract ERC7579SignatureValidator is ERC7579Validator {
      * directly, the signer will be set to the provided data even if the account didn't track
      * the module's installation. Future installations will revert.
      */
-    function onInstall(bytes calldata data) public virtual override(IERC7579Module, ERC7579Module) {
+    function onInstall(bytes calldata data) public virtual override {
         require(signer(msg.sender).length == 0, ERC7579SignatureValidatorAlreadyInstalled());
         setSigner(data);
-        super.onInstall(data);
     }
 
     /**
@@ -87,9 +85,8 @@ contract ERC7579SignatureValidator is ERC7579Validator {
      * making the account unusable. As an account operator, make sure to uninstall to a predefined path
      * in your account that properly side effects of uninstallation.  See {AccountERC7579-uninstallModule}.
      */
-    function onUninstall(bytes calldata data) public virtual override(IERC7579Module, ERC7579Module) {
+    function onUninstall(bytes calldata) public virtual override {
         _setSigner(msg.sender, "");
-        super.onUninstall(data);
     }
 
     /// @dev Sets the ERC-7913 signer (i.e. `verifier || key`) for the calling account.

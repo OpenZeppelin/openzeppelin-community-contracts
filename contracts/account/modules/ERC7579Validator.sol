@@ -2,8 +2,7 @@
 
 pragma solidity ^0.8.27;
 
-import {ERC7579Module} from "./ERC7579Module.sol";
-import {IERC7579Validator, MODULE_TYPE_VALIDATOR} from "@openzeppelin/contracts/interfaces/draft-IERC7579.sol";
+import {IERC7579Module, IERC7579Validator, MODULE_TYPE_VALIDATOR} from "@openzeppelin/contracts/interfaces/draft-IERC7579.sol";
 import {PackedUserOperation} from "@openzeppelin/contracts/interfaces/draft-IERC4337.sol";
 import {ERC4337Utils} from "@openzeppelin/contracts/account/utils/draft-ERC4337Utils.sol";
 import {IERC1271} from "@openzeppelin/contracts/interfaces/IERC1271.sol";
@@ -20,14 +19,10 @@ import {IERC1271} from "@openzeppelin/contracts/interfaces/IERC1271.sol";
  * contract MyValidatorModule is ERC7579Validator {
  *     function onInstall(bytes calldata data) public override {
  *         // Install logic here
- *         ...
- *         super.onInstall(data);
  *     }
  *
  *     function onUninstall(bytes calldata data) public override {
  *         // Uninstall logic here
- *         ...
- *         super.onUninstall(data);
  *     }
  *
  *     function _isValidSignatureWithSender(
@@ -40,7 +35,17 @@ import {IERC1271} from "@openzeppelin/contracts/interfaces/IERC1271.sol";
  * }
  * ```
  */
-abstract contract ERC7579Validator is ERC7579Module(MODULE_TYPE_VALIDATOR), IERC7579Validator {
+abstract contract ERC7579Validator is IERC7579Module, IERC7579Validator {
+    /// @inheritdoc IERC7579Module
+    function onInstall(bytes calldata data) public virtual;
+
+    /// @inheritdoc IERC7579Module
+    function onUninstall(bytes calldata data) public virtual;
+
+    function isModuleType(uint256 moduleTypeId) external view returns (bool) {
+        return moduleTypeId == MODULE_TYPE_VALIDATOR;
+    }
+
     /// @inheritdoc IERC7579Validator
     function validateUserOp(
         PackedUserOperation calldata userOp,
