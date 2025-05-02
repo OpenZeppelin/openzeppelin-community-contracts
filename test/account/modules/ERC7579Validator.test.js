@@ -15,7 +15,11 @@ async function fixture() {
   const mock = await ethers.deployContract('$ERC7579ValidatorMock');
 
   // Prepare signer
-  const signerECDSA = ethers.Wallet.createRandom();
+  const signer = ethers.Wallet.createRandom();
+  const signUserOp = userOp =>
+    signer
+      .signTypedData(entrypointDomain, { PackedUserOperation }, userOp.packed)
+      .then(signature => Object.assign(userOp, { signature }));
 
   // ERC-4337 env
   const helper = new ERC4337Helper();
@@ -33,18 +37,14 @@ async function fixture() {
     entrypointDomain,
     mockAccount,
     other,
-    signerECDSA,
+    signer,
+    signUserOp,
   };
 }
 
 describe('ERC7579Validator', function () {
   beforeEach(async function () {
     Object.assign(this, await loadFixture(fixture));
-    this.signer = this.signerECDSA;
-    this.signUserOp = userOp =>
-      this.signer
-        .signTypedData(this.entrypointDomain, { PackedUserOperation }, userOp.packed)
-        .then(signature => Object.assign(userOp, { signature }));
     this.installData = ethers.solidityPacked(['address'], [this.signer.address]);
   });
 
