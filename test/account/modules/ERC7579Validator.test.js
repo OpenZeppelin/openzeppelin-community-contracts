@@ -21,6 +21,9 @@ async function fixture() {
       .signTypedData(entrypointDomain, { PackedUserOperation }, userOp.packed)
       .then(signature => Object.assign(userOp, { signature }));
 
+  // Prepare module installation data
+  const installData = ethers.solidityPacked(['address'], [signer.address]);
+
   // ERC-4337 env
   const helper = new ERC4337Helper();
   await helper.wait();
@@ -39,13 +42,13 @@ async function fixture() {
     other,
     signer,
     signUserOp,
+    installData,
   };
 }
 
 describe('ERC7579Validator', function () {
   beforeEach(async function () {
     Object.assign(this, await loadFixture(fixture));
-    this.installData = ethers.solidityPacked(['address'], [this.signer.address]);
   });
 
   shouldBehaveLikeERC7579Module();
