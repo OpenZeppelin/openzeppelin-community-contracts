@@ -61,9 +61,6 @@ contract ERC7579SignatureValidator is ERC7579Validator {
     /// @dev Thrown when the module is already installed.
     error ERC7579SignatureValidatorAlreadyInstalled();
 
-    /// @dev Thrown when the module is not installed.
-    error ERC7579SignatureValidatorNotInstalled();
-
     /// @dev Return the ERC-7913 signer (i.e. `verifier || key`).
     function signer(address account) public view virtual returns (bytes memory) {
         return _signers[account];
