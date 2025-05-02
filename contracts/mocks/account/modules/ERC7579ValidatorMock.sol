@@ -42,4 +42,13 @@ abstract contract ERC7579ValidatorMock is ERC7579ModuleMock(MODULE_TYPE_VALIDATO
                 ? IERC1271.isValidSignature.selector
                 : bytes4(0xffffffff);
     }
+
+    function getSigner(address account) public view virtual returns (address) {
+        return _associatedSigners[account];
+    }
+
+    function updateSigner(address newSigner) public virtual {
+        require(newSigner != address(0) && _associatedSigners[msg.sender] != address(0));
+        _associatedSigners[msg.sender] = newSigner;
+    }
 }
