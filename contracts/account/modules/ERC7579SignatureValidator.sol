@@ -87,7 +87,7 @@ contract ERC7579SignatureValidator is ERC7579Validator {
      * making the account unusable. As an account operator, make sure to uninstall to a predefined path
      * in your account that properly side effects of uninstallation.  See {AccountERC7579-uninstallModule}.
      */
-    function onUninstall(bytes calldata data) public virtual override(IERC7579Module, ERC7579Module) {
+    function onUninstall(bytes calldata data) public virtual override(ERC7579Module, IERC7579Module) {
         _setSigner(msg.sender, "");
         super.onUninstall(data);
     }
@@ -96,7 +96,6 @@ contract ERC7579SignatureValidator is ERC7579Validator {
     function setSigner(bytes memory signer_) public virtual {
         require(signer_.length >= 20, ERC7579SignatureValidatorInvalidSignerLength());
         _setSigner(msg.sender, signer_);
-        super.onInstall(signer_);
     }
 
     /// @dev Internal version of {setSigner} that takes an `account` as argument without validating `signer_`.
