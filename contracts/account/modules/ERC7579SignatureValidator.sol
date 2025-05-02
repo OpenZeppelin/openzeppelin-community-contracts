@@ -2,14 +2,13 @@
 
 pragma solidity ^0.8.27;
 
-import {IERC7579Validator, IERC7579Module, MODULE_TYPE_VALIDATOR} from "@openzeppelin/contracts/interfaces/draft-IERC7579.sol";
-import {PackedUserOperation} from "@openzeppelin/contracts/interfaces/draft-IERC4337.sol";
-import {ERC4337Utils} from "@openzeppelin/contracts/account/utils/draft-ERC4337Utils.sol";
-import {IERC1271} from "@openzeppelin/contracts/interfaces/IERC1271.sol";
+import {ERC7579Module} from "./ERC7579Module.sol";
+import {ERC7579Validator} from "./ERC7579Validator.sol";
 import {ERC7913Utils} from "../../utils/cryptography/ERC7913Utils.sol";
+import {IERC7579Module} from "@openzeppelin/contracts/interfaces/draft-IERC7579.sol";
 
 /**
- * @dev Implementation of {IERC7579Validator} module using ERC-7913 signature verification.
+ * @dev Implementation of {ERC7579Validator} module using ERC-7913 signature verification.
  *
  * This validator allows ERC-7579 accounts to integrate with address-less cryptographic keys
  * through the ERC-7913 signature verification system. Each account can store its own ERC-7913
@@ -50,7 +49,7 @@ import {ERC7913Utils} from "../../utils/cryptography/ERC7913Utils.sol";
  * account.initialize(address(new ERC7579SignatureValidator()), signerData);
  * ```
  */
-contract ERC7579SignatureValidator is IERC7579Validator {
+contract ERC7579SignatureValidator is ERC7579Validator {
     mapping(address account => bytes signer) private _signers;
 
     /// @dev Emitted when the signer is set.
@@ -62,14 +61,12 @@ contract ERC7579SignatureValidator is IERC7579Validator {
     /// @dev Thrown when the module is already installed.
     error ERC7579SignatureValidatorAlreadyInstalled();
 
+    /// @dev Thrown when the module is not installed.
+    error ERC7579SignatureValidatorNotInstalled();
+
     /// @dev Return the ERC-7913 signer (i.e. `verifier || key`).
     function signer(address account) public view virtual returns (bytes memory) {
         return _signers[account];
-    }
-
-    /// @inheritdoc IERC7579Module
-    function isModuleType(uint256 moduleTypeId) public pure virtual returns (bool) {
-        return moduleTypeId == MODULE_TYPE_VALIDATOR;
     }
 
     /**
@@ -80,9 +77,10 @@ contract ERC7579SignatureValidator is IERC7579Validator {
      * directly, the signer will be set to the provided data even if the account didn't track
      * the module's installation. Future installations will revert.
      */
-    function onInstall(bytes calldata data) public virtual {
+    function onInstall(bytes calldata data) public virtual override(ERC7579Module, IERC7579Module) {
         require(signer(msg.sender).length == 0, ERC7579SignatureValidatorAlreadyInstalled());
         setSigner(data);
+        super.onInstall(data);
     }
 
     /**
@@ -92,31 +90,9 @@ contract ERC7579SignatureValidator is IERC7579Validator {
      * making the account unusable. As an account operator, make sure to uninstall to a predefined path
      * in your account that properly side effects of uninstallation.  See {AccountERC7579-uninstallModule}.
      */
-    function onUninstall(bytes calldata) public virtual {
+    function onUninstall(bytes calldata data) public virtual override(ERC7579Module, IERC7579Module) {
         _setSigner(msg.sender, "");
-    }
-
-    /// @inheritdoc IERC7579Validator
-    function validateUserOp(
-        PackedUserOperation calldata userOp,
-        bytes32 userOpHash
-    ) public view virtual returns (uint256) {
-        return
-            _isValidSignatureWithSender(msg.sender, userOpHash, userOp.signature)
-                ? ERC4337Utils.SIG_VALIDATION_SUCCESS
-                : ERC4337Utils.SIG_VALIDATION_FAILED;
-    }
-
-    /// @inheritdoc IERC7579Validator
-    function isValidSignatureWithSender(
-        address sender,
-        bytes32 hash,
-        bytes calldata signature
-    ) public view virtual returns (bytes4) {
-        return
-            _isValidSignatureWithSender(sender, hash, signature)
-                ? IERC1271.isValidSignature.selector
-                : bytes4(0xffffffff);
+        super.onUninstall(data);
     }
 
     /// @dev Sets the ERC-7913 signer (i.e. `verifier || key`) for the calling account.
@@ -134,7 +110,7 @@ contract ERC7579SignatureValidator is IERC7579Validator {
     /**
      * @dev Validates a `signature` using ERC-7913 verification.
      *
-     * The base implementation ignores the `sender` parameter and validates using
+     * This base implementation ignores the `sender` parameter and validates using
      * the account's stored signer. Derived contracts can override this to implement
      * custom validation logic based on the sender.
      */
@@ -142,7 +118,7 @@ contract ERC7579SignatureValidator is IERC7579Validator {
         address /* sender */,
         bytes32 hash,
         bytes calldata signature
-    ) internal view virtual returns (bool) {
+    ) internal view virtual override returns (bool) {
         return ERC7913Utils.isValidSignatureNow(signer(msg.sender), hash, signature);
     }
 }

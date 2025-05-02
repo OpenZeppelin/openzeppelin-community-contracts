@@ -8,7 +8,7 @@ const { PackedUserOperation } = require('../../helpers/eip712-types');
 const { NonNativeSigner, P256SigningKey, RSASHA256SigningKey } = require('../../helpers/signers');
 
 const { MODULE_TYPE_VALIDATOR } = require('@openzeppelin/contracts/test/helpers/erc7579');
-const { shouldBehaveLikeERC7579Module, shouldBehaveLikeERC7579Validator } = require('./ERC7579.behavior');
+const { shouldBehaveLikeERC7579Module, shouldBehaveLikeERC7579Validator } = require('./ERC7579Module.behavior');
 
 // Prepare signers in advance (RSA are long to initialize)
 const signerECDSA = ethers.Wallet.createRandom();

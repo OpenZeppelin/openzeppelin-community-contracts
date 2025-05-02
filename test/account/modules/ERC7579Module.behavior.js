@@ -9,9 +9,10 @@ function shouldBehaveLikeERC7579Module() {
       await expect(this.mock.isModuleType(999)).to.eventually.be.false; // Using random unassigned module type
     });
 
-    it('handles installation and uninstallation', async function () {
+    it('handles installation, uninstallation and re-installation', async function () {
       await expect(this.mockFromAccount.onInstall(this.installData || '0x')).to.not.be.reverted;
       await expect(this.mockFromAccount.onUninstall(this.uninstallData || '0x')).to.not.be.reverted;
+      await expect(this.mockFromAccount.onInstall(this.installData || '0x')).to.not.be.reverted;
     });
   });
 }
