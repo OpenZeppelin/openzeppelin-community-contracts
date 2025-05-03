@@ -62,7 +62,10 @@ abstract contract PaymasterERC20 is PaymasterCore {
         bytes32 userOpHash,
         uint256 maxCost
     ) internal virtual override returns (bytes memory context, uint256 validationData) {
-        (uint256 validationData_, IERC20 token, uint256 tokenPrice) = _fetchDetails(userOp, userOpHash);
+        IERC20 token;
+        uint256 tokenPrice;
+        (validationData, token, tokenPrice) = _fetchDetails(userOp, userOpHash);
+        context = abi.encodePacked(userOpHash, token, tokenPrice);
         (bool prefunded, uint256 prefundAmount, address prefunder, bytes memory prefundContext) = _prefund(
             userOp,
             userOpHash,
@@ -72,13 +75,10 @@ abstract contract PaymasterERC20 is PaymasterCore {
             maxCost
         );
 
-        if (validationData_ == ERC4337Utils.SIG_VALIDATION_FAILED || !prefunded)
+        if (validationData == ERC4337Utils.SIG_VALIDATION_FAILED || !prefunded)
             return (bytes(""), ERC4337Utils.SIG_VALIDATION_FAILED);
 
-        return (
-            abi.encodePacked(userOpHash, token, tokenPrice, prefundAmount, prefunder, prefundContext),
-            validationData_
-        );
+        return (abi.encodePacked(context, prefundAmount, prefunder, prefundContext), validationData);
     }
 
     /**
