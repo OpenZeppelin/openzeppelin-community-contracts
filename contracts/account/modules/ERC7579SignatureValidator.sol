@@ -73,7 +73,7 @@ contract ERC7579SignatureValidator is ERC7579Validator {
      * directly, the signer will be set to the provided data even if the account didn't track
      * the module's installation. Future installations will revert.
      */
-    function onInstall(bytes calldata data) public virtual override {
+    function onInstall(bytes calldata data) public virtual {
         require(signer(msg.sender).length == 0, ERC7579SignatureValidatorAlreadyInstalled());
         setSigner(data);
     }
@@ -85,7 +85,7 @@ contract ERC7579SignatureValidator is ERC7579Validator {
      * making the account unusable. As an account operator, make sure to uninstall to a predefined path
      * in your account that properly side effects of uninstallation.  See {AccountERC7579-uninstallModule}.
      */
-    function onUninstall(bytes calldata) public virtual override {
+    function onUninstall(bytes calldata) public virtual {
         _setSigner(msg.sender, "");
     }
 
@@ -102,7 +102,7 @@ contract ERC7579SignatureValidator is ERC7579Validator {
     }
 
     /**
-     * @dev See {ERC7579Validator-_isValidSignatureWithSender}.
+     * @dev See {ERC7579Validator-_rawSignatureValidationWithSender}.
      *
      * Validates a `signature` using ERC-7913 verification.
      *
@@ -110,7 +110,7 @@ contract ERC7579SignatureValidator is ERC7579Validator {
      * the account's stored signer. Derived contracts can override this to implement
      * custom validation logic based on the sender.
      */
-    function _isValidSignatureWithSender(
+    function _rawSignatureValidationWithSender(
         address /* sender */,
         bytes32 hash,
         bytes calldata signature

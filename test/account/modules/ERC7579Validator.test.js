@@ -14,6 +14,11 @@ async function fixture() {
   // Deploy ERC-7579 validator module
   const mock = await ethers.deployContract('$ERC7579ValidatorMock');
 
+  // ERC-4337 env
+  const helper = new ERC4337Helper();
+  await helper.wait();
+  const entrypointDomain = await getDomain(entrypoint.v08);
+
   // Prepare signer
   const signer = ethers.Wallet.createRandom();
   const signUserOp = userOp =>
@@ -24,11 +29,6 @@ async function fixture() {
   // Prepare module installation data
   const installData = ethers.solidityPacked(['address'], [signer.address]);
 
-  // ERC-4337 env
-  const helper = new ERC4337Helper();
-  await helper.wait();
-  const entrypointDomain = await getDomain(entrypoint.v08);
-
   // ERC-7579 account
   const mockAccount = await helper.newAccount('$AccountERC7579');
   const mockFromAccount = await impersonate(mockAccount.address).then(asAccount => mock.connect(asAccount));
@@ -37,7 +37,6 @@ async function fixture() {
     moduleType: MODULE_TYPE_VALIDATOR,
     mock,
     mockFromAccount,
-    entrypointDomain,
     mockAccount,
     other,
     signer,

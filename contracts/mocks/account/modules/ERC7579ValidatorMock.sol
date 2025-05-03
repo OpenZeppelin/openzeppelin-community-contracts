@@ -9,18 +9,16 @@ import {IERC7579Module} from "@openzeppelin/contracts/interfaces/draft-IERC7579.
 abstract contract ERC7579ValidatorMock is ERC7579Validator {
     mapping(address sender => address signer) private _associatedSigners;
 
-    /// @inheritdoc ERC7579Validator
     function onInstall(bytes calldata data) public virtual override {
         _associatedSigners[msg.sender] = address(bytes20(data[0:20]));
     }
 
-    /// @inheritdoc ERC7579Validator
     function onUninstall(bytes calldata) public virtual override {
         delete _associatedSigners[msg.sender];
     }
 
     /// @dev Validates the ECDSA signature of the sender against the associated signer.
-    function _isValidSignatureWithSender(
+    function _rawSignatureValidationWithSender(
         address /* sender */,
         bytes32 hash,
         bytes calldata signature

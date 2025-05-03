@@ -10,22 +10,22 @@ import {IERC1271} from "@openzeppelin/contracts/interfaces/IERC1271.sol";
  * @dev Abstract validator module for ERC-7579 accounts.
  *
  * This contract provides the base implementation for signature validation in ERC-7579 accounts.
- * Developers must implement the onInstall, onUninstall, and {_isValidSignatureWithSender} function in derived contracts to
+ * Developers must implement the onInstall, onUninstall, and {_rawSignatureValidationWithSender} function in derived contracts to
  * define the specific signature validation logic.
  *
  * Example usage:
  *
  * ```solidity
  * contract MyValidatorModule is ERC7579Validator {
- *     function onInstall(bytes calldata data) public override {
+ *     function onInstall(bytes calldata data) public {
  *         // Install logic here
  *     }
  *
- *     function onUninstall(bytes calldata data) public override {
+ *     function onUninstall(bytes calldata data) public {
  *         // Uninstall logic here
  *     }
  *
- *     function _isValidSignatureWithSender(
+ *     function _rawSignatureValidationWithSender(
  *         address sender,
  *         bytes32 hash,
  *         bytes calldata signature
@@ -37,12 +37,7 @@ import {IERC1271} from "@openzeppelin/contracts/interfaces/IERC1271.sol";
  */
 abstract contract ERC7579Validator is IERC7579Module, IERC7579Validator {
     /// @inheritdoc IERC7579Module
-    function onInstall(bytes calldata data) public virtual;
-
-    /// @inheritdoc IERC7579Module
-    function onUninstall(bytes calldata data) public virtual;
-
-    function isModuleType(uint256 moduleTypeId) external view returns (bool) {
+    function isModuleType(uint256 moduleTypeId) public pure virtual returns (bool) {
         return moduleTypeId == MODULE_TYPE_VALIDATOR;
     }
 
@@ -52,7 +47,7 @@ abstract contract ERC7579Validator is IERC7579Module, IERC7579Validator {
         bytes32 userOpHash
     ) public view virtual returns (uint256) {
         return
-            _isValidSignatureWithSender(msg.sender, userOpHash, userOp.signature)
+            _rawSignatureValidationWithSender(msg.sender, userOpHash, userOp.signature)
                 ? ERC4337Utils.SIG_VALIDATION_SUCCESS
                 : ERC4337Utils.SIG_VALIDATION_FAILED;
     }
@@ -64,13 +59,19 @@ abstract contract ERC7579Validator is IERC7579Module, IERC7579Validator {
         bytes calldata signature
     ) public view virtual returns (bytes4) {
         return
-            _isValidSignatureWithSender(sender, hash, signature)
+            _rawSignatureValidationWithSender(sender, hash, signature)
                 ? IERC1271.isValidSignature.selector
                 : bytes4(0xffffffff);
     }
 
-    /// @dev Internal version of {isValidSignatureWithSender} to be implemented by derived contracts.
-    function _isValidSignatureWithSender(
+    /**
+     * @dev Internal version of {isValidSignatureWithSender} to be implemented by derived contracts.
+     *
+     * WARNING: Signature validation is a critical security function for smart accounts as it determines
+     * whether operations can be executed on the account. Implementations must carefully handle cryptographic
+     * verification to prevent unauthorized access. Thorough security review and testing is required before deployment.
+     */
+    function _rawSignatureValidationWithSender(
         address sender,
         bytes32 hash,
         bytes calldata signature
