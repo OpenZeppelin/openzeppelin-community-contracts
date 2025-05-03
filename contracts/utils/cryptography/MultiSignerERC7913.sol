@@ -74,11 +74,6 @@ abstract contract MultiSignerERC7913 is AbstractSigner {
     /// @dev The `threshold` is unreachable given the number of `signers`.
     error MultiSignerERC7913UnreachableThreshold(uint256 signers, uint256 threshold);
 
-    /// @dev Returns the internal id of the `signer`.
-    function signerId(bytes memory signer) public view virtual returns (bytes32) {
-        return keccak256(signer);
-    }
-
     /**
      * @dev Returns the set of authorized signers. Prefer {_signers} for internal use.
      *
@@ -115,7 +110,8 @@ abstract contract MultiSignerERC7913 is AbstractSigner {
      * * Each of `newSigners` must not be authorized. See {isSigner}. Reverts with {MultiSignerERC7913AlreadyExists} if so.
      */
     function _addSigners(bytes[] memory newSigners) internal virtual {
-        for (uint256 i = 0; i < newSigners.length; i++) {
+        uint256 newSignersLength = newSigners.length;
+        for (uint256 i = 0; i < newSignersLength; i++) {
             bytes memory signer = newSigners[i];
             require(signer.length >= 20, MultiSignerERC7913InvalidSigner(signer));
             require(_signers().add(signer), MultiSignerERC7913AlreadyExists(signer));
@@ -132,7 +128,8 @@ abstract contract MultiSignerERC7913 is AbstractSigner {
      * * See {_validateReachableThreshold} for the threshold validation.
      */
     function _removeSigners(bytes[] memory oldSigners) internal virtual {
-        for (uint256 i = 0; i < oldSigners.length; i++) {
+        uint256 oldSignersLength = oldSigners.length;
+        for (uint256 i = 0; i < oldSignersLength; i++) {
             bytes memory signer = oldSigners[i];
             require(_signers().remove(signer), MultiSignerERC7913NonexistentSigner(signer));
         }
@@ -172,7 +169,7 @@ abstract contract MultiSignerERC7913 is AbstractSigner {
 
     /**
      * @dev Decodes, validates the signature and checks the signers are authorized.
-     * See {_validateNSignatures} and {_validateThreshold} for more details.
+     * See {_validateSignatures} and {_validateThreshold} for more details.
      *
      * Example of signature encoding:
      *
@@ -210,22 +207,22 @@ abstract contract MultiSignerERC7913 is AbstractSigner {
         if (signature.length == 0) return false; // For ERC-7739 compatibility
         (bytes[] memory signingSigners, bytes[] memory signatures) = abi.decode(signature, (bytes[], bytes[]));
         if (signingSigners.length != signatures.length) return false;
-        return _validateNSignatures(hash, signingSigners, signatures) && _validateThreshold(signingSigners);
+        return _validateThreshold(signingSigners) && _validateSignatures(hash, signingSigners, signatures);
     }
 
     /**
      * @dev Validates the signatures using the signers and their corresponding signatures.
      * Returns whether whether the signers are authorized and the signatures are valid for the given hash.
      *
-     * IMPORTANT: For simplicity, this contract assumes that the signers are ordered by their {signerId} to
-     * avoid duplication when iterating through the signers (i.e. `signerId(signer1) < signerId(signer2)`).
+     * IMPORTANT: For simplicity, this contract assumes that the signers are ordered by their `keccak256` hash
+     * to avoid duplication when iterating through the signers (i.e. `keccak256(signer1) < keccak256(signer2)`).
      * The function will return false if the signers are not ordered.
      *
      * Requirements:
      *
      * * The `signatures` arrays must be at least as large as the `signingSigners` arrays. Panics otherwise.
      */
-    function _validateNSignatures(
+    function _validateSignatures(
         bytes32 hash,
         bytes[] memory signingSigners,
         bytes[] memory signatures
@@ -236,12 +233,12 @@ abstract contract MultiSignerERC7913 is AbstractSigner {
                 return false;
             }
         }
-        return hash.areValidNSignaturesNow(signingSigners, signatures, signerId);
+        return hash.areValidSignaturesNow(signingSigners, signatures);
     }
 
     /**
      * @dev Validates that the number of signers meets the {threshold} requirement.
-     * Assumes the signers were already validated. See {_validateNSignatures} for more details.
+     * Assumes the signers were already validated. See {_validateSignatures} for more details.
      */
     function _validateThreshold(bytes[] memory validatingSigners) internal view virtual returns (bool) {
         return validatingSigners.length >= threshold();
