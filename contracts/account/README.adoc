@@ -17,6 +17,8 @@ This directory includes contracts to build accounts for ERC-4337. These include:
 
 {{Account}}
 
+{{AccountFactory}}
+
 == Extensions
 
 {{AccountERC7579}}
