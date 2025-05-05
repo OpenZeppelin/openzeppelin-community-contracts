@@ -50,6 +50,8 @@ describe('ERC7579Validator', function () {
     Object.assign(this, await loadFixture(fixture));
   });
 
-  shouldBehaveLikeERC7579Module();
-  shouldBehaveLikeERC7579Validator();
+  describe('ECDSA key', function () {
+    shouldBehaveLikeERC7579Module();
+    shouldBehaveLikeERC7579Validator();
+  });
 });

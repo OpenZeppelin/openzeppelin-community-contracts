@@ -117,16 +117,7 @@ describe('ERC7579SignatureValidator', function () {
     );
   });
 
-  describe('ECDSA key', function () {
-    beforeEach(async function () {
-      this.signer = signerECDSA;
-      prepareSigner.call(this, ethers.Wallet.prototype);
-      this.installData = ethers.solidityPacked(['address'], [this.signer.address]);
-    });
-
-    shouldBehaveLikeERC7579Module();
-    shouldBehaveLikeERC7579Validator();
-  });
+  // ECDSA tested in ./ERC7579Validator.test.js
 
   describe('P256 key', function () {
     beforeEach(async function () {
