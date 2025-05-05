@@ -20,6 +20,9 @@ contract AccountFactory {
     using Clones for address;
     using Address for address;
 
+    /// @dev Emitted when a new account is created.
+    event AccountCreated(address indexed account, bytes32 salt);
+
     address private immutable _impl;
 
     /// @dev Sets the implementation contract address to be used for cloning accounts.
@@ -48,6 +51,7 @@ contract AccountFactory {
         if (predicted.code.length == 0) {
             _impl.cloneDeterministic(_calldataSalt);
             predicted.functionCall(callData);
+            emit AccountCreated(predicted, salt);
         }
         return predicted;
     }

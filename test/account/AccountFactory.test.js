@@ -80,6 +80,22 @@ describe('AccountFactory', function () {
       await expect(deployedClone.initialize()).to.be.reverted;
     });
 
+    it('should emit AccountCreated event once when a new account is created', async function () {
+      const salt = ethers.randomBytes(32);
+      const [predictedAddress] = await this.factory.predictAddress(salt, this.initializeData);
+
+      // First deployment (should emit event)
+      await expect(this.factory.cloneAndInitialize(salt, this.initializeData))
+        .to.emit(this.factory, 'AccountCreated')
+        .withArgs(predictedAddress, salt);
+
+      // Second deployment attempt (should not emit event)
+      await expect(this.factory.cloneAndInitialize(salt, this.initializeData)).to.not.emit(
+        this.factory,
+        'AccountCreated',
+      );
+    });
+
     it('should return the existing account if already deployed', async function () {
       const salt = ethers.randomBytes(32);
 
