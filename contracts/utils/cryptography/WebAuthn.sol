@@ -5,35 +5,49 @@ pragma solidity ^0.8.24;
 import {Base64} from "@openzeppelin/contracts/utils/Base64.sol";
 import {Bytes} from "@openzeppelin/contracts/utils/Bytes.sol";
 import {P256} from "@openzeppelin/contracts/utils/cryptography/P256.sol";
+import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 
 /**
  * @dev Library for verifying WebAuthn Authentication Assertions.
  *
- * WebAuthn enables strong authentication for smart contracts using secp256r1 public key cryptography
- * as an alternative to traditional secp256k1 ECDSA signatures. This library verifies signatures
- * generated during WebAuthn authentication ceremonies as specified in the
+ * WebAuthn enables strong authentication for smart contracts using
+ * https://docs.openzeppelin.com/contracts/5.x/api/utils#P256[P256]
+ * as an alternative to traditional secp256k1 ECDSA signatures. This library verifies
+ * signatures generated during WebAuthn authentication ceremonies as specified in the
  * https://www.w3.org/TR/webauthn-2/[WebAuthn Level 2 standard].
  *
- * Inspired on:
+ * For blockchain use cases, the following WebAuthn validations are intentionally omitted:
+ *
+ * * Origin validation: Origin verification in `clientDataJSON` is omitted as blockchain
+ *   contexts rely on authenticator and dapp frontend enforcement. Standard authenticators
+ *   implement proper origin validation.
+ * * RP ID hash validation: Verification of `rpIdHash` in authenticatorData against expected
+ *   RP ID hash is omitted. This is typically handled by platform-level security measures.
+ *   Including an expiry timestamp in signed data is recommended for enhanced security.
+ * * Signature counter: Verification of signature counter increments is omitted. While
+ *   useful for detecting credential cloning, on-chain operations typically include nonce
+ *   protection, making this check redundant.
+ * * Extension outputs: Extension output value verification is omitted as these are not
+ *   essential for core authentication security in blockchain applications.
+ * * Attestation: Attestation object verification is omitted as this implementation
+ *   focuses on authentication (`webauthn.get`) rather than registration ceremonies.
+ *
+ * Inspired by:
  * - https://github.com/daimo-eth/p256-verifier/blob/master/src/WebAuthn.sol[daimo-eth implementation]
  * - https://github.com/base/webauthn-sol/blob/main/src/WebAuthn.sol[base implementation]
  */
 library WebAuthn {
     struct WebAuthnAuth {
-        /// @dev The WebAuthn authenticator data.
+        /// The WebAuthn authenticator data.
         /// https://www.w3.org/TR/webauthn-2/#dom-authenticatorassertionresponse-authenticatordata
         bytes authenticatorData;
-        /// @dev The WebAuthn client data JSON.
+        /// The WebAuthn client data JSON.
         /// https://www.w3.org/TR/webauthn-2/#dom-authenticatorresponse-clientdatajson
         string clientDataJSON;
-        /// @dev The index at which "challenge":"..." occurs in `clientDataJSON`.
-        uint256 challengeIndex;
-        /// @dev The index at which "type":"..." occurs in `clientDataJSON`.
-        uint256 typeIndex;
-        /// @dev The r value of secp256r1 signature
-        bytes32 r;
-        /// @dev The s value of secp256r1 signature
-        bytes32 s;
+        uint256 challengeIndex; /// The index at which "challenge":"..." occurs in `clientDataJSON`.
+        uint256 typeIndex; /// The index at which "type":"..." occurs in `clientDataJSON`.
+        bytes32 r; /// The r value of secp256r1 signature
+        bytes32 s; /// The s value of secp256r1 signature
     }
 
     /// @dev Bit 0 of the authenticator data flags: "User Present" bit.
@@ -46,50 +60,26 @@ library WebAuthn {
     bytes1 private constant AUTH_DATA_FLAGS_BS = 0x10;
 
     /// @dev The expected type string in the client data JSON when verifying assertion signatures.
-    ///      https://www.w3.org/TR/webauthn-2/#dom-collectedclientdata-type
+    /// https://www.w3.org/TR/webauthn-2/#dom-collectedclientdata-type
     // solhint-disable-next-line quotes
     bytes32 private constant EXPECTED_TYPE_HASH = keccak256('"type":"webauthn.get"');
 
     /**
-     * @dev Verifies a WebAuthn Authentication Assertion as specified in the WebAuthn standard.
-     * The function takes a `challenge` provided by the relying party, a flag indicating whether
-     * user verification is required, a {WebAuthnAuth} struct containing authentication data,
-     * and the `qx` and `qy` coordinates of the public key, returning true if the
-     * https://www.w3.org/TR/webauthn-2/#sctn-verifying-assertion[authentication assertion] is valid.
+     * @dev Performs the absolute minimal verification of a WebAuthn Authentication Assertion.
+     * This function includes only the essential checks required for basic WebAuthn security:
      *
-     * This implementation verifies:
-     * - Type is "webauthn.get" (confirming this is an authentication, not registration)
-     * - Challenge matches the expected value
-     * - User Present (UP) bit is set
-     * - User Verified (UV) bit is set (when requireUserVerification is true)
-     * - Backup State (BS) and Backup Eligibility (BE) bits are valid (if BE=0, BS must also be 0)
-     * - The cryptographic signature is valid for the given public key
+     * 1. Type is "webauthn.get" (see {validateExpectedTypeHash})
+     * 2. Challenge matches the expected value (see {validateChallenge})
+     * 3. Cryptographic signature is valid for the given public key
      *
-     * Unlike some implementations, this verifies the backup state bit relationship
-     * as specified in the WebAuthn standard, which requires that if a credential
-     * is backed up (BS=1), it must also be eligible for backup (BE=1).
-     * Not enforcing this could allow security compromises if backups are not intended.
+     * For most applications, use {verify} or {verifyStrict} instead.
      *
-     * For blockchain use cases, the following WebAuthn validations are omitted for valid reasons:
-     *
-     * * Origin validation: We don't verify the origin in clientDataJSON because in blockchain
-     *   contexts, the origin is enforced by the authenticator and dapp frontend. High-quality
-     *   authenticators (like iCloud Keychain, Google Password Manager) properly enforce this.
-     * * RP ID hash validation: We don't verify that rpIdHash in authenticatorData matches the
-     *   expected RP ID hash. This is typically enforced by platform-level protections (like
-     *   Apple App Site Association, Google Asset Links). For additional security, consider
-     *   including an expiry timestamp in signed data.
-     * * Signature counter: We don't verify that the signature counter increases with each
-     *   authentication. While this can help detect credential cloning, on-chain operations
-     *   are frequently replay-protected by their nonce, making this check redundant.
-     * * Extension outputs: We don't verify extension output values, as they're typically not
-     *   critical for the core authentication security model in blockchain applications.
-     * * Attestation: We don't verify attestation objects, as this implementation is designed
-     *   for authentication (webauthn.get) rather than registration ceremonies.
+     * NOTE: This function intentionally omits User Presence (UP), User Verification (UV),
+     * and Backup State/Eligibility checks. Use this only when broader compatibility with
+     * authenticators is required or in constrained environments.
      */
-    function verify(
+    function verifyMinimal(
         bytes memory challenge,
-        bool requireUserVerification,
         WebAuthnAuth memory auth,
         bytes32 qx,
         bytes32 qy
@@ -98,19 +88,12 @@ library WebAuthn {
         // - 32 bytes for rpIdHash
         // - 1 byte for flags
         // - 4 bytes for signature counter
-        if (auth.authenticatorData.length < 37) {
-            return false;
-        }
-
-        bytes1 flags = auth.authenticatorData[32];
+        if (auth.authenticatorData.length < 37) return false;
         bytes memory clientDataJSON = bytes(auth.clientDataJSON);
 
         return
             validateExpectedTypeHash(clientDataJSON, auth.typeIndex) && // 11
             validateChallenge(clientDataJSON, auth.challengeIndex, challenge) && // 12
-            validateUserPresentBitSet(flags) && // 16
-            validateUserVerifiedBit(flags, requireUserVerification) && // 17
-            validateBackupStateBit(flags) &&
             // Handles signature malleability internally
             P256.verify(
                 sha256(
@@ -126,35 +109,106 @@ library WebAuthn {
             ); // 20
     }
 
-    /// @dev Validates that the https://www.w3.org/TR/webauthn-2/#up[User Present (UP)] bit is set.
+    /**
+     * @dev Performs standard verification of a WebAuthn Authentication Assertion.
+     *
+     * Same as {verifyMinimal}, but also verifies:
+     *
+     * 4. {validateUserPresentBitSet} - confirming physical user presence during authentication
+     *
+     * This compliance level satisfies the core WebAuthn verification requirements while
+     * maintaining broad compatibility with authenticators. For higher security requirements,
+     * consider using {verifyStrict}.
+     */
+    function verify(
+        bytes memory challenge,
+        WebAuthnAuth memory auth,
+        bytes32 qx,
+        bytes32 qy
+    ) internal view returns (bool) {
+        // 16 && rest
+        return validateUserPresentBitSet(auth.authenticatorData[32]) && verifyMinimal(challenge, auth, qx, qy);
+    }
+
+    /**
+     * @dev Performs strict verification of a WebAuthn Authentication Assertion.
+     *
+     * Same as {verify}, but also also verifies:
+     *
+     * 5. {validateUserVerifiedBitSet} - confirming stronger user authentication (biometrics/PIN)
+     * 6. {validateBackupEligibilityAndState}- Backup Eligibility (`BE`) and Backup State (BS) bits
+     * relationship is valid
+     *
+     * This strict verification is recommended for:
+     * * High-value transactions
+     * * Privileged operations
+     * * Account recovery or critical settings changes
+     * * Applications where security takes precedence over broad authenticator compatibility
+     */
+    function verifyStrict(
+        bytes memory challenge,
+        WebAuthnAuth memory auth,
+        bytes32 qx,
+        bytes32 qy
+    ) internal view returns (bool) {
+        return
+            validateUserVerifiedBitSet(auth.authenticatorData[32]) && // 17
+            validateBackupEligibilityAndState(auth.authenticatorData[32]) && // Consistency check
+            verify(challenge, auth, qx, qy);
+    }
+
+    /**
+     * @dev Validates that the https://www.w3.org/TR/webauthn-2/#up[User Present (UP)] bit is set.
+     * Step 16 in https://www.w3.org/TR/webauthn-2/#sctn-verifying-assertion[verifying an assertion].
+     *
+     * NOTE: Required by WebAuthn spec but may be skipped for platform authenticators
+     * (Touch ID, Windows Hello) in controlled environments. Enforce for public-facing apps.
+     */
     function validateUserPresentBitSet(bytes1 flags) internal pure returns (bool) {
         return (flags & AUTH_DATA_FLAGS_UP) == AUTH_DATA_FLAGS_UP;
     }
 
     /**
-     * @dev Validates that the https://www.w3.org/TR/webauthn-2/#uv[User Verified (UV)] bit is set
-     * if user verification
+     * @dev Validates that the https://www.w3.org/TR/webauthn-2/#uv[User Verified (UV)] bit is set.
+     * Step 17 in https://www.w3.org/TR/webauthn-2/#sctn-verifying-assertion[verifying an assertion].
+     *
+     * The UV bit indicates whether the user was verified using a stronger identification method
+     * (biometrics, PIN, password). While optional, requiring UV=1 is recommended for:
+     * * High-value transactions and sensitive operations
+     * * Account recovery and critical settings changes
+     * * Privileged operations
+     *
+     * NOTE: For routine operations or when using hardware authenticators without verification capabilities,
+     * `UV=0` may be acceptable. The choice of whether to require UV represents a security vs. usability
+     * tradeoff - for blockchain applications handling valuable assets, requiring UV is generally safer.
      */
-    function validateUserVerifiedBit(bytes1 flags, bool requireUserVerification) internal pure returns (bool) {
-        return !requireUserVerification || (flags & AUTH_DATA_FLAGS_UV) == AUTH_DATA_FLAGS_UV;
+    function validateUserVerifiedBitSet(bytes1 flags) internal pure returns (bool) {
+        return (flags & AUTH_DATA_FLAGS_UV) == AUTH_DATA_FLAGS_UV;
     }
 
     /**
-     * @dev Validates that the https://www.w3.org/TR/webauthn-2/#be[Backup Eligibility (BE)] bit is set
-     * if the https://www.w3.org/TR/webauthn-2/#bs[Backup State (BS)] bit is set.
+     * @dev Validates the relationship between Backup Eligibility (`BE`) and Backup State (`BS`) bits
+     * according to the WebAuthn specification.
      *
-     * According to the WebAuthn spec, if a credential is backed up (BS=1), it must also be
-     * eligible for backup (BE=1). This is a security requirement to prevent unauthorized
-     * credential backup.
+     * The function enforces that if a credential is backed up (`BS=1`), it must also be eligible
+     * for backup (`BE=1`). This prevents unauthorized credential backup and ensures compliance
+     * with the WebAuthn spec.
      *
-     * The logic returns true if either:
-     * - BE=1 (credential is eligible for backup), regardless of BS value
-     * - BS=0 (credential is not backed up), regardless of BE value
+     * Returns true in these valid states:
+     * * `BE=1`, `BS=0`: Credential is eligible but not backed up
+     * * `BE=1`, `BS=1`: Credential is eligible and backed up
+     * * `BE=0`, `BS=0`: Credential is not eligible and not backed up
      *
-     * It only returns false when BE=0 and BS=1, which would indicate a credential
-     * that's backed up but not eligible for backup - an invalid state.
+     * Returns false only when `BE=0` and `BS=1`, which is an invalid state indicating
+     * a credential that's backed up but not eligible for backup.
+     *
+     * NOTE: While the WebAuthn spec defines this relationship between `BE` and `BS` bits,
+     * validating it is not explicitly required as part of the core verification procedure.
+     * Some implementations may choose to skip this check for broader authenticator
+     * compatibility or when the application's threat model doesn't consider credential
+     * syncing a major risk.
      */
-    function validateBackupStateBit(bytes1 flags) internal pure returns (bool) {
+    function validateBackupEligibilityAndState(bytes1 flags) internal pure returns (bool) {
         return (flags & AUTH_DATA_FLAGS_BE) != 0 || (flags & AUTH_DATA_FLAGS_BS) == 0;
     }
 
@@ -163,6 +217,7 @@ library WebAuthn {
      * is set to "webauthn.get".
      */
     function validateExpectedTypeHash(bytes memory clientDataJSON, uint256 typeIndex) internal pure returns (bool) {
+        // 21 = length of '"type":"webauthn.get"'
         bytes memory typeValueBytes = Bytes.slice(clientDataJSON, typeIndex, typeIndex + 21);
         return keccak256(typeValueBytes) == EXPECTED_TYPE_HASH;
     }
@@ -177,16 +232,13 @@ library WebAuthn {
             // solhint-disable-next-line quotes
             string.concat('"challenge":"', Base64.encodeURL(expectedChallenge), '"')
         );
-        if (challengeIndex + expectedChallengeBytes.length > clientDataJSON.length) {
-            return false;
-        }
-
+        if (challengeIndex + expectedChallengeBytes.length > clientDataJSON.length) return false;
         bytes memory actualChallengeBytes = Bytes.slice(
             clientDataJSON,
             challengeIndex,
             challengeIndex + expectedChallengeBytes.length
         );
 
-        return keccak256(actualChallengeBytes) == keccak256(expectedChallengeBytes);
+        return Strings.equal(string(actualChallengeBytes), string(expectedChallengeBytes));
     }
 }
