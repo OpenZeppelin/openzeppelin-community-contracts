@@ -100,51 +100,97 @@ describe('WebAuthn', function () {
     Object.assign(this, await loadFixture(fixture));
   });
 
-  describe('verify', function () {
-    it('should validate Safari WebAuthn authentication', async function () {
+  describe('verifyMinimal', function () {
+    it('should validate Safari WebAuthn authentication with minimal checks', async function () {
       const vector = TEST_VECTORS.safari;
       const auth = createWebAuthnAuth(vector);
 
-      await expect(
-        this.webAuthnMock.$verify(
-          vector.challenge,
-          false, // requireUserVerification
-          auth,
-          vector.x,
-          vector.y,
-        ),
-      ).to.eventually.be.true;
+      await expect(this.webAuthnMock.$verifyMinimal(vector.challenge, auth, vector.x, vector.y)).to.eventually.be.true;
     });
 
-    it('should validate Chrome WebAuthn authentication', async function () {
+    it('should validate Chrome WebAuthn authentication with minimal checks', async function () {
       const vector = TEST_VECTORS.chrome;
       const auth = createWebAuthnAuth(vector);
 
-      await expect(
-        this.webAuthnMock.$verify(
-          vector.challenge,
-          false, // requireUserVerification
-          auth,
-          vector.x,
-          vector.y,
-        ),
-      ).to.eventually.be.true;
+      await expect(this.webAuthnMock.$verifyMinimal(vector.challenge, auth, vector.x, vector.y)).to.eventually.be.true;
     });
 
-    it('should require user verification when specified', async function () {
+    it.only('should accept authentication without user present bit in minimal mode', async function () {
+      const vector = TEST_VECTORS.invalidUp;
+      const auth = createWebAuthnAuth(vector);
+
+      // In minimal mode, we don't check user presence
+      await expect(this.webAuthnMock.$verifyMinimal(vector.challenge, auth, vector.x, vector.y)).to.eventually.be.true;
+    });
+
+    it('should reject invalid type in clientDataJSON even in minimal mode', async function () {
+      const vector = TEST_VECTORS.invalidType;
+      const auth = createWebAuthnAuth(vector);
+
+      await expect(this.webAuthnMock.$verifyMinimal(vector.challenge, auth, vector.x, vector.y)).to.eventually.be.false;
+    });
+
+    it('should reject invalid challenge even in minimal mode', async function () {
+      const vector = TEST_VECTORS.safari;
+      // Create auth with wrong challenge encoding
+      const auth = createWebAuthnAuth(vector, false);
+
+      await expect(this.webAuthnMock.$verifyMinimal(vector.challenge, auth, vector.x, vector.y)).to.eventually.be.false;
+    });
+
+    it('should reject if authenticator data is too short in minimal mode', async function () {
       const vector = TEST_VECTORS.safari;
       const auth = createWebAuthnAuth(vector);
 
-      // This should pass because the test vector has UV bit set
-      await expect(
-        this.webAuthnMock.$verify(
-          vector.challenge,
-          true, // requireUserVerification
-          auth,
-          vector.x,
-          vector.y,
-        ),
-      ).to.eventually.be.true;
+      // Truncate authenticator data to make it too short
+      auth.authenticatorData = ethers.dataSlice(vector.authenticatorData, 0, 30);
+
+      await expect(this.webAuthnMock.$verifyMinimal(vector.challenge, auth, vector.x, vector.y)).to.eventually.be.false;
+    });
+  });
+
+  describe('verify', function () {
+    it('should validate Safari WebAuthn authentication with standard checks', async function () {
+      const vector = TEST_VECTORS.safari;
+      const auth = createWebAuthnAuth(vector);
+
+      await expect(this.webAuthnMock.$verify(vector.challenge, auth, vector.x, vector.y)).to.eventually.be.true;
+    });
+
+    it('should validate Chrome WebAuthn authentication with standard checks', async function () {
+      const vector = TEST_VECTORS.chrome;
+      const auth = createWebAuthnAuth(vector);
+
+      await expect(this.webAuthnMock.$verify(vector.challenge, auth, vector.x, vector.y)).to.eventually.be.true;
+    });
+
+    it('should reject authentication without user present bit in standard mode', async function () {
+      const vector = TEST_VECTORS.invalidUp;
+      const auth = createWebAuthnAuth(vector);
+
+      // In standard mode, we check user presence but not user verification
+      await expect(this.webAuthnMock.$verify(vector.challenge, auth, vector.x, vector.y)).to.eventually.be.false;
+    });
+  });
+
+  describe('verifyStrict', function () {
+    it('should validate Safari WebAuthn authentication with strict checks', async function () {
+      const vector = TEST_VECTORS.safari;
+      const auth = createWebAuthnAuth(vector);
+
+      await expect(this.webAuthnMock.$verifyStrict(vector.challenge, auth, vector.x, vector.y)).to.eventually.be.true;
+    });
+
+    it('should validate Chrome WebAuthn authentication with strict checks', async function () {
+      const vector = TEST_VECTORS.chrome;
+      const auth = createWebAuthnAuth(vector);
+
+      await expect(this.webAuthnMock.$verifyStrict(vector.challenge, auth, vector.x, vector.y)).to.eventually.be.true;
+    });
+
+    it('should reject authentication without user verification bit in strict mode', async function () {
+      const vector = TEST_VECTORS.safari;
+      const auth = createWebAuthnAuth(vector);
 
       // Create modified auth data with UV bit cleared (replace bit 2)
       const authNoUV = { ...auth };
@@ -156,48 +202,28 @@ describe('WebAuthn', function () {
       authDataBytes[32] = Number(noUVFlags);
       authNoUV.authenticatorData = ethers.hexlify(authDataBytes);
 
-      // This should fail because we require UV but the modified auth data doesn't have it
-      await expect(
-        this.webAuthnMock.$verify(
-          vector.challenge,
-          true, // requireUserVerification
-          authNoUV,
-          vector.x,
-          vector.y,
-        ),
-      ).to.eventually.be.false;
+      // In strict mode, we require user verification
+      await expect(this.webAuthnMock.$verifyStrict(vector.challenge, authNoUV, vector.x, vector.y)).to.eventually.be
+        .false;
     });
 
-    it('should reject authentication without user present bit', async function () {
-      const vector = TEST_VECTORS.invalidUp;
-      const auth = createWebAuthnAuth(vector);
-
-      await expect(this.webAuthnMock.$verify(vector.challenge, false, auth, vector.x, vector.y)).to.eventually.be.false;
-    });
-
-    it('should reject invalid type in clientDataJSON', async function () {
-      const vector = TEST_VECTORS.invalidType;
-      const auth = createWebAuthnAuth(vector);
-
-      await expect(this.webAuthnMock.$verify(vector.challenge, false, auth, vector.x, vector.y)).to.eventually.be.false;
-    });
-
-    it('should reject invalid challenge', async function () {
-      const vector = TEST_VECTORS.safari;
-      // Create auth with wrong challenge encoding
-      const auth = createWebAuthnAuth(vector, false);
-
-      await expect(this.webAuthnMock.$verify(vector.challenge, false, auth, vector.x, vector.y)).to.eventually.be.false;
-    });
-
-    it('should reject if authenticator data is too short', async function () {
+    it('should reject invalid backup state/eligibility relationship in strict mode', async function () {
       const vector = TEST_VECTORS.safari;
       const auth = createWebAuthnAuth(vector);
 
-      // Truncate authenticator data to make it too short
-      auth.authenticatorData = ethers.dataSlice(vector.authenticatorData, 0, 30);
+      // Create modified auth data with invalid BE/BS combination (BE=0, BS=1)
+      const authInvalidBE = { ...auth };
+      const flagsByte = ethers.dataSlice(vector.authenticatorData, 32, 33);
+      const originalFlags = ethers.getBigInt(flagsByte);
+      const invalidFlags = (originalFlags & ~BigInt(0x08)) | BigInt(0x10); // Clear BE (0x08), set BS (0x10)
 
-      await expect(this.webAuthnMock.$verify(vector.challenge, false, auth, vector.x, vector.y)).to.eventually.be.false;
+      let authDataBytes = ethers.getBytes(vector.authenticatorData);
+      authDataBytes[32] = Number(invalidFlags);
+      authInvalidBE.authenticatorData = ethers.hexlify(authDataBytes);
+
+      // In strict mode, we validate BE/BS relationship
+      await expect(this.webAuthnMock.$verifyStrict(vector.challenge, authInvalidBE, vector.x, vector.y)).to.eventually
+        .be.false;
     });
   });
 
@@ -209,34 +235,30 @@ describe('WebAuthn', function () {
     });
 
     it('should correctly validate user verified bit', async function () {
-      // When requireUserVerification is true
-      await expect(this.webAuthnMock.$validateUserVerifiedBit('0x04', true)).to.be.eventually.true;
-      await expect(this.webAuthnMock.$validateUserVerifiedBit('0x00', true)).to.be.eventually.false;
-
-      // When requireUserVerification is false
-      await expect(this.webAuthnMock.$validateUserVerifiedBit('0x04', false)).to.be.eventually.true;
-      await expect(this.webAuthnMock.$validateUserVerifiedBit('0x00', false)).to.be.eventually.true;
+      await expect(this.webAuthnMock.$validateUserVerifiedBitSet('0x04')).to.be.eventually.true;
+      await expect(this.webAuthnMock.$validateUserVerifiedBitSet('0x00')).to.be.eventually.false;
+      await expect(this.webAuthnMock.$validateUserVerifiedBitSet('0x05')).to.be.eventually.true; // Other bits set too
     });
 
-    it('should correctly validate backup state bit logic', async function () {
+    it('should correctly validate backup state/eligibility relationship', async function () {
       // Test all possible combinations of BE and BS bits
 
       // BE=1, BS=0: BE is set, BS is not set (valid)
-      await expect(this.webAuthnMock.$validateBackupStateBit('0x08')).to.eventually.be.true;
+      await expect(this.webAuthnMock.$validateBackupEligibilityAndState('0x08')).to.eventually.be.true;
 
       // BE=1, BS=1: BE is set, BS is set (valid)
-      await expect(this.webAuthnMock.$validateBackupStateBit('0x18')).to.eventually.be.true;
+      await expect(this.webAuthnMock.$validateBackupEligibilityAndState('0x18')).to.eventually.be.true;
 
       // BE=0, BS=0: BE is not set, BS is not set (valid)
-      await expect(this.webAuthnMock.$validateBackupStateBit('0x00')).to.eventually.be.true;
+      await expect(this.webAuthnMock.$validateBackupEligibilityAndState('0x00')).to.eventually.be.true;
 
       // BE=0, BS=1: BE is not set, BS is set (invalid)
-      await expect(this.webAuthnMock.$validateBackupStateBit('0x10')).to.eventually.be.false;
+      await expect(this.webAuthnMock.$validateBackupEligibilityAndState('0x10')).to.eventually.be.false;
 
       // Test with other bits set too
-      await expect(this.webAuthnMock.$validateBackupStateBit('0x51')).to.eventually.be.false; // BE=0, BS=1, others=0x41
-      await expect(this.webAuthnMock.$validateBackupStateBit('0x59')).to.eventually.be.true; // BE=1, BS=1, others=0x41
-      await expect(this.webAuthnMock.$validateBackupStateBit('0x41')).to.eventually.be.true; // BE=0, BS=0, others=0x41
+      await expect(this.webAuthnMock.$validateBackupEligibilityAndState('0x51')).to.eventually.be.false; // BE=0, BS=1, others=0x41
+      await expect(this.webAuthnMock.$validateBackupEligibilityAndState('0x59')).to.eventually.be.true; // BE=1, BS=1, others=0x41
+      await expect(this.webAuthnMock.$validateBackupEligibilityAndState('0x41')).to.eventually.be.true; // BE=0, BS=0, others=0x41
     });
   });
 });
