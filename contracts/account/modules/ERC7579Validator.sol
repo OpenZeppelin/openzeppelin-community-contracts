@@ -10,8 +10,8 @@ import {IERC1271} from "@openzeppelin/contracts/interfaces/IERC1271.sol";
  * @dev Abstract validator module for ERC-7579 accounts.
  *
  * This contract provides the base implementation for signature validation in ERC-7579 accounts.
- * Developers must implement the onInstall, onUninstall, and {_rawSignatureValidationWithSender} function in derived contracts to
- * define the specific signature validation logic.
+ * Developers must implement the onInstall, onUninstall, and {_rawSignatureValidationWithSender}
+ * functions in derived contracts to define the specific signature validation logic.
  *
  * Example usage:
  *
@@ -67,9 +67,10 @@ abstract contract ERC7579Validator is IERC7579Module, IERC7579Validator {
     /**
      * @dev Internal version of {isValidSignatureWithSender} to be implemented by derived contracts.
      *
-     * WARNING: Signature validation is a critical security function for smart accounts as it determines
-     * whether operations can be executed on the account. Implementations must carefully handle cryptographic
-     * verification to prevent unauthorized access. Thorough security review and testing is required before deployment.
+     * WARNING: Signature validation is a critical security function for smart accounts as it
+     * determines whether operations can be executed on the account. Implementations must carefully
+     * handle cryptographic verification to prevent unauthorized access. Thorough security review and
+     * testing are required before deployment.
      */
     function _rawSignatureValidationWithSender(
         address sender,

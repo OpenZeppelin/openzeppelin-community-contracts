@@ -69,9 +69,8 @@ contract ERC7579SignatureValidator is ERC7579Validator {
      * @dev See {IERC7579Module-onInstall}.
      * Reverts with {ERC7579SignatureValidatorAlreadyInstalled} if the module is already installed.
      *
-     * IMPORTANT: A signer will be set for the calling account. In case the account calls this function
-     * directly, the signer will be set to the provided data even if the account didn't track
-     * the module's installation. Future installations will revert.
+     * IMPORTANT: An account can only call onInstall once. If called directly by the account,
+     * the signer will be set to the provided data. Future installations will revert.
      */
     function onInstall(bytes calldata data) public virtual {
         require(signer(msg.sender).length == 0, ERC7579SignatureValidatorAlreadyInstalled());
