@@ -83,7 +83,7 @@ contract ERC7579SignatureValidator is ERC7579Validator {
      *
      * WARNING: The signer's key will be removed if the account calls this function, potentially
      * making the account unusable. As an account operator, make sure to uninstall to a predefined path
-     * in your account that properly side effects of uninstallation.  See {AccountERC7579-uninstallModule}.
+     * in your account that properly handles side effects of uninstallation.  See {AccountERC7579-uninstallModule}.
      */
     function onUninstall(bytes calldata) public virtual {
         _setSigner(msg.sender, "");
