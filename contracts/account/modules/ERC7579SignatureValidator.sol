@@ -17,8 +17,9 @@ import {IERC7579Module} from "@openzeppelin/contracts/interfaces/draft-IERC7579.
  * Ethereum address.
  *
  * The validator implements two key functions from ERC-7579:
- * - `validateUserOp`: Validates ERC-4337 user operations using ERC-7913 signatures
- * - `isValidSignatureWithSender`: Implements ERC-1271 signature verification via ERC-7913
+ *
+ * * `validateUserOp`: Validates ERC-4337 user operations using ERC-7913 signatures
+ * * `isValidSignatureWithSender`: Implements ERC-1271 signature verification via ERC-7913
  *
  * Example usage with an account:
  *

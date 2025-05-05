@@ -3,6 +3,8 @@
 :AccountERC7579: pass:normal[xref:account.adoc#AccountERC7579[`AccountERC7579`]]
 :AccountERC7579Hooked: pass:normal[xref:account.adoc#AccountERC7579Hooked[`AccountERC7579Hooked`]]
 :ERC7821: pass:normal[xref:account.adoc#ERC7821[`ERC7821`]]
+:ERC7579Validator: pass:normal[xref:account.adoc#ERC7579Validator[`ERC7579Validator`]]
+:ERC7579SignatureValidator: pass:normal[xref:account.adoc#ERC7579SignatureValidator[`ERC7579SignatureValidator`]]
 :PaymasterCore: pass:normal[xref:account.adoc#PaymasterCore[`PaymasterCore`]]
 :PaymasterERC20: pass:normal[xref:account.adoc#PaymasterERC20[`PaymasterERC20`]]
 :PaymasterERC721Owner: pass:normal[xref:account.adoc#PaymasterERC721Owner[`PaymasterERC721Owner`]]
@@ -25,6 +27,9 @@
 :AccountERC7579-_uninstallModule: pass:normal[xref:account.adoc#AccountERC7579-_uninstallModule-uint256-address-bytes-[`AccountERC7579._uninstallModule`]]
 :AccountERC7579-_execute: pass:normal[xref:account.adoc#AccountERC7579-_execute-Mode-bytes-[`AccountERC7579._execute`]]
 :AccountERC7579-_fallback: pass:normal[xref:account.adoc#AccountERC7579-_fallback--[`AccountERC7579._fallback`]]
+:ERC7579Validator: pass:normal[xref:account.adoc#ERC7579Validator[`ERC7579Validator`]]
+:AccountERC7579-uninstallModule: pass:normal[xref:account.adoc#AccountERC7579-uninstallModule-uint256-address-bytes-[`AccountERC7579.uninstallModule`]]
+:ERC7579Validator-_rawSignatureValidationWithSender: pass:normal[xref:account.adoc#ERC7579Validator-_rawSignatureValidationWithSender-address-bytes32-bytes-[`ERC7579Validator._rawSignatureValidationWithSender`]]
 :PaymasterCore-_validatePaymasterUserOp: pass:normal[xref:account.adoc#PaymasterCore-_validatePaymasterUserOp-struct-PackedUserOperation-bytes32-uint256-[`PaymasterCore._validatePaymasterUserOp`]]
 :PaymasterCore: pass:normal[xref:account.adoc#PaymasterCore[`PaymasterCore`]]
 :PaymasterCore: pass:normal[xref:account.adoc#PaymasterCore[`PaymasterCore`]]
@@ -42,6 +47,8 @@ This directory includes contracts to build accounts for ERC-4337. These include:
  * {AccountERC7579}: An extension of `Account` that implements support for ERC-7579 modules.
  * {AccountERC7579Hooked}: An extension of `AccountERC7579` with support for a single hook module (type 4).
  * {ERC7821}: Minimal batch executor implementation contracts. Useful to enable easy batch execution for smart contracts.
+ * {ERC7579Validator}: Abstract validator module for ERC-7579 accounts that provides base implementation for signature validation.
+ * {ERC7579SignatureValidator}: Implementation of ERC7579Validator using ERC-7913 signature verification for address-less cryptographic keys.
  * {PaymasterCore}: An ERC-4337 paymaster implementation that includes the core logic to validate and pay for user operations.
  * {PaymasterERC20}: A paymaster that allows users to pay for user operations using ERC-20 tokens.
  * {PaymasterERC721Owner}: A paymaster that allows users to pay for user operations based on ERC-721 ownership.
@@ -938,6 +945,285 @@ function _erc7821AuthorizedExecutor(
 [.contract-item]
 [[ERC7821-UnsupportedExecutionMode--]]
 ==== `[.contract-item-name]#++UnsupportedExecutionMode++#++()++` [.item-kind]#error#
+
+== Modules
+
+=== Validators
+
+:isModuleType: pass:normal[xref:#ERC7579Validator-isModuleType-uint256-[`++isModuleType++`]]
+:validateUserOp: pass:normal[xref:#ERC7579Validator-validateUserOp-struct-PackedUserOperation-bytes32-[`++validateUserOp++`]]
+:isValidSignatureWithSender: pass:normal[xref:#ERC7579Validator-isValidSignatureWithSender-address-bytes32-bytes-[`++isValidSignatureWithSender++`]]
+:_rawSignatureValidationWithSender: pass:normal[xref:#ERC7579Validator-_rawSignatureValidationWithSender-address-bytes32-bytes-[`++_rawSignatureValidationWithSender++`]]
+
+[.contract]
+[[ERC7579Validator]]
+=== `++ERC7579Validator++` link:https://github.com/OpenZeppelin/openzeppelin-community-contracts/blob/master/contracts/account/modules/ERC7579Validator.sol[{github-icon},role=heading-link]
+
+[.hljs-theme-light.nopadding]
+```solidity
+import "@openzeppelin/community-contracts/account/modules/ERC7579Validator.sol";
+```
+
+Abstract validator module for ERC-7579 accounts.
+
+This contract provides the base implementation for signature validation in ERC-7579 accounts.
+Developers must implement the onInstall, onUninstall, and {_rawSignatureValidationWithSender}
+functions in derived contracts to define the specific signature validation logic.
+
+Example usage:
+
+```solidity
+contract MyValidatorModule is ERC7579Validator {
+    function onInstall(bytes calldata data) public {
+        // Install logic here
+    }
+
+    function onUninstall(bytes calldata data) public {
+        // Uninstall logic here
+    }
+
+    function _rawSignatureValidationWithSender(
+        address sender,
+        bytes32 hash,
+        bytes calldata signature
+    ) internal view override returns (bool) {
+        // Signature validation logic here
+    }
+}
+```
+
+[.contract-index]
+.Functions
+--
+* `++isModuleType(moduleTypeId)++`
+* `++validateUserOp(userOp, userOpHash)++`
+* `++isValidSignatureWithSender(sender, hash, signature)++`
+* `++_rawSignatureValidationWithSender(sender, hash, signature)++`
+
+[.contract-subindex-inherited]
+.IERC7579Validator
+
+[.contract-subindex-inherited]
+.IERC7579Module
+* `++onInstall(data)++`
+* `++onUninstall(data)++`
+
+--
+
+[.contract-item]
+[[ERC7579Validator-isModuleType-uint256-]]
+==== `[.contract-item-name]#++isModuleType++#++(uint256 moduleTypeId) → bool++` [.item-kind]#public#
+
+Returns boolean value if module is a certain type
+
+[.contract-item]
+[[ERC7579Validator-validateUserOp-struct-PackedUserOperation-bytes32-]]
+==== `[.contract-item-name]#++validateUserOp++#++(struct PackedUserOperation userOp, bytes32 userOpHash) → uint256++` [.item-kind]#public#
+
+Validates a UserOperation
+
+[.contract-item]
+[[ERC7579Validator-isValidSignatureWithSender-address-bytes32-bytes-]]
+==== `[.contract-item-name]#++isValidSignatureWithSender++#++(address sender, bytes32 hash, bytes signature) → bytes4++` [.item-kind]#public#
+
+Validates a signature using ERC-1271
+
+[.contract-item]
+[[ERC7579Validator-_rawSignatureValidationWithSender-address-bytes32-bytes-]]
+==== `[.contract-item-name]#++_rawSignatureValidationWithSender++#++(address sender, bytes32 hash, bytes signature) → bool++` [.item-kind]#internal#
+
+Internal version of {isValidSignatureWithSender} to be implemented by derived contracts.
+
+WARNING: Signature validation is a critical security function for smart accounts as it
+determines whether operations can be executed on the account. Implementations must carefully
+handle cryptographic verification to prevent unauthorized access. Thorough security review and
+testing are required before deployment.
+
+:ERC7579SignatureValidatorSignerSet: pass:normal[xref:#ERC7579SignatureValidator-ERC7579SignatureValidatorSignerSet-address-bytes-[`++ERC7579SignatureValidatorSignerSet++`]]
+:ERC7579SignatureValidatorInvalidSignerLength: pass:normal[xref:#ERC7579SignatureValidator-ERC7579SignatureValidatorInvalidSignerLength--[`++ERC7579SignatureValidatorInvalidSignerLength++`]]
+:ERC7579SignatureValidatorAlreadyInstalled: pass:normal[xref:#ERC7579SignatureValidator-ERC7579SignatureValidatorAlreadyInstalled--[`++ERC7579SignatureValidatorAlreadyInstalled++`]]
+:signer: pass:normal[xref:#ERC7579SignatureValidator-signer-address-[`++signer++`]]
+:onInstall: pass:normal[xref:#ERC7579SignatureValidator-onInstall-bytes-[`++onInstall++`]]
+:onUninstall: pass:normal[xref:#ERC7579SignatureValidator-onUninstall-bytes-[`++onUninstall++`]]
+:setSigner: pass:normal[xref:#ERC7579SignatureValidator-setSigner-bytes-[`++setSigner++`]]
+:_setSigner: pass:normal[xref:#ERC7579SignatureValidator-_setSigner-address-bytes-[`++_setSigner++`]]
+:_rawSignatureValidationWithSender: pass:normal[xref:#ERC7579SignatureValidator-_rawSignatureValidationWithSender-address-bytes32-bytes-[`++_rawSignatureValidationWithSender++`]]
+
+[.contract]
+[[ERC7579SignatureValidator]]
+=== `++ERC7579SignatureValidator++` link:https://github.com/OpenZeppelin/openzeppelin-community-contracts/blob/master/contracts/account/modules/ERC7579SignatureValidator.sol[{github-icon},role=heading-link]
+
+[.hljs-theme-light.nopadding]
+```solidity
+import "@openzeppelin/community-contracts/account/modules/ERC7579SignatureValidator.sol";
+```
+
+Implementation of {ERC7579Validator} module using ERC-7913 signature verification.
+
+This validator allows ERC-7579 accounts to integrate with address-less cryptographic keys
+through the ERC-7913 signature verification system. Each account can store its own ERC-7913
+formatted signer (a concatenation of a verifier address and a key: `verifier || key`).
+
+This enables accounts to use signature schemes without requiring each key to have its own
+Ethereum address.
+
+The validator implements two key functions from ERC-7579:
+
+* `validateUserOp`: Validates ERC-4337 user operations using ERC-7913 signatures
+* `isValidSignatureWithSender`: Implements ERC-1271 signature verification via ERC-7913
+
+Example usage with an account:
+
+```solidity
+contract MyAccount is Account, AccountERC7579 {
+    function initialize(address validator, bytes memory signerData) public initializer {
+        // Install the validator module
+        bytes memory initData = abi.encode(signerData);
+        _installModule(MODULE_TYPE_VALIDATOR, validator, initData);
+    }
+}
+```
+
+Example of validator installation with a P256 key:
+
+```solidity
+// Address of the P256 verifier contract
+address p256verifier = 0x123...;
+
+// P256 public key bytes
+bytes memory p256PublicKey = 0x456...;
+
+// Combine into ERC-7913 signer format
+bytes memory signerData = bytes.concat(abi.encodePacked(p256verifier), p256PublicKey);
+
+// Initialize the account with the validator and signer
+account.initialize(address(new ERC7579SignatureValidator()), signerData);
+```
+
+[.contract-index]
+.Functions
+--
+* `++signer(account)++`
+* `++onInstall(data)++`
+* `++onUninstall()++`
+* `++setSigner(signer_)++`
+* `++_setSigner(account, signer_)++`
+* `++_rawSignatureValidationWithSender(, hash, signature)++`
+
+[.contract-subindex-inherited]
+.ERC7579Validator
+* `++isModuleType(moduleTypeId)++`
+* `++validateUserOp(userOp, userOpHash)++`
+* `++isValidSignatureWithSender(sender, hash, signature)++`
+
+[.contract-subindex-inherited]
+.IERC7579Validator
+
+[.contract-subindex-inherited]
+.IERC7579Module
+
+--
+
+[.contract-index]
+.Events
+--
+* `++ERC7579SignatureValidatorSignerSet(account, signer)++`
+
+[.contract-subindex-inherited]
+.ERC7579Validator
+
+[.contract-subindex-inherited]
+.IERC7579Validator
+
+[.contract-subindex-inherited]
+.IERC7579Module
+
+--
+
+[.contract-index]
+.Errors
+--
+* `++ERC7579SignatureValidatorInvalidSignerLength()++`
+* `++ERC7579SignatureValidatorAlreadyInstalled()++`
+
+[.contract-subindex-inherited]
+.ERC7579Validator
+
+[.contract-subindex-inherited]
+.IERC7579Validator
+
+[.contract-subindex-inherited]
+.IERC7579Module
+
+--
+
+[.contract-item]
+[[ERC7579SignatureValidator-signer-address-]]
+==== `[.contract-item-name]#++signer++#++(address account) → bytes++` [.item-kind]#public#
+
+Return the ERC-7913 signer (i.e. `verifier || key`).
+
+[.contract-item]
+[[ERC7579SignatureValidator-onInstall-bytes-]]
+==== `[.contract-item-name]#++onInstall++#++(bytes data)++` [.item-kind]#public#
+
+See {IERC7579Module-onInstall}.
+Reverts with {ERC7579SignatureValidatorAlreadyInstalled} if the module is already installed.
+
+IMPORTANT: An account can only call onInstall once. If called directly by the account,
+the signer will be set to the provided data. Future installations will revert.
+
+[.contract-item]
+[[ERC7579SignatureValidator-onUninstall-bytes-]]
+==== `[.contract-item-name]#++onUninstall++#++(bytes)++` [.item-kind]#public#
+
+See {IERC7579Module-onUninstall}.
+
+WARNING: The signer's key will be removed if the account calls this function, potentially
+making the account unusable. As an account operator, make sure to uninstall to a predefined path
+in your account that properly handles side effects of uninstallation.  See {AccountERC7579-uninstallModule}.
+
+[.contract-item]
+[[ERC7579SignatureValidator-setSigner-bytes-]]
+==== `[.contract-item-name]#++setSigner++#++(bytes signer_)++` [.item-kind]#public#
+
+Sets the ERC-7913 signer (i.e. `verifier || key`) for the calling account.
+
+[.contract-item]
+[[ERC7579SignatureValidator-_setSigner-address-bytes-]]
+==== `[.contract-item-name]#++_setSigner++#++(address account, bytes signer_)++` [.item-kind]#internal#
+
+Internal version of {setSigner} that takes an `account` as argument without validating `signer_`.
+
+[.contract-item]
+[[ERC7579SignatureValidator-_rawSignatureValidationWithSender-address-bytes32-bytes-]]
+==== `[.contract-item-name]#++_rawSignatureValidationWithSender++#++(address, bytes32 hash, bytes signature) → bool++` [.item-kind]#internal#
+
+See {ERC7579Validator-_rawSignatureValidationWithSender}.
+
+Validates a `signature` using ERC-7913 verification.
+
+This base implementation ignores the `sender` parameter and validates using
+the account's stored signer. Derived contracts can override this to implement
+custom validation logic based on the sender.
+
+[.contract-item]
+[[ERC7579SignatureValidator-ERC7579SignatureValidatorSignerSet-address-bytes-]]
+==== `[.contract-item-name]#++ERC7579SignatureValidatorSignerSet++#++(address indexed account, bytes signer)++` [.item-kind]#event#
+
+Emitted when the signer is set.
+
+[.contract-item]
+[[ERC7579SignatureValidator-ERC7579SignatureValidatorInvalidSignerLength--]]
+==== `[.contract-item-name]#++ERC7579SignatureValidatorInvalidSignerLength++#++()++` [.item-kind]#error#
+
+Thrown when the signer length is less than 20 bytes.
+
+[.contract-item]
+[[ERC7579SignatureValidator-ERC7579SignatureValidatorAlreadyInstalled--]]
+==== `[.contract-item-name]#++ERC7579SignatureValidatorAlreadyInstalled++#++()++` [.item-kind]#error#
+
+Thrown when the module is already installed.
 
 == Paymaster
 
