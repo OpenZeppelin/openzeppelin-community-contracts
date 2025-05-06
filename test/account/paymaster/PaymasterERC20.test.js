@@ -197,10 +197,10 @@ describe('PaymasterERC20', function () {
 
       const extraCalls = [
         // Set the token to block all transfers during postOp
-        // {
-        //   target: erc20Blocklist,
-        //   data: erc20Blocklist.interface.encodeFunctionData('$_blockUser', [this.paymaster.target]),
-        // },
+        {
+          target: erc20Blocklist,
+          data: erc20Blocklist.interface.encodeFunctionData('$_blockUser', [this.paymaster.target]),
+        },
       ];
 
       const signedUserOp = await this.account
@@ -224,19 +224,20 @@ describe('PaymasterERC20', function () {
 
       const txPromise = entrypoint.v08.handleOps([signedUserOp.packed], this.receiver);
 
-      await expect(txPromise)
-        .to.emit(this.paymaster, 'UserOperationSponsored')
-        .withArgs(signedUserOp.hash(), erc20Blocklist, anyValue, 2n * ethers.WeiPerEther)
-        .to.emit(this.target, 'MockFunctionCalledExtra')
-        .withArgs(this.account, 0n);
-
       // Reverted post op does not revert the operation
       const { logs } = await txPromise.then(tx => tx.wait());
-      const { tokenAmount } = logs.map(ev => this.paymaster.interface.parseLog(ev)).find(Boolean).args;
+      const [, , , postOpRevertReason] = logs.find(v => v.fragment?.name === 'PostOpRevertReason').args;
+      const postOpError = entrypoint.v08.interface.parseError(postOpRevertReason);
+      expect(postOpError.name).to.eq('PostOpReverted');
+      const [paymasterRevertReason] = postOpError.args;
+      const { name, args } = this.paymaster.interface.parseError(paymasterRevertReason);
+      expect(name).to.eq('PaymasterERC20FailedRefund');
+      const [token, prefundAmount] = args;
+      expect(token).to.eq(erc20Blocklist.target);
       await expect(txPromise).changeTokenBalances(
         erc20Blocklist,
         [this.paymaster, signedUserOp.sender],
-        [tokenAmount, -tokenAmount],
+        [prefundAmount, -prefundAmount],
       );
     });
 
