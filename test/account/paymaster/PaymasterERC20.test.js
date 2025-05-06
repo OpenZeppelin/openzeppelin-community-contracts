@@ -29,7 +29,7 @@ async function fixture() {
   await account.deploy();
 
   // ERC-4337 paymaster
-  const paymaster = await ethers.deployContract(`$PaymasterERC20Mock`, ['PaymasterERC20', '1']);
+  const paymaster = await ethers.deployContract('$PaymasterERC20Mock', ['PaymasterERC20', '1']);
   await paymaster.$_grantRole(ethers.id('ORACLE_ROLE'), oracleSigner);
   await paymaster.$_grantRole(ethers.id('WITHDRAWER_ROLE'), admin);
 

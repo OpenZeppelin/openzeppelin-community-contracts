@@ -29,7 +29,7 @@ async function fixture() {
   await account.deploy();
 
   // ERC-4337 paymaster
-  const paymaster = await ethers.deployContract(`$PaymasterERC20GuarantorMock`, ['PaymasterERC20Guarantor', '1']);
+  const paymaster = await ethers.deployContract('$PaymasterERC20GuarantorMock', ['PaymasterERC20Guarantor', '1']);
   await paymaster.$_grantRole(ethers.id('ORACLE_ROLE'), oracleSigner);
   await paymaster.$_grantRole(ethers.id('WITHDRAWER_ROLE'), admin);
 
@@ -150,7 +150,7 @@ describe('PaymasterERC20Guarantor', function () {
       this.userOp.paymaster = this.paymaster;
     });
 
-    describe.only('succeeds paying with ERC20 tokens', function () {
+    describe('succeeds paying with ERC20 tokens', function () {
       it('user repays guarantor', async function () {
         // fund guarantor. account has no asset to pay for at the beginning of the transaction, but will get them during execution.
         await this.token.$_mint(this.guarantor, value);
@@ -205,9 +205,9 @@ describe('PaymasterERC20Guarantor', function () {
         // - get tokenAmount repaid for the paymaster event
         // - get the actual gas cost from the entrypoint event
         const { logs } = await txPromise.then(tx => tx.wait());
-        console.log(logs.map(ev => this.paymaster.interface.parseLog(ev)));
-        const { tokenAmount } = logs.map(ev => this.paymaster.interface.parseLog(ev)).find(Boolean).args;
-        const { actualGasCost } = logs.find(ev => ev.fragment?.name == 'UserOperationSponsored').args;
+        const paymasterERC20 = await ethers.getContractFactory('$PaymasterERC20Mock');
+        const { tokenAmount } = logs.map(ev => paymasterERC20.interface.parseLog(ev)).find(Boolean).args;
+        const { actualGasCost } = logs.find(ev => ev.fragment?.name == 'UserOperationEvent').args;
 
         // check token balances moved as expected
         await expect(txPromise).to.changeTokenBalances(
@@ -269,7 +269,8 @@ describe('PaymasterERC20Guarantor', function () {
 
         // parse logs
         const { logs } = await txPromise.then(tx => tx.wait());
-        const { tokenAmount } = logs.map(ev => this.paymaster.interface.parseLog(ev)).find(Boolean).args;
+        const paymasterERC20 = await ethers.getContractFactory('$PaymasterERC20Mock');
+        const { tokenAmount } = logs.map(ev => paymasterERC20.interface.parseLog(ev)).find(Boolean).args;
         const { actualGasCost } = logs.find(ev => ev.fragment?.name == 'UserOperationEvent').args;
 
         // check token balances
@@ -330,7 +331,8 @@ describe('PaymasterERC20Guarantor', function () {
 
         // parse logs
         const { logs } = await txPromise.then(tx => tx.wait());
-        const { tokenAmount } = logs.map(ev => this.paymaster.interface.parseLog(ev)).find(Boolean).args;
+        const paymasterERC20 = await ethers.getContractFactory('$PaymasterERC20Mock');
+        const { tokenAmount } = logs.map(ev => paymasterERC20.interface.parseLog(ev)).find(Boolean).args;
 
         // check token balances
         await expect(txPromise).to.changeTokenBalances(

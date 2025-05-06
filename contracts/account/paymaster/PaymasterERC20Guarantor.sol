@@ -128,9 +128,11 @@ abstract contract PaymasterERC20Guarantor is PaymasterERC20 {
         address userOpSender,
         bytes calldata /* prefundContext */
     ) internal virtual returns (bool refunded, uint256 actualAmount) {
-        bool userRepaid = token.trySafeTransferFrom(userOpSender, address(this), prefundAmount);
         actualAmount = _erc20Cost(actualGasCost, actualUserOpFeePerGas, tokenPrice);
-        refunded = userRepaid && token.trySafeTransfer(prefunder, actualAmount); // Short-circuit if the user paid, otherwise guarantor absorbs the cost.
+        bool userRepaid = token.trySafeTransferFrom(userOpSender, address(this), actualAmount);
+        refunded = userRepaid
+            ? token.trySafeTransfer(prefunder, prefundAmount)
+            : token.trySafeTransfer(prefunder, prefundAmount - actualAmount); // Short-circuit if the user paid, otherwise guarantor absorbs the cost.
         return (refunded, actualAmount);
     }
 
