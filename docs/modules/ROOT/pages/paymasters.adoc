@@ -135,8 +135,8 @@ While signature-based sponsorship is useful for many applications, sometimes you
 function _fetchDetails(
     PackedUserOperation calldata userOp,
     bytes32 userOpHash
-) internal view override returns (uint256 validationData, IERC20 token, uint256 tokenPrice, address guarantor) {
-    // Implement logic to fetch the token, token price, and guarantor address from the userOp
+) internal view override returns (uint256 validationData, IERC20 token, uint256 tokenPrice) {
+    // Implement logic to fetch the token and token price from the userOp
 }
 ----
 
@@ -175,13 +175,12 @@ contract PaymasterUSDCChainlink is PaymasterERC20, Ownable {
     function _fetchDetails(
         PackedUserOperation calldata userOp,
         bytes32 /* userOpHash */
-    ) internal view virtual override returns (uint256 validationData, IERC20 token, uint256 tokenPrice, address guarantor) {
+    ) internal view virtual override returns (uint256 validationData, IERC20 token, uint256 tokenPrice) {
         (uint256 validationData_, uint256 price) = _fetchOracleDetails(userOp);
         return (
             validationData_,
             USDC,
-            price,
-            address(0) // Guarantor disabled for now
+            price
         );
     }
 
@@ -241,11 +240,8 @@ function _fetchOracleDetails(
 
     // eth / usdc = (usdc / usd) / (eth / usd) = usdc * usd / eth * usd = usdc / eth
     int256 scale = _tokenPriceDenominator().toInt256();
-    int256 scaledUSDCUSD = USDCUSD *
-        scale *
-        (10 ** ETH_USD_ORACLE.decimals()).toInt256();
-    int256 scaledUSDCETH = scaledUSDCUSD /
-        (ETHUSD * (10 ** USDC_USD_ORACLE.decimals()).toInt256());
+    int256 scaledUSDCUSD = USDCUSD * scale * (10 ** ETH_USD_ORACLE.decimals()).toInt256();
+    int256 scaledUSDCETH = scaledUSDCUSD / (ETHUSD * (10 ** USDC_USD_ORACLE.decimals()).toInt256());
 
     return (
         ETHUSDValidationData.combineValidationData(USDCUSDValidationData),
@@ -277,15 +273,15 @@ function _fetchPrice(
 
 NOTE: An important difference with token-based sponsorship is that the user's smart account must first approve the paymaster to spend their tokens. You might want to incorporate this approval as part of your account initialization process, or check if approval is needed before executing an operation.
 
-By default, the `PaymasterERC20` contract supports a xref:api:account.adoc#guarantor[guarantor], which is a third party that could cover the ERC-20 token pre-payment if the user lacks funds, ensuring the Paymaster gets paid back for its services and the transaction success. For simplicity, our example disables the guarantor usage, but encoding your `paymasterAndData` will still require to provide an empty guarantor signature.
+The PaymasterERC20 contract follows a pre-charge and refund model:
+
+1. During validation, it pre-charges the maximum possible gas cost
+2. After execution, it refunds any unused gas back to the user
+
+This model ensures the paymaster can always cover gas costs, while only charging users for the actual gas used.
 
 [source,typescript]
 ----
-// No guarantor in this example
-const guarantorSigLength = 0;
-const guarantorSigLengthHex = toHex(guarantorSigLength, { size: 2 });
-const guarantorSignature = "0x";
-
 const paymasterVerificationGasLimit = 150_000n;
 const paymasterPostOpGasLimit = 300_000n;
 
@@ -295,10 +291,7 @@ userOp.paymasterAndData = encodePacked(
     paymasterUSDCChainlink.address,
     paymasterVerificationGasLimit,
     paymasterPostOpGasLimit,
-    encodePacked(
-      ["address", "bytes2", "bytes"],
-      [zeroAddress, guarantorSigLengthHex, guarantorSignature]
-    ),
+    "0x" // No additional data needed
   ]
 );
 ----
@@ -323,143 +316,107 @@ WARNING: Oracle-based pricing relies on the accuracy and freshness of price feed
 
 === Using a Guarantor
 
-There are multiple valid cases where the user might not have enough tokens to pay for the transaction before it takes place. For example, if the user is claiming an airdrop, they might need their first transaction to be sponsored. For those cases, you can return a `guarantor` address in `_fetchDetails` after validating a signature.
+There are multiple valid cases where the user might not have enough tokens to pay for the transaction before it takes place. For example, if the user is claiming an airdrop, they might need their first transaction to be sponsored. For those cases, the xref:api:account.adoc#PaymasterERC20Guarantor[`PaymasterERC20Guarantor`] contract extends the standard PaymasterERC20 to allow a third party (guarantor) to back user operations.
 
-NOTE: This approach requires the guarantor to approve the paymaster to spend their ERC-20 tokens.
+The guarantor pre-funds the maximum possible gas cost upfront, and after execution:
 
-Let's start by adding https://docs.openzeppelin.com/contracts/5.x/api/utils#EIP712[EIP-712] support in our example to ensure the guarantor signatures are specific to this contract:
+1. If the user repays the guarantor, the guarantor gets their funds back
+2. If the user fails to repay, the guarantor absorbs the cost
 
-```diff
--contract PaymasterUSDCChainlink is PaymasterERC20, Ownable {
-+contract PaymasterUSDCChainlink is EIP712, PaymasterERC20, Ownable {
-     
-      // ...
- 
-+    bytes32 private constant GUARANTEED_PACKED_USER_OPERATION =
-+        keccak256(
-+            "GuaranteedPackedUserOperation(address sender,uint256 nonce,bytes initCode,bytes callData,bytes32 accountGasLimits,uint256 preVerificationGas,bytes32 gasFees,bytes paymasterData)"
-+        );
-+
-     
-      // ...
- 
--    constructor(address initialOwner) Ownable(initialOwner) {}
-+    constructor(
-+        address initialOwner
-+    ) EIP712("PaymasterERC20Mock", "1") Ownable(initialOwner) {}
-     
-      // ...
- 
-+    function _guaranteedPackedOperationStructHash(
-+        PackedUserOperation calldata userOp
-+    ) internal pure virtual returns (bytes32) {
-+        return
-+            keccak256(
-+                abi.encode(
-+                    GUARANTEED_PACKED_USER_OPERATION,
-+                    userOp.sender,
-+                    userOp.nonce,
-+                    keccak256(userOp.initCode),
-+                    keccak256(userOp.callData),
-+                    userOp.accountGasLimits,
-+                    userOp.preVerificationGas,
-+                    userOp.gasFees,
-+                    keccak256(ERC4337Utils.paymasterData(userOp))
-+                )
-+            );
-+    }
+[TIP]
+====
+A common use case is for guarantors to pay for operations of users claiming airdrops:
+
+* The guarantor pays gas fees upfront
+* The user claims their airdrop tokens
+* The user repays the guarantor from the claimed tokens
+* If the user fails to repay, the guarantor absorbs the cost
+====
+
+To implement guarantor functionality, your paymaster needs to extend the PaymasterERC20Guarantor class and implement the `_fetchGuarantor` function:
+
+[source,solidity]
+----
+function _fetchGuarantor(
+    PackedUserOperation calldata userOp
+) internal view override returns (address guarantor) {
+    // Implement logic to fetch and validate the guarantor from userOp
+}
+----
+
+Let's create a guarantor-enabled paymaster by extending our previous example:
+
+```solidity
+// WARNING: Unaudited code.
+// Consider performing a security review before going to production.
+contract PaymasterUSDCGuaranteed is EIP712, PaymasterERC20Guarantor, Ownable {
+    
+    // Keep the same oracle code as before...
+    
+    bytes32 private constant GUARANTEED_USER_OPERATION_TYPEHASH =
+        keccak256(
+            "GuaranteedUserOperation(address sender,uint256 nonce,bytes initCode,bytes callData,bytes32 accountGasLimits,uint256 preVerificationGas,bytes32 gasFees,bytes paymasterData)"
+        );
+
+    constructor(
+        address initialOwner
+    ) EIP712("PaymasterUSDCGuaranteed", "1") Ownable(initialOwner) {}
+    
+    // Other functions from PaymasterUSDCChainlink...
+    
+    function _fetchGuarantor(
+        PackedUserOperation calldata userOp
+    ) internal view override returns (address guarantor) {
+        bytes calldata paymasterData = userOp.paymasterData();
+        
+        // Check guarantor data (should be at least 22 bytes: 20 for address + 2 for sig length)
+        // If no guarantor specified, return early
+        if (paymasterData.length < 22 || guarantor == address(0)) {
+            return address(0);
+        }
+        
+        guarantor = address(bytes20(paymasterData[:20]));  
+        uint16 guarantorSigLength = uint16(bytes2(paymasterData[20:22]));
+        
+        // Ensure the signature fits in the data
+        if (paymasterData.length < 22 + guarantorSigLength) {
+            return address(0);
+        }
+        
+        bytes calldata guarantorSignature = paymasterData[22:22 + guarantorSigLength];
+        
+        // Validate the guarantor's signature
+        bytes32 structHash = _getGuaranteedOperationStructHash(userOp);
+        bytes32 hash = _hashTypedDataV4(structHash);
+        
+        return SignatureChecker.isValidSignatureNow(
+            guarantor,
+            hash,
+            guarantorSignature
+        ) ? guarantor : address(0);
+    }
+    
+    function _getGuaranteedOperationStructHash(
+        PackedUserOperation calldata userOp
+    ) internal pure returns (bytes32) {
+        return keccak256(
+            abi.encode(
+                GUARANTEED_USER_OPERATION_TYPEHASH,
+                userOp.sender,
+                userOp.nonce,
+                keccak256(userOp.initCode),
+                keccak256(userOp.callData),
+                userOp.accountGasLimits,
+                userOp.preVerificationGas,
+                userOp.gasFees,
+                keccak256(bytes(userOp.paymasterData()[:20])) // Just the guarantor address part
+            )
+        );
+    }
+}
 ```
 
-Then, let's modify the `_fetchDetails` function to read and validate the guarantor's signature from calldata. Validation is performed using the https://docs.openzeppelin.com/contracts/5.x/api/utils#SignatureChecker[SignatureChecker] library.
-
-Encoding of the expected `paymasterData` is:
-
-* `[0x00:0x14                         ]` guarantor             (address)
-* `[0x14:0x16                         ]` guarantorSigLength    (uint16)
-* `[0x16:0x16+guarantorSigLength      ]` guarantorSignature    (bytes)
-
-```diff
-      function _fetchGuarantorDetails(
-         PackedUserOperation calldata /* userOp */
-      )
-         internal
-         view
-         virtual
-         returns (uint256 validationData, address guarantor)
-     {
--        return (ERC4337Utils.SIG_VALIDATION_SUCCESS, address(0));
-+        bytes calldata paymasterData = userOp.paymasterData();
-+        if (paymasterData.length < 20) {
-+            return (ERC4337Utils.SIG_VALIDATION_FAILED, address(0));
-+        }
-+        guarantor = address(bytes20(paymasterData[:20]));
-+
-+        if (guarantor == address(0)) {
-+            return (ERC4337Utils.SIG_VALIDATION_SUCCESS, guarantor);
-+        }
-+
-+        uint16 guarantorSigLength = uint16(bytes2(paymasterData[20:22]));
-+        bytes calldata guarantorSignature = paymasterData[22:22 +
-+            guarantorSigLength];
-+
-+        return (
-+            SignatureChecker.isValidSignatureNow(
-+                guarantor,
-+                _hashTypedDataV4(_guaranteedPackedOperationStructHash(userOp)),
-+                guarantorSignature
-+            )
-+                ? ERC4337Utils.SIG_VALIDATION_SUCCESS
-+                : ERC4337Utils.SIG_VALIDATION_FAILED,
-+            guarantor
-+        );
-     }
-```
-
-Finally, the `_fetchDetails` must incorporate this changes:
-
-```diff
-     function _fetchDetails(
-         PackedUserOperation calldata userOp,
-         bytes32 /* userOpHash */
-     )
-         internal
-         view
-         virtual
-         override
-         returns (
-             uint256 validationData,
-             IERC20 token,
-             uint256 tokenPrice,
-             address guarantor
-         )
-     {
--        (uint256 validationData_, uint256 price) = _fetchOracleDetails(userOp);
-+        (uint256 validationData1, uint256 price) = _fetchOracleDetails(userOp);
-+        (
-+            uint256 validationData2,
-+            address verifiedGuarantor
-+        ) = _fetchGuarantorDetails(userOp);
-         return (
--            validationData_,
-+            validationData1.combineValidationData(validationData2),
-             PAYMENT_TOKEN,
-             price,
--            address(0) // Disabled for now
-+            verifiedGuarantor
-         );
-     }
-
-     function _guaranteedPackedOperationStructHash(
-         PackedUserOperation calldata userOp
-     ) internal pure virtual returns (bytes32) {
-
--                    keccak256(ERC4337Utils.paymasterData(userOp))
-+                    keccak256(userOp.paymasterAndData[:0x48]) // 0x34 (paymasterDataOffset) + 0x14 (token + oracle + guarantor)
-
-     }
-```
-
-After deploying the modified version of this contract, the guarantor signs the user operation to authorize the payment:
+With this implementation, a guarantor would sign a user operation to authorize backing it:
 
 [source,typescript]
 ----
@@ -467,12 +424,12 @@ After deploying the modified version of this contract, the guarantor signs the u
 const guarantorSignature = await guarantor.signTypedData({
   domain: {
     chainId: await guarantorClient.getChainId(),
-    name: "PaymasterERC20Mock",
-    verifyingContract: paymasterUSDCChainlink.address,
+    name: "PaymasterUSDCGuaranteed",
+    verifyingContract: paymasterUSDC.address,
     version: "1",
   },
   types: {
-    GuaranteedPackedUserOperation: [
+    GuaranteedUserOperation: [
       { name: "sender", type: "address" },
       { name: "nonce", type: "uint256" },
       { name: "initCode", type: "bytes" },
@@ -480,10 +437,10 @@ const guarantorSignature = await guarantor.signTypedData({
       { name: "accountGasLimits", type: "bytes32" },
       { name: "preVerificationGas", type: "uint256" },
       { name: "gasFees", type: "bytes32" },
-      { name: "paymasterAndData", type: "bytes" }
+      { name: "paymasterData", type: "bytes" }
     ]
   },
-  primaryType: "GuaranteedPackedUserOperation",
+  primaryType: "GuaranteedUserOperation",
   message: {
     sender: userOp.sender,
     nonce: userOp.nonce,
@@ -492,7 +449,7 @@ const guarantorSignature = await guarantor.signTypedData({
     accountGasLimits: userOp.accountGasLimits,
     preVerificationGas: userOp.preVerificationGas,
     gasFees: userOp.gasFees,
-    paymasterAndData: "0x" // Partial paymasterAndData
+    paymasterData: guarantorAddress // Just the guarantor address
   },
 });
 ----
@@ -501,21 +458,36 @@ Then, we include the guarantor's address and its signature in the paymaster data
 
 [source,typescript]
 ----
+const paymasterVerificationGasLimit = 150_000n;
+const paymasterPostOpGasLimit = 300_000n;
+
 userOp.paymasterAndData = encodePacked(
   ["address", "uint128", "uint128", "bytes"],
   [
-    paymasterUSDCChainlink.address,
+    paymasterUSDC.address,
     paymasterVerificationGasLimit,
     paymasterPostOpGasLimit,
     encodePacked(
       ["address", "bytes2", "bytes"],
-      [guarantorAddress, toHex(guarantorSignature.replace("0x", "").length / 2, { size: 2 }), guarantorSignature]
-    ),
+      [
+        guarantorAddress, 
+        toHex(guarantorSignature.replace("0x", "").length / 2, { size: 2 }),
+        guarantorSignature
+      ]
+    )
   ]
 );
 ----
 
-This approach is useful to replace meta-transactions. The guarantor allows projects to cover their gas costs in their own token denomination.
+When the operation executes:
+
+1. During validation, the paymaster verifies the guarantor's signature and pre-funds from the guarantor's account
+2. The user operation executes, potentially giving the user tokens (like in an airdrop claim)
+3. During post-operation, the paymaster first tries to get repayment from the user
+4. If the user can't pay, the guarantor's pre-funded amount is used
+5. An event is emitted indicating who ultimately paid for the operation
+
+This approach enables novel use cases where users don't need tokens to start using a web3 app, and can cover costs after receiving value through their transaction.
 
 == Practical Considerations
 
@@ -527,7 +499,7 @@ When implementing paymasters in production environments, keep these consideratio
 
 3. **Security**: For signature-based paymasters, protect your signing key as it controls who gets subsidized operations.
 
-4. **Price volatility**: For token-based paymasters, consider restricting which tokens are accepted, and implementing circuit breakers for extreme market conditions
+4. **Price volatility**: For token-based paymasters, consider restricting which tokens are accepted, and implementing circuit breakers for extreme market conditions.
 
 5. **Spending limits**: Consider implementing daily or per-user limits to prevent abuse of your paymaster.
 
