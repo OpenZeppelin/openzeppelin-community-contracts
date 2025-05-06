@@ -84,7 +84,7 @@ abstract contract PaymasterERC20Guarantor is PaymasterERC20 {
         uint256 prefundAmount,
         bytes calldata prefundContext
     ) internal virtual override returns (bool refunded, uint256 actualAmount) {
-        address userOpSender = address(bytes20(prefundContext[0x00:0x20]));
+        address userOpSender = address(bytes20(prefundContext[0x00:0x14]));
 
         bool isGuaranteed = prefunder != userOpSender;
         if (isGuaranteed) {
@@ -130,14 +130,15 @@ abstract contract PaymasterERC20Guarantor is PaymasterERC20 {
     ) internal virtual returns (bool refunded, uint256 actualAmount) {
         bool userRepaid = token.trySafeTransferFrom(userOpSender, address(this), prefundAmount);
         actualAmount = _erc20Cost(actualGasCost, actualUserOpFeePerGas, tokenPrice);
-        refunded = userRepaid && token.trySafeTransferFrom(address(this), prefunder, actualAmount); // Short-circuit if the user paid, otherwise guarantor absorbs the cost.
+        refunded = userRepaid && token.trySafeTransfer(prefunder, actualAmount); // Short-circuit if the user paid, otherwise guarantor absorbs the cost.
         return (refunded, actualAmount);
     }
 
     /**
      * @dev Fetches the guarantor address and validation data from the user operation.
      *
-     * NOTE: Return `address(0)` to disable the guarantor feature.
+     * NOTE: Return `address(0)` to disable the guarantor feature. If supported, ensure
+     * explicit consent (e.g., signature verification) to prevent unauthorized use.
      */
     function _fetchGuarantor(PackedUserOperation calldata userOp) internal view virtual returns (address guarantor);
 

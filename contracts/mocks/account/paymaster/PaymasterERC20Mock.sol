@@ -82,11 +82,12 @@ abstract contract PaymasterERC20GuarantorMock is PaymasterERC20Mock, PaymasterER
         uint16 oracleSignatureLength = uint16(bytes2(paymasterData[0x54:0x56]));
         bytes calldata guarantorData = paymasterData[0x56 + oracleSignatureLength:];
 
-        address guarantorInput = address(bytes20(guarantorData[:0x14]));
+        if (guarantorData.length < 0x16) return address(0);
+        address guarantorInput = address(bytes20(guarantorData[0x00:0x14]));
         if (guarantorInput == address(0)) return guarantorInput;
 
-        uint16 guarantorSignatureLength = uint16(bytes2(paymasterData[0x14:0x16]));
-        bytes calldata guarantorSignature = paymasterData[0x16:0x16 + guarantorSignatureLength];
+        uint16 guarantorSignatureLength = uint16(bytes2(guarantorData[0x14:0x16]));
+        bytes calldata guarantorSignature = guarantorData[0x16:0x16 + guarantorSignatureLength];
         return
             SignatureChecker.isValidSignatureNow(
                 guarantorInput,
