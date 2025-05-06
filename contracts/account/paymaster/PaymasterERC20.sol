@@ -126,7 +126,7 @@ abstract contract PaymasterERC20 is PaymasterCore {
         uint256 tokenPrice = uint256(bytes32(context[0x34:0x54]));
         uint256 prefundAmount = uint256(bytes32(context[0x54:0x74]));
         address prefunder = address(bytes20(context[0x74:0x88]));
-        bytes calldata prefundContext = context[0x88:0x9c];
+        bytes calldata prefundContext = context[0x88:];
 
         (bool refunded, uint256 actualAmount) = _refund(
             token,
@@ -160,7 +160,7 @@ abstract contract PaymasterERC20 is PaymasterCore {
         bytes calldata /* prefundContext */
     ) internal virtual returns (bool refunded, uint256 actualAmount) {
         uint256 actualAmount_ = _erc20Cost(actualGasCost, actualUserOpFeePerGas, tokenPrice);
-        return (token.trySafeTransferFrom(address(this), prefunder, prefundAmount - actualAmount_), actualAmount_);
+        return (token.trySafeTransfer(prefunder, prefundAmount - actualAmount_), actualAmount_);
     }
 
     /**
