@@ -15,10 +15,11 @@ import {PaymasterERC20} from "./PaymasterERC20.sol";
  * 2. If the user fails to repay, the guarantor absorbs the cost
  *
  * A common use case is for guarantors to pay for the operations of users claiming airdrops. In this scenario:
- * - The guarantor pays the gas fees upfront
- * - The user claims their airdrop tokens
- * - The user repays the guarantor from the claimed tokens
- * - If the user fails to repay, the guarantor absorbs the cost
+ *
+ * * The guarantor pays the gas fees upfront
+ * * The user claims their airdrop tokens
+ * * The user repays the guarantor from the claimed tokens
+ * * If the user fails to repay, the guarantor absorbs the cost
  *
  * The guarantor is identified through the {_fetchGuarantor} function, which must be implemented
  * by developers to determine who can guarantee operations. This allows for flexible guarantor selection
