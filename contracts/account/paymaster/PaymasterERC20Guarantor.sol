@@ -72,8 +72,8 @@ abstract contract PaymasterERC20Guarantor is PaymasterERC20 {
      * If the operation was guaranteed, it attempts to get repayment from the user first and then refunds the guarantor.
      * Otherwise, fallback to {PaymasterERC20-refund}. See {_refundGuaranteed}.
      *
-     * NOTE: For guaranteed user operations, this function doesn't call `super._refund`. Consider whether there
-     * are side effects in the parent contract that need to be executed.
+     * NOTE: For guaranteed user operations where the user paid the `actualGasCost` back, this function
+     * doesn't call `super._refund`. Consider whether there are side effects in the parent contract that need to be executed.
      */
     function _refund(
         IERC20 token,
@@ -86,19 +86,12 @@ abstract contract PaymasterERC20Guarantor is PaymasterERC20 {
     ) internal virtual override returns (bool refunded, uint256 actualAmount) {
         address userOpSender = address(bytes20(prefundContext[0x00:0x14]));
 
-        bool isGuaranteed = prefunder != userOpSender;
-        if (isGuaranteed) {
-            return
-                _refundGuaranteed(
-                    token,
-                    tokenPrice,
-                    actualGasCost + _guaranteedPostOpCost(),
-                    actualUserOpFeePerGas,
-                    prefunder,
-                    prefundAmount,
-                    userOpSender,
-                    prefundContext
-                );
+        if (prefunder != userOpSender) {
+            actualAmount = _erc20Cost(actualGasCost, actualUserOpFeePerGas, tokenPrice);
+            if (token.trySafeTransferFrom(userOpSender, address(this), actualAmount)) {
+                // The paymaster gets the funds first, so in case of a failure, the guarantor absorbs the cost.
+                return (token.trySafeTransfer(prefunder, prefundAmount), actualAmount);
+            }
         }
         return
             super._refund(
@@ -110,30 +103,6 @@ abstract contract PaymasterERC20Guarantor is PaymasterERC20 {
                 prefundAmount,
                 prefundContext
             );
-    }
-
-    /**
-     * @dev Handles the refund process for guaranteed operations.
-     *
-     * NOTE: In the case of a guaranteed operation, if any of the user repayment or the guarantor refund fails,
-     * this function reverts and the guarantor absorbs the cost.
-     */
-    function _refundGuaranteed(
-        IERC20 token,
-        uint256 tokenPrice,
-        uint256 actualGasCost,
-        uint256 actualUserOpFeePerGas,
-        address prefunder,
-        uint256 prefundAmount,
-        address userOpSender,
-        bytes calldata /* prefundContext */
-    ) internal virtual returns (bool refunded, uint256 actualAmount) {
-        actualAmount = _erc20Cost(actualGasCost, actualUserOpFeePerGas, tokenPrice);
-        bool userRepaid = token.trySafeTransferFrom(userOpSender, address(this), actualAmount);
-        refunded = userRepaid
-            ? token.trySafeTransfer(prefunder, prefundAmount)
-            : token.trySafeTransfer(prefunder, prefundAmount - actualAmount); // Short-circuit if the user paid, otherwise guarantor absorbs the cost.
-        return (refunded, actualAmount);
     }
 
     /**
