@@ -1,4 +1,8 @@
 * xref:index.adoc[Overview]
 * xref:account-abstraction.adoc[Account Abstraction]
 * xref:crosschain.adoc[Crosschain]
+** xref:accounts.adoc[Accounts]
+*** xref:eoa-delegation.adoc[EOA Delegation]
+*** xref:multisig.adoc[Multisig]
+** xref:paymasters.adoc[Paymasters]
 * xref:utilities.adoc[Utilities]

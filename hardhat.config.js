@@ -1,3 +1,8 @@
+// - COMPILER:      compiler version (default: 0.8.27)
+// - HARDFORK:      hardfork version (default: prague)
+// - GAS:           enable gas report (default: false)
+// - COINMARKETCAP: coinmarketcap api key for USD value in gas report
+
 const { argv } = require('yargs/yargs')()
   .env('')
   .options({
@@ -7,13 +12,24 @@ const { argv } = require('yargs/yargs')()
     },
     hardfork: {
       type: 'string',
-      default: 'cancun',
+      default: 'prague',
+    },
+    gas: {
+      alias: 'enableGasReport',
+      type: 'boolean',
+      default: false,
+    },
+    coinmarketcap: {
+      alias: 'coinmarketcap',
+      type: 'string',
+      default: '',
     },
   });
 
 require('@nomicfoundation/hardhat-chai-matchers');
 require('@nomicfoundation/hardhat-ethers');
 require('hardhat-exposed');
+require('hardhat-gas-reporter');
 require('solidity-coverage');
 require('solidity-docgen');
 require('./hardhat/remappings');
@@ -34,6 +50,13 @@ module.exports = {
     hardhat: {
       hardfork: argv.hardfork,
     },
+  },
+  gasReporter: {
+    enabled: argv.gas,
+    showMethodSig: true,
+    includeBytecodeInJSON: true,
+    currency: 'USD',
+    coinmarketcap: argv.coinmarketcap,
   },
   docgen: require('./docs/config'),
 };

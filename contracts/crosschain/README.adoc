@@ -3,16 +3,12 @@
 [.readme-notice]
 NOTE: This document is better viewed at https://docs.openzeppelin.com/community-contracts/api/crosschain
 
-Gateways are contracts that enable cross-chain communication. These can either be a message source or a destination according to ERC-7786, which defines the following interfaces:
-
- * {IERC7786GatewaySource}: A contract interface to send a message to another contract on a different chain.
- * {IERC7786Receiver}: An interface that allows an smart contract to receive a crosschain message provided by a trusted destination gateway.
-
-The library provides an implementation of an ERC-7786 receiver contract as a building block:
+Gateways are contracts that enable cross-chain communication. These can either be a message source or a destination according to ERC-7786.
 
  * {ERC7786Receiver}: ERC-7786 cross-chain message receiver.
+ * {ERC7786Aggregator}: ERC-7786 "N out of M" gateway. Sends a message through M gateways and executes on the destination if N received it.
 
-Given ERC-7786 could be enabled natively or via adapters. Developers can access interoperability protocols through gateway adapters. The library includes the following gateway adapters:
+Developers can access interoperability protocols through gateway adapters. The library includes the following gateway adapters:
 
  * {AxelarGatewayBase}: Core gateway logic for the https://www.axelar.network/[Axelar] adapter.
  * {AxelarGatewaySource}: ERC-7786 source gateway adapter (sending side) for Axelar.
@@ -21,11 +17,9 @@ Given ERC-7786 could be enabled natively or via adapters. Developers can access 
 
 == Gateways
 
-{{IERC7786GatewaySource}}
+{{ERC7786Aggregator}}
 
 == Clients
-
-{{IERC7786Receiver}}
 
 {{ERC7786Receiver}}
 

@@ -17,16 +17,17 @@
     "prepare-docs": "scripts/prepare-docs.sh",
     "lint": "npm run lint:js && npm run lint:sol",
     "lint:fix": "npm run lint:js:fix && npm run lint:sol:fix",
-    "lint:js": "prettier --log-level warn --ignore-path .gitignore '**/*.{js,ts}' --check && eslint .",
-    "lint:js:fix": "prettier --log-level warn --ignore-path .gitignore '**/*.{js,ts}' --write && eslint . --fix",
-    "lint:sol": "prettier --log-level warn --ignore-path .gitignore '{contracts,test}/**/*.sol' --check && solhint '{contracts,test}/**/*.sol'",
-    "lint:sol:fix": "prettier --log-level warn --ignore-path .gitignore '{contracts,test}/**/*.sol' --write",
+    "lint:js": "prettier --log-level warn '**/*.{js,ts}' --check && eslint .",
+    "lint:js:fix": "prettier --log-level warn '**/*.{js,ts}' --write && eslint . --fix",
+    "lint:sol": "prettier --log-level warn '{contracts,test}/**/*.sol' --check && solhint '{contracts,test}/**/*.sol'",
+    "lint:sol:fix": "prettier --log-level warn '{contracts,test}/**/*.sol' --write",
     "coverage": "scripts/checks/coverage.sh",
     "generate": "scripts/generate/run.js",
     "test": "hardhat test",
     "test:generation": "scripts/checks/generation.sh",
     "test:inheritance": "scripts/checks/inheritance-ordering.js artifacts/build-info/*",
-    "test:pragma": "scripts/checks/pragma-consistency.js artifacts/build-info/*"
+    "test:pragma": "scripts/checks/pragma-consistency.js artifacts/build-info/*",
+    "gas-report": "env ENABLE_GAS_REPORT=true npm run test"
   },
   "homepage": "https://openzeppelin.com/contracts/",
   "repository": {
@@ -44,11 +45,14 @@
     "security",
     "zeppelin"
   ],
-  "dependencies": {
-    "@axelar-network/axelar-gmp-sdk-solidity": "^6.0.6"
+  "peerDependencies": {
+    "@axelar-network/axelar-gmp-sdk-solidity": "^6.0.6",
+    "@zk-email/contracts": "^6.3.2"
   },
   "devDependencies": {
     "@openzeppelin/contracts": "file:lib/@openzeppelin-contracts",
+    "ethers": "^6.13.6-beta.1",
+    "hardhat": "^2.23.0",
     "husky": "^9.1.7"
   },
   "lint-staged": {
