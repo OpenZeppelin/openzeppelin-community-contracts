@@ -64,8 +64,5 @@
       "prettier --log-level warn --ignore-path .gitignore --check",
       "solhint"
     ]
-  },
-  "dependencies": {
-    "hardhat-gas-reporter": "^2.2.3"
   }
 }
