@@ -1,4 +1,5 @@
 const {
+  AbiCoder,
   AbstractSigner,
   Signature,
   TypedDataEncoder,
@@ -13,6 +14,8 @@ const {
   hexlify,
   sha256,
   toBeHex,
+  toBigInt,
+  keccak256,
 } = require('ethers');
 const { secp256r1 } = require('@noble/curves/p256');
 const { generateKeyPairSync, privateEncrypt } = require('crypto');
@@ -156,9 +159,135 @@ class RSASHA256SigningKey extends RSASigningKey {
   }
 }
 
+class ZKEmailSigningKey {
+  #domainName;
+  #publicKeyHash;
+  #emailNullifier;
+  #accountSalt;
+  #templateId;
+
+  constructor(domainName, publicKeyHash, emailNullifier, accountSalt, templateId) {
+    this.#domainName = domainName;
+    this.#publicKeyHash = publicKeyHash;
+    this.#emailNullifier = emailNullifier;
+    this.#accountSalt = accountSalt;
+    this.#templateId = templateId;
+    this.SIGN_HASH_COMMAND = 'signHash';
+  }
+
+  get domainName() {
+    return this.#domainName;
+  }
+
+  get publicKeyHash() {
+    return this.#publicKeyHash;
+  }
+
+  get emailNullifier() {
+    return this.#emailNullifier;
+  }
+
+  get accountSalt() {
+    return this.#accountSalt;
+  }
+
+  sign(digest /*: BytesLike*/ /*: Signature*/) {
+    assertArgument(dataLength(digest) === 32, 'invalid digest length', 'digest', digest);
+
+    const timestamp = Math.floor(Date.now() / 1000);
+    const command = this.SIGN_HASH_COMMAND + ' ' + toBigInt(digest).toString();
+    const isCodeExist = true;
+    const proof = '0x01'; // Mocked in ZKEmailVerifierMock
+
+    // Encode the email auth message as the signature
+    return {
+      serialized: AbiCoder.defaultAbiCoder().encode(
+        ['tuple(uint256,bytes[],uint256,tuple(string,bytes32,uint256,string,bytes32,bytes32,bool,bytes))'],
+        [
+          [
+            this.#templateId,
+            [digest],
+            0, // skippedCommandPrefix
+            [
+              this.#domainName,
+              this.#publicKeyHash,
+              timestamp,
+              command,
+              this.#emailNullifier,
+              this.#accountSalt,
+              isCodeExist,
+              proof,
+            ],
+          ],
+        ],
+      ),
+    };
+  }
+}
+
+class MultiERC7913SigningKey {
+  #signers;
+  #weights;
+
+  constructor(signers, weights = null) {
+    assertArgument(
+      Array.isArray(signers) && signers.length > 0,
+      'signers must be a non-empty array',
+      'signers',
+      signers.length,
+    );
+
+    if (weights !== null) {
+      assertArgument(
+        Array.isArray(weights) && weights.length === signers.length,
+        'weights must be an array with the same length as signers',
+        'weights',
+        weights.length,
+      );
+    }
+
+    this.#signers = signers;
+    this.#weights = weights;
+  }
+
+  get signers() {
+    return this.#signers;
+  }
+
+  get weights() {
+    return this.#weights;
+  }
+
+  sign(digest /*: BytesLike*/ /*: Signature*/) {
+    assertArgument(dataLength(digest) === 32, 'invalid digest length', 'digest', digest);
+
+    const sortedSigners = this.#signers
+      .map(signer => {
+        const signerBytes = typeof signer.address === 'string' ? signer.address : signer.bytes;
+
+        const id = keccak256(signerBytes);
+        return {
+          id,
+          signer: signerBytes,
+          signature: signer.signingKey.sign(digest).serialized,
+        };
+      })
+      .sort((a, b) => (toBigInt(a.id) < toBigInt(b.id) ? -1 : 1));
+
+    return {
+      serialized: AbiCoder.defaultAbiCoder().encode(
+        ['bytes[]', 'bytes[]'],
+        [sortedSigners.map(p => p.signer), sortedSigners.map(p => p.signature)],
+      ),
+    };
+  }
+}
+
 module.exports = {
   NonNativeSigner,
   P256SigningKey,
   RSASigningKey,
   RSASHA256SigningKey,
+  ZKEmailSigningKey,
+  MultiERC7913SigningKey,
 };

@@ -1,3 +1,18 @@
+## 21-04-2025
+
+- `MultiSignerERC7913`: Implementation of `AbstractSigner` that supports multiple ERC-7913 signers with a threshold-based signature verification system.
+- `MultiSignerERC7913Weighted`: Extension of `MultiSignerERC7913` that supports assigning different weights to each signer, enabling more flexible governance schemes.
+
+## 12-04-2025
+
+- `SignerERC7913`: Abstract signer that verifies signatures using the ERC-7913 workflow.
+- `ERC7913SignatureVerifierP256` and `ERC7913SignatureVerifierRSA`: Ready to use ERC-7913 verifiers that implement key verification for P256 (secp256r1) and RSA keys.
+- `ERC7913Utils`: Utilities library for verifying signatures by ERC-7913 formatted signers.
+
+## 11-04-2025
+
+- `EnumerableSetExtended` and `EnumerableMapExtended`: Extensions of the `EnumerableSet` and `EnumerableMap` libraries with more types, including non-value types.
+
 ## 03-04-2025
 
 - `PaymasterERC20`: Extension of `PaymasterCore` that sponsors user operations against payment in ERC-20 tokens.

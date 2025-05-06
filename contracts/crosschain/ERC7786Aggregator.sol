@@ -157,6 +157,7 @@ contract ERC7786Aggregator is IERC7786GatewaySource, IERC7786Receiver, Ownable, 
      * {Received} event.
      *
      * This function revert if:
+     *
      * * the message is not properly formatted or does not originate from the registered aggregator on the source
      *   chain.
      * * someone tries re-execute a message that was already successfully delivered. This includes gateways that call
@@ -165,12 +166,14 @@ contract ERC7786Aggregator is IERC7786GatewaySource, IERC7786Receiver, Ownable, 
      *   executed value.
      *
      * This function does not revert if:
+     *
      * * A known gateway delivers a message for the first time, and that message was already executed. In that case
      *   the message is NOT re-executed, and the correct "magic value" is returned.
      * * The execution of the message (on the {IERC7786Receiver} receiver) reverts. In that case a {ExecutionFailed}
      *   event is emitted.
      *
      * This function emits:
+     *
      * * {Received} when a known ERC-7786 gateway delivers a message for the first time.
      * * {ExecutionSuccess} when a message is successfully delivered to the receiver.
      * * {ExecutionFailed} when a message delivery to the receiver reverted (for example because of OOG error).

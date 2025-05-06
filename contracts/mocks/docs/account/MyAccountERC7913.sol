@@ -1,7 +1,7 @@
-// contracts/MyAccount.sol
+// contracts/MyAccountERC7913.sol
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.20;
+pragma solidity ^0.8.24;
 
 import {Account} from "../../../account/Account.sol";
 import {EIP712} from "@openzeppelin/contracts/utils/cryptography/EIP712.sol";
@@ -10,13 +10,13 @@ import {ERC1155Holder} from "@openzeppelin/contracts/token/ERC1155/utils/ERC1155
 import {ERC7739} from "../../../utils/cryptography/ERC7739.sol";
 import {ERC7821} from "../../../account/extensions/ERC7821.sol";
 import {Initializable} from "@openzeppelin/contracts/proxy/utils/Initializable.sol";
-import {SignerRSA} from "../../../utils/cryptography/SignerRSA.sol";
+import {SignerERC7913} from "../../../utils/cryptography/SignerERC7913.sol";
 
-contract MyAccountRSA is Account, SignerRSA, ERC7739, ERC7821, ERC721Holder, ERC1155Holder, Initializable {
-    constructor() EIP712("MyAccountRSA", "1") {}
+contract MyAccountERC7913 is Account, SignerERC7913, ERC7739, ERC7821, ERC721Holder, ERC1155Holder, Initializable {
+    constructor() EIP712("MyAccount7913", "1") {}
 
-    function initialize(bytes memory e, bytes memory n) public initializer {
-        _setSigner(e, n);
+    function initialize(bytes memory signer) public initializer {
+        _setSigner(signer);
     }
 
     /// @dev Allows the entry point as an authorized executor.
