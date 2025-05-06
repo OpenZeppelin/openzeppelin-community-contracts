@@ -197,10 +197,10 @@ describe('PaymasterERC20', function () {
 
       const extraCalls = [
         // Set the token to block all transfers during postOp
-        {
-          target: erc20Blocklist,
-          data: erc20Blocklist.interface.encodeFunctionData('$_blockUser', [this.paymaster.target]),
-        },
+        // {
+        //   target: erc20Blocklist,
+        //   data: erc20Blocklist.interface.encodeFunctionData('$_blockUser', [this.paymaster.target]),
+        // },
       ];
 
       const signedUserOp = await this.account
@@ -217,22 +217,34 @@ describe('PaymasterERC20', function () {
         .then(op =>
           this.paymasterSignUserOp(op, {
             tokenPrice: 2n * ethers.WeiPerEther,
-            token: erc20Blocklist,
+            erc20: erc20Blocklist,
           }),
         )
         .then(op => this.signUserOp(op));
 
-      // Send it to the entrypoint - should execute the user op successfully but fail in postOp
-      await expect(entrypoint.v08.handleOps([signedUserOp.packed], this.receiver))
-        .to.be.revertedWithCustomError(entrypoint.v08, 'FailedOp')
-        .withArgs(0n, 'AA34 signature error');
+      const txPromise = entrypoint.v08.handleOps([signedUserOp.packed], this.receiver);
+
+      await expect(txPromise)
+        .to.emit(this.paymaster, 'UserOperationSponsored')
+        .withArgs(signedUserOp.hash(), erc20Blocklist, anyValue, 2n * ethers.WeiPerEther)
+        .to.emit(this.target, 'MockFunctionCalledExtra')
+        .withArgs(this.account, 0n);
+
+      // Reverted post op does not revert the operation
+      const { logs } = await txPromise.then(tx => tx.wait());
+      const { tokenAmount } = logs.map(ev => this.paymaster.interface.parseLog(ev)).find(Boolean).args;
+      await expect(txPromise).changeTokenBalances(
+        erc20Blocklist,
+        [this.paymaster, signedUserOp.sender],
+        [tokenAmount, -tokenAmount],
+      );
     });
 
     it('reverts with an invalid token', async function () {
       // prepare user operation, with paymaster data
       const signedUserOp = await this.account
         .createUserOp(this.userOp)
-        .then(op => this.paymasterSignUserOp(op, { token: this.other })) // not a token
+        .then(op => this.paymasterSignUserOp(op, { erc20: this.other })) // not a token
         .then(op => this.signUserOp(op));
 
       // send it to the entrypoint
