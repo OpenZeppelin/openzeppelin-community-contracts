@@ -188,6 +188,46 @@ describe('PaymasterERC20', function () {
       }
     });
 
+    it('reverts with PaymasterERC20FailedRefund when token refund fails', async function () {
+      const erc20Blocklist = await ethers.deployContract('$ERC20Blocklist', ['Token', 'TKN']);
+
+      // fund account with the malicious token
+      await erc20Blocklist.$_mint(this.account, value);
+      await erc20Blocklist.$_approve(this.account, this.paymaster, ethers.MaxUint256);
+
+      const extraCalls = [
+        // Set the token to block all transfers during postOp
+        {
+          target: erc20Blocklist,
+          data: erc20Blocklist.interface.encodeFunctionData('$_blockUser', [this.paymaster.target]),
+        },
+      ];
+
+      const signedUserOp = await this.account
+        .createUserOp({
+          ...this.userOp,
+          callData: this.account.interface.encodeFunctionData('execute', [
+            encodeMode({ callType: CALL_TYPE_BATCH }),
+            encodeBatch(...extraCalls, {
+              target: this.target,
+              data: this.target.interface.encodeFunctionData('mockFunctionExtra'),
+            }),
+          ]),
+        })
+        .then(op =>
+          this.paymasterSignUserOp(op, {
+            tokenPrice: 2n * ethers.WeiPerEther,
+            token: erc20Blocklist,
+          }),
+        )
+        .then(op => this.signUserOp(op));
+
+      // Send it to the entrypoint - should execute the user op successfully but fail in postOp
+      await expect(entrypoint.v08.handleOps([signedUserOp.packed], this.receiver))
+        .to.be.revertedWithCustomError(entrypoint.v08, 'FailedOp')
+        .withArgs(0n, 'AA34 signature error');
+    });
+
     it('reverts with an invalid token', async function () {
       // prepare user operation, with paymaster data
       const signedUserOp = await this.account
