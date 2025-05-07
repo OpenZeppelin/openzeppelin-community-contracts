@@ -889,7 +889,12 @@ Modifier to restrict access to the token bridge.
 [[ERC20Bridgeable-supportsInterface-bytes4-]]
 ==== `[.contract-item-name]#++supportsInterface++#++(bytes4 interfaceId) → bool++` [.item-kind]#public#
 
-See {IERC165-supportsInterface}.
+Returns true if this contract implements the interface defined by
+`interfaceId`. See the corresponding
+https://eips.ethereum.org/EIPS/eip-165#how-interfaces-are-identified[ERC section]
+to learn more about how these ids are created.
+
+This function call must use less than 30 000 gas.
 
 [.contract-item]
 [[ERC20Bridgeable-crosschainMint-address-uint256-]]
