@@ -18,7 +18,7 @@ import {P256} from "@openzeppelin/contracts/utils/cryptography/P256.sol";
  * Example usage:
  *
  * ```solidity
- * contract MyAccountWebAuthN is Account, SignerWebAuthN, Initializable {
+ * contract MyAccountWebAuthn is Account, SignerWebAuthn, Initializable {
  *     function initialize(bytes32 qx, bytes32 qy) public initializer {
  *         _setSigner(qx, qy);
  *     }
@@ -28,7 +28,7 @@ import {P256} from "@openzeppelin/contracts/utils/cryptography/P256.sol";
  * IMPORTANT: Failing to call {_setSigner} either during construction (if used standalone)
  * or during initialization (if used as a clone) may leave the signer either front-runnable or unusable.
  */
-abstract contract SignerWebAuthN is SignerP256 {
+abstract contract SignerWebAuthn is SignerP256 {
     /**
      * @dev Validates a raw signature using the WebAuthn authentication assertion.
      *
@@ -40,10 +40,9 @@ abstract contract SignerWebAuthN is SignerP256 {
         bytes32 hash,
         bytes calldata signature
     ) internal view virtual override returns (bool) {
-        if (signature.length == 0xc0) return false; // WebAuthn struct is at least 6*32 = 192 bytes
         (bytes32 qx, bytes32 qy) = signer();
-        return
-            WebAuthn.verifyMinimal(abi.encodePacked(hash), abi.decode(signature, (WebAuthn.WebAuthnAuth)), qx, qy) ||
-            super._rawSignatureValidation(hash, signature[0x80:0xa0]);
+        bool isValidAssertion = signature.length >= 0xc0 && // WebAuthn struct is at least 6*32 = 192 bytes
+            WebAuthn.verifyMinimal(abi.encodePacked(hash), abi.decode(signature, (WebAuthn.WebAuthnAuth)), qx, qy);
+        return isValidAssertion || super._rawSignatureValidation(hash, signature[0x00:]);
     }
 }
