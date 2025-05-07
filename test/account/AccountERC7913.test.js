@@ -44,10 +44,7 @@ async function fixture() {
   // ERC-7913 verifiers
   const verifierP256 = await ethers.deployContract('ERC7913SignatureVerifierP256');
   const verifierRSA = await ethers.deployContract('ERC7913SignatureVerifierRSA');
-  const verifierZKEmail = await ethers.deployContract('$ERC7913SignatureVerifierZKEmail', [
-    zkEmailVerifier.target,
-    templateId,
-  ]);
+  const verifierZKEmail = await ethers.deployContract('$ERC7913SignatureVerifierZKEmail');
 
   // ERC-4337 env
   const helper = new ERC4337Helper();
@@ -153,7 +150,10 @@ describe('AccountERC7913', function () {
       this.mock = await this.makeMock(
         ethers.concat([
           this.verifierZKEmail.target,
-          ethers.AbiCoder.defaultAbiCoder().encode(['address', 'bytes32'], [this.dkim.target, accountSalt]),
+          ethers.AbiCoder.defaultAbiCoder().encode(
+            ['address', 'bytes32', 'address', 'uint256'],
+            [this.dkim.target, accountSalt, this.zkEmailVerifier.target, templateId],
+          ),
         ]),
       );
 
