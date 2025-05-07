@@ -31,7 +31,10 @@ import {P256} from "@openzeppelin/contracts/utils/cryptography/P256.sol";
 abstract contract SignerWebAuthN is SignerP256 {
     /**
      * @dev Validates a raw signature using the WebAuthn authentication assertion.
-     * Falls back to {SignerP256-_rawSignatureValidation}.
+     *
+     * In case the signature can't be validated, it falls back to the
+     * {SignerP256-_rawSignatureValidation} method for raw P256 signature validation by passing
+     * the raw `r` and `s` values from the signature.
      */
     function _rawSignatureValidation(
         bytes32 hash,
