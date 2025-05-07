@@ -102,8 +102,8 @@ library WebAuthn {
                         sha256(clientDataJSON) // 19
                     )
                 ),
-                bytes32(auth.r),
-                bytes32(auth.s),
+                auth.r,
+                auth.s,
                 qx,
                 qy
             ); // 20
