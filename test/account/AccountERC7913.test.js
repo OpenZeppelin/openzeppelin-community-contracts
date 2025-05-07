@@ -3,7 +3,7 @@ const { loadFixture } = require('@nomicfoundation/hardhat-network-helpers');
 
 const { getDomain } = require('@openzeppelin/contracts/test/helpers/eip712');
 const { ERC4337Helper } = require('../helpers/erc4337');
-const { NonNativeSigner, P256SigningKey, RSASHA256SigningKey } = require('../helpers/signers');
+const { NonNativeSigner, P256SigningKey, RSASHA256SigningKey, ZKEmailSigningKey } = require('../helpers/signers');
 const { PackedUserOperation } = require('../helpers/eip712-types');
 
 const { shouldBehaveLikeAccountCore, shouldBehaveLikeAccountHolder } = require('./Account.behavior');
@@ -15,15 +15,36 @@ const signerECDSA = ethers.Wallet.createRandom();
 const signerP256 = new NonNativeSigner(P256SigningKey.random());
 const signerRSA = new NonNativeSigner(RSASHA256SigningKey.random());
 
+// Constants for ZKEmail
+const accountSalt = '0x046582bce36cdd0a8953b9d40b8f20d58302bacf3bcecffeb6741c98a52725e2'; // keccak256("test@example.com")
+const selector = '12345';
+const domainName = 'gmail.com';
+const publicKeyHash = '0x0ea9c777dc7110e5a9e89b13f0cfc540e3845ba120b2b6dc24024d61488d4788';
+const emailNullifier = '0x00a83fce3d4b1c9ef0f600644c1ecc6c8115b57b1596e0e3295e2c5105fbfd8a';
+const templateId = ethers.solidityPackedKeccak256(['string', 'uint256'], ['TEST', 0n]);
+
 // Minimal fixture common to the different signer verifiers
 async function fixture() {
   // EOAs and environment
-  const [beneficiary, other] = await ethers.getSigners();
+  const [admin, beneficiary, other] = await ethers.getSigners();
   const target = await ethers.deployContract('CallReceiverMockExtended');
+
+  // DKIM Registry for ZKEmail
+  const dkim = await ethers.deployContract('ECDSAOwnedDKIMRegistry');
+  await dkim.initialize(admin, admin);
+  await dkim
+    .SET_PREFIX()
+    .then(prefix => dkim.computeSignedMsg(prefix, domainName, publicKeyHash))
+    .then(message => admin.signMessage(message))
+    .then(signature => dkim.setDKIMPublicKeyHash(selector, domainName, publicKeyHash, signature));
+
+  // ZKEmail Verifier
+  const zkEmailVerifier = await ethers.deployContract('ZKEmailVerifierMock');
 
   // ERC-7913 verifiers
   const verifierP256 = await ethers.deployContract('ERC7913SignatureVerifierP256');
   const verifierRSA = await ethers.deployContract('ERC7913SignatureVerifierRSA');
+  const verifierZKEmail = await ethers.deployContract('$ERC7913SignatureVerifierZKEmail');
 
   // ERC-4337 env
   const helper = new ERC4337Helper();
@@ -43,7 +64,20 @@ async function fixture() {
       .then(signature => Object.assign(userOp, { signature }));
   };
 
-  return { helper, verifierP256, verifierRSA, domain, target, beneficiary, other, makeMock, signUserOp };
+  return {
+    helper,
+    verifierP256,
+    verifierRSA,
+    verifierZKEmail,
+    dkim,
+    zkEmailVerifier,
+    domain,
+    target,
+    beneficiary,
+    other,
+    makeMock,
+    signUserOp,
+  };
 }
 
 describe('AccountERC7913', function () {
@@ -96,6 +130,38 @@ describe('AccountERC7913', function () {
           ),
         ]),
       );
+    });
+
+    shouldBehaveLikeAccountCore();
+    shouldBehaveLikeAccountHolder();
+    shouldBehaveLikeERC1271({ erc7739: true });
+    shouldBehaveLikeERC7821();
+  });
+
+  // Using ZKEmail with an ERC-7913 verifier
+  describe('ZKEmail', function () {
+    beforeEach(async function () {
+      // Create ZKEmail signer
+      this.signer = new NonNativeSigner(
+        new ZKEmailSigningKey(domainName, publicKeyHash, emailNullifier, accountSalt, templateId),
+      );
+
+      // Create account with ZKEmail verifier
+      this.mock = await this.makeMock(
+        ethers.concat([
+          this.verifierZKEmail.target,
+          ethers.AbiCoder.defaultAbiCoder().encode(
+            ['address', 'bytes32', 'address', 'uint256'],
+            [this.dkim.target, accountSalt, this.zkEmailVerifier.target, templateId],
+          ),
+        ]),
+      );
+
+      // Override the signUserOp function to use the ZKEmail signer
+      this.signUserOp = async userOp => {
+        const hash = await userOp.hash();
+        return Object.assign(userOp, { signature: this.signer.signingKey.sign(hash).serialized });
+      };
     });
 
     shouldBehaveLikeAccountCore();
