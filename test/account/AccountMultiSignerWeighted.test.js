@@ -26,8 +26,8 @@ async function fixture() {
   const target = await ethers.deployContract('CallReceiverMockExtended');
 
   // ERC-7913 verifiers
-  const verifierP256 = await ethers.deployContract('ERC7913SignatureVerifierP256');
-  const verifierRSA = await ethers.deployContract('ERC7913SignatureVerifierRSA');
+  const verifierP256 = await ethers.deployContract('ERC7913P256Verifier');
+  const verifierRSA = await ethers.deployContract('ERC7913RSAVerifier');
 
   // ERC-4337 env
   const helper = new ERC4337Helper();
