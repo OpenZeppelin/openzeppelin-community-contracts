@@ -77,10 +77,7 @@ abstract contract ERC7913ZKEmailVerifier is IERC7913SignatureVerifier {
         bytes32 hash,
         bytes calldata signature
     ) public view virtual override returns (bytes4) {
-        (IDKIMRegistry registry_, bytes32 accountSalt_, IVerifier verifier_, uint256 templateId_) = abi.decode(
-            key,
-            (IDKIMRegistry, bytes32, IVerifier, uint256)
-        );
+        (IDKIMRegistry registry_, bytes32 accountSalt_, IVerifier verifier_, uint256 templateId_) = _decodeKey(key);
         EmailAuthMsg memory emailAuthMsg = abi.decode(signature, (EmailAuthMsg));
 
         return
