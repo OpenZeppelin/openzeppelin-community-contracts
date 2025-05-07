@@ -9,7 +9,7 @@ import {ERC7739, EIP712} from "../../utils/cryptography/ERC7739.sol";
 import {ERC7821} from "../../account/extensions/ERC7821.sol";
 import {SignerZKEmail} from "../../utils/cryptography/SignerZKEmail.sol";
 import {IDKIMRegistry} from "@zk-email/contracts/DKIMRegistry.sol";
-import {IVerifier} from "@zk-email/email-tx-builder/interfaces/IVerifier.sol";
+import {IVerifier} from "@zk-email/email-tx-builder/src/interfaces/IVerifier.sol";
 
 contract AccountZKEmailMock is Account, SignerZKEmail, ERC7739, ERC7821, ERC721Holder, ERC1155Holder {
     constructor(

@@ -47,6 +47,10 @@ jobs:
         run: npm run test:pragma
       - name: Check procedurally generated contracts are up-to-date
         run: npm run test:generation
+      - name: Compare gas costs
+        uses: ./.github/actions/gas-compare
+        with:
+          token: ${{ github.token }}
 
   coverage:
     runs-on: ubuntu-latest

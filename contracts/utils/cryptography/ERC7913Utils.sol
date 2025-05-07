@@ -40,13 +40,44 @@ library ERC7913Utils {
         } else if (signer.length == 20) {
             return SignatureChecker.isValidSignatureNow(address(bytes20(signer)), hash, signature);
         } else {
-            try IERC7913SignatureVerifier(address(bytes20(signer))).verify(signer.slice(20), hash, signature) returns (
-                bytes4 magic
-            ) {
-                return magic == IERC7913SignatureVerifier.verify.selector;
-            } catch {
+            (bool success, bytes memory result) = address(bytes20(signer)).staticcall(
+                abi.encodeCall(IERC7913SignatureVerifier.verify, (signer.slice(20), hash, signature))
+            );
+            return (success &&
+                result.length >= 32 &&
+                abi.decode(result, (bytes32)) == bytes32(IERC7913SignatureVerifier.verify.selector));
+        }
+    }
+
+    /**
+     * @dev Verifies multiple `signatures` for a given hash using a set of `signers`.
+     *
+     * The signers must be ordered by their `keccak256` hash to ensure no duplicates and to optimize
+     * the verification process. The function will return `false` if the signers are not properly ordered.
+     *
+     * Requirements:
+     *
+     * * The `signatures` array must be at least the  `signers` array's length.
+     */
+    function areValidSignaturesNow(
+        bytes32 hash,
+        bytes[] memory signers,
+        bytes[] memory signatures
+    ) internal view returns (bool) {
+        bytes32 previousId = bytes32(0);
+
+        uint256 signersLength = signers.length;
+        for (uint256 i = 0; i < signersLength; i++) {
+            bytes memory signer = signers[i];
+            // Signers must ordered by id to ensure no duplicates
+            bytes32 id = keccak256(signer);
+            if (previousId >= id || !isValidSignatureNow(signer, hash, signatures[i])) {
                 return false;
             }
+
+            previousId = id;
         }
+
+        return true;
     }
 }

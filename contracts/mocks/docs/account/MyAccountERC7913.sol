@@ -1,4 +1,4 @@
-// contracts/MyAccount.sol
+// contracts/MyAccountERC7913.sol
 // SPDX-License-Identifier: MIT
 
 pragma solidity ^0.8.24;
@@ -12,7 +12,7 @@ import {ERC7821} from "../../../account/extensions/ERC7821.sol";
 import {Initializable} from "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 import {SignerERC7913} from "../../../utils/cryptography/SignerERC7913.sol";
 
-contract MyAccount7913 is Account, SignerERC7913, ERC7739, ERC7821, ERC721Holder, ERC1155Holder, Initializable {
+contract MyAccountERC7913 is Account, SignerERC7913, ERC7739, ERC7821, ERC721Holder, ERC1155Holder, Initializable {
     constructor() EIP712("MyAccount7913", "1") {}
 
     function initialize(bytes memory signer) public initializer {
