@@ -19,8 +19,6 @@ import {P256} from "@openzeppelin/contracts/utils/cryptography/P256.sol";
  *
  * ```solidity
  * contract MyAccountWebAuthN is Account, SignerWebAuthN, Initializable {
- *     constructor() EIP712("MyAccountWebAuthN", "1") {}
- *
  *     function initialize(bytes32 qx, bytes32 qy) public initializer {
  *         _setSigner(qx, qy);
  *     }
@@ -32,22 +30,14 @@ import {P256} from "@openzeppelin/contracts/utils/cryptography/P256.sol";
  */
 abstract contract SignerWebAuthN is SignerP256 {
     /**
-     * @dev Validates a signature as a WebAuthn authentication assertion or as a raw P256 signature.
-     *
-     * If the signature is a valid abi-encoded {WebAuthn.WebAuthnAuth} struct, it is validated using
-     * {WebAuthn.verifyMinimal}. Otherwise, it falls back to raw P256 signature validation using the
-     * parent contract's implementation.
-     *
-     * @param hash The hash of the data that was signed (used as the WebAuthn challenge).
-     * @param signature The signature bytes, expected to be an abi-encoded {WebAuthn.WebAuthnAuth} struct
-     *                  or a raw P256 signature (r||s, 64 bytes).
-     * @return True if the signature is valid according to WebAuthn or raw P256 validation, false otherwise.
+     * @dev Validates a raw signature using the WebAuthn authentication assertion.
+     * Falls back to {SignerP256-_rawSignatureValidation}.
      */
     function _rawSignatureValidation(
         bytes32 hash,
         bytes calldata signature
     ) internal view virtual override returns (bool) {
-        if (signature.length == 0) return false;
+        if (signature.length == 0xc0) return false; // WebAuthn struct is at least 6*32 = 192 bytes
         (bytes32 qx, bytes32 qy) = signer();
         return
             WebAuthn.verifyMinimal(abi.encodePacked(hash), abi.decode(signature, (WebAuthn.WebAuthnAuth)), qx, qy) ||
