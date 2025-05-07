@@ -35,7 +35,7 @@ import {ZKEmailUtils} from "./ZKEmailUtils.sol";
  *   }
  * ```
  */
-abstract contract ERC7913SignatureVerifierZKEmail is IERC7913SignatureVerifier {
+abstract contract ERC7913ZKEmailVerifier is IERC7913SignatureVerifier {
     using ZKEmailUtils for EmailAuthMsg;
 
     /**

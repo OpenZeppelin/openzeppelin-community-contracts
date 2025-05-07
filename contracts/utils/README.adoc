@@ -50,9 +50,9 @@ Miscellaneous contracts and libraries containing utility functions you can use t
 
 {{ERC7913Utils}}
 
-{{ERC7913SignatureVerifierP256}}
+{{ERC7913P256Verifier}}
 
-{{ERC7913SignatureVerifierRSA}}
+{{ERC7913RSAVerifier}}
 
 {{ERC7913SignatureVerifierZKEmail}}
 

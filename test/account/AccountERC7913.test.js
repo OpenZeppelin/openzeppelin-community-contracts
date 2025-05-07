@@ -42,9 +42,9 @@ async function fixture() {
   const zkEmailVerifier = await ethers.deployContract('ZKEmailVerifierMock');
 
   // ERC-7913 verifiers
-  const verifierP256 = await ethers.deployContract('ERC7913SignatureVerifierP256');
-  const verifierRSA = await ethers.deployContract('ERC7913SignatureVerifierRSA');
-  const verifierZKEmail = await ethers.deployContract('$ERC7913SignatureVerifierZKEmail');
+  const verifierP256 = await ethers.deployContract('ERC7913P256Verifier');
+  const verifierRSA = await ethers.deployContract('ERC7913RSAVerifier');
+  const verifierZKEmail = await ethers.deployContract('$ERC7913ZKEmailVerifier');
 
   // ERC-4337 env
   const helper = new ERC4337Helper();
