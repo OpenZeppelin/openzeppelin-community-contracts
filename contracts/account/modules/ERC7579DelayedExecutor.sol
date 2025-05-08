@@ -201,10 +201,9 @@ abstract contract ERC7579DelayedExecutor is ERC7579Executor {
         address account
     ) public view virtual returns (uint32 delay, uint32 pendingDelay, uint48 effectTime) {
         (uint32 currentDelay, uint32 newDelay, uint48 effect) = _config[account].delay.getFull();
-        bool installed = isModuleInstalled(account);
         return (
             // Safe downcast since both arguments are uint32
-            uint32(Math.ternary(!installed, 0, Math.max(currentDelay, minimumDelay()))),
+            uint32(Math.ternary(!isModuleInstalled(account), 0, Math.max(currentDelay, minimumDelay()))),
             newDelay,
             effect
         );
@@ -212,9 +211,11 @@ abstract contract ERC7579DelayedExecutor is ERC7579Executor {
 
     /// @dev Expiration delay for account operations. If not set, returns the minimum delay.
     function getExpiration(address account) public view virtual returns (uint32 expiration) {
-        bool installed = isModuleInstalled(account);
         // Safe downcast since both arguments are uint32
-        return uint32(Math.ternary(!installed, 0, Math.max(_config[account].expiration, minimumExpiration())));
+        return
+            uint32(
+                Math.ternary(!isModuleInstalled(account), 0, Math.max(_config[account].expiration, minimumExpiration()))
+            );
     }
 
     /// @dev Schedule for an operation. Returns default values if not set (i.e. `uint48(0)`, `uint48(0)`, `uint48(0)`).
@@ -266,8 +267,7 @@ abstract contract ERC7579DelayedExecutor is ERC7579Executor {
      * * `initData` must be empty or decode correctly to `(uint32, uint32)`.
      */
     function onInstall(bytes calldata initData) public virtual {
-        bool installed = isModuleInstalled(msg.sender);
-        if (!installed) {
+        if (!isModuleInstalled(msg.sender)) {
             (uint32 initialDelay, uint32 initialExpiration) = initData.length > 0
                 ? abi.decode(initData, (uint32, uint32))
                 : (0, 0);
