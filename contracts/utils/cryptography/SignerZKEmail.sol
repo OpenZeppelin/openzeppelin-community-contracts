@@ -86,8 +86,10 @@ abstract contract SignerZKEmail is AbstractSigner {
         return _registry;
     }
 
-    /// @dev An instance of the Verifier contract.
-    /// See https://docs.zk.email/architecture/zk-proofs#how-zk-email-uses-zero-knowledge-proofs[ZK Proofs].
+    /**
+     * @dev An instance of the Verifier contract.
+     * See https://docs.zk.email/architecture/zk-proofs#how-zk-email-uses-zero-knowledge-proofs[ZK Proofs].
+     */
     function verifier() public view virtual returns (IVerifier) {
         return _verifier;
     }

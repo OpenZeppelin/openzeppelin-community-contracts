@@ -265,14 +265,14 @@ class MultiERC7913SigningKey {
       .map(signer => {
         const signerBytes = typeof signer.address === 'string' ? signer.address : signer.bytes;
 
-        const signerId = keccak256(signerBytes);
+        const id = keccak256(signerBytes);
         return {
-          signerId,
+          id,
           signer: signerBytes,
           signature: signer.signingKey.sign(digest).serialized,
         };
       })
-      .sort((a, b) => (toBigInt(a.signerId) < toBigInt(b.signerId) ? -1 : 1));
+      .sort((a, b) => (toBigInt(a.id) < toBigInt(b.id) ? -1 : 1));
 
     return {
       serialized: AbiCoder.defaultAbiCoder().encode(

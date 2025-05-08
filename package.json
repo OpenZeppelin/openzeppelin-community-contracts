@@ -26,7 +26,8 @@
     "test": "hardhat test",
     "test:generation": "scripts/checks/generation.sh",
     "test:inheritance": "scripts/checks/inheritance-ordering.js artifacts/build-info/*",
-    "test:pragma": "scripts/checks/pragma-consistency.js artifacts/build-info/*"
+    "test:pragma": "scripts/checks/pragma-consistency.js artifacts/build-info/*",
+    "gas-report": "env ENABLE_GAS_REPORT=true npm run test"
   },
   "homepage": "https://openzeppelin.com/contracts/",
   "repository": {
@@ -49,10 +50,7 @@
     "@zk-email/contracts": "^6.3.2"
   },
   "devDependencies": {
-    "@openzeppelin/contracts": "file:lib/@openzeppelin-contracts",
-    "ethers": "^6.13.6-beta.1",
-    "hardhat": "^2.23.0",
-    "husky": "^9.1.7"
+    "@openzeppelin/contracts": "file:lib/@openzeppelin-contracts"
   },
   "lint-staged": {
     "*.{js,ts}": [

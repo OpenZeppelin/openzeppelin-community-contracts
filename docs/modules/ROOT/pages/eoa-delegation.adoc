@@ -1,10 +1,23 @@
 = EOA Delegation
 
-This guide walks you through the process of delegating an https://ethereum.org/en/developers/docs/accounts/[Externally Owned Account (EOA)] to a contract following https://eips.ethereum.org/EIPS/eip-7702[ERC-7702]. This allows you to use your EOA's private key to sign and execute operations with custom execution logic. Combined with ERC-4337 infrastructure, users can achieve gas sponsoring through xref:account-abstraction.adoc#paymaster[paymasters].
+https://eips.ethereum.org/EIPS/eip-7702[EIP-7702] introduces a new transaction type (`0x4`) that grants https://ethereum.org/en/developers/docs/accounts/[Externally Owned Accounts (EOAs)] the ability to delegate execution to an smart contract. This is particularly useful to enable traditional EVM accounts to:
+
+* Batch multiple operations in a single transaction (e.g. https://docs.openzeppelin.com/contracts/5.x/api/token/erc20#IERC20-approve-address-uint256-[`approve`] + https://docs.openzeppelin.com/contracts/5.x/api/token/erc20#IERC20-transfer-address-uint256-[`transfer`], yey!)
+* Sponsoring transactions for other users.
+* Implementing privilege de-escalation (e.g., sub-keys with limited permissions)
+
+This section walks you through the process of delegating an EOA to a contract following https://eips.ethereum.org/EIPS/eip-7702[ERC-7702]. This allows you to use your EOA's private key to sign and execute operations with custom execution logic. Combined with https://eips.ethereum.org/EIPS/eip-4337[ERC-4337] infrastructure, users can achieve gas sponsoring through xref:paymasters.adoc[paymasters].
 
 == Delegating execution
 
-ERC-7702 introduces a new transaction type (`0x4`) that grants externally owned accounts (EOAs) the ability to execute smart contract operations by setting a delegate contract. This functionality bridges the gap between EOAs and smart account, unlocking capabilities including batch transaction processing, gas fee sponsorship, and managed delegation of access rights.
+EIP-7702 enables EOAs to delegate their execution capabilities to smart contracts, effectively bridging the gap between traditional and xref:accounts.adoc#SmartAccounts[Smart Accounts]. The xref:api:utils.adoc[`SignerERC7702`] utility facilitates this delegation by verifying signatures against the EOA's address (`address(this)`), making it easier to implement EIP-7702 in smart contract accounts.
+
+[source,solidity]
+----
+include::api:example$account/MyAccountERC7702.sol[]
+----
+
+TIP: Users can delegate to an instance of xref:api:account.adoc#ERC7821[`ERC-7821`] for a minimal batch executor that does not use ERC-4337 related code.
 
 === Signing Authorization
 
@@ -16,6 +29,14 @@ Here's how to construct an authorization with https://viem.sh/[viem]:
 
 [source, typescript]
 ----
+// Remember not to hardcode your private key! 
+const eoa = privateKeyToAccount('<YOUR_PRIVATE_KEY>');
+const eoaClient = createWalletClient({
+  account: eoa,
+  chain: publicClient.chain,
+  transport: http(),
+});
+
 const walletClient = createWalletClient({
   account, // See Viem's `privateKeyToAccount`
   chain, // import { ... } from 'viem/chains';
@@ -30,6 +51,9 @@ const authorization = await eoaClient.signAuthorization({
   // executor: "self",
 });
 ----
+
+NOTE: When implementing delegate contracts, ensure they require signatures that avoid replayability (e.g. a domain separator, nonce).
+A poorly implemented delegate can allow a malicious actor to take near complete control over a signer's EOA.
 
 === Send a Set Code Transaction
 
@@ -64,30 +88,11 @@ WARNING: Updating the delegation designator may render your EOA unusable due to 
 
 The ability to set code to execute logic on an EOA allows users to leverage ERC-4337 infrastructure to process user operations. Developers only need to combine an xref:api:account.adoc#Account[`Account`] contract with an xref:api:utils.adoc#SignerERC7702[`SignerERC7702`] to accomplish ERC-4337 compliance out of the box.
 
-[source,solidity]
-----
-include::api:example$account/MyAccountERC7702.sol[]
-----
-
-[WARNING]
-====
-When implementing delegate contracts, ensure they require signatures over:
-
-* a `nonce` value for replay protection
-* `value` to prevent unexpected effects in the callee
-* `gas` to prevent griefing via out-of-gas failures
-* `target` and `calldata` to prevent arbitrary function calls
-
-A poorly implemented delegate can allow a malicious actor to take near complete control over a signer's EOA.
-====
-
-NOTE: xref:api:account.adoc#ERC-7821[`ERC7821`] is included to bring batching capabilities to the account, a convenient feature.
-
 === Sending a UserOp
 
 Once your EOA is delegated to an ERC-4337 compatible account, you can send user operations through the entry point contract. The user operation includes all the necessary fields for execution, including gas limits, fees, and the actual call data to execute. The entry point will validate the operation and execute it in the context of your delegated account.
 
-Similar to how xref:sending-user-operations.adoc#bundle_a_useroperation[sending a UserOp] is achieved for factory accounts, here's how you can construct a UserOp for an EOA who's delegated to an xref:api:account.adoc#Account[`Account`] contract.
+Similar to how xref:accounts.adoc#bundle_a_useroperation[sending a UserOp] is achieved for factory accounts, here's how you can construct a UserOp for an EOA who's delegated to an xref:api:account.adoc#Account[`Account`] contract.
 
 [source, typescript]
 ----

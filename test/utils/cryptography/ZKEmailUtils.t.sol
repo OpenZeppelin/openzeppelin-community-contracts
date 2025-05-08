@@ -5,8 +5,7 @@ import {Test} from "forge-std/Test.sol";
 import {ZKEmailUtils} from "../../../contracts/utils/cryptography/ZKEmailUtils.sol";
 import {ECDSAOwnedDKIMRegistry} from "@zk-email/email-tx-builder/src/utils/ECDSAOwnedDKIMRegistry.sol";
 import {Groth16Verifier} from "@zk-email/email-tx-builder/test/fixtures/Groth16Verifier.sol";
-import {Verifier, EmailProof} from "@zk-email/email-tx-builder/src/utils/Verifier.sol";
-import {EmailAuthMsg} from "@zk-email/email-tx-builder/src/interfaces/IEmailTypes.sol";
+import {Verifier} from "@zk-email/email-tx-builder/src/utils/Verifier.sol";
 import {IDKIMRegistry} from "@zk-email/contracts/DKIMRegistry.sol";
 import {IVerifier, EmailProof} from "@zk-email/email-tx-builder/src/interfaces/IVerifier.sol";
 import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
@@ -61,11 +60,26 @@ contract ZKEmailUtilsTest is Test {
         assertEq(uint256(err), uint256(ZKEmailUtils.EmailProofError.NoError));
     }
 
-    // Skipping EmailAuthMsgFixtures.getCase3()
-    //
-    // The fixture's command string doesn't match what would be constructed from the parameters using the
-    // "Send {uint} ETH to {ethAddr}" template. The masked command must be "Send 100000000000000000 ETH to 0x1234"
-    // as opposed to "Send 0.1 ETH to 0x1234".
+    function testFixtureCase3SendEthToAddr() public {
+        EmailAuthMsg memory authMsg = EmailAuthMsgFixtures.getCase3();
+        _setupDKIMRegistryForFixture(authMsg);
+
+        string[] memory template = new string[](5);
+        template[0] = "Send";
+        template[1] = CommandUtils.DECIMALS_MATCHER;
+        template[2] = "ETH";
+        template[3] = "to";
+        template[4] = CommandUtils.ETH_ADDR_MATCHER;
+
+        ZKEmailUtils.EmailProofError err = ZKEmailUtils.isValidZKEmail(
+            authMsg,
+            _dkimRegistry,
+            _verifier,
+            template,
+            ZKEmailUtils.Case.ANY
+        );
+        assertEq(uint256(err), uint256(ZKEmailUtils.EmailProofError.NoError));
+    }
 
     function testFixtureCase4AcceptGuardian() public {
         EmailAuthMsg memory authMsg = EmailAuthMsgFixtures.getCase4();

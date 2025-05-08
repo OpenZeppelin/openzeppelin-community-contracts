@@ -8,7 +8,7 @@ const { PackedUserOperation } = require('../../helpers/eip712-types');
 const { NonNativeSigner, P256SigningKey, RSASHA256SigningKey } = require('../../helpers/signers');
 
 const { MODULE_TYPE_VALIDATOR } = require('@openzeppelin/contracts/test/helpers/erc7579');
-const { shouldBehaveLikeERC7579Module, shouldBehaveLikeERC7579Validator } = require('./ERC7579.behavior');
+const { shouldBehaveLikeERC7579Module, shouldBehaveLikeERC7579Validator } = require('./ERC7579Module.behavior');
 
 // Prepare signers in advance (RSA are long to initialize)
 const signerECDSA = ethers.Wallet.createRandom();
@@ -22,8 +22,8 @@ async function fixture() {
   const mock = await ethers.deployContract('$ERC7579SignatureValidator');
 
   // ERC-7913 verifiers
-  const verifierP256 = await ethers.deployContract('ERC7913SignatureVerifierP256');
-  const verifierRSA = await ethers.deployContract('ERC7913SignatureVerifierRSA');
+  const verifierP256 = await ethers.deployContract('ERC7913P256Verifier');
+  const verifierRSA = await ethers.deployContract('ERC7913RSAVerifier');
 
   // ERC-4337 env
   const helper = new ERC4337Helper();
@@ -117,16 +117,7 @@ describe('ERC7579SignatureValidator', function () {
     );
   });
 
-  describe('ECDSA key', function () {
-    beforeEach(async function () {
-      this.signer = signerECDSA;
-      prepareSigner.call(this, ethers.Wallet.prototype);
-      this.installData = ethers.solidityPacked(['address'], [this.signer.address]);
-    });
-
-    shouldBehaveLikeERC7579Module();
-    shouldBehaveLikeERC7579Validator();
-  });
+  // ECDSA tested in ./ERC7579Validator.test.js
 
   describe('P256 key', function () {
     beforeEach(async function () {

@@ -1,12 +1,31 @@
+## 06-05-2025
+
+- `ERC7913SignatureVerifierZKEmail`: Add ERC-7913 signature verifier that enables email-based authentication through zero-knowledge proofs.
+
+## 05-05-2025
+
+- `PaymasterERC20Guarantor`: Add extension of `PaymasterERC20` that enables third parties to guarantee user operations by prefunding gas costs upfront, with repayment handling for successful operations.
+- `ERC7579Validator`: Add abstract validator module for ERC-7579 accounts that provides base implementation for signature validation.
+- `ERC7579SignatureValidator`: Add implementation of `ERC7579Validator` that enables ERC-7579 accounts to integrate with address-less cryptographic keys through ERC-7913 signature verification.
+
+## 29-04-2025
+
+- `ERC7913Utils`: Add `areValidSignaturesNow` function to verify multiple signatures from a set of ordered signers.
+
 ## 21-04-2025
 
 - `MultiSignerERC7913`: Implementation of `AbstractSigner` that supports multiple ERC-7913 signers with a threshold-based signature verification system.
 - `MultiSignerERC7913Weighted`: Extension of `MultiSignerERC7913` that supports assigning different weights to each signer, enabling more flexible governance schemes.
 
+## 16-04-2025
+
+- `ZKEmailUtils`: Add library for ZKEmail signature validation utilities that enables email-based authentication through zero-knowledge proofs, with support for DKIM verification and command template validation.
+- `SignerZKEmail`: Add implementation of `AbstractSigner` that enables accounts to use ZKEmail signatures for authentication, leveraging DKIM registry and zero-knowledge proof verification.
+
 ## 12-04-2025
 
 - `SignerERC7913`: Abstract signer that verifies signatures using the ERC-7913 workflow.
-- `ERC7913SignatureVerifierP256` and `ERC7913SignatureVerifierRSA`: Ready to use ERC-7913 verifiers that implement key verification for P256 (secp256r1) and RSA keys.
+- `ERC7913P256Verifier` and `ERC7913RSAVerifier`: Ready to use ERC-7913 verifiers that implement key verification for P256 (secp256r1) and RSA keys.
 - `ERC7913Utils`: Utilities library for verifying signatures by ERC-7913 formatted signers.
 
 ## 11-04-2025

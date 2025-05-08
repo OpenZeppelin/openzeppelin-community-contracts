@@ -26,8 +26,8 @@ async function fixture() {
   const target = await ethers.deployContract('CallReceiverMockExtended');
 
   // ERC-7913 verifiers
-  const verifierP256 = await ethers.deployContract('ERC7913SignatureVerifierP256');
-  const verifierRSA = await ethers.deployContract('ERC7913SignatureVerifierRSA');
+  const verifierP256 = await ethers.deployContract('ERC7913P256Verifier');
+  const verifierRSA = await ethers.deployContract('ERC7913RSAVerifier');
 
   // ERC-4337 env
   const helper = new ERC4337Helper();
@@ -127,11 +127,6 @@ describe('AccountMultiSigner', function () {
       this.signer = new NonNativeSigner(new MultiERC7913SigningKey([signerECDSA1, signerECDSA2]));
       this.mock = await this.makeMock([signerECDSA1.address, signerECDSA2.address], 1);
       await this.mock.deploy();
-    });
-
-    it('verifies signerId function returns keccak256(signer)', async function () {
-      const signer = signerECDSA1.address;
-      await expect(this.mock.signerId(signer)).to.eventually.equal(ethers.keccak256(signer));
     });
 
     it('can add signers', async function () {
