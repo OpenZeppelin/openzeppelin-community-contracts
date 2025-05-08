@@ -201,7 +201,7 @@ abstract contract ERC7579DelayedExecutor is ERC7579Executor {
         address account
     ) public view virtual returns (uint32 delay, uint32 pendingDelay, uint48 effectTime) {
         (uint32 currentDelay, uint32 newDelay, uint48 effect) = _config[account].delay.getFull();
-        bool installed = IERC7579ModuleConfig(msg.sender).isModuleInstalled(MODULE_TYPE_EXECUTOR, address(this), "");
+        bool installed = IERC7579ModuleConfig(account).isModuleInstalled(MODULE_TYPE_EXECUTOR, address(this), "");
         return (
             // Safe downcast since both arguments are uint32
             uint32(Math.ternary(installed, 0, Math.max(currentDelay, minimumDelay()))),
@@ -212,7 +212,7 @@ abstract contract ERC7579DelayedExecutor is ERC7579Executor {
 
     /// @dev Expiration delay for account operations. If not set, returns the minimum delay.
     function getExpiration(address account) public view virtual returns (uint32 expiration) {
-        bool installed = IERC7579ModuleConfig(msg.sender).isModuleInstalled(MODULE_TYPE_EXECUTOR, address(this), "");
+        bool installed = IERC7579ModuleConfig(account).isModuleInstalled(MODULE_TYPE_EXECUTOR, address(this), "");
         // Safe downcast since both arguments are uint32
         return uint32(Math.ternary(!installed, 0, Math.max(_config[account].expiration, minimumExpiration())));
     }
