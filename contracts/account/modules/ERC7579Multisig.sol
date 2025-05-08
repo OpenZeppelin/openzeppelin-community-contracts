@@ -1,31 +1,42 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
-import {ERC7579DelayedExecutor} from "./ERC7579DelayedExecutor.sol";
 import {ERC7913Utils} from "../../utils/cryptography/ERC7913Utils.sol";
 import {EnumerableSetExtended} from "../../utils/structs/EnumerableSetExtended.sol";
+import {IERC7579Module} from "@openzeppelin/contracts/interfaces/draft-IERC7579.sol";
 import {Mode} from "@openzeppelin/contracts/account/utils/draft-ERC7579Utils.sol";
 
 /**
- * @dev Implementation of {ERC7579DelayedExecutor} that uses ERC-7913 signers for multisignature
- * operation scheduling.
+ * @dev Implementation of an {IERC7579Module} that uses ERC-7913 signers for multisignature
+ * validation.
  *
- * This module extends the base time-delayed executor with multisignature capabilities,
- * allowing an operation to be scheduled once it has been signed by a required threshold
- * of authorized signers. The signers are represented using the ERC-7913 format,
- * which concatenates a verifier address and a key: `verifier || key`.
+ * This module provides a base implementation for multisignature validation that can be
+ * attached to any function through the {_checkMultiSignature} internal function. The signers
+ * are represented using the ERC-7913 format, which concatenates a verifier address and
+ * a key: `verifier || key`.
  *
- * Operations can be scheduled using either:
- * - The account itself through the standard {schedule} function
- * - Or by collecting signatures from multiple authorized signers through {scheduleMultisigner}
+ * Example implementation:
+ *
+ * ```solidity
+ * function execute(
+ *     address account,
+ *     Mode mode,
+ *     bytes calldata executionCalldata,
+ *     bytes32 salt,
+ *     bytes calldata signature
+ * ) public virtual {
+ *     _checkMultiSignature(account, hash, signature);
+ *     // ... rest of execute logic
+ * }
+ * ```
  *
  * Example use case:
  *
- * A smart account with this module installed can schedule social recovery operations
- * after obtaining approval from a set number of signers (e.g., 3-of-5 guardians),
- * and then execute them after the time delay has passed.
+ * A smart account with this module installed can require multiple signers to approve
+ * operations before they are executed, such as requiring 3-of-5 guardians to approve
+ * a social recovery operation.
  */
-contract ERC7579MultisigExecutor is ERC7579DelayedExecutor {
+abstract contract ERC7579Multisig is IERC7579Module {
     using EnumerableSetExtended for EnumerableSetExtended.BytesSet;
     using ERC7913Utils for bytes32;
     using ERC7913Utils for bytes;
@@ -40,19 +51,19 @@ contract ERC7579MultisigExecutor is ERC7579DelayedExecutor {
     event ERC7913ThresholdSet(address indexed account, uint256 threshold);
 
     /// @dev The `signer` already exists.
-    error ERC7579MultisigExecutorAlreadyExists(bytes signer);
+    error ERC7579MultisigAlreadyExists(bytes signer);
 
     /// @dev The `signer` does not exist.
-    error ERC7579MultisigExecutorNonexistentSigner(bytes signer);
+    error ERC7579MultisigNonexistentSigner(bytes signer);
 
     /// @dev The `signer` is less than 20 bytes long.
-    error ERC7579MultisigExecutorInvalidSigner(bytes signer);
+    error ERC7579MultisigInvalidSigner(bytes signer);
 
     /// @dev The `threshold` is unreachable given the number of `signers`.
-    error ERC7579MultisigExecutorUnreachableThreshold(uint256 signers, uint256 threshold);
+    error ERC7579MultisigUnreachableThreshold(uint256 signers, uint256 threshold);
 
     /// @dev The signatures are invalid.
-    error ERC7579MultisigExecutorInvalidSignatures();
+    error ERC7579MultisigInvalidSignatures();
 
     mapping(address account => EnumerableSetExtended.BytesSet) private _signersSetByAccount;
     mapping(address account => uint256) private _thresholdByAccount;
@@ -63,17 +74,15 @@ contract ERC7579MultisigExecutor is ERC7579DelayedExecutor {
      * include `signers` and `threshold`.
      *
      * The initData should be encoded as:
-     * `abi.encode(uint32 initialDelay, bytes[] signers, uint256 threshold)`
+     * `abi.encode(bytes[] signers, uint256 threshold)`
      *
      * If no signers or threshold are provided, the multisignature functionality will be
      * disabled until they are added later.
      */
-    function onInstall(bytes calldata initData) public virtual override {
-        super.onInstall(initData);
-
+    function onInstall(bytes calldata initData) public virtual {
         if (initData.length > 32) {
             // More than just delay parameter
-            (, bytes[] memory signers_, uint256 threshold_) = abi.decode(initData, (uint32, bytes[], uint256));
+            (bytes[] memory signers_, uint256 threshold_) = abi.decode(initData, (bytes[], uint256));
             _addSigners(msg.sender, signers_);
             _setThreshold(msg.sender, threshold_);
         }
@@ -88,15 +97,9 @@ contract ERC7579MultisigExecutor is ERC7579DelayedExecutor {
      * WARNING: This function has unbounded gas costs and may become uncallable if the set grows too large.
      * See {EnumerableSetExtended-clear}.
      */
-    function onUninstall(bytes calldata data) public virtual override {
+    function onUninstall(bytes calldata /* data */) public virtual {
         _signersSetByAccount[msg.sender].clear();
         delete _thresholdByAccount[msg.sender];
-        super.onUninstall(data);
-    }
-
-    /// @dev Returns the unique identifier of the `signer`.
-    function signerId(bytes memory signer) public pure virtual returns (bytes32) {
-        return keccak256(signer);
     }
 
     /**
@@ -130,6 +133,11 @@ contract ERC7579MultisigExecutor is ERC7579DelayedExecutor {
     /**
      * @dev Adds new signers to the authorized set for the calling account.
      * Can only be called by the account itself.
+     *
+     * Requirements:
+     *
+     * * Each of `newSigners` must be at least 20 bytes long.
+     * * Each of `newSigners` must not be already authorized.
      */
     function addSigners(bytes[] memory newSigners) public virtual {
         _addSigners(msg.sender, newSigners);
@@ -138,6 +146,11 @@ contract ERC7579MultisigExecutor is ERC7579DelayedExecutor {
     /**
      * @dev Removes signers from the authorized set for the calling account.
      * Can only be called by the account itself.
+     *
+     * Requirements:
+     *
+     * * Each of `oldSigners` must be authorized.
+     * * After removal, the threshold must still be reachable.
      */
     function removeSigners(bytes[] memory oldSigners) public virtual {
         _removeSigners(msg.sender, oldSigners);
@@ -146,93 +159,108 @@ contract ERC7579MultisigExecutor is ERC7579DelayedExecutor {
     /**
      * @dev Sets the threshold for the calling account.
      * Can only be called by the account itself.
+     *
+     * Requirements:
+     *
+     * * The threshold must be reachable with the current number of signers.
      */
     function setThreshold(uint256 newThreshold) public virtual {
         _setThreshold(msg.sender, newThreshold);
     }
 
     /**
-     * @dev Schedules an operation using signatures from multiple authorized {signers}.
-     * The operation will be scheduled if the number of valid signatures meets or exceeds
-     * the threshold set for the target account.
+     * @dev Checks whether the number of valid signatures meets or exceeds the
+     * threshold set for the target account. Reverts with {ERC7579MultisigInvalidSignatures}
+     * if the multisignature is not valid.
      *
      * The signature should be encoded as:
      * `abi.encode(bytes[] signingSigners, bytes[] signatures)`
      *
-     * Where signingSigners are the authorized signers and signatures are their corresponding
-     * signatures of the operation hash. See {hashOperation} for the operation hash.
-     *
-     * NOTE: Signers should be ordered by their {signerId} to prevent duplications.
+     * Where `signingSigners` are the authorized signers and signatures are their corresponding
+     * signatures of the operation `hash`.
      */
-    function scheduleMultisigner(
-        address account,
-        Mode mode,
-        bytes calldata executionCalldata,
-        bytes32 salt,
-        bytes calldata signature
-    ) public virtual returns (bytes32 operationId) {
-        bytes32 hash = hashOperation(account, mode, executionCalldata, salt);
+    function _checkMultiSignature(address account, bytes32 hash, bytes calldata signature) internal view virtual {
         (bytes[] memory signingSigners, bytes[] memory signatures) = abi.decode(signature, (bytes[], bytes[]));
         require(
-            _validateNSignatures(account, hash, signingSigners, signatures) &&
-                _validateThreshold(account, signingSigners),
-            ERC7579MultisigExecutorInvalidSignatures()
+            _validateThreshold(account, signingSigners) &&
+                _validateNSignatures(account, hash, signingSigners, signatures),
+            ERC7579MultisigInvalidSignatures()
         );
-
-        // Schedule the operation
-        (operationId, ) = _schedule(account, mode, executionCalldata, salt);
-        return operationId;
     }
 
-    /// @dev Adds the `newSigners` to those allowed to sign on behalf of the account.
+    /**
+     * @dev Adds the `newSigners` to those allowed to sign on behalf of the account.
+     *
+     * Requirements:
+     *
+     * * Each of `newSigners` must be at least 20 bytes long. Reverts with {ERC7579MultisigInvalidSigner} if not.
+     * * Each of `newSigners` must not be authorized. Reverts with {ERC7579MultisigAlreadyExists} if it already exists.
+     */
     function _addSigners(address account, bytes[] memory newSigners) internal virtual {
         EnumerableSetExtended.BytesSet storage signerSet = _signers(account);
 
         for (uint256 i = 0; i < newSigners.length; i++) {
             bytes memory signer = newSigners[i];
-            require(signer.length >= 20, ERC7579MultisigExecutorInvalidSigner(signer));
-            require(signerSet.add(signer), ERC7579MultisigExecutorAlreadyExists(signer));
+            require(signer.length >= 20, ERC7579MultisigInvalidSigner(signer));
+            require(signerSet.add(signer), ERC7579MultisigAlreadyExists(signer));
         }
 
         emit ERC7913SignersAdded(account, newSigners);
     }
 
-    /// @dev Removes the `oldSigners` from the authorized signers for the account.
+    /**
+     * @dev Removes the `oldSigners` from the authorized signers for the account.
+     *
+     * Requirements:
+     *
+     * * Each of `oldSigners` must be authorized. Reverts with {ERC7579MultisigNonexistentSigner} if not.
+     * * The threshold must remain reachable after removal. See {_validateReachableThreshold} for details.
+     */
     function _removeSigners(address account, bytes[] memory oldSigners) internal virtual {
         EnumerableSetExtended.BytesSet storage signerSet = _signers(account);
 
         for (uint256 i = 0; i < oldSigners.length; i++) {
             bytes memory signer = oldSigners[i];
-            require(signerSet.remove(signer), ERC7579MultisigExecutorNonexistentSigner(signer));
+            require(signerSet.remove(signer), ERC7579MultisigNonexistentSigner(signer));
         }
 
         _validateReachableThreshold(account);
         emit ERC7913SignersRemoved(account, oldSigners);
     }
 
-    /// @dev Sets the signatures `threshold` required to approve a multisignature operation.
+    /**
+     * @dev Sets the signatures `threshold` required to approve a multisignature operation.
+     *
+     * Requirements:
+     *
+     * * The threshold must be reachable with the current number of signers. See {_validateReachableThreshold} for details.
+     */
     function _setThreshold(address account, uint256 newThreshold) internal virtual {
         _thresholdByAccount[account] = newThreshold;
         _validateReachableThreshold(account);
         emit ERC7913ThresholdSet(account, newThreshold);
     }
 
-    /// @dev Validates the current threshold is reachable with the number of {signers}.
+    /**
+     * @dev Validates the current threshold is reachable with the number of {signers}.
+     *
+     * Requirements:
+     *
+     * * The number of signers must be >= the threshold. Reverts with {ERC7579MultisigUnreachableThreshold} if not.
+     */
     function _validateReachableThreshold(address account) internal view virtual {
         uint256 totalSigners = _signers(account).length();
         uint256 currentThreshold = threshold(account);
-        require(
-            totalSigners >= currentThreshold,
-            ERC7579MultisigExecutorUnreachableThreshold(totalSigners, currentThreshold)
-        );
+        require(totalSigners >= currentThreshold, ERC7579MultisigUnreachableThreshold(totalSigners, currentThreshold));
     }
 
     /**
      * @dev Validates the signatures using the signers and their corresponding signatures.
      * Returns whether the signers are authorized and the signatures are valid for the given hash.
      *
-     * The signers must be ordered by their `signerId` to ensure no duplicates and to optimize
-     * the verification process. The function will return `false` if the signers are not properly ordered.
+     * The signers must be ordered by their `keccak256` hash to prevent duplications and to optimize
+     * the verification process. The function will return `false` if any signer is not authorized or
+     * if the signatures are invalid for the given hash.
      *
      * Requirements:
      *
@@ -250,7 +278,7 @@ contract ERC7579MultisigExecutor is ERC7579DelayedExecutor {
                 return false;
             }
         }
-        return hash.areValidNSignaturesNow(signingSigners, signatures, signerId);
+        return hash.areValidSignaturesNow(signingSigners, signatures);
     }
 
     /**

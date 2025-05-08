@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
-import {ERC7579MultisigExecutor} from "./ERC7579MultisigExecutor.sol";
+import {ERC7579Multisig} from "./ERC7579Multisig.sol";
 import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 import {EnumerableSetExtended} from "../../utils/structs/EnumerableSetExtended.sol";
 
 /**
- * @dev Extension of {ERC7579MultisigExecutor} that supports weighted signatures.
+ * @dev Extension of {ERC7579Multisig} that supports weighted signatures.
  *
- * This module extends the multisignature executor to allow assigning different weights
+ * This module extends the multisignature module to allow assigning different weights
  * to each signer, enabling more flexible governance schemes. For example, some guardians
  * could have higher weight than others, allowing for weighted voting or prioritized authorization.
  *
@@ -23,23 +23,23 @@ import {EnumerableSetExtended} from "../../utils/structs/EnumerableSetExtended.s
  * For example, if signers have weights like 1, 2, or 3, then a threshold of 4 would require
  * signatures with a total weight of at least 4 (e.g., one with weight 1 and one with weight 3).
  */
-contract ERC7579MultisigWeightedExecutor is ERC7579MultisigExecutor {
+abstract contract ERC7579MultisigWeighted is ERC7579Multisig {
     using EnumerableSetExtended for EnumerableSetExtended.BytesSet;
 
-    // Mapping from account => signerId => weight
-    mapping(address account => mapping(bytes32 signerId => uint256 weight)) private _weightsByAccount;
+    // Mapping from account => signer => weight
+    mapping(address account => mapping(bytes signer => uint256)) private _weights;
 
     // Invariant: sum(weights(account)) >= threshold(account)
-    mapping(address account => uint256 totalWeight) private _totalWeightByAccount;
+    mapping(address account => uint256 totalWeight) private _totalWeight;
 
     /// @dev Emitted when a signer's weight is changed.
     event ERC7913SignerWeightChanged(address indexed account, bytes indexed signer, uint256 weight);
 
     /// @dev Thrown when a signer's weight is invalid.
-    error ERC7579MultisigExecutorInvalidWeight(bytes signer, uint256 weight);
+    error ERC7579MultisigInvalidWeight(bytes signer, uint256 weight);
 
     /// @dev Thrown when the arrays lengths don't match.
-    error ERC7579MultisigExecutorMismatchedLength();
+    error ERC7579MultisigMismatchedLength();
 
     /**
      * @dev Sets up the module's initial configuration when installed by an account.
@@ -47,37 +47,32 @@ contract ERC7579MultisigWeightedExecutor is ERC7579MultisigExecutor {
      * signer weights.
      *
      * The initData should be encoded as:
-     * `abi.encode(uint32 initialDelay, bytes[] signers, uint256 threshold, uint256[] weights)`
+     * `abi.encode(bytes[] signers, uint256 threshold, uint256[] weights)`
      *
      * If weights are not provided but signers are, all signers default to weight 1.
      */
     function onInstall(bytes calldata initData) public virtual override {
         super.onInstall(initData);
-
-        (, bytes[] memory signers, uint256 threshold, uint256[] memory weights) = abi.decode(
-            initData,
-            (uint32, bytes[], uint256, uint256[])
-        );
-
-        _addSigners(msg.sender, signers);
-        _setSignerWeights(msg.sender, signers, weights);
-        _setThreshold(msg.sender, threshold);
+        if (initData.length > 96) {
+            (bytes[] memory signers, , uint256[] memory weights) = abi.decode(initData, (bytes[], uint256, uint256[]));
+            _setSignerWeights(msg.sender, signers, weights);
+        }
     }
 
     /**
      * @dev Cleans up module's configuration when uninstalled from an account.
      * Clears all signers, weights, and total weights.
      *
-     * See {ERC7579MultisigExecutor-onUninstall}.
+     * See {ERC7579Multisig-onUninstall}.
      */
     function onUninstall(bytes calldata data) public virtual override {
         address account = msg.sender;
 
         bytes[] memory allSigners = signers(account);
         for (uint256 i = 0; i < allSigners.length; i++) {
-            delete _weightsByAccount[account][signerId(allSigners[i])];
+            delete _weights[account][allSigners[i]];
         }
-        delete _totalWeightByAccount[account];
+        delete _totalWeight[account];
 
         // Call parent implementation which will clear signers and threshold
         super.onUninstall(data);
@@ -90,7 +85,7 @@ contract ERC7579MultisigWeightedExecutor is ERC7579MultisigExecutor {
 
     /// @dev Gets the total weight of all signers for a specific account.
     function totalWeight(address account) public view virtual returns (uint256) {
-        return Math.max(_totalWeightByAccount[account], _signers(account).length());
+        return _totalWeight[account]; // Doesn't need Math.max because it's incremented by the default 1 in `_addSigners`
     }
 
     /**
@@ -106,7 +101,7 @@ contract ERC7579MultisigWeightedExecutor is ERC7579MultisigExecutor {
      * This internal function doesn't check if the signer is authorized.
      */
     function _signerWeight(address account, bytes memory signer) internal view virtual returns (uint256) {
-        return Math.max(_weightsByAccount[account][signerId(signer)], 1);
+        return Math.max(_weights[account][signer], 1);
     }
 
     /**
@@ -114,44 +109,44 @@ contract ERC7579MultisigWeightedExecutor is ERC7579MultisigExecutor {
      *
      * Requirements:
      *
-     * - `signers` and `weights` arrays must have the same length. Reverts with {ERC7579MultisigExecutorMismatchedLength} on mismatch.
-     * - Each signer must exist in the set of authorized signers. Reverts with {ERC7579MultisigExecutorNonexistentSigner} if not.
-     * - Each weight must be greater than 0. Reverts with {ERC7579MultisigExecutorInvalidWeight} if not.
-     * - See {_validateReachableThreshold} for the threshold validation.
+     * * `signers` and `weights` arrays must have the same length. Reverts with {ERC7579MultisigMismatchedLength} on mismatch.
+     * * Each signer must exist in the set of authorized signers. Reverts with {ERC7579MultisigNonexistentSigner} if not.
+     * * Each weight must be greater than 0. Reverts with {ERC7579MultisigInvalidWeight} if not.
+     * * See {_validateReachableThreshold} for the threshold validation.
      *
      * Emits {ERC7913SignerWeightChanged} for each signer.
      */
     function _setSignerWeights(address account, bytes[] memory signers, uint256[] memory newWeights) internal virtual {
-        require(signers.length == newWeights.length, ERC7579MultisigExecutorMismatchedLength());
+        require(signers.length == newWeights.length, ERC7579MultisigMismatchedLength());
         uint256 oldWeight = _weightSigners(account, signers);
 
         for (uint256 i = 0; i < signers.length; i++) {
             bytes memory signer = signers[i];
             uint256 newWeight = newWeights[i];
-            require(isSigner(account, signer), ERC7579MultisigExecutorNonexistentSigner(signer));
-            require(newWeight > 0, ERC7579MultisigExecutorInvalidWeight(signer, newWeight));
+            require(isSigner(account, signer), ERC7579MultisigNonexistentSigner(signer));
+            require(newWeight > 0, ERC7579MultisigInvalidWeight(signer, newWeight));
         }
 
         _unsafeSetSignerWeights(account, signers, newWeights);
-        _totalWeightByAccount[account] = _totalWeightByAccount[account] - oldWeight + _weightSigners(account, signers);
+        _totalWeight[account] = totalWeight(account) - oldWeight + _weightSigners(account, signers);
         _validateReachableThreshold(account);
     }
 
     /**
-     * @dev Override to add weight tracking. See {ERC7579MultisigExecutor-_addSigners}.
+     * @dev Override to add weight tracking. See {ERC7579Multisig-_addSigners}.
      * Each new signer has a default weight of 1.
      */
     function _addSigners(address account, bytes[] memory newSigners) internal virtual override {
         super._addSigners(account, newSigners);
-        _totalWeightByAccount[account] += newSigners.length; // Default weight of 1 per signer.
+        _totalWeight[account] += newSigners.length; // Default weight of 1 per signer.
     }
 
-    /// @dev Override to handle weight tracking during removal. See {ERC7579MultisigExecutor-_removeSigners}.
+    /// @dev Override to handle weight tracking during removal. See {ERC7579Multisig-_removeSigners}.
     function _removeSigners(address account, bytes[] memory oldSigners) internal virtual override {
         uint256 removedWeight = _weightSigners(account, oldSigners);
         unchecked {
             // Can't overflow. Invariant: sum(weights) >= threshold
-            _totalWeightByAccount[account] -= removedWeight;
+            _totalWeight[account] -= removedWeight;
         }
         _unsafeSetSignerWeights(account, oldSigners, new uint256[](oldSigners.length));
         super._removeSigners(account, oldSigners);
@@ -168,7 +163,7 @@ contract ERC7579MultisigWeightedExecutor is ERC7579MultisigExecutor {
     function _validateReachableThreshold(address account) internal view virtual override {
         uint256 weight = totalWeight(account);
         uint256 currentThreshold = threshold(account);
-        require(weight >= currentThreshold, ERC7579MultisigExecutorUnreachableThreshold(weight, currentThreshold));
+        require(weight >= currentThreshold, ERC7579MultisigUnreachableThreshold(weight, currentThreshold));
     }
 
     /**
@@ -208,7 +203,7 @@ contract ERC7579MultisigWeightedExecutor is ERC7579MultisigExecutor {
      */
     function _unsafeSetSignerWeights(address account, bytes[] memory signers, uint256[] memory newWeights) private {
         for (uint256 i = 0; i < signers.length; i++) {
-            delete _weightsByAccount[account][signerId(signers[i])];
+            delete _weights[account][signers[i]];
             emit ERC7913SignerWeightChanged(account, signers[i], newWeights[i]);
         }
     }

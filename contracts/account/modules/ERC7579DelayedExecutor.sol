@@ -1,9 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
-import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 import {Time} from "@openzeppelin/contracts/utils/types/Time.sol";
+import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 import {Mode} from "@openzeppelin/contracts/account/utils/draft-ERC7579Utils.sol";
+import {IERC7579ModuleConfig, MODULE_TYPE_EXECUTOR} from "@openzeppelin/contracts/interfaces/draft-IERC7579.sol";
 import {ERC7579Executor} from "./ERC7579Executor.sol";
 
 /**
@@ -29,23 +30,30 @@ import {ERC7579Executor} from "./ERC7579Executor.sol";
 abstract contract ERC7579DelayedExecutor is ERC7579Executor {
     using Time for *;
 
-    uint32 private constant NO_DELAY = type(uint32).max; // Sentinel value for no delay
-    uint32 private constant EXECUTED = type(uint32).max - 1; // Sentinel value for no delay
-
     // Invariant `delay` <= `expiration` < `type(uint32).max - 1` (for NO_DELAY and EXECUTED)
     struct Schedule {
+        // 1 slot = 48 + 32 + 32 + 1 + 1 = 114 bits ~ 14 bytes
         uint48 scheduledAt; // The time when the operation was scheduled
-        uint32 delay; // Time after the operation becomes executable
-        uint32 expiration; // Time after the operation expires
+        uint32 executableAfter; // Time after the operation becomes executable
+        uint32 expiresAfter; // Time after the operation expires
+        bool executed;
+        bool canceled;
     }
 
     struct ExecutionConfig {
+        // 1 slot = 112 + 32 + 1 = 145 bits ~ 18 bytes
         Time.Delay delay;
-        Time.Delay expiration;
+        uint32 expiration;
     }
 
-    mapping(address account => ExecutionConfig) private _config;
-    mapping(bytes32 operationId => Schedule) private _schedules;
+    enum OperationState {
+        Unknown,
+        Scheduled,
+        Ready,
+        Expired,
+        Executed,
+        Canceled
+    }
 
     /// @dev Emitted when a new operation is scheduled.
     event ERC7579ExecutorOperationScheduled(
@@ -57,32 +65,126 @@ abstract contract ERC7579DelayedExecutor is ERC7579Executor {
         uint48 schedule
     );
 
-    /// @dev Emitted when a scheduled operation is canceled.
+    /// @dev Emitted when a new operation is canceled.
     event ERC7579ExecutorOperationCanceled(address indexed account, bytes32 indexed operationId);
+
+    /// @dev Emitted when a new operation is executed.
+    event ERC7579ExecutorOperationExecuted(address indexed account, bytes32 indexed operationId);
 
     /// @dev Emitted when the execution delay is updated.
     event ERC7579ExecutorDelayUpdated(address indexed account, uint32 newDelay, uint48 effectTime);
 
     /// @dev Emitted when the expiration delay is updated.
-    event ERC7579ExecutorExpirationUpdated(address indexed account, uint32 newExpiration, uint48 effectTime);
+    event ERC7579ExecutorExpirationUpdated(address indexed account, uint32 newExpiration);
 
-    /// @dev Thrown when the account already installed the module.
-    error ERC7579ExecutorAlreadyInstalled(address account);
+    /**
+     * @dev The current state of a operation is not the expected. The `expectedStates` is a bitmap with the
+     * bits enabled for each ProposalState enum position counting from right to left. See {_encodeStateBitmap}.
+     *
+     * NOTE: If `expectedState` is `bytes32(0)`, the operation is expected to not be in any state (i.e. not exist).
+     */
+    error ERC7579ExecutorUnexpectedOperationState(
+        bytes32 operationId,
+        OperationState currentState,
+        bytes32 allowedStates
+    );
 
-    /// @dev Thrown when trying to execute an operation that is not scheduled.
-    error ERC7579ExecutorOperationNotScheduled(bytes32 operationId);
+    /// @dev The operation is not authorized to be canceled.
+    error ERC7579UnauthorizedCancellation();
 
-    /// @dev Thrown when trying to execute an operation before its execution time.
-    error ERC7579ExecutorOperationNotReady(bytes32 operationId, uint48 schedule);
+    /// @dev The operation is not authorized to be scheduled.
+    error ERC7579UnauthorizedSchedule();
 
-    /// @dev Thrown when trying to schedule an operation that is already scheduled.
-    error ERC7579ExecutorOperationAlreadyScheduled(bytes32 operationId);
+    mapping(address account => ExecutionConfig) private _config;
+    mapping(bytes32 operationId => Schedule) private _schedules;
 
-    /// @dev Thrown when trying to execute an operation that has already been executed.
-    error ERC7579ExecutorOperationAlreadyExecuted(bytes32 operationId);
+    /// @dev Current state of an operation.
+    function state(
+        address account,
+        Mode mode,
+        bytes calldata executionCalldata,
+        bytes32 salt
+    ) public view returns (OperationState) {
+        return state(hashOperation(account, mode, executionCalldata, salt));
+    }
 
-    /// @dev Thrown when trying to execute an operation that has expired.
-    error ERC7579ExecutorOperationExpired(bytes32 operationId, uint48 expiresAt);
+    /// @dev Same as {state}, but for a specific operation.
+    function state(bytes32 operationId) public view returns (OperationState) {
+        Schedule storage sched = _schedules[operationId];
+        if (sched.scheduledAt == 0) return OperationState.Unknown;
+        if (sched.canceled) return OperationState.Canceled;
+        if (sched.executed) return OperationState.Executed;
+        if (block.timestamp < sched.scheduledAt + sched.executableAfter) return OperationState.Scheduled;
+        if (block.timestamp > sched.scheduledAt + sched.expiresAfter) return OperationState.Expired;
+        return OperationState.Ready;
+    }
+
+    /// @dev See {ERC7579Executor-canExecute}. Allows anyone to execute an operation if it's {OperationState-Ready}.
+    function canExecute(
+        address account,
+        Mode mode,
+        bytes calldata executionCalldata,
+        bytes32 salt
+    ) public view virtual override returns (bool) {
+        bytes32 id = hashOperation(account, mode, executionCalldata, salt);
+        return state(id) == OperationState.Ready || super.canExecute(account, mode, executionCalldata, salt);
+    }
+
+    /**
+     * @dev Whether the caller is authorized to cancel operations.
+     * By default, this checks if the caller is the account itself. Derived contracts can
+     * override this to implement custom authorization logic.
+     *
+     * Example extension:
+     *
+     * ```
+     *  function canCancel(
+     *     address account,
+     *     Mode mode,
+     *     bytes calldata executionCalldata,
+     *     bytes32 salt
+     *  ) public view virtual returns (bool) {
+     *    bool isAuthorized = ...; // custom logic to check authorization
+     *    return isAuthorized || super.canCancel(account, mode, executionCalldata, salt);
+     *  }
+     *```
+     */
+    function canCancel(
+        address account,
+        Mode /* mode */,
+        bytes calldata /* executionCalldata */,
+        bytes32 /* salt */
+    ) public view virtual returns (bool) {
+        return account == msg.sender;
+    }
+
+    /**
+     * @dev Whether the caller is authorized to cancel operations.
+     * By default, this checks if the caller is the account itself. Derived contracts can
+     * override this to implement custom authorization logic.
+     *
+     * Example extension:
+     *
+     * ```
+     *  function canSchedule(
+     *     address account,
+     *     Mode mode,
+     *     bytes calldata executionCalldata,
+     *     bytes32 salt
+     *  ) public view virtual returns (bool) {
+     *    bool isAuthorized = ...; // custom logic to check authorization
+     *    return isAuthorized || super.canSchedule(account, mode, executionCalldata, salt);
+     *  }
+     *```
+     */
+    function canSchedule(
+        address account,
+        Mode /* mode */,
+        bytes calldata /* executionCalldata */,
+        bytes32 /* salt */
+    ) public view virtual returns (bool) {
+        return account == msg.sender;
+    }
 
     /// @dev Minimum delay for operations. Default for accounts that do not set a custom delay.
     function minimumDelay() public view virtual returns (uint32) {
@@ -99,48 +201,42 @@ abstract contract ERC7579DelayedExecutor is ERC7579Executor {
         address account
     ) public view virtual returns (uint32 delay, uint32 pendingDelay, uint48 effectTime) {
         (uint32 currentDelay, uint32 newDelay, uint48 effect) = _config[account].delay.getFull();
+        bool installed = IERC7579ModuleConfig(msg.sender).isModuleInstalled(MODULE_TYPE_EXECUTOR, address(this), "");
         return (
             // Safe downcast since both arguments are uint32
-            uint32(Math.ternary(_isDelayUninstalled(currentDelay), 0, Math.max(currentDelay, minimumDelay()))),
+            uint32(Math.ternary(installed, 0, Math.max(currentDelay, minimumDelay()))),
             newDelay,
             effect
         );
     }
 
-    /// @dev Delay for a specific account. If not set, returns the minimum delay.
-    function getExpiration(
-        address account
-    ) public view virtual returns (uint32 expiration, uint32 pendingExpiration, uint48 effectTime) {
-        (uint32 currentDelay, uint32 newDelay, uint48 effect) = _config[account].expiration.getFull();
-        return (
-            // Safe downcast since both arguments are uint32
-            uint32(Math.ternary(_isDelayUninstalled(currentDelay), 0, Math.max(currentDelay, minimumExpiration()))),
-            newDelay,
-            effect
-        );
+    /// @dev Expiration delay for account operations. If not set, returns the minimum delay.
+    function getExpiration(address account) public view virtual returns (uint32 expiration) {
+        bool installed = IERC7579ModuleConfig(msg.sender).isModuleInstalled(MODULE_TYPE_EXECUTOR, address(this), "");
+        // Safe downcast since both arguments are uint32
+        return uint32(Math.ternary(!installed, 0, Math.max(_config[account].expiration, minimumExpiration())));
     }
 
-    /**
-     * @dev Schedule for an operation. Returns default values if not set
-     * (i.e. `uint48(0)`, `uint48(0)`, `uint48(0)`, and `false`).
-     */
+    /// @dev Schedule for an operation. Returns default values if not set (i.e. `uint48(0)`, `uint48(0)`, `uint48(0)`).
     function getSchedule(
         address account,
         Mode mode,
         bytes calldata executionCalldata,
         bytes32 salt
-    ) public view virtual returns (uint48 scheduledAt, uint48 executableAt, uint48 expiresAt, bool executed) {
+    ) public view virtual returns (uint48 scheduledAt, uint48 executableAt, uint48 expiresAt) {
         return getSchedule(hashOperation(account, mode, executionCalldata, salt));
     }
 
     /// @dev Same as {getSchedule} but with the operation id.
     function getSchedule(
         bytes32 operationId
-    ) public view virtual returns (uint48 scheduledAt, uint48 executableAt, uint48 expiresAt, bool executed) {
-        Schedule storage schedule_ = _schedules[operationId];
-        scheduledAt = schedule_.scheduledAt;
-        uint32 delay = schedule_.delay;
-        return (scheduledAt, scheduledAt + delay, scheduledAt + schedule_.expiration, delay == EXECUTED);
+    ) public view virtual returns (uint48 scheduledAt, uint48 executableAt, uint48 expiresAt) {
+        scheduledAt = _schedules[operationId].scheduledAt;
+        return (
+            scheduledAt,
+            scheduledAt + _schedules[operationId].executableAfter,
+            scheduledAt + _schedules[operationId].expiresAfter
+        );
     }
 
     /// @dev Returns the operation id.
@@ -157,25 +253,62 @@ abstract contract ERC7579DelayedExecutor is ERC7579Executor {
      * @dev Sets up the module's initial configuration when installed by an account.
      * The account calling this function becomes registered with the module.
      *
-     * The `initData` can contain an `abi.encode(uint32(initialDelay))` value.
+     * The `initData` may be `abi.encode(uint32(initialDelay), uint32(initialExpiration))`.
      * The delay will be set to the maximum of this value and the minimum delay if provided.
      * Otherwise, the delay will be set to the minimum delay.
      *
+     * Behaves as a no-op if the module is already installed.
+     *
      * Requirements:
      *
-     * * The account must not have the module installed already. See {ERC7579ExecutorAlreadyInstalled}.
-     * * The delay must be different to `type(uint32).max` used as a sentinel value for no delay.
-     *
-     * IMPORTANT: A delay will be set for the calling account. In case the account calls this function
-     * directly, the delay will be set to the provided data even if the account didn't track
-     * the module's installation. Future installations will revert.
+     * * The account (i.e `msg.sender`) must implement the {IERC7579ModuleConfig} interface.
+     * * The {IERC7579ModuleConfig-isModuleInstalled} function must return not revert.
+     * * `initData` must be empty or decode correctly to `(uint32, uint32)`.
      */
     function onInstall(bytes calldata initData) public virtual {
-        (uint32 currentDelay, , ) = getDelay(msg.sender);
-        require(_isDelayUninstalled(currentDelay), ERC7579ExecutorAlreadyInstalled(msg.sender));
-        (uint32 delay, uint32 expiration) = initData.length > 0 ? abi.decode(initData, (uint32, uint32)) : (0, 0);
-        _setDelay(msg.sender, uint32(Math.max(minimumDelay(), delay))); // Safe downcast since both arguments are uint32
-        _setExpiration(msg.sender, uint32(Math.max(minimumExpiration(), expiration))); // Safe downcast since both arguments are uint32
+        bool installed = IERC7579ModuleConfig(msg.sender).isModuleInstalled(MODULE_TYPE_EXECUTOR, address(this), "");
+        if (!installed) {
+            (uint32 initialDelay, uint32 initialExpiration) = initData.length > 0
+                ? abi.decode(initData, (uint32, uint32))
+                : (0, 0);
+            _setDelay(msg.sender, initialDelay);
+            _setExpiration(msg.sender, initialExpiration);
+        }
+    }
+
+    /**
+     * @dev Allows an account to update its execution delay (see {getDelay}).
+     *
+     * The new delay will take effect after a transition period defined by the current delay
+     * or minimum delay, whichever is longer. This prevents immediate security downgrades.
+     * Can only be called by the account itself.
+     */
+    function setDelay(uint32 newDelay) public virtual {
+        _setDelay(msg.sender, newDelay);
+    }
+
+    /// @dev Allows an account to update its execution expiration (see {getExpiration}).
+    function setExpiration(uint32 newExpiration) public virtual {
+        _setExpiration(msg.sender, newExpiration);
+    }
+
+    /**
+     * @dev Schedules an operation to be executed after the account's delay period (see {getDelay}).
+     * Operations are uniquely identified by the combination of `mode`, `executionCalldata`, and `salt`.
+     * See {canSchedule} for authorization checks.
+     */
+    function schedule(Mode mode, bytes calldata executionCalldata, bytes32 salt) public virtual {
+        require(canSchedule(msg.sender, mode, executionCalldata, salt), ERC7579UnauthorizedSchedule());
+        _schedule(msg.sender, mode, executionCalldata, salt);
+    }
+
+    /**
+     * @dev Cancels a previously scheduled operation. Can only be called by the account that
+     * scheduled the operation. See {_cancel}.
+     */
+    function cancel(address account, Mode mode, bytes calldata executionCalldata, bytes32 salt) public virtual {
+        require(canCancel(account, mode, executionCalldata, salt), ERC7579UnauthorizedCancellation());
+        _cancel(account, mode, executionCalldata, salt);
     }
 
     /**
@@ -195,62 +328,16 @@ abstract contract ERC7579DelayedExecutor is ERC7579Executor {
      */
     function onUninstall(bytes calldata) public virtual {
         _unsafeSetDelay(msg.sender, 0, 0);
-        _unsafeSetExpiration(msg.sender, 0, 0);
-    }
-
-    /**
-     * @dev Allows an account to update its execution delay (see {getDelay}).
-     *
-     * The new delay will take effect after a transition period defined by the current delay
-     * or minimum delay, whichever is longer. This prevents immediate security downgrades.
-     * Can only be called by the account itself.
-     */
-    function setDelay(uint32 newDelay) public virtual {
-        _setDelay(msg.sender, newDelay);
-    }
-
-    /**
-     * @dev Allows an account to update its execution expiration (see {getExpiration}).
-     *
-     * The new expiration will take effect after a transition period defined by the current expiration
-     * or minimum delay, whichever is longer. This prevents immediate security downgrades.
-     * Can only be called by the account itself.
-     */
-    function setExpiration(uint32 newExpiration) public virtual {
-        _setExpiration(msg.sender, newExpiration);
-    }
-
-    /**
-     * @dev Schedules an operation to be executed after the account's delay period (see {getDelay}).
-     * Operations are uniquely identified by the combination of `mode`, `executionCalldata`, and `salt`.
-     * Can only be called by the account itself to schedule its own operations. See {_schedule}.
-     */
-    function schedule(Mode mode, bytes calldata executionCalldata, bytes32 salt) public virtual {
-        _schedule(msg.sender, mode, executionCalldata, salt);
-    }
-
-    /**
-     * @dev Cancels a previously scheduled operation. Can only be called by the account that
-     * scheduled the operation. See {_cancel}.
-     */
-    function cancel(Mode mode, bytes calldata executionCalldata, bytes32 salt) public virtual {
-        _cancel(msg.sender, mode, executionCalldata, salt);
+        _setExpiration(msg.sender, 0);
     }
 
     /**
      * @dev Internal implementation for setting an account's delay. See {getDelay}.
      *
      * Emits an {ERC7579ExecutorDelayUpdated} event.
-     *
-     * NOTE: The delay is set to `type(uint32).max` if the new delay is `0`. This is a
-     * reserved value to indicate that the module is not installed.
      */
     function _setDelay(address account, uint32 newDelay) internal virtual {
-        _unsafeSetDelay(
-            account,
-            uint32(Math.ternary(newDelay == 0, NO_DELAY, newDelay)), // Safe downcast since both arguments are uint32
-            minimumDelay()
-        );
+        _unsafeSetDelay(account, newDelay, minimumDelay());
     }
 
     /**
@@ -259,7 +346,9 @@ abstract contract ERC7579DelayedExecutor is ERC7579Executor {
      * Emits an {ERC7579ExecutorExpirationUpdated} event.
      */
     function _setExpiration(address account, uint32 newExpiration) internal virtual {
-        _unsafeSetExpiration(account, newExpiration, minimumExpiration());
+        // Safe downcast since both arguments are uint32
+        _config[account].expiration = newExpiration;
+        emit ERC7579ExecutorExpirationUpdated(account, newExpiration);
     }
 
     /// @dev Version of {_setDelay} without `type(uint32).max` check and with a custom minimum setback.
@@ -270,23 +359,12 @@ abstract contract ERC7579DelayedExecutor is ERC7579Executor {
         emit ERC7579ExecutorDelayUpdated(account, newDelay, effect);
     }
 
-    /// @dev Version of {_setExpiration} without `type(uint32).max` check and with a custom minimum setback.
-    function _unsafeSetExpiration(address account, uint32 newExpiration, uint32 minSetback) internal virtual {
-        (uint32 expiration, uint32 pendingExpiration, uint48 effectTime) = getExpiration(account);
-        uint48 effect;
-        (_config[account].expiration, effect) = Time.pack(expiration, pendingExpiration, effectTime).withUpdate(
-            newExpiration,
-            minSetback
-        );
-        emit ERC7579ExecutorExpirationUpdated(account, newExpiration, effect);
-    }
-
     /**
      * @dev Internal version of {schedule} that takes an `account` address as an argument.
      *
      * Requirements:
      *
-     * * Operation must not have been scheduled already. See {ERC7579ExecutorOperationAlreadyScheduled}.
+     * * The operation must be {OperationState-Unknown}.
      *
      * Emits an {ERC7579ExecutorOperationScheduled} event.
      */
@@ -297,15 +375,14 @@ abstract contract ERC7579DelayedExecutor is ERC7579Executor {
         bytes32 salt
     ) internal virtual returns (bytes32 operationId, Schedule memory schedule_) {
         bytes32 id = hashOperation(account, mode, executionCalldata, salt);
-        (uint32 delay, , ) = getDelay(account);
-        (uint32 expiration, , ) = getExpiration(account);
+        _validateStateBitmap(id, _encodeStateBitmap(OperationState.Unknown));
 
-        uint48 timepoint = Time.timestamp() + delay;
-        require(timepoint == 0, ERC7579ExecutorOperationAlreadyScheduled(id));
+        (uint32 executableAfter, , ) = getDelay(account);
 
+        uint48 timepoint = Time.timestamp();
         _schedules[id].scheduledAt = timepoint;
-        _schedules[id].delay = delay;
-        _schedules[id].expiration = expiration;
+        _schedules[id].executableAfter = executableAfter;
+        _schedules[id].expiresAfter = getExpiration(account);
 
         emit ERC7579ExecutorOperationScheduled(account, id, mode, executionCalldata, salt, timepoint);
         return (id, schedule_);
@@ -316,12 +393,9 @@ abstract contract ERC7579DelayedExecutor is ERC7579Executor {
      *
      * Requirements:
      *
-     * * Operation must have been scheduled. Reverts with {ERC7579ExecutorOperationNotScheduled} otherwise.
-     * * Operation must not have been executed yet. Reverts with {ERC7579ExecutorOperationAlreadyExecuted} otherwise.
-     * * Operation must be ready for execution. Reverts with {ERC7579ExecutorOperationNotReady} otherwise.
-     * * Operation must not have expired. Reverts with {ERC7579ExecutorOperationExpired} otherwise.
+     * * The operation must be {OperationState-Ready}.
      *
-     * NOTE: Anyone can trigger execution once the the execution delay has passed. See {getSchedule}.
+     * NOTE: Anyone can trigger execution once the operation is {OperationState-Ready}. See {canExecute}.
      */
     function _execute(
         address account,
@@ -330,65 +404,61 @@ abstract contract ERC7579DelayedExecutor is ERC7579Executor {
         bytes32 salt
     ) internal virtual override returns (bytes[] memory returnData) {
         bytes32 id = hashOperation(account, mode, executionCalldata, salt);
-        (uint48 scheduledAt, uint48 executableAt, uint48 expiresAt, bool executed) = getSchedule(id);
+        _validateStateBitmap(id, _encodeStateBitmap(OperationState.Ready));
 
-        require(scheduledAt != 0, ERC7579ExecutorOperationNotScheduled(id));
-        require(!executed, ERC7579ExecutorOperationAlreadyExecuted(id));
-        require(Time.timestamp() >= executableAt, ERC7579ExecutorOperationNotReady(id, executableAt));
-        require(Time.timestamp() < expiresAt, ERC7579ExecutorOperationExpired(id, expiresAt));
+        _schedules[id].executed = true;
 
-        _config[account].delay = EXECUTED.toDelay(); // Mark the operation as executed
-
+        emit ERC7579ExecutorOperationExecuted(account, id);
         return super._execute(account, mode, executionCalldata, salt);
     }
 
     /**
      * @dev Internal version of {cancel} that takes an `account` address as an argument.
      *
-     * [NOTE]
-     * ====
-     * Expired operations can be canceled, which allows for rescheduling. Consider
-     * overriding this behavior in derived contracts if you want to prevent rescheduling
-     * of expired operations.
-     *
-     * ```solidity
-     * function _cancel(
-     *     address account,
-     *     Mode mode,
-     *     bytes calldata executionCalldata,
-     *     bytes32 salt
-     * ) internal virtual override {
-     *     bytes32 id = hashOperation(account, mode, executionCalldata, salt);
-     *     (, , , uint48 expiresAt, ) = getSchedule(id);
-     *     require(expiresAt == 0, ERC7579ExecutorOperationExpired(id, expiresAt));
-     *     super._cancel(account, mode, executionCalldata, salt);
-     * }
-     * ```
-     * ====
-     *
      * Requirements:
      *
-     * * Operation must have been scheduled. Reverts with {ERC7579ExecutorOperationNotScheduled} otherwise.
-     * * Operation must not have been executed yet. Reverts with {ERC7579ExecutorOperationAlreadyExecuted} otherwise.
+     * * The operation must be {OperationState-Scheduled} or {OperationState-Ready}.
      *
-     * Emits an {ERC7579ExecutorOperationCanceled} event.
+     * Canceled operations can't be rescheduled. Emits an {ERC7579ExecutorOperationCanceled} event.
      */
     function _cancel(address account, Mode mode, bytes calldata executionCalldata, bytes32 salt) internal virtual {
         bytes32 id = hashOperation(account, mode, executionCalldata, salt);
-        (uint48 scheduledAt, , , bool executed) = getSchedule(id);
+        bytes32 allowedStates = _encodeStateBitmap(OperationState.Scheduled) | _encodeStateBitmap(OperationState.Ready);
+        _validateStateBitmap(id, allowedStates);
 
-        require(scheduledAt != 0, ERC7579ExecutorOperationNotScheduled(id));
-        require(!executed, ERC7579ExecutorOperationAlreadyExecuted(id));
+        _schedules[id].canceled = true;
 
-        _schedules[id].scheduledAt = 0;
-        _schedules[id].delay = 0;
-        _schedules[id].expiration = 0;
-        // _schedules[id].executed defaults to false
         emit ERC7579ExecutorOperationCanceled(account, id);
     }
 
-    /// @dev Checks whether the module is uninstalled depending on the account's `delay` value.
-    function _isDelayUninstalled(uint32 delay) private pure returns (bool) {
-        return delay == 0;
+    /**
+     * @dev Check that the current state of a proposal matches the requirements described by the `allowedStates` bitmap.
+     * This bitmap should be built using {_encodeStateBitmap}.
+     *
+     * If requirements are not met, reverts with a {ERC7579ExecutorUnexpectedOperationState} error.
+     */
+    function _validateStateBitmap(bytes32 operationId, bytes32 allowedStates) internal view returns (OperationState) {
+        OperationState currentState = state(operationId);
+        require(
+            _encodeStateBitmap(currentState) & allowedStates != bytes32(0),
+            ERC7579ExecutorUnexpectedOperationState(operationId, currentState, allowedStates)
+        );
+        return currentState;
+    }
+
+    /**
+     * @dev Encodes a `ProposalState` into a `bytes32` representation where each bit enabled corresponds to
+     * the underlying position in the `ProposalState` enum. For example:
+     *
+     * 0x000...10000
+     *   ^^^^^^------ ...
+     *         ^----- Succeeded
+     *          ^---- Defeated
+     *           ^--- Canceled
+     *            ^-- Active
+     *             ^- Pending
+     */
+    function _encodeStateBitmap(OperationState operationState) internal pure returns (bytes32) {
+        return bytes32(1 << uint8(operationState));
     }
 }
