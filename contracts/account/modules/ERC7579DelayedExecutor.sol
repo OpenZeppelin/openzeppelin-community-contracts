@@ -204,7 +204,7 @@ abstract contract ERC7579DelayedExecutor is ERC7579Executor {
         bool installed = IERC7579ModuleConfig(account).isModuleInstalled(MODULE_TYPE_EXECUTOR, address(this), "");
         return (
             // Safe downcast since both arguments are uint32
-            uint32(Math.ternary(installed, 0, Math.max(currentDelay, minimumDelay()))),
+            uint32(Math.ternary(!installed, 0, Math.max(currentDelay, minimumDelay()))),
             newDelay,
             effect
         );
