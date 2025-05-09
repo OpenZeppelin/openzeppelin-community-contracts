@@ -40,8 +40,21 @@ abstract contract SignerWebAuthn is SignerP256 {
         bytes calldata signature
     ) internal view virtual override returns (bool) {
         (bytes32 qx, bytes32 qy) = signer();
-        bool isValidAssertion = signature.length >= 0xc0 && // WebAuthn struct is at least 6*32 = 192 bytes
-            WebAuthn.verifyMinimal(abi.encodePacked(hash), abi.decode(signature, (WebAuthn.WebAuthnAuth)), qx, qy);
-        return isValidAssertion || super._rawSignatureValidation(hash, signature[0x00:]);
+
+        return
+            WebAuthn.verifyMinimal(abi.encodePacked(hash), _toWebAuthnSignature(signature), qx, qy) ||
+            super._rawSignatureValidation(hash, signature);
+    }
+
+    /// @dev Non-reverting version of signature decoding.
+    function _toWebAuthnSignature(bytes calldata signature) private pure returns (WebAuthn.WebAuthnAuth memory auth) {
+        bool decodable;
+        assembly ("memory-safe") {
+            let offset := calldataload(signature.offset)
+            // Validate the offset is within bounds and makes sense for a WebAuthnAuth struct
+            // A valid offset should be 32 and point to data within the signature bounds
+            decodable := and(eq(offset, 32), lt(add(offset, 0x80), signature.length))
+        }
+        return decodable ? abi.decode(signature, (WebAuthn.WebAuthnAuth)) : auth;
     }
 }
