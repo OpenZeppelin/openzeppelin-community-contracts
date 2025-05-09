@@ -39,7 +39,7 @@ abstract contract ERC7579MultisigConfirmation is ERC7579Multisig, EIP712 {
      * * signature: The signature from this signer confirming their addition
      *
      * The function verifies each signature before adding the signer. If any signature is invalid,
-     * the function reverts with ERC7579MultisigInvalidConfirmationSignature.
+     * the function reverts with {ERC7579MultisigInvalidConfirmationSignature}.
      */
     function _addSigners(address account, bytes[] memory newSigners) internal virtual override {
         uint256 newSignersLength = newSigners.length;
