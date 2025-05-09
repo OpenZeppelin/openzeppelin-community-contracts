@@ -41,9 +41,10 @@ abstract contract ERC7579DelayedExecutor is ERC7579Executor {
     }
 
     struct ExecutionConfig {
-        // 1 slot = 112 + 32 + 1 = 145 bits ~ 18 bytes
+        // 1 slot = 112 + 32 + 1 + 1 = 146 bits ~ 18 bytes
         Time.Delay delay;
         uint32 expiration;
+        bool installed;
     }
 
     enum OperationState {
@@ -79,7 +80,7 @@ abstract contract ERC7579DelayedExecutor is ERC7579Executor {
 
     /**
      * @dev The current state of a operation is not the expected. The `expectedStates` is a bitmap with the
-     * bits enabled for each ProposalState enum position counting from right to left. See {_encodeStateBitmap}.
+     * bits enabled for each OperationState enum position counting from right to left. See {_encodeStateBitmap}.
      *
      * NOTE: If `expectedState` is `bytes32(0)`, the operation is expected to not be in any state (i.e. not exist).
      */
@@ -203,7 +204,7 @@ abstract contract ERC7579DelayedExecutor is ERC7579Executor {
         (uint32 currentDelay, uint32 newDelay, uint48 effect) = _config[account].delay.getFull();
         return (
             // Safe downcast since both arguments are uint32
-            uint32(Math.ternary(!isModuleInstalled(account), 0, Math.max(currentDelay, minimumDelay()))),
+            uint32(Math.ternary(!_config[account].installed, 0, Math.max(currentDelay, minimumDelay()))),
             newDelay,
             effect
         );
@@ -214,7 +215,7 @@ abstract contract ERC7579DelayedExecutor is ERC7579Executor {
         // Safe downcast since both arguments are uint32
         return
             uint32(
-                Math.ternary(!isModuleInstalled(account), 0, Math.max(_config[account].expiration, minimumExpiration()))
+                Math.ternary(!_config[account].installed, 0, Math.max(_config[account].expiration, minimumExpiration()))
             );
     }
 
@@ -263,11 +264,11 @@ abstract contract ERC7579DelayedExecutor is ERC7579Executor {
      * Requirements:
      *
      * * The account (i.e `msg.sender`) must implement the {IERC7579ModuleConfig} interface.
-     * * The {IERC7579ModuleConfig-isModuleInstalled} function must return not revert.
      * * `initData` must be empty or decode correctly to `(uint32, uint32)`.
      */
     function onInstall(bytes calldata initData) public virtual {
-        if (!isModuleInstalled(msg.sender)) {
+        if (!_config[msg.sender].installed) {
+            _config[msg.sender].installed = true;
             (uint32 initialDelay, uint32 initialExpiration) = initData.length > 0
                 ? abi.decode(initData, (uint32, uint32))
                 : (0, 0);
@@ -327,6 +328,7 @@ abstract contract ERC7579DelayedExecutor is ERC7579Executor {
      * See {AccountERC7579-uninstallModule}.
      */
     function onUninstall(bytes calldata) public virtual {
+        _config[msg.sender].installed = false;
         _unsafeSetDelay(msg.sender, 0, 0);
         _setExpiration(msg.sender, 0);
     }
@@ -432,7 +434,7 @@ abstract contract ERC7579DelayedExecutor is ERC7579Executor {
     }
 
     /**
-     * @dev Check that the current state of a proposal matches the requirements described by the `allowedStates` bitmap.
+     * @dev Check that the current state of a operation matches the requirements described by the `allowedStates` bitmap.
      * This bitmap should be built using {_encodeStateBitmap}.
      *
      * If requirements are not met, reverts with a {ERC7579ExecutorUnexpectedOperationState} error.
@@ -447,8 +449,8 @@ abstract contract ERC7579DelayedExecutor is ERC7579Executor {
     }
 
     /**
-     * @dev Encodes a `ProposalState` into a `bytes32` representation where each bit enabled corresponds to
-     * the underlying position in the `ProposalState` enum. For example:
+     * @dev Encodes a `OperationState` into a `bytes32` representation where each bit enabled corresponds to
+     * the underlying position in the `OperationState` enum. For example:
      *
      * 0x000...10000
      *   ^^^^^^------ ...
@@ -460,9 +462,5 @@ abstract contract ERC7579DelayedExecutor is ERC7579Executor {
      */
     function _encodeStateBitmap(OperationState operationState) internal pure returns (bytes32) {
         return bytes32(1 << uint8(operationState));
-    }
-
-    function isModuleInstalled(address account) public view returns (bool) {
-        return IERC7579ModuleConfig(account).isModuleInstalled(MODULE_TYPE_EXECUTOR, address(this), "");
     }
 }

@@ -78,9 +78,12 @@ abstract contract ERC7579Multisig is IERC7579Module {
      *
      * If no signers or threshold are provided, the multisignature functionality will be
      * disabled until they are added later.
+     *
+     * NOTE: An account can only call onInstall once. If called directly by the account,
+     * the signer will be set to the provided data. Future installations will behave as a no-op.
      */
     function onInstall(bytes calldata initData) public virtual {
-        if (initData.length > 32) {
+        if (initData.length > 32 && _signers(msg.sender).length() == 0) {
             // More than just delay parameter
             (bytes[] memory signers_, uint256 threshold_) = abi.decode(initData, (bytes[], uint256));
             _addSigners(msg.sender, signers_);
@@ -109,12 +112,12 @@ abstract contract ERC7579Multisig is IERC7579Module {
      * can be expensive or may result in unbounded computation.
      */
     function signers(address account) public view virtual returns (bytes[] memory) {
-        return _signers().values();
+        return _signers(account).values();
     }
 
     /// @dev Returns whether the `signer` is an authorized signer for the specified account.
     function isSigner(address account, bytes memory signer) public view virtual returns (bool) {
-        return _signersSetByAccount[account].contains(signer);
+        return _signers(account).contains(signer);
     }
 
     /// @dev Returns the set of authorized signers for the specified account.
@@ -183,7 +186,7 @@ abstract contract ERC7579Multisig is IERC7579Module {
         (bytes[] memory signingSigners, bytes[] memory signatures) = abi.decode(signature, (bytes[], bytes[]));
         require(
             _validateThreshold(account, signingSigners) &&
-                _validateNSignatures(account, hash, signingSigners, signatures),
+                _validateSignatures(account, hash, signingSigners, signatures),
             ERC7579MultisigInvalidSignatures()
         );
     }
@@ -203,7 +206,6 @@ abstract contract ERC7579Multisig is IERC7579Module {
             require(signer.length >= 20, ERC7579MultisigInvalidSigner(signer));
             require(_signers(account).add(signer), ERC7579MultisigAlreadyExists(signer));
         }
-
         emit ERC7913SignersAdded(account, newSigners);
     }
 
@@ -221,7 +223,6 @@ abstract contract ERC7579Multisig is IERC7579Module {
             bytes memory signer = oldSigners[i];
             require(_signers(account).remove(signer), ERC7579MultisigNonexistentSigner(signer));
         }
-
         _validateReachableThreshold(account);
         emit ERC7913SignersRemoved(account, oldSigners);
     }
@@ -281,7 +282,7 @@ abstract contract ERC7579Multisig is IERC7579Module {
 
     /**
      * @dev Validates that the number of signers meets the {threshold} requirement.
-     * Assumes the signers were already validated. See {_validateNSignatures} for more details.
+     * Assumes the signers were already validated. See {_validateSignatures} for more details.
      */
     function _validateThreshold(
         address account,

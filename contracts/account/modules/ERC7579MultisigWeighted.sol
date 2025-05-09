@@ -52,8 +52,9 @@ abstract contract ERC7579MultisigWeighted is ERC7579Multisig {
      * If weights are not provided but signers are, all signers default to weight 1.
      */
     function onInstall(bytes calldata initData) public virtual override {
+        bool installed = _signers(msg.sender).length() > 0;
         super.onInstall(initData);
-        if (initData.length > 96) {
+        if (initData.length > 96 && !installed) {
             (bytes[] memory signers, , uint256[] memory weights) = abi.decode(initData, (bytes[], uint256, uint256[]));
             _setSignerWeights(msg.sender, signers, weights);
         }
@@ -115,14 +116,14 @@ abstract contract ERC7579MultisigWeighted is ERC7579Multisig {
      * * Each weight must be greater than 0. Reverts with {ERC7579MultisigInvalidWeight} if not.
      * * See {_validateReachableThreshold} for the threshold validation.
      *
-     * Emits {ERC7913SignerWeightChanged} for each signer.
+     * Emits {ERC7579MultisigWeightChanged} for each signer.
      */
     function _setSignerWeights(address account, bytes[] memory signers, uint256[] memory newWeights) internal virtual {
         uint256 signersLength = signers.length;
         require(signersLength == newWeights.length, ERC7579MultisigMismatchedLength());
         uint256 oldWeight = _weightSigners(account, signers);
 
-        for (uint256 i = 0; i < signers.length; i++) {
+        for (uint256 i = 0; i < signersLength; i++) {
             bytes memory signer = signers[i];
             uint256 newWeight = newWeights[i];
             require(isSigner(account, signer), ERC7579MultisigNonexistentSigner(signer));
@@ -201,13 +202,13 @@ abstract contract ERC7579MultisigWeighted is ERC7579Multisig {
      *
      * * The `newWeights` array must be at least as large as the `signers` array. Panics otherwise.
      *
-     * Emits {ERC7913SignerWeightChanged} for each signer.
+     * Emits {ERC7579MultisigWeightChanged} for each signer.
      */
     function _unsafeSetSignerWeights(address account, bytes[] memory signers, uint256[] memory newWeights) private {
-        uint256 signersLength = signers.lenght;
+        uint256 signersLength = signers.length;
         for (uint256 i = 0; i < signersLength; i++) {
-            delete _weights[account][signers[i]];
-            emit ERC7913SignerWeightChanged(account, signers[i], newWeights[i]);
+            _weights[account][signers[i]] = newWeights[i];
+            emit ERC7579MultisigWeightChanged(account, signers[i], newWeights[i]);
         }
     }
 }
