@@ -50,6 +50,9 @@ abstract contract ERC7579MultisigWeighted is ERC7579Multisig {
      * `abi.encode(bytes[] signers, uint256 threshold, uint256[] weights)`
      *
      * If weights are not provided but signers are, all signers default to weight 1.
+     *
+     * NOTE: An account can only call onInstall once. If called directly by the account,
+     * the signer will be set to the provided data. Future installations will behave as a no-op.
      */
     function onInstall(bytes calldata initData) public virtual override {
         bool installed = _signers(msg.sender).length() > 0;
