@@ -33,7 +33,7 @@ abstract contract ERC7579MultisigWeighted is ERC7579Multisig {
     mapping(address account => uint256 totalWeight) private _totalWeight;
 
     /// @dev Emitted when a signer's weight is changed.
-    event ERC7913SignerWeightChanged(address indexed account, bytes indexed signer, uint256 weight);
+    event ERC7579MultisigWeightChanged(address indexed account, bytes indexed signer, uint256 weight);
 
     /// @dev Thrown when a signer's weight is invalid.
     error ERC7579MultisigInvalidWeight(bytes signer, uint256 weight);
@@ -69,7 +69,8 @@ abstract contract ERC7579MultisigWeighted is ERC7579Multisig {
         address account = msg.sender;
 
         bytes[] memory allSigners = signers(account);
-        for (uint256 i = 0; i < allSigners.length; i++) {
+        uint256 allSignersLength = allSigners.length;
+        for (uint256 i = 0; i < allSignersLength; i++) {
             delete _weights[account][allSigners[i]];
         }
         delete _totalWeight[account];
@@ -117,7 +118,8 @@ abstract contract ERC7579MultisigWeighted is ERC7579Multisig {
      * Emits {ERC7913SignerWeightChanged} for each signer.
      */
     function _setSignerWeights(address account, bytes[] memory signers, uint256[] memory newWeights) internal virtual {
-        require(signers.length == newWeights.length, ERC7579MultisigMismatchedLength());
+        uint256 signersLength = signers.length;
+        require(signersLength == newWeights.length, ERC7579MultisigMismatchedLength());
         uint256 oldWeight = _weightSigners(account, signers);
 
         for (uint256 i = 0; i < signers.length; i++) {
@@ -202,7 +204,8 @@ abstract contract ERC7579MultisigWeighted is ERC7579Multisig {
      * Emits {ERC7913SignerWeightChanged} for each signer.
      */
     function _unsafeSetSignerWeights(address account, bytes[] memory signers, uint256[] memory newWeights) private {
-        for (uint256 i = 0; i < signers.length; i++) {
+        uint256 signersLength = signers.lenght;
+        for (uint256 i = 0; i < signersLength; i++) {
             delete _weights[account][signers[i]];
             emit ERC7913SignerWeightChanged(account, signers[i], newWeights[i]);
         }

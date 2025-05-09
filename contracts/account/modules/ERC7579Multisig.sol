@@ -109,7 +109,7 @@ abstract contract ERC7579Multisig is IERC7579Module {
      * can be expensive or may result in unbounded computation.
      */
     function signers(address account) public view virtual returns (bytes[] memory) {
-        return _signersSetByAccount[account].values();
+        return _signers().values();
     }
 
     /// @dev Returns whether the `signer` is an authorized signer for the specified account.
@@ -197,12 +197,11 @@ abstract contract ERC7579Multisig is IERC7579Module {
      * * Each of `newSigners` must not be authorized. Reverts with {ERC7579MultisigAlreadyExists} if it already exists.
      */
     function _addSigners(address account, bytes[] memory newSigners) internal virtual {
-        EnumerableSetExtended.BytesSet storage signerSet = _signers(account);
-
-        for (uint256 i = 0; i < newSigners.length; i++) {
+        uint256 newSignersLength = newSigners.length;
+        for (uint256 i = 0; i < newSignersLength; i++) {
             bytes memory signer = newSigners[i];
             require(signer.length >= 20, ERC7579MultisigInvalidSigner(signer));
-            require(signerSet.add(signer), ERC7579MultisigAlreadyExists(signer));
+            require(_signers(account).add(signer), ERC7579MultisigAlreadyExists(signer));
         }
 
         emit ERC7913SignersAdded(account, newSigners);
@@ -217,11 +216,10 @@ abstract contract ERC7579Multisig is IERC7579Module {
      * * The threshold must remain reachable after removal. See {_validateReachableThreshold} for details.
      */
     function _removeSigners(address account, bytes[] memory oldSigners) internal virtual {
-        EnumerableSetExtended.BytesSet storage signerSet = _signers(account);
-
-        for (uint256 i = 0; i < oldSigners.length; i++) {
+        uint256 oldSignersLength = oldSigners.length;
+        for (uint256 i = 0; i < oldSignersLength; i++) {
             bytes memory signer = oldSigners[i];
-            require(signerSet.remove(signer), ERC7579MultisigNonexistentSigner(signer));
+            require(_signers(account).remove(signer), ERC7579MultisigNonexistentSigner(signer));
         }
 
         _validateReachableThreshold(account);
@@ -266,7 +264,7 @@ abstract contract ERC7579Multisig is IERC7579Module {
      *
      * * The `signatures` array must be at least the `signers` array's length.
      */
-    function _validateNSignatures(
+    function _validateSignatures(
         address account,
         bytes32 hash,
         bytes[] memory signingSigners,
