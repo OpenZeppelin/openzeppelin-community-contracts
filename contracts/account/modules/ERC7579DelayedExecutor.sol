@@ -454,11 +454,11 @@ abstract contract ERC7579DelayedExecutor is ERC7579Executor {
      *
      * 0x000...10000
      *   ^^^^^^------ ...
-     *         ^----- Succeeded
-     *          ^---- Defeated
-     *           ^--- Canceled
-     *            ^-- Active
-     *             ^- Pending
+     *         ^----- Canceled
+     *          ^---- Executed
+     *           ^--- Ready
+     *            ^-- Scheduled
+     *             ^- Unknown
      */
     function _encodeStateBitmap(OperationState operationState) internal pure returns (bytes32) {
         return bytes32(1 << uint8(operationState));
