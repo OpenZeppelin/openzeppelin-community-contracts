@@ -40,14 +40,14 @@ library WebAuthn {
     struct WebAuthnAuth {
         bytes32 r; /// The r value of secp256r1 signature
         bytes32 s; /// The s value of secp256r1 signature
+        uint256 challengeIndex; /// The index at which "challenge":"..." occurs in `clientDataJSON`.
+        uint256 typeIndex; /// The index at which "type":"..." occurs in `clientDataJSON`.
         /// The WebAuthn authenticator data.
         /// https://www.w3.org/TR/webauthn-2/#dom-authenticatorassertionresponse-authenticatordata
         bytes authenticatorData;
         /// The WebAuthn client data JSON.
         /// https://www.w3.org/TR/webauthn-2/#dom-authenticatorresponse-clientdatajson
         string clientDataJSON;
-        uint256 challengeIndex; /// The index at which "challenge":"..." occurs in `clientDataJSON`.
-        uint256 typeIndex; /// The index at which "type":"..." occurs in `clientDataJSON`.
     }
 
     /// @dev Bit 0 of the authenticator data flags: "User Present" bit.

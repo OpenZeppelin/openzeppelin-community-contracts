@@ -156,8 +156,8 @@ class WebAuthnSigningKey extends P256SigningKey {
 
   serialize(r, s, authenticatorData, clientDataJSON) {
     return AbiCoder.defaultAbiCoder().encode(
-      ['tuple(bytes32,bytes32,bytes,string,uint256,uint256)'],
-      [[r, s, authenticatorData, clientDataJSON, 23, 1]],
+      ['tuple(bytes32,bytes32,uint256,uint256,bytes,string)'],
+      [[r, s, 23, 1, authenticatorData, clientDataJSON]],
     );
   }
 }
