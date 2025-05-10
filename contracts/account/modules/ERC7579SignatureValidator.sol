@@ -58,9 +58,6 @@ contract ERC7579SignatureValidator is ERC7579Validator {
     /// @dev Thrown when the signer length is less than 20 bytes.
     error ERC7579SignatureValidatorInvalidSignerLength();
 
-    /// @dev Thrown when the module is already installed.
-    error ERC7579SignatureValidatorAlreadyInstalled();
-
     /// @dev Return the ERC-7913 signer (i.e. `verifier || key`).
     function signer(address account) public view virtual returns (bytes memory) {
         return _signers[account];
@@ -70,12 +67,13 @@ contract ERC7579SignatureValidator is ERC7579Validator {
      * @dev See {IERC7579Module-onInstall}.
      * Reverts with {ERC7579SignatureValidatorAlreadyInstalled} if the module is already installed.
      *
-     * IMPORTANT: An account can only call onInstall once. If called directly by the account,
-     * the signer will be set to the provided data. Future installations will revert.
+     * NOTE: An account can only call onInstall once. If called directly by the account,
+     * the signer will be set to the provided data. Future installations will behave as a no-op.
      */
     function onInstall(bytes calldata data) public virtual {
-        require(signer(msg.sender).length == 0, ERC7579SignatureValidatorAlreadyInstalled());
-        setSigner(data);
+        if (signer(msg.sender).length == 0) {
+            setSigner(data);
+        }
     }
 
     /**

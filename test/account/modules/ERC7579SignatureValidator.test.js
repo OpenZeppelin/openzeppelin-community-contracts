@@ -71,11 +71,9 @@ describe('ERC7579SignatureValidator', function () {
     const signerData = ethers.solidityPacked(['address'], [signerECDSA.address]);
     await expect(this.mockFromAccount.onInstall(signerData)).to.not.be.reverted;
 
-    // Second installation should fail
-    await expect(this.mockFromAccount.onInstall(signerData)).to.be.revertedWithCustomError(
-      this.mock,
-      'ERC7579SignatureValidatorAlreadyInstalled',
-    );
+    // Second installation should behave as a no-op
+    await this.mockFromAccount.onInstall(ethers.solidityPacked(['address'], [ethers.Wallet.createRandom().address])); // Not revert
+    await expect(this.mock.signer(this.mockAccount.address)).to.eventually.equal(signerData); // No change in signers
   });
 
   it('emits event on ERC7579SignatureValidatorSignerSet on both installation and uninstallation', async function () {
