@@ -1,6 +1,6 @@
 // contracts/MyERC7786ReceiverContract.sol
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.22;
+pragma solidity ^0.8.27;
 
 import {AccessManaged} from "@openzeppelin/contracts/access/manager/AccessManaged.sol";
 import {ERC7786Receiver} from "../../../crosschain/utils/ERC7786Receiver.sol";
