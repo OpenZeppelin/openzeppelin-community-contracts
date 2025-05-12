@@ -17,14 +17,18 @@ import {EIP712} from "@openzeppelin/contracts/utils/cryptography/EIP712.sol";
  * explicitly agreed to their roles.
  */
 abstract contract ERC7579MultisigConfirmation is ERC7579Multisig, EIP712 {
-    bytes32 private constant MULTISIG_CONFIRMATION = keccak256("MultisigConfirmation(address account,address module)");
+    bytes32 private constant MULTISIG_CONFIRMATION =
+        keccak256("MultisigConfirmation(address account,address module,uint256 deadline)");
 
     /// @dev Error thrown when a `signer`'s confirmation signature is invalid
     error ERC7579MultisigInvalidConfirmationSignature(bytes signer);
 
+    /// @dev Error thrown when a confirmation signature has expired
+    error ERC7579MultisigExpiredConfirmation(uint256 deadline);
+
     /// @dev Generates a hash that signers must sign to confirm their addition to the multisig of `account`.
-    function _signableConfirmationHash(address account) internal view virtual returns (bytes32) {
-        return _hashTypedDataV4(keccak256(abi.encode(MULTISIG_CONFIRMATION, account, address(this))));
+    function _signableConfirmationHash(address account, uint256 deadline) internal view virtual returns (bytes32) {
+        return _hashTypedDataV4(keccak256(abi.encode(MULTISIG_CONFIRMATION, account, address(this), deadline)));
     }
 
     /**
@@ -32,7 +36,7 @@ abstract contract ERC7579MultisigConfirmation is ERC7579Multisig, EIP712 {
      * Each entry in newSigners must be ABI-encoded as:
      *
      * ```solidity
-     * abi.encode(bytes signer, bytes signature)
+     * abi.encode(deadline,signer,signature); // uint256, bytes, bytes
      * ```
      *
      * * signer: The ERC-7913 signer to add
@@ -44,9 +48,13 @@ abstract contract ERC7579MultisigConfirmation is ERC7579Multisig, EIP712 {
     function _addSigners(address account, bytes[] memory newSigners) internal virtual override {
         uint256 newSignersLength = newSigners.length;
         for (uint256 i = 0; i < newSignersLength; i++) {
-            (bytes memory signer, bytes memory signature) = abi.decode(newSigners[i], (bytes, bytes));
+            (uint256 deadline, bytes memory signer, bytes memory signature) = abi.decode(
+                newSigners[i],
+                (uint256, bytes, bytes)
+            );
+            require(deadline > block.timestamp, ERC7579MultisigExpiredConfirmation(deadline));
             require(
-                ERC7913Utils.isValidSignatureNow(signer, _signableConfirmationHash(account), signature),
+                ERC7913Utils.isValidSignatureNow(signer, _signableConfirmationHash(account, deadline), signature),
                 ERC7579MultisigInvalidConfirmationSignature(signer)
             );
             newSigners[i] = signer;
