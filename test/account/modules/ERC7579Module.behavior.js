@@ -1,14 +1,6 @@
 const { ethers } = require('hardhat');
 const { expect } = require('chai');
 const { SIG_VALIDATION_SUCCESS, SIG_VALIDATION_FAILURE } = require('@openzeppelin/contracts/test/helpers/erc4337');
-const {
-  encodeMode,
-  encodeSingle,
-  CALL_TYPE_CALL,
-  EXEC_TYPE_DEFAULT,
-} = require('@openzeppelin/contracts/test/helpers/erc7579');
-const { impersonate } = require('@openzeppelin/contracts/test/helpers/account');
-const { entrypoint } = require('hardhat');
 
 function shouldBehaveLikeERC7579Module() {
   describe('behaves like ERC7579Module', function () {
@@ -72,41 +64,7 @@ function shouldBehaveLikeERC7579Validator() {
   });
 }
 
-function shouldBehaveLikeERC7579Executor() {
-  describe('behaves like ERC7579Executor', function () {
-    const mode = encodeMode({ callType: CALL_TYPE_CALL, execType: EXEC_TYPE_DEFAULT });
-
-    beforeEach(async function () {
-      await this.mockAccount.deploy();
-      await impersonate(entrypoint.v08.target).then(asEntrypoint =>
-        this.mockAccount.connect(asEntrypoint).installModule(this.moduleType, this.mock.target, this.installData),
-      );
-    });
-
-    describe('execute', function () {
-      beforeEach(function () {
-        this.args = [42, '0x1234'];
-        this.data = this.target.interface.encodeFunctionData('mockFunctionWithArgs', this.args);
-        this.calldata = encodeSingle(this.target, 0, this.data);
-      });
-
-      it('succeeds if called by the account', async function () {
-        await expect(this.mockFromAccount.execute(this.mockAccount.address, mode, this.calldata, ethers.ZeroHash))
-          .to.emit(this.target, 'MockFunctionCalledWithArgs')
-          .withArgs(...this.args);
-      });
-
-      it('reverts with ERC7579UnauthorizedExecution if called by an authorized sender', async function () {
-        await expect(
-          this.mock.execute(this.mockAccount.address, mode, this.calldata, ethers.ZeroHash),
-        ).to.be.revertedWithCustomError(this.mock, 'ERC7579UnauthorizedExecution');
-      });
-    });
-  });
-}
-
 module.exports = {
   shouldBehaveLikeERC7579Module,
   shouldBehaveLikeERC7579Validator,
-  shouldBehaveLikeERC7579Executor,
 };

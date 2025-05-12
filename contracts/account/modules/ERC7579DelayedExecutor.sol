@@ -69,9 +69,6 @@ abstract contract ERC7579DelayedExecutor is ERC7579Executor {
     /// @dev Emitted when a new operation is canceled.
     event ERC7579ExecutorOperationCanceled(address indexed account, bytes32 indexed operationId);
 
-    /// @dev Emitted when a new operation is executed.
-    event ERC7579ExecutorOperationExecuted(address indexed account, bytes32 indexed operationId);
-
     /// @dev Emitted when the execution delay is updated.
     event ERC7579ExecutorDelayUpdated(address indexed account, uint32 newDelay, uint48 effectTime);
 
@@ -298,9 +295,9 @@ abstract contract ERC7579DelayedExecutor is ERC7579Executor {
      * Operations are uniquely identified by the combination of `mode`, `executionCalldata`, and `salt`.
      * See {canSchedule} for authorization checks.
      */
-    function schedule(Mode mode, bytes calldata executionCalldata, bytes32 salt) public virtual {
-        require(canSchedule(msg.sender, mode, executionCalldata, salt), ERC7579UnauthorizedSchedule());
-        _schedule(msg.sender, mode, executionCalldata, salt);
+    function schedule(address account, Mode mode, bytes calldata executionCalldata, bytes32 salt) public virtual {
+        require(canSchedule(account, mode, executionCalldata, salt), ERC7579UnauthorizedSchedule());
+        _schedule(account, mode, executionCalldata, salt);
     }
 
     /**
@@ -410,7 +407,6 @@ abstract contract ERC7579DelayedExecutor is ERC7579Executor {
 
         _schedules[id].executed = true;
 
-        emit ERC7579ExecutorOperationExecuted(account, id);
         return super._execute(account, mode, executionCalldata, salt);
     }
 
