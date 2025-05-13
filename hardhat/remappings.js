@@ -26,7 +26,7 @@ task(UPDATED_VENDORED_REMAPPINGS).setAction(() => {
   }
 
   const vendoredRemappings = Object.entries(remappings)
-    .map(r => [r[0], r[1].replace(NODE_MODULES_PATH, 'lib/')])
+    .map(r => [r[0], r[1].replace(NODE_MODULES_PATH, LIB_PATH)])
     .map(r => `${r[0]}=${r[1]}`)
     .join('\n');
 
