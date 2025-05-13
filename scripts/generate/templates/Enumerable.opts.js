@@ -7,6 +7,7 @@ const typeDescr = ({ type, size = 0, memory = false }) => {
   const base = size ? type : undefined;
   const typeFull = size ? `${type}[${size}]` : type;
   const typeLoc = memory ? `${typeFull} memory` : typeFull;
+
   return { name, type: typeFull, typeLoc, base, size, memory };
 };
 
