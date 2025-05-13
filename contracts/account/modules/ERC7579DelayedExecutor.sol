@@ -112,18 +112,6 @@ abstract contract ERC7579DelayedExecutor is ERC7579Executor {
         return OperationState.Ready;
     }
 
-    /// @dev See {ERC7579Executor-canExecute}. Allows anyone to execute an operation if it's {OperationState-Ready}.
-    function canExecute(
-        address account,
-        Mode mode,
-        bytes calldata executionCalldata,
-        bytes32 salt
-    ) public view virtual override returns (bool) {
-        return
-            state(account, mode, executionCalldata, salt) == OperationState.Ready ||
-            super.canExecute(account, mode, executionCalldata, salt);
-    }
-
     /**
      * @dev Whether the caller is authorized to cancel operations.
      * By default, this checks if the caller is the account itself. Derived contracts can
@@ -368,6 +356,16 @@ abstract contract ERC7579DelayedExecutor is ERC7579Executor {
 
         emit ERC7579ExecutorOperationScheduled(account, id, mode, executionCalldata, salt, timepoint);
         return (id, schedule_);
+    }
+
+    /// @dev See {ERC7579Executor-canExecute}. Allows anyone to execute an operation if it's {OperationState-Ready}.
+    function canExecute(
+        address /* account */,
+        Mode /* mode */,
+        bytes calldata /* executionCalldata */,
+        bytes32 /* salt */
+    ) public view virtual override returns (bool) {
+        return true;
     }
 
     /**
