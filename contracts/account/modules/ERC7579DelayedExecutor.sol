@@ -314,10 +314,9 @@ abstract contract ERC7579DelayedExecutor is ERC7579Executor {
      *
      * Emits an {ERC7579ExecutorDelayUpdated} event.
      */
-    function _setDelay(address account, uint32 newDelay, uint32 setback) internal virtual {
-        (uint32 delay, uint32 pendingDelay, uint48 effectTime) = getDelay(account);
+    function _setDelay(address account, uint32 newDelay, uint32 minimumSetback) internal virtual {
         uint48 effect;
-        (_config[account].delay, effect) = Time.pack(delay, pendingDelay, effectTime).withUpdate(newDelay, setback);
+        (_config[account].delay, effect) = _config[account].delay.withUpdate(newDelay, minimumSetback);
         emit ERC7579ExecutorDelayUpdated(account, newDelay, effect);
     }
 

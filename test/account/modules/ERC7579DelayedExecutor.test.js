@@ -30,13 +30,13 @@ async function fixture() {
   // ERC-7579 account
   const mockAccount = await helper.newAccount('$AccountERC7579');
   const mockFromAccount = await impersonate(mockAccount.address).then(asAccount => mock.connect(asAccount));
+  const mockAccountFromEntrypoint = await impersonate(entrypoint.v08.target).then(asEntrypoint =>
+    mockAccount.connect(asEntrypoint),
+  );
 
   const moduleType = MODULE_TYPE_EXECUTOR;
 
   await mockAccount.deploy();
-  await impersonate(entrypoint.v08.target).then(asEntrypoint =>
-    mockAccount.connect(asEntrypoint).installModule(moduleType, mock.target, installData),
-  );
 
   const args = [42, '0x1234'];
   const data = target.interface.encodeFunctionData('mockFunctionWithArgs', args);
@@ -48,6 +48,7 @@ async function fixture() {
     mock,
     mockAccount,
     mockFromAccount,
+    mockAccountFromEntrypoint,
     target,
     installData,
     args,
@@ -68,7 +69,61 @@ describe('ERC7579DelayedExecutor', function () {
 
   shouldBehaveLikeERC7579Module();
 
+  it('sets an initial delay and expiration on installation', async function () {
+    const tx = await this.mockAccountFromEntrypoint.installModule(this.moduleType, this.mock.target, this.installData);
+    const now = await time.latest();
+    await expect(tx)
+      .to.emit(this.mock, 'ERC7579ExecutorDelayUpdated')
+      .withArgs(this.mockAccount.address, this.delay, now)
+      .to.emit(this.mock, 'ERC7579ExecutorExpirationUpdated')
+      .withArgs(this.mockAccount.address, this.expiration);
+  });
+
+  it('schedule delay unset and unsets expiration', async function () {
+    await this.mockAccountFromEntrypoint.installModule(this.moduleType, this.mock.target, this.installData);
+    const tx = await this.mockAccountFromEntrypoint.uninstallModule(this.moduleType, this.mock.target, '0x');
+    const now = await time.latest();
+    await expect(tx)
+      .to.emit(this.mock, 'ERC7579ExecutorDelayUpdated')
+      .withArgs(this.mockAccount.address, 0, now + this.delay) // Old delay
+      .to.emit(this.mock, 'ERC7579ExecutorExpirationUpdated')
+      .withArgs(this.mockAccount.address, 0);
+  });
+
+  it('schedules a delay update', async function () {
+    await this.mockAccountFromEntrypoint.installModule(this.moduleType, this.mock.target, this.installData);
+
+    const newDelay = time.duration.days(5);
+    const tx = await this.mockFromAccount.setDelay(newDelay);
+    const now = await time.latest();
+    const effect = now + this.delay - newDelay;
+
+    // Delay is scheduled, will take effect later
+    await expect(tx)
+      .to.emit(this.mock, 'ERC7579ExecutorDelayUpdated')
+      .withArgs(this.mockAccount.address, newDelay, effect);
+    await expect(this.mock.getDelay(this.mockAccount.target)).to.eventually.deep.equal([this.delay, newDelay, effect]);
+
+    // Later, it takes effect
+    await time.increaseTo(effect);
+    await expect(this.mock.getDelay(this.mockAccount.target)).to.eventually.deep.equal([newDelay, 0, 0]);
+  });
+
+  it('updates the expiration', async function () {
+    await this.mockAccountFromEntrypoint.installModule(this.moduleType, this.mock.target, this.installData);
+
+    const newExpiration = time.duration.weeks(10);
+    await expect(this.mockFromAccount.setExpiration(newExpiration))
+      .to.emit(this.mock, 'ERC7579ExecutorExpirationUpdated')
+      .withArgs(this.mockAccount.address, newExpiration);
+    await expect(this.mock.getExpiration(this.mockAccount.target)).to.eventually.equal(newExpiration);
+  });
+
   describe('scheduling', function () {
+    beforeEach(async function () {
+      await this.mockAccountFromEntrypoint.installModule(this.moduleType, this.mock.target, this.installData);
+    });
+
     it('schedules an operation if called by the account', async function () {
       const id = this.mock.hashOperation(this.mockAccount.address, this.mode, this.calldata, salt);
       const tx = await this.mockFromAccount.schedule(this.mockAccount.address, this.mode, this.calldata, salt);
@@ -93,6 +148,7 @@ describe('ERC7579DelayedExecutor', function () {
 
   describe('execution', function () {
     beforeEach(async function () {
+      await this.mockAccountFromEntrypoint.installModule(this.moduleType, this.mock.target, this.installData);
       await this.mock.$_schedule(this.mockAccount.address, this.mode, this.calldata, salt);
     });
 
@@ -145,6 +201,7 @@ describe('ERC7579DelayedExecutor', function () {
 
   describe('cancelling', function () {
     beforeEach(async function () {
+      await this.mockAccountFromEntrypoint.installModule(this.moduleType, this.mock.target, this.installData);
       await this.mock.$_schedule(this.mockAccount.address, this.mode, this.calldata, salt);
     });
 
