@@ -57,7 +57,7 @@ abstract contract ERC7579MultisigConfirmation is ERC7579Multisig, EIP712 {
                 ERC7913Utils.isValidSignatureNow(signer, _signableConfirmationHash(account, deadline), signature),
                 ERC7579MultisigInvalidConfirmationSignature(signer)
             );
-            newSigners[i] = signer;
+            newSigners[i] = signer; // Replace the ABI-encoded value with the signer
         }
         super._addSigners(account, newSigners);
     }

@@ -6,7 +6,7 @@ export COVERAGE=true
 export FOUNDRY_FUZZ_RUNS=10
 
 # Hardhat coverage
-hardhat coverage --testfiles test/account/modules/**/*.test.js
+hardhat coverage
 
 if [ "${CI:-"false"}" == "true" ]; then
   # Foundry coverage
