@@ -1046,7 +1046,6 @@ testing are required before deployment.
 
 :ERC7579SignatureValidatorSignerSet: pass:normal[xref:#ERC7579SignatureValidator-ERC7579SignatureValidatorSignerSet-address-bytes-[`++ERC7579SignatureValidatorSignerSet++`]]
 :ERC7579SignatureValidatorInvalidSignerLength: pass:normal[xref:#ERC7579SignatureValidator-ERC7579SignatureValidatorInvalidSignerLength--[`++ERC7579SignatureValidatorInvalidSignerLength++`]]
-:ERC7579SignatureValidatorAlreadyInstalled: pass:normal[xref:#ERC7579SignatureValidator-ERC7579SignatureValidatorAlreadyInstalled--[`++ERC7579SignatureValidatorAlreadyInstalled++`]]
 :signer: pass:normal[xref:#ERC7579SignatureValidator-signer-address-[`++signer++`]]
 :onInstall: pass:normal[xref:#ERC7579SignatureValidator-onInstall-bytes-[`++onInstall++`]]
 :onUninstall: pass:normal[xref:#ERC7579SignatureValidator-onUninstall-bytes-[`++onUninstall++`]]
@@ -1149,7 +1148,6 @@ account.initialize(address(new ERC7579SignatureValidator()), signerData);
 .Errors
 --
 * `++ERC7579SignatureValidatorInvalidSignerLength()++`
-* `++ERC7579SignatureValidatorAlreadyInstalled()++`
 
 [.contract-subindex-inherited]
 .ERC7579Validator
@@ -1175,8 +1173,8 @@ Return the ERC-7913 signer (i.e. `verifier || key`).
 See {IERC7579Module-onInstall}.
 Reverts with {ERC7579SignatureValidatorAlreadyInstalled} if the module is already installed.
 
-IMPORTANT: An account can only call onInstall once. If called directly by the account,
-the signer will be set to the provided data. Future installations will revert.
+NOTE: An account can only call onInstall once. If called directly by the account,
+the signer will be set to the provided data. Future installations will behave as a no-op.
 
 [.contract-item]
 [[ERC7579SignatureValidator-onUninstall-bytes-]]
@@ -1223,12 +1221,6 @@ Emitted when the signer is set.
 ==== `[.contract-item-name]#++ERC7579SignatureValidatorInvalidSignerLength++#++()++` [.item-kind]#error#
 
 Thrown when the signer length is less than 20 bytes.
-
-[.contract-item]
-[[ERC7579SignatureValidator-ERC7579SignatureValidatorAlreadyInstalled--]]
-==== `[.contract-item-name]#++ERC7579SignatureValidatorAlreadyInstalled++#++()++` [.item-kind]#error#
-
-Thrown when the module is already installed.
 
 == Paymaster
 
