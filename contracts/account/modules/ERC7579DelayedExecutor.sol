@@ -226,6 +226,16 @@ abstract contract ERC7579DelayedExecutor is ERC7579Executor {
         return keccak256(abi.encode(account, mode, executionCalldata, salt));
     }
 
+    /// @dev Default delay for account operations. Set if not provided during {onInstall}.
+    function defaultDelay() public view virtual returns (uint32) {
+        return 5 days;
+    }
+
+    /// @dev Default expiration for account operations. Set if not provided during {onInstall}.
+    function defaultExpiration() public view virtual returns (uint32) {
+        return 60 days;
+    }
+
     /**
      * @dev Sets up the module's initial configuration when installed by an account.
      * The account calling this function becomes registered with the module.
@@ -246,7 +256,7 @@ abstract contract ERC7579DelayedExecutor is ERC7579Executor {
             _config[msg.sender].installed = true;
             (uint32 initialDelay, uint32 initialExpiration) = initData.length > 0
                 ? abi.decode(initData, (uint32, uint32))
-                : (0, 0);
+                : (defaultDelay(), defaultExpiration());
             // An old delay might be still present
             // So we set 0 for the minimum setback relying on any old value as the minimum delay
             _setDelay(msg.sender, initialDelay, 0);

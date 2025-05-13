@@ -77,6 +77,22 @@ describe('ERC7579DelayedExecutor', function () {
       .withArgs(this.mockAccount.address, this.delay, now)
       .to.emit(this.mock, 'ERC7579ExecutorExpirationUpdated')
       .withArgs(this.mockAccount.address, this.expiration);
+
+    // onInstall is allowed again but a noop
+    await this.mockFromAccount.onInstall(
+      ethers.AbiCoder.defaultAbiCoder().encode(['uint32', 'uint32'], [time.duration.days(3), time.duration.hours(12)]),
+    );
+    await expect(this.mock.getDelay(this.mockAccount.address)).to.eventually.deep.equal([this.delay, 0, 0]);
+  });
+
+  it('sets default delay and expiration on installation', async function () {
+    const tx = await this.mockAccountFromEntrypoint.installModule(this.moduleType, this.mock.target, '0x');
+    const now = await time.latest();
+    await expect(tx)
+      .to.emit(this.mock, 'ERC7579ExecutorDelayUpdated')
+      .withArgs(this.mockAccount.address, time.duration.days(5), now)
+      .to.emit(this.mock, 'ERC7579ExecutorExpirationUpdated')
+      .withArgs(this.mockAccount.address, time.duration.days(60));
   });
 
   it('schedule delay unset and unsets expiration', async function () {
