@@ -23,5 +23,5 @@ jobs:
           npm run vendor
           git checkout -f vendored
           git add .
-          git commit -m "Vendor $(git rev-parse --short HEAD)" --no-verify # Skip lint
+          git commit -m "Vendor $(git rev-parse --short HEAD)" --allow-empty --no-verify # Skip lint
           git push --all origin
