@@ -36,7 +36,7 @@ abstract contract ERC7579DelayedExecutor is ERC7579Executor {
     }
 
     struct ExecutionConfig {
-        // 1 slot = 112 + 32 + 1 + 1 = 146 bits ~ 18 bytes
+        // 1 slot = 112 + 32 + 1 = 145 bits ~ 18 bytes
         Time.Delay delay;
         uint32 expiration; // Time after operation is OperationState.Ready to expire
         bool installed;
@@ -83,10 +83,10 @@ abstract contract ERC7579DelayedExecutor is ERC7579Executor {
     );
 
     /// @dev The operation is not authorized to be canceled.
-    error ERC7579UnauthorizedCancellation();
+    error ERC7579ExecutorUnauthorizedCancellation();
 
     /// @dev The operation is not authorized to be scheduled.
-    error ERC7579UnauthorizedSchedule();
+    error ERC7579ExecutorUnauthorizedSchedule();
 
     mapping(address account => ExecutionConfig) private _config;
     mapping(bytes32 operationId => Schedule) private _schedules;

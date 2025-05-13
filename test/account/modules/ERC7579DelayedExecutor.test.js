@@ -95,7 +95,7 @@ describe('ERC7579DelayedExecutor', function () {
       .withArgs(this.mockAccount.address, time.duration.days(60));
   });
 
-  it('schedule delay unset and unsets expiration', async function () {
+  it('schedule delay unset and unsets expiration on uninstallation', async function () {
     await this.mockAccountFromEntrypoint.installModule(this.moduleType, this.mock.target, this.installData);
     const tx = await this.mockAccountFromEntrypoint.uninstallModule(this.moduleType, this.mock.target, '0x');
     const now = await time.latest();
