@@ -4,7 +4,7 @@ Developers building contracts may require cross-chain functionality. To accompli
 
 The variety of these bridges is outlined in https://x.com/norswap[@norswap]'s https://github.com/0xFableOrg/xchain/blob/master/README.md[Cross-Chain Interoperability Report] that proposes https://github.com/0xFableOrg/xchain/blob/master/README.md#bridge-taxonomy[a taxonomy of 7 bridge categories]. This diversity makes it difficult for developers to design cross-chain applications given the lack of portability.
 
-This guide will teach you how to follow ERC-7786 to establish messaging gateways across chains regardless of the underlying bridge. Developers can implement gateway contracts that process cross-chain messages and connect any crosschain protocol they want (or implement themselves).
+This guide will teach you how to follow https://eips.ethereum.org/EIPS/eip-7786[ERC-7786] to establish messaging gateways across chains regardless of the underlying bridge. Developers can implement gateway contracts that process cross-chain messages and connect any crosschain protocol they want (or implement themselves).
 
 == ERC-7786 Gateway
 
@@ -22,7 +22,7 @@ Smart contract developers only need to worry about implementing the xref:api:cro
 
 === Getting started with Axelar Network
 
-To start sending cross-chain messages, developers can get started with a duplex gateway powered by Axelar Network. This will allow a contract to send or receive cross-chain messages from other applications or users leveraging automated execution by Axelar relayers on the destination chain.
+To start sending cross-chain messages, developers can get started with a duplex gateway powered by Axelar Network. This will allow a contract to send or receive cross-chain messages leveraging automated execution by Axelar relayers on the destination chain.
 
 [source,solidity]
 ----
