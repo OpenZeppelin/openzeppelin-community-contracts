@@ -155,10 +155,10 @@ describe('ERC7579DelayedExecutor', function () {
       ).to.eventually.deep.equal([now, now + this.delay, now + this.delay + this.expiration]);
     });
 
-    it('reverts with ERC7579UnauthorizedSchedule if called by other account', async function () {
+    it('reverts with ERC7579ExecutorUnauthorizedSchedule if called by other account', async function () {
       await expect(
         this.mock.schedule(this.mockAccount.address, this.mode, this.calldata, salt),
-      ).to.be.revertedWithCustomError(this.mock, 'ERC7579UnauthorizedSchedule');
+      ).to.be.revertedWithCustomError(this.mock, 'ERC7579ExecutorUnauthorizedSchedule');
     });
   });
 
@@ -231,10 +231,10 @@ describe('ERC7579DelayedExecutor', function () {
       ).to.be.revertedWithCustomError(this.mock, 'ERC7579ExecutorUnexpectedOperationState'); // Can't cancel twice
     });
 
-    it('reverts with ERC7579UnauthorizedCancellation if called by other account', async function () {
+    it('reverts with ERC7579ExecutorUnauthorizedCancellation if called by other account', async function () {
       await expect(
         this.mock.cancel(this.mockAccount.address, this.mode, this.calldata, salt),
-      ).to.be.revertedWithCustomError(this.mock, 'ERC7579UnauthorizedCancellation');
+      ).to.be.revertedWithCustomError(this.mock, 'ERC7579ExecutorUnauthorizedCancellation');
     });
   });
 });

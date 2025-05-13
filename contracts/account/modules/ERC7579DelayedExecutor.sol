@@ -286,7 +286,7 @@ abstract contract ERC7579DelayedExecutor is ERC7579Executor {
      * See {canSchedule} for authorization checks.
      */
     function schedule(address account, Mode mode, bytes calldata executionCalldata, bytes32 salt) public virtual {
-        require(canSchedule(account, mode, executionCalldata, salt), ERC7579UnauthorizedSchedule());
+        require(canSchedule(account, mode, executionCalldata, salt), ERC7579ExecutorUnauthorizedSchedule());
         _schedule(account, mode, executionCalldata, salt);
     }
 
@@ -295,7 +295,7 @@ abstract contract ERC7579DelayedExecutor is ERC7579Executor {
      * scheduled the operation. See {_cancel}.
      */
     function cancel(address account, Mode mode, bytes calldata executionCalldata, bytes32 salt) public virtual {
-        require(canCancel(account, mode, executionCalldata, salt), ERC7579UnauthorizedCancellation());
+        require(canCancel(account, mode, executionCalldata, salt), ERC7579ExecutorUnauthorizedCancellation());
         _cancel(account, mode, executionCalldata, salt);
     }
 
@@ -305,8 +305,8 @@ abstract contract ERC7579DelayedExecutor is ERC7579Executor {
      *
      * IMPORTANT: This function does not clean up scheduled operations. This means operations
      * could potentially be re-executed if the module is reinstalled later. This is a deliberate
-     * design choice, but module implementations may want to override this behavior to clear
-     * scheduled operations during uninstallation for their specific use cases.
+     * design choice for efficiency, but module implementations may want to override this behavior
+     * to clear scheduled operations during uninstallation for their specific use cases.
      *
      * WARNING: The account's delay will be removed if the account calls this function, allowing
      * immediate scheduling of operations. As an account operator, make sure to uninstall to a
