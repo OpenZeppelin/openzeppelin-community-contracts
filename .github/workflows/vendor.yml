@@ -18,6 +18,6 @@ jobs:
       - name: Vendor dependencies
         run: |
           npm run vendored
-          git checkout vendored
+          git checkout -f vendored
           git commit -m "Vendor $(git rev-parse --short HEAD)"
           git push --all origin
