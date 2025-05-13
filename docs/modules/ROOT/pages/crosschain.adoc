@@ -83,3 +83,94 @@ For a destination gateway, the library provides an adapter of the `AxelarExecuta
 ----
 include::api:example$crosschain/MyCustomAxelarGatewayDestination.sol[]
 ----
+
+=== Multi Bridge Aggregator
+
+The xref:api:crosschain.adoc#ERC7786Aggregator[ERC7786Aggregator] is a special gateway that implements both xref:api:crosschain.adoc#IERC7786GatewaySource[IERC7786GatewaySource] and xref:api:crosschain.adoc#IERC7786Receiver[IERC7786Receiver] interfaces. It provides a way to send messages across multiple bridges simultaneously and ensures message delivery through a threshold-based confirmation system.
+
+The aggregator maintains a list of known  gateways and a confirmation threshold. When sending a message, it broadcasts to all registered gateways, and when receiving, it requires a minimum number of confirmations before executing the message. This approach increases reliability by ensuring messages are properly delivered and validated across multiple bridges.
+
+When sending a message, the aggregator tracks the message IDs from each gateway to maintain a record of the message's journey across different bridges:
+
+```solidity
+function sendMessage(
+    string calldata destinationChain,
+    string memory receiver,
+    bytes memory payload,
+    bytes[] memory attributes
+) public payable virtual whenNotPaused returns (bytes32 outboxId) {
+    
+    // ... Initialize variables and prepare payload ...
+
+    // Post on all gateways
+    Outbox[] memory outbox = new Outbox[](_gateways.length());
+    bool needsId = false;
+    for (uint256 i = 0; i < outbox.length; ++i) {
+        address gateway = _gateways.at(i);
+        // send message
+        bytes32 id = IERC7786GatewaySource(gateway).sendMessage(
+            destinationChain,
+            aggregator,
+            wrappedPayload,
+            attributes
+        );
+        // if ID, track it
+        if (id != bytes32(0)) {
+            outbox[i] = Outbox(gateway, id);
+            needsId = true;
+        }
+    }
+
+    // ... Handle message tracking and return value ...
+}
+```
+
+On the receiving end, the aggregator implements a threshold-based confirmation system. Messages are only executed after receiving enough confirmations from the gateways, ensuring message validity and preventing double execution. The xref:api:crosschain.adoc#ERC7786Aggregator-executeMessage-string-string-string-bytes-bytes---[`executeMessage`] function handles this process:
+
+```solidity
+function executeMessage(
+    string calldata /*messageId*/, // gateway specific, empty or unique
+    string calldata sourceChain, // CAIP-2 chain identifier
+    string calldata sender, // CAIP-10 account address (does not include the chain identifier)
+    bytes calldata payload,
+    bytes[] calldata attributes
+) public payable virtual whenNotPaused returns (bytes4) {
+
+    // ... Validate message format and extract message ID ...
+
+    // If call is first from a trusted gateway
+    if (_gateways.contains(msg.sender) && !tracker.receivedBy[msg.sender]) {
+        // Count number of time received
+        tracker.receivedBy[msg.sender] = true;
+        ++tracker.countReceived;
+        emit Received(id, msg.sender);
+
+        // if already executed, leave gracefully
+        if (tracker.executed) return IERC7786Receiver.executeMessage.selector;
+    } else if (tracker.executed) {
+        revert ERC7786AggregatorAlreadyExecuted();
+    }
+    
+    // ... Validate sender and prepare payload for execution ...
+
+    // If ready to execute, and not yet executed
+    if (tracker.countReceived >= getThreshold()) {
+        // prevent re-entry
+        tracker.executed = true;
+
+        // ... Prepare execution context and validate state ...
+        bytes memory call = abi.encodeCall(
+            IERC7786Receiver.executeMessage,
+            (uint256(id).toHexString(32), sourceChain, originalSender, unwrappedPayload, attributes)
+        );
+
+        (bool success, bytes memory returndata) = receiver.parseAddress().call(call);
+
+        // ... Handle the result ...
+    }
+
+    return IERC7786Receiver.executeMessage.selector;
+}
+```
+
+The aggregator is designed to be configurable. As an `Ownable` contract, it allows the owner to manage the list of trusted gateways and adjust the confirmation threshold. The `_gateways` list and threshold are initially set during contract deployment using the xref:api:crosschain.adoc#ERC7786Aggregator-_addGateway-address-[`++_addGateway++`] and xref:api:crosschain.adoc#ERC7786Aggregator-_setThreshold-uint8-[`++_setThreshold++`] functions. The owner can update these settings as needed to adapt to changing requirements or add new gateways.
