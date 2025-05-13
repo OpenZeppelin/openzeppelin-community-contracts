@@ -16,7 +16,8 @@ jobs:
         uses: ./.github/actions/setup
       - run: bash scripts/git-user-config.sh
       - name: Vendor dependencies
-        run: npm run lint vendored
       - run: |
+          npm run vendored
+          git checkout vendored
           git commit -m "Vendor $(git rev-parse --short HEAD)"
-          git push origin vendored
+          git push --all origin

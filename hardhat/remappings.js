@@ -22,7 +22,9 @@ task(UPDATED_VENDORED_REMAPPINGS).setAction(() => {
   const LIB_PATH = 'lib/';
 
   for (const [, src] of Object.entries(remappings).filter(r => r[1].includes(NODE_MODULES_PATH))) {
-    fs.cpSync(src, src.replace(NODE_MODULES_PATH, LIB_PATH), { recursive: true });
+    const dir = src.replace(NODE_MODULES_PATH, LIB_PATH);
+    fs.rmSync(dir, { recursive: true });
+    fs.cpSync(src, dir, { recursive: true });
   }
 
   const vendoredRemappings = Object.entries(remappings)
