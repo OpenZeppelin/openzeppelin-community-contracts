@@ -11,6 +11,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
+          fetch-depth: 0 # So vendored branch is available
           submodules: recursive
       - name: Set up environment
         uses: ./.github/actions/setup
