@@ -3,6 +3,7 @@ const { expect } = require('chai');
 const { loadFixture } = require('@nomicfoundation/hardhat-network-helpers');
 const { impersonate } = require('@openzeppelin/contracts/test/helpers/account');
 const { ERC4337Helper } = require('../../helpers/erc4337');
+const { NonNativeSigner, MultiERC7913SigningKey } = require('../../helpers/signers');
 
 const {
   MODULE_TYPE_EXECUTOR,
@@ -31,6 +32,7 @@ async function fixture() {
   // Prepare signers
   const signers = [signerECDSA1.address, signerECDSA2.address];
   const threshold = 1;
+  const multiSigner = new NonNativeSigner(new MultiERC7913SigningKey([signerECDSA1, signerECDSA2]));
 
   // Prepare module installation data
   const installData = ethers.AbiCoder.defaultAbiCoder().encode(['bytes[]', 'uint256'], [signers, threshold]);
@@ -65,6 +67,7 @@ async function fixture() {
     mode,
     signers,
     threshold,
+    multiSigner,
   };
 }
 
@@ -205,74 +208,77 @@ describe('ERC7579Multisig', function () {
       await this.mockAccountFromEntrypoint.installModule(this.moduleType, this.mock.target, this.installData);
     });
 
-    it('validates valid signatures meeting threshold', async function () {
-      // Create valid signature from authorized signer
-      const signature1 = await signerECDSA1.signMessage('test');
+    it('validates multiple signatures meeting threshold', async function () {
+      // Set threshold to 2
+      await this.mockFromAccount.setThreshold(2);
 
-      // Prepare signers and signatures arrays
-      const signers = [signerECDSA1.address];
-      const signatures = [signature1];
-
-      // Encode the multi-signature
-      const multiSignature = ethers.AbiCoder.defaultAbiCoder().encode(['bytes[]', 'bytes[]'], [signers, signatures]);
-
-      // Should succeed with valid signature meeting threshold
-      await expect(
-        this.mock.$_checkMultiSignature(this.mockAccount.address, ethers.hashMessage('test'), multiSignature),
-      ).to.not.be.reverted;
+      // Create hash and sign it
+      const testMessage = 'test';
+      const messageHash = ethers.hashMessage(testMessage);
+      const multiSignature = await this.multiSigner.signMessage(testMessage);
+      await this.mock.$_checkMultiSignature(this.mockAccount.address, messageHash, multiSignature);
+      // Should succeed with valid signatures meeting threshold
+      await expect(this.mock.$_checkMultiSignature(this.mockAccount.address, messageHash, multiSignature)).to.not.be
+        .reverted;
     });
 
     it('rejects signatures not meeting threshold', async function () {
       // First set threshold to 2
       await this.mockFromAccount.setThreshold(2);
 
-      // Create valid signature from authorized signer
-      const signature1 = await signerECDSA1.signMessage('test');
+      // Create MultiERC7913SigningKey with one authorized signer
+      const multiSigner = new NonNativeSigner(new MultiERC7913SigningKey([signerECDSA1]));
 
-      // Prepare signers and signatures arrays
-      const signers = [signerECDSA1.address];
-      const signatures = [signature1];
-
-      // Encode the multi-signature
-      const multiSignature = ethers.AbiCoder.defaultAbiCoder().encode(['bytes[]', 'bytes[]'], [signers, signatures]);
+      // Create hash and sign it
+      const testMessage = 'test';
+      const messageHash = ethers.hashMessage(testMessage);
+      const multiSignature = await multiSigner.signMessage(testMessage);
 
       // Should fail because threshold is 2 but only 1 signature provided
       await expect(
-        this.mock.$_checkMultiSignature(this.mockAccount.address, ethers.hashMessage('test'), multiSignature),
+        this.mock.$_checkMultiSignature(this.mockAccount.address, messageHash, multiSignature),
       ).to.be.revertedWithCustomError(this.mock, 'ERC7579MultisigInvalidSignatures');
     });
 
+    it('validates valid signatures meeting threshold', async function () {
+      // Create MultiERC7913SigningKey with one authorized signer
+      const multiSigner = new NonNativeSigner(new MultiERC7913SigningKey([signerECDSA1]));
+
+      // Create hash and sign it
+      const testMessage = 'test';
+      const messageHash = ethers.hashMessage(testMessage);
+      const multiSignature = await multiSigner.signMessage(testMessage);
+
+      // Should succeed with valid signature meeting threshold
+      await expect(this.mock.$_checkMultiSignature(this.mockAccount.address, messageHash, multiSignature)).to.not.be
+        .reverted;
+    });
+
     it('rejects signatures from unauthorized signers', async function () {
-      // Create valid signature from unauthorized signer
-      const signature = await signerECDSA4.signMessage('test');
+      // Create MultiERC7913SigningKey with unauthorized signer
+      const multiSigner = new NonNativeSigner(new MultiERC7913SigningKey([signerECDSA4]));
 
-      // Prepare signers and signatures arrays
-      const signers = [signerECDSA4.address];
-      const signatures = [signature];
-
-      // Encode the multi-signature
-      const multiSignature = ethers.AbiCoder.defaultAbiCoder().encode(['bytes[]', 'bytes[]'], [signers, signatures]);
+      // Create hash and sign it
+      const testMessage = 'test';
+      const messageHash = ethers.hashMessage(testMessage);
+      const multiSignature = await multiSigner.signMessage(testMessage);
 
       // Should fail because signer is not authorized
       await expect(
-        this.mock.$_checkMultiSignature(this.mockAccount.address, ethers.hashMessage('test'), multiSignature),
+        this.mock.$_checkMultiSignature(this.mockAccount.address, messageHash, multiSignature),
       ).to.be.revertedWithCustomError(this.mock, 'ERC7579MultisigInvalidSignatures');
     });
 
     it('rejects invalid signatures from authorized signers', async function () {
-      // Create invalid signature (signing different message)
-      const invalidSignature = await signerECDSA1.signMessage('Different message');
+      // Create hash and sign it with a different message
+      const testMessage = 'test';
+      const differentMessage = 'different test';
+      const messageHash = ethers.hashMessage(testMessage);
+      const multiSignature = await this.multiSigner.signMessage(differentMessage);
 
-      // Prepare signers and signatures arrays
-      const signers = [signerECDSA1.address];
-      const signatures = [invalidSignature];
-
-      // Encode the multi-signature
-      const multiSignature = ethers.AbiCoder.defaultAbiCoder().encode(['bytes[]', 'bytes[]'], [signers, signatures]);
-
-      // Should fail because signature is invalid for the given hash
+      // Should fail because signature is for a different hash
       await expect(
-        this.mock.$_checkMultiSignature(this.mockAccount.address, ethers.hashMessage('test'), multiSignature),
+        this.mock.$_checkMultiSignature(this.mockAccount.address, messageHash, multiSignature),
       ).to.be.revertedWithCustomError(this.mock, 'ERC7579MultisigInvalidSignatures');
     });
   });
