@@ -2,7 +2,6 @@
 pragma solidity ^0.8.27;
 
 import {Time} from "@openzeppelin/contracts/utils/types/Time.sol";
-import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 import {Mode} from "@openzeppelin/contracts/account/utils/draft-ERC7579Utils.sol";
 import {IERC7579ModuleConfig, MODULE_TYPE_EXECUTOR} from "@openzeppelin/contracts/interfaces/draft-IERC7579.sol";
 import {ERC7579Executor} from "./ERC7579Executor.sol";
@@ -15,12 +14,9 @@ import {ERC7579Executor} from "./ERC7579Executor.sol";
  * period has elapsed (indicated during {onInstall}), creating a security window where suspicious
  * operations can be monitored and potentially canceled (see {cancel}) before execution (see {execute}).
  *
- * Accounts can customize their delay periods with {setDelay}, Delay changes take effect after a
- * transition period to prevent immediate security downgrades.
- *
- * Operations have an expiration mechanism that prevents them from being executed after a certain
- * time has passed. It can be customized by overriding the {expiration} function and defaults to
- * `type(uint32).max` (no expiration).
+ * Accounts can customize their delay periods with {setDelay}. Changes take effect after a transition
+ * period to prevent immediate security downgrades. Operations have an expiration mechanism that
+ * prevents them from being executed after a certain time has passed.
  *
  * IMPORTANT: This module assumes the {AccountERC7579} is the ultimate authority and does not restrict
  * module uninstallation. An account can bypass the time-delay security by simply uninstalling
@@ -30,7 +26,6 @@ import {ERC7579Executor} from "./ERC7579Executor.sol";
 abstract contract ERC7579DelayedExecutor is ERC7579Executor {
     using Time for *;
 
-    // Invariant `delay` <= `expiration` < `type(uint32).max - 1` (for NO_DELAY and EXECUTED)
     struct Schedule {
         // 1 slot = 48 + 32 + 32 + 1 + 1 = 114 bits ~ 14 bytes
         uint48 scheduledAt; // The time when the operation was scheduled
@@ -43,7 +38,7 @@ abstract contract ERC7579DelayedExecutor is ERC7579Executor {
     struct ExecutionConfig {
         // 1 slot = 112 + 32 + 1 + 1 = 146 bits ~ 18 bytes
         Time.Delay delay;
-        uint32 expiration;
+        uint32 expiration; // Time after operation is OperationState.Ready to expire
         bool installed;
     }
 
@@ -106,14 +101,14 @@ abstract contract ERC7579DelayedExecutor is ERC7579Executor {
         return state(hashOperation(account, mode, executionCalldata, salt));
     }
 
-    /// @dev Same as {state}, but for a specific operation.
+    /// @dev Same as {state}, but for a specific operation id.
     function state(bytes32 operationId) public view returns (OperationState) {
-        Schedule storage sched = _schedules[operationId];
-        if (sched.scheduledAt == 0) return OperationState.Unknown;
-        if (sched.canceled) return OperationState.Canceled;
-        if (sched.executed) return OperationState.Executed;
-        if (block.timestamp < sched.scheduledAt + sched.executableAfter) return OperationState.Scheduled;
-        if (block.timestamp > sched.scheduledAt + sched.expiresAfter) return OperationState.Expired;
+        if (_schedules[operationId].scheduledAt == 0) return OperationState.Unknown;
+        if (_schedules[operationId].canceled) return OperationState.Canceled;
+        if (_schedules[operationId].executed) return OperationState.Executed;
+        (, uint48 executableAt, uint48 expiresAt) = getSchedule(operationId);
+        if (block.timestamp < executableAt) return OperationState.Scheduled;
+        if (block.timestamp > expiresAt) return OperationState.Expired;
         return OperationState.Ready;
     }
 
@@ -124,8 +119,9 @@ abstract contract ERC7579DelayedExecutor is ERC7579Executor {
         bytes calldata executionCalldata,
         bytes32 salt
     ) public view virtual override returns (bool) {
-        bytes32 id = hashOperation(account, mode, executionCalldata, salt);
-        return state(id) == OperationState.Ready || super.canExecute(account, mode, executionCalldata, salt);
+        return
+            state(account, mode, executionCalldata, salt) == OperationState.Ready ||
+            super.canExecute(account, mode, executionCalldata, salt);
     }
 
     /**
@@ -157,7 +153,7 @@ abstract contract ERC7579DelayedExecutor is ERC7579Executor {
     }
 
     /**
-     * @dev Whether the caller is authorized to cancel operations.
+     * @dev Whether the caller is authorized to schedule operations.
      * By default, this checks if the caller is the account itself. Derived contracts can
      * override this to implement custom authorization logic.
      *
@@ -184,36 +180,21 @@ abstract contract ERC7579DelayedExecutor is ERC7579Executor {
         return account == msg.sender;
     }
 
-    /// @dev Minimum delay for operations. Default for accounts that do not set a custom delay.
-    function minimumDelay() public view virtual returns (uint32) {
+    /// @dev Minimum delay after which {setDelay} takes effect.
+    function minSetback() public view virtual returns (uint32) {
         return 1 days; // Up to ~136 years
     }
 
-    /// @dev Minimum expiration for operations. Default for accounts that do not set a custom expiration.
-    function minimumExpiration() public view virtual returns (uint32) {
-        return 365 days; // Up to ~136 years
-    }
-
-    /// @dev Delay for a specific account. If not set, returns the minimum delay.
+    /// @dev Delay for a specific account.
     function getDelay(
         address account
     ) public view virtual returns (uint32 delay, uint32 pendingDelay, uint48 effectTime) {
-        (uint32 currentDelay, uint32 newDelay, uint48 effect) = _config[account].delay.getFull();
-        return (
-            // Safe downcast since both arguments are uint32
-            uint32(Math.ternary(!_config[account].installed, 0, Math.max(currentDelay, minimumDelay()))),
-            newDelay,
-            effect
-        );
+        return _config[account].delay.getFull();
     }
 
-    /// @dev Expiration delay for account operations. If not set, returns the minimum delay.
+    /// @dev Expiration delay for account operations.
     function getExpiration(address account) public view virtual returns (uint32 expiration) {
-        // Safe downcast since both arguments are uint32
-        return
-            uint32(
-                Math.ternary(!_config[account].installed, 0, Math.max(_config[account].expiration, minimumExpiration()))
-            );
+        return _config[account].expiration;
     }
 
     /// @dev Schedule for an operation. Returns default values if not set (i.e. `uint48(0)`, `uint48(0)`, `uint48(0)`).
@@ -231,11 +212,8 @@ abstract contract ERC7579DelayedExecutor is ERC7579Executor {
         bytes32 operationId
     ) public view virtual returns (uint48 scheduledAt, uint48 executableAt, uint48 expiresAt) {
         scheduledAt = _schedules[operationId].scheduledAt;
-        return (
-            scheduledAt,
-            scheduledAt + _schedules[operationId].executableAfter,
-            scheduledAt + _schedules[operationId].expiresAfter
-        );
+        executableAt = scheduledAt + _schedules[operationId].executableAfter;
+        return (scheduledAt, executableAt, executableAt + _schedules[operationId].expiresAfter);
     }
 
     /// @dev Returns the operation id.
@@ -269,7 +247,9 @@ abstract contract ERC7579DelayedExecutor is ERC7579Executor {
             (uint32 initialDelay, uint32 initialExpiration) = initData.length > 0
                 ? abi.decode(initData, (uint32, uint32))
                 : (0, 0);
-            _setDelay(msg.sender, initialDelay);
+            // An old delay might be still present
+            // So we set 0 for the minimum setback relying on any old value as the minimum delay
+            _setDelay(msg.sender, initialDelay, 0);
             _setExpiration(msg.sender, initialExpiration);
         }
     }
@@ -278,11 +258,11 @@ abstract contract ERC7579DelayedExecutor is ERC7579Executor {
      * @dev Allows an account to update its execution delay (see {getDelay}).
      *
      * The new delay will take effect after a transition period defined by the current delay
-     * or minimum delay, whichever is longer. This prevents immediate security downgrades.
+     * or {minSetback}, whichever is longer. This prevents immediate security downgrades.
      * Can only be called by the account itself.
      */
     function setDelay(uint32 newDelay) public virtual {
-        _setDelay(msg.sender, newDelay);
+        _setDelay(msg.sender, newDelay, minSetback());
     }
 
     /// @dev Allows an account to update its execution expiration (see {getExpiration}).
@@ -311,8 +291,7 @@ abstract contract ERC7579DelayedExecutor is ERC7579Executor {
 
     /**
      * @dev Cleans up the {getDelay} and {getExpiration} values by scheduling them to `0`
-     * and respecting the previous delay and expiration values. Do not consider {minimumDelay} and
-     * {minimumExpiration} for scheduling.
+     * and respecting the previous delay and expiration values.
      *
      * IMPORTANT: This function does not clean up scheduled operations. This means operations
      * could potentially be re-executed if the module is reinstalled later. This is a deliberate
@@ -326,7 +305,7 @@ abstract contract ERC7579DelayedExecutor is ERC7579Executor {
      */
     function onUninstall(bytes calldata) public virtual {
         _config[msg.sender].installed = false;
-        _unsafeSetDelay(msg.sender, 0, 0);
+        _setDelay(msg.sender, 0, minSetback()); // Avoids immediate downgrades
         _setExpiration(msg.sender, 0);
     }
 
@@ -335,8 +314,11 @@ abstract contract ERC7579DelayedExecutor is ERC7579Executor {
      *
      * Emits an {ERC7579ExecutorDelayUpdated} event.
      */
-    function _setDelay(address account, uint32 newDelay) internal virtual {
-        _unsafeSetDelay(account, newDelay, minimumDelay());
+    function _setDelay(address account, uint32 newDelay, uint32 setback) internal virtual {
+        (uint32 delay, uint32 pendingDelay, uint48 effectTime) = getDelay(account);
+        uint48 effect;
+        (_config[account].delay, effect) = Time.pack(delay, pendingDelay, effectTime).withUpdate(newDelay, setback);
+        emit ERC7579ExecutorDelayUpdated(account, newDelay, effect);
     }
 
     /**
@@ -348,14 +330,6 @@ abstract contract ERC7579DelayedExecutor is ERC7579Executor {
         // Safe downcast since both arguments are uint32
         _config[account].expiration = newExpiration;
         emit ERC7579ExecutorExpirationUpdated(account, newExpiration);
-    }
-
-    /// @dev Version of {_setDelay} without `type(uint32).max` check and with a custom minimum setback.
-    function _unsafeSetDelay(address account, uint32 newDelay, uint32 minSetback) internal virtual {
-        (uint32 delay, uint32 pendingDelay, uint48 effectTime) = getDelay(account);
-        uint48 effect;
-        (_config[account].delay, effect) = Time.pack(delay, pendingDelay, effectTime).withUpdate(newDelay, minSetback);
-        emit ERC7579ExecutorDelayUpdated(account, newDelay, effect);
     }
 
     /**

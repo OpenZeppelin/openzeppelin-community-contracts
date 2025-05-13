@@ -24,7 +24,7 @@ async function fixture() {
 
   // Prepare module installation data
   const delay = time.duration.days(10);
-  const expiration = time.duration.years(15);
+  const expiration = time.duration.years(1);
   const installData = ethers.AbiCoder.defaultAbiCoder().encode(['uint32', 'uint32'], [delay, expiration]);
 
   // ERC-7579 account
@@ -79,6 +79,9 @@ describe('ERC7579DelayedExecutor', function () {
       await expect(
         this.mockFromAccount.schedule(this.mockAccount.address, this.mode, this.calldata, salt),
       ).to.be.revertedWithCustomError(this.mock, 'ERC7579ExecutorUnexpectedOperationState'); // Can't schedule twice
+      await expect(
+        this.mock.getSchedule(this.mockAccount.address, this.mode, this.calldata, salt),
+      ).to.eventually.deep.equal([now, now + this.delay, now + this.delay + this.expiration]);
     });
 
     it('reverts with ERC7579UnauthorizedSchedule if called by other account', async function () {
