@@ -23,7 +23,7 @@ task(UPDATED_VENDORED_REMAPPINGS).setAction(() => {
 
   for (const [, src] of Object.entries(remappings).filter(r => r[1].includes(NODE_MODULES_PATH))) {
     const dir = src.replace(NODE_MODULES_PATH, LIB_PATH);
-    fs.rmSync(dir, { recursive: true });
+    fs.rmSync(dir, { recursive: true, force: true });
     fs.cpSync(src, dir, { recursive: true });
   }
 
