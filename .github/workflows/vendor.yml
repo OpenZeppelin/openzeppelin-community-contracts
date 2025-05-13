@@ -3,7 +3,7 @@ name: vendor dependencies
 on:
   push:
     branches:
-      - master
+      - test-vendor
 
 jobs:
   vendor:
@@ -17,7 +17,8 @@ jobs:
       - run: bash scripts/git-user-config.sh
       - name: Vendor dependencies
         run: |
-          npm run vendored
+          npm run vendor
           git checkout -f vendored
-          git commit -m "Vendor $(git rev-parse --short HEAD)"
+          git add .
+          git commit -m "Vendor $(git rev-parse --short HEAD)" --no-verify # Skip lint
           git push --all origin
