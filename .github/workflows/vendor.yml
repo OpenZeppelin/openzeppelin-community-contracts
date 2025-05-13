@@ -1,0 +1,27 @@
+name: vendor dependencies
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  vendor:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # So vendored branch is available
+          submodules: recursive
+      - name: Set up environment
+        uses: ./.github/actions/setup
+      - run: bash scripts/git-user-config.sh
+      - name: Vendor dependencies
+        run: |
+          npm run vendor
+          git checkout -f vendored
+          git add .
+          git commit -m "Vendor $(git rev-parse --short HEAD)" --allow-empty --no-verify # Skip lint
+          git push --all origin
