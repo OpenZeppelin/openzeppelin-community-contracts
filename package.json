@@ -10,7 +10,6 @@
   ],
   "scripts": {
     "compile": "hardhat compile",
-    "vendor": "hardhat vendor",
     "clean": "hardhat clean && rimraf build contracts/build",
     "docs": "npm run prepare-docs && oz-docs",
     "docs:watch": "oz-docs watch contracts docs/templates docs/config.js",
