@@ -10,4 +10,4 @@ import {MODULE_TYPE_EXECUTOR, IERC7579Hook} from "@openzeppelin/contracts/interf
 
 abstract contract ERC7579MultisigExecutorMock is ERC7579Executor, ERC7579Multisig {}
 abstract contract ERC7579MultisigWeightedExecutorMock is ERC7579Executor, ERC7579MultisigWeighted {}
-abstract contract ERC7579MultisigConfirmationMock is ERC7579Executor, ERC7579MultisigConfirmation {}
+abstract contract ERC7579MultisigConfirmationExecutorMock is ERC7579Executor, ERC7579MultisigConfirmation {}

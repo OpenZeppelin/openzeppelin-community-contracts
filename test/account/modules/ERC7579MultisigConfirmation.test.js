@@ -15,7 +15,10 @@ const signerToConfirm = ethers.Wallet.createRandom();
 
 async function fixture() {
   // Deploy ERC-7579 multisig confirmation module
-  const mock = await ethers.deployContract('$ERC7579MultisigConfirmationMock', ['ERC7579MultisigConfirmation', '1']);
+  const mock = await ethers.deployContract('$ERC7579MultisigConfirmationExecutorMock', [
+    'ERC7579MultisigConfirmation',
+    '1',
+  ]);
 
   // ERC-4337 env
   const helper = new ERC4337Helper();
