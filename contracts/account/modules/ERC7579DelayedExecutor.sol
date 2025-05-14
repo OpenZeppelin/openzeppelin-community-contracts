@@ -80,7 +80,7 @@ abstract contract ERC7579DelayedExecutor is ERC7579Executor {
     /// @dev Emitted when the expiration delay is updated.
     event ERC7579ExecutorExpirationUpdated(address indexed account, uint32 newExpiration);
 
-    /// @dev The module is not installed.
+    /// @dev The module is not installed on the account.
     error ERC7579ExecutorModuleNotInstalled();
 
     /**
@@ -123,203 +123,6 @@ abstract contract ERC7579DelayedExecutor is ERC7579Executor {
         if (block.timestamp < executableAt) return OperationState.Scheduled;
         if (block.timestamp > expiresAt) return OperationState.Expired;
         return OperationState.Ready;
-    }
-
-    /// @dev Minimum delay after which {setDelay} takes effect.
-    function minSetback() public view virtual returns (uint32) {
-        return 1 days; // Up to ~136 years
-    }
-
-    /// @dev Default delay for account operations. Set if not provided during {onInstall}.
-    function defaultDelay() public view virtual returns (uint32) {
-        return 5 days;
-    }
-
-    /// @dev Default expiration for account operations. Set if not provided during {onInstall}.
-    function defaultExpiration() public view virtual returns (uint32) {
-        return 60 days;
-    }
-
-    /// @dev Delay for a specific account.
-    function getDelay(
-        address account
-    ) public view virtual returns (uint32 delay, uint32 pendingDelay, uint48 effectTime) {
-        return _config[account].delay.getFull();
-    }
-
-    /// @dev Expiration delay for account operations.
-    function getExpiration(address account) public view virtual returns (uint32 expiration) {
-        return _config[account].expiration;
-    }
-
-    /// @dev Schedule for an operation. Returns default values if not set (i.e. `uint48(0)`, `uint48(0)`, `uint48(0)`).
-    function getSchedule(
-        address account,
-        Mode mode,
-        bytes calldata executionCalldata,
-        bytes32 salt
-    ) public view virtual returns (uint48 scheduledAt, uint48 executableAt, uint48 expiresAt) {
-        return getSchedule(hashOperation(account, mode, executionCalldata, salt));
-    }
-
-    /// @dev Same as {getSchedule} but with the operation id.
-    function getSchedule(
-        bytes32 operationId
-    ) public view virtual returns (uint48 scheduledAt, uint48 executableAt, uint48 expiresAt) {
-        scheduledAt = _schedules[operationId].scheduledAt;
-        executableAt = scheduledAt + _schedules[operationId].executableAfter;
-        return (scheduledAt, executableAt, executableAt + _schedules[operationId].expiresAfter);
-    }
-
-    /// @dev Returns the operation id.
-    function hashOperation(
-        address account,
-        Mode mode,
-        bytes calldata executionCalldata,
-        bytes32 salt
-    ) public view virtual returns (bytes32) {
-        return keccak256(abi.encode(account, mode, executionCalldata, salt));
-    }
-
-    /**
-     * @dev Sets up the module's initial configuration when installed by an account.
-     * The account calling this function becomes registered with the module.
-     *
-     * The `initData` may be `abi.encode(uint32(initialDelay), uint32(initialExpiration))`.
-     * The delay will be set to the maximum of this value and the minimum delay if provided.
-     * Otherwise, the delay will be set to the minimum delay.
-     *
-     * Behaves as a no-op if the module is already installed.
-     *
-     * Requirements:
-     *
-     * * The account (i.e `msg.sender`) must implement the {IERC7579ModuleConfig} interface.
-     * * `initData` must be empty or decode correctly to `(uint32, uint32)`.
-     */
-    function onInstall(bytes calldata initData) public virtual {
-        if (!_config[msg.sender].installed) {
-            _config[msg.sender].installed = true;
-            (uint32 initialDelay, uint32 initialExpiration) = initData.length > 0
-                ? abi.decode(initData, (uint32, uint32))
-                : (defaultDelay(), defaultExpiration());
-            // An old delay might be still present
-            // So we set 0 for the minimum setback relying on any old value as the minimum delay
-            _setDelay(msg.sender, initialDelay, 0);
-            _setExpiration(msg.sender, initialExpiration);
-        }
-    }
-
-    /**
-     * @dev Cleans up the {getDelay} and {getExpiration} values by scheduling them to `0`
-     * and respecting the previous delay and expiration values.
-     *
-     * IMPORTANT: This function does not clean up scheduled operations. This means operations
-     * could potentially be re-executed if the module is reinstalled later. This is a deliberate
-     * design choice for efficiency, but module implementations may want to override this behavior
-     * to clear scheduled operations during uninstallation for their specific use cases.
-     *
-     * WARNING: The account's delay will be removed if the account calls this function, allowing
-     * immediate scheduling of operations. As an account operator, make sure to uninstall to a
-     * predefined path in your account that properly handles the side effects of uninstallation.
-     * See {AccountERC7579-uninstallModule}.
-     */
-    function onUninstall(bytes calldata) public virtual {
-        _config[msg.sender].installed = false;
-        _setDelay(msg.sender, 0, minSetback()); // Avoids immediate downgrades
-        _setExpiration(msg.sender, 0);
-    }
-
-    /**
-     * @dev Allows an account to update its execution delay (see {getDelay}).
-     *
-     * The new delay will take effect after a transition period defined by the current delay
-     * or {minSetback}, whichever is longer. This prevents immediate security downgrades.
-     * Can only be called by the account itself.
-     */
-    function setDelay(uint32 newDelay) public virtual {
-        _setDelay(msg.sender, newDelay, minSetback());
-    }
-
-    /// @dev Allows an account to update its execution expiration (see {getExpiration}).
-    function setExpiration(uint32 newExpiration) public virtual {
-        _setExpiration(msg.sender, newExpiration);
-    }
-
-    /**
-     * @dev Schedules an operation to be executed after the account's delay period (see {getDelay}).
-     * Operations are uniquely identified by the combination of `mode`, `executionCalldata`, and `salt`.
-     * See {_validateScheduleRequest} for validation.
-     */
-    function schedule(address account, Mode mode, bytes calldata executionCalldata, bytes32 salt) public virtual {
-        _validateScheduleRequest(account, mode, executionCalldata, salt);
-        _schedule(account, mode, executionCalldata, salt);
-    }
-
-    /**
-     * @dev Cancels a previously scheduled operation.
-     * See {_validateCancelRequest} for validation.
-     */
-    function cancel(address account, Mode mode, bytes calldata executionCalldata, bytes32 salt) public virtual {
-        _validateCancelRequest(account, mode, executionCalldata, salt);
-        _cancel(account, mode, executionCalldata, salt);
-    }
-
-    /**
-     * @dev Internal implementation for setting an account's delay. See {getDelay}.
-     *
-     * Emits an {ERC7579ExecutorDelayUpdated} event.
-     */
-    function _setDelay(address account, uint32 newDelay, uint32 minimumSetback) internal virtual {
-        uint48 effect;
-        (_config[account].delay, effect) = _config[account].delay.withUpdate(newDelay, minimumSetback);
-        emit ERC7579ExecutorDelayUpdated(account, newDelay, effect);
-    }
-
-    /**
-     * @dev Internal implementation for setting an account's expiration. See {getExpiration}.
-     *
-     * Emits an {ERC7579ExecutorExpirationUpdated} event.
-     */
-    function _setExpiration(address account, uint32 newExpiration) internal virtual {
-        // Safe downcast since both arguments are uint32
-        _config[account].expiration = newExpiration;
-        emit ERC7579ExecutorExpirationUpdated(account, newExpiration);
-    }
-
-    /**
-     * @dev Validates a schedule request. This base implementation validates
-     * the caller is authorized to schedule, the module is installed, and the
-     * operation was not scheduled before.
-     *
-     * Can be overridden by derived contracts to implement custom validation logic.
-     *
-     * Example extension:
-     *
-     * ```solidity
-     *  function _validateScheduleRequest(
-     *     address account,
-     *     Mode mode,
-     *     bytes calldata executionCalldata,
-     *     bytes32 salt
-     *  ) internal view virtual override {
-     *    bool conditionMet = ...; // custom logic to check condition
-     *    require(conditionMet, ERC7579ExecutorConditionNotMet());
-     *    super._validateScheduleRequest(account, mode, executionCalldata, salt);
-     *  }
-     *```
-     */
-    function _validateScheduleRequest(
-        address account,
-        Mode mode,
-        bytes calldata executionCalldata,
-        bytes32 salt
-    ) internal view virtual {
-        require(_config[account].installed, ERC7579ExecutorModuleNotInstalled());
-
-        bytes32 id = hashOperation(account, mode, executionCalldata, salt);
-        _validateStateBitmap(id, _encodeStateBitmap(OperationState.Unknown));
-
-        require(msg.sender == account, ERC7579ExecutorUnauthorizedSchedule());
     }
 
     /**
@@ -386,6 +189,203 @@ abstract contract ERC7579DelayedExecutor is ERC7579Executor {
         _validateStateBitmap(id, allowedStates);
 
         require(msg.sender == account, ERC7579ExecutorUnauthorizedCancellation());
+    }
+
+    /**
+     * @dev Validates a schedule request. This base implementation validates
+     * the caller is authorized to schedule, the module is installed, and the
+     * operation was not scheduled before.
+     *
+     * Can be overridden by derived contracts to implement custom validation logic.
+     *
+     * Example extension:
+     *
+     * ```solidity
+     *  function _validateScheduleRequest(
+     *     address account,
+     *     Mode mode,
+     *     bytes calldata executionCalldata,
+     *     bytes32 salt
+     *  ) internal view virtual override {
+     *    bool conditionMet = ...; // custom logic to check condition
+     *    require(conditionMet, ERC7579ExecutorConditionNotMet());
+     *    super._validateScheduleRequest(account, mode, executionCalldata, salt);
+     *  }
+     *```
+     */
+    function _validateScheduleRequest(
+        address account,
+        Mode mode,
+        bytes calldata executionCalldata,
+        bytes32 salt
+    ) internal view virtual {
+        require(_config[account].installed, ERC7579ExecutorModuleNotInstalled());
+
+        bytes32 id = hashOperation(account, mode, executionCalldata, salt);
+        _validateStateBitmap(id, _encodeStateBitmap(OperationState.Unknown));
+
+        require(msg.sender == account, ERC7579ExecutorUnauthorizedSchedule());
+    }
+
+    /// @dev Minimum delay after which {setDelay} takes effect.
+    function minSetback() public view virtual returns (uint32) {
+        return 1 days; // Up to ~136 years
+    }
+
+    /// @dev Delay for a specific account.
+    function getDelay(
+        address account
+    ) public view virtual returns (uint32 delay, uint32 pendingDelay, uint48 effectTime) {
+        return _config[account].delay.getFull();
+    }
+
+    /// @dev Expiration delay for account operations.
+    function getExpiration(address account) public view virtual returns (uint32 expiration) {
+        return _config[account].expiration;
+    }
+
+    /// @dev Schedule for an operation. Returns default values if not set (i.e. `uint48(0)`, `uint48(0)`, `uint48(0)`).
+    function getSchedule(
+        address account,
+        Mode mode,
+        bytes calldata executionCalldata,
+        bytes32 salt
+    ) public view virtual returns (uint48 scheduledAt, uint48 executableAt, uint48 expiresAt) {
+        return getSchedule(hashOperation(account, mode, executionCalldata, salt));
+    }
+
+    /// @dev Same as {getSchedule} but with the operation id.
+    function getSchedule(
+        bytes32 operationId
+    ) public view virtual returns (uint48 scheduledAt, uint48 executableAt, uint48 expiresAt) {
+        scheduledAt = _schedules[operationId].scheduledAt;
+        executableAt = scheduledAt + _schedules[operationId].executableAfter;
+        return (scheduledAt, executableAt, executableAt + _schedules[operationId].expiresAfter);
+    }
+
+    /// @dev Returns the operation id.
+    function hashOperation(
+        address account,
+        Mode mode,
+        bytes calldata executionCalldata,
+        bytes32 salt
+    ) public view virtual returns (bytes32) {
+        return keccak256(abi.encode(account, mode, executionCalldata, salt));
+    }
+
+    /// @dev Default delay for account operations. Set if not provided during {onInstall}.
+    function defaultDelay() public view virtual returns (uint32) {
+        return 5 days;
+    }
+
+    /// @dev Default expiration for account operations. Set if not provided during {onInstall}.
+    function defaultExpiration() public view virtual returns (uint32) {
+        return 60 days;
+    }
+
+    /**
+     * @dev Sets up the module's initial configuration when installed by an account.
+     * The account calling this function becomes registered with the module.
+     *
+     * The `initData` may be `abi.encode(uint32(initialDelay), uint32(initialExpiration))`.
+     * The delay will be set to the maximum of this value and the minimum delay if provided.
+     * Otherwise, the delay will be set to the minimum delay.
+     *
+     * Behaves as a no-op if the module is already installed.
+     *
+     * Requirements:
+     *
+     * * The account (i.e `msg.sender`) must implement the {IERC7579ModuleConfig} interface.
+     * * `initData` must be empty or decode correctly to `(uint32, uint32)`.
+     */
+    function onInstall(bytes calldata initData) public virtual {
+        if (!_config[msg.sender].installed) {
+            _config[msg.sender].installed = true;
+            (uint32 initialDelay, uint32 initialExpiration) = initData.length > 0
+                ? abi.decode(initData, (uint32, uint32))
+                : (defaultDelay(), defaultExpiration());
+            // An old delay might be still present
+            // So we set 0 for the minimum setback relying on any old value as the minimum delay
+            _setDelay(msg.sender, initialDelay, 0);
+            _setExpiration(msg.sender, initialExpiration);
+        }
+    }
+
+    /**
+     * @dev Allows an account to update its execution delay (see {getDelay}).
+     *
+     * The new delay will take effect after a transition period defined by the current delay
+     * or {minSetback}, whichever is longer. This prevents immediate security downgrades.
+     * Can only be called by the account itself.
+     */
+    function setDelay(uint32 newDelay) public virtual {
+        _setDelay(msg.sender, newDelay, minSetback());
+    }
+
+    /// @dev Allows an account to update its execution expiration (see {getExpiration}).
+    function setExpiration(uint32 newExpiration) public virtual {
+        _setExpiration(msg.sender, newExpiration);
+    }
+
+    /**
+     * @dev Schedules an operation to be executed after the account's delay period (see {getDelay}).
+     * Operations are uniquely identified by the combination of `mode`, `executionCalldata`, and `salt`.
+     * See {_validateScheduleRequest} for validation.
+     */
+    function schedule(address account, Mode mode, bytes calldata executionCalldata, bytes32 salt) public virtual {
+        _validateScheduleRequest(account, mode, executionCalldata, salt);
+        _schedule(account, mode, executionCalldata, salt);
+    }
+
+    /**
+     * @dev Cancels a previously scheduled operation.
+     * See {_validateCancelRequest} for validation.
+     */
+    function cancel(address account, Mode mode, bytes calldata executionCalldata, bytes32 salt) public virtual {
+        _validateCancelRequest(account, mode, executionCalldata, salt);
+        _cancel(account, mode, executionCalldata, salt);
+    }
+
+    /**
+     * @dev Cleans up the {getDelay} and {getExpiration} values by scheduling them to `0`
+     * and respecting the previous delay and expiration values.
+     *
+     * IMPORTANT: This function does not clean up scheduled operations. This means operations
+     * could potentially be re-executed if the module is reinstalled later. This is a deliberate
+     * design choice for efficiency, but module implementations may want to override this behavior
+     * to clear scheduled operations during uninstallation for their specific use cases.
+     *
+     * WARNING: The account's delay will be removed if the account calls this function, allowing
+     * immediate scheduling of operations. As an account operator, make sure to uninstall to a
+     * predefined path in your account that properly handles the side effects of uninstallation.
+     * See {AccountERC7579-uninstallModule}.
+     */
+    function onUninstall(bytes calldata) public virtual {
+        _config[msg.sender].installed = false;
+        _setDelay(msg.sender, 0, minSetback()); // Avoids immediate downgrades
+        _setExpiration(msg.sender, 0);
+    }
+
+    /**
+     * @dev Internal implementation for setting an account's delay. See {getDelay}.
+     *
+     * Emits an {ERC7579ExecutorDelayUpdated} event.
+     */
+    function _setDelay(address account, uint32 newDelay, uint32 minimumSetback) internal virtual {
+        uint48 effect;
+        (_config[account].delay, effect) = _config[account].delay.withUpdate(newDelay, minimumSetback);
+        emit ERC7579ExecutorDelayUpdated(account, newDelay, effect);
+    }
+
+    /**
+     * @dev Internal implementation for setting an account's expiration. See {getExpiration}.
+     *
+     * Emits an {ERC7579ExecutorExpirationUpdated} event.
+     */
+    function _setExpiration(address account, uint32 newExpiration) internal virtual {
+        // Safe downcast since both arguments are uint32
+        _config[account].expiration = newExpiration;
+        emit ERC7579ExecutorExpirationUpdated(account, newExpiration);
     }
 
     /**
