@@ -68,8 +68,10 @@ abstract contract ERC7579Executor is IERC7579Module {
         bytes calldata executionCalldata,
         bytes32 salt
     ) public virtual returns (bytes[] memory returnData) {
-        require(canExecute(account, mode, executionCalldata, salt), ERC7579UnauthorizedExecution());
-        return _execute(account, mode, executionCalldata, salt);
+        bool allowed = canExecute(account, mode, executionCalldata, salt);
+        returnData = _execute(account, mode, executionCalldata, salt); // Prioritize errors thrown in _execute
+        require(allowed, ERC7579UnauthorizedExecution());
+        return returnData;
     }
 
     /**

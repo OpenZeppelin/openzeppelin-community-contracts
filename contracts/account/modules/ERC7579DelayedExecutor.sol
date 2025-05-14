@@ -286,8 +286,9 @@ abstract contract ERC7579DelayedExecutor is ERC7579Executor {
      * See {canSchedule} for authorization checks.
      */
     function schedule(address account, Mode mode, bytes calldata executionCalldata, bytes32 salt) public virtual {
-        require(canSchedule(account, mode, executionCalldata, salt), ERC7579ExecutorUnauthorizedSchedule());
-        _schedule(account, mode, executionCalldata, salt);
+        bool allowed = canSchedule(account, mode, executionCalldata, salt);
+        _schedule(account, mode, executionCalldata, salt); // Prioritize errors thrown in _schedule
+        require(allowed, ERC7579ExecutorUnauthorizedSchedule());
     }
 
     /**
@@ -295,8 +296,9 @@ abstract contract ERC7579DelayedExecutor is ERC7579Executor {
      * scheduled the operation. See {_cancel}.
      */
     function cancel(address account, Mode mode, bytes calldata executionCalldata, bytes32 salt) public virtual {
-        require(canCancel(account, mode, executionCalldata, salt), ERC7579ExecutorUnauthorizedCancellation());
-        _cancel(account, mode, executionCalldata, salt);
+        bool allowed = canCancel(account, mode, executionCalldata, salt);
+        _cancel(account, mode, executionCalldata, salt); // Prioritize errors thrown in _cancel
+        require(allowed, ERC7579ExecutorUnauthorizedCancellation());
     }
 
     /**

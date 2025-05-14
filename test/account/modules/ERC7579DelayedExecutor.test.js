@@ -168,13 +168,13 @@ describe('ERC7579DelayedExecutor', function () {
       await this.mock.$_schedule(this.mockAccount.address, this.mode, this.calldata, salt);
     });
 
-    it('reverts with ERC7579UnauthorizedExecution before delay passes with any caller', async function () {
+    it('reverts with ERC7579ExecutorUnexpectedOperationState before delay passes with any caller', async function () {
       await expect(
         this.mock.execute(this.mockAccount.address, this.mode, this.calldata, salt),
-      ).to.be.revertedWithCustomError(this.mock, 'ERC7579UnauthorizedExecution');
+      ).to.be.revertedWithCustomError(this.mock, 'ERC7579ExecutorUnexpectedOperationState');
     });
 
-    it('reverts with ERC7579UnauthorizedExecution before delay passes with the account as caller', async function () {
+    it('reverts with ERC7579ExecutorUnexpectedOperationState before delay passes with the account as caller', async function () {
       await expect(
         this.mockFromAccount.execute(this.mockAccount.address, this.mode, this.calldata, salt),
       ).to.be.revertedWithCustomError(this.mock, 'ERC7579ExecutorUnexpectedOperationState'); // Allowed, not ready
@@ -187,7 +187,7 @@ describe('ERC7579DelayedExecutor', function () {
         .withArgs(...this.args);
       await expect(
         this.mock.execute(this.mockAccount.address, this.mode, this.calldata, salt),
-      ).to.be.revertedWithCustomError(this.mock, 'ERC7579UnauthorizedExecution'); // Can't execute twice
+      ).to.be.revertedWithCustomError(this.mock, 'ERC7579ExecutorUnexpectedOperationState'); // Can't execute twice
     });
 
     it('executes if called by the account when delay passes but has not expired with the account as caller', async function () {
@@ -200,11 +200,11 @@ describe('ERC7579DelayedExecutor', function () {
       ).to.be.revertedWithCustomError(this.mock, 'ERC7579ExecutorUnexpectedOperationState'); // Can't execute twice
     });
 
-    it('reverts if the operation was expired with any caller', async function () {
+    it('reverts with ERC7579ExecutorUnexpectedOperationState if the operation was expired with any caller', async function () {
       await time.increase(this.delay + this.expiration);
       await expect(
         this.mock.execute(this.mockAccount.address, this.mode, this.calldata, salt),
-      ).to.be.revertedWithCustomError(this.mock, 'ERC7579UnauthorizedExecution');
+      ).to.be.revertedWithCustomError(this.mock, 'ERC7579ExecutorUnexpectedOperationState');
     });
 
     it('reverts if the operation was expired with the account as caller', async function () {
