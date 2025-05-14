@@ -80,6 +80,9 @@ abstract contract ERC7579DelayedExecutor is ERC7579Executor {
     /// @dev Emitted when the expiration delay is updated.
     event ERC7579ExecutorExpirationUpdated(address indexed account, uint32 newExpiration);
 
+    /// @dev The module is not installed.
+    error ERC7579ExecutorModuleNotInstalled();
+
     /**
      * @dev The current state of a operation is not the expected. The `expectedStates` is a bitmap with the
      * bits enabled for each OperationState enum position counting from right to left. See {_encodeStateBitmap}.
@@ -122,7 +125,7 @@ abstract contract ERC7579DelayedExecutor is ERC7579Executor {
         return OperationState.Ready;
     }
 
-    /// @dev See {ERC7579Executor-canExecute}. Allows anyone to execute an operation if it's {OperationState-Ready}.
+    /// @dev See {ERC7579Executor-canExecute}. This implementation allows anyone to execute an operation.
     function canExecute(
         address /* account */,
         Mode /* mode */,
@@ -133,8 +136,8 @@ abstract contract ERC7579DelayedExecutor is ERC7579Executor {
     }
 
     /**
-     * @dev Whether the caller is authorized to cancel operations.
-     * By default, this checks if the caller is the account itself. Derived contracts can
+     * @dev Checks whether the caller is authorized to cancel operations.
+     * By default, checks if the caller is the account itself. Derived contracts can
      * override this to implement custom authorization logic.
      *
      * Example extension:
@@ -161,8 +164,8 @@ abstract contract ERC7579DelayedExecutor is ERC7579Executor {
     }
 
     /**
-     * @dev Whether the caller is authorized to schedule operations.
-     * By default, this checks if the caller is the account itself. Derived contracts can
+     * @dev Checks whether the caller is authorized to schedule operations.
+     * By default, checks if the caller is the account itself. Derived contracts can
      * override this to implement custom authorization logic.
      *
      * Example extension:
@@ -191,6 +194,16 @@ abstract contract ERC7579DelayedExecutor is ERC7579Executor {
     /// @dev Minimum delay after which {setDelay} takes effect.
     function minSetback() public view virtual returns (uint32) {
         return 1 days; // Up to ~136 years
+    }
+
+    /// @dev Default delay for account operations. Set if not provided during {onInstall}.
+    function defaultDelay() public view virtual returns (uint32) {
+        return 5 days;
+    }
+
+    /// @dev Default expiration for account operations. Set if not provided during {onInstall}.
+    function defaultExpiration() public view virtual returns (uint32) {
+        return 60 days;
     }
 
     /// @dev Delay for a specific account.
@@ -234,16 +247,6 @@ abstract contract ERC7579DelayedExecutor is ERC7579Executor {
         return keccak256(abi.encode(account, mode, executionCalldata, salt));
     }
 
-    /// @dev Default delay for account operations. Set if not provided during {onInstall}.
-    function defaultDelay() public view virtual returns (uint32) {
-        return 5 days;
-    }
-
-    /// @dev Default expiration for account operations. Set if not provided during {onInstall}.
-    function defaultExpiration() public view virtual returns (uint32) {
-        return 60 days;
-    }
-
     /**
      * @dev Sets up the module's initial configuration when installed by an account.
      * The account calling this function becomes registered with the module.
@@ -273,6 +276,26 @@ abstract contract ERC7579DelayedExecutor is ERC7579Executor {
     }
 
     /**
+     * @dev Cleans up the {getDelay} and {getExpiration} values by scheduling them to `0`
+     * and respecting the previous delay and expiration values.
+     *
+     * IMPORTANT: This function does not clean up scheduled operations. This means operations
+     * could potentially be re-executed if the module is reinstalled later. This is a deliberate
+     * design choice for efficiency, but module implementations may want to override this behavior
+     * to clear scheduled operations during uninstallation for their specific use cases.
+     *
+     * WARNING: The account's delay will be removed if the account calls this function, allowing
+     * immediate scheduling of operations. As an account operator, make sure to uninstall to a
+     * predefined path in your account that properly handles the side effects of uninstallation.
+     * See {AccountERC7579-uninstallModule}.
+     */
+    function onUninstall(bytes calldata) public virtual {
+        _config[msg.sender].installed = false;
+        _setDelay(msg.sender, 0, minSetback()); // Avoids immediate downgrades
+        _setExpiration(msg.sender, 0);
+    }
+
+    /**
      * @dev Allows an account to update its execution delay (see {getDelay}).
      *
      * The new delay will take effect after a transition period defined by the current delay
@@ -291,7 +314,8 @@ abstract contract ERC7579DelayedExecutor is ERC7579Executor {
     /**
      * @dev Schedules an operation to be executed after the account's delay period (see {getDelay}).
      * Operations are uniquely identified by the combination of `mode`, `executionCalldata`, and `salt`.
-     * See {_validateScheduleRequest} for validation checks.
+     * See {canSchedule} for caller authorization and {_validateScheduleRequest} for extra
+     * validation checks.
      */
     function schedule(address account, Mode mode, bytes calldata executionCalldata, bytes32 salt) public virtual {
         _validateScheduleRequest(account, mode, executionCalldata, salt);
@@ -299,33 +323,13 @@ abstract contract ERC7579DelayedExecutor is ERC7579Executor {
     }
 
     /**
-     * @dev Cancels a previously scheduled operation. Can only be called by the account that
-     * scheduled the operation.
-     * See {_validateCancelRequest} for validation checks.
+     * @dev Cancels a previously scheduled operation.
+     * See {canCancel} for caller authorization and {_validateCancelRequest} for extra
+     * validation checks.
      */
     function cancel(address account, Mode mode, bytes calldata executionCalldata, bytes32 salt) public virtual {
         _validateCancelRequest(account, mode, executionCalldata, salt);
         _cancel(account, mode, executionCalldata, salt);
-    }
-
-    /**
-     * @dev Cleans up the {getDelay} and {getExpiration} values by scheduling them to `0`
-     * and respecting the previous delay and expiration values.
-     *
-     * IMPORTANT: This function does not clean up scheduled operations. This means operations
-     * could potentially be re-executed if the module is reinstalled later. This is a deliberate
-     * design choice for efficiency, but module implementations may want to override this behavior
-     * to clear scheduled operations during uninstallation for their specific use cases.
-     *
-     * WARNING: The account's delay will be removed if the account calls this function, allowing
-     * immediate scheduling of operations. As an account operator, make sure to uninstall to a
-     * predefined path in your account that properly handles the side effects of uninstallation.
-     * See {AccountERC7579-uninstallModule}.
-     */
-    function onUninstall(bytes calldata) public virtual {
-        _config[msg.sender].installed = false;
-        _setDelay(msg.sender, 0, minSetback()); // Avoids immediate downgrades
-        _setExpiration(msg.sender, 0);
     }
 
     /**
@@ -351,9 +355,26 @@ abstract contract ERC7579DelayedExecutor is ERC7579Executor {
     }
 
     /**
-     * @dev Validates a schedule request.
+     * @dev Validates a schedule request. This base implementation validates
+     * the caller is authorized to schedule, the module is installed, and the
+     * operation was not scheduled before.
      *
      * Can be overridden by derived contracts to implement custom validation logic.
+     *
+     * Example extension:
+     *
+     * ```solidity
+     *  function _validateScheduleRequest(
+     *     address account,
+     *     Mode mode,
+     *     bytes calldata executionCalldata,
+     *     bytes32 salt
+     *  ) internal view virtual override {
+     *    bool conditionMet = ...; // custom logic to check condition
+     *    require(conditionMet, ERC7579ExecutorConditionNotMet());
+     *    super._validateScheduleRequest(account, mode, executionCalldata, salt);
+     *  }
+     *```
      */
     function _validateScheduleRequest(
         address account,
@@ -361,7 +382,8 @@ abstract contract ERC7579DelayedExecutor is ERC7579Executor {
         bytes calldata executionCalldata,
         bytes32 salt
     ) internal view virtual {
-        // priorizes "when" errors over "who" thrown errors
+        require(_config[account].installed, ERC7579ExecutorModuleNotInstalled());
+
         bytes32 id = hashOperation(account, mode, executionCalldata, salt);
         _validateStateBitmap(id, _encodeStateBitmap(OperationState.Unknown));
 
@@ -369,7 +391,9 @@ abstract contract ERC7579DelayedExecutor is ERC7579Executor {
     }
 
     /**
-     * @dev See {ERC7579Executor-_validateExecution}.
+     * @dev See {ERC7579Executor-_validateExecutionRequest}.
+     *
+     * Validates the caller is authorized to execute and the operation is in a valid state.
      */
     function _validateExecutionRequest(
         address account,
@@ -384,9 +408,25 @@ abstract contract ERC7579DelayedExecutor is ERC7579Executor {
     }
 
     /**
-     * @dev Validates a cancellation request.
+     * @dev Validates a cancellation request against necessary conditions. This base implementation
+     * validates the caller is authorized to cancel and that the operation is in a valid state.
      *
-     * Can be overridden by derived contracts to implement custom validation logic.
+     * Derived contracts can override this function to add additional validation logic.
+     *
+     * Example extension:
+     *
+     * ```solidity
+     *  function _validateCancelRequest(
+     *     address account,
+     *     Mode mode,
+     *     bytes calldata executionCalldata,
+     *     bytes32 salt
+     *  ) internal view virtual override {
+     *    bool conditionMet = ...; // custom logic to check additional condition
+     *    require(conditionMet, ERC7579ExecutorConditionNotMet());
+     *    super._validateCancelRequest(account, mode, executionCalldata, salt);
+     *  }
+     *```
      */
     function _validateCancelRequest(
         address account,
@@ -402,7 +442,7 @@ abstract contract ERC7579DelayedExecutor is ERC7579Executor {
     }
 
     /**
-     * @dev Internal version of {schedule} that takes an `account` address as an argument.
+     * @dev Low-level internal function to schedule an operation. Does not perform any validation checks.
      *
      * Emits an {ERC7579ExecutorOperationScheduled} event.
      */
@@ -435,9 +475,11 @@ abstract contract ERC7579DelayedExecutor is ERC7579Executor {
     }
 
     /**
-     * @dev Internal version of {cancel} that takes an `account` address as an argument.
+     * @dev Low-level internal function to cancel an operation. Does not perform any validation checks.
      *
-     * Canceled operations can't be rescheduled. Emits an {ERC7579ExecutorOperationCanceled} event.
+     * Canceled operations can't be rescheduled.
+     *
+     * Emits an {ERC7579ExecutorOperationCanceled} event.
      */
     function _cancel(address account, Mode mode, bytes calldata executionCalldata, bytes32 salt) internal virtual {
         bytes32 id = hashOperation(account, mode, executionCalldata, salt);
