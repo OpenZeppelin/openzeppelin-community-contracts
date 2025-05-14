@@ -11,9 +11,7 @@ import {Mode} from "@openzeppelin/contracts/account/utils/draft-ERC7579Utils.sol
  * The module enables accounts to execute arbitrary operations, leveraging the execution
  * capabilities defined in the ERC-7579 standard. By default, the executor is restricted to
  * operations initiated by the account itself, but can be customized in derived contracts
- * by overriding the {canExecute} function.
- *
- * Additional validations can be added in {_validateExecutionRequest}.
+ * by overriding the {_validateExecutionRequest} function.
  *
  * TIP: This is a simplified executor that directly executes operations without delay or expiration
  * mechanisms. For a more advanced implementation with time-delayed execution patterns and
@@ -32,37 +30,8 @@ abstract contract ERC7579Executor is IERC7579Module {
     }
 
     /**
-     * @dev Checks whether the caller is authorized to execute operations.
-     * By default, checks if the caller is the account itself. Derived contracts can
-     * override this to implement custom authorization logic.
-     *
-     * Example extension:
-     *
-     * ```solidity
-     *  function canExecute(
-     *     address account,
-     *     Mode mode,
-     *     bytes calldata executionCalldata,
-     *     bytes32 salt
-     *  ) public view virtual returns (bool) {
-     *    bool isAuthorized = ...; // custom logic to check authorization
-     *    return isAuthorized || super.canExecute(account, mode, executionCalldata, salt);
-     *  }
-     *```
-     */
-    function canExecute(
-        address account,
-        Mode /* mode */,
-        bytes calldata /* executionCalldata */,
-        bytes32 /* salt */
-    ) public view virtual returns (bool) {
-        return msg.sender == account;
-    }
-
-    /**
-     * @dev Validates an execution request with required conditions. This base implementation
-     * only validates the caller is authorized to execute via {canExecute}. Derived contracts can
-     * override this function to add additional validation logic.
+     * @dev Validates an execution request. This base implementation only validates the caller is the account itself.
+     * Derived contracts can override this function to add additional validation logic.
      *
      * Example extension:
      *
@@ -81,17 +50,16 @@ abstract contract ERC7579Executor is IERC7579Module {
      */
     function _validateExecutionRequest(
         address account,
-        Mode mode,
-        bytes calldata executionCalldata,
-        bytes32 salt
+        Mode /* mode */,
+        bytes calldata /* executionCalldata */,
+        bytes32 /* salt */
     ) internal view virtual {
-        require(canExecute(account, mode, executionCalldata, salt), ERC7579UnauthorizedExecution());
+        require(msg.sender == account, ERC7579UnauthorizedExecution());
     }
 
     /**
      * @dev Executes an operation and returns the result data from the executed operation.
-     * Restricted to the account itself by default. See {_execute} for requirements, {canExecute}
-     * for caller authorization and {_validateExecutionRequest} for additional validation checks.
+     * See {_execute} for requirements, see {_validateExecutionRequest} for validation.
      */
     function execute(
         address account,

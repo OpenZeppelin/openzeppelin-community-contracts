@@ -125,72 +125,6 @@ abstract contract ERC7579DelayedExecutor is ERC7579Executor {
         return OperationState.Ready;
     }
 
-    /// @dev See {ERC7579Executor-canExecute}. This implementation allows anyone to execute an operation.
-    function canExecute(
-        address /* account */,
-        Mode /* mode */,
-        bytes calldata /* executionCalldata */,
-        bytes32 /* salt */
-    ) public view virtual override returns (bool) {
-        return true;
-    }
-
-    /**
-     * @dev Checks whether the caller is authorized to cancel operations.
-     * By default, checks if the caller is the account itself. Derived contracts can
-     * override this to implement custom authorization logic.
-     *
-     * Example extension:
-     *
-     * ```solidity
-     *  function canCancel(
-     *     address account,
-     *     Mode mode,
-     *     bytes calldata executionCalldata,
-     *     bytes32 salt
-     *  ) public view virtual returns (bool) {
-     *    bool isAuthorized = ...; // custom logic to check authorization
-     *    return isAuthorized || super.canCancel(account, mode, executionCalldata, salt);
-     *  }
-     *```
-     */
-    function canCancel(
-        address account,
-        Mode /* mode */,
-        bytes calldata /* executionCalldata */,
-        bytes32 /* salt */
-    ) public view virtual returns (bool) {
-        return account == msg.sender;
-    }
-
-    /**
-     * @dev Checks whether the caller is authorized to schedule operations.
-     * By default, checks if the caller is the account itself. Derived contracts can
-     * override this to implement custom authorization logic.
-     *
-     * Example extension:
-     *
-     * ```solidity
-     *  function canSchedule(
-     *     address account,
-     *     Mode mode,
-     *     bytes calldata executionCalldata,
-     *     bytes32 salt
-     *  ) public view virtual returns (bool) {
-     *    bool isAuthorized = ...; // custom logic to check authorization
-     *    return isAuthorized || super.canSchedule(account, mode, executionCalldata, salt);
-     *  }
-     *```
-     */
-    function canSchedule(
-        address account,
-        Mode /* mode */,
-        bytes calldata /* executionCalldata */,
-        bytes32 /* salt */
-    ) public view virtual returns (bool) {
-        return account == msg.sender;
-    }
-
     /// @dev Minimum delay after which {setDelay} takes effect.
     function minSetback() public view virtual returns (uint32) {
         return 1 days; // Up to ~136 years
@@ -314,8 +248,7 @@ abstract contract ERC7579DelayedExecutor is ERC7579Executor {
     /**
      * @dev Schedules an operation to be executed after the account's delay period (see {getDelay}).
      * Operations are uniquely identified by the combination of `mode`, `executionCalldata`, and `salt`.
-     * See {canSchedule} for caller authorization and {_validateScheduleRequest} for extra
-     * validation checks.
+     * See {_validateScheduleRequest} for validation.
      */
     function schedule(address account, Mode mode, bytes calldata executionCalldata, bytes32 salt) public virtual {
         _validateScheduleRequest(account, mode, executionCalldata, salt);
@@ -324,8 +257,7 @@ abstract contract ERC7579DelayedExecutor is ERC7579Executor {
 
     /**
      * @dev Cancels a previously scheduled operation.
-     * See {canCancel} for caller authorization and {_validateCancelRequest} for extra
-     * validation checks.
+     * See {_validateCancelRequest} for validation.
      */
     function cancel(address account, Mode mode, bytes calldata executionCalldata, bytes32 salt) public virtual {
         _validateCancelRequest(account, mode, executionCalldata, salt);
@@ -387,13 +319,30 @@ abstract contract ERC7579DelayedExecutor is ERC7579Executor {
         bytes32 id = hashOperation(account, mode, executionCalldata, salt);
         _validateStateBitmap(id, _encodeStateBitmap(OperationState.Unknown));
 
-        require(canSchedule(account, mode, executionCalldata, salt), ERC7579ExecutorUnauthorizedSchedule());
+        require(msg.sender == account, ERC7579ExecutorUnauthorizedSchedule());
     }
 
     /**
-     * @dev See {ERC7579Executor-_validateExecutionRequest}.
+     * @dev See {ERC7579Executor-_validateExecutionRequest}. This implementation only validates
+     * the operation is in {OperationState.Ready}. Any caller can execute the operation if it is
+     * in this state.
      *
-     * Validates the caller is authorized to execute and the operation is in a valid state.
+     * Derived contracts can override this function to add additional validation logic.
+     *
+     * Example extension:
+     *
+     * ```solidity
+     *  function _validateExecutionRequest(
+     *     address account,
+     *     Mode mode,
+     *     bytes calldata executionCalldata,
+     *     bytes32 salt
+     *  ) internal view virtual override {
+     *    bool conditionMet = ...; // custom logic to check condition
+     *    require(conditionMet, ERC7579ExecutorConditionNotMet());
+     *    super._validateExecutionRequest(account, mode, executionCalldata, salt);
+     *  }
+     *```
      */
     function _validateExecutionRequest(
         address account,
@@ -403,12 +352,10 @@ abstract contract ERC7579DelayedExecutor is ERC7579Executor {
     ) internal view virtual override {
         bytes32 id = hashOperation(account, mode, executionCalldata, salt);
         _validateStateBitmap(id, _encodeStateBitmap(OperationState.Ready));
-
-        super._validateExecutionRequest(account, mode, executionCalldata, salt);
     }
 
     /**
-     * @dev Validates a cancellation request against necessary conditions. This base implementation
+     * @dev Validates a cancellation request against required conditions. This base implementation
      * validates the caller is authorized to cancel and that the operation is in a valid state.
      *
      * Derived contracts can override this function to add additional validation logic.
@@ -438,7 +385,7 @@ abstract contract ERC7579DelayedExecutor is ERC7579Executor {
         bytes32 allowedStates = _encodeStateBitmap(OperationState.Scheduled) | _encodeStateBitmap(OperationState.Ready);
         _validateStateBitmap(id, allowedStates);
 
-        require(canCancel(account, mode, executionCalldata, salt), ERC7579ExecutorUnauthorizedCancellation());
+        require(msg.sender == account, ERC7579ExecutorUnauthorizedCancellation());
     }
 
     /**
@@ -459,7 +406,7 @@ abstract contract ERC7579DelayedExecutor is ERC7579Executor {
     }
 
     /**
-     * @dev See {ERC7579Executor-_execute}.
+     * @inheritdoc ERC7579Executor
      */
     function _execute(
         address account,
@@ -477,7 +424,7 @@ abstract contract ERC7579DelayedExecutor is ERC7579Executor {
     /**
      * @dev Low-level internal function to cancel an operation. Does not perform any validation checks.
      *
-     * Canceled operations can't be rescheduled.
+     * Note: Canceled operations can't be rescheduled.
      *
      * Emits an {ERC7579ExecutorOperationCanceled} event.
      */
