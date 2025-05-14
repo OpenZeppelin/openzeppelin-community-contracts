@@ -4,4 +4,5 @@
 *** xref:eoa-delegation.adoc[EOA Delegation]
 *** xref:multisig.adoc[Multisig]
 ** xref:paymasters.adoc[Paymasters]
+* xref:crosschain.adoc[Crosschain]
 * xref:utilities.adoc[Utilities]
