@@ -36,7 +36,7 @@ abstract contract ERC7579Executor is IERC7579Module {
      *
      * Example extension:
      *
-     * ```
+     * ```solidity
      *  function canExecute(
      *     address account,
      *     Mode mode,

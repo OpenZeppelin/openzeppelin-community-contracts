@@ -10,18 +10,28 @@ import {ERC7579Executor} from "./ERC7579Executor.sol";
  * @dev Extension of {ERC7579Executor} that allows scheduling and executing delayed operations
  * with expiration. This module enables time-delayed execution patterns for smart accounts.
  *
- * Once scheduled (see {schedule}), operations can only be executed after their specified delay
- * period has elapsed (indicated during {onInstall}), creating a security window where suspicious
- * operations can be monitored and potentially canceled (see {cancel}) before execution (see {execute}).
+ * === Operation Lifecycle
  *
- * Accounts can customize their delay periods with {setDelay}. Changes take effect after a transition
- * period to prevent immediate security downgrades. Operations have an expiration mechanism that
- * prevents them from being executed after a certain time has passed.
+ * 1. Scheduling: Operations are scheduled via {schedule} with a specified delay period.
+ * The delay period is set during {onInstall} and can be customized via {setDelay}. Each
+ * operation enters a `Scheduled` state and must wait for its delay period to elapse.
  *
- * IMPORTANT: This module assumes the {AccountERC7579} is the ultimate authority and does not restrict
- * module uninstallation. An account can bypass the time-delay security by simply uninstalling
- * the module. Consider adding safeguards in your Account implementation if uninstallation
- * protection is required for your security model.
+ * 2. Security Window: During the delay period, operations remain in `Scheduled` state but
+ * cannot be executed. Through this period, suspicious operations can be monitored and
+ * canceled via {cancel} if appropriate.
+ *
+ * 3. Execution & Expiration: Once the delay period elapses, operations transition to `Ready` state.
+ * Operations can be executed via {execute} and have an expiration period after becoming
+ * executable. If an operation is not executed within the expiration period, it becomes `Expired`
+ * and can't be executed. Expired operations must be rescheduled with a different salt.
+ *
+ * === Delay Management
+ *
+ * Accounts can set their own delay periods during installation or via {setDelay}.
+ * The delay period is enforced even between installas and uninstalls to prevent
+ * immediate downgrades. When setting a new delay period, the new delay takes effect
+ * after a transition period defined by the current delay or {minSetback}, whichever
+ * is longer.
  */
 abstract contract ERC7579DelayedExecutor is ERC7579Executor {
     using Time for *;
@@ -112,7 +122,7 @@ abstract contract ERC7579DelayedExecutor is ERC7579Executor {
         return OperationState.Ready;
     }
 
-    /// @dev See {ERC7579Executor-canExecute}. Allows anyone to execute an operation if it's {OperationState-Ready}.
+    /// @dev See {ERC7579Executor-canExecute}. Allows anyone to execute an operation if it's `Ready`.
     function canExecute(
         address account,
         Mode mode,
@@ -131,7 +141,7 @@ abstract contract ERC7579DelayedExecutor is ERC7579Executor {
      *
      * Example extension:
      *
-     * ```
+     * ```solidity
      *  function canCancel(
      *     address account,
      *     Mode mode,
@@ -159,7 +169,7 @@ abstract contract ERC7579DelayedExecutor is ERC7579Executor {
      *
      * Example extension:
      *
-     * ```
+     * ```solidity
      *  function canSchedule(
      *     address account,
      *     Mode mode,
@@ -348,7 +358,7 @@ abstract contract ERC7579DelayedExecutor is ERC7579Executor {
      *
      * Requirements:
      *
-     * * The operation must be {OperationState-Unknown}.
+     * * The operation must be `Unknown`.
      *
      * Emits an {ERC7579ExecutorOperationScheduled} event.
      */
@@ -377,9 +387,9 @@ abstract contract ERC7579DelayedExecutor is ERC7579Executor {
      *
      * Requirements:
      *
-     * * The operation must be {OperationState-Ready}.
+     * * The operation must be `Ready`.
      *
-     * NOTE: Anyone can trigger execution once the operation is {OperationState-Ready}. See {canExecute}.
+     * NOTE: Anyone can trigger execution once the operation is `Ready`. See {canExecute}.
      */
     function _execute(
         address account,
@@ -400,7 +410,7 @@ abstract contract ERC7579DelayedExecutor is ERC7579Executor {
      *
      * Requirements:
      *
-     * * The operation must be {OperationState-Scheduled} or {OperationState-Ready}.
+     * * The operation must be `Scheduled` or `Ready`.
      *
      * Canceled operations can't be rescheduled. Emits an {ERC7579ExecutorOperationCanceled} event.
      */
@@ -433,6 +443,7 @@ abstract contract ERC7579DelayedExecutor is ERC7579Executor {
      * @dev Encodes a `OperationState` into a `bytes32` representation where each bit enabled corresponds to
      * the underlying position in the `OperationState` enum. For example:
      *
+     * ```
      * 0x000...10000
      *   ^^^^^^------ ...
      *         ^----- Canceled
@@ -440,6 +451,7 @@ abstract contract ERC7579DelayedExecutor is ERC7579Executor {
      *           ^--- Ready
      *            ^-- Scheduled
      *             ^- Unknown
+     * ```
      */
     function _encodeStateBitmap(OperationState operationState) internal pure returns (bytes32) {
         return bytes32(1 << uint8(operationState));
