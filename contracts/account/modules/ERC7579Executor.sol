@@ -36,7 +36,7 @@ abstract contract ERC7579Executor is IERC7579Module {
      *
      * Example extension:
      *
-     * ```
+     * ```solidity
      *  function canExecute(
      *     address account,
      *     Mode mode,
@@ -58,6 +58,20 @@ abstract contract ERC7579Executor is IERC7579Module {
     }
 
     /**
+     * @dev Validates an execution request.
+     *
+     * Can be overridden by derived contracts to extend the default validation logic.
+     */
+    function _validateExecutionRequest(
+        address account,
+        Mode mode,
+        bytes calldata executionCalldata,
+        bytes32 salt
+    ) internal view virtual {
+        require(canExecute(account, mode, executionCalldata, salt), ERC7579UnauthorizedExecution());
+    }
+
+    /**
      * @dev Executes an operation and returns the result data from the executed operation.
      * Restricted to the account itself by default. See {_execute} for requirements and
      * {canExecute} for authorization checks.
@@ -68,8 +82,8 @@ abstract contract ERC7579Executor is IERC7579Module {
         bytes calldata executionCalldata,
         bytes32 salt
     ) public virtual returns (bytes[] memory returnData) {
-        require(canExecute(account, mode, executionCalldata, salt), ERC7579UnauthorizedExecution());
-        return _execute(account, mode, executionCalldata, salt);
+        _validateExecutionRequest(account, mode, executionCalldata, salt);
+        return _execute(account, mode, executionCalldata, salt); // Prioritize errors thrown in _execute
     }
 
     /**
