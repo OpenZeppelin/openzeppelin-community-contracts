@@ -11,7 +11,7 @@ import {Mode} from "@openzeppelin/contracts/account/utils/draft-ERC7579Utils.sol
  * The module enables accounts to execute arbitrary operations, leveraging the execution
  * capabilities defined in the ERC-7579 standard. By default, the executor is restricted to
  * operations initiated by the account itself, but this can be customized in derived contracts
- * by overriding the {canExecute} function.
+ * by overriding the {_validateExecutionRequest} function.
  *
  * TIP: This is a simplified executor that directly executes operations without delay or expiration
  * mechanisms. For a more advanced implementation with time-delayed execution patterns and
@@ -30,37 +30,36 @@ abstract contract ERC7579Executor is IERC7579Module {
     }
 
     /**
-     * @dev Check if the caller is authorized to execute operations.
-     * By default, this checks if the caller is the account itself. Derived contracts can
-     * override this to implement custom authorization logic.
+     * @dev Validates an execution request. By default, only validates the caller is the account itself.
+     * Derived contracts can override this function to add additional validation logic.
      *
      * Example extension:
      *
      * ```solidity
-     *  function canExecute(
+     *  function _validateExecutionRequest(
      *     address account,
      *     Mode mode,
      *     bytes calldata executionCalldata,
      *     bytes32 salt
-     *  ) public view virtual returns (bool) {
-     *    bool isAuthorized = ...; // custom logic to check authorization
-     *    return isAuthorized || super.canExecute(account, mode, executionCalldata, salt);
+     *  ) internal view virtual override {
+     *    bool conditionMet = ...; // custom logic to check condition
+     *    require(conditionMet, ERC7579ExecutorConditionNotMet());
+     *    super._validateExecutionRequest(account, mode, executionCalldata, salt);
      *  }
      *```
      */
-    function canExecute(
+    function _validateExecutionRequest(
         address account,
         Mode /* mode */,
         bytes calldata /* executionCalldata */,
         bytes32 /* salt */
-    ) public view virtual returns (bool) {
-        return msg.sender == account;
+    ) internal view virtual {
+        require(msg.sender == account, ERC7579UnauthorizedExecution());
     }
 
     /**
      * @dev Executes an operation and returns the result data from the executed operation.
-     * Restricted to the account itself by default. See {_execute} for requirements and
-     * {canExecute} for authorization checks.
+     * See {_execute} for requirements and {_validateExecutionRequest} for validation.
      */
     function execute(
         address account,
@@ -68,14 +67,14 @@ abstract contract ERC7579Executor is IERC7579Module {
         bytes calldata executionCalldata,
         bytes32 salt
     ) public virtual returns (bytes[] memory returnData) {
-        bool allowed = canExecute(account, mode, executionCalldata, salt);
-        returnData = _execute(account, mode, executionCalldata, salt); // Prioritize errors thrown in _execute
-        require(allowed, ERC7579UnauthorizedExecution());
-        return returnData;
+        _validateExecutionRequest(account, mode, executionCalldata, salt);
+        return _execute(account, mode, executionCalldata, salt);
     }
 
     /**
-     * @dev Internal version of {execute}. Emits {ERC7579ExecutorOperationExecuted} event.
+     * @dev Low-level internal function to execute an operation. Does not perform any validation checks.
+     *
+     * Emits {ERC7579ExecutorOperationExecuted} event.
      *
      * Requirements:
      *
