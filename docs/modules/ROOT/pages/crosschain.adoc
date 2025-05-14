@@ -1,0 +1,176 @@
+= Cross-chain messaging
+
+Developers building contracts may require cross-chain functionality. To accomplish this, multiple protocols have implemented their own ways to process operations across chains.
+
+The variety of these bridges is outlined in https://x.com/norswap[@norswap]'s https://github.com/0xFableOrg/xchain/blob/master/README.md[Cross-Chain Interoperability Report] that proposes https://github.com/0xFableOrg/xchain/blob/master/README.md#bridge-taxonomy[a taxonomy of 7 bridge categories]. This diversity makes it difficult for developers to design cross-chain applications given the lack of portability.
+
+This guide will teach you how to follow https://eips.ethereum.org/EIPS/eip-7786[ERC-7786] to establish messaging gateways across chains regardless of the underlying bridge. Developers can implement gateway contracts that process cross-chain messages and connect any crosschain protocol they want (or implement themselves).
+
+== ERC-7786 Gateway
+
+To address the lack of composability in a simple and unopinionated way, ERC-7786 proposes a standard for implementing gateways that relay messages to other chains. This generalized approach is expressive enough to enable new types of applications and can be adapted to any bridge taxonomy or specific bridge interface with standardized attributes.
+
+=== Message passing overview
+
+The ERC defines a source and a destination gateway. Both are contracts that implement a protocol to send a message and process its reception respectively. These two processes are identified explicitly by the ERC-7786 specification since they define the minimal requirements for both gateways.
+
+* On the **source chain**, the contract implements a standard xref:api:crosschain.adoc#AxelarGatewaySource-sendMessage-string-string-bytes-bytes---[`sendMessage`] function and emits a xref:api:crosschain.adoc#AxelarGatewaySource-MessagePosted-bytes32-string-string-bytes-bytes---[`MessagePosted`] event to signal that the message should be relayed by the underlying protocol.
+
+* On the **destination chain**, the gateway receives the message and passes it to the receiver contract by calling the xref:api:crosschain.adoc#ERC7786Receiver-executeMessage-string-string-string-bytes-bytes---[`executeMessage`] function.
+
+Smart contract developers only need to worry about implementing the xref:api:crosschain.adoc#IERC7786GatewaySource[IERC7786GatewaySource] interface to send a message on the source chain and the xref:api:crosschain.adoc#IERC7786GatewaySource[IERC7786GatewaySource] and xref:api:crosschain.adoc#IERC7786Receiver[IERC7786Receiver] interface to receive such message on the destination chain.
+
+=== Getting started with Axelar Network
+
+To start sending cross-chain messages, developers can get started with a duplex gateway powered by Axelar Network. This will allow a contract to send or receive cross-chain messages leveraging automated execution by Axelar relayers on the destination chain.
+
+[source,solidity]
+----
+include::api:example$crosschain/MyCustomAxelarGatewayDuplex.sol[]
+----
+
+For more details of how the duplex gateway works, see xref:crosschain.adoc#axelar_network[how to send and receive messages with the  Axelar Network] below
+
+NOTE: Developers can register supported chains and destination gateways using the xref:api:crosschain.adoc#AxelarGatewayBase-registerChainEquivalence-string-string-[`registerChainEquivalence`] and xref:api:crosschain.adoc#AxelarGatewayBase-registerRemoteGateway-string-string-[`registerRemoteGateway`] functions
+
+== Cross-chain communication
+
+=== Sending a message
+
+The interface for a source gateway is general enough that it allows wrapping a custom protocol to authenticate messages. Depending on the use case, developers can implement any offchain mechanism to read the standard xref:api:crosschain.adoc#IERC7786GatewaySource-MessagePosted-bytes32-string-string-bytes-bytes---[`MessagePosted`] event and deliver it to the receiver on the destination chain.
+
+[source,solidity]
+----
+include::api:example$crosschain/MyERC7786GatewaySource.sol[]
+----
+
+NOTE: The standard represents chains using https://github.com/ChainAgnostic/CAIPs/blob/main/CAIPs/caip-2.md[CAIP-2] identifiers and accounts using https://github.com/ChainAgnostic/CAIPs/blob/main/CAIPs/caip-2.md[CAIP-10] identifiers for increased interoperability with non-EVM chains. Consider using the Strings library in the contracts library to process these identifiers.
+
+=== Receiving a message
+
+To successfully process a message on the destination chain, a destination gateway is required. Although ERC-7786 doesn't define a standard interface for the destination gateway, it requires that it calls the `executeMessage` upon message reception.
+
+Every cross-chain message protocol already offers a way to receive the message either through a canonical bridge or an intermediate contract. Developers can easily wrap the receiving contract into a gateway that calls the `executeMessage` function as mandated by the ERC.
+
+To receive a message on a custom smart contract, OpenZeppelin Community Contracts provide an xref:api:crosschain.adoc#ERC7786Receiver[ERC7786Receiver] implementation for developers to inherit. This way your contracts can receive a cross-chain message relayed through a known destination gateway gateway.
+
+[source,solidity]
+----
+include::api:example$crosschain/MyERC7786ReceiverContract.sol[]
+----
+
+The standard receiving interface abstracts away the underlying protocol. This way, it is possible for a contract to send a message through an ERC-7786 compliant gateway (or through an adapter) and get it received on the destination chain without worrying about the protocol implementation details.
+
+=== Axelar Network
+
+Aside from the xref:api:crosschain.adoc#AxelarGatewayDuplex[AxelarGatewayDuplex], the library offers an implementation of the xref:api:crosschain.adoc#IERC7786GatewaySource[IERC7786GatewaySource] interface called xref:api:crosschain.adoc#AxelarGatewaySource[AxelarGatewaySource] that works as an adapter for sending messages in compliance with ERC-7786
+
+The implementation takes a local gateway address that MUST correspond to https://axelarscan.io/resources/chains?type=evm[Axelar's native gateways] and has mechanisms to:
+
+* Keep track of equivalences between Axelar chain names and CAIP-2 identifiers
+* Record a destination gateway per network using their CAIP-2 identifier
+
+The xref:api:crosschain.adoc#AxelarGatewaySource[AxelarGatewaySource] implementation can be used out of the box
+
+[source,solidity]
+----
+include::api:example$crosschain/MyCustomAxelarGatewaySource.sol[]
+----
+
+For a destination gateway, the library provides an adapter of the `AxelarExecutable` interface to receive messages and relay them to an xref:api:crosschain.adoc#IERC7786Receiver[IERC7786Receiver].
+
+[source,solidity]
+----
+include::api:example$crosschain/MyCustomAxelarGatewayDestination.sol[]
+----
+
+=== Multi Bridge Aggregator
+
+The xref:api:crosschain.adoc#ERC7786Aggregator[ERC7786Aggregator] is a special gateway that implements both xref:api:crosschain.adoc#IERC7786GatewaySource[IERC7786GatewaySource] and xref:api:crosschain.adoc#IERC7786Receiver[IERC7786Receiver] interfaces. It provides a way to send messages across multiple bridges simultaneously and ensures message delivery through a threshold-based confirmation system.
+
+The aggregator maintains a list of known  gateways and a confirmation threshold. When sending a message, it broadcasts to all registered gateways, and when receiving, it requires a minimum number of confirmations before executing the message. This approach increases reliability by ensuring messages are properly delivered and validated across multiple bridges.
+
+When sending a message, the aggregator tracks the message IDs from each gateway to maintain a record of the message's journey across different bridges:
+
+```solidity
+function sendMessage(
+    string calldata destinationChain,
+    string memory receiver,
+    bytes memory payload,
+    bytes[] memory attributes
+) public payable virtual whenNotPaused returns (bytes32 outboxId) {
+    
+    // ... Initialize variables and prepare payload ...
+
+    // Post on all gateways
+    Outbox[] memory outbox = new Outbox[](_gateways.length());
+    bool needsId = false;
+    for (uint256 i = 0; i < outbox.length; ++i) {
+        address gateway = _gateways.at(i);
+        // send message
+        bytes32 id = IERC7786GatewaySource(gateway).sendMessage(
+            destinationChain,
+            aggregator,
+            wrappedPayload,
+            attributes
+        );
+        // if ID, track it
+        if (id != bytes32(0)) {
+            outbox[i] = Outbox(gateway, id);
+            needsId = true;
+        }
+    }
+
+    // ... Handle message tracking and return value ...
+}
+```
+
+On the receiving end, the aggregator implements a threshold-based confirmation system. Messages are only executed after receiving enough confirmations from the gateways, ensuring message validity and preventing double execution. The xref:api:crosschain.adoc#ERC7786Aggregator-executeMessage-string-string-string-bytes-bytes---[`executeMessage`] function handles this process:
+
+```solidity
+function executeMessage(
+    string calldata /*messageId*/, // gateway specific, empty or unique
+    string calldata sourceChain, // CAIP-2 chain identifier
+    string calldata sender, // CAIP-10 account address (does not include the chain identifier)
+    bytes calldata payload,
+    bytes[] calldata attributes
+) public payable virtual whenNotPaused returns (bytes4) {
+
+    // ... Validate message format and extract message ID ...
+
+    // If call is first from a trusted gateway
+    if (_gateways.contains(msg.sender) && !tracker.receivedBy[msg.sender]) {
+        // Count number of time received
+        tracker.receivedBy[msg.sender] = true;
+        ++tracker.countReceived;
+        emit Received(id, msg.sender);
+
+        // if already executed, leave gracefully
+        if (tracker.executed) return IERC7786Receiver.executeMessage.selector;
+    } else if (tracker.executed) {
+        revert ERC7786AggregatorAlreadyExecuted();
+    }
+    
+    // ... Validate sender and prepare payload for execution ...
+
+    // If ready to execute, and not yet executed
+    if (tracker.countReceived >= getThreshold()) {
+        // prevent re-entry
+        tracker.executed = true;
+
+        // ... Prepare execution context and validate state ...
+        bytes memory call = abi.encodeCall(
+            IERC7786Receiver.executeMessage,
+            (uint256(id).toHexString(32), sourceChain, originalSender, unwrappedPayload, attributes)
+        );
+
+        (bool success, bytes memory returndata) = receiver.parseAddress().call(call);
+
+        // ... Handle the result ...
+    }
+
+    return IERC7786Receiver.executeMessage.selector;
+}
+```
+
+The aggregator is designed to be configurable. As an `Ownable` contract, it allows the owner to manage the list of trusted gateways and adjust the confirmation threshold. The `_gateways` list and threshold are initially set during contract deployment using the xref:api:crosschain.adoc#ERC7786Aggregator-_addGateway-address-[`++_addGateway++`] and xref:api:crosschain.adoc#ERC7786Aggregator-_setThreshold-uint8-[`++_setThreshold++`] functions. The owner can update these settings as needed to adapt to changing requirements or add new gateways.
