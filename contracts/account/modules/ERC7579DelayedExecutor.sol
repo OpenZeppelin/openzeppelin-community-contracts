@@ -227,8 +227,14 @@ abstract contract ERC7579DelayedExecutor is ERC7579Executor {
      * Operations are uniquely identified by the combination of `mode`, `executionCalldata`, and `salt`.
      * See {_validateSchedule} for authorization checks.
      */
-    function schedule(address account, Mode mode, bytes calldata executionCalldata, bytes32 salt) public virtual {
-        bool allowed = _validateSchedule(account, mode, executionCalldata, salt);
+    function schedule(
+        address account,
+        Mode mode,
+        bytes calldata executionCalldata,
+        bytes32 salt,
+        bytes calldata extraData
+    ) public virtual {
+        bool allowed = _validateSchedule(account, mode, executionCalldata, salt, extraData);
         _schedule(account, mode, executionCalldata, salt); // Prioritize errors thrown in _schedule
         require(allowed, ERC7579ExecutorUnauthorizedSchedule());
     }
@@ -237,8 +243,14 @@ abstract contract ERC7579DelayedExecutor is ERC7579Executor {
      * @dev Cancels a previously scheduled operation. Can only be called by the account that
      * scheduled the operation. See {_cancel}.
      */
-    function cancel(address account, Mode mode, bytes calldata executionCalldata, bytes32 salt) public virtual {
-        bool allowed = _validateCancel(account, mode, executionCalldata, salt);
+    function cancel(
+        address account,
+        Mode mode,
+        bytes calldata executionCalldata,
+        bytes32 salt,
+        bytes calldata extraData
+    ) public virtual {
+        bool allowed = _validateCancel(account, mode, executionCalldata, salt, extraData);
         _cancel(account, mode, executionCalldata, salt); // Prioritize errors thrown in _cancel
         require(allowed, ERC7579ExecutorUnauthorizedCancellation());
     }
@@ -268,7 +280,8 @@ abstract contract ERC7579DelayedExecutor is ERC7579Executor {
         address /* account */,
         Mode /* mode */,
         bytes calldata /* executionCalldata */,
-        bytes32 /* salt */
+        bytes32 /* salt */,
+        bytes calldata /* extraData */
     ) internal view virtual override returns (bool) {
         return true; // Anyone can execute, the state validation of the operation is enough
     }
@@ -285,7 +298,8 @@ abstract contract ERC7579DelayedExecutor is ERC7579Executor {
      *     address account,
      *     Mode mode,
      *     bytes calldata executionCalldata,
-     *     bytes32 salt
+     *     bytes32 salt,
+     *     bytes32 extraData
      *  ) internal view override returns (bool) {
      *    bool isAuthorized = ...; // custom logic to check authorization
      *    return isAuthorized || super._validateCancel(account, mode, executionCalldata, salt);
@@ -296,7 +310,8 @@ abstract contract ERC7579DelayedExecutor is ERC7579Executor {
         address account,
         Mode /* mode */,
         bytes calldata /* executionCalldata */,
-        bytes32 /* salt */
+        bytes32 /* salt */,
+        bytes calldata /* extraData */
     ) internal view virtual returns (bool) {
         return account == msg.sender;
     }
@@ -313,7 +328,8 @@ abstract contract ERC7579DelayedExecutor is ERC7579Executor {
      *     address account,
      *     Mode mode,
      *     bytes calldata executionCalldata,
-     *     bytes32 salt
+     *     bytes32 salt,
+     *     bytes32 extraData
      *  ) internal view override returns (bool) {
      *    bool isAuthorized = ...; // custom logic to check authorization
      *    return isAuthorized || super._validateSchedule(account, mode, executionCalldata, salt);
@@ -324,7 +340,8 @@ abstract contract ERC7579DelayedExecutor is ERC7579Executor {
         address account,
         Mode /* mode */,
         bytes calldata /* executionCalldata */,
-        bytes32 /* salt */
+        bytes32 /* salt */,
+        bytes calldata /* extraData */
     ) internal view virtual returns (bool) {
         return account == msg.sender;
     }

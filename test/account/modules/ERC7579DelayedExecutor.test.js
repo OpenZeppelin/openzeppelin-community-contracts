@@ -142,13 +142,13 @@ describe('ERC7579DelayedExecutor', function () {
 
     it('schedules an operation if called by the account', async function () {
       const id = this.mock.hashOperation(this.mockAccount.address, this.mode, this.calldata, salt);
-      const tx = await this.mockFromAccount.schedule(this.mockAccount.address, this.mode, this.calldata, salt);
+      const tx = await this.mockFromAccount.schedule(this.mockAccount.address, this.mode, this.calldata, salt, '0x');
       const now = await time.latest();
       await expect(tx)
         .to.emit(this.mock, 'ERC7579ExecutorOperationScheduled')
         .withArgs(this.mockAccount.address, id, this.mode, this.calldata, salt, now);
       await expect(
-        this.mockFromAccount.schedule(this.mockAccount.address, this.mode, this.calldata, salt),
+        this.mockFromAccount.schedule(this.mockAccount.address, this.mode, this.calldata, salt, '0x'),
       ).to.be.revertedWithCustomError(this.mock, 'ERC7579ExecutorUnexpectedOperationState'); // Can't schedule twice
       await expect(
         this.mock.getSchedule(this.mockAccount.address, this.mode, this.calldata, salt),
@@ -157,7 +157,7 @@ describe('ERC7579DelayedExecutor', function () {
 
     it('reverts with ERC7579ExecutorUnauthorizedSchedule if called by other account', async function () {
       await expect(
-        this.mock.schedule(this.mockAccount.address, this.mode, this.calldata, salt),
+        this.mock.schedule(this.mockAccount.address, this.mode, this.calldata, salt, '0x'),
       ).to.be.revertedWithCustomError(this.mock, 'ERC7579ExecutorUnauthorizedSchedule');
     });
   });
@@ -170,47 +170,47 @@ describe('ERC7579DelayedExecutor', function () {
 
     it('reverts with ERC7579ExecutorUnexpectedOperationState before delay passes with any caller', async function () {
       await expect(
-        this.mock.execute(this.mockAccount.address, this.mode, this.calldata, salt),
+        this.mock.execute(this.mockAccount.address, this.mode, this.calldata, salt, '0x'),
       ).to.be.revertedWithCustomError(this.mock, 'ERC7579ExecutorUnexpectedOperationState');
     });
 
     it('reverts with ERC7579ExecutorUnexpectedOperationState before delay passes with the account as caller', async function () {
       await expect(
-        this.mockFromAccount.execute(this.mockAccount.address, this.mode, this.calldata, salt),
+        this.mockFromAccount.execute(this.mockAccount.address, this.mode, this.calldata, salt, '0x'),
       ).to.be.revertedWithCustomError(this.mock, 'ERC7579ExecutorUnexpectedOperationState'); // Allowed, not ready
     });
 
     it('executes if called by the account when delay passes but has not expired with any caller', async function () {
       await time.increase(this.delay);
-      await expect(this.mock.execute(this.mockAccount.address, this.mode, this.calldata, salt))
+      await expect(this.mock.execute(this.mockAccount.address, this.mode, this.calldata, salt, '0x'))
         .to.emit(this.target, 'MockFunctionCalledWithArgs')
         .withArgs(...this.args);
       await expect(
-        this.mock.execute(this.mockAccount.address, this.mode, this.calldata, salt),
+        this.mock.execute(this.mockAccount.address, this.mode, this.calldata, salt, '0x'),
       ).to.be.revertedWithCustomError(this.mock, 'ERC7579ExecutorUnexpectedOperationState'); // Can't execute twice
     });
 
     it('executes if called by the account when delay passes but has not expired with the account as caller', async function () {
       await time.increase(this.delay);
-      await expect(this.mockFromAccount.execute(this.mockAccount.address, this.mode, this.calldata, salt))
+      await expect(this.mockFromAccount.execute(this.mockAccount.address, this.mode, this.calldata, salt, '0x'))
         .to.emit(this.target, 'MockFunctionCalledWithArgs')
         .withArgs(...this.args);
       await expect(
-        this.mockFromAccount.execute(this.mockAccount.address, this.mode, this.calldata, salt),
+        this.mockFromAccount.execute(this.mockAccount.address, this.mode, this.calldata, salt, '0x'),
       ).to.be.revertedWithCustomError(this.mock, 'ERC7579ExecutorUnexpectedOperationState'); // Can't execute twice
     });
 
     it('reverts with ERC7579ExecutorUnexpectedOperationState if the operation was expired with any caller', async function () {
       await time.increase(this.delay + this.expiration);
       await expect(
-        this.mock.execute(this.mockAccount.address, this.mode, this.calldata, salt),
+        this.mock.execute(this.mockAccount.address, this.mode, this.calldata, salt, '0x'),
       ).to.be.revertedWithCustomError(this.mock, 'ERC7579ExecutorUnexpectedOperationState');
     });
 
     it('reverts if the operation was expired with the account as caller', async function () {
       await time.increase(this.delay + this.expiration);
       await expect(
-        this.mockFromAccount.execute(this.mockAccount.address, this.mode, this.calldata, salt),
+        this.mockFromAccount.execute(this.mockAccount.address, this.mode, this.calldata, salt, '0x'),
       ).to.be.revertedWithCustomError(this.mock, 'ERC7579ExecutorUnexpectedOperationState'); // Allowed, expired
     });
   });
@@ -223,17 +223,17 @@ describe('ERC7579DelayedExecutor', function () {
 
     it('cancels an operation if called by the account', async function () {
       const id = this.mock.hashOperation(this.mockAccount.address, this.mode, this.calldata, salt);
-      await expect(this.mockFromAccount.cancel(this.mockAccount.address, this.mode, this.calldata, salt))
+      await expect(this.mockFromAccount.cancel(this.mockAccount.address, this.mode, this.calldata, salt, '0x'))
         .to.emit(this.mock, 'ERC7579ExecutorOperationCanceled')
         .withArgs(this.mockAccount.address, id);
       await expect(
-        this.mockFromAccount.cancel(this.mockAccount.address, this.mode, this.calldata, salt),
+        this.mockFromAccount.cancel(this.mockAccount.address, this.mode, this.calldata, salt, '0x'),
       ).to.be.revertedWithCustomError(this.mock, 'ERC7579ExecutorUnexpectedOperationState'); // Can't cancel twice
     });
 
     it('reverts with ERC7579ExecutorUnauthorizedCancellation if called by other account', async function () {
       await expect(
-        this.mock.cancel(this.mockAccount.address, this.mode, this.calldata, salt),
+        this.mock.cancel(this.mockAccount.address, this.mode, this.calldata, salt, '0x'),
       ).to.be.revertedWithCustomError(this.mock, 'ERC7579ExecutorUnauthorizedCancellation');
     });
   });

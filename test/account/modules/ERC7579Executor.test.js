@@ -15,7 +15,7 @@ const { shouldBehaveLikeERC7579Module } = require('./ERC7579Module.behavior');
 
 async function fixture() {
   // Deploy ERC-7579 validator module
-  const mock = await ethers.deployContract('$ERC7579MultisigExecutorMock');
+  const mock = await ethers.deployContract('$ERC7579MultisigExecutorMock', ['MultisigExecutor', '1']);
   const target = await ethers.deployContract('CallReceiverMockExtended');
 
   // ERC-4337 env
@@ -61,17 +61,11 @@ describe('ERC7579Executor', function () {
   });
 
   describe('execute', function () {
-    it('succeeds if called by the account', async function () {
-      await expect(this.mockFromAccount.execute(this.mockAccount.address, this.mode, this.calldata, ethers.ZeroHash))
+    it('succeeds', async function () {
+      await expect(this.mockFromAccount.$_execute(this.mockAccount.address, this.mode, this.calldata, ethers.ZeroHash))
         .to.emit(this.mock, 'ERC7579ExecutorOperationExecuted')
         .to.emit(this.target, 'MockFunctionCalledWithArgs')
         .withArgs(...this.args);
-    });
-
-    it('reverts with ERC7579UnauthorizedExecution if called by an authorized sender', async function () {
-      await expect(
-        this.mock.execute(this.mockAccount.address, this.mode, this.calldata, ethers.ZeroHash),
-      ).to.be.revertedWithCustomError(this.mock, 'ERC7579UnauthorizedExecution');
     });
   });
 

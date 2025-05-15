@@ -22,7 +22,7 @@ const signerECDSA4 = ethers.Wallet.createRandom(); // Unauthorized signer
 
 async function fixture() {
   // Deploy ERC-7579 multisig weighted module
-  const mock = await ethers.deployContract('$ERC7579MultisigWeightedExecutorMock');
+  const mock = await ethers.deployContract('$ERC7579MultisigWeightedExecutorMock', ['MultisigWeightedExecutor', '1']);
   const target = await ethers.deployContract('CallReceiverMockExtended');
 
   // ERC-4337 env

@@ -2,12 +2,93 @@
 
 pragma solidity ^0.8.27;
 
+import {EIP712} from "@openzeppelin/contracts/utils/cryptography/EIP712.sol";
 import {ERC7579Executor} from "../../../account/modules/ERC7579Executor.sol";
 import {ERC7579Multisig} from "../../../account/modules/ERC7579Multisig.sol";
 import {ERC7579MultisigWeighted} from "../../../account/modules/ERC7579MultisigWeighted.sol";
 import {ERC7579MultisigConfirmation} from "../../../account/modules/ERC7579MultisigConfirmation.sol";
 import {MODULE_TYPE_EXECUTOR, IERC7579Hook} from "@openzeppelin/contracts/interfaces/draft-IERC7579.sol";
+import {Mode} from "@openzeppelin/contracts/account/utils/draft-ERC7579Utils.sol";
 
-abstract contract ERC7579MultisigExecutorMock is ERC7579Executor, ERC7579Multisig {}
-abstract contract ERC7579MultisigWeightedExecutorMock is ERC7579Executor, ERC7579MultisigWeighted {}
-abstract contract ERC7579MultisigConfirmationExecutorMock is ERC7579Executor, ERC7579MultisigConfirmation {}
+abstract contract ERC7579MultisigExecutorMock is EIP712, ERC7579Executor, ERC7579Multisig {
+    bytes32 private constant EXECUTE_OPERATION =
+        keccak256("ExecuteOperation(address account,bytes32 mode,bytes executionCalldata,bytes32 salt)");
+
+    function _validateExecution(
+        address account,
+        Mode mode,
+        bytes calldata executionCalldata,
+        bytes32 salt,
+        bytes calldata extraData
+    ) internal view override returns (bool) {
+        // We're missing the `signature` here
+        return _validateMultisignature(account, _getExecuteTypeHash(account, mode, executionCalldata, salt), extraData);
+    }
+
+    function _getExecuteTypeHash(
+        address account,
+        Mode mode,
+        bytes calldata executionCalldata,
+        bytes32 salt
+    ) internal view returns (bytes32) {
+        return
+            _hashTypedDataV4(
+                keccak256(abi.encode(EXECUTE_OPERATION, account, Mode.unwrap(mode), executionCalldata, salt))
+            );
+    }
+}
+
+abstract contract ERC7579MultisigWeightedExecutorMock is EIP712, ERC7579Executor, ERC7579MultisigWeighted {
+    bytes32 private constant EXECUTE_OPERATION =
+        keccak256("ExecuteOperation(address account,bytes32 mode,bytes executionCalldata,bytes32 salt)");
+
+    function _validateExecution(
+        address account,
+        Mode mode,
+        bytes calldata executionCalldata,
+        bytes32 salt,
+        bytes calldata extraData
+    ) internal view override returns (bool) {
+        // We're missing the `signature` here
+        return _validateMultisignature(account, _getExecuteTypeHash(account, mode, executionCalldata, salt), extraData);
+    }
+
+    function _getExecuteTypeHash(
+        address account,
+        Mode mode,
+        bytes calldata executionCalldata,
+        bytes32 salt
+    ) internal view returns (bytes32) {
+        return
+            _hashTypedDataV4(
+                keccak256(abi.encode(EXECUTE_OPERATION, account, Mode.unwrap(mode), executionCalldata, salt))
+            );
+    }
+}
+abstract contract ERC7579MultisigConfirmationExecutorMock is ERC7579Executor, ERC7579MultisigConfirmation {
+    bytes32 private constant EXECUTE_OPERATION =
+        keccak256("ExecuteOperation(address account,bytes32 mode,bytes executionCalldata,bytes32 salt)");
+
+    function _validateExecution(
+        address account,
+        Mode mode,
+        bytes calldata executionCalldata,
+        bytes32 salt,
+        bytes calldata extraData
+    ) internal view override returns (bool) {
+        // We're missing the `signature` here
+        return _validateMultisignature(account, _getExecuteTypeHash(account, mode, executionCalldata, salt), extraData);
+    }
+
+    function _getExecuteTypeHash(
+        address account,
+        Mode mode,
+        bytes calldata executionCalldata,
+        bytes32 salt
+    ) internal view returns (bytes32) {
+        return
+            _hashTypedDataV4(
+                keccak256(abi.encode(EXECUTE_OPERATION, account, Mode.unwrap(mode), executionCalldata, salt))
+            );
+    }
+}
