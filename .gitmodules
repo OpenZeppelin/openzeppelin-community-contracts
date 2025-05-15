@@ -18,5 +18,5 @@
 	url = https://github.com/axelarnetwork/axelar-gmp-sdk-solidity
 [submodule "lib/zk-email-verify"]
 	path = lib/zk-email-verify
-	branch = master
+	branch = v6.3.2
 	url = https://github.com/zkemail/zk-email-verify
