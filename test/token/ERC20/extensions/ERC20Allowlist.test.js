@@ -160,12 +160,12 @@ describe('ERC20Allowlist', function () {
     describe('allowed', function () {
       it('returns 1 when allowed', async function () {
         await this.token.$_allowUser(this.holder);
-        expect(await this.token.allowed(this.holder)).to.equal(1);
+        expect(await this.token.allowed(this.holder)).to.equal(true);
       });
 
       it('returns 0 when disallowed', async function () {
         await this.token.$_disallowUser(this.holder);
-        expect(await this.token.allowed(this.holder)).to.equal(0);
+        expect(await this.token.allowed(this.holder)).to.equal(false);
       });
     });
   });
