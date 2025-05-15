@@ -30,6 +30,23 @@ abstract contract ERC7579Executor is IERC7579Module {
     }
 
     /**
+     * @dev Executes an operation and returns the result data from the executed operation.
+     * Restricted to the account itself by default. See {_execute} for requirements and
+     * {_validateExecution} for authorization checks.
+     */
+    function execute(
+        address account,
+        Mode mode,
+        bytes calldata executionCalldata,
+        bytes32 salt
+    ) public virtual returns (bytes[] memory returnData) {
+        bool allowed = _validateExecution(account, mode, executionCalldata, salt);
+        returnData = _execute(account, mode, executionCalldata, salt); // Prioritize errors thrown in _execute
+        require(allowed, ERC7579InvalidExecution());
+        return returnData;
+    }
+
+    /**
      * @dev Check if the caller is authorized to execute operations.
      * Derived contracts can implement this with custom authorization logic.
      *
@@ -52,23 +69,6 @@ abstract contract ERC7579Executor is IERC7579Module {
         bytes calldata /* executionCalldata */,
         bytes32 /* salt */
     ) internal view virtual returns (bool);
-
-    /**
-     * @dev Executes an operation and returns the result data from the executed operation.
-     * Restricted to the account itself by default. See {_execute} for requirements and
-     * {_validateExecution} for authorization checks.
-     */
-    function execute(
-        address account,
-        Mode mode,
-        bytes calldata executionCalldata,
-        bytes32 salt
-    ) public virtual returns (bytes[] memory returnData) {
-        bool allowed = _validateExecution(account, mode, executionCalldata, salt);
-        returnData = _execute(account, mode, executionCalldata, salt); // Prioritize errors thrown in _execute
-        require(allowed, ERC7579InvalidExecution());
-        return returnData;
-    }
 
     /**
      * @dev Internal version of {execute}. Emits {ERC7579ExecutorOperationExecuted} event.

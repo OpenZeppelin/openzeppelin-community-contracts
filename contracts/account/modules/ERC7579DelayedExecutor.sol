@@ -122,72 +122,6 @@ abstract contract ERC7579DelayedExecutor is ERC7579Executor {
         return OperationState.Ready;
     }
 
-    /// @inheritdoc ERC7579Executor
-    function _validateExecution(
-        address /* account */,
-        Mode /* mode */,
-        bytes calldata /* executionCalldata */,
-        bytes32 /* salt */
-    ) internal view virtual override returns (bool) {
-        return true; // Anyone can execute, the state validation of the operation is enough
-    }
-
-    /**
-     * @dev Whether the caller is authorized to cancel operations.
-     * By default, this checks if the caller is the account itself. Derived contracts can
-     * override this to implement custom authorization logic.
-     *
-     * Example extension:
-     *
-     * ```solidity
-     *  function _validateCancel(
-     *     address account,
-     *     Mode mode,
-     *     bytes calldata executionCalldata,
-     *     bytes32 salt
-     *  ) internal view override returns (bool) {
-     *    bool isAuthorized = ...; // custom logic to check authorization
-     *    return isAuthorized || super._validateCancel(account, mode, executionCalldata, salt);
-     *  }
-     *```
-     */
-    function _validateCancel(
-        address account,
-        Mode /* mode */,
-        bytes calldata /* executionCalldata */,
-        bytes32 /* salt */
-    ) internal view virtual returns (bool) {
-        return account == msg.sender;
-    }
-
-    /**
-     * @dev Whether the caller is authorized to schedule operations.
-     * By default, this checks if the caller is the account itself. Derived contracts can
-     * override this to implement custom authorization logic.
-     *
-     * Example extension:
-     *
-     * ```solidity
-     *  function _validateSchedule(
-     *     address account,
-     *     Mode mode,
-     *     bytes calldata executionCalldata,
-     *     bytes32 salt
-     *  ) internal view override returns (bool) {
-     *    bool isAuthorized = ...; // custom logic to check authorization
-     *    return isAuthorized || super._validateSchedule(account, mode, executionCalldata, salt);
-     *  }
-     *```
-     */
-    function _validateSchedule(
-        address account,
-        Mode /* mode */,
-        bytes calldata /* executionCalldata */,
-        bytes32 /* salt */
-    ) internal view virtual returns (bool) {
-        return account == msg.sender;
-    }
-
     /// @dev Minimum delay after which {setDelay} takes effect.
     function minSetback() public view virtual returns (uint32) {
         return 1 days; // Up to ~136 years
@@ -327,6 +261,72 @@ abstract contract ERC7579DelayedExecutor is ERC7579Executor {
         _config[msg.sender].installed = false;
         _setDelay(msg.sender, 0, minSetback()); // Avoids immediate downgrades
         _setExpiration(msg.sender, 0);
+    }
+
+    /// @inheritdoc ERC7579Executor
+    function _validateExecution(
+        address /* account */,
+        Mode /* mode */,
+        bytes calldata /* executionCalldata */,
+        bytes32 /* salt */
+    ) internal view virtual override returns (bool) {
+        return true; // Anyone can execute, the state validation of the operation is enough
+    }
+
+    /**
+     * @dev Whether the caller is authorized to cancel operations.
+     * By default, this checks if the caller is the account itself. Derived contracts can
+     * override this to implement custom authorization logic.
+     *
+     * Example extension:
+     *
+     * ```solidity
+     *  function _validateCancel(
+     *     address account,
+     *     Mode mode,
+     *     bytes calldata executionCalldata,
+     *     bytes32 salt
+     *  ) internal view override returns (bool) {
+     *    bool isAuthorized = ...; // custom logic to check authorization
+     *    return isAuthorized || super._validateCancel(account, mode, executionCalldata, salt);
+     *  }
+     *```
+     */
+    function _validateCancel(
+        address account,
+        Mode /* mode */,
+        bytes calldata /* executionCalldata */,
+        bytes32 /* salt */
+    ) internal view virtual returns (bool) {
+        return account == msg.sender;
+    }
+
+    /**
+     * @dev Whether the caller is authorized to schedule operations.
+     * By default, this checks if the caller is the account itself. Derived contracts can
+     * override this to implement custom authorization logic.
+     *
+     * Example extension:
+     *
+     * ```solidity
+     *  function _validateSchedule(
+     *     address account,
+     *     Mode mode,
+     *     bytes calldata executionCalldata,
+     *     bytes32 salt
+     *  ) internal view override returns (bool) {
+     *    bool isAuthorized = ...; // custom logic to check authorization
+     *    return isAuthorized || super._validateSchedule(account, mode, executionCalldata, salt);
+     *  }
+     *```
+     */
+    function _validateSchedule(
+        address account,
+        Mode /* mode */,
+        bytes calldata /* executionCalldata */,
+        bytes32 /* salt */
+    ) internal view virtual returns (bool) {
+        return account == msg.sender;
     }
 
     /**
