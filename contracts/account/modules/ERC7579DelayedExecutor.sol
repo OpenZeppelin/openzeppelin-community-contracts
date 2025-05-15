@@ -64,9 +64,9 @@ abstract contract ERC7579DelayedExecutor is ERC7579Executor {
     event ERC7579ExecutorOperationScheduled(
         address indexed account,
         bytes32 indexed operationId,
+        bytes32 salt,
         bytes32 mode,
         bytes executionCalldata,
-        bytes32 salt,
         uint48 schedule
     );
 
@@ -103,11 +103,11 @@ abstract contract ERC7579DelayedExecutor is ERC7579Executor {
     /// @dev Current state of an operation.
     function state(
         address account,
+        bytes32 salt,
         bytes32 mode,
-        bytes calldata executionCalldata,
-        bytes32 salt
+        bytes calldata executionCalldata
     ) public view returns (OperationState) {
-        return state(hashOperation(account, mode, executionCalldata, salt));
+        return state(hashOperation(account, salt, mode, executionCalldata));
     }
 
     /// @dev Same as {state}, but for a specific operation id.
@@ -141,11 +141,11 @@ abstract contract ERC7579DelayedExecutor is ERC7579Executor {
     /// @dev Schedule for an operation. Returns default values if not set (i.e. `uint48(0)`, `uint48(0)`, `uint48(0)`).
     function getSchedule(
         address account,
+        bytes32 salt,
         bytes32 mode,
-        bytes calldata executionCalldata,
-        bytes32 salt
+        bytes calldata executionCalldata
     ) public view virtual returns (uint48 scheduledAt, uint48 executableAt, uint48 expiresAt) {
-        return getSchedule(hashOperation(account, mode, executionCalldata, salt));
+        return getSchedule(hashOperation(account, salt, mode, executionCalldata));
     }
 
     /// @dev Same as {getSchedule} but with the operation id.
@@ -160,11 +160,11 @@ abstract contract ERC7579DelayedExecutor is ERC7579Executor {
     /// @dev Returns the operation id.
     function hashOperation(
         address account,
+        bytes32 salt,
         bytes32 mode,
-        bytes calldata executionCalldata,
-        bytes32 salt
+        bytes calldata executionCalldata
     ) public view virtual returns (bytes32) {
-        return keccak256(abi.encode(account, mode, executionCalldata, salt));
+        return keccak256(abi.encode(account, salt, mode, executionCalldata));
     }
 
     /// @dev Default delay for account operations. Set if not provided during {onInstall}.
@@ -223,12 +223,12 @@ abstract contract ERC7579DelayedExecutor is ERC7579Executor {
 
     /**
      * @dev Schedules an operation to be executed after the account's delay period (see {getDelay}).
-     * Operations are uniquely identified by the combination of `mode`, `data`, and `salt`.
+     * Operations are uniquely identified by the combination of `salt`, `mode`, and `data`.
      * See {_validateSchedule} for authorization checks.
      */
-    function schedule(address account, bytes32 mode, bytes calldata data, bytes32 salt) public virtual {
-        bool allowed = _validateSchedule(account, mode, data, salt);
-        _schedule(account, mode, data, salt); // Prioritize errors thrown in _schedule
+    function schedule(address account, bytes32 salt, bytes32 mode, bytes calldata data) public virtual {
+        bool allowed = _validateSchedule(account, salt, mode, data);
+        _schedule(account, salt, mode, data); // Prioritize errors thrown in _schedule
         require(allowed, ERC7579ExecutorUnauthorizedSchedule());
     }
 
@@ -236,8 +236,8 @@ abstract contract ERC7579DelayedExecutor is ERC7579Executor {
      * @dev Cancels a previously scheduled operation. Can only be called by the account that
      * scheduled the operation. See {_cancel}.
      */
-    function cancel(address account, bytes32 mode, bytes calldata data, bytes32 salt) public virtual {
-        bool allowed = _validateCancel(account, mode, data, salt);
+    function cancel(address account, bytes32 salt, bytes32 mode, bytes calldata data) public virtual {
+        bool allowed = _validateCancel(account, salt, mode, data);
         _cancel(account, mode, data, salt); // Prioritize errors thrown in _cancel
         require(allowed, ERC7579ExecutorUnauthorizedCancellation());
     }
@@ -265,9 +265,9 @@ abstract contract ERC7579DelayedExecutor is ERC7579Executor {
     /// @inheritdoc ERC7579Executor
     function _validateExecution(
         address /* account */,
+        bytes32 /* salt */,
         bytes32 /* mode */,
-        bytes calldata data,
-        bytes32 /* salt */
+        bytes calldata data
     ) internal view virtual override returns (bool valid, bytes calldata executionCalldata) {
         return (true, data); // Anyone can execute, the state validation of the operation is enough
     }
@@ -293,9 +293,9 @@ abstract contract ERC7579DelayedExecutor is ERC7579Executor {
      */
     function _validateCancel(
         address account,
+        bytes32 /* salt */,
         bytes32 /* mode */,
-        bytes calldata /* data */,
-        bytes32 /* salt */
+        bytes calldata /* data */
     ) internal view virtual returns (bool) {
         return account == msg.sender;
     }
@@ -321,9 +321,9 @@ abstract contract ERC7579DelayedExecutor is ERC7579Executor {
      */
     function _validateSchedule(
         address account,
+        bytes32 /* salt */,
         bytes32 /* mode */,
-        bytes calldata /* data */,
-        bytes32 /* salt */
+        bytes calldata /* data */
     ) internal view virtual returns (bool) {
         return account == msg.sender;
     }
@@ -361,11 +361,11 @@ abstract contract ERC7579DelayedExecutor is ERC7579Executor {
      */
     function _schedule(
         address account,
+        bytes32 salt,
         bytes32 mode,
-        bytes calldata executionCalldata,
-        bytes32 salt
+        bytes calldata executionCalldata
     ) internal virtual returns (bytes32 operationId, Schedule memory schedule_) {
-        bytes32 id = hashOperation(account, mode, executionCalldata, salt);
+        bytes32 id = hashOperation(account, salt, mode, executionCalldata);
         _validateStateBitmap(id, _encodeStateBitmap(OperationState.Unknown));
 
         (uint32 executableAfter, , ) = getDelay(account);
@@ -375,7 +375,7 @@ abstract contract ERC7579DelayedExecutor is ERC7579Executor {
         _schedules[id].executableAfter = executableAfter;
         _schedules[id].expiresAfter = getExpiration(account);
 
-        emit ERC7579ExecutorOperationScheduled(account, id, mode, executionCalldata, salt, timepoint);
+        emit ERC7579ExecutorOperationScheduled(account, id, salt, mode, executionCalldata, timepoint);
         return (id, schedule_);
     }
 
@@ -388,16 +388,16 @@ abstract contract ERC7579DelayedExecutor is ERC7579Executor {
      */
     function _execute(
         address account,
+        bytes32 salt,
         bytes32 mode,
-        bytes calldata executionCalldata,
-        bytes32 salt
+        bytes calldata executionCalldata
     ) internal virtual override returns (bytes[] memory returnData) {
-        bytes32 id = hashOperation(account, mode, executionCalldata, salt);
+        bytes32 id = hashOperation(account, salt, mode, executionCalldata);
         _validateStateBitmap(id, _encodeStateBitmap(OperationState.Ready));
 
         _schedules[id].executed = true;
 
-        return super._execute(account, mode, executionCalldata, salt);
+        return super._execute(account, salt, mode, executionCalldata);
     }
 
     /**
@@ -410,7 +410,7 @@ abstract contract ERC7579DelayedExecutor is ERC7579Executor {
      * Canceled operations can't be rescheduled. Emits an {ERC7579ExecutorOperationCanceled} event.
      */
     function _cancel(address account, bytes32 mode, bytes calldata executionCalldata, bytes32 salt) internal virtual {
-        bytes32 id = hashOperation(account, mode, executionCalldata, salt);
+        bytes32 id = hashOperation(account, salt, mode, executionCalldata);
         bytes32 allowedStates = _encodeStateBitmap(OperationState.Scheduled) | _encodeStateBitmap(OperationState.Ready);
         _validateStateBitmap(id, allowedStates);
 

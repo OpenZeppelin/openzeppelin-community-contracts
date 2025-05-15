@@ -62,7 +62,7 @@ describe('ERC7579Executor', function () {
 
   describe('execute', function () {
     it('succeeds', async function () {
-      await expect(this.mockFromAccount.$_execute(this.mockAccount.address, this.mode, this.calldata, ethers.ZeroHash))
+      await expect(this.mockFromAccount.$_execute(this.mockAccount.address, ethers.ZeroHash, this.mode, this.calldata))
         .to.emit(this.mock, 'ERC7579ExecutorOperationExecuted')
         .to.emit(this.target, 'MockFunctionCalledWithArgs')
         .withArgs(...this.args);

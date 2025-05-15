@@ -17,9 +17,9 @@ abstract contract ERC7579MultisigExecutorMock is EIP712, ERC7579Executor, ERC757
     // Data encoding: [uint16(executionCalldataLength), executionCalldata, signature]
     function _validateExecution(
         address account,
+        bytes32 salt,
         bytes32 mode,
-        bytes calldata data,
-        bytes32 salt
+        bytes calldata data
     ) internal view override returns (bool valid, bytes calldata executionCalldata) {
         uint16 executionCalldataLength = uint16(uint256(bytes32(data[0:2]))); // First 2 bytes are the length
         bytes calldata actualExecutionCalldata = data[2:2 + executionCalldataLength]; // Next bytes are the calldata
@@ -27,7 +27,7 @@ abstract contract ERC7579MultisigExecutorMock is EIP712, ERC7579Executor, ERC757
         return (
             _validateMultisignature(
                 account,
-                _getExecuteTypeHash(account, mode, actualExecutionCalldata, salt),
+                _getExecuteTypeHash(account, salt, mode, actualExecutionCalldata),
                 signature
             ),
             actualExecutionCalldata
@@ -36,9 +36,9 @@ abstract contract ERC7579MultisigExecutorMock is EIP712, ERC7579Executor, ERC757
 
     function _getExecuteTypeHash(
         address account,
+        bytes32 salt,
         bytes32 mode,
-        bytes calldata executionCalldata,
-        bytes32 salt
+        bytes calldata executionCalldata
     ) internal view returns (bytes32) {
         return _hashTypedDataV4(keccak256(abi.encode(EXECUTE_OPERATION, account, mode, executionCalldata, salt)));
     }
@@ -51,9 +51,9 @@ abstract contract ERC7579MultisigWeightedExecutorMock is EIP712, ERC7579Executor
     // Data encoding: [uint16(executionCalldataLength), executionCalldata, signature]
     function _validateExecution(
         address account,
+        bytes32 salt,
         bytes32 mode,
-        bytes calldata data,
-        bytes32 salt
+        bytes calldata data
     ) internal view override returns (bool valid, bytes calldata executionCalldata) {
         uint16 executionCalldataLength = uint16(uint256(bytes32(data[0:2]))); // First 2 bytes are the length
         bytes calldata actualExecutionCalldata = data[2:2 + executionCalldataLength]; // Next bytes are the calldata
@@ -61,7 +61,7 @@ abstract contract ERC7579MultisigWeightedExecutorMock is EIP712, ERC7579Executor
         return (
             _validateMultisignature(
                 account,
-                _getExecuteTypeHash(account, mode, actualExecutionCalldata, salt),
+                _getExecuteTypeHash(account, salt, mode, actualExecutionCalldata),
                 signature
             ),
             actualExecutionCalldata
@@ -70,9 +70,9 @@ abstract contract ERC7579MultisigWeightedExecutorMock is EIP712, ERC7579Executor
 
     function _getExecuteTypeHash(
         address account,
+        bytes32 salt,
         bytes32 mode,
-        bytes calldata executionCalldata,
-        bytes32 salt
+        bytes calldata executionCalldata
     ) internal view returns (bytes32) {
         return _hashTypedDataV4(keccak256(abi.encode(EXECUTE_OPERATION, account, mode, executionCalldata, salt)));
     }
@@ -85,9 +85,9 @@ abstract contract ERC7579MultisigConfirmationExecutorMock is ERC7579Executor, ER
     // Data encoding: [uint16(executionCalldataLength), executionCalldata, signature]
     function _validateExecution(
         address account,
+        bytes32 salt,
         bytes32 mode,
-        bytes calldata data,
-        bytes32 salt
+        bytes calldata data
     ) internal view override returns (bool valid, bytes calldata executionCalldata) {
         uint16 executionCalldataLength = uint16(uint256(bytes32(data[0:2]))); // First 2 bytes are the length
         bytes calldata actualExecutionCalldata = data[2:2 + executionCalldataLength]; // Next bytes are the calldata
@@ -95,7 +95,7 @@ abstract contract ERC7579MultisigConfirmationExecutorMock is ERC7579Executor, ER
         return (
             _validateMultisignature(
                 account,
-                _getExecuteTypeHash(account, mode, actualExecutionCalldata, salt),
+                _getExecuteTypeHash(account, salt, mode, actualExecutionCalldata),
                 signature
             ),
             actualExecutionCalldata
@@ -104,9 +104,9 @@ abstract contract ERC7579MultisigConfirmationExecutorMock is ERC7579Executor, ER
 
     function _getExecuteTypeHash(
         address account,
+        bytes32 salt,
         bytes32 mode,
-        bytes calldata executionCalldata,
-        bytes32 salt
+        bytes calldata executionCalldata
     ) internal view returns (bytes32) {
         return _hashTypedDataV4(keccak256(abi.encode(EXECUTE_OPERATION, account, mode, executionCalldata, salt)));
     }

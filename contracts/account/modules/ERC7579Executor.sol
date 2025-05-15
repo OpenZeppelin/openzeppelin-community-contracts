@@ -20,9 +20,9 @@ abstract contract ERC7579Executor is IERC7579Module {
     /// @dev Emitted when an operation is executed.
     event ERC7579ExecutorOperationExecuted(
         address indexed account,
+        bytes32 salt,
         bytes32 mode,
-        bytes executionCalldata,
-        bytes32 salt
+        bytes executionCalldata
     );
 
     /// @dev Thrown when the execution is invalid. See {_validateExecution} for details.
@@ -40,12 +40,12 @@ abstract contract ERC7579Executor is IERC7579Module {
      */
     function execute(
         address account,
+        bytes32 salt,
         bytes32 mode,
-        bytes calldata data,
-        bytes32 salt
+        bytes calldata data
     ) public virtual returns (bytes[] memory returnData) {
-        (bool allowed, bytes calldata executionCalldata) = _validateExecution(account, mode, data, salt);
-        returnData = _execute(account, mode, executionCalldata, salt); // Prioritize errors thrown in _execute
+        (bool allowed, bytes calldata executionCalldata) = _validateExecution(account, salt, mode, data);
+        returnData = _execute(account, mode, salt, executionCalldata); // Prioritize errors thrown in _execute
         require(allowed, ERC7579InvalidExecution());
         return returnData;
     }
@@ -59,9 +59,9 @@ abstract contract ERC7579Executor is IERC7579Module {
      * ```solidity
      *  function _validateExecution(
      *     address account,
+     *     bytes32 salt,
      *     bytes32 mode,
-     *     bytes calldata data,
-     *     bytes32 salt
+     *     bytes calldata data
      *  ) internal view override returns (bool valid, bytes calldata executionCalldata) {
      *    /// ...
      *    return isAuthorized; // custom logic to check authorization
@@ -70,9 +70,9 @@ abstract contract ERC7579Executor is IERC7579Module {
      */
     function _validateExecution(
         address account,
+        bytes32 salt,
         bytes32 mode,
-        bytes calldata data,
-        bytes32 salt
+        bytes calldata data
     ) internal view virtual returns (bool valid, bytes calldata executionCalldata);
 
     /**
@@ -85,10 +85,10 @@ abstract contract ERC7579Executor is IERC7579Module {
     function _execute(
         address account,
         bytes32 mode,
-        bytes calldata executionCalldata,
-        bytes32 salt
+        bytes32 salt,
+        bytes calldata executionCalldata
     ) internal virtual returns (bytes[] memory returnData) {
-        emit ERC7579ExecutorOperationExecuted(account, mode, executionCalldata, salt);
+        emit ERC7579ExecutorOperationExecuted(account, salt, mode, executionCalldata);
         return IERC7579Execution(account).executeFromExecutor(mode, executionCalldata);
     }
 }
