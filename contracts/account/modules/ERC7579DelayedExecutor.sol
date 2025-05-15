@@ -126,8 +126,7 @@ abstract contract ERC7579DelayedExecutor is ERC7579Executor {
     }
 
     /**
-     * @dev See {ERC7579Executor-_validateExecution}. Validates that the operation is in `Ready` state,
-     * unless the caller is the account itself which can execute in any state.
+     * @dev See {ERC7579Executor-_validateExecution}. Validates that the operation is in `Ready` state.
      *
      * Derived contracts can override this function to add additional validation logic.
      *
@@ -153,12 +152,7 @@ abstract contract ERC7579DelayedExecutor is ERC7579Executor {
         bytes32 salt
     ) internal view virtual override {
         bytes32 id = hashOperation(account, mode, executionCalldata, salt);
-        if (msg.sender == account)
-            _validateStateBitmap(
-                id,
-                _encodeStateBitmap(OperationState.Scheduled) | _encodeStateBitmap(OperationState.Ready)
-            );
-        else _validateStateBitmap(id, _encodeStateBitmap(OperationState.Ready));
+        _validateStateBitmap(id, _encodeStateBitmap(OperationState.Ready));
 
         super._validateExecution(account, mode, executionCalldata, salt);
     }

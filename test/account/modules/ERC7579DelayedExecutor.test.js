@@ -191,16 +191,14 @@ describe('ERC7579DelayedExecutor', function () {
     });
 
     it('reverts with ERC7579ExecutorUnexpectedOperationState before delay passes with any caller', async function () {
+      // call from the account
+      await expect(
+        this.mockFromAccount.execute(this.mockAccount.address, this.mode, this.calldata, salt),
+      ).to.be.revertedWithCustomError(this.mock, 'ERC7579ExecutorUnexpectedOperationState');
       // call from anyone
       await expect(
         this.mock.execute(this.mockAccount.address, this.mode, this.calldata, salt),
       ).to.be.revertedWithCustomError(this.mock, 'ERC7579ExecutorUnexpectedOperationState');
-    });
-
-    it('executes before delay passes with the caller being the account', async function () {
-      await expect(this.mockFromAccount.execute(this.mockAccount.address, this.mode, this.calldata, salt))
-        .to.emit(this.target, 'MockFunctionCalledWithArgs')
-        .withArgs(...this.args);
     });
 
     it('executes when delay passes but has not expired if called by the account', async function () {
