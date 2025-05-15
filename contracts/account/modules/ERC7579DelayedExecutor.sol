@@ -153,9 +153,13 @@ abstract contract ERC7579DelayedExecutor is ERC7579Executor {
         bytes32 salt
     ) internal view virtual override {
         bytes32 id = hashOperation(account, mode, executionCalldata, salt);
-        if (msg.sender != account) {
-            _validateStateBitmap(id, _encodeStateBitmap(OperationState.Ready));
-        }
+        if (msg.sender == account)
+            _validateStateBitmap(
+                id,
+                _encodeStateBitmap(OperationState.Scheduled) | _encodeStateBitmap(OperationState.Ready)
+            );
+        else _validateStateBitmap(id, _encodeStateBitmap(OperationState.Ready));
+
         super._validateExecution(account, mode, executionCalldata, salt);
     }
 
@@ -390,7 +394,7 @@ abstract contract ERC7579DelayedExecutor is ERC7579Executor {
     }
 
     /**
-     * @dev Schedules an operation.
+     * @dev Schedules an operation. Does not perform any validation checks.
      *
      * Emits an {ERC7579ExecutorOperationScheduled} event.
      *
