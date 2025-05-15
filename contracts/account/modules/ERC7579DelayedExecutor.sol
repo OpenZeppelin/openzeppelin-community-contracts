@@ -2,7 +2,6 @@
 pragma solidity ^0.8.27;
 
 import {Time} from "@openzeppelin/contracts/utils/types/Time.sol";
-import {Mode} from "@openzeppelin/contracts/account/utils/draft-ERC7579Utils.sol";
 import {IERC7579ModuleConfig, MODULE_TYPE_EXECUTOR} from "@openzeppelin/contracts/interfaces/draft-IERC7579.sol";
 import {ERC7579Executor} from "./ERC7579Executor.sol";
 
@@ -65,7 +64,7 @@ abstract contract ERC7579DelayedExecutor is ERC7579Executor {
     event ERC7579ExecutorOperationScheduled(
         address indexed account,
         bytes32 indexed operationId,
-        Mode mode,
+        bytes32 mode,
         bytes executionCalldata,
         bytes32 salt,
         uint48 schedule
@@ -104,7 +103,7 @@ abstract contract ERC7579DelayedExecutor is ERC7579Executor {
     /// @dev Current state of an operation.
     function state(
         address account,
-        Mode mode,
+        bytes32 mode,
         bytes calldata executionCalldata,
         bytes32 salt
     ) public view returns (OperationState) {
@@ -142,7 +141,7 @@ abstract contract ERC7579DelayedExecutor is ERC7579Executor {
     /// @dev Schedule for an operation. Returns default values if not set (i.e. `uint48(0)`, `uint48(0)`, `uint48(0)`).
     function getSchedule(
         address account,
-        Mode mode,
+        bytes32 mode,
         bytes calldata executionCalldata,
         bytes32 salt
     ) public view virtual returns (uint48 scheduledAt, uint48 executableAt, uint48 expiresAt) {
@@ -161,7 +160,7 @@ abstract contract ERC7579DelayedExecutor is ERC7579Executor {
     /// @dev Returns the operation id.
     function hashOperation(
         address account,
-        Mode mode,
+        bytes32 mode,
         bytes calldata executionCalldata,
         bytes32 salt
     ) public view virtual returns (bytes32) {
@@ -229,7 +228,7 @@ abstract contract ERC7579DelayedExecutor is ERC7579Executor {
      */
     function schedule(
         address account,
-        Mode mode,
+        bytes32 mode,
         bytes calldata executionCalldata,
         bytes32 salt,
         bytes calldata extraData
@@ -245,7 +244,7 @@ abstract contract ERC7579DelayedExecutor is ERC7579Executor {
      */
     function cancel(
         address account,
-        Mode mode,
+        bytes32 mode,
         bytes calldata executionCalldata,
         bytes32 salt,
         bytes calldata extraData
@@ -278,7 +277,7 @@ abstract contract ERC7579DelayedExecutor is ERC7579Executor {
     /// @inheritdoc ERC7579Executor
     function _validateExecution(
         address /* account */,
-        Mode /* mode */,
+        bytes32 /* mode */,
         bytes calldata /* executionCalldata */,
         bytes32 /* salt */,
         bytes calldata /* extraData */
@@ -296,7 +295,7 @@ abstract contract ERC7579DelayedExecutor is ERC7579Executor {
      * ```solidity
      *  function _validateCancel(
      *     address account,
-     *     Mode mode,
+     *     bytes32 mode,
      *     bytes calldata executionCalldata,
      *     bytes32 salt,
      *     bytes32 extraData
@@ -308,7 +307,7 @@ abstract contract ERC7579DelayedExecutor is ERC7579Executor {
      */
     function _validateCancel(
         address account,
-        Mode /* mode */,
+        bytes32 /* mode */,
         bytes calldata /* executionCalldata */,
         bytes32 /* salt */,
         bytes calldata /* extraData */
@@ -326,7 +325,7 @@ abstract contract ERC7579DelayedExecutor is ERC7579Executor {
      * ```solidity
      *  function _validateSchedule(
      *     address account,
-     *     Mode mode,
+     *     bytes32 mode,
      *     bytes calldata executionCalldata,
      *     bytes32 salt,
      *     bytes32 extraData
@@ -338,7 +337,7 @@ abstract contract ERC7579DelayedExecutor is ERC7579Executor {
      */
     function _validateSchedule(
         address account,
-        Mode /* mode */,
+        bytes32 /* mode */,
         bytes calldata /* executionCalldata */,
         bytes32 /* salt */,
         bytes calldata /* extraData */
@@ -379,7 +378,7 @@ abstract contract ERC7579DelayedExecutor is ERC7579Executor {
      */
     function _schedule(
         address account,
-        Mode mode,
+        bytes32 mode,
         bytes calldata executionCalldata,
         bytes32 salt
     ) internal virtual returns (bytes32 operationId, Schedule memory schedule_) {
@@ -406,7 +405,7 @@ abstract contract ERC7579DelayedExecutor is ERC7579Executor {
      */
     function _execute(
         address account,
-        Mode mode,
+        bytes32 mode,
         bytes calldata executionCalldata,
         bytes32 salt
     ) internal virtual override returns (bytes[] memory returnData) {
@@ -427,7 +426,7 @@ abstract contract ERC7579DelayedExecutor is ERC7579Executor {
      *
      * Canceled operations can't be rescheduled. Emits an {ERC7579ExecutorOperationCanceled} event.
      */
-    function _cancel(address account, Mode mode, bytes calldata executionCalldata, bytes32 salt) internal virtual {
+    function _cancel(address account, bytes32 mode, bytes calldata executionCalldata, bytes32 salt) internal virtual {
         bytes32 id = hashOperation(account, mode, executionCalldata, salt);
         bytes32 allowedStates = _encodeStateBitmap(OperationState.Scheduled) | _encodeStateBitmap(OperationState.Ready);
         _validateStateBitmap(id, allowedStates);

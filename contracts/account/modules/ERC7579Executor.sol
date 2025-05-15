@@ -2,7 +2,6 @@
 pragma solidity ^0.8.27;
 
 import {IERC7579Module, MODULE_TYPE_EXECUTOR, IERC7579Execution} from "@openzeppelin/contracts/interfaces/draft-IERC7579.sol";
-import {Mode} from "@openzeppelin/contracts/account/utils/draft-ERC7579Utils.sol";
 
 /**
  * @dev Basic implementation for ERC-7579 executor modules that provides execution functionality
@@ -19,7 +18,7 @@ import {Mode} from "@openzeppelin/contracts/account/utils/draft-ERC7579Utils.sol
  */
 abstract contract ERC7579Executor is IERC7579Module {
     /// @dev Emitted when an operation is executed.
-    event ERC7579ExecutorOperationExecuted(address indexed account, Mode mode, bytes callData, bytes32 salt);
+    event ERC7579ExecutorOperationExecuted(address indexed account, bytes32 mode, bytes callData, bytes32 salt);
 
     /// @dev Thrown when the execution is invalid. See {_validateExecution} for details.
     error ERC7579InvalidExecution();
@@ -36,7 +35,7 @@ abstract contract ERC7579Executor is IERC7579Module {
      */
     function execute(
         address account,
-        Mode mode,
+        bytes32 mode,
         bytes calldata executionCalldata,
         bytes32 salt,
         bytes calldata extraData
@@ -56,18 +55,18 @@ abstract contract ERC7579Executor is IERC7579Module {
      * ```solidity
      *  function _validateExecution(
      *     address account,
-     *     Mode mode,
+     *     bytes32 mode,
      *     bytes calldata executionCalldata,
      *     bytes32 salt,
      *     bytes calldata extraData
-     *  ) internal view virtual returns (bool) {
+     *  ) internal view override returns (bool) {
      *    return isAuthorized; // custom logic to check authorization
      *  }
      *```
      */
     function _validateExecution(
         address account,
-        Mode mode,
+        bytes32 mode,
         bytes calldata executionCalldata,
         bytes32 salt,
         bytes calldata extraData // additional data for custom validation
@@ -82,11 +81,11 @@ abstract contract ERC7579Executor is IERC7579Module {
      */
     function _execute(
         address account,
-        Mode mode,
+        bytes32 mode,
         bytes calldata executionCalldata,
         bytes32 salt
     ) internal virtual returns (bytes[] memory returnData) {
         emit ERC7579ExecutorOperationExecuted(account, mode, executionCalldata, salt);
-        return IERC7579Execution(account).executeFromExecutor(Mode.unwrap(mode), executionCalldata);
+        return IERC7579Execution(account).executeFromExecutor(mode, executionCalldata);
     }
 }
