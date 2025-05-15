@@ -17,8 +17,8 @@
     "prepare-docs": "scripts/prepare-docs.sh",
     "lint": "npm run lint:js && npm run lint:sol",
     "lint:fix": "npm run lint:js:fix && npm run lint:sol:fix",
-    "lint:js": "prettier --log-level warn '**/*.{js,ts}' --check && eslint .",
-    "lint:js:fix": "prettier --log-level warn '**/*.{js,ts}' --write && eslint . --fix",
+    "lint:js": "prettier --log-level warn '**/*.{js,ts}' --check && eslint . --ignore-pattern lib/",
+    "lint:js:fix": "prettier --log-level warn '**/*.{js,ts}' --write && eslint . --fix --ignore-pattern lib/",
     "lint:sol": "prettier --log-level warn '{contracts,test}/**/*.sol' --check && solhint '{contracts,test}/**/*.sol'",
     "lint:sol:fix": "prettier --log-level warn '{contracts,test}/**/*.sol' --write",
     "coverage": "scripts/checks/coverage.sh",
@@ -45,10 +45,6 @@
     "security",
     "zeppelin"
   ],
-  "peerDependencies": {
-    "@axelar-network/axelar-gmp-sdk-solidity": "^6.0.6",
-    "@zk-email/contracts": "^6.3.2"
-  },
   "devDependencies": {
     "@openzeppelin/contracts": "file:lib/@openzeppelin-contracts"
   },
