@@ -18,7 +18,12 @@ import {IERC7579Module, MODULE_TYPE_EXECUTOR, IERC7579Execution} from "@openzepp
  */
 abstract contract ERC7579Executor is IERC7579Module {
     /// @dev Emitted when an operation is executed.
-    event ERC7579ExecutorOperationExecuted(address indexed account, bytes32 mode, bytes callData, bytes32 salt);
+    event ERC7579ExecutorOperationExecuted(
+        address indexed account,
+        bytes32 mode,
+        bytes executionCalldata,
+        bytes32 salt
+    );
 
     /// @dev Thrown when the execution is invalid. See {_validateExecution} for details.
     error ERC7579InvalidExecution();
@@ -36,11 +41,10 @@ abstract contract ERC7579Executor is IERC7579Module {
     function execute(
         address account,
         bytes32 mode,
-        bytes calldata executionCalldata,
-        bytes32 salt,
-        bytes calldata extraData
+        bytes calldata data,
+        bytes32 salt
     ) public virtual returns (bytes[] memory returnData) {
-        bool allowed = _validateExecution(account, mode, executionCalldata, salt, extraData);
+        (bool allowed, bytes calldata executionCalldata) = _validateExecution(account, mode, data, salt);
         returnData = _execute(account, mode, executionCalldata, salt); // Prioritize errors thrown in _execute
         require(allowed, ERC7579InvalidExecution());
         return returnData;
@@ -56,10 +60,10 @@ abstract contract ERC7579Executor is IERC7579Module {
      *  function _validateExecution(
      *     address account,
      *     bytes32 mode,
-     *     bytes calldata executionCalldata,
-     *     bytes32 salt,
-     *     bytes calldata extraData
-     *  ) internal view override returns (bool) {
+     *     bytes calldata data,
+     *     bytes32 salt
+     *  ) internal view override returns (bool valid, bytes calldata executionCalldata) {
+     *    /// ...
      *    return isAuthorized; // custom logic to check authorization
      *  }
      *```
@@ -67,10 +71,9 @@ abstract contract ERC7579Executor is IERC7579Module {
     function _validateExecution(
         address account,
         bytes32 mode,
-        bytes calldata executionCalldata,
-        bytes32 salt,
-        bytes calldata extraData // additional data for custom validation
-    ) internal view virtual returns (bool);
+        bytes calldata data,
+        bytes32 salt
+    ) internal view virtual returns (bool valid, bytes calldata executionCalldata);
 
     /**
      * @dev Internal version of {execute}. Emits {ERC7579ExecutorOperationExecuted} event.
