@@ -122,16 +122,14 @@ abstract contract ERC7579DelayedExecutor is ERC7579Executor {
         return OperationState.Ready;
     }
 
-    /// @dev See {ERC7579Executor-canExecute}. Allows anyone to execute an operation if it's `Ready`.
-    function canExecute(
-        address account,
-        Mode mode,
-        bytes calldata executionCalldata,
-        bytes32 salt
-    ) public view virtual override returns (bool) {
-        return
-            state(account, mode, executionCalldata, salt) == OperationState.Ready ||
-            super.canExecute(account, mode, executionCalldata, salt);
+    /// @inheritdoc ERC7579Executor
+    function _validateExecution(
+        address /* account */,
+        Mode /* mode */,
+        bytes calldata /* executionCalldata */,
+        bytes32 /* salt */
+    ) internal view virtual override returns (bool) {
+        return true; // Anyone can execute, the state validation of the operation is enough
     }
 
     /**
@@ -142,23 +140,23 @@ abstract contract ERC7579DelayedExecutor is ERC7579Executor {
      * Example extension:
      *
      * ```solidity
-     *  function canCancel(
+     *  function _validateCancel(
      *     address account,
      *     Mode mode,
      *     bytes calldata executionCalldata,
      *     bytes32 salt
-     *  ) public view virtual returns (bool) {
+     *  ) internal view override returns (bool) {
      *    bool isAuthorized = ...; // custom logic to check authorization
-     *    return isAuthorized || super.canCancel(account, mode, executionCalldata, salt);
+     *    return isAuthorized || super._validateCancel(account, mode, executionCalldata, salt);
      *  }
      *```
      */
-    function canCancel(
+    function _validateCancel(
         address account,
         Mode /* mode */,
         bytes calldata /* executionCalldata */,
         bytes32 /* salt */
-    ) public view virtual returns (bool) {
+    ) internal view virtual returns (bool) {
         return account == msg.sender;
     }
 
@@ -170,23 +168,23 @@ abstract contract ERC7579DelayedExecutor is ERC7579Executor {
      * Example extension:
      *
      * ```solidity
-     *  function canSchedule(
+     *  function _validateSchedule(
      *     address account,
      *     Mode mode,
      *     bytes calldata executionCalldata,
      *     bytes32 salt
-     *  ) public view virtual returns (bool) {
+     *  ) internal view override returns (bool) {
      *    bool isAuthorized = ...; // custom logic to check authorization
-     *    return isAuthorized || super.canSchedule(account, mode, executionCalldata, salt);
+     *    return isAuthorized || super._validateSchedule(account, mode, executionCalldata, salt);
      *  }
      *```
      */
-    function canSchedule(
+    function _validateSchedule(
         address account,
         Mode /* mode */,
         bytes calldata /* executionCalldata */,
         bytes32 /* salt */
-    ) public view virtual returns (bool) {
+    ) internal view virtual returns (bool) {
         return account == msg.sender;
     }
 
@@ -293,10 +291,10 @@ abstract contract ERC7579DelayedExecutor is ERC7579Executor {
     /**
      * @dev Schedules an operation to be executed after the account's delay period (see {getDelay}).
      * Operations are uniquely identified by the combination of `mode`, `executionCalldata`, and `salt`.
-     * See {canSchedule} for authorization checks.
+     * See {_validateSchedule} for authorization checks.
      */
     function schedule(address account, Mode mode, bytes calldata executionCalldata, bytes32 salt) public virtual {
-        bool allowed = canSchedule(account, mode, executionCalldata, salt);
+        bool allowed = _validateSchedule(account, mode, executionCalldata, salt);
         _schedule(account, mode, executionCalldata, salt); // Prioritize errors thrown in _schedule
         require(allowed, ERC7579ExecutorUnauthorizedSchedule());
     }
@@ -306,7 +304,7 @@ abstract contract ERC7579DelayedExecutor is ERC7579Executor {
      * scheduled the operation. See {_cancel}.
      */
     function cancel(address account, Mode mode, bytes calldata executionCalldata, bytes32 salt) public virtual {
-        bool allowed = canCancel(account, mode, executionCalldata, salt);
+        bool allowed = _validateCancel(account, mode, executionCalldata, salt);
         _cancel(account, mode, executionCalldata, salt); // Prioritize errors thrown in _cancel
         require(allowed, ERC7579ExecutorUnauthorizedCancellation());
     }
@@ -388,8 +386,6 @@ abstract contract ERC7579DelayedExecutor is ERC7579Executor {
      * Requirements:
      *
      * * The operation must be `Ready`.
-     *
-     * NOTE: Anyone can trigger execution once the operation is `Ready`. See {canExecute}.
      */
     function _execute(
         address account,

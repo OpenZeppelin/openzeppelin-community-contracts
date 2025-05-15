@@ -9,9 +9,9 @@ import {Mode} from "@openzeppelin/contracts/account/utils/draft-ERC7579Utils.sol
  * for smart accounts.
  *
  * The module enables accounts to execute arbitrary operations, leveraging the execution
- * capabilities defined in the ERC-7579 standard. By default, the executor is restricted to
- * operations initiated by the account itself, but this can be customized in derived contracts
- * by overriding the {canExecute} function.
+ * capabilities defined in the ERC-7579 standard. Developers can customize whether an operation
+ * can be executed with custom rules by implementing the {_validateExecution} function in
+ * derived contracts.
  *
  * TIP: This is a simplified executor that directly executes operations without delay or expiration
  * mechanisms. For a more advanced implementation with time-delayed execution patterns and
@@ -21,8 +21,8 @@ abstract contract ERC7579Executor is IERC7579Module {
     /// @dev Emitted when an operation is executed.
     event ERC7579ExecutorOperationExecuted(address indexed account, Mode mode, bytes callData, bytes32 salt);
 
-    /// @dev Thrown when the executor is uninstalled.
-    error ERC7579UnauthorizedExecution();
+    /// @dev Thrown when the execution is invalid. See {_validateExecution} for details.
+    error ERC7579InvalidExecution();
 
     /// @inheritdoc IERC7579Module
     function isModuleType(uint256 moduleTypeId) public pure virtual returns (bool) {
@@ -31,36 +31,32 @@ abstract contract ERC7579Executor is IERC7579Module {
 
     /**
      * @dev Check if the caller is authorized to execute operations.
-     * By default, this checks if the caller is the account itself. Derived contracts can
-     * override this to implement custom authorization logic.
+     * Derived contracts can implement this with custom authorization logic.
      *
      * Example extension:
      *
      * ```solidity
-     *  function canExecute(
+     *  function _validateExecution(
      *     address account,
      *     Mode mode,
      *     bytes calldata executionCalldata,
      *     bytes32 salt
-     *  ) public view virtual returns (bool) {
-     *    bool isAuthorized = ...; // custom logic to check authorization
-     *    return isAuthorized || super.canExecute(account, mode, executionCalldata, salt);
+     *  ) internal view virtual returns (bool) {
+     *    return isAuthorized; // custom logic to check authorization
      *  }
      *```
      */
-    function canExecute(
+    function _validateExecution(
         address account,
         Mode /* mode */,
         bytes calldata /* executionCalldata */,
         bytes32 /* salt */
-    ) public view virtual returns (bool) {
-        return msg.sender == account;
-    }
+    ) internal view virtual returns (bool);
 
     /**
      * @dev Executes an operation and returns the result data from the executed operation.
      * Restricted to the account itself by default. See {_execute} for requirements and
-     * {canExecute} for authorization checks.
+     * {_validateExecution} for authorization checks.
      */
     function execute(
         address account,
@@ -68,9 +64,9 @@ abstract contract ERC7579Executor is IERC7579Module {
         bytes calldata executionCalldata,
         bytes32 salt
     ) public virtual returns (bytes[] memory returnData) {
-        bool allowed = canExecute(account, mode, executionCalldata, salt);
+        bool allowed = _validateExecution(account, mode, executionCalldata, salt);
         returnData = _execute(account, mode, executionCalldata, salt); // Prioritize errors thrown in _execute
-        require(allowed, ERC7579UnauthorizedExecution());
+        require(allowed, ERC7579InvalidExecution());
         return returnData;
     }
 
