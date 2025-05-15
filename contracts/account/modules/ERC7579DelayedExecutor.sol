@@ -126,9 +126,8 @@ abstract contract ERC7579DelayedExecutor is ERC7579Executor {
     }
 
     /**
-     * @dev See {ERC7579Executor-_validateExecution}. This implementation only validates
-     * the operation is in `Ready`. Any caller can execute the operation if it is
-     * in this state.
+     * @dev See {ERC7579Executor-_validateExecution}. Validates that the operation is in `Ready` state,
+     * unless the caller is the account itself which can execute in any state.
      *
      * Derived contracts can override this function to add additional validation logic.
      *
@@ -154,7 +153,10 @@ abstract contract ERC7579DelayedExecutor is ERC7579Executor {
         bytes32 salt
     ) internal view virtual override {
         bytes32 id = hashOperation(account, mode, executionCalldata, salt);
-        _validateStateBitmap(id, _encodeStateBitmap(OperationState.Ready));
+        if (msg.sender != account) {
+            _validateStateBitmap(id, _encodeStateBitmap(OperationState.Ready));
+        }
+        super._validateExecution(account, mode, executionCalldata, salt);
     }
 
     /**
@@ -388,9 +390,12 @@ abstract contract ERC7579DelayedExecutor is ERC7579Executor {
     }
 
     /**
-     * @dev Schedules an operation. Does not perform any validation checks.
+     * @dev Schedules an operation.
      *
      * Emits an {ERC7579ExecutorOperationScheduled} event.
+     *
+     * NOTE: Calling this function directly will NOT perform any validation checks.
+     * Scheduling a operation should be done using {schedule}.
      */
     function _schedule(address account, Mode mode, bytes calldata executionCalldata, bytes32 salt) internal virtual {
         bytes32 id = hashOperation(account, mode, executionCalldata, salt);
@@ -421,11 +426,14 @@ abstract contract ERC7579DelayedExecutor is ERC7579Executor {
     }
 
     /**
-     * @dev Cancels an operation. Does not perform any validation checks.
-     *
-     * NOTE: Canceled operations can't be rescheduled.
+     * @dev Cancels an operation.
      *
      * Emits an {ERC7579ExecutorOperationCanceled} event.
+     *
+     * NOTE: Calling this function directly will NOT perform any validation checks.
+     * Cancelling a operation should be done using {cancel}.
+     *
+     * NOTE: Canceled operations can't be rescheduled.
      */
     function _cancel(address account, Mode mode, bytes calldata executionCalldata, bytes32 salt) internal virtual {
         bytes32 id = hashOperation(account, mode, executionCalldata, salt);

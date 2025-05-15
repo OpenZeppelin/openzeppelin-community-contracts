@@ -53,9 +53,7 @@ abstract contract ERC7579Executor is IERC7579Module {
         Mode /* mode */,
         bytes calldata /* executionCalldata */,
         bytes32 /* salt */
-    ) internal view virtual {
-        require(msg.sender == account, ERC7579UnauthorizedExecution());
-    }
+    ) internal view virtual {}
 
     /**
      * @dev Executes an operation and returns the result data from the executed operation.
@@ -72,13 +70,16 @@ abstract contract ERC7579Executor is IERC7579Module {
     }
 
     /**
-     * @dev Executes an operation. Does not perform any validation checks.
+     * @dev Executes an operation.
      *
      * Emits {ERC7579ExecutorOperationExecuted} event.
      *
      * Requirements:
      *
      * * The `account` must implement the {IERC7579Execution-executeFromExecutor} function.
+     *
+     * NOTE: Calling this function directly will NOT perform any validation checks.
+     * Executing a operation should be done using {execute}.
      */
     function _execute(
         address account,
