@@ -11,7 +11,7 @@ import {Mode} from "@openzeppelin/contracts/account/utils/draft-ERC7579Utils.sol
  * validation.
  *
  * This module provides a base implementation for multisignature validation that can be
- * attached to any function through the {_checkMultiSignature} internal function. The signers
+ * attached to any function through the {_validateMultisignature} internal function. The signers
  * are represented using the ERC-7913 format, which concatenates a verifier address and
  * a key: `verifier || key`.
  *
@@ -25,7 +25,7 @@ import {Mode} from "@openzeppelin/contracts/account/utils/draft-ERC7579Utils.sol
  *     bytes32 salt,
  *     bytes calldata signature
  * ) public virtual {
- *     _checkMultiSignature(account, hash, signature);
+ *     require(_validateMultisignature(account, hash, signature));
  *     // ... rest of execute logic
  * }
  * ```
@@ -61,9 +61,6 @@ abstract contract ERC7579Multisig is IERC7579Module {
 
     /// @dev The `threshold` is unreachable given the number of `signers`.
     error ERC7579MultisigUnreachableThreshold(uint256 signers, uint256 threshold);
-
-    /// @dev The signatures are invalid.
-    error ERC7579MultisigInvalidSignatures();
 
     mapping(address account => EnumerableSetExtended.BytesSet) private _signersSetByAccount;
     mapping(address account => uint256) private _thresholdByAccount;
@@ -172,9 +169,8 @@ abstract contract ERC7579Multisig is IERC7579Module {
     }
 
     /**
-     * @dev Checks whether the number of valid signatures meets or exceeds the
-     * threshold set for the target account. Reverts with {ERC7579MultisigInvalidSignatures}
-     * if the multisignature is not valid.
+     * @dev Returns whether the number of valid signatures meets or exceeds the
+     * threshold set for the target account.
      *
      * The signature should be encoded as:
      * `abi.encode(bytes[] signingSigners, bytes[] signatures)`
@@ -182,13 +178,15 @@ abstract contract ERC7579Multisig is IERC7579Module {
      * Where `signingSigners` are the authorized signers and signatures are their corresponding
      * signatures of the operation `hash`.
      */
-    function _checkMultiSignature(address account, bytes32 hash, bytes calldata signature) internal view virtual {
+    function _validateMultisignature(
+        address account,
+        bytes32 hash,
+        bytes calldata signature
+    ) internal view virtual returns (bool) {
         (bytes[] memory signingSigners, bytes[] memory signatures) = abi.decode(signature, (bytes[], bytes[]));
-        require(
+        return
             _validateThreshold(account, signingSigners) &&
-                _validateSignatures(account, hash, signingSigners, signatures),
-            ERC7579MultisigInvalidSignatures()
-        );
+            _validateSignatures(account, hash, signingSigners, signatures);
     }
 
     /**

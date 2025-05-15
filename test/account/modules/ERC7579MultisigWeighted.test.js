@@ -289,21 +289,21 @@ describe('ERC7579MultisigWeighted', function () {
       const exactSigner = new NonNativeSigner(new MultiERC7913SigningKey([signerECDSA1, signerECDSA2]));
       const exactSignature = await exactSigner.signMessage(testMessage);
 
-      await expect(this.mock.$_checkMultiSignature(this.mockAccount.address, messageHash, exactSignature)).to.not.be
-        .reverted;
+      await expect(this.mock.$_validateMultisignature(this.mockAccount.address, messageHash, exactSignature)).to
+        .eventually.be.true;
 
       // Also works with all signers (1+2+3=6 > threshold 3)
       const sufficientSignature = await this.multiSigner.signMessage(testMessage);
 
-      await expect(this.mock.$_checkMultiSignature(this.mockAccount.address, messageHash, sufficientSignature)).to.not
-        .be.reverted;
+      await expect(this.mock.$_validateMultisignature(this.mockAccount.address, messageHash, sufficientSignature)).to
+        .eventually.be.true;
 
       // Also try with just signerECDSA3 (weight 3) = 3, exactly meeting threshold
       const minimumSigner = new NonNativeSigner(new MultiERC7913SigningKey([signerECDSA3]));
       const minimumSignature = await minimumSigner.signMessage(testMessage);
 
-      await expect(this.mock.$_checkMultiSignature(this.mockAccount.address, messageHash, minimumSignature)).to.not.be
-        .reverted;
+      await expect(this.mock.$_validateMultisignature(this.mockAccount.address, messageHash, minimumSignature)).to
+        .eventually.be.true;
     });
 
     it('rejects signatures that collectively miss threshold', async function () {
@@ -317,9 +317,8 @@ describe('ERC7579MultisigWeighted', function () {
       const insufficientSignature = await insufficientSigner.signMessage(testMessage);
 
       // Should fail because total weight (1) < threshold (4)
-      await expect(
-        this.mock.$_checkMultiSignature(this.mockAccount.address, messageHash, insufficientSignature),
-      ).to.be.revertedWithCustomError(this.mock, 'ERC7579MultisigInvalidSignatures');
+      await expect(this.mock.$_validateMultisignature(this.mockAccount.address, messageHash, insufficientSignature)).to
+        .eventually.be.false;
     });
 
     it('considers weight changes when validating signatures', async function () {
@@ -334,16 +333,15 @@ describe('ERC7579MultisigWeighted', function () {
       const insufficientSignature = await insufficientSigner.signMessage(testMessage);
 
       // First verify this combination is insufficient
-      await expect(
-        this.mock.$_checkMultiSignature(this.mockAccount.address, messageHash, insufficientSignature),
-      ).to.be.revertedWithCustomError(this.mock, 'ERC7579MultisigInvalidSignatures');
+      await expect(this.mock.$_validateMultisignature(this.mockAccount.address, messageHash, insufficientSignature)).to
+        .eventually.be.false;
 
       // Now increase the weight of signerECDSA2 to make it sufficient
       await this.mockFromAccount.setSignerWeights([this.signers[1]], [3]); // Now weight is 1+3=4 >= threshold 4
 
       // Same signature should now pass
-      await expect(this.mock.$_checkMultiSignature(this.mockAccount.address, messageHash, insufficientSignature)).to.not
-        .be.reverted;
+      await expect(this.mock.$_validateMultisignature(this.mockAccount.address, messageHash, insufficientSignature)).to
+        .eventually.be.true;
     });
 
     it('rejects invalid signatures regardless of weight', async function () {
@@ -359,9 +357,8 @@ describe('ERC7579MultisigWeighted', function () {
       const invalidSignature = await invalidSigner.signMessage(differentMessage);
 
       // Should fail because signature is invalid for the hash
-      await expect(
-        this.mock.$_checkMultiSignature(this.mockAccount.address, messageHash, invalidSignature),
-      ).to.be.revertedWithCustomError(this.mock, 'ERC7579MultisigInvalidSignatures');
+      await expect(this.mock.$_validateMultisignature(this.mockAccount.address, messageHash, invalidSignature)).to
+        .eventually.be.false;
     });
   });
 });

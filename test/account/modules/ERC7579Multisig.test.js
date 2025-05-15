@@ -216,10 +216,9 @@ describe('ERC7579Multisig', function () {
       const testMessage = 'test';
       const messageHash = ethers.hashMessage(testMessage);
       const multiSignature = await this.multiSigner.signMessage(testMessage);
-      await this.mock.$_checkMultiSignature(this.mockAccount.address, messageHash, multiSignature);
       // Should succeed with valid signatures meeting threshold
-      await expect(this.mock.$_checkMultiSignature(this.mockAccount.address, messageHash, multiSignature)).to.not.be
-        .reverted;
+      await expect(this.mock.$_validateMultisignature(this.mockAccount.address, messageHash, multiSignature)).to
+        .eventually.be.true;
     });
 
     it('rejects signatures not meeting threshold', async function () {
@@ -235,9 +234,8 @@ describe('ERC7579Multisig', function () {
       const multiSignature = await multiSigner.signMessage(testMessage);
 
       // Should fail because threshold is 2 but only 1 signature provided
-      await expect(
-        this.mock.$_checkMultiSignature(this.mockAccount.address, messageHash, multiSignature),
-      ).to.be.revertedWithCustomError(this.mock, 'ERC7579MultisigInvalidSignatures');
+      await expect(this.mock.$_validateMultisignature(this.mockAccount.address, messageHash, multiSignature)).to
+        .eventually.be.false;
     });
 
     it('validates valid signatures meeting threshold', async function () {
@@ -250,8 +248,8 @@ describe('ERC7579Multisig', function () {
       const multiSignature = await multiSigner.signMessage(testMessage);
 
       // Should succeed with valid signature meeting threshold
-      await expect(this.mock.$_checkMultiSignature(this.mockAccount.address, messageHash, multiSignature)).to.not.be
-        .reverted;
+      await expect(this.mock.$_validateMultisignature(this.mockAccount.address, messageHash, multiSignature)).to
+        .eventually.be.true;
     });
 
     it('rejects signatures from unauthorized signers', async function () {
@@ -264,9 +262,8 @@ describe('ERC7579Multisig', function () {
       const multiSignature = await multiSigner.signMessage(testMessage);
 
       // Should fail because signer is not authorized
-      await expect(
-        this.mock.$_checkMultiSignature(this.mockAccount.address, messageHash, multiSignature),
-      ).to.be.revertedWithCustomError(this.mock, 'ERC7579MultisigInvalidSignatures');
+      await expect(this.mock.$_validateMultisignature(this.mockAccount.address, messageHash, multiSignature)).to
+        .eventually.be.false;
     });
 
     it('rejects invalid signatures from authorized signers', async function () {
@@ -277,9 +274,8 @@ describe('ERC7579Multisig', function () {
       const multiSignature = await this.multiSigner.signMessage(differentMessage);
 
       // Should fail because signature is for a different hash
-      await expect(
-        this.mock.$_checkMultiSignature(this.mockAccount.address, messageHash, multiSignature),
-      ).to.be.revertedWithCustomError(this.mock, 'ERC7579MultisigInvalidSignatures');
+      await expect(this.mock.$_validateMultisignature(this.mockAccount.address, messageHash, multiSignature)).to
+        .eventually.be.false;
     });
   });
 });
