@@ -11,7 +11,7 @@ import {Mode} from "@openzeppelin/contracts/account/utils/draft-ERC7579Utils.sol
  * The module enables accounts to execute arbitrary operations, leveraging the execution
  * capabilities defined in the ERC-7579 standard. By default, the executor is restricted to
  * operations initiated by the account itself, but this can be customized in derived contracts
- * by overriding the {_validateExecutionRequest} function.
+ * by overriding the {_validateExecution} function.
  *
  * TIP: This is a simplified executor that directly executes operations without delay or expiration
  * mechanisms. For a more advanced implementation with time-delayed execution patterns and
@@ -30,13 +30,13 @@ abstract contract ERC7579Executor is IERC7579Module {
     }
 
     /**
-     * @dev Validates an execution request. By default, only validates the caller is the account itself.
+     * @dev Validates execution. By default, only validates the caller is the account itself.
      * Derived contracts can override this function to add additional validation logic.
      *
      * Example extension:
      *
      * ```solidity
-     *  function _validateExecutionRequest(
+     *  function _validateExecution(
      *     address account,
      *     Mode mode,
      *     bytes calldata executionCalldata,
@@ -44,11 +44,11 @@ abstract contract ERC7579Executor is IERC7579Module {
      *  ) internal view virtual override {
      *    bool conditionMet = ...; // custom logic to check condition
      *    require(conditionMet, ERC7579ExecutorConditionNotMet());
-     *    super._validateExecutionRequest(account, mode, executionCalldata, salt);
+     *    super._validateExecution(account, mode, executionCalldata, salt);
      *  }
      *```
      */
-    function _validateExecutionRequest(
+    function _validateExecution(
         address account,
         Mode /* mode */,
         bytes calldata /* executionCalldata */,
@@ -59,7 +59,7 @@ abstract contract ERC7579Executor is IERC7579Module {
 
     /**
      * @dev Executes an operation and returns the result data from the executed operation.
-     * See {_execute} for requirements and {_validateExecutionRequest} for validation.
+     * See {_execute} for requirements and {_validateExecution} for validation.
      */
     function execute(
         address account,
@@ -67,12 +67,12 @@ abstract contract ERC7579Executor is IERC7579Module {
         bytes calldata executionCalldata,
         bytes32 salt
     ) public virtual returns (bytes[] memory returnData) {
-        _validateExecutionRequest(account, mode, executionCalldata, salt);
+        _validateExecution(account, mode, executionCalldata, salt);
         return _execute(account, mode, executionCalldata, salt);
     }
 
     /**
-     * @dev Low-level internal function to execute an operation. Does not perform any validation checks.
+     * @dev Executes an operation. Does not perform any validation checks.
      *
      * Emits {ERC7579ExecutorOperationExecuted} event.
      *

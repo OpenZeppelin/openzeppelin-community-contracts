@@ -126,8 +126,8 @@ abstract contract ERC7579DelayedExecutor is ERC7579Executor {
     }
 
     /**
-     * @dev See {ERC7579Executor-_validateExecutionRequest}. This implementation only validates
-     * the operation is in {OperationState.Ready}. Any caller can execute the operation if it is
+     * @dev See {ERC7579Executor-_validateExecution}. This implementation only validates
+     * the operation is in `Ready`. Any caller can execute the operation if it is
      * in this state.
      *
      * Derived contracts can override this function to add additional validation logic.
@@ -135,7 +135,7 @@ abstract contract ERC7579DelayedExecutor is ERC7579Executor {
      * Example extension:
      *
      * ```solidity
-     *  function _validateExecutionRequest(
+     *  function _validateExecution(
      *     address account,
      *     Mode mode,
      *     bytes calldata executionCalldata,
@@ -143,11 +143,11 @@ abstract contract ERC7579DelayedExecutor is ERC7579Executor {
      *  ) internal view virtual override {
      *    bool conditionMet = ...; // custom logic to check condition
      *    require(conditionMet, ERC7579ExecutorConditionNotMet());
-     *    super._validateExecutionRequest(account, mode, executionCalldata, salt);
+     *    super._validateExecution(account, mode, executionCalldata, salt);
      *  }
      *```
      */
-    function _validateExecutionRequest(
+    function _validateExecution(
         address account,
         Mode mode,
         bytes calldata executionCalldata,
@@ -158,15 +158,15 @@ abstract contract ERC7579DelayedExecutor is ERC7579Executor {
     }
 
     /**
-     * @dev Validates a cancellation request against required conditions. This base implementation
-     * validates the caller is authorized to cancel and that the operation is in a valid state.
+     * @dev Validates cancellation. This base implementation validates the caller
+     * is authorized to cancel and that the operation is in a valid state.
      *
      * Derived contracts can override this function to add additional validation logic.
      *
      * Example extension:
      *
      * ```solidity
-     *  function _validateCancelRequest(
+     *  function _validateCancel(
      *     address account,
      *     Mode mode,
      *     bytes calldata executionCalldata,
@@ -174,11 +174,11 @@ abstract contract ERC7579DelayedExecutor is ERC7579Executor {
      *  ) internal view virtual override {
      *    bool conditionMet = ...; // custom logic to check additional condition
      *    require(conditionMet, ERC7579ExecutorConditionNotMet());
-     *    super._validateCancelRequest(account, mode, executionCalldata, salt);
+     *    super._validateCancel(account, mode, executionCalldata, salt);
      *  }
      *```
      */
-    function _validateCancelRequest(
+    function _validateCancel(
         address account,
         Mode mode,
         bytes calldata executionCalldata,
@@ -192,16 +192,16 @@ abstract contract ERC7579DelayedExecutor is ERC7579Executor {
     }
 
     /**
-     * @dev Validates a schedule request. This base implementation validates
-     * the caller is authorized to schedule, the module is installed, and the
-     * operation was not scheduled before.
+     * @dev Validates scheduling. This base implementation validates the caller
+     * is authorized to schedule, the module is installed, and the operation was
+     * not scheduled before.
      *
      * Can be overridden by derived contracts to implement custom validation logic.
      *
      * Example extension:
      *
      * ```solidity
-     *  function _validateScheduleRequest(
+     *  function _validateSchedule(
      *     address account,
      *     Mode mode,
      *     bytes calldata executionCalldata,
@@ -209,11 +209,11 @@ abstract contract ERC7579DelayedExecutor is ERC7579Executor {
      *  ) internal view virtual override {
      *    bool conditionMet = ...; // custom logic to check condition
      *    require(conditionMet, ERC7579ExecutorConditionNotMet());
-     *    super._validateScheduleRequest(account, mode, executionCalldata, salt);
+     *    super._validateSchedule(account, mode, executionCalldata, salt);
      *  }
      *```
      */
-    function _validateScheduleRequest(
+    function _validateSchedule(
         address account,
         Mode mode,
         bytes calldata executionCalldata,
@@ -330,19 +330,18 @@ abstract contract ERC7579DelayedExecutor is ERC7579Executor {
     /**
      * @dev Schedules an operation to be executed after the account's delay period (see {getDelay}).
      * Operations are uniquely identified by the combination of `mode`, `executionCalldata`, and `salt`.
-     * See {_validateScheduleRequest} for validation.
+     * See {_validateSchedule} for validation.
      */
     function schedule(address account, Mode mode, bytes calldata executionCalldata, bytes32 salt) public virtual {
-        _validateScheduleRequest(account, mode, executionCalldata, salt);
+        _validateSchedule(account, mode, executionCalldata, salt);
         _schedule(account, mode, executionCalldata, salt);
     }
 
     /**
-     * @dev Cancels a previously scheduled operation.
-     * See {_validateCancelRequest} for validation.
+     * @dev Cancels a scheduled operation. See {_validateCancel} for validation.
      */
     function cancel(address account, Mode mode, bytes calldata executionCalldata, bytes32 salt) public virtual {
-        _validateCancelRequest(account, mode, executionCalldata, salt);
+        _validateCancel(account, mode, executionCalldata, salt);
         _cancel(account, mode, executionCalldata, salt);
     }
 
@@ -389,7 +388,7 @@ abstract contract ERC7579DelayedExecutor is ERC7579Executor {
     }
 
     /**
-     * @dev Low-level internal function to schedule an operation. Does not perform any validation checks.
+     * @dev Schedules an operation. Does not perform any validation checks.
      *
      * Emits an {ERC7579ExecutorOperationScheduled} event.
      */
@@ -422,9 +421,9 @@ abstract contract ERC7579DelayedExecutor is ERC7579Executor {
     }
 
     /**
-     * @dev Low-level internal function to cancel an operation. Does not perform any validation checks.
+     * @dev Cancels an operation. Does not perform any validation checks.
      *
-     * Note: Canceled operations can't be rescheduled.
+     * NOTE: Canceled operations can't be rescheduled.
      *
      * Emits an {ERC7579ExecutorOperationCanceled} event.
      */
