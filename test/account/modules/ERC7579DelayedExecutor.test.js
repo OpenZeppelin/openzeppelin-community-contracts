@@ -3,6 +3,7 @@ const { expect } = require('chai');
 const { loadFixture, time } = require('@nomicfoundation/hardhat-network-helpers');
 const { impersonate } = require('@openzeppelin/contracts/test/helpers/account');
 const { ERC4337Helper } = require('../../helpers/erc4337');
+const { OperationState } = require('../../helpers/enums');
 
 const {
   MODULE_TYPE_EXECUTOR,
@@ -71,6 +72,63 @@ describe('ERC7579DelayedExecutor', function () {
   });
 
   shouldBehaveLikeERC7579Module();
+
+  it('returns the correct state (complete execution)', async function () {
+    await this.mockAccountFromEntrypoint.installModule(this.moduleType, this.mock.target, this.installData);
+    await expect(this.mock.state(this.mockAccount.address, salt, this.mode, this.calldata)).to.eventually.eq(
+      OperationState.Unknown,
+    );
+    await this.mockFromAccount.schedule(this.mockAccount.address, salt, this.mode, this.calldata);
+    await expect(this.mock.state(this.mockAccount.address, salt, this.mode, this.calldata)).to.eventually.eq(
+      OperationState.Scheduled,
+    );
+    await time.increase(this.delay);
+    await expect(this.mock.state(this.mockAccount.address, salt, this.mode, this.calldata)).to.eventually.eq(
+      OperationState.Ready,
+    );
+    await this.mock.execute(this.mockAccount.address, salt, this.mode, this.calldata);
+    await expect(this.mock.state(this.mockAccount.address, salt, this.mode, this.calldata)).to.eventually.eq(
+      OperationState.Executed,
+    );
+  });
+
+  it('returns the correct state (expiration)', async function () {
+    await this.mockAccountFromEntrypoint.installModule(this.moduleType, this.mock.target, this.installData);
+    await expect(this.mock.state(this.mockAccount.address, salt, this.mode, this.calldata)).to.eventually.eq(
+      OperationState.Unknown,
+    );
+    await this.mockFromAccount.schedule(this.mockAccount.address, salt, this.mode, this.calldata);
+    await expect(this.mock.state(this.mockAccount.address, salt, this.mode, this.calldata)).to.eventually.eq(
+      OperationState.Scheduled,
+    );
+    await time.increase(this.delay);
+    await expect(this.mock.state(this.mockAccount.address, salt, this.mode, this.calldata)).to.eventually.eq(
+      OperationState.Ready,
+    );
+    await time.increase(this.expiration);
+    await expect(this.mock.state(this.mockAccount.address, salt, this.mode, this.calldata)).to.eventually.eq(
+      OperationState.Expired,
+    );
+  });
+
+  it('returns the correct state (cancelation)', async function () {
+    await this.mockAccountFromEntrypoint.installModule(this.moduleType, this.mock.target, this.installData);
+    await expect(this.mock.state(this.mockAccount.address, salt, this.mode, this.calldata)).to.eventually.eq(
+      OperationState.Unknown,
+    );
+    await this.mockFromAccount.schedule(this.mockAccount.address, salt, this.mode, this.calldata);
+    await expect(this.mock.state(this.mockAccount.address, salt, this.mode, this.calldata)).to.eventually.eq(
+      OperationState.Scheduled,
+    );
+    await time.increase(this.delay);
+    await expect(this.mock.state(this.mockAccount.address, salt, this.mode, this.calldata)).to.eventually.eq(
+      OperationState.Ready,
+    );
+    await this.mockFromAccount.cancel(this.mockAccount.address, salt, this.mode, this.calldata);
+    await expect(this.mock.state(this.mockAccount.address, salt, this.mode, this.calldata)).to.eventually.eq(
+      OperationState.Canceled,
+    );
+  });
 
   it('sets an initial delay and expiration on installation', async function () {
     const tx = await this.mockAccountFromEntrypoint.installModule(this.moduleType, this.mock.target, this.installData);

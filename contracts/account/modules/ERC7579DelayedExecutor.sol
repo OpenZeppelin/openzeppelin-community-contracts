@@ -123,7 +123,7 @@ abstract contract ERC7579DelayedExecutor is ERC7579Executor {
         if (_schedules[operationId].executed) return OperationState.Executed;
         (, uint48 executableAt, uint48 expiresAt) = getSchedule(operationId);
         if (block.timestamp < executableAt) return OperationState.Scheduled;
-        if (block.timestamp > expiresAt) return OperationState.Expired;
+        if (block.timestamp >= expiresAt) return OperationState.Expired;
         return OperationState.Ready;
     }
 
