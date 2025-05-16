@@ -14,6 +14,8 @@ const {
 const { shouldBehaveLikeERC7579Module } = require('./ERC7579Module.behavior');
 
 async function fixture() {
+  const [other] = await ethers.getSigners();
+
   // Deploy ERC-7579 validator module
   const mock = await ethers.deployContract('$ERC7579DelayedExecutor');
   const target = await ethers.deployContract('CallReceiverMockExtended');
@@ -57,6 +59,7 @@ async function fixture() {
     mode,
     delay,
     expiration,
+    other,
   };
 }
 
@@ -159,6 +162,12 @@ describe('ERC7579DelayedExecutor', function () {
       await expect(
         this.mock.schedule(this.mockAccount.address, salt, this.mode, this.calldata),
       ).to.be.revertedWithCustomError(this.mock, 'ERC7579ExecutorUnauthorizedSchedule');
+    });
+
+    it('reverts with ERC7579ExecutorModuleNotInstalled if the module is not installed', async function () {
+      await expect(
+        this.mock.schedule(this.other.address, salt, this.mode, this.calldata),
+      ).to.be.revertedWithCustomError(this.mock, 'ERC7579ExecutorModuleNotInstalled');
     });
   });
 

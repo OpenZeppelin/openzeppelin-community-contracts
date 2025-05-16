@@ -97,6 +97,9 @@ abstract contract ERC7579DelayedExecutor is ERC7579Executor {
     /// @dev The operation is not authorized to be scheduled.
     error ERC7579ExecutorUnauthorizedSchedule();
 
+    /// @dev The module is not installed on the account.
+    error ERC7579ExecutorModuleNotInstalled();
+
     mapping(address account => ExecutionConfig) private _config;
     mapping(bytes32 operationId => Schedule) private _schedules;
 
@@ -227,6 +230,7 @@ abstract contract ERC7579DelayedExecutor is ERC7579Executor {
      * See {_validateSchedule} for authorization checks.
      */
     function schedule(address account, bytes32 salt, bytes32 mode, bytes calldata data) public virtual {
+        require(_config[account].installed, ERC7579ExecutorModuleNotInstalled());
         bool allowed = _validateSchedule(account, salt, mode, data);
         _schedule(account, salt, mode, data); // Prioritize errors thrown in _schedule
         require(allowed, ERC7579ExecutorUnauthorizedSchedule());
