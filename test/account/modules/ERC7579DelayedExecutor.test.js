@@ -111,7 +111,7 @@ describe('ERC7579DelayedExecutor', function () {
     );
   });
 
-  it('returns the correct state (cancelation)', async function () {
+  it('returns the correct state (cancellation)', async function () {
     await this.mockAccountFromEntrypoint.installModule(this.moduleType, this.mock.target, this.installData);
     await expect(this.mock.state(this.mockAccount.address, salt, this.mode, this.calldata)).to.eventually.eq(
       OperationState.Unknown,
