@@ -10,6 +10,11 @@ This directory includes contracts to build accounts for ERC-4337. These include:
  * {ERC7821}: Minimal batch executor implementation contracts. Useful to enable easy batch execution for smart contracts.
  * {ERC7579Validator}: Abstract validator module for ERC-7579 accounts that provides base implementation for signature validation.
  * {ERC7579SignatureValidator}: Implementation of ERC7579Validator using ERC-7913 signature verification for address-less cryptographic keys.
+ * {ERC7579Multisig}: An abstract multisig module for ERC-7579 accounts using ERC-7913 signer keys.
+ * {ERC7579MultisigWeighted}: An abstract weighted multisig module that allows different weights to be assigned to signers.
+ * {ERC7579MultisigConfirmation}: An abstract confirmation-based multisig module that each signer to provide a confirmation signature.
+ * {ERC7579Executor}: An executor module that enables executing calls from accounts where the it's installed.
+ * {ERC7579DelayedExecutor}: An executor module that adds a delay before executing an account operation.
  * {PaymasterCore}: An ERC-4337 paymaster implementation that includes the core logic to validate and pay for user operations.
  * {PaymasterERC20}: A paymaster that allows users to pay for user operations using ERC-20 tokens.
  * {PaymasterERC20Guarantor}: A paymaster that enables third parties to guarantee user operations by pre-funding gas costs, with the option for users to repay or for guarantors to absorb the cost.
@@ -29,6 +34,18 @@ This directory includes contracts to build accounts for ERC-4337. These include:
 {{ERC7821}}
 
 == Modules
+
+{{ERC7579Multisig}}
+
+{{ERC7579MultisigWeighted}}
+
+{{ERC7579MultisigConfirmation}}
+
+=== Executors
+
+{{ERC7579Executor}}
+
+{{ERC7579DelayedExecutor}}
 
 === Validators
 
