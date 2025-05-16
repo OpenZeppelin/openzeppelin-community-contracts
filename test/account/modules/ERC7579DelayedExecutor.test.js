@@ -149,7 +149,7 @@ describe('ERC7579DelayedExecutor', function () {
       const now = await time.latest();
       await expect(tx)
         .to.emit(this.mock, 'ERC7579ExecutorOperationScheduled')
-        .withArgs(this.mockAccount.address, id, salt, this.mode, this.calldata, now);
+        .withArgs(this.mockAccount.address, id, salt, this.mode, this.calldata, now + this.delay);
       await expect(
         this.mockFromAccount.schedule(this.mockAccount.address, salt, this.mode, this.calldata),
       ).to.be.revertedWithCustomError(this.mock, 'ERC7579ExecutorUnexpectedOperationState'); // Can't schedule twice
@@ -174,7 +174,9 @@ describe('ERC7579DelayedExecutor', function () {
   describe('execution', function () {
     beforeEach(async function () {
       await this.mockAccountFromEntrypoint.installModule(this.moduleType, this.mock.target, this.installData);
-      await this.mock.$_schedule(this.mockAccount.address, salt, this.mode, this.calldata);
+      const now = await time.latest();
+      const [delay] = await this.mock.getDelay(this.mockAccount.address);
+      await this.mock.$_scheduleAt(this.mockAccount.address, salt, this.mode, this.calldata, now, delay);
     });
 
     it('reverts with ERC7579ExecutorUnexpectedOperationState before delay passes with any caller', async function () {
@@ -227,7 +229,9 @@ describe('ERC7579DelayedExecutor', function () {
   describe('cancelling', function () {
     beforeEach(async function () {
       await this.mockAccountFromEntrypoint.installModule(this.moduleType, this.mock.target, this.installData);
-      await this.mock.$_schedule(this.mockAccount.address, salt, this.mode, this.calldata);
+      const now = await time.latest();
+      const [delay] = await this.mock.getDelay(this.mockAccount.address);
+      await this.mock.$_scheduleAt(this.mockAccount.address, salt, this.mode, this.calldata, now, delay);
     });
 
     it('cancels an operation if called by the account', async function () {

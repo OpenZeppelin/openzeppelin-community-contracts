@@ -31,6 +31,9 @@ import {ERC7579Executor} from "./ERC7579Executor.sol";
  * immediate downgrades. When setting a new delay period, the new delay takes effect
  * after a transition period defined by the current delay or {minSetback}, whichever
  * is longer.
+ *
+ * TIP: Use {_scheduleAt} to schedule operations at a specific points in time. This is
+ * useful to pre-schedule operations for non-deployed accounts (e.g. subscriptions).
  */
 abstract contract ERC7579DelayedExecutor is ERC7579Executor {
     using Time for *;
@@ -124,7 +127,10 @@ abstract contract ERC7579DelayedExecutor is ERC7579Executor {
         return OperationState.Ready;
     }
 
-    /// @dev Minimum delay after which {setDelay} takes effect.
+    /**
+     * @dev Minimum delay after which {setDelay} takes effect.
+     * Set as default delay if not provided during {onInstall}.
+     */
     function minSetback() public view virtual returns (uint32) {
         return 1 days; // Up to ~136 years
     }
@@ -170,11 +176,6 @@ abstract contract ERC7579DelayedExecutor is ERC7579Executor {
         return keccak256(abi.encode(account, salt, mode, executionCalldata));
     }
 
-    /// @dev Default delay for account operations. Set if not provided during {onInstall}.
-    function defaultDelay() public view virtual returns (uint32) {
-        return 5 days;
-    }
-
     /// @dev Default expiration for account operations. Set if not provided during {onInstall}.
     function defaultExpiration() public view virtual returns (uint32) {
         return 60 days;
@@ -186,7 +187,7 @@ abstract contract ERC7579DelayedExecutor is ERC7579Executor {
      *
      * The `initData` may be `abi.encode(uint32(initialDelay), uint32(initialExpiration))`.
      * The delay will be set to the maximum of this value and the minimum delay if provided.
-     * Otherwise, the delay will be set to the minimum delay.
+     * Otherwise, the delay will be set to {minSetback} and {defaultExpiration} respectively.
      *
      * Behaves as a no-op if the module is already installed.
      *
@@ -200,7 +201,7 @@ abstract contract ERC7579DelayedExecutor is ERC7579Executor {
             _config[msg.sender].installed = true;
             (uint32 initialDelay, uint32 initialExpiration) = initData.length > 0
                 ? abi.decode(initData, (uint32, uint32))
-                : (defaultDelay(), defaultExpiration());
+                : (minSetback(), defaultExpiration());
             // An old delay might be still present
             // So we set 0 for the minimum setback relying on any old value as the minimum delay
             _setDelay(msg.sender, initialDelay, 0);
@@ -232,7 +233,8 @@ abstract contract ERC7579DelayedExecutor is ERC7579Executor {
     function schedule(address account, bytes32 salt, bytes32 mode, bytes calldata data) public virtual {
         require(_config[account].installed, ERC7579ExecutorModuleNotInstalled());
         bool allowed = _validateSchedule(account, salt, mode, data);
-        _schedule(account, salt, mode, data); // Prioritize errors thrown in _schedule
+        (uint32 executableAfter, , ) = getDelay(account);
+        _scheduleAt(account, salt, mode, data, Time.timestamp(), executableAfter);
         require(allowed, ERC7579ExecutorUnauthorizedSchedule());
     }
 
@@ -355,7 +357,8 @@ abstract contract ERC7579DelayedExecutor is ERC7579Executor {
     }
 
     /**
-     * @dev Internal version of {schedule} that takes an `account` address as an argument.
+     * @dev Internal version of {schedule} that takes an `account` address to schedule
+     * an operation that starts its security window at `at` and expires after `delay`.
      *
      * Requirements:
      *
@@ -363,23 +366,22 @@ abstract contract ERC7579DelayedExecutor is ERC7579Executor {
      *
      * Emits an {ERC7579ExecutorOperationScheduled} event.
      */
-    function _schedule(
+    function _scheduleAt(
         address account,
         bytes32 salt,
         bytes32 mode,
-        bytes calldata executionCalldata
+        bytes calldata executionCalldata,
+        uint48 timepoint,
+        uint32 delay
     ) internal virtual returns (bytes32 operationId, Schedule memory schedule_) {
         bytes32 id = hashOperation(account, salt, mode, executionCalldata);
         _validateStateBitmap(id, _encodeStateBitmap(OperationState.Unknown));
 
-        (uint32 executableAfter, , ) = getDelay(account);
-
-        uint48 timepoint = Time.timestamp();
         _schedules[id].scheduledAt = timepoint;
-        _schedules[id].executableAfter = executableAfter;
+        _schedules[id].executableAfter = delay;
         _schedules[id].expiresAfter = getExpiration(account);
 
-        emit ERC7579ExecutorOperationScheduled(account, id, salt, mode, executionCalldata, timepoint);
+        emit ERC7579ExecutorOperationScheduled(account, id, salt, mode, executionCalldata, timepoint + delay);
         return (id, schedule_);
     }
 
