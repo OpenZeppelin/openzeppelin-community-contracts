@@ -257,10 +257,9 @@ abstract contract ERC7579DelayedExecutor is ERC7579Executor {
      * design choice for efficiency, but module implementations may want to override this behavior
      * to clear scheduled operations during uninstallation for their specific use cases.
      *
-     * WARNING: The account's delay will be removed if the account calls this function, allowing
-     * immediate scheduling of operations. As an account operator, make sure to uninstall to a
-     * predefined path in your account that properly handles the side effects of uninstallation.
-     * See {AccountERC7579-uninstallModule}.
+     * NOTE: Calling this function directly will remove the expiration ({getExpiration}) value and
+     * will schedule a reset of the delay ({getDelay}) to `0` for the account. Reinstalling the
+     * module will not immediately reset the delay if the delay reset hasn't taken effect yet.
      */
     function onUninstall(bytes calldata) public virtual {
         _config[msg.sender].installed = false;
