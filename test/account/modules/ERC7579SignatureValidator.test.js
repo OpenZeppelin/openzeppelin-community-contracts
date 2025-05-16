@@ -66,7 +66,7 @@ describe('ERC7579SignatureValidator', function () {
     );
   });
 
-  it('reverts with ERC7579SignatureValidatorAlreadyInstalled when the validator is already installed for an account', async function () {
+  it('behaves as a noop when the validator is already installed for an account', async function () {
     // First installation should succeed
     const signerData = ethers.solidityPacked(['address'], [signerECDSA.address]);
     await expect(this.mockFromAccount.onInstall(signerData)).to.not.be.reverted;

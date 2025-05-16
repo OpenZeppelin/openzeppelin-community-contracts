@@ -2,6 +2,7 @@
 * xref:access.adoc[Access]
 * xref:account.adoc[Account]
 * xref:crosschain.adoc[Crosschain]
+* xref:interfaces.adoc[Interfaces]
 * xref:proxy.adoc[Proxy]
 * xref:token.adoc[Token]
 * xref:utils.adoc[Utils]

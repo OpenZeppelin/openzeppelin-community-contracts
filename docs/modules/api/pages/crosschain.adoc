@@ -5,6 +5,8 @@
 :AxelarGatewaySource: pass:normal[xref:crosschain.adoc#AxelarGatewaySource[`AxelarGatewaySource`]]
 :AxelarGatewayDestination: pass:normal[xref:crosschain.adoc#AxelarGatewayDestination[`AxelarGatewayDestination`]]
 :AxelarGatewayDuplex: pass:normal[xref:crosschain.adoc#AxelarGatewayDuplex[`AxelarGatewayDuplex`]]
+:IERC7786Receiver: pass:normal[xref:interfaces.adoc#IERC7786Receiver[`IERC7786Receiver`]]
+:IERC7786Receiver: pass:normal[xref:interfaces.adoc#IERC7786Receiver[`IERC7786Receiver`]]
 = Crosschain
 
 [.readme-notice]

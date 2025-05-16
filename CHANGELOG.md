@@ -1,6 +1,14 @@
+## 15-05-2025
+
+- `ERC7579Multisig`: Add an abstract multisig module for ERC-7579 accounts using ERC-7913 signer keys.
+- `ERC7579MultisigWeighted`: Add an abstract weighted multisig module that allows different weights to be assigned to signers.
+- `ERC7579MultisigConfirmation`: Add an abstract confirmation-based multisig module that each signer to provide a confirmation signature.
+- `ERC7579Executor`: Add an executor module that enables executing calls from accounts where the it's installed.
+- `ERC7579DelayedExecutor`: Add executor module that adds a delay before executing an account operation.
+
 ## 06-05-2025
 
-- `ERC7913SignatureVerifierZKEmail`: Add ERC-7913 signature verifier that enables email-based authentication through zero-knowledge proofs.
+- `ERC7913ZKEmailVerifier`: Add ERC-7913 signature verifier that enables email-based authentication through zero-knowledge proofs.
 
 ## 05-05-2025
 

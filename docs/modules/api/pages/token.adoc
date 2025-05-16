@@ -7,6 +7,8 @@
 :ERC4626Fees: pass:normal[xref:token.adoc#ERC4626Fees[`ERC4626Fees`]]
 :AxelarGatewaySource: pass:normal[xref:crosschain.adoc#AxelarGatewaySource[`AxelarGatewaySource`]]
 :AxelarGatewayDestination: pass:normal[xref:crosschain.adoc#AxelarGatewayDestination[`AxelarGatewayDestination`]]
+:IERC7802-crosschainMint: pass:normal[xref:interfaces.adoc#IERC7802-crosschainMint-address-uint256-[`IERC7802.crosschainMint`]]
+:IERC7802-crosschainBurn: pass:normal[xref:interfaces.adoc#IERC7802-crosschainBurn-address-uint256-[`IERC7802.crosschainBurn`]]
 = Tokens
 
 [.readme-notice]

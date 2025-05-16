@@ -44,7 +44,6 @@
 :ERC7579Multisig-_addSigners: pass:normal[xref:account.adoc#ERC7579Multisig-_addSigners-address-bytes---[`ERC7579Multisig._addSigners`]]
 :ERC7579DelayedExecutor: pass:normal[xref:account.adoc#ERC7579DelayedExecutor[`ERC7579DelayedExecutor`]]
 :ERC7579Executor: pass:normal[xref:account.adoc#ERC7579Executor[`ERC7579Executor`]]
-:AccountERC7579-uninstallModule: pass:normal[xref:account.adoc#AccountERC7579-uninstallModule-uint256-address-bytes-[`AccountERC7579.uninstallModule`]]
 :ERC7579Executor-_execute: pass:normal[xref:account.adoc#ERC7579Executor-_execute-address-bytes32-bytes32-bytes-[`ERC7579Executor._execute`]]
 :ERC7579Validator: pass:normal[xref:account.adoc#ERC7579Validator[`ERC7579Validator`]]
 :AccountERC7579-uninstallModule: pass:normal[xref:account.adoc#AccountERC7579-uninstallModule-uint256-address-bytes-[`AccountERC7579.uninstallModule`]]
@@ -54,6 +53,7 @@
 :PaymasterCore-_validatePaymasterUserOp: pass:normal[xref:account.adoc#PaymasterCore-_validatePaymasterUserOp-struct-PackedUserOperation-bytes32-uint256-[`PaymasterCore._validatePaymasterUserOp`]]
 :PaymasterERC20: pass:normal[xref:account.adoc#PaymasterERC20[`PaymasterERC20`]]
 :PaymasterERC20-_prefund: pass:normal[xref:account.adoc#PaymasterERC20-_prefund-struct-PackedUserOperation-bytes32-contract-IERC20-uint256-address-uint256-[`PaymasterERC20._prefund`]]
+:PaymasterERC20-_refund: pass:normal[xref:account.adoc#PaymasterERC20-_refund-contract-IERC20-uint256-uint256-uint256-address-uint256-bytes-[`PaymasterERC20._refund`]]
 :PaymasterCore: pass:normal[xref:account.adoc#PaymasterCore[`PaymasterCore`]]
 :PaymasterCore: pass:normal[xref:account.adoc#PaymasterCore[`PaymasterCore`]]
 :SignerECDSA: pass:normal[xref:utils.adoc#SignerECDSA[`SignerECDSA`]]
@@ -947,8 +947,9 @@ Reverts and bubbles up error if any call fails.
 
 This function is provided for frontends to detect support.
 Only returns true for:
-- `bytes32(0x01000000000000000000...)`: does not support optional `opData`.
-- `bytes32(0x01000000000078210001...)`: supports optional `opData`.
+
+* `bytes32(0x01000000000000000000...)`: does not support optional `opData`.
+* `bytes32(0x01000000000078210001...)`: supports optional `opData`.
 
 [.contract-item]
 [[ERC7821-_erc7821AuthorizedExecutor-address-bytes32-bytes-]]
@@ -2067,10 +2068,9 @@ could potentially be re-executed if the module is reinstalled later. This is a d
 design choice for efficiency, but module implementations may want to override this behavior
 to clear scheduled operations during uninstallation for their specific use cases.
 
-WARNING: The account's delay will be removed if the account calls this function, allowing
-immediate scheduling of operations. As an account operator, make sure to uninstall to a
-predefined path in your account that properly handles the side effects of uninstallation.
-See {AccountERC7579-uninstallModule}.
+NOTE: Calling this function directly will remove the expiration ({getExpiration}) value and
+will schedule a reset of the delay ({getDelay}) to `0` for the account. Reinstalling the
+module will not immediately reset the delay if the delay reset hasn't taken effect yet.
 
 [.contract-item]
 [[ERC7579DelayedExecutor-_validateExecution-address-bytes32-bytes32-bytes-]]
@@ -2483,7 +2483,6 @@ Return the ERC-7913 signer (i.e. `verifier || key`).
 ==== `[.contract-item-name]#++onInstall++#++(bytes data)++` [.item-kind]#public#
 
 See {IERC7579Module-onInstall}.
-Reverts with {ERC7579SignatureValidatorAlreadyInstalled} if the module is already installed.
 
 NOTE: An account can only call onInstall once. If called directly by the account,
 the signer will be set to the provided data. Future installations will behave as a no-op.
@@ -3050,7 +3049,7 @@ the refund process to identify the user operation sender.
 Handles the refund process for guaranteed operations.
 
 If the operation was guaranteed, it attempts to get repayment from the user first and then refunds the guarantor.
-Otherwise, fallback to {PaymasterERC20-refund}. See {_refundGuaranteed}.
+Otherwise, fallback to {PaymasterERC20-_refund}.
 
 NOTE: For guaranteed user operations where the user paid the `actualGasCost` back, this function
 doesn't call `super._refund`. Consider whether there are side effects in the parent contract that need to be executed.

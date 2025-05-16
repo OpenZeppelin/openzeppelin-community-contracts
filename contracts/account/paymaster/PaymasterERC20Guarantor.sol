@@ -71,7 +71,7 @@ abstract contract PaymasterERC20Guarantor is PaymasterERC20 {
      * @dev Handles the refund process for guaranteed operations.
      *
      * If the operation was guaranteed, it attempts to get repayment from the user first and then refunds the guarantor.
-     * Otherwise, fallback to {PaymasterERC20-refund}. See {_refundGuaranteed}.
+     * Otherwise, fallback to {PaymasterERC20-_refund}.
      *
      * NOTE: For guaranteed user operations where the user paid the `actualGasCost` back, this function
      * doesn't call `super._refund`. Consider whether there are side effects in the parent contract that need to be executed.
