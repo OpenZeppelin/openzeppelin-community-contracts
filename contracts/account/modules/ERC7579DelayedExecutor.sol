@@ -132,7 +132,7 @@ abstract contract ERC7579DelayedExecutor is ERC7579Executor {
      * Set as default delay if not provided during {onInstall}.
      */
     function minSetback() public view virtual returns (uint32) {
-        return 1 days; // Up to ~136 years
+        return 5 days; // Up to ~136 years
     }
 
     /// @dev Delay for a specific account.
