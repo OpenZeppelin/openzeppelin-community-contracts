@@ -12,7 +12,6 @@ const {
   encodeSingle,
 } = require('@openzeppelin/contracts/test/helpers/erc7579');
 const { shouldBehaveLikeERC7579Module } = require('./ERC7579Module.behavior');
-const { OperationState, ProposalState } = require('../../helpers/enums');
 
 async function fixture() {
   // Deploy ERC-7579 validator module
@@ -156,14 +155,10 @@ describe('ERC7579DelayedExecutor', function () {
       ).to.eventually.deep.equal([now, now + this.delay, now + this.delay + this.expiration]);
     });
 
-    it('no-ops if called by other account', async function () {
-      await this.mock.schedule(this.mockAccount.address, salt, this.mode, this.calldata); // not revert
+    it('reverts with ERC7579ExecutorUnauthorizedSchedule if called by other account', async function () {
       await expect(
-        this.mock.getSchedule(this.mockAccount.address, salt, this.mode, this.calldata),
-      ).to.eventually.deep.equal([0n, 0n, 0n]);
-      await expect(this.mock.state(this.mockAccount.address, salt, this.mode, this.calldata)).to.eventually.equal(
-        OperationState.Unknown,
-      );
+        this.mock.schedule(this.mockAccount.address, salt, this.mode, this.calldata),
+      ).to.be.revertedWithCustomError(this.mock, 'ERC7579ExecutorUnauthorizedSchedule');
     });
   });
 
@@ -237,12 +232,9 @@ describe('ERC7579DelayedExecutor', function () {
     });
 
     it('reverts with ERC7579ExecutorUnauthorizedCancellation if called by other account', async function () {
-      const previousState = await this.mock.state(this.mockAccount.address, salt, this.mode, this.calldata);
-      expect(previousState).to.not.eq(ProposalState.Canceled);
-      await this.mock.cancel(this.mockAccount.address, salt, this.mode, this.calldata); // not revert
-      await expect(this.mock.state(this.mockAccount.address, salt, this.mode, this.calldata)).to.eventually.equal(
-        previousState,
-      );
+      await expect(
+        this.mock.cancel(this.mockAccount.address, salt, this.mode, this.calldata),
+      ).to.be.revertedWithCustomError(this.mock, 'ERC7579ExecutorUnauthorizedCancellation');
     });
   });
 });

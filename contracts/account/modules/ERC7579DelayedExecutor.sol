@@ -91,6 +91,12 @@ abstract contract ERC7579DelayedExecutor is ERC7579Executor {
         bytes32 allowedStates
     );
 
+    /// @dev The operation is not authorized to be canceled.
+    error ERC7579ExecutorUnauthorizedCancellation();
+
+    /// @dev The operation is not authorized to be scheduled.
+    error ERC7579ExecutorUnauthorizedSchedule();
+
     mapping(address account => ExecutionConfig) private _config;
     mapping(bytes32 operationId => Schedule) private _schedules;
 
@@ -221,9 +227,9 @@ abstract contract ERC7579DelayedExecutor is ERC7579Executor {
      * See {_validateSchedule} for authorization checks.
      */
     function schedule(address account, bytes32 salt, bytes32 mode, bytes calldata data) public virtual {
-        if (_validateSchedule(account, salt, mode, data)) {
-            _schedule(account, salt, mode, data);
-        } // else no-op
+        bool allowed = _validateSchedule(account, salt, mode, data);
+        _schedule(account, salt, mode, data); // Prioritize errors thrown in _schedule
+        require(allowed, ERC7579ExecutorUnauthorizedSchedule());
     }
 
     /**
@@ -231,9 +237,9 @@ abstract contract ERC7579DelayedExecutor is ERC7579Executor {
      * scheduled the operation. See {_cancel}.
      */
     function cancel(address account, bytes32 salt, bytes32 mode, bytes calldata data) public virtual {
-        if (_validateCancel(account, salt, mode, data)) {
-            _cancel(account, mode, data, salt);
-        } // else no-op
+        bool allowed = _validateCancel(account, salt, mode, data);
+        _cancel(account, mode, data, salt); // Prioritize errors thrown in _cancel
+        require(allowed, ERC7579ExecutorUnauthorizedCancellation());
     }
 
     /**
@@ -319,7 +325,7 @@ abstract contract ERC7579DelayedExecutor is ERC7579Executor {
         bytes32 /* mode */,
         bytes calldata /* data */
     ) internal view virtual returns (bool) {
-        return _config[account].installed && account == msg.sender;
+        return account == msg.sender;
     }
 
     /**

@@ -11,5 +11,4 @@ module.exports = {
     'EmailProof',
   ),
   Case: enums.EnumTyped('CHECKSUM', 'LOWERCASE', 'UPPERCASE', 'ANY'),
-  OperationState: enums.Enum('Unknown', 'Scheduled', 'Ready', 'Expired', 'Executed'),
 };
