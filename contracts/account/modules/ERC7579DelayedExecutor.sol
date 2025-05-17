@@ -32,6 +32,12 @@ import {ERC7579Executor} from "./ERC7579Executor.sol";
  * after a transition period defined by the current delay or {minSetback}, whichever
  * is longer.
  *
+ * ==== Authorization
+ *
+ * Authorization for scheduling and canceling operations is controlled through the {_validateSchedule}
+ * and {_validateCancel} functions. These functions can be overridden to implement custom
+ * authorization logic, such as requiring specific signers or roles.
+ *
  * TIP: Use {_scheduleAt} to schedule operations at a specific points in time. This is
  * useful to pre-schedule operations for non-deployed accounts (e.g. subscriptions).
  */
@@ -93,12 +99,6 @@ abstract contract ERC7579DelayedExecutor is ERC7579Executor {
         OperationState currentState,
         bytes32 allowedStates
     );
-
-    /// @dev The operation is not authorized to be canceled.
-    error ERC7579ExecutorUnauthorizedCancellation();
-
-    /// @dev The operation is not authorized to be scheduled.
-    error ERC7579ExecutorUnauthorizedSchedule();
 
     /// @dev The module is not installed on the account.
     error ERC7579ExecutorModuleNotInstalled();
@@ -232,10 +232,9 @@ abstract contract ERC7579DelayedExecutor is ERC7579Executor {
      */
     function schedule(address account, bytes32 salt, bytes32 mode, bytes calldata data) public virtual {
         require(_config[account].installed, ERC7579ExecutorModuleNotInstalled());
-        bool allowed = _validateSchedule(account, salt, mode, data);
+        _validateSchedule(account, salt, mode, data);
         (uint32 executableAfter, , ) = getDelay(account);
         _scheduleAt(account, salt, mode, data, Time.timestamp(), executableAfter);
-        require(allowed, ERC7579ExecutorUnauthorizedSchedule());
     }
 
     /**
@@ -243,9 +242,8 @@ abstract contract ERC7579DelayedExecutor is ERC7579Executor {
      * scheduled the operation. See {_cancel}.
      */
     function cancel(address account, bytes32 salt, bytes32 mode, bytes calldata data) public virtual {
-        bool allowed = _validateCancel(account, salt, mode, data);
+        _validateCancel(account, salt, mode, data);
         _cancel(account, mode, data, salt); // Prioritize errors thrown in _cancel
-        require(allowed, ERC7579ExecutorUnauthorizedCancellation());
     }
 
     /**
@@ -267,32 +265,30 @@ abstract contract ERC7579DelayedExecutor is ERC7579Executor {
         _setExpiration(msg.sender, 0);
     }
 
-    /// @inheritdoc ERC7579Executor
+    /**
+     * @dev Returns `data` as the execution calldata. See {ERC7579Executor-_execute}.
+     *
+     * NOTE: This function relies on the operation state validation in {_execute} for
+     * authorization. Extensions of this module should override this function to implement
+     * additional validation logic if needed.
+     */
     function _validateExecution(
         address /* account */,
         bytes32 /* salt */,
         bytes32 /* mode */,
         bytes calldata data
-    ) internal view virtual override returns (bool valid, bytes calldata executionCalldata) {
-        return (true, data); // Anyone can execute, the state validation of the operation is enough
+    ) internal virtual override returns (bytes calldata) {
+        return data;
     }
 
     /**
-     * @dev Whether the caller is authorized to cancel operations.
-     * By default, this checks if the caller is the account itself. Derived contracts can
-     * override this to implement custom authorization logic.
+     * @dev Validates whether an operation can be canceled.
      *
      * Example extension:
      *
      * ```solidity
-     *  function _validateCancel(
-     *     address account,
-     *     bytes32 mode,
-     *     bytes calldata data,
-     *     bytes32 salt
-     *  ) internal view override returns (bool) {
-     *    bool isAuthorized = ...; // custom logic to check authorization
-     *    return isAuthorized || super._validateCancel(account, mode, data, salt);
+     *  function _validateCancel(address account, bytes32 salt, bytes32 mode, bytes calldata data) internal override {
+     *    // e.g. require(msg.sender == account);
      *  }
      *```
      */
@@ -301,26 +297,16 @@ abstract contract ERC7579DelayedExecutor is ERC7579Executor {
         bytes32 /* salt */,
         bytes32 /* mode */,
         bytes calldata /* data */
-    ) internal view virtual returns (bool) {
-        return account == msg.sender;
-    }
+    ) internal virtual;
 
     /**
-     * @dev Whether the caller is authorized to schedule operations.
-     * By default, this checks if the caller is the account itself. Derived contracts can
-     * override this to implement custom authorization logic.
+     * @dev Validates whether an operation can be scheduled.
      *
      * Example extension:
      *
      * ```solidity
-     *  function _validateSchedule(
-     *     address account,
-     *     bytes32 mode,
-     *     bytes calldata data,
-     *     bytes32 salt
-     *  ) internal view override returns (bool) {
-     *    bool isAuthorized = ...; // custom logic to check authorization
-     *    return isAuthorized || super._validateSchedule(account, mode, data, salt);
+     *  function _validateSchedule(address account, bytes32 salt, bytes32 mode, bytes calldata data) internal override {
+     *    // e.g. require(msg.sender == account);
      *  }
      *```
      */
@@ -329,9 +315,7 @@ abstract contract ERC7579DelayedExecutor is ERC7579Executor {
         bytes32 /* salt */,
         bytes32 /* mode */,
         bytes calldata /* data */
-    ) internal view virtual returns (bool) {
-        return account == msg.sender;
-    }
+    ) internal virtual;
 
     /**
      * @dev Internal implementation for setting an account's delay. See {getDelay}.

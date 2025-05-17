@@ -20,18 +20,12 @@ abstract contract ERC7579MultisigExecutorMock is EIP712, ERC7579Executor, ERC757
         bytes32 salt,
         bytes32 mode,
         bytes calldata data
-    ) internal view override returns (bool valid, bytes calldata executionCalldata) {
+    ) internal view override returns (bytes calldata) {
         uint16 executionCalldataLength = uint16(uint256(bytes32(data[0:2]))); // First 2 bytes are the length
-        bytes calldata actualExecutionCalldata = data[2:2 + executionCalldataLength]; // Next bytes are the calldata
-        bytes calldata signature = data[2 + executionCalldataLength:]; // Remaining bytes are the signature
-        return (
-            _validateMultisignature(
-                account,
-                _getExecuteTypeHash(account, salt, mode, actualExecutionCalldata),
-                signature
-            ),
-            actualExecutionCalldata
-        );
+        bytes calldata executionCalldata = data[2:2 + executionCalldataLength]; // Next bytes are the calldata
+        bytes32 typeHash = _getExecuteTypeHash(account, salt, mode, executionCalldata);
+        require(_validateMultisignature(account, typeHash, data[2 + executionCalldataLength:])); // Remaining bytes are the signature
+        return executionCalldata;
     }
 
     function _getExecuteTypeHash(
@@ -54,18 +48,12 @@ abstract contract ERC7579MultisigWeightedExecutorMock is EIP712, ERC7579Executor
         bytes32 salt,
         bytes32 mode,
         bytes calldata data
-    ) internal view override returns (bool valid, bytes calldata executionCalldata) {
+    ) internal view override returns (bytes calldata) {
         uint16 executionCalldataLength = uint16(uint256(bytes32(data[0:2]))); // First 2 bytes are the length
-        bytes calldata actualExecutionCalldata = data[2:2 + executionCalldataLength]; // Next bytes are the calldata
-        bytes calldata signature = data[2 + executionCalldataLength:]; // Remaining bytes are the signature
-        return (
-            _validateMultisignature(
-                account,
-                _getExecuteTypeHash(account, salt, mode, actualExecutionCalldata),
-                signature
-            ),
-            actualExecutionCalldata
-        );
+        bytes calldata executionCalldata = data[2:2 + executionCalldataLength]; // Next bytes are the calldata
+        bytes32 typeHash = _getExecuteTypeHash(account, salt, mode, executionCalldata);
+        require(_validateMultisignature(account, typeHash, data[2 + executionCalldataLength:])); // Remaining bytes are the signature
+        return executionCalldata;
     }
 
     function _getExecuteTypeHash(
@@ -88,18 +76,12 @@ abstract contract ERC7579MultisigConfirmationExecutorMock is ERC7579Executor, ER
         bytes32 salt,
         bytes32 mode,
         bytes calldata data
-    ) internal view override returns (bool valid, bytes calldata executionCalldata) {
+    ) internal view override returns (bytes calldata) {
         uint16 executionCalldataLength = uint16(uint256(bytes32(data[0:2]))); // First 2 bytes are the length
-        bytes calldata actualExecutionCalldata = data[2:2 + executionCalldataLength]; // Next bytes are the calldata
-        bytes calldata signature = data[2 + executionCalldataLength:]; // Remaining bytes are the signature
-        return (
-            _validateMultisignature(
-                account,
-                _getExecuteTypeHash(account, salt, mode, actualExecutionCalldata),
-                signature
-            ),
-            actualExecutionCalldata
-        );
+        bytes calldata executionCalldata = data[2:2 + executionCalldataLength]; // Next bytes are the calldata
+        bytes32 typeHash = _getExecuteTypeHash(account, salt, mode, executionCalldata);
+        require(_validateMultisignature(account, typeHash, data[2 + executionCalldataLength:])); // Remaining bytes are the signature
+        return executionCalldata;
     }
 
     function _getExecuteTypeHash(

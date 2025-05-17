@@ -45,6 +45,7 @@
 :ERC7579DelayedExecutor: pass:normal[xref:account.adoc#ERC7579DelayedExecutor[`ERC7579DelayedExecutor`]]
 :ERC7579Executor: pass:normal[xref:account.adoc#ERC7579Executor[`ERC7579Executor`]]
 :ERC7579Executor-_execute: pass:normal[xref:account.adoc#ERC7579Executor-_execute-address-bytes32-bytes32-bytes-[`ERC7579Executor._execute`]]
+:ERC7579Executor-_execute: pass:normal[xref:account.adoc#ERC7579Executor-_execute-address-bytes32-bytes32-bytes-[`ERC7579Executor._execute`]]
 :ERC7579Validator: pass:normal[xref:account.adoc#ERC7579Validator[`ERC7579Validator`]]
 :AccountERC7579-uninstallModule: pass:normal[xref:account.adoc#AccountERC7579-uninstallModule-uint256-address-bytes-[`AccountERC7579.uninstallModule`]]
 :ERC7579Validator-_rawSignatureValidationWithSender: pass:normal[xref:account.adoc#ERC7579Validator-_rawSignatureValidationWithSender-address-bytes32-bytes-[`ERC7579Validator._rawSignatureValidationWithSender`]]
@@ -1685,7 +1686,6 @@ Error thrown when a confirmation signature has expired
 === Executors
 
 :ERC7579ExecutorOperationExecuted: pass:normal[xref:#ERC7579Executor-ERC7579ExecutorOperationExecuted-address-bytes32-bytes32-bytes-[`++ERC7579ExecutorOperationExecuted++`]]
-:ERC7579InvalidExecution: pass:normal[xref:#ERC7579Executor-ERC7579InvalidExecution--[`++ERC7579InvalidExecution++`]]
 :isModuleType: pass:normal[xref:#ERC7579Executor-isModuleType-uint256-[`++isModuleType++`]]
 :execute: pass:normal[xref:#ERC7579Executor-execute-address-bytes32-bytes32-bytes-[`++execute++`]]
 :_validateExecution: pass:normal[xref:#ERC7579Executor-_validateExecution-address-bytes32-bytes32-bytes-[`++_validateExecution++`]]
@@ -1737,16 +1737,6 @@ security features, see {ERC7579DelayedExecutor}.
 
 --
 
-[.contract-index]
-.Errors
---
-* `++ERC7579InvalidExecution()++`
-
-[.contract-subindex-inherited]
-.IERC7579Module
-
---
-
 [.contract-item]
 [[ERC7579Executor-isModuleType-uint256-]]
 ==== `[.contract-item-name]#++isModuleType++#++(uint256 moduleTypeId) → bool++` [.item-kind]#public#
@@ -1763,24 +1753,27 @@ Restricted to the account itself by default. See {_execute} for requirements and
 
 [.contract-item]
 [[ERC7579Executor-_validateExecution-address-bytes32-bytes32-bytes-]]
-==== `[.contract-item-name]#++_validateExecution++#++(address account, bytes32 salt, bytes32 mode, bytes data) → bool valid, bytes executionCalldata++` [.item-kind]#internal#
+==== `[.contract-item-name]#++_validateExecution++#++(address account, bytes32 salt, bytes32 mode, bytes data) → bytes++` [.item-kind]#internal#
 
-Check if the caller is authorized to execute operations.
-Derived contracts can implement this with custom authorization logic.
+Validates whether the execution can proceed. This function is called before executing
+the operation and returns the execution calldata to be used.
 
 Example extension:
 
 ```solidity
- function _validateExecution(
-    address account,
-    bytes32 salt,
-    bytes32 mode,
-    bytes calldata data
- ) internal view override returns (bool valid, bytes calldata executionCalldata) {
-   /// ...
-   return isAuthorized; // custom logic to check authorization
+ function _validateExecution(address account, bytes32 salt, bytes32 mode, bytes calldata data)
+     internal
+     override
+     returns (bytes calldata)
+ {
+     // custom logic
+     return data;
  }
 ```
+
+TIP: Pack extra data in the `data` arguments (e.g. a signature) to be used in the
+validation process. Calldata can be sliced to extract it and return only the
+execution calldata.
 
 [.contract-item]
 [[ERC7579Executor-_execute-address-bytes32-bytes32-bytes-]]
@@ -1798,12 +1791,6 @@ Requirements:
 
 Emitted when an operation is executed.
 
-[.contract-item]
-[[ERC7579Executor-ERC7579InvalidExecution--]]
-==== `[.contract-item-name]#++ERC7579InvalidExecution++#++()++` [.item-kind]#error#
-
-Thrown when the execution is invalid. See {_validateExecution} for details.
-
 :Schedule: pass:normal[xref:#ERC7579DelayedExecutor-Schedule[`++Schedule++`]]
 :ExecutionConfig: pass:normal[xref:#ERC7579DelayedExecutor-ExecutionConfig[`++ExecutionConfig++`]]
 :OperationState: pass:normal[xref:#ERC7579DelayedExecutor-OperationState[`++OperationState++`]]
@@ -1812,8 +1799,6 @@ Thrown when the execution is invalid. See {_validateExecution} for details.
 :ERC7579ExecutorDelayUpdated: pass:normal[xref:#ERC7579DelayedExecutor-ERC7579ExecutorDelayUpdated-address-uint32-uint48-[`++ERC7579ExecutorDelayUpdated++`]]
 :ERC7579ExecutorExpirationUpdated: pass:normal[xref:#ERC7579DelayedExecutor-ERC7579ExecutorExpirationUpdated-address-uint32-[`++ERC7579ExecutorExpirationUpdated++`]]
 :ERC7579ExecutorUnexpectedOperationState: pass:normal[xref:#ERC7579DelayedExecutor-ERC7579ExecutorUnexpectedOperationState-bytes32-enum-ERC7579DelayedExecutor-OperationState-bytes32-[`++ERC7579ExecutorUnexpectedOperationState++`]]
-:ERC7579ExecutorUnauthorizedCancellation: pass:normal[xref:#ERC7579DelayedExecutor-ERC7579ExecutorUnauthorizedCancellation--[`++ERC7579ExecutorUnauthorizedCancellation++`]]
-:ERC7579ExecutorUnauthorizedSchedule: pass:normal[xref:#ERC7579DelayedExecutor-ERC7579ExecutorUnauthorizedSchedule--[`++ERC7579ExecutorUnauthorizedSchedule++`]]
 :ERC7579ExecutorModuleNotInstalled: pass:normal[xref:#ERC7579DelayedExecutor-ERC7579ExecutorModuleNotInstalled--[`++ERC7579ExecutorModuleNotInstalled++`]]
 :state: pass:normal[xref:#ERC7579DelayedExecutor-state-address-bytes32-bytes32-bytes-[`++state++`]]
 :state: pass:normal[xref:#ERC7579DelayedExecutor-state-bytes32-[`++state++`]]
@@ -1875,6 +1860,12 @@ The delay period is enforced even between installas and uninstalls to prevent
 immediate downgrades. When setting a new delay period, the new delay takes effect
 after a transition period defined by the current delay or {minSetback}, whichever
 is longer.
+
+==== Authorization
+
+Authorization for scheduling and canceling operations is controlled through the {_validateSchedule}
+and {_validateCancel} functions. These functions can be overridden to implement custom
+authorization logic, such as requiring specific signers or roles.
 
 TIP: Use {_scheduleAt} to schedule operations at a specific points in time. This is
 useful to pre-schedule operations for non-deployed accounts (e.g. subscriptions).
@@ -1939,13 +1930,10 @@ useful to pre-schedule operations for non-deployed accounts (e.g. subscriptions)
 .Errors
 --
 * `++ERC7579ExecutorUnexpectedOperationState(operationId, currentState, allowedStates)++`
-* `++ERC7579ExecutorUnauthorizedCancellation()++`
-* `++ERC7579ExecutorUnauthorizedSchedule()++`
 * `++ERC7579ExecutorModuleNotInstalled()++`
 
 [.contract-subindex-inherited]
 .ERC7579Executor
-* `++ERC7579InvalidExecution()++`
 
 [.contract-subindex-inherited]
 .IERC7579Module
@@ -2074,66 +2062,39 @@ module will not immediately reset the delay if the delay reset hasn't taken effe
 
 [.contract-item]
 [[ERC7579DelayedExecutor-_validateExecution-address-bytes32-bytes32-bytes-]]
-==== `[.contract-item-name]#++_validateExecution++#++(address, bytes32, bytes32, bytes data) → bool valid, bytes executionCalldata++` [.item-kind]#internal#
+==== `[.contract-item-name]#++_validateExecution++#++(address, bytes32, bytes32, bytes data) → bytes++` [.item-kind]#internal#
 
-Check if the caller is authorized to execute operations.
-Derived contracts can implement this with custom authorization logic.
+Returns `data` as the execution calldata. See {ERC7579Executor-_execute}.
 
-Example extension:
-
-```solidity
- function _validateExecution(
-    address account,
-    bytes32 salt,
-    bytes32 mode,
-    bytes calldata data
- ) internal view override returns (bool valid, bytes calldata executionCalldata) {
-   /// ...
-   return isAuthorized; // custom logic to check authorization
- }
-```
+NOTE: This function relies on the operation state validation in {_execute} for
+authorization. Extensions of this module should override this function to implement
+additional validation logic if needed.
 
 [.contract-item]
 [[ERC7579DelayedExecutor-_validateCancel-address-bytes32-bytes32-bytes-]]
-==== `[.contract-item-name]#++_validateCancel++#++(address account, bytes32, bytes32, bytes) → bool++` [.item-kind]#internal#
+==== `[.contract-item-name]#++_validateCancel++#++(address account, bytes32, bytes32, bytes)++` [.item-kind]#internal#
 
-Whether the caller is authorized to cancel operations.
-By default, this checks if the caller is the account itself. Derived contracts can
-override this to implement custom authorization logic.
+Validates whether an operation can be canceled.
 
 Example extension:
 
 ```solidity
- function _validateCancel(
-    address account,
-    bytes32 mode,
-    bytes calldata data,
-    bytes32 salt
- ) internal view override returns (bool) {
-   bool isAuthorized = ...; // custom logic to check authorization
-   return isAuthorized || super._validateCancel(account, mode, data, salt);
+ function _validateCancel(address account, bytes32 salt, bytes32 mode, bytes calldata data) internal override {
+   // e.g. require(msg.sender == account);
  }
 ```
 
 [.contract-item]
 [[ERC7579DelayedExecutor-_validateSchedule-address-bytes32-bytes32-bytes-]]
-==== `[.contract-item-name]#++_validateSchedule++#++(address account, bytes32, bytes32, bytes) → bool++` [.item-kind]#internal#
+==== `[.contract-item-name]#++_validateSchedule++#++(address account, bytes32, bytes32, bytes)++` [.item-kind]#internal#
 
-Whether the caller is authorized to schedule operations.
-By default, this checks if the caller is the account itself. Derived contracts can
-override this to implement custom authorization logic.
+Validates whether an operation can be scheduled.
 
 Example extension:
 
 ```solidity
- function _validateSchedule(
-    address account,
-    bytes32 mode,
-    bytes calldata data,
-    bytes32 salt
- ) internal view override returns (bool) {
-   bool isAuthorized = ...; // custom logic to check authorization
-   return isAuthorized || super._validateSchedule(account, mode, data, salt);
+ function _validateSchedule(address account, bytes32 salt, bytes32 mode, bytes calldata data) internal override {
+   // e.g. require(msg.sender == account);
  }
 ```
 
@@ -2246,18 +2207,6 @@ The current state of a operation is not the expected. The `expectedStates` is a 
 bits enabled for each OperationState enum position counting from right to left. See {_encodeStateBitmap}.
 
 NOTE: If `expectedState` is `bytes32(0)`, the operation is expected to not be in any state (i.e. not exist).
-
-[.contract-item]
-[[ERC7579DelayedExecutor-ERC7579ExecutorUnauthorizedCancellation--]]
-==== `[.contract-item-name]#++ERC7579ExecutorUnauthorizedCancellation++#++()++` [.item-kind]#error#
-
-The operation is not authorized to be canceled.
-
-[.contract-item]
-[[ERC7579DelayedExecutor-ERC7579ExecutorUnauthorizedSchedule--]]
-==== `[.contract-item-name]#++ERC7579ExecutorUnauthorizedSchedule++#++()++` [.item-kind]#error#
-
-The operation is not authorized to be scheduled.
 
 [.contract-item]
 [[ERC7579DelayedExecutor-ERC7579ExecutorModuleNotInstalled--]]

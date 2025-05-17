@@ -15,7 +15,7 @@ const { shouldBehaveLikeERC7579Module } = require('./ERC7579Module.behavior');
 
 async function fixture() {
   // Deploy ERC-7579 validator module
-  const mock = await ethers.deployContract('$ERC7579MultisigExecutorMock', ['MultisigExecutor', '1']);
+  const mock = await ethers.deployContract('$ERC7579ExecutorMock');
   const target = await ethers.deployContract('CallReceiverMockExtended');
 
   // ERC-4337 env
