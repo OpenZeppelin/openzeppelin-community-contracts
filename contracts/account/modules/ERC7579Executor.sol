@@ -25,9 +25,6 @@ abstract contract ERC7579Executor is IERC7579Module {
         bytes executionCalldata
     );
 
-    /// @dev Thrown when the execution is invalid. See {_validateExecution} for details.
-    error ERC7579InvalidExecution();
-
     /// @inheritdoc IERC7579Module
     function isModuleType(uint256 moduleTypeId) public pure virtual returns (bool) {
         return moduleTypeId == MODULE_TYPE_EXECUTOR;
@@ -44,36 +41,38 @@ abstract contract ERC7579Executor is IERC7579Module {
         bytes32 mode,
         bytes calldata data
     ) public virtual returns (bytes[] memory returnData) {
-        (bool allowed, bytes calldata executionCalldata) = _validateExecution(account, salt, mode, data);
+        bytes calldata executionCalldata = _validateExecution(account, salt, mode, data);
         returnData = _execute(account, mode, salt, executionCalldata); // Prioritize errors thrown in _execute
-        require(allowed, ERC7579InvalidExecution());
         return returnData;
     }
 
     /**
-     * @dev Check if the caller is authorized to execute operations.
-     * Derived contracts can implement this with custom authorization logic.
+     * @dev Validates whether the execution can proceed. This function is called before executing
+     * the operation and returns the execution calldata to be used.
      *
      * Example extension:
      *
      * ```solidity
-     *  function _validateExecution(
-     *     address account,
-     *     bytes32 salt,
-     *     bytes32 mode,
-     *     bytes calldata data
-     *  ) internal view override returns (bool valid, bytes calldata executionCalldata) {
-     *    /// ...
-     *    return isAuthorized; // custom logic to check authorization
+     *  function _validateExecution(address account, bytes32 salt, bytes32 mode, bytes calldata data)
+     *      internal
+     *      override
+     *      returns (bytes calldata)
+     *  {
+     *      // custom logic
+     *      return data;
      *  }
      *```
+     *
+     * TIP: Pack extra data in the `data` arguments (e.g. a signature) to be used in the
+     * validation process. Calldata can be sliced to extract it and return only the
+     * execution calldata.
      */
     function _validateExecution(
         address account,
         bytes32 salt,
         bytes32 mode,
         bytes calldata data
-    ) internal view virtual returns (bool valid, bytes calldata executionCalldata);
+    ) internal virtual returns (bytes calldata);
 
     /**
      * @dev Internal version of {execute}. Emits {ERC7579ExecutorOperationExecuted} event.
