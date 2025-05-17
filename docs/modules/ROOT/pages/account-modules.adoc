@@ -116,6 +116,8 @@ For enhanced security, you can extend this foundation with scheduling, delays, a
 include::api:example$account/modules/MyERC7579DelayedSocialRecovery.sol[]
 ----
 
+NOTE: The delayed executor's signature validation doesn't require a nonce since operations are uniquely identified by their operation ID (derived from account, salt, mode, and execution calldata) and cannot be scheduled twice.
+
 These implementations demonstrate how to build progressively more secure social recovery mechanisms, from basic multi-signature recovery to time-delayed recovery with cancellation capabilities.
 
 For additional functionality, developers can use:
