@@ -102,24 +102,23 @@ Social recovery is not a single solution but a design space with multiple config
 * Cancellation windows
 * Confirmation requirements
 
-A simple approach combines multiple signatures from guardians with execution capabilities:
+A simple first approach combines multiple signatures from guardians with execution capabilities. This provides a basic foundation that can be extended with more sophisticated features:
 
 [source,solidity]
 ----
 include::api:example$account/modules/MyERC7579SocialRecovery.sol[]
 ----
 
-For more robust recovery options, you can use xref:api:account.adoc#ERC7579DelayedExecutor[ERC7579DelayedExecutor] to add scheduling, delays, and cancellations:
+For enhanced security, you can extend this foundation with scheduling, delays, and cancellations using xref:api:account.adoc#ERC7579DelayedExecutor[ERC7579DelayedExecutor]. This allows guardians to schedule recovery operations with a time delay, providing a security window to detect and cancel suspicious recovery attempts before they execute:
 
 [source,solidity]
 ----
 include::api:example$account/modules/MyERC7579DelayedSocialRecovery.sol[]
 ----
 
-[TIP]
-====
+These implementations demonstrate how to build progressively more secure social recovery mechanisms, from basic multi-signature recovery to time-delayed recovery with cancellation capabilities.
+
 For additional functionality, developers can use:
 
 * xref:api:account.adoc#ERC7579MultisigWeighted[ERC7579MultisigWeighted] to assign different weights to signers
 * xref:api:account.adoc#ERC7579MultisigConfirmation[ERC7579MultisigConfirmation] to implement a confirmation system that verifies signatures when adding signers
-====
