@@ -294,9 +294,7 @@ abstract contract ERC7579DelayedExecutor is ERC7579Executor {
     ) internal virtual;
 
     /**
-     * @dev Whether the caller is authorized to schedule operations.
-     * By default, this checks if the caller is the account itself. Derived contracts can
-     * override this to implement custom authorization logic.
+     * @dev Validates whether an operation can be scheduled.
      *
      * Example extension:
      *
