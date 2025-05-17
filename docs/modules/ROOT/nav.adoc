@@ -3,6 +3,7 @@
 ** xref:accounts.adoc[Accounts]
 *** xref:eoa-delegation.adoc[EOA Delegation]
 *** xref:multisig.adoc[Multisig]
+*** xref:account-modules.adoc[Modules]
 ** xref:paymasters.adoc[Paymasters]
 * xref:crosschain.adoc[Crosschain]
 * xref:utilities.adoc[Utilities]
