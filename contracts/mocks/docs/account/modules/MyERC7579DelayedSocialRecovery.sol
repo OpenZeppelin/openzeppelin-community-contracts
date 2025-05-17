@@ -33,13 +33,13 @@ abstract contract MyERC7579DelayedSocialRecovery is EIP712, ERC7579DelayedExecut
         bytes32 salt,
         bytes32 mode,
         bytes calldata data
-    ) internal override returns (bool) {
+    ) internal view override {
         uint16 executionCalldataLength = uint16(uint256(bytes32(data[0:2]))); // First 2 bytes are the length
         bytes calldata executionCalldata = data[2:2 + executionCalldataLength]; // Next bytes are the calldata
         bytes calldata signature = data[2 + executionCalldataLength:]; // Remaining bytes are the signature
-        return
-            _validateMultisignature(account, _getExecuteTypeHash(account, salt, mode, executionCalldata), signature) ||
-            super._validateSchedule(account, salt, mode, data);
+        require(
+            _validateMultisignature(account, _getExecuteTypeHash(account, salt, mode, executionCalldata), signature)
+        );
     }
 
     function _getExecuteTypeHash(
