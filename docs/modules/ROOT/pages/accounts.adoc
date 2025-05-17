@@ -298,7 +298,6 @@ The signature verification stays compatible: delegated EOAs are treated as contr
 
 TIP: Learn more about delegating to an ERC-7702 account in our xref:eoa-delegation.adoc[EOA Delegation] section.
 
-
 === ERC-7579 Modules
 
 Smart accounts have evolved to embrace modularity as a design principle, with popular implementations like https://erc7579.com/#supporters[Safe, Pimlico, Rhinestone, Etherspot and many others] agreeing on ERC-7579 as the standard for module interoperability. This standardization enables accounts to extend their functionality through external contracts while maintaining compatibility across different implementations.
