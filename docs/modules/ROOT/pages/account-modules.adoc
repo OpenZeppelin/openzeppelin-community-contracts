@@ -1,6 +1,6 @@
 = Account Modules
 
-Smart accounts built with https://eips.ethereum.org/EIPS/eip-7579[ERC-7579] provide a standardized way to extend account functionality through modules. This architecture allows accounts to support various features that are compatible with a wide variety of account implementations. See https://erc7579.com/accounts[compatible accounts].
+Smart accounts built with https://eips.ethereum.org/EIPS/eip-7579[ERC-7579] provide a standardized way to extend account functionality through modules. This architecture allows accounts to support various features that are compatible with a wide variety of account implementations. See https://erc7579.com/accounts[compatible modules].
 
 == ERC-7579
 
@@ -88,7 +88,7 @@ The execution data format varies depending on the call type:
 * For batched calls: `abi.encode(Execution[])` where `Execution` is a struct containing `target`, `value`, and `callData`
 * For delegate calls: `abi.encodePacked(target, callData)`
 
-== Use Cases and Examples
+== Examples
 
 === Social Recovery
 
