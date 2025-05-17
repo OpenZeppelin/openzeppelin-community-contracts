@@ -1,0 +1,115 @@
+= Account Modules
+
+Smart accounts built with https://eips.ethereum.org/EIPS/eip-7579[ERC-7579] support provide a standardized way to extend account functionality through modules. This architecture allows accounts to support various features that are compatible with a wide variety of account implementations. See https://erc7579.com/accounts[compatible accounts].
+
+== ERC-7579
+
+ERC-7579 defines a standardized interface for modular smart accounts. This standard enables accounts to install, uninstall, and interact with modules that extend their capabilities in a composable manner with different account implementations as long as they are compatible with ERC-7579 modules.
+
+=== Accounts
+
+OpenZeppelin offers an implementation of an xref:api:accounts.adoc#AccountERC7579[`AccountERC7579`] contract that allows installing modules compliant with this standard. Also, there's an xref:api:accounts.adoc#AccountERC7579Hooked[`AccountERC7579Hooked`] variant that allows installing a hook. Like xref:accounts.adoc#handling_initialization[most accounts, an instance should define an initializer function] where the first module that controls the account will be set. 
+
+[source,solidity]
+----
+include::api:example$account/MyAccountERC7579.sol[]
+----
+
+NOTE: For simplicity, the xref:api:accounts.adoc#AccountERC7579Hooked[`AccountERC7579Hooked`] only supports a single hook. However, a common workaround is to install a https://github.com/rhinestonewtf/core-modules/blob/7afffccb44d73dbaca2481e7b92bce0621ea6449/src/HookMultiPlexer/HookMultiPlexer.sol[single hook with a multiplexer pattern] to extend the functionality to multiple hooks.
+
+=== Modules
+
+Functionality is added to accounts through encapsulated functionality deployed at a smart contract called _module_. The standard defines four primary module types:
+
+* *Validator modules (type 1)*: Handle signature verification and user operation validation
+* *Executor modules (type 2)*: Execute operations on behalf of the account
+* *Fallback modules (type 3)*: Handle fallback calls for specific function selectors
+* *Hook modules (type 4)*: Execute logic before and after operations
+
+Modules are not mutually exclusive, which means that you could, for example, combine an executor module with hooks, so that it shares both types. These could be useful if developers want to enforce behaviors on an account, like keeping ERC20 approvals or avoid removing certain permissions.
+
+See https://erc7579.com/modules[popular module implementations].
+
+==== Setting up a module
+
+The library provides with _standard composable modules_ to build your own. These are thought as building blocks that expose an internal API for developers to build functionalities. Composing them would produce a rich set of variants for developers without forcing unnecessary features they don't want to.
+
+To get started, you may like to start off from xref:api:account.adoc#ERC7579Executor[ERC7579Executor] or xref:api:account.adoc#ERC7579Validator[ERC7579Validator], which include an opinionated base layer which can easily be combined with other abstract modules. In the case of hooks or fallback handlers, they're more straight forward to implement out from interfaces.
+
+[source,solidity]
+----
+include::api:example$account/modules/MyERC7579Modules.sol[]
+----
+
+TIP: Explore these abstract ERC-7579 modules in the xref:api:account.adoc#modules[API Reference].
+
+==== Execution Modes
+
+ERC-7579 supports various execution modes, which are encoded as a `bytes32` value using specific bit patterns. The `ERC7579Utils` library provides utility functions to work with these modes:
+
+[source,solidity]
+----
+// Parts of an execution mode
+type Mode is bytes32;
+type CallType is bytes1;
+type ExecType is bytes1;
+type ModeSelector is bytes4;
+type ModePayload is bytes22;
+----
+
+TIP: Use the https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/account/utils/draft-ERC7579Utils.sol[ERC7579Utils] library to encode and decode ERC-7579 modes and their components.
+
+===== Call Types
+
+Call types determine the kind of execution:
+
+[%header,cols="1,1,3"]
+|===
+|Type |Value |Description
+|`CALLTYPE_SINGLE` |`0x00` |A single `call` execution
+|`CALLTYPE_BATCH` |`0x01` |A batch of `call` executions
+|`CALLTYPE_DELEGATECALL` |`0xFF` |A `delegatecall` execution
+|===
+
+===== Execution Types
+
+Execution types determine how failures are handled:
+
+[%header,cols="1,1,3"]
+|===
+|Type |Value |Description
+|`EXECTYPE_DEFAULT` |`0x00` |Reverts on failure
+|`EXECTYPE_TRY` |`0x01` |Does not revert on failure, emits an event instead
+|===
+
+==== Execution Data Format
+
+The execution data format varies depending on the call type:
+
+* For single calls: `abi.encodePacked(target, value, callData)`
+* For batched calls: `abi.encode(Execution[])` where `Execution` is a struct containing `target`, `value`, and `callData`
+* For delegate calls: `abi.encodePacked(target, callData)`
+
+== Examples
+
+=== Social Recovery
+
+Social Recovery is a method to regain access to an account by relying on trusted parties or "guardians" who verify the user's identity and help restore access, typically without needing a centralized authority.
+
+Although commonly cited as a single solution, social recovery is a whole design space. It includes multiple nuanced design decisions like _delay configuration_, _expiration_, _support of different guardian types_, _cancellation windows_, and even _confirmations_ to make sure guardians are capable to execute a recovery procedure. These functionalities are difficult to agreed upon in a standard way given the tradeoffs between configurations (e.g. should guardians have different weights?).
+
+In practice, a simple approach to social recovery is to coordinate multiple signatures from the guardians who can execute a recovery. Fortunately, the library includes an xref:api.accounts.adoc#ERC7579Executor[`ERC7579Executor`] that you can configure by implementing the xref:api.accounts.adoc#ERC7579Executor-_validateExecution[`_validateExecution`] function. In combination with xref:api.accounts.adoc#ERC7579Multisig[ERC7579Multisig], it's possible to create a simple _social_ executor that supports generic keys following https://eips.ethereum.org/EIPS/eip-7913[ERC-7913]:
+
+[source,solidity]
+----
+include::api:example$account/modules/MyERC7579SocialRecovery.sol[]
+----
+
+This approach, although lightweight, this approach lacks of more configuration options like delays or expirations. For these purposes, developers can use the xref:api.accounts.adoc#ERC7579DelayedExecutor[`ERC7579DelayedExecutor`] contract instead, that includes support for scheduling execution requests with an execution delay and cancellations:
+
+[source,solidity]
+----
+include::api:example$account/modules/MyERC7579DelayedSocialRecovery.sol[]
+----
+
+Developers can also use xref:api.accounts.adoc#ERC7579MultisigWeighted[ERC7579MultisigWeighted] to assign flexible weights to each signers. Also, they could implement a confirmation system that verifies a signature when signers are added to an executor using xref:api.accounts.adoc#ERC7579MultisigConfirmation[ERC7579MultisigConfirmation]

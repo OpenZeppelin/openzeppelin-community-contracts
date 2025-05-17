@@ -62,7 +62,7 @@ abstract contract ERC7579Executor is IERC7579Module {
      *     bytes32 salt,
      *     bytes32 mode,
      *     bytes calldata data
-     *  ) internal view override returns (bool valid, bytes calldata executionCalldata) {
+     *  ) internal override returns (bool valid, bytes calldata executionCalldata) {
      *    /// ...
      *    return isAuthorized; // custom logic to check authorization
      *  }
@@ -73,7 +73,7 @@ abstract contract ERC7579Executor is IERC7579Module {
         bytes32 salt,
         bytes32 mode,
         bytes calldata data
-    ) internal view virtual returns (bool valid, bytes calldata executionCalldata);
+    ) internal virtual returns (bool valid, bytes calldata executionCalldata);
 
     /**
      * @dev Internal version of {execute}. Emits {ERC7579ExecutorOperationExecuted} event.

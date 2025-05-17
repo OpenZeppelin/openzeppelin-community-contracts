@@ -273,7 +273,7 @@ abstract contract ERC7579DelayedExecutor is ERC7579Executor {
         bytes32 /* salt */,
         bytes32 /* mode */,
         bytes calldata data
-    ) internal view virtual override returns (bool valid, bytes calldata executionCalldata) {
+    ) internal virtual override returns (bool valid, bytes calldata executionCalldata) {
         return (true, data); // Anyone can execute, the state validation of the operation is enough
     }
 
@@ -287,12 +287,12 @@ abstract contract ERC7579DelayedExecutor is ERC7579Executor {
      * ```solidity
      *  function _validateCancel(
      *     address account,
+     *     bytes32 salt,
      *     bytes32 mode,
-     *     bytes calldata data,
-     *     bytes32 salt
-     *  ) internal view override returns (bool) {
+     *     bytes calldata data
+     *  ) internal override returns (bool) {
      *    bool isAuthorized = ...; // custom logic to check authorization
-     *    return isAuthorized || super._validateCancel(account, mode, data, salt);
+     *    return isAuthorized || super._validateCancel(account, salt, mode, data);
      *  }
      *```
      */
@@ -301,7 +301,7 @@ abstract contract ERC7579DelayedExecutor is ERC7579Executor {
         bytes32 /* salt */,
         bytes32 /* mode */,
         bytes calldata /* data */
-    ) internal view virtual returns (bool) {
+    ) internal virtual returns (bool) {
         return account == msg.sender;
     }
 
@@ -315,12 +315,12 @@ abstract contract ERC7579DelayedExecutor is ERC7579Executor {
      * ```solidity
      *  function _validateSchedule(
      *     address account,
+     *     bytes32 salt,
      *     bytes32 mode,
-     *     bytes calldata data,
-     *     bytes32 salt
-     *  ) internal view override returns (bool) {
+     *     bytes calldata data
+     *  ) internal override returns (bool) {
      *    bool isAuthorized = ...; // custom logic to check authorization
-     *    return isAuthorized || super._validateSchedule(account, mode, data, salt);
+     *    return isAuthorized || super._validateSchedule(account, salt, mode, data);
      *  }
      *```
      */
@@ -329,7 +329,7 @@ abstract contract ERC7579DelayedExecutor is ERC7579Executor {
         bytes32 /* salt */,
         bytes32 /* mode */,
         bytes calldata /* data */
-    ) internal view virtual returns (bool) {
+    ) internal virtual returns (bool) {
         return account == msg.sender;
     }
 
