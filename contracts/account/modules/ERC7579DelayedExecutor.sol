@@ -32,6 +32,12 @@ import {ERC7579Executor} from "./ERC7579Executor.sol";
  * after a transition period defined by the current delay or {minSetback}, whichever
  * is longer.
  *
+ * ==== Authorization
+ *
+ * Authorization for scheduling and canceling operations is controlled through the {_validateSchedule}
+ * and {_validateCancel} functions. These functions can be overridden to implement custom
+ * authorization logic, such as requiring specific signers or roles.
+ *
  * TIP: Use {_scheduleAt} to schedule operations at a specific points in time. This is
  * useful to pre-schedule operations for non-deployed accounts (e.g. subscriptions).
  */
