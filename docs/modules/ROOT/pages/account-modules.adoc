@@ -1,6 +1,6 @@
 = Account Modules
 
-Smart accounts built with https://eips.ethereum.org/EIPS/eip-7579[ERC-7579] provide a standardized way to extend account functionality through modules. This architecture allows accounts to support various features that are compatible with a wide variety of account implementations. See https://erc7579.com/accounts[compatible modules].
+Smart accounts built with https://eips.ethereum.org/EIPS/eip-7579[ERC-7579] provide a standardized way to extend account functionality through modules (i.e. smart contract instances). This architecture allows accounts to support various features that are compatible with a wide variety of account implementations. See https://erc7579.com/accounts[compatible modules].
 
 == ERC-7579
 
@@ -116,7 +116,7 @@ For enhanced security, you can extend this foundation with scheduling, delays, a
 include::api:example$account/modules/MyERC7579DelayedSocialRecovery.sol[]
 ----
 
-NOTE: The delayed executor's signature validation doesn't require a nonce since operations are uniquely identified by their operation ID (derived from account, salt, mode, and execution calldata) and cannot be scheduled twice.
+NOTE: The delayed executor's signature validation doesn't require a nonce since operations are uniquely identified by their xref:api:account.account#ERC7579DelayedExecutor-hashOperation-address-bytes32-bytes32-bytes-[operation id] and cannot be scheduled twice.
 
 These implementations demonstrate how to build progressively more secure social recovery mechanisms, from basic multi-signature recovery to time-delayed recovery with cancellation capabilities.
 
