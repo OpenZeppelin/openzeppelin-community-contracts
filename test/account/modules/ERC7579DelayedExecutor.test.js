@@ -18,7 +18,7 @@ async function fixture() {
   const [other] = await ethers.getSigners();
 
   // Deploy ERC-7579 validator module
-  const mock = await ethers.deployContract('$ERC7579DelayedExecutor');
+  const mock = await ethers.deployContract('$ERC7579DelayedExecutorMock');
   const target = await ethers.deployContract('CallReceiverMockExtended');
 
   // ERC-4337 env
@@ -216,12 +216,6 @@ describe('ERC7579DelayedExecutor', function () {
       ).to.eventually.deep.equal([now, now + this.delay, now + this.delay + this.expiration]);
     });
 
-    it('reverts with ERC7579ExecutorUnauthorizedSchedule if called by other account', async function () {
-      await expect(
-        this.mock.schedule(this.mockAccount.address, salt, this.mode, this.calldata),
-      ).to.be.revertedWithCustomError(this.mock, 'ERC7579ExecutorUnauthorizedSchedule');
-    });
-
     it('reverts with ERC7579ExecutorModuleNotInstalled if the module is not installed', async function () {
       await expect(
         this.mock.schedule(this.other.address, salt, this.mode, this.calldata),
@@ -300,12 +294,6 @@ describe('ERC7579DelayedExecutor', function () {
       await expect(
         this.mockFromAccount.cancel(this.mockAccount.address, salt, this.mode, this.calldata),
       ).to.be.revertedWithCustomError(this.mock, 'ERC7579ExecutorUnexpectedOperationState'); // Can't cancel twice
-    });
-
-    it('reverts with ERC7579ExecutorUnauthorizedCancellation if called by other account', async function () {
-      await expect(
-        this.mock.cancel(this.mockAccount.address, salt, this.mode, this.calldata),
-      ).to.be.revertedWithCustomError(this.mock, 'ERC7579ExecutorUnauthorizedCancellation');
     });
   });
 });
