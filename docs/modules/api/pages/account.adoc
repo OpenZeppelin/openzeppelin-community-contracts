@@ -3,13 +3,17 @@
 :AccountERC7579: pass:normal[xref:account.adoc#AccountERC7579[`AccountERC7579`]]
 :AccountERC7579Hooked: pass:normal[xref:account.adoc#AccountERC7579Hooked[`AccountERC7579Hooked`]]
 :ERC7821: pass:normal[xref:account.adoc#ERC7821[`ERC7821`]]
-:ERC7579Validator: pass:normal[xref:account.adoc#ERC7579Validator[`ERC7579Validator`]]
-:ERC7579SignatureValidator: pass:normal[xref:account.adoc#ERC7579SignatureValidator[`ERC7579SignatureValidator`]]
-:ERC7579Multisig: pass:normal[xref:account.adoc#ERC7579Multisig[`ERC7579Multisig`]]
-:ERC7579MultisigWeighted: pass:normal[xref:account.adoc#ERC7579MultisigWeighted[`ERC7579MultisigWeighted`]]
-:ERC7579MultisigConfirmation: pass:normal[xref:account.adoc#ERC7579MultisigConfirmation[`ERC7579MultisigConfirmation`]]
 :ERC7579Executor: pass:normal[xref:account.adoc#ERC7579Executor[`ERC7579Executor`]]
 :ERC7579DelayedExecutor: pass:normal[xref:account.adoc#ERC7579DelayedExecutor[`ERC7579DelayedExecutor`]]
+:ERC7579Validator: pass:normal[xref:account.adoc#ERC7579Validator[`ERC7579Validator`]]
+:ERC7579Signature: pass:normal[xref:account.adoc#ERC7579Signature[`ERC7579Signature`]]
+:ERC7579Validator: pass:normal[xref:account.adoc#ERC7579Validator[`ERC7579Validator`]]
+:ERC7579Multisig: pass:normal[xref:account.adoc#ERC7579Multisig[`ERC7579Multisig`]]
+:ERC7579Validator: pass:normal[xref:account.adoc#ERC7579Validator[`ERC7579Validator`]]
+:ERC7579MultisigWeighted: pass:normal[xref:account.adoc#ERC7579MultisigWeighted[`ERC7579MultisigWeighted`]]
+:ERC7579Multisig: pass:normal[xref:account.adoc#ERC7579Multisig[`ERC7579Multisig`]]
+:ERC7579MultisigConfirmation: pass:normal[xref:account.adoc#ERC7579MultisigConfirmation[`ERC7579MultisigConfirmation`]]
+:ERC7579Multisig: pass:normal[xref:account.adoc#ERC7579Multisig[`ERC7579Multisig`]]
 :PaymasterCore: pass:normal[xref:account.adoc#PaymasterCore[`PaymasterCore`]]
 :PaymasterERC20: pass:normal[xref:account.adoc#PaymasterERC20[`PaymasterERC20`]]
 :PaymasterERC20Guarantor: pass:normal[xref:account.adoc#PaymasterERC20Guarantor[`PaymasterERC20Guarantor`]]
@@ -33,6 +37,14 @@
 :AccountERC7579-_uninstallModule: pass:normal[xref:account.adoc#AccountERC7579-_uninstallModule-uint256-address-bytes-[`AccountERC7579._uninstallModule`]]
 :AccountERC7579-_execute: pass:normal[xref:account.adoc#AccountERC7579-_execute-Mode-bytes-[`AccountERC7579._execute`]]
 :AccountERC7579-_fallback: pass:normal[xref:account.adoc#AccountERC7579-_fallback--[`AccountERC7579._fallback`]]
+:ERC7579DelayedExecutor: pass:normal[xref:account.adoc#ERC7579DelayedExecutor[`ERC7579DelayedExecutor`]]
+:ERC7579Executor: pass:normal[xref:account.adoc#ERC7579Executor[`ERC7579Executor`]]
+:ERC7579Executor-_execute: pass:normal[xref:account.adoc#ERC7579Executor-_execute-address-bytes32-bytes32-bytes-[`ERC7579Executor._execute`]]
+:ERC7579Executor-_execute: pass:normal[xref:account.adoc#ERC7579Executor-_execute-address-bytes32-bytes32-bytes-[`ERC7579Executor._execute`]]
+:ERC7579Validator: pass:normal[xref:account.adoc#ERC7579Validator[`ERC7579Validator`]]
+:AccountERC7579-uninstallModule: pass:normal[xref:account.adoc#AccountERC7579-uninstallModule-uint256-address-bytes-[`AccountERC7579.uninstallModule`]]
+:ERC7579Validator-_rawERC7579Validation: pass:normal[xref:account.adoc#ERC7579Validator-_rawERC7579Validation-address-bytes32-bytes-[`ERC7579Validator._rawERC7579Validation`]]
+:ERC7579Validator: pass:normal[xref:account.adoc#ERC7579Validator[`ERC7579Validator`]]
 :ERC7579DelayedExecutor-onInstall: pass:normal[xref:account.adoc#ERC7579DelayedExecutor-onInstall-bytes-[`ERC7579DelayedExecutor.onInstall`]]
 :ERC7579DelayedExecutor-onUninstall: pass:normal[xref:account.adoc#ERC7579DelayedExecutor-onUninstall-bytes-[`ERC7579DelayedExecutor.onUninstall`]]
 :EnumerableSetExtended-clear: pass:normal[xref:utils.adoc#EnumerableSetExtended-clear-struct-EnumerableSetExtended-Bytes32x2Set-[`EnumerableSetExtended.clear`]]
@@ -42,13 +54,6 @@
 :ERC7579Multisig-_removeSigners: pass:normal[xref:account.adoc#ERC7579Multisig-_removeSigners-address-bytes---[`ERC7579Multisig._removeSigners`]]
 :ERC7579Multisig: pass:normal[xref:account.adoc#ERC7579Multisig[`ERC7579Multisig`]]
 :ERC7579Multisig-_addSigners: pass:normal[xref:account.adoc#ERC7579Multisig-_addSigners-address-bytes---[`ERC7579Multisig._addSigners`]]
-:ERC7579DelayedExecutor: pass:normal[xref:account.adoc#ERC7579DelayedExecutor[`ERC7579DelayedExecutor`]]
-:ERC7579Executor: pass:normal[xref:account.adoc#ERC7579Executor[`ERC7579Executor`]]
-:ERC7579Executor-_execute: pass:normal[xref:account.adoc#ERC7579Executor-_execute-address-bytes32-bytes32-bytes-[`ERC7579Executor._execute`]]
-:ERC7579Executor-_execute: pass:normal[xref:account.adoc#ERC7579Executor-_execute-address-bytes32-bytes32-bytes-[`ERC7579Executor._execute`]]
-:ERC7579Validator: pass:normal[xref:account.adoc#ERC7579Validator[`ERC7579Validator`]]
-:AccountERC7579-uninstallModule: pass:normal[xref:account.adoc#AccountERC7579-uninstallModule-uint256-address-bytes-[`AccountERC7579.uninstallModule`]]
-:ERC7579Validator-_rawSignatureValidationWithSender: pass:normal[xref:account.adoc#ERC7579Validator-_rawSignatureValidationWithSender-address-bytes32-bytes-[`ERC7579Validator._rawSignatureValidationWithSender`]]
 :PaymasterCore-_validatePaymasterUserOp: pass:normal[xref:account.adoc#PaymasterCore-_validatePaymasterUserOp-struct-PackedUserOperation-bytes32-uint256-[`PaymasterCore._validatePaymasterUserOp`]]
 :PaymasterCore: pass:normal[xref:account.adoc#PaymasterCore[`PaymasterCore`]]
 :PaymasterCore-_validatePaymasterUserOp: pass:normal[xref:account.adoc#PaymasterCore-_validatePaymasterUserOp-struct-PackedUserOperation-bytes32-uint256-[`PaymasterCore._validatePaymasterUserOp`]]
@@ -70,13 +75,13 @@ This directory includes contracts to build accounts for ERC-4337. These include:
  * {AccountERC7579}: An extension of `Account` that implements support for ERC-7579 modules.
  * {AccountERC7579Hooked}: An extension of `AccountERC7579` with support for a single hook module (type 4).
  * {ERC7821}: Minimal batch executor implementation contracts. Useful to enable easy batch execution for smart contracts.
- * {ERC7579Validator}: Abstract validator module for ERC-7579 accounts that provides base implementation for signature validation.
- * {ERC7579SignatureValidator}: Implementation of ERC7579Validator using ERC-7913 signature verification for address-less cryptographic keys.
- * {ERC7579Multisig}: An abstract multisig module for ERC-7579 accounts using ERC-7913 signer keys.
- * {ERC7579MultisigWeighted}: An abstract weighted multisig module that allows different weights to be assigned to signers.
- * {ERC7579MultisigConfirmation}: An abstract confirmation-based multisig module that each signer to provide a confirmation signature.
  * {ERC7579Executor}: An executor module that enables executing calls from accounts where the it's installed.
  * {ERC7579DelayedExecutor}: An executor module that adds a delay before executing an account operation.
+ * {ERC7579Validator}: Abstract validator module for ERC-7579 accounts that provides base implementation for signature validation.
+ * {ERC7579Signature}: Implementation of {ERC7579Validator} using ERC-7913 signature verification for address-less cryptographic keys and account signatures.
+ * {ERC7579Multisig}: An extension of {ERC7579Validator} that enables validation using ERC-7913 signer keys.
+ * {ERC7579MultisigWeighted}: An extension of {ERC7579Multisig} that allows different weights to be assigned to signers.
+ * {ERC7579MultisigConfirmation}: An extension of {ERC7579Multisig} that requires each signer to provide a confirmation signature.
  * {PaymasterCore}: An ERC-4337 paymaster implementation that includes the core logic to validate and pay for user operations.
  * {PaymasterERC20}: A paymaster that allows users to pay for user operations using ERC-20 tokens.
  * {PaymasterERC20Guarantor}: A paymaster that enables third parties to guarantee user operations by pre-funding gas costs, with the option for users to repay or for guarantors to absorb the cost.
@@ -978,711 +983,6 @@ function _erc7821AuthorizedExecutor(
 
 == Modules
 
-:ERC7913SignersAdded: pass:normal[xref:#ERC7579Multisig-ERC7913SignersAdded-address-bytes---[`++ERC7913SignersAdded++`]]
-:ERC7913SignersRemoved: pass:normal[xref:#ERC7579Multisig-ERC7913SignersRemoved-address-bytes---[`++ERC7913SignersRemoved++`]]
-:ERC7913ThresholdSet: pass:normal[xref:#ERC7579Multisig-ERC7913ThresholdSet-address-uint256-[`++ERC7913ThresholdSet++`]]
-:ERC7579MultisigAlreadyExists: pass:normal[xref:#ERC7579Multisig-ERC7579MultisigAlreadyExists-bytes-[`++ERC7579MultisigAlreadyExists++`]]
-:ERC7579MultisigNonexistentSigner: pass:normal[xref:#ERC7579Multisig-ERC7579MultisigNonexistentSigner-bytes-[`++ERC7579MultisigNonexistentSigner++`]]
-:ERC7579MultisigInvalidSigner: pass:normal[xref:#ERC7579Multisig-ERC7579MultisigInvalidSigner-bytes-[`++ERC7579MultisigInvalidSigner++`]]
-:ERC7579MultisigUnreachableThreshold: pass:normal[xref:#ERC7579Multisig-ERC7579MultisigUnreachableThreshold-uint256-uint256-[`++ERC7579MultisigUnreachableThreshold++`]]
-:onInstall: pass:normal[xref:#ERC7579Multisig-onInstall-bytes-[`++onInstall++`]]
-:onUninstall: pass:normal[xref:#ERC7579Multisig-onUninstall-bytes-[`++onUninstall++`]]
-:signers: pass:normal[xref:#ERC7579Multisig-signers-address-[`++signers++`]]
-:isSigner: pass:normal[xref:#ERC7579Multisig-isSigner-address-bytes-[`++isSigner++`]]
-:_signers: pass:normal[xref:#ERC7579Multisig-_signers-address-[`++_signers++`]]
-:threshold: pass:normal[xref:#ERC7579Multisig-threshold-address-[`++threshold++`]]
-:addSigners: pass:normal[xref:#ERC7579Multisig-addSigners-bytes---[`++addSigners++`]]
-:removeSigners: pass:normal[xref:#ERC7579Multisig-removeSigners-bytes---[`++removeSigners++`]]
-:setThreshold: pass:normal[xref:#ERC7579Multisig-setThreshold-uint256-[`++setThreshold++`]]
-:_validateMultisignature: pass:normal[xref:#ERC7579Multisig-_validateMultisignature-address-bytes32-bytes-[`++_validateMultisignature++`]]
-:_addSigners: pass:normal[xref:#ERC7579Multisig-_addSigners-address-bytes---[`++_addSigners++`]]
-:_removeSigners: pass:normal[xref:#ERC7579Multisig-_removeSigners-address-bytes---[`++_removeSigners++`]]
-:_setThreshold: pass:normal[xref:#ERC7579Multisig-_setThreshold-address-uint256-[`++_setThreshold++`]]
-:_validateReachableThreshold: pass:normal[xref:#ERC7579Multisig-_validateReachableThreshold-address-[`++_validateReachableThreshold++`]]
-:_validateSignatures: pass:normal[xref:#ERC7579Multisig-_validateSignatures-address-bytes32-bytes---bytes---[`++_validateSignatures++`]]
-:_validateThreshold: pass:normal[xref:#ERC7579Multisig-_validateThreshold-address-bytes---[`++_validateThreshold++`]]
-
-[.contract]
-[[ERC7579Multisig]]
-=== `++ERC7579Multisig++` link:https://github.com/OpenZeppelin/openzeppelin-community-contracts/blob/master/contracts/account/modules/ERC7579Multisig.sol[{github-icon},role=heading-link]
-
-[.hljs-theme-light.nopadding]
-```solidity
-import "@openzeppelin/community-contracts/account/modules/ERC7579Multisig.sol";
-```
-
-Implementation of an {IERC7579Module} that uses ERC-7913 signers for multisignature
-validation.
-
-This module provides a base implementation for multisignature validation that can be
-attached to any function through the {_validateMultisignature} internal function. The signers
-are represented using the ERC-7913 format, which concatenates a verifier address and
-a key: `verifier || key`.
-
-Example implementation:
-
-```solidity
-function execute(
-    address account,
-    Mode mode,
-    bytes calldata executionCalldata,
-    bytes32 salt,
-    bytes calldata signature
-) public virtual {
-    require(_validateMultisignature(account, hash, signature));
-    // ... rest of execute logic
-}
-```
-
-Example use case:
-
-A smart account with this module installed can require multiple signers to approve
-operations before they are executed, such as requiring 3-of-5 guardians to approve
-a social recovery operation.
-
-[.contract-index]
-.Functions
---
-* `++onInstall(initData)++`
-* `++onUninstall()++`
-* `++signers(account)++`
-* `++isSigner(account, signer)++`
-* `++_signers(account)++`
-* `++threshold(account)++`
-* `++addSigners(newSigners)++`
-* `++removeSigners(oldSigners)++`
-* `++setThreshold(newThreshold)++`
-* `++_validateMultisignature(account, hash, signature)++`
-* `++_addSigners(account, newSigners)++`
-* `++_removeSigners(account, oldSigners)++`
-* `++_setThreshold(account, newThreshold)++`
-* `++_validateReachableThreshold(account)++`
-* `++_validateSignatures(account, hash, signingSigners, signatures)++`
-* `++_validateThreshold(account, validatingSigners)++`
-
-[.contract-subindex-inherited]
-.IERC7579Module
-* `++isModuleType(moduleTypeId)++`
-
---
-
-[.contract-index]
-.Events
---
-* `++ERC7913SignersAdded(account, signers)++`
-* `++ERC7913SignersRemoved(account, signers)++`
-* `++ERC7913ThresholdSet(account, threshold)++`
-
-[.contract-subindex-inherited]
-.IERC7579Module
-
---
-
-[.contract-index]
-.Errors
---
-* `++ERC7579MultisigAlreadyExists(signer)++`
-* `++ERC7579MultisigNonexistentSigner(signer)++`
-* `++ERC7579MultisigInvalidSigner(signer)++`
-* `++ERC7579MultisigUnreachableThreshold(signers, threshold)++`
-
-[.contract-subindex-inherited]
-.IERC7579Module
-
---
-
-[.contract-item]
-[[ERC7579Multisig-onInstall-bytes-]]
-==== `[.contract-item-name]#++onInstall++#++(bytes initData)++` [.item-kind]#public#
-
-Sets up the module's initial configuration when installed by an account.
-See {ERC7579DelayedExecutor-onInstall}. Besides the delay setup, the `initdata` can
-include `signers` and `threshold`.
-
-The initData should be encoded as:
-`abi.encode(bytes[] signers, uint256 threshold)`
-
-If no signers or threshold are provided, the multisignature functionality will be
-disabled until they are added later.
-
-NOTE: An account can only call onInstall once. If called directly by the account,
-the signer will be set to the provided data. Future installations will behave as a no-op.
-
-[.contract-item]
-[[ERC7579Multisig-onUninstall-bytes-]]
-==== `[.contract-item-name]#++onUninstall++#++(bytes)++` [.item-kind]#public#
-
-Cleans up module's configuration when uninstalled from an account.
-Clears all signers and resets the threshold.
-
-See {ERC7579DelayedExecutor-onUninstall}.
-
-WARNING: This function has unbounded gas costs and may become uncallable if the set grows too large.
-See {EnumerableSetExtended-clear}.
-
-[.contract-item]
-[[ERC7579Multisig-signers-address-]]
-==== `[.contract-item-name]#++signers++#++(address account) → bytes[]++` [.item-kind]#public#
-
-Returns the set of authorized signers for the specified account.
-
-WARNING: This operation copies the entire signers set to memory, which
-can be expensive or may result in unbounded computation.
-
-[.contract-item]
-[[ERC7579Multisig-isSigner-address-bytes-]]
-==== `[.contract-item-name]#++isSigner++#++(address account, bytes signer) → bool++` [.item-kind]#public#
-
-Returns whether the `signer` is an authorized signer for the specified account.
-
-[.contract-item]
-[[ERC7579Multisig-_signers-address-]]
-==== `[.contract-item-name]#++_signers++#++(address account) → struct EnumerableSetExtended.BytesSet++` [.item-kind]#internal#
-
-Returns the set of authorized signers for the specified account.
-
-[.contract-item]
-[[ERC7579Multisig-threshold-address-]]
-==== `[.contract-item-name]#++threshold++#++(address account) → uint256++` [.item-kind]#public#
-
-Returns the minimum number of signers required to approve a multisignature operation
-for the specified account.
-
-[.contract-item]
-[[ERC7579Multisig-addSigners-bytes---]]
-==== `[.contract-item-name]#++addSigners++#++(bytes[] newSigners)++` [.item-kind]#public#
-
-Adds new signers to the authorized set for the calling account.
-Can only be called by the account itself.
-
-Requirements:
-
-* Each of `newSigners` must be at least 20 bytes long.
-* Each of `newSigners` must not be already authorized.
-
-[.contract-item]
-[[ERC7579Multisig-removeSigners-bytes---]]
-==== `[.contract-item-name]#++removeSigners++#++(bytes[] oldSigners)++` [.item-kind]#public#
-
-Removes signers from the authorized set for the calling account.
-Can only be called by the account itself.
-
-Requirements:
-
-* Each of `oldSigners` must be authorized.
-* After removal, the threshold must still be reachable.
-
-[.contract-item]
-[[ERC7579Multisig-setThreshold-uint256-]]
-==== `[.contract-item-name]#++setThreshold++#++(uint256 newThreshold)++` [.item-kind]#public#
-
-Sets the threshold for the calling account.
-Can only be called by the account itself.
-
-Requirements:
-
-* The threshold must be reachable with the current number of signers.
-
-[.contract-item]
-[[ERC7579Multisig-_validateMultisignature-address-bytes32-bytes-]]
-==== `[.contract-item-name]#++_validateMultisignature++#++(address account, bytes32 hash, bytes signature) → bool++` [.item-kind]#internal#
-
-Returns whether the number of valid signatures meets or exceeds the
-threshold set for the target account.
-
-The signature should be encoded as:
-`abi.encode(bytes[] signingSigners, bytes[] signatures)`
-
-Where `signingSigners` are the authorized signers and signatures are their corresponding
-signatures of the operation `hash`.
-
-[.contract-item]
-[[ERC7579Multisig-_addSigners-address-bytes---]]
-==== `[.contract-item-name]#++_addSigners++#++(address account, bytes[] newSigners)++` [.item-kind]#internal#
-
-Adds the `newSigners` to those allowed to sign on behalf of the account.
-
-Requirements:
-
-* Each of `newSigners` must be at least 20 bytes long. Reverts with {ERC7579MultisigInvalidSigner} if not.
-* Each of `newSigners` must not be authorized. Reverts with {ERC7579MultisigAlreadyExists} if it already exists.
-
-[.contract-item]
-[[ERC7579Multisig-_removeSigners-address-bytes---]]
-==== `[.contract-item-name]#++_removeSigners++#++(address account, bytes[] oldSigners)++` [.item-kind]#internal#
-
-Removes the `oldSigners` from the authorized signers for the account.
-
-Requirements:
-
-* Each of `oldSigners` must be authorized. Reverts with {ERC7579MultisigNonexistentSigner} if not.
-* The threshold must remain reachable after removal. See {_validateReachableThreshold} for details.
-
-[.contract-item]
-[[ERC7579Multisig-_setThreshold-address-uint256-]]
-==== `[.contract-item-name]#++_setThreshold++#++(address account, uint256 newThreshold)++` [.item-kind]#internal#
-
-Sets the signatures `threshold` required to approve a multisignature operation.
-
-Requirements:
-
-* The threshold must be reachable with the current number of signers. See {_validateReachableThreshold} for details.
-
-[.contract-item]
-[[ERC7579Multisig-_validateReachableThreshold-address-]]
-==== `[.contract-item-name]#++_validateReachableThreshold++#++(address account)++` [.item-kind]#internal#
-
-Validates the current threshold is reachable with the number of {signers}.
-
-Requirements:
-
-* The number of signers must be >= the threshold. Reverts with {ERC7579MultisigUnreachableThreshold} if not.
-
-[.contract-item]
-[[ERC7579Multisig-_validateSignatures-address-bytes32-bytes---bytes---]]
-==== `[.contract-item-name]#++_validateSignatures++#++(address account, bytes32 hash, bytes[] signingSigners, bytes[] signatures) → bool valid++` [.item-kind]#internal#
-
-Validates the signatures using the signers and their corresponding signatures.
-Returns whether the signers are authorized and the signatures are valid for the given hash.
-
-The signers must be ordered by their `keccak256` hash to prevent duplications and to optimize
-the verification process. The function will return `false` if any signer is not authorized or
-if the signatures are invalid for the given hash.
-
-Requirements:
-
-* The `signatures` array must be at least the `signers` array's length.
-
-[.contract-item]
-[[ERC7579Multisig-_validateThreshold-address-bytes---]]
-==== `[.contract-item-name]#++_validateThreshold++#++(address account, bytes[] validatingSigners) → bool++` [.item-kind]#internal#
-
-Validates that the number of signers meets the {threshold} requirement.
-Assumes the signers were already validated. See {_validateSignatures} for more details.
-
-[.contract-item]
-[[ERC7579Multisig-ERC7913SignersAdded-address-bytes---]]
-==== `[.contract-item-name]#++ERC7913SignersAdded++#++(address indexed account, bytes[] signers)++` [.item-kind]#event#
-
-Emitted when signers are added.
-
-[.contract-item]
-[[ERC7579Multisig-ERC7913SignersRemoved-address-bytes---]]
-==== `[.contract-item-name]#++ERC7913SignersRemoved++#++(address indexed account, bytes[] signers)++` [.item-kind]#event#
-
-Emitted when signers are removed.
-
-[.contract-item]
-[[ERC7579Multisig-ERC7913ThresholdSet-address-uint256-]]
-==== `[.contract-item-name]#++ERC7913ThresholdSet++#++(address indexed account, uint256 threshold)++` [.item-kind]#event#
-
-Emitted when the threshold is updated.
-
-[.contract-item]
-[[ERC7579Multisig-ERC7579MultisigAlreadyExists-bytes-]]
-==== `[.contract-item-name]#++ERC7579MultisigAlreadyExists++#++(bytes signer)++` [.item-kind]#error#
-
-The `signer` already exists.
-
-[.contract-item]
-[[ERC7579Multisig-ERC7579MultisigNonexistentSigner-bytes-]]
-==== `[.contract-item-name]#++ERC7579MultisigNonexistentSigner++#++(bytes signer)++` [.item-kind]#error#
-
-The `signer` does not exist.
-
-[.contract-item]
-[[ERC7579Multisig-ERC7579MultisigInvalidSigner-bytes-]]
-==== `[.contract-item-name]#++ERC7579MultisigInvalidSigner++#++(bytes signer)++` [.item-kind]#error#
-
-The `signer` is less than 20 bytes long.
-
-[.contract-item]
-[[ERC7579Multisig-ERC7579MultisigUnreachableThreshold-uint256-uint256-]]
-==== `[.contract-item-name]#++ERC7579MultisigUnreachableThreshold++#++(uint256 signers, uint256 threshold)++` [.item-kind]#error#
-
-The `threshold` is unreachable given the number of `signers`.
-
-:ERC7579MultisigWeightChanged: pass:normal[xref:#ERC7579MultisigWeighted-ERC7579MultisigWeightChanged-address-bytes-uint256-[`++ERC7579MultisigWeightChanged++`]]
-:ERC7579MultisigInvalidWeight: pass:normal[xref:#ERC7579MultisigWeighted-ERC7579MultisigInvalidWeight-bytes-uint256-[`++ERC7579MultisigInvalidWeight++`]]
-:ERC7579MultisigMismatchedLength: pass:normal[xref:#ERC7579MultisigWeighted-ERC7579MultisigMismatchedLength--[`++ERC7579MultisigMismatchedLength++`]]
-:onInstall: pass:normal[xref:#ERC7579MultisigWeighted-onInstall-bytes-[`++onInstall++`]]
-:onUninstall: pass:normal[xref:#ERC7579MultisigWeighted-onUninstall-bytes-[`++onUninstall++`]]
-:signerWeight: pass:normal[xref:#ERC7579MultisigWeighted-signerWeight-address-bytes-[`++signerWeight++`]]
-:totalWeight: pass:normal[xref:#ERC7579MultisigWeighted-totalWeight-address-[`++totalWeight++`]]
-:setSignerWeights: pass:normal[xref:#ERC7579MultisigWeighted-setSignerWeights-bytes---uint256---[`++setSignerWeights++`]]
-:_signerWeight: pass:normal[xref:#ERC7579MultisigWeighted-_signerWeight-address-bytes-[`++_signerWeight++`]]
-:_setSignerWeights: pass:normal[xref:#ERC7579MultisigWeighted-_setSignerWeights-address-bytes---uint256---[`++_setSignerWeights++`]]
-:_addSigners: pass:normal[xref:#ERC7579MultisigWeighted-_addSigners-address-bytes---[`++_addSigners++`]]
-:_removeSigners: pass:normal[xref:#ERC7579MultisigWeighted-_removeSigners-address-bytes---[`++_removeSigners++`]]
-:_validateReachableThreshold: pass:normal[xref:#ERC7579MultisigWeighted-_validateReachableThreshold-address-[`++_validateReachableThreshold++`]]
-:_validateThreshold: pass:normal[xref:#ERC7579MultisigWeighted-_validateThreshold-address-bytes---[`++_validateThreshold++`]]
-:_weightSigners: pass:normal[xref:#ERC7579MultisigWeighted-_weightSigners-address-bytes---[`++_weightSigners++`]]
-
-[.contract]
-[[ERC7579MultisigWeighted]]
-=== `++ERC7579MultisigWeighted++` link:https://github.com/OpenZeppelin/openzeppelin-community-contracts/blob/master/contracts/account/modules/ERC7579MultisigWeighted.sol[{github-icon},role=heading-link]
-
-[.hljs-theme-light.nopadding]
-```solidity
-import "@openzeppelin/community-contracts/account/modules/ERC7579MultisigWeighted.sol";
-```
-
-Extension of {ERC7579Multisig} that supports weighted signatures.
-
-This module extends the multisignature module to allow assigning different weights
-to each signer, enabling more flexible governance schemes. For example, some guardians
-could have higher weight than others, allowing for weighted voting or prioritized authorization.
-
-Example use case:
-
-A smart account with this module installed can schedule social recovery operations
-after obtaining approval from guardians with sufficient total weight (e.g., requiring
-a total weight of 10, with 3 guardians weighted as 5, 3, and 2), and then execute them
-after the time delay has passed.
-
-IMPORTANT: When setting a threshold value, ensure it matches the scale used for signer weights.
-For example, if signers have weights like 1, 2, or 3, then a threshold of 4 would require
-signatures with a total weight of at least 4 (e.g., one with weight 1 and one with weight 3).
-
-[.contract-index]
-.Functions
---
-* `++onInstall(initData)++`
-* `++onUninstall(data)++`
-* `++signerWeight(account, signer)++`
-* `++totalWeight(account)++`
-* `++setSignerWeights(signers, weights)++`
-* `++_signerWeight(account, signer)++`
-* `++_setSignerWeights(account, signers, newWeights)++`
-* `++_addSigners(account, newSigners)++`
-* `++_removeSigners(account, oldSigners)++`
-* `++_validateReachableThreshold(account)++`
-* `++_validateThreshold(account, validatingSigners)++`
-* `++_weightSigners(account, signers)++`
-
-[.contract-subindex-inherited]
-.ERC7579Multisig
-* `++signers(account)++`
-* `++isSigner(account, signer)++`
-* `++_signers(account)++`
-* `++threshold(account)++`
-* `++addSigners(newSigners)++`
-* `++removeSigners(oldSigners)++`
-* `++setThreshold(newThreshold)++`
-* `++_validateMultisignature(account, hash, signature)++`
-* `++_setThreshold(account, newThreshold)++`
-* `++_validateSignatures(account, hash, signingSigners, signatures)++`
-
-[.contract-subindex-inherited]
-.IERC7579Module
-* `++isModuleType(moduleTypeId)++`
-
---
-
-[.contract-index]
-.Events
---
-* `++ERC7579MultisigWeightChanged(account, signer, weight)++`
-
-[.contract-subindex-inherited]
-.ERC7579Multisig
-* `++ERC7913SignersAdded(account, signers)++`
-* `++ERC7913SignersRemoved(account, signers)++`
-* `++ERC7913ThresholdSet(account, threshold)++`
-
-[.contract-subindex-inherited]
-.IERC7579Module
-
---
-
-[.contract-index]
-.Errors
---
-* `++ERC7579MultisigInvalidWeight(signer, weight)++`
-* `++ERC7579MultisigMismatchedLength()++`
-
-[.contract-subindex-inherited]
-.ERC7579Multisig
-* `++ERC7579MultisigAlreadyExists(signer)++`
-* `++ERC7579MultisigNonexistentSigner(signer)++`
-* `++ERC7579MultisigInvalidSigner(signer)++`
-* `++ERC7579MultisigUnreachableThreshold(signers, threshold)++`
-
-[.contract-subindex-inherited]
-.IERC7579Module
-
---
-
-[.contract-item]
-[[ERC7579MultisigWeighted-onInstall-bytes-]]
-==== `[.contract-item-name]#++onInstall++#++(bytes initData)++` [.item-kind]#public#
-
-Sets up the module's initial configuration when installed by an account.
-Besides the standard delay and signer configuration, this can also include
-signer weights.
-
-The initData should be encoded as:
-`abi.encode(bytes[] signers, uint256 threshold, uint256[] weights)`
-
-If weights are not provided but signers are, all signers default to weight 1.
-
-NOTE: An account can only call onInstall once. If called directly by the account,
-the signer will be set to the provided data. Future installations will behave as a no-op.
-
-[.contract-item]
-[[ERC7579MultisigWeighted-onUninstall-bytes-]]
-==== `[.contract-item-name]#++onUninstall++#++(bytes data)++` [.item-kind]#public#
-
-Cleans up module's configuration when uninstalled from an account.
-Clears all signers, weights, and total weights.
-
-See {ERC7579Multisig-onUninstall}.
-
-[.contract-item]
-[[ERC7579MultisigWeighted-signerWeight-address-bytes-]]
-==== `[.contract-item-name]#++signerWeight++#++(address account, bytes signer) → uint256++` [.item-kind]#public#
-
-Gets the weight of a signer for a specific account. Returns 0 if the signer is not authorized.
-
-[.contract-item]
-[[ERC7579MultisigWeighted-totalWeight-address-]]
-==== `[.contract-item-name]#++totalWeight++#++(address account) → uint256++` [.item-kind]#public#
-
-Gets the total weight of all signers for a specific account.
-
-[.contract-item]
-[[ERC7579MultisigWeighted-setSignerWeights-bytes---uint256---]]
-==== `[.contract-item-name]#++setSignerWeights++#++(bytes[] signers, uint256[] weights)++` [.item-kind]#public#
-
-Sets weights for signers for the calling account.
-Can only be called by the account itself.
-
-[.contract-item]
-[[ERC7579MultisigWeighted-_signerWeight-address-bytes-]]
-==== `[.contract-item-name]#++_signerWeight++#++(address account, bytes signer) → uint256++` [.item-kind]#internal#
-
-Gets the weight of the current signer. Returns 1 if not explicitly set.
-This internal function doesn't check if the signer is authorized.
-
-[.contract-item]
-[[ERC7579MultisigWeighted-_setSignerWeights-address-bytes---uint256---]]
-==== `[.contract-item-name]#++_setSignerWeights++#++(address account, bytes[] signers, uint256[] newWeights)++` [.item-kind]#internal#
-
-Sets weights for multiple signers at once. Internal version without access control.
-
-Requirements:
-
-* `signers` and `weights` arrays must have the same length. Reverts with {ERC7579MultisigMismatchedLength} on mismatch.
-* Each signer must exist in the set of authorized signers. Reverts with {ERC7579MultisigNonexistentSigner} if not.
-* Each weight must be greater than 0. Reverts with {ERC7579MultisigInvalidWeight} if not.
-* See {_validateReachableThreshold} for the threshold validation.
-
-Emits {ERC7579MultisigWeightChanged} for each signer.
-
-[.contract-item]
-[[ERC7579MultisigWeighted-_addSigners-address-bytes---]]
-==== `[.contract-item-name]#++_addSigners++#++(address account, bytes[] newSigners)++` [.item-kind]#internal#
-
-Override to add weight tracking. See {ERC7579Multisig-_addSigners}.
-Each new signer has a default weight of 1.
-
-[.contract-item]
-[[ERC7579MultisigWeighted-_removeSigners-address-bytes---]]
-==== `[.contract-item-name]#++_removeSigners++#++(address account, bytes[] oldSigners)++` [.item-kind]#internal#
-
-Override to handle weight tracking during removal. See {ERC7579Multisig-_removeSigners}.
-
-[.contract-item]
-[[ERC7579MultisigWeighted-_validateReachableThreshold-address-]]
-==== `[.contract-item-name]#++_validateReachableThreshold++#++(address account)++` [.item-kind]#internal#
-
-Override to validate threshold against total weight instead of signer count.
-
-NOTE: This function intentionally does not call `super._validateReachableThreshold` because the base implementation
-assumes each signer has a weight of 1, which is a subset of this weighted implementation. Consider that multiple
-implementations of this function may exist in the contract, so important side effects may be missed
-depending on the linearization order.
-
-[.contract-item]
-[[ERC7579MultisigWeighted-_validateThreshold-address-bytes---]]
-==== `[.contract-item-name]#++_validateThreshold++#++(address account, bytes[] validatingSigners) → bool++` [.item-kind]#internal#
-
-Validates that the total weight of signers meets the {threshold} requirement.
-Overrides the base implementation to use weights instead of count.
-
-NOTE: This function intentionally does not call `super._validateThreshold` because the base implementation
-assumes each signer has a weight of 1, which is incompatible with this weighted implementation.
-
-[.contract-item]
-[[ERC7579MultisigWeighted-_weightSigners-address-bytes---]]
-==== `[.contract-item-name]#++_weightSigners++#++(address account, bytes[] signers) → uint256++` [.item-kind]#internal#
-
-Calculates the total weight of a set of signers.
-
-[.contract-item]
-[[ERC7579MultisigWeighted-ERC7579MultisigWeightChanged-address-bytes-uint256-]]
-==== `[.contract-item-name]#++ERC7579MultisigWeightChanged++#++(address indexed account, bytes indexed signer, uint256 weight)++` [.item-kind]#event#
-
-Emitted when a signer's weight is changed.
-
-[.contract-item]
-[[ERC7579MultisigWeighted-ERC7579MultisigInvalidWeight-bytes-uint256-]]
-==== `[.contract-item-name]#++ERC7579MultisigInvalidWeight++#++(bytes signer, uint256 weight)++` [.item-kind]#error#
-
-Thrown when a signer's weight is invalid.
-
-[.contract-item]
-[[ERC7579MultisigWeighted-ERC7579MultisigMismatchedLength--]]
-==== `[.contract-item-name]#++ERC7579MultisigMismatchedLength++#++()++` [.item-kind]#error#
-
-Thrown when the arrays lengths don't match.
-
-:ERC7579MultisigInvalidConfirmationSignature: pass:normal[xref:#ERC7579MultisigConfirmation-ERC7579MultisigInvalidConfirmationSignature-bytes-[`++ERC7579MultisigInvalidConfirmationSignature++`]]
-:ERC7579MultisigExpiredConfirmation: pass:normal[xref:#ERC7579MultisigConfirmation-ERC7579MultisigExpiredConfirmation-uint256-[`++ERC7579MultisigExpiredConfirmation++`]]
-:_signableConfirmationHash: pass:normal[xref:#ERC7579MultisigConfirmation-_signableConfirmationHash-address-uint256-[`++_signableConfirmationHash++`]]
-:_addSigners: pass:normal[xref:#ERC7579MultisigConfirmation-_addSigners-address-bytes---[`++_addSigners++`]]
-
-[.contract]
-[[ERC7579MultisigConfirmation]]
-=== `++ERC7579MultisigConfirmation++` link:https://github.com/OpenZeppelin/openzeppelin-community-contracts/blob/master/contracts/account/modules/ERC7579MultisigConfirmation.sol[{github-icon},role=heading-link]
-
-[.hljs-theme-light.nopadding]
-```solidity
-import "@openzeppelin/community-contracts/account/modules/ERC7579MultisigConfirmation.sol";
-```
-
-Extension of {ERC7579Multisig} that requires explicit confirmation signatures
-from new signers when they are being added to the multisig.
-
-This module ensures that only willing participants can be added as signers to a
-multisig by requiring each new signer to provide a valid signature confirming their
-consent to be added. Each signer must sign an EIP-712 message to confirm their addition.
-
-TIP: Use this module to ensure that all guardians in a social recovery or multisig setup have
-explicitly agreed to their roles.
-
-[.contract-index]
-.Functions
---
-* `++_signableConfirmationHash(account, deadline)++`
-* `++_addSigners(account, newSigners)++`
-
-[.contract-subindex-inherited]
-.EIP712
-* `++_domainSeparatorV4()++`
-* `++_hashTypedDataV4(structHash)++`
-* `++eip712Domain()++`
-* `++_EIP712Name()++`
-* `++_EIP712Version()++`
-
-[.contract-subindex-inherited]
-.IERC5267
-
-[.contract-subindex-inherited]
-.ERC7579Multisig
-* `++onInstall(initData)++`
-* `++onUninstall()++`
-* `++signers(account)++`
-* `++isSigner(account, signer)++`
-* `++_signers(account)++`
-* `++threshold(account)++`
-* `++addSigners(newSigners)++`
-* `++removeSigners(oldSigners)++`
-* `++setThreshold(newThreshold)++`
-* `++_validateMultisignature(account, hash, signature)++`
-* `++_removeSigners(account, oldSigners)++`
-* `++_setThreshold(account, newThreshold)++`
-* `++_validateReachableThreshold(account)++`
-* `++_validateSignatures(account, hash, signingSigners, signatures)++`
-* `++_validateThreshold(account, validatingSigners)++`
-
-[.contract-subindex-inherited]
-.IERC7579Module
-* `++isModuleType(moduleTypeId)++`
-
---
-
-[.contract-index]
-.Events
---
-
-[.contract-subindex-inherited]
-.EIP712
-
-[.contract-subindex-inherited]
-.IERC5267
-* `++EIP712DomainChanged()++`
-
-[.contract-subindex-inherited]
-.ERC7579Multisig
-* `++ERC7913SignersAdded(account, signers)++`
-* `++ERC7913SignersRemoved(account, signers)++`
-* `++ERC7913ThresholdSet(account, threshold)++`
-
-[.contract-subindex-inherited]
-.IERC7579Module
-
---
-
-[.contract-index]
-.Errors
---
-* `++ERC7579MultisigInvalidConfirmationSignature(signer)++`
-* `++ERC7579MultisigExpiredConfirmation(deadline)++`
-
-[.contract-subindex-inherited]
-.EIP712
-
-[.contract-subindex-inherited]
-.IERC5267
-
-[.contract-subindex-inherited]
-.ERC7579Multisig
-* `++ERC7579MultisigAlreadyExists(signer)++`
-* `++ERC7579MultisigNonexistentSigner(signer)++`
-* `++ERC7579MultisigInvalidSigner(signer)++`
-* `++ERC7579MultisigUnreachableThreshold(signers, threshold)++`
-
-[.contract-subindex-inherited]
-.IERC7579Module
-
---
-
-[.contract-item]
-[[ERC7579MultisigConfirmation-_signableConfirmationHash-address-uint256-]]
-==== `[.contract-item-name]#++_signableConfirmationHash++#++(address account, uint256 deadline) → bytes32++` [.item-kind]#internal#
-
-Generates a hash that signers must sign to confirm their addition to the multisig of `account`.
-
-[.contract-item]
-[[ERC7579MultisigConfirmation-_addSigners-address-bytes---]]
-==== `[.contract-item-name]#++_addSigners++#++(address account, bytes[] newSigners)++` [.item-kind]#internal#
-
-Extends {ERC7579Multisig-_addSigners} _addSigners to require confirmation signatures
-Each entry in newSigners must be ABI-encoded as:
-
-```solidity
-abi.encode(deadline,signer,signature); // uint256, bytes, bytes
-```
-
-* signer: The ERC-7913 signer to add
-* signature: The signature from this signer confirming their addition
-
-The function verifies each signature before adding the signer. If any signature is invalid,
-the function reverts with {ERC7579MultisigInvalidConfirmationSignature}.
-
-[.contract-item]
-[[ERC7579MultisigConfirmation-ERC7579MultisigInvalidConfirmationSignature-bytes-]]
-==== `[.contract-item-name]#++ERC7579MultisigInvalidConfirmationSignature++#++(bytes signer)++` [.item-kind]#error#
-
-Error thrown when a `signer`'s confirmation signature is invalid
-
-[.contract-item]
-[[ERC7579MultisigConfirmation-ERC7579MultisigExpiredConfirmation-uint256-]]
-==== `[.contract-item-name]#++ERC7579MultisigExpiredConfirmation++#++(uint256 deadline)++` [.item-kind]#error#
-
-Error thrown when a confirmation signature has expired
-
 === Executors
 
 :ERC7579ExecutorOperationExecuted: pass:normal[xref:#ERC7579Executor-ERC7579ExecutorOperationExecuted-address-bytes32-bytes32-bytes-[`++ERC7579ExecutorOperationExecuted++`]]
@@ -2219,7 +1519,7 @@ The module is not installed on the account.
 :isModuleType: pass:normal[xref:#ERC7579Validator-isModuleType-uint256-[`++isModuleType++`]]
 :validateUserOp: pass:normal[xref:#ERC7579Validator-validateUserOp-struct-PackedUserOperation-bytes32-[`++validateUserOp++`]]
 :isValidSignatureWithSender: pass:normal[xref:#ERC7579Validator-isValidSignatureWithSender-address-bytes32-bytes-[`++isValidSignatureWithSender++`]]
-:_rawSignatureValidationWithSender: pass:normal[xref:#ERC7579Validator-_rawSignatureValidationWithSender-address-bytes32-bytes-[`++_rawSignatureValidationWithSender++`]]
+:_rawERC7579Validation: pass:normal[xref:#ERC7579Validator-_rawERC7579Validation-address-bytes32-bytes-[`++_rawERC7579Validation++`]]
 
 [.contract]
 [[ERC7579Validator]]
@@ -2233,7 +1533,7 @@ import "@openzeppelin/community-contracts/account/modules/ERC7579Validator.sol";
 Abstract validator module for ERC-7579 accounts.
 
 This contract provides the base implementation for signature validation in ERC-7579 accounts.
-Developers must implement the onInstall, onUninstall, and {_rawSignatureValidationWithSender}
+Developers must implement the onInstall, onUninstall, and {_rawERC7579Validation}
 functions in derived contracts to define the specific signature validation logic.
 
 Example usage:
@@ -2248,8 +1548,8 @@ contract MyValidatorModule is ERC7579Validator {
         // Uninstall logic here
     }
 
-    function _rawSignatureValidationWithSender(
-        address sender,
+    function _rawERC7579Validation(
+        address account,
         bytes32 hash,
         bytes calldata signature
     ) internal view override returns (bool) {
@@ -2258,13 +1558,29 @@ contract MyValidatorModule is ERC7579Validator {
 }
 ```
 
+Developers can restrict other operations by using the internal {_rawERC7579Validation}.
+Example usage:
+
+```solidity
+function execute(
+    address account,
+    Mode mode,
+    bytes calldata executionCalldata,
+    bytes32 salt,
+    bytes calldata signature
+) public virtual {
+    require(_rawERC7579Validation(account, hash, signature));
+    // ... rest of execute logic
+}
+```
+
 [.contract-index]
 .Functions
 --
 * `++isModuleType(moduleTypeId)++`
 * `++validateUserOp(userOp, userOpHash)++`
-* `++isValidSignatureWithSender(sender, hash, signature)++`
-* `++_rawSignatureValidationWithSender(sender, hash, signature)++`
+* `++isValidSignatureWithSender(, hash, signature)++`
+* `++_rawERC7579Validation(account, hash, signature)++`
 
 [.contract-subindex-inherited]
 .IERC7579Validator
@@ -2290,80 +1606,51 @@ Validates a UserOperation
 
 [.contract-item]
 [[ERC7579Validator-isValidSignatureWithSender-address-bytes32-bytes-]]
-==== `[.contract-item-name]#++isValidSignatureWithSender++#++(address sender, bytes32 hash, bytes signature) → bytes4++` [.item-kind]#public#
+==== `[.contract-item-name]#++isValidSignatureWithSender++#++(address, bytes32 hash, bytes signature) → bytes4++` [.item-kind]#public#
 
-Validates a signature using ERC-1271
+See {IERC7579Validator-isValidSignatureWithSender}.
+
+Ignores the `sender` parameter and validates using {_rawERC7579Validation}.
+Consider overriding this function to implement custom validation logic
+based on the original sender.
 
 [.contract-item]
-[[ERC7579Validator-_rawSignatureValidationWithSender-address-bytes32-bytes-]]
-==== `[.contract-item-name]#++_rawSignatureValidationWithSender++#++(address sender, bytes32 hash, bytes signature) → bool++` [.item-kind]#internal#
+[[ERC7579Validator-_rawERC7579Validation-address-bytes32-bytes-]]
+==== `[.contract-item-name]#++_rawERC7579Validation++#++(address account, bytes32 hash, bytes signature) → bool++` [.item-kind]#internal#
 
-Internal version of {isValidSignatureWithSender} to be implemented by derived contracts.
+Validation algorithm.
 
-WARNING: Signature validation is a critical security function for smart accounts as it
-determines whether operations can be executed on the account. Implementations must carefully
-handle cryptographic verification to prevent unauthorized access. Thorough security review and
-testing are required before deployment.
+WARNING: Validation is a critical security function. Implementations must carefully
+handle cryptographic verification to prevent unauthorized access.
 
-:ERC7579SignatureValidatorSignerSet: pass:normal[xref:#ERC7579SignatureValidator-ERC7579SignatureValidatorSignerSet-address-bytes-[`++ERC7579SignatureValidatorSignerSet++`]]
-:ERC7579SignatureValidatorInvalidSignerLength: pass:normal[xref:#ERC7579SignatureValidator-ERC7579SignatureValidatorInvalidSignerLength--[`++ERC7579SignatureValidatorInvalidSignerLength++`]]
-:signer: pass:normal[xref:#ERC7579SignatureValidator-signer-address-[`++signer++`]]
-:onInstall: pass:normal[xref:#ERC7579SignatureValidator-onInstall-bytes-[`++onInstall++`]]
-:onUninstall: pass:normal[xref:#ERC7579SignatureValidator-onUninstall-bytes-[`++onUninstall++`]]
-:setSigner: pass:normal[xref:#ERC7579SignatureValidator-setSigner-bytes-[`++setSigner++`]]
-:_setSigner: pass:normal[xref:#ERC7579SignatureValidator-_setSigner-address-bytes-[`++_setSigner++`]]
-:_rawSignatureValidationWithSender: pass:normal[xref:#ERC7579SignatureValidator-_rawSignatureValidationWithSender-address-bytes32-bytes-[`++_rawSignatureValidationWithSender++`]]
+:ERC7579SignatureSignerSet: pass:normal[xref:#ERC7579Signature-ERC7579SignatureSignerSet-address-bytes-[`++ERC7579SignatureSignerSet++`]]
+:ERC7579SignatureInvalidSignerLength: pass:normal[xref:#ERC7579Signature-ERC7579SignatureInvalidSignerLength--[`++ERC7579SignatureInvalidSignerLength++`]]
+:signer: pass:normal[xref:#ERC7579Signature-signer-address-[`++signer++`]]
+:onInstall: pass:normal[xref:#ERC7579Signature-onInstall-bytes-[`++onInstall++`]]
+:onUninstall: pass:normal[xref:#ERC7579Signature-onUninstall-bytes-[`++onUninstall++`]]
+:setSigner: pass:normal[xref:#ERC7579Signature-setSigner-bytes-[`++setSigner++`]]
+:_setSigner: pass:normal[xref:#ERC7579Signature-_setSigner-address-bytes-[`++_setSigner++`]]
+:_rawERC7579Validation: pass:normal[xref:#ERC7579Signature-_rawERC7579Validation-address-bytes32-bytes-[`++_rawERC7579Validation++`]]
 
 [.contract]
-[[ERC7579SignatureValidator]]
-=== `++ERC7579SignatureValidator++` link:https://github.com/OpenZeppelin/openzeppelin-community-contracts/blob/master/contracts/account/modules/ERC7579SignatureValidator.sol[{github-icon},role=heading-link]
+[[ERC7579Signature]]
+=== `++ERC7579Signature++` link:https://github.com/OpenZeppelin/openzeppelin-community-contracts/blob/master/contracts/account/modules/ERC7579Signature.sol[{github-icon},role=heading-link]
 
 [.hljs-theme-light.nopadding]
 ```solidity
-import "@openzeppelin/community-contracts/account/modules/ERC7579SignatureValidator.sol";
+import "@openzeppelin/community-contracts/account/modules/ERC7579Signature.sol";
 ```
 
 Implementation of {ERC7579Validator} module using ERC-7913 signature verification.
 
 This validator allows ERC-7579 accounts to integrate with address-less cryptographic keys
-through the ERC-7913 signature verification system. Each account can store its own ERC-7913
-formatted signer (a concatenation of a verifier address and a key: `verifier || key`).
+and account signatures through the ERC-7913 signature verification system. Each account
+can store its own ERC-7913 formatted signer (a concatenation of a verifier address and a
+key: `verifier || key`).
 
 This enables accounts to use signature schemes without requiring each key to have its own
-Ethereum address.
-
-The validator implements two key functions from ERC-7579:
-
-* `validateUserOp`: Validates ERC-4337 user operations using ERC-7913 signatures
-* `isValidSignatureWithSender`: Implements ERC-1271 signature verification via ERC-7913
-
-Example usage with an account:
-
-```solidity
-contract MyAccount is Account, AccountERC7579 {
-    function initialize(address validator, bytes memory signerData) public initializer {
-        // Install the validator module
-        bytes memory initData = abi.encode(signerData);
-        _installModule(MODULE_TYPE_VALIDATOR, validator, initData);
-    }
-}
-```
-
-Example of validator installation with a P256 key:
-
-```solidity
-// Address of the P256 verifier contract
-address p256verifier = 0x123...;
-
-// P256 public key bytes
-bytes memory p256PublicKey = 0x456...;
-
-// Combine into ERC-7913 signer format
-bytes memory signerData = bytes.concat(abi.encodePacked(p256verifier), p256PublicKey);
-
-// Initialize the account with the validator and signer
-account.initialize(address(new ERC7579SignatureValidator()), signerData);
-```
+Ethereum address.A smart account with this module installed can keep an emergency key as a
+backup.
 
 [.contract-index]
 .Functions
@@ -2373,13 +1660,13 @@ account.initialize(address(new ERC7579SignatureValidator()), signerData);
 * `++onUninstall()++`
 * `++setSigner(signer_)++`
 * `++_setSigner(account, signer_)++`
-* `++_rawSignatureValidationWithSender(, hash, signature)++`
+* `++_rawERC7579Validation(account, hash, signature)++`
 
 [.contract-subindex-inherited]
 .ERC7579Validator
 * `++isModuleType(moduleTypeId)++`
 * `++validateUserOp(userOp, userOpHash)++`
-* `++isValidSignatureWithSender(sender, hash, signature)++`
+* `++isValidSignatureWithSender(, hash, signature)++`
 
 [.contract-subindex-inherited]
 .IERC7579Validator
@@ -2392,7 +1679,7 @@ account.initialize(address(new ERC7579SignatureValidator()), signerData);
 [.contract-index]
 .Events
 --
-* `++ERC7579SignatureValidatorSignerSet(account, signer)++`
+* `++ERC7579SignatureSignerSet(account, signer)++`
 
 [.contract-subindex-inherited]
 .ERC7579Validator
@@ -2408,7 +1695,7 @@ account.initialize(address(new ERC7579SignatureValidator()), signerData);
 [.contract-index]
 .Errors
 --
-* `++ERC7579SignatureValidatorInvalidSignerLength()++`
+* `++ERC7579SignatureInvalidSignerLength()++`
 
 [.contract-subindex-inherited]
 .ERC7579Validator
@@ -2422,13 +1709,13 @@ account.initialize(address(new ERC7579SignatureValidator()), signerData);
 --
 
 [.contract-item]
-[[ERC7579SignatureValidator-signer-address-]]
+[[ERC7579Signature-signer-address-]]
 ==== `[.contract-item-name]#++signer++#++(address account) → bytes++` [.item-kind]#public#
 
 Return the ERC-7913 signer (i.e. `verifier || key`).
 
 [.contract-item]
-[[ERC7579SignatureValidator-onInstall-bytes-]]
+[[ERC7579Signature-onInstall-bytes-]]
 ==== `[.contract-item-name]#++onInstall++#++(bytes data)++` [.item-kind]#public#
 
 See {IERC7579Module-onInstall}.
@@ -2437,7 +1724,7 @@ NOTE: An account can only call onInstall once. If called directly by the account
 the signer will be set to the provided data. Future installations will behave as a no-op.
 
 [.contract-item]
-[[ERC7579SignatureValidator-onUninstall-bytes-]]
+[[ERC7579Signature-onUninstall-bytes-]]
 ==== `[.contract-item-name]#++onUninstall++#++(bytes)++` [.item-kind]#public#
 
 See {IERC7579Module-onUninstall}.
@@ -2447,22 +1734,22 @@ making the account unusable. As an account operator, make sure to uninstall to a
 in your account that properly handles side effects of uninstallation.  See {AccountERC7579-uninstallModule}.
 
 [.contract-item]
-[[ERC7579SignatureValidator-setSigner-bytes-]]
+[[ERC7579Signature-setSigner-bytes-]]
 ==== `[.contract-item-name]#++setSigner++#++(bytes signer_)++` [.item-kind]#public#
 
 Sets the ERC-7913 signer (i.e. `verifier || key`) for the calling account.
 
 [.contract-item]
-[[ERC7579SignatureValidator-_setSigner-address-bytes-]]
+[[ERC7579Signature-_setSigner-address-bytes-]]
 ==== `[.contract-item-name]#++_setSigner++#++(address account, bytes signer_)++` [.item-kind]#internal#
 
 Internal version of {setSigner} that takes an `account` as argument without validating `signer_`.
 
 [.contract-item]
-[[ERC7579SignatureValidator-_rawSignatureValidationWithSender-address-bytes32-bytes-]]
-==== `[.contract-item-name]#++_rawSignatureValidationWithSender++#++(address, bytes32 hash, bytes signature) → bool++` [.item-kind]#internal#
+[[ERC7579Signature-_rawERC7579Validation-address-bytes32-bytes-]]
+==== `[.contract-item-name]#++_rawERC7579Validation++#++(address account, bytes32 hash, bytes signature) → bool++` [.item-kind]#internal#
 
-See {ERC7579Validator-_rawSignatureValidationWithSender}.
+See {ERC7579Validator-_rawERC7579Validation}.
 
 Validates a `signature` using ERC-7913 verification.
 
@@ -2471,16 +1758,764 @@ the account's stored signer. Derived contracts can override this to implement
 custom validation logic based on the sender.
 
 [.contract-item]
-[[ERC7579SignatureValidator-ERC7579SignatureValidatorSignerSet-address-bytes-]]
-==== `[.contract-item-name]#++ERC7579SignatureValidatorSignerSet++#++(address indexed account, bytes signer)++` [.item-kind]#event#
+[[ERC7579Signature-ERC7579SignatureSignerSet-address-bytes-]]
+==== `[.contract-item-name]#++ERC7579SignatureSignerSet++#++(address indexed account, bytes signer)++` [.item-kind]#event#
 
 Emitted when the signer is set.
 
 [.contract-item]
-[[ERC7579SignatureValidator-ERC7579SignatureValidatorInvalidSignerLength--]]
-==== `[.contract-item-name]#++ERC7579SignatureValidatorInvalidSignerLength++#++()++` [.item-kind]#error#
+[[ERC7579Signature-ERC7579SignatureInvalidSignerLength--]]
+==== `[.contract-item-name]#++ERC7579SignatureInvalidSignerLength++#++()++` [.item-kind]#error#
 
 Thrown when the signer length is less than 20 bytes.
+
+:ERC7913SignersAdded: pass:normal[xref:#ERC7579Multisig-ERC7913SignersAdded-address-bytes---[`++ERC7913SignersAdded++`]]
+:ERC7913SignersRemoved: pass:normal[xref:#ERC7579Multisig-ERC7913SignersRemoved-address-bytes---[`++ERC7913SignersRemoved++`]]
+:ERC7913ThresholdSet: pass:normal[xref:#ERC7579Multisig-ERC7913ThresholdSet-address-uint256-[`++ERC7913ThresholdSet++`]]
+:ERC7579MultisigAlreadyExists: pass:normal[xref:#ERC7579Multisig-ERC7579MultisigAlreadyExists-bytes-[`++ERC7579MultisigAlreadyExists++`]]
+:ERC7579MultisigNonexistentSigner: pass:normal[xref:#ERC7579Multisig-ERC7579MultisigNonexistentSigner-bytes-[`++ERC7579MultisigNonexistentSigner++`]]
+:ERC7579MultisigInvalidSigner: pass:normal[xref:#ERC7579Multisig-ERC7579MultisigInvalidSigner-bytes-[`++ERC7579MultisigInvalidSigner++`]]
+:ERC7579MultisigUnreachableThreshold: pass:normal[xref:#ERC7579Multisig-ERC7579MultisigUnreachableThreshold-uint256-uint256-[`++ERC7579MultisigUnreachableThreshold++`]]
+:onInstall: pass:normal[xref:#ERC7579Multisig-onInstall-bytes-[`++onInstall++`]]
+:onUninstall: pass:normal[xref:#ERC7579Multisig-onUninstall-bytes-[`++onUninstall++`]]
+:signers: pass:normal[xref:#ERC7579Multisig-signers-address-[`++signers++`]]
+:isSigner: pass:normal[xref:#ERC7579Multisig-isSigner-address-bytes-[`++isSigner++`]]
+:_signers: pass:normal[xref:#ERC7579Multisig-_signers-address-[`++_signers++`]]
+:threshold: pass:normal[xref:#ERC7579Multisig-threshold-address-[`++threshold++`]]
+:addSigners: pass:normal[xref:#ERC7579Multisig-addSigners-bytes---[`++addSigners++`]]
+:removeSigners: pass:normal[xref:#ERC7579Multisig-removeSigners-bytes---[`++removeSigners++`]]
+:setThreshold: pass:normal[xref:#ERC7579Multisig-setThreshold-uint256-[`++setThreshold++`]]
+:_rawERC7579Validation: pass:normal[xref:#ERC7579Multisig-_rawERC7579Validation-address-bytes32-bytes-[`++_rawERC7579Validation++`]]
+:_addSigners: pass:normal[xref:#ERC7579Multisig-_addSigners-address-bytes---[`++_addSigners++`]]
+:_removeSigners: pass:normal[xref:#ERC7579Multisig-_removeSigners-address-bytes---[`++_removeSigners++`]]
+:_setThreshold: pass:normal[xref:#ERC7579Multisig-_setThreshold-address-uint256-[`++_setThreshold++`]]
+:_validateReachableThreshold: pass:normal[xref:#ERC7579Multisig-_validateReachableThreshold-address-[`++_validateReachableThreshold++`]]
+:_validateSignatures: pass:normal[xref:#ERC7579Multisig-_validateSignatures-address-bytes32-bytes---bytes---[`++_validateSignatures++`]]
+:_validateThreshold: pass:normal[xref:#ERC7579Multisig-_validateThreshold-address-bytes---[`++_validateThreshold++`]]
+
+[.contract]
+[[ERC7579Multisig]]
+=== `++ERC7579Multisig++` link:https://github.com/OpenZeppelin/openzeppelin-community-contracts/blob/master/contracts/account/modules/ERC7579Multisig.sol[{github-icon},role=heading-link]
+
+[.hljs-theme-light.nopadding]
+```solidity
+import "@openzeppelin/community-contracts/account/modules/ERC7579Multisig.sol";
+```
+
+Implementation of an {ERC7579Validator} that uses ERC-7913 signers for multisignature
+validation.
+
+This module provides a base implementation for multisignature validation that can be
+attached to any function through the {_rawERC7579Validation} internal function. The signers
+are represented using the ERC-7913 format, which concatenates a verifier address and
+a key: `verifier || key`.
+
+A smart account with this module installed can require multiple signers to approve
+operations before they are executed, such as requiring 3-of-5 guardians to approve
+a social recovery operation.
+
+[.contract-index]
+.Functions
+--
+* `++onInstall(initData)++`
+* `++onUninstall()++`
+* `++signers(account)++`
+* `++isSigner(account, signer)++`
+* `++_signers(account)++`
+* `++threshold(account)++`
+* `++addSigners(newSigners)++`
+* `++removeSigners(oldSigners)++`
+* `++setThreshold(newThreshold)++`
+* `++_rawERC7579Validation(account, hash, signature)++`
+* `++_addSigners(account, newSigners)++`
+* `++_removeSigners(account, oldSigners)++`
+* `++_setThreshold(account, newThreshold)++`
+* `++_validateReachableThreshold(account)++`
+* `++_validateSignatures(account, hash, signingSigners, signatures)++`
+* `++_validateThreshold(account, validatingSigners)++`
+
+[.contract-subindex-inherited]
+.ERC7579Validator
+* `++isModuleType(moduleTypeId)++`
+* `++validateUserOp(userOp, userOpHash)++`
+* `++isValidSignatureWithSender(, hash, signature)++`
+
+[.contract-subindex-inherited]
+.IERC7579Validator
+
+[.contract-subindex-inherited]
+.IERC7579Module
+
+--
+
+[.contract-index]
+.Events
+--
+* `++ERC7913SignersAdded(account, signers)++`
+* `++ERC7913SignersRemoved(account, signers)++`
+* `++ERC7913ThresholdSet(account, threshold)++`
+
+[.contract-subindex-inherited]
+.ERC7579Validator
+
+[.contract-subindex-inherited]
+.IERC7579Validator
+
+[.contract-subindex-inherited]
+.IERC7579Module
+
+--
+
+[.contract-index]
+.Errors
+--
+* `++ERC7579MultisigAlreadyExists(signer)++`
+* `++ERC7579MultisigNonexistentSigner(signer)++`
+* `++ERC7579MultisigInvalidSigner(signer)++`
+* `++ERC7579MultisigUnreachableThreshold(signers, threshold)++`
+
+[.contract-subindex-inherited]
+.ERC7579Validator
+
+[.contract-subindex-inherited]
+.IERC7579Validator
+
+[.contract-subindex-inherited]
+.IERC7579Module
+
+--
+
+[.contract-item]
+[[ERC7579Multisig-onInstall-bytes-]]
+==== `[.contract-item-name]#++onInstall++#++(bytes initData)++` [.item-kind]#public#
+
+Sets up the module's initial configuration when installed by an account.
+See {ERC7579DelayedExecutor-onInstall}. Besides the delay setup, the `initdata` can
+include `signers` and `threshold`.
+
+The initData should be encoded as:
+`abi.encode(bytes[] signers, uint256 threshold)`
+
+If no signers or threshold are provided, the multisignature functionality will be
+disabled until they are added later.
+
+NOTE: An account can only call onInstall once. If called directly by the account,
+the signer will be set to the provided data. Future installations will behave as a no-op.
+
+[.contract-item]
+[[ERC7579Multisig-onUninstall-bytes-]]
+==== `[.contract-item-name]#++onUninstall++#++(bytes)++` [.item-kind]#public#
+
+Cleans up module's configuration when uninstalled from an account.
+Clears all signers and resets the threshold.
+
+See {ERC7579DelayedExecutor-onUninstall}.
+
+WARNING: This function has unbounded gas costs and may become uncallable if the set grows too large.
+See {EnumerableSetExtended-clear}.
+
+[.contract-item]
+[[ERC7579Multisig-signers-address-]]
+==== `[.contract-item-name]#++signers++#++(address account) → bytes[]++` [.item-kind]#public#
+
+Returns the set of authorized signers for the specified account.
+
+WARNING: This operation copies the entire signers set to memory, which
+can be expensive or may result in unbounded computation.
+
+[.contract-item]
+[[ERC7579Multisig-isSigner-address-bytes-]]
+==== `[.contract-item-name]#++isSigner++#++(address account, bytes signer) → bool++` [.item-kind]#public#
+
+Returns whether the `signer` is an authorized signer for the specified account.
+
+[.contract-item]
+[[ERC7579Multisig-_signers-address-]]
+==== `[.contract-item-name]#++_signers++#++(address account) → struct EnumerableSetExtended.BytesSet++` [.item-kind]#internal#
+
+Returns the set of authorized signers for the specified account.
+
+[.contract-item]
+[[ERC7579Multisig-threshold-address-]]
+==== `[.contract-item-name]#++threshold++#++(address account) → uint256++` [.item-kind]#public#
+
+Returns the minimum number of signers required to approve a multisignature operation
+for the specified account.
+
+[.contract-item]
+[[ERC7579Multisig-addSigners-bytes---]]
+==== `[.contract-item-name]#++addSigners++#++(bytes[] newSigners)++` [.item-kind]#public#
+
+Adds new signers to the authorized set for the calling account.
+Can only be called by the account itself.
+
+Requirements:
+
+* Each of `newSigners` must be at least 20 bytes long.
+* Each of `newSigners` must not be already authorized.
+
+[.contract-item]
+[[ERC7579Multisig-removeSigners-bytes---]]
+==== `[.contract-item-name]#++removeSigners++#++(bytes[] oldSigners)++` [.item-kind]#public#
+
+Removes signers from the authorized set for the calling account.
+Can only be called by the account itself.
+
+Requirements:
+
+* Each of `oldSigners` must be authorized.
+* After removal, the threshold must still be reachable.
+
+[.contract-item]
+[[ERC7579Multisig-setThreshold-uint256-]]
+==== `[.contract-item-name]#++setThreshold++#++(uint256 newThreshold)++` [.item-kind]#public#
+
+Sets the threshold for the calling account.
+Can only be called by the account itself.
+
+Requirements:
+
+* The threshold must be reachable with the current number of signers.
+
+[.contract-item]
+[[ERC7579Multisig-_rawERC7579Validation-address-bytes32-bytes-]]
+==== `[.contract-item-name]#++_rawERC7579Validation++#++(address account, bytes32 hash, bytes signature) → bool++` [.item-kind]#internal#
+
+Returns whether the number of valid signatures meets or exceeds the
+threshold set for the target account.
+
+The signature should be encoded as:
+`abi.encode(bytes[] signingSigners, bytes[] signatures)`
+
+Where `signingSigners` are the authorized signers and signatures are their corresponding
+signatures of the operation `hash`.
+
+[.contract-item]
+[[ERC7579Multisig-_addSigners-address-bytes---]]
+==== `[.contract-item-name]#++_addSigners++#++(address account, bytes[] newSigners)++` [.item-kind]#internal#
+
+Adds the `newSigners` to those allowed to sign on behalf of the account.
+
+Requirements:
+
+* Each of `newSigners` must be at least 20 bytes long. Reverts with {ERC7579MultisigInvalidSigner} if not.
+* Each of `newSigners` must not be authorized. Reverts with {ERC7579MultisigAlreadyExists} if it already exists.
+
+[.contract-item]
+[[ERC7579Multisig-_removeSigners-address-bytes---]]
+==== `[.contract-item-name]#++_removeSigners++#++(address account, bytes[] oldSigners)++` [.item-kind]#internal#
+
+Removes the `oldSigners` from the authorized signers for the account.
+
+Requirements:
+
+* Each of `oldSigners` must be authorized. Reverts with {ERC7579MultisigNonexistentSigner} if not.
+* The threshold must remain reachable after removal. See {_validateReachableThreshold} for details.
+
+[.contract-item]
+[[ERC7579Multisig-_setThreshold-address-uint256-]]
+==== `[.contract-item-name]#++_setThreshold++#++(address account, uint256 newThreshold)++` [.item-kind]#internal#
+
+Sets the signatures `threshold` required to approve a multisignature operation.
+
+Requirements:
+
+* The threshold must be reachable with the current number of signers. See {_validateReachableThreshold} for details.
+
+[.contract-item]
+[[ERC7579Multisig-_validateReachableThreshold-address-]]
+==== `[.contract-item-name]#++_validateReachableThreshold++#++(address account)++` [.item-kind]#internal#
+
+Validates the current threshold is reachable with the number of {signers}.
+
+Requirements:
+
+* The number of signers must be >= the threshold. Reverts with {ERC7579MultisigUnreachableThreshold} if not.
+
+[.contract-item]
+[[ERC7579Multisig-_validateSignatures-address-bytes32-bytes---bytes---]]
+==== `[.contract-item-name]#++_validateSignatures++#++(address account, bytes32 hash, bytes[] signingSigners, bytes[] signatures) → bool valid++` [.item-kind]#internal#
+
+Validates the signatures using the signers and their corresponding signatures.
+Returns whether the signers are authorized and the signatures are valid for the given hash.
+
+The signers must be ordered by their `keccak256` hash to prevent duplications and to optimize
+the verification process. The function will return `false` if any signer is not authorized or
+if the signatures are invalid for the given hash.
+
+Requirements:
+
+* The `signatures` array must be at least the `signers` array's length.
+
+[.contract-item]
+[[ERC7579Multisig-_validateThreshold-address-bytes---]]
+==== `[.contract-item-name]#++_validateThreshold++#++(address account, bytes[] validatingSigners) → bool++` [.item-kind]#internal#
+
+Validates that the number of signers meets the {threshold} requirement.
+Assumes the signers were already validated. See {_validateSignatures} for more details.
+
+[.contract-item]
+[[ERC7579Multisig-ERC7913SignersAdded-address-bytes---]]
+==== `[.contract-item-name]#++ERC7913SignersAdded++#++(address indexed account, bytes[] signers)++` [.item-kind]#event#
+
+Emitted when signers are added.
+
+[.contract-item]
+[[ERC7579Multisig-ERC7913SignersRemoved-address-bytes---]]
+==== `[.contract-item-name]#++ERC7913SignersRemoved++#++(address indexed account, bytes[] signers)++` [.item-kind]#event#
+
+Emitted when signers are removed.
+
+[.contract-item]
+[[ERC7579Multisig-ERC7913ThresholdSet-address-uint256-]]
+==== `[.contract-item-name]#++ERC7913ThresholdSet++#++(address indexed account, uint256 threshold)++` [.item-kind]#event#
+
+Emitted when the threshold is updated.
+
+[.contract-item]
+[[ERC7579Multisig-ERC7579MultisigAlreadyExists-bytes-]]
+==== `[.contract-item-name]#++ERC7579MultisigAlreadyExists++#++(bytes signer)++` [.item-kind]#error#
+
+The `signer` already exists.
+
+[.contract-item]
+[[ERC7579Multisig-ERC7579MultisigNonexistentSigner-bytes-]]
+==== `[.contract-item-name]#++ERC7579MultisigNonexistentSigner++#++(bytes signer)++` [.item-kind]#error#
+
+The `signer` does not exist.
+
+[.contract-item]
+[[ERC7579Multisig-ERC7579MultisigInvalidSigner-bytes-]]
+==== `[.contract-item-name]#++ERC7579MultisigInvalidSigner++#++(bytes signer)++` [.item-kind]#error#
+
+The `signer` is less than 20 bytes long.
+
+[.contract-item]
+[[ERC7579Multisig-ERC7579MultisigUnreachableThreshold-uint256-uint256-]]
+==== `[.contract-item-name]#++ERC7579MultisigUnreachableThreshold++#++(uint256 signers, uint256 threshold)++` [.item-kind]#error#
+
+The `threshold` is unreachable given the number of `signers`.
+
+:ERC7579MultisigWeightChanged: pass:normal[xref:#ERC7579MultisigWeighted-ERC7579MultisigWeightChanged-address-bytes-uint256-[`++ERC7579MultisigWeightChanged++`]]
+:ERC7579MultisigInvalidWeight: pass:normal[xref:#ERC7579MultisigWeighted-ERC7579MultisigInvalidWeight-bytes-uint256-[`++ERC7579MultisigInvalidWeight++`]]
+:ERC7579MultisigMismatchedLength: pass:normal[xref:#ERC7579MultisigWeighted-ERC7579MultisigMismatchedLength--[`++ERC7579MultisigMismatchedLength++`]]
+:onInstall: pass:normal[xref:#ERC7579MultisigWeighted-onInstall-bytes-[`++onInstall++`]]
+:onUninstall: pass:normal[xref:#ERC7579MultisigWeighted-onUninstall-bytes-[`++onUninstall++`]]
+:signerWeight: pass:normal[xref:#ERC7579MultisigWeighted-signerWeight-address-bytes-[`++signerWeight++`]]
+:totalWeight: pass:normal[xref:#ERC7579MultisigWeighted-totalWeight-address-[`++totalWeight++`]]
+:setSignerWeights: pass:normal[xref:#ERC7579MultisigWeighted-setSignerWeights-bytes---uint256---[`++setSignerWeights++`]]
+:_signerWeight: pass:normal[xref:#ERC7579MultisigWeighted-_signerWeight-address-bytes-[`++_signerWeight++`]]
+:_setSignerWeights: pass:normal[xref:#ERC7579MultisigWeighted-_setSignerWeights-address-bytes---uint256---[`++_setSignerWeights++`]]
+:_addSigners: pass:normal[xref:#ERC7579MultisigWeighted-_addSigners-address-bytes---[`++_addSigners++`]]
+:_removeSigners: pass:normal[xref:#ERC7579MultisigWeighted-_removeSigners-address-bytes---[`++_removeSigners++`]]
+:_validateReachableThreshold: pass:normal[xref:#ERC7579MultisigWeighted-_validateReachableThreshold-address-[`++_validateReachableThreshold++`]]
+:_validateThreshold: pass:normal[xref:#ERC7579MultisigWeighted-_validateThreshold-address-bytes---[`++_validateThreshold++`]]
+:_weightSigners: pass:normal[xref:#ERC7579MultisigWeighted-_weightSigners-address-bytes---[`++_weightSigners++`]]
+
+[.contract]
+[[ERC7579MultisigWeighted]]
+=== `++ERC7579MultisigWeighted++` link:https://github.com/OpenZeppelin/openzeppelin-community-contracts/blob/master/contracts/account/modules/ERC7579MultisigWeighted.sol[{github-icon},role=heading-link]
+
+[.hljs-theme-light.nopadding]
+```solidity
+import "@openzeppelin/community-contracts/account/modules/ERC7579MultisigWeighted.sol";
+```
+
+Extension of {ERC7579Multisig} that supports weighted signatures.
+
+This module extends the multisignature module to allow assigning different weights
+to each signer, enabling more flexible governance schemes. For example, some guardians
+could have higher weight than others, allowing for weighted voting or prioritized authorization.
+
+Example use case:
+
+A smart account with this module installed can schedule social recovery operations
+after obtaining approval from guardians with sufficient total weight (e.g., requiring
+a total weight of 10, with 3 guardians weighted as 5, 3, and 2), and then execute them
+after the time delay has passed.
+
+IMPORTANT: When setting a threshold value, ensure it matches the scale used for signer weights.
+For example, if signers have weights like 1, 2, or 3, then a threshold of 4 would require
+signatures with a total weight of at least 4 (e.g., one with weight 1 and one with weight 3).
+
+[.contract-index]
+.Functions
+--
+* `++onInstall(initData)++`
+* `++onUninstall(data)++`
+* `++signerWeight(account, signer)++`
+* `++totalWeight(account)++`
+* `++setSignerWeights(signers, weights)++`
+* `++_signerWeight(account, signer)++`
+* `++_setSignerWeights(account, signers, newWeights)++`
+* `++_addSigners(account, newSigners)++`
+* `++_removeSigners(account, oldSigners)++`
+* `++_validateReachableThreshold(account)++`
+* `++_validateThreshold(account, validatingSigners)++`
+* `++_weightSigners(account, signers)++`
+
+[.contract-subindex-inherited]
+.ERC7579Multisig
+* `++signers(account)++`
+* `++isSigner(account, signer)++`
+* `++_signers(account)++`
+* `++threshold(account)++`
+* `++addSigners(newSigners)++`
+* `++removeSigners(oldSigners)++`
+* `++setThreshold(newThreshold)++`
+* `++_rawERC7579Validation(account, hash, signature)++`
+* `++_setThreshold(account, newThreshold)++`
+* `++_validateSignatures(account, hash, signingSigners, signatures)++`
+
+[.contract-subindex-inherited]
+.ERC7579Validator
+* `++isModuleType(moduleTypeId)++`
+* `++validateUserOp(userOp, userOpHash)++`
+* `++isValidSignatureWithSender(, hash, signature)++`
+
+[.contract-subindex-inherited]
+.IERC7579Validator
+
+[.contract-subindex-inherited]
+.IERC7579Module
+
+--
+
+[.contract-index]
+.Events
+--
+* `++ERC7579MultisigWeightChanged(account, signer, weight)++`
+
+[.contract-subindex-inherited]
+.ERC7579Multisig
+* `++ERC7913SignersAdded(account, signers)++`
+* `++ERC7913SignersRemoved(account, signers)++`
+* `++ERC7913ThresholdSet(account, threshold)++`
+
+[.contract-subindex-inherited]
+.ERC7579Validator
+
+[.contract-subindex-inherited]
+.IERC7579Validator
+
+[.contract-subindex-inherited]
+.IERC7579Module
+
+--
+
+[.contract-index]
+.Errors
+--
+* `++ERC7579MultisigInvalidWeight(signer, weight)++`
+* `++ERC7579MultisigMismatchedLength()++`
+
+[.contract-subindex-inherited]
+.ERC7579Multisig
+* `++ERC7579MultisigAlreadyExists(signer)++`
+* `++ERC7579MultisigNonexistentSigner(signer)++`
+* `++ERC7579MultisigInvalidSigner(signer)++`
+* `++ERC7579MultisigUnreachableThreshold(signers, threshold)++`
+
+[.contract-subindex-inherited]
+.ERC7579Validator
+
+[.contract-subindex-inherited]
+.IERC7579Validator
+
+[.contract-subindex-inherited]
+.IERC7579Module
+
+--
+
+[.contract-item]
+[[ERC7579MultisigWeighted-onInstall-bytes-]]
+==== `[.contract-item-name]#++onInstall++#++(bytes initData)++` [.item-kind]#public#
+
+Sets up the module's initial configuration when installed by an account.
+Besides the standard delay and signer configuration, this can also include
+signer weights.
+
+The initData should be encoded as:
+`abi.encode(bytes[] signers, uint256 threshold, uint256[] weights)`
+
+If weights are not provided but signers are, all signers default to weight 1.
+
+NOTE: An account can only call onInstall once. If called directly by the account,
+the signer will be set to the provided data. Future installations will behave as a no-op.
+
+[.contract-item]
+[[ERC7579MultisigWeighted-onUninstall-bytes-]]
+==== `[.contract-item-name]#++onUninstall++#++(bytes data)++` [.item-kind]#public#
+
+Cleans up module's configuration when uninstalled from an account.
+Clears all signers, weights, and total weights.
+
+See {ERC7579Multisig-onUninstall}.
+
+[.contract-item]
+[[ERC7579MultisigWeighted-signerWeight-address-bytes-]]
+==== `[.contract-item-name]#++signerWeight++#++(address account, bytes signer) → uint256++` [.item-kind]#public#
+
+Gets the weight of a signer for a specific account. Returns 0 if the signer is not authorized.
+
+[.contract-item]
+[[ERC7579MultisigWeighted-totalWeight-address-]]
+==== `[.contract-item-name]#++totalWeight++#++(address account) → uint256++` [.item-kind]#public#
+
+Gets the total weight of all signers for a specific account.
+
+[.contract-item]
+[[ERC7579MultisigWeighted-setSignerWeights-bytes---uint256---]]
+==== `[.contract-item-name]#++setSignerWeights++#++(bytes[] signers, uint256[] weights)++` [.item-kind]#public#
+
+Sets weights for signers for the calling account.
+Can only be called by the account itself.
+
+[.contract-item]
+[[ERC7579MultisigWeighted-_signerWeight-address-bytes-]]
+==== `[.contract-item-name]#++_signerWeight++#++(address account, bytes signer) → uint256++` [.item-kind]#internal#
+
+Gets the weight of the current signer. Returns 1 if not explicitly set.
+This internal function doesn't check if the signer is authorized.
+
+[.contract-item]
+[[ERC7579MultisigWeighted-_setSignerWeights-address-bytes---uint256---]]
+==== `[.contract-item-name]#++_setSignerWeights++#++(address account, bytes[] signers, uint256[] newWeights)++` [.item-kind]#internal#
+
+Sets weights for multiple signers at once. Internal version without access control.
+
+Requirements:
+
+* `signers` and `weights` arrays must have the same length. Reverts with {ERC7579MultisigMismatchedLength} on mismatch.
+* Each signer must exist in the set of authorized signers. Reverts with {ERC7579MultisigNonexistentSigner} if not.
+* Each weight must be greater than 0. Reverts with {ERC7579MultisigInvalidWeight} if not.
+* See {_validateReachableThreshold} for the threshold validation.
+
+Emits {ERC7579MultisigWeightChanged} for each signer.
+
+[.contract-item]
+[[ERC7579MultisigWeighted-_addSigners-address-bytes---]]
+==== `[.contract-item-name]#++_addSigners++#++(address account, bytes[] newSigners)++` [.item-kind]#internal#
+
+Override to add weight tracking. See {ERC7579Multisig-_addSigners}.
+Each new signer has a default weight of 1.
+
+[.contract-item]
+[[ERC7579MultisigWeighted-_removeSigners-address-bytes---]]
+==== `[.contract-item-name]#++_removeSigners++#++(address account, bytes[] oldSigners)++` [.item-kind]#internal#
+
+Override to handle weight tracking during removal. See {ERC7579Multisig-_removeSigners}.
+
+[.contract-item]
+[[ERC7579MultisigWeighted-_validateReachableThreshold-address-]]
+==== `[.contract-item-name]#++_validateReachableThreshold++#++(address account)++` [.item-kind]#internal#
+
+Override to validate threshold against total weight instead of signer count.
+
+NOTE: This function intentionally does not call `super._validateReachableThreshold` because the base implementation
+assumes each signer has a weight of 1, which is a subset of this weighted implementation. Consider that multiple
+implementations of this function may exist in the contract, so important side effects may be missed
+depending on the linearization order.
+
+[.contract-item]
+[[ERC7579MultisigWeighted-_validateThreshold-address-bytes---]]
+==== `[.contract-item-name]#++_validateThreshold++#++(address account, bytes[] validatingSigners) → bool++` [.item-kind]#internal#
+
+Validates that the total weight of signers meets the {threshold} requirement.
+Overrides the base implementation to use weights instead of count.
+
+NOTE: This function intentionally does not call `super._validateThreshold` because the base implementation
+assumes each signer has a weight of 1, which is incompatible with this weighted implementation.
+
+[.contract-item]
+[[ERC7579MultisigWeighted-_weightSigners-address-bytes---]]
+==== `[.contract-item-name]#++_weightSigners++#++(address account, bytes[] signers) → uint256++` [.item-kind]#internal#
+
+Calculates the total weight of a set of signers.
+
+[.contract-item]
+[[ERC7579MultisigWeighted-ERC7579MultisigWeightChanged-address-bytes-uint256-]]
+==== `[.contract-item-name]#++ERC7579MultisigWeightChanged++#++(address indexed account, bytes indexed signer, uint256 weight)++` [.item-kind]#event#
+
+Emitted when a signer's weight is changed.
+
+[.contract-item]
+[[ERC7579MultisigWeighted-ERC7579MultisigInvalidWeight-bytes-uint256-]]
+==== `[.contract-item-name]#++ERC7579MultisigInvalidWeight++#++(bytes signer, uint256 weight)++` [.item-kind]#error#
+
+Thrown when a signer's weight is invalid.
+
+[.contract-item]
+[[ERC7579MultisigWeighted-ERC7579MultisigMismatchedLength--]]
+==== `[.contract-item-name]#++ERC7579MultisigMismatchedLength++#++()++` [.item-kind]#error#
+
+Thrown when the arrays lengths don't match.
+
+:ERC7579MultisigInvalidConfirmationSignature: pass:normal[xref:#ERC7579MultisigConfirmation-ERC7579MultisigInvalidConfirmationSignature-bytes-[`++ERC7579MultisigInvalidConfirmationSignature++`]]
+:ERC7579MultisigExpiredConfirmation: pass:normal[xref:#ERC7579MultisigConfirmation-ERC7579MultisigExpiredConfirmation-uint256-[`++ERC7579MultisigExpiredConfirmation++`]]
+:_signableConfirmationHash: pass:normal[xref:#ERC7579MultisigConfirmation-_signableConfirmationHash-address-uint256-[`++_signableConfirmationHash++`]]
+:_addSigners: pass:normal[xref:#ERC7579MultisigConfirmation-_addSigners-address-bytes---[`++_addSigners++`]]
+
+[.contract]
+[[ERC7579MultisigConfirmation]]
+=== `++ERC7579MultisigConfirmation++` link:https://github.com/OpenZeppelin/openzeppelin-community-contracts/blob/master/contracts/account/modules/ERC7579MultisigConfirmation.sol[{github-icon},role=heading-link]
+
+[.hljs-theme-light.nopadding]
+```solidity
+import "@openzeppelin/community-contracts/account/modules/ERC7579MultisigConfirmation.sol";
+```
+
+Extension of {ERC7579Multisig} that requires explicit confirmation signatures
+from new signers when they are being added to the multisig.
+
+This module ensures that only willing participants can be added as signers to a
+multisig by requiring each new signer to provide a valid signature confirming their
+consent to be added. Each signer must sign an EIP-712 message to confirm their addition.
+
+TIP: Use this module to ensure that all guardians in a social recovery or multisig setup have
+explicitly agreed to their roles.
+
+[.contract-index]
+.Functions
+--
+* `++_signableConfirmationHash(account, deadline)++`
+* `++_addSigners(account, newSigners)++`
+
+[.contract-subindex-inherited]
+.EIP712
+* `++_domainSeparatorV4()++`
+* `++_hashTypedDataV4(structHash)++`
+* `++eip712Domain()++`
+* `++_EIP712Name()++`
+* `++_EIP712Version()++`
+
+[.contract-subindex-inherited]
+.IERC5267
+
+[.contract-subindex-inherited]
+.ERC7579Multisig
+* `++onInstall(initData)++`
+* `++onUninstall()++`
+* `++signers(account)++`
+* `++isSigner(account, signer)++`
+* `++_signers(account)++`
+* `++threshold(account)++`
+* `++addSigners(newSigners)++`
+* `++removeSigners(oldSigners)++`
+* `++setThreshold(newThreshold)++`
+* `++_rawERC7579Validation(account, hash, signature)++`
+* `++_removeSigners(account, oldSigners)++`
+* `++_setThreshold(account, newThreshold)++`
+* `++_validateReachableThreshold(account)++`
+* `++_validateSignatures(account, hash, signingSigners, signatures)++`
+* `++_validateThreshold(account, validatingSigners)++`
+
+[.contract-subindex-inherited]
+.ERC7579Validator
+* `++isModuleType(moduleTypeId)++`
+* `++validateUserOp(userOp, userOpHash)++`
+* `++isValidSignatureWithSender(, hash, signature)++`
+
+[.contract-subindex-inherited]
+.IERC7579Validator
+
+[.contract-subindex-inherited]
+.IERC7579Module
+
+--
+
+[.contract-index]
+.Events
+--
+
+[.contract-subindex-inherited]
+.EIP712
+
+[.contract-subindex-inherited]
+.IERC5267
+* `++EIP712DomainChanged()++`
+
+[.contract-subindex-inherited]
+.ERC7579Multisig
+* `++ERC7913SignersAdded(account, signers)++`
+* `++ERC7913SignersRemoved(account, signers)++`
+* `++ERC7913ThresholdSet(account, threshold)++`
+
+[.contract-subindex-inherited]
+.ERC7579Validator
+
+[.contract-subindex-inherited]
+.IERC7579Validator
+
+[.contract-subindex-inherited]
+.IERC7579Module
+
+--
+
+[.contract-index]
+.Errors
+--
+* `++ERC7579MultisigInvalidConfirmationSignature(signer)++`
+* `++ERC7579MultisigExpiredConfirmation(deadline)++`
+
+[.contract-subindex-inherited]
+.EIP712
+
+[.contract-subindex-inherited]
+.IERC5267
+
+[.contract-subindex-inherited]
+.ERC7579Multisig
+* `++ERC7579MultisigAlreadyExists(signer)++`
+* `++ERC7579MultisigNonexistentSigner(signer)++`
+* `++ERC7579MultisigInvalidSigner(signer)++`
+* `++ERC7579MultisigUnreachableThreshold(signers, threshold)++`
+
+[.contract-subindex-inherited]
+.ERC7579Validator
+
+[.contract-subindex-inherited]
+.IERC7579Validator
+
+[.contract-subindex-inherited]
+.IERC7579Module
+
+--
+
+[.contract-item]
+[[ERC7579MultisigConfirmation-_signableConfirmationHash-address-uint256-]]
+==== `[.contract-item-name]#++_signableConfirmationHash++#++(address account, uint256 deadline) → bytes32++` [.item-kind]#internal#
+
+Generates a hash that signers must sign to confirm their addition to the multisig of `account`.
+
+[.contract-item]
+[[ERC7579MultisigConfirmation-_addSigners-address-bytes---]]
+==== `[.contract-item-name]#++_addSigners++#++(address account, bytes[] newSigners)++` [.item-kind]#internal#
+
+Extends {ERC7579Multisig-_addSigners} _addSigners to require confirmation signatures
+Each entry in newSigners must be ABI-encoded as:
+
+```solidity
+abi.encode(deadline,signer,signature); // uint256, bytes, bytes
+```
+
+* signer: The ERC-7913 signer to add
+* signature: The signature from this signer confirming their addition
+
+The function verifies each signature before adding the signer. If any signature is invalid,
+the function reverts with {ERC7579MultisigInvalidConfirmationSignature}.
+
+[.contract-item]
+[[ERC7579MultisigConfirmation-ERC7579MultisigInvalidConfirmationSignature-bytes-]]
+==== `[.contract-item-name]#++ERC7579MultisigInvalidConfirmationSignature++#++(bytes signer)++` [.item-kind]#error#
+
+Error thrown when a `signer`'s confirmation signature is invalid
+
+[.contract-item]
+[[ERC7579MultisigConfirmation-ERC7579MultisigExpiredConfirmation-uint256-]]
+==== `[.contract-item-name]#++ERC7579MultisigExpiredConfirmation++#++(uint256 deadline)++` [.item-kind]#error#
+
+Error thrown when a confirmation signature has expired
 
 == Paymaster
 

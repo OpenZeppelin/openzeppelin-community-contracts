@@ -14,7 +14,7 @@
 
 - `PaymasterERC20Guarantor`: Add extension of `PaymasterERC20` that enables third parties to guarantee user operations by prefunding gas costs upfront, with repayment handling for successful operations.
 - `ERC7579Validator`: Add abstract validator module for ERC-7579 accounts that provides base implementation for signature validation.
-- `ERC7579SignatureValidator`: Add implementation of `ERC7579Validator` that enables ERC-7579 accounts to integrate with address-less cryptographic keys through ERC-7913 signature verification.
+- `ERC7579Signature`: Add implementation of `ERC7579Validator` that enables ERC-7579 accounts to integrate with address-less cryptographic keys and account signatures through ERC-7913 signature verification.
 
 ## 29-04-2025
 

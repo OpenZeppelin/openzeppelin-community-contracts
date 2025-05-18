@@ -217,7 +217,7 @@ describe('ERC7579Multisig', function () {
       const messageHash = ethers.hashMessage(testMessage);
       const multiSignature = await this.multiSigner.signMessage(testMessage);
       // Should succeed with valid signatures meeting threshold
-      await expect(this.mock.$_validateMultisignature(this.mockAccount.address, messageHash, multiSignature)).to
+      await expect(this.mock.$_rawERC7579Validation(this.mockAccount.address, messageHash, multiSignature)).to
         .eventually.be.true;
     });
 
@@ -234,7 +234,7 @@ describe('ERC7579Multisig', function () {
       const multiSignature = await multiSigner.signMessage(testMessage);
 
       // Should fail because threshold is 2 but only 1 signature provided
-      await expect(this.mock.$_validateMultisignature(this.mockAccount.address, messageHash, multiSignature)).to
+      await expect(this.mock.$_rawERC7579Validation(this.mockAccount.address, messageHash, multiSignature)).to
         .eventually.be.false;
     });
 
@@ -248,7 +248,7 @@ describe('ERC7579Multisig', function () {
       const multiSignature = await multiSigner.signMessage(testMessage);
 
       // Should succeed with valid signature meeting threshold
-      await expect(this.mock.$_validateMultisignature(this.mockAccount.address, messageHash, multiSignature)).to
+      await expect(this.mock.$_rawERC7579Validation(this.mockAccount.address, messageHash, multiSignature)).to
         .eventually.be.true;
     });
 
@@ -262,7 +262,7 @@ describe('ERC7579Multisig', function () {
       const multiSignature = await multiSigner.signMessage(testMessage);
 
       // Should fail because signer is not authorized
-      await expect(this.mock.$_validateMultisignature(this.mockAccount.address, messageHash, multiSignature)).to
+      await expect(this.mock.$_rawERC7579Validation(this.mockAccount.address, messageHash, multiSignature)).to
         .eventually.be.false;
     });
 
@@ -274,7 +274,7 @@ describe('ERC7579Multisig', function () {
       const multiSignature = await this.multiSigner.signMessage(differentMessage);
 
       // Should fail because signature is for a different hash
-      await expect(this.mock.$_validateMultisignature(this.mockAccount.address, messageHash, multiSignature)).to
+      await expect(this.mock.$_rawERC7579Validation(this.mockAccount.address, messageHash, multiSignature)).to
         .eventually.be.false;
     });
   });

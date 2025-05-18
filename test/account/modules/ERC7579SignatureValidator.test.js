@@ -19,7 +19,7 @@ async function fixture() {
   const [other] = await ethers.getSigners();
 
   // Deploy ERC-7579 signature validator
-  const mock = await ethers.deployContract('$ERC7579SignatureValidator');
+  const mock = await ethers.deployContract('$ERC7579Signature');
 
   // ERC-7913 verifiers
   const verifierP256 = await ethers.deployContract('ERC7913P256Verifier');
@@ -53,16 +53,16 @@ function prepareSigner(prototype) {
       .then(signature => Object.assign(userOp, { signature }));
 }
 
-describe('ERC7579SignatureValidator', function () {
+describe('ERC7579Signature', function () {
   beforeEach(async function () {
     Object.assign(this, await loadFixture(fixture));
   });
 
-  it('reverts with ERC7579SignatureValidatorInvalidSignerLength when signer length is less than 20 bytes', async function () {
+  it('reverts with ERC7579SignatureInvalidSignerLength when signer length is less than 20 bytes', async function () {
     const shortSigner = '0x0123456789'; // Less than 20 bytes
     await expect(this.mockFromAccount.onInstall(shortSigner)).to.be.revertedWithCustomError(
       this.mock,
-      'ERC7579SignatureValidatorInvalidSignerLength',
+      'ERC7579SignatureInvalidSignerLength',
     );
   });
 
@@ -76,17 +76,17 @@ describe('ERC7579SignatureValidator', function () {
     await expect(this.mock.signer(this.mockAccount.address)).to.eventually.equal(signerData); // No change in signers
   });
 
-  it('emits event on ERC7579SignatureValidatorSignerSet on both installation and uninstallation', async function () {
+  it('emits event on ERC7579SignatureSignerSet on both installation and uninstallation', async function () {
     const signerData = ethers.solidityPacked(['address'], [signerECDSA.address]);
 
     // First install
     await expect(this.mockFromAccount.onInstall(signerData))
-      .to.emit(this.mock, 'ERC7579SignatureValidatorSignerSet')
+      .to.emit(this.mock, 'ERC7579SignatureSignerSet')
       .withArgs(this.mockAccount.address, signerData);
 
     // Then uninstall
     await expect(this.mockFromAccount.onUninstall('0x'))
-      .to.emit(this.mock, 'ERC7579SignatureValidatorSignerSet')
+      .to.emit(this.mock, 'ERC7579SignatureSignerSet')
       .withArgs(this.mockAccount.address, '0x');
   });
 
@@ -103,7 +103,7 @@ describe('ERC7579SignatureValidator', function () {
   it('sets signer correctly with setSigner and emits event', async function () {
     const signerData = ethers.solidityPacked(['address'], [signerECDSA.address]);
     await expect(this.mockFromAccount.setSigner(signerData))
-      .to.emit(this.mockFromAccount, 'ERC7579SignatureValidatorSignerSet')
+      .to.emit(this.mockFromAccount, 'ERC7579SignatureSignerSet')
       .withArgs(this.mockAccount.address, signerData);
     await expect(this.mock.signer(this.mockAccount.address)).to.eventually.equal(signerData);
   });
@@ -111,7 +111,7 @@ describe('ERC7579SignatureValidator', function () {
   it('reverts when calling setSigner with invalid signer length', async function () {
     await expect(this.mock.setSigner('0x0123456789')).to.be.revertedWithCustomError(
       this.mock,
-      'ERC7579SignatureValidatorInvalidSignerLength',
+      'ERC7579SignatureInvalidSignerLength',
     );
   });
 
