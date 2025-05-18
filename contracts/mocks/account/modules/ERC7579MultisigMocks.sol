@@ -4,6 +4,7 @@ pragma solidity ^0.8.27;
 
 import {EIP712} from "@openzeppelin/contracts/utils/cryptography/EIP712.sol";
 import {ERC7579Executor} from "../../../account/modules/ERC7579Executor.sol";
+import {ERC7579Validator} from "../../../account/modules/ERC7579Validator.sol";
 import {ERC7579Multisig} from "../../../account/modules/ERC7579Multisig.sol";
 import {ERC7579MultisigWeighted} from "../../../account/modules/ERC7579MultisigWeighted.sol";
 import {ERC7579MultisigConfirmation} from "../../../account/modules/ERC7579MultisigConfirmation.sol";
@@ -13,6 +14,10 @@ import {Mode} from "@openzeppelin/contracts/account/utils/draft-ERC7579Utils.sol
 abstract contract ERC7579MultisigExecutorMock is EIP712, ERC7579Executor, ERC7579Multisig {
     bytes32 private constant EXECUTE_OPERATION =
         keccak256("ExecuteOperation(address account,bytes32 mode,bytes executionCalldata,bytes32 salt)");
+
+    function isModuleType(uint256 moduleTypeId) public pure override(ERC7579Executor, ERC7579Validator) returns (bool) {
+        return ERC7579Executor.isModuleType(moduleTypeId) || ERC7579Executor.isModuleType(moduleTypeId);
+    }
 
     // Data encoding: [uint16(executionCalldataLength), executionCalldata, signature]
     function _validateExecution(
@@ -24,7 +29,7 @@ abstract contract ERC7579MultisigExecutorMock is EIP712, ERC7579Executor, ERC757
         uint16 executionCalldataLength = uint16(uint256(bytes32(data[0:2]))); // First 2 bytes are the length
         bytes calldata executionCalldata = data[2:2 + executionCalldataLength]; // Next bytes are the calldata
         bytes32 typeHash = _getExecuteTypeHash(account, salt, mode, executionCalldata);
-        require(_validateMultisignature(account, typeHash, data[2 + executionCalldataLength:])); // Remaining bytes are the signature
+        require(_rawERC7579Validation(account, typeHash, data[2 + executionCalldataLength:])); // Remaining bytes are the signature
         return executionCalldata;
     }
 
@@ -42,6 +47,10 @@ abstract contract ERC7579MultisigWeightedExecutorMock is EIP712, ERC7579Executor
     bytes32 private constant EXECUTE_OPERATION =
         keccak256("ExecuteOperation(address account,bytes32 mode,bytes executionCalldata,bytes32 salt)");
 
+    function isModuleType(uint256 moduleTypeId) public pure override(ERC7579Executor, ERC7579Validator) returns (bool) {
+        return ERC7579Executor.isModuleType(moduleTypeId) || ERC7579Executor.isModuleType(moduleTypeId);
+    }
+
     // Data encoding: [uint16(executionCalldataLength), executionCalldata, signature]
     function _validateExecution(
         address account,
@@ -52,7 +61,7 @@ abstract contract ERC7579MultisigWeightedExecutorMock is EIP712, ERC7579Executor
         uint16 executionCalldataLength = uint16(uint256(bytes32(data[0:2]))); // First 2 bytes are the length
         bytes calldata executionCalldata = data[2:2 + executionCalldataLength]; // Next bytes are the calldata
         bytes32 typeHash = _getExecuteTypeHash(account, salt, mode, executionCalldata);
-        require(_validateMultisignature(account, typeHash, data[2 + executionCalldataLength:])); // Remaining bytes are the signature
+        require(_rawERC7579Validation(account, typeHash, data[2 + executionCalldataLength:])); // Remaining bytes are the signature
         return executionCalldata;
     }
 
@@ -70,6 +79,10 @@ abstract contract ERC7579MultisigConfirmationExecutorMock is ERC7579Executor, ER
     bytes32 private constant EXECUTE_OPERATION =
         keccak256("ExecuteOperation(address account,bytes32 mode,bytes executionCalldata,bytes32 salt)");
 
+    function isModuleType(uint256 moduleTypeId) public pure override(ERC7579Executor, ERC7579Validator) returns (bool) {
+        return ERC7579Executor.isModuleType(moduleTypeId) || ERC7579Executor.isModuleType(moduleTypeId);
+    }
+
     // Data encoding: [uint16(executionCalldataLength), executionCalldata, signature]
     function _validateExecution(
         address account,
@@ -80,7 +93,7 @@ abstract contract ERC7579MultisigConfirmationExecutorMock is ERC7579Executor, ER
         uint16 executionCalldataLength = uint16(uint256(bytes32(data[0:2]))); // First 2 bytes are the length
         bytes calldata executionCalldata = data[2:2 + executionCalldataLength]; // Next bytes are the calldata
         bytes32 typeHash = _getExecuteTypeHash(account, salt, mode, executionCalldata);
-        require(_validateMultisignature(account, typeHash, data[2 + executionCalldataLength:])); // Remaining bytes are the signature
+        require(_rawERC7579Validation(account, typeHash, data[2 + executionCalldataLength:])); // Remaining bytes are the signature
         return executionCalldata;
     }
 

@@ -10,53 +10,22 @@ import {IERC7579Module} from "@openzeppelin/contracts/interfaces/draft-IERC7579.
  * @dev Implementation of {ERC7579Validator} module using ERC-7913 signature verification.
  *
  * This validator allows ERC-7579 accounts to integrate with address-less cryptographic keys
- * through the ERC-7913 signature verification system. Each account can store its own ERC-7913
- * formatted signer (a concatenation of a verifier address and a key: `verifier || key`).
+ * and account signatures through the ERC-7913 signature verification system. Each account
+ * can store its own ERC-7913 formatted signer (a concatenation of a verifier address and a
+ * key: `verifier || key`).
  *
  * This enables accounts to use signature schemes without requiring each key to have its own
- * Ethereum address.
- *
- * The validator implements two key functions from ERC-7579:
- *
- * * `validateUserOp`: Validates ERC-4337 user operations using ERC-7913 signatures
- * * `isValidSignatureWithSender`: Implements ERC-1271 signature verification via ERC-7913
- *
- * Example usage with an account:
- *
- * ```solidity
- * contract MyAccount is Account, AccountERC7579 {
- *     function initialize(address validator, bytes memory signerData) public initializer {
- *         // Install the validator module
- *         bytes memory initData = abi.encode(signerData);
- *         _installModule(MODULE_TYPE_VALIDATOR, validator, initData);
- *     }
- * }
- * ```
- *
- * Example of validator installation with a P256 key:
- *
- * ```solidity
- * // Address of the P256 verifier contract
- * address p256verifier = 0x123...;
- *
- * // P256 public key bytes
- * bytes memory p256PublicKey = 0x456...;
- *
- * // Combine into ERC-7913 signer format
- * bytes memory signerData = bytes.concat(abi.encodePacked(p256verifier), p256PublicKey);
- *
- * // Initialize the account with the validator and signer
- * account.initialize(address(new ERC7579SignatureValidator()), signerData);
- * ```
+ * Ethereum address.A smart account with this module installed can keep an emergency key as a
+ * backup.
  */
-contract ERC7579SignatureValidator is ERC7579Validator {
+contract ERC7579Signature is ERC7579Validator {
     mapping(address account => bytes signer) private _signers;
 
     /// @dev Emitted when the signer is set.
-    event ERC7579SignatureValidatorSignerSet(address indexed account, bytes signer);
+    event ERC7579SignatureSignerSet(address indexed account, bytes signer);
 
     /// @dev Thrown when the signer length is less than 20 bytes.
-    error ERC7579SignatureValidatorInvalidSignerLength();
+    error ERC7579SignatureInvalidSignerLength();
 
     /// @dev Return the ERC-7913 signer (i.e. `verifier || key`).
     function signer(address account) public view virtual returns (bytes memory) {
@@ -88,18 +57,18 @@ contract ERC7579SignatureValidator is ERC7579Validator {
 
     /// @dev Sets the ERC-7913 signer (i.e. `verifier || key`) for the calling account.
     function setSigner(bytes memory signer_) public virtual {
-        require(signer_.length >= 20, ERC7579SignatureValidatorInvalidSignerLength());
+        require(signer_.length >= 20, ERC7579SignatureInvalidSignerLength());
         _setSigner(msg.sender, signer_);
     }
 
     /// @dev Internal version of {setSigner} that takes an `account` as argument without validating `signer_`.
     function _setSigner(address account, bytes memory signer_) internal virtual {
         _signers[account] = signer_;
-        emit ERC7579SignatureValidatorSignerSet(account, signer_);
+        emit ERC7579SignatureSignerSet(account, signer_);
     }
 
     /**
-     * @dev See {ERC7579Validator-_rawSignatureValidationWithSender}.
+     * @dev See {ERC7579Validator-_rawERC7579Validation}.
      *
      * Validates a `signature` using ERC-7913 verification.
      *
@@ -107,11 +76,11 @@ contract ERC7579SignatureValidator is ERC7579Validator {
      * the account's stored signer. Derived contracts can override this to implement
      * custom validation logic based on the sender.
      */
-    function _rawSignatureValidationWithSender(
-        address /* sender */,
+    function _rawERC7579Validation(
+        address account,
         bytes32 hash,
         bytes calldata signature
     ) internal view virtual override returns (bool) {
-        return ERC7913Utils.isValidSignatureNow(signer(msg.sender), hash, signature);
+        return ERC7913Utils.isValidSignatureNow(signer(account), hash, signature);
     }
 }
