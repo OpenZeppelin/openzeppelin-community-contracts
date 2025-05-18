@@ -23,7 +23,7 @@ async function fixture() {
   await setBalance(eoa.address, ethers.WeiPerEther);
 
   // ERC-7579 validator module
-  const validator = await ethers.deployContract('$ERC7579SignatureValidator');
+  const validator = await ethers.deployContract('$ERC7579Signature');
 
   // ERC-4337 account
   const helper = new ERC4337Helper();

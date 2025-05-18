@@ -12,7 +12,7 @@ async function fixture() {
   const [other] = await ethers.getSigners();
 
   // Deploy ERC-7579 validator module
-  const mock = await ethers.deployContract('$ERC7579SignatureValidator');
+  const mock = await ethers.deployContract('$ERC7579Signature');
 
   // ERC-4337 env
   const helper = new ERC4337Helper();

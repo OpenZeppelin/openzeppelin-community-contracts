@@ -3,40 +3,23 @@ pragma solidity ^0.8.27;
 
 import {ERC7913Utils} from "../../utils/cryptography/ERC7913Utils.sol";
 import {EnumerableSetExtended} from "../../utils/structs/EnumerableSetExtended.sol";
-import {IERC7579Module} from "@openzeppelin/contracts/interfaces/draft-IERC7579.sol";
 import {Mode} from "@openzeppelin/contracts/account/utils/draft-ERC7579Utils.sol";
+import {ERC7579Validator} from "./ERC7579Validator.sol";
 
 /**
- * @dev Implementation of an {IERC7579Module} that uses ERC-7913 signers for multisignature
+ * @dev Implementation of an {ERC7579Validator} that uses ERC-7913 signers for multisignature
  * validation.
  *
  * This module provides a base implementation for multisignature validation that can be
- * attached to any function through the {_validateMultisignature} internal function. The signers
+ * attached to any function through the {_rawERC7579Validation} internal function. The signers
  * are represented using the ERC-7913 format, which concatenates a verifier address and
  * a key: `verifier || key`.
- *
- * Example implementation:
- *
- * ```solidity
- * function execute(
- *     address account,
- *     Mode mode,
- *     bytes calldata executionCalldata,
- *     bytes32 salt,
- *     bytes calldata signature
- * ) public virtual {
- *     require(_validateMultisignature(account, hash, signature));
- *     // ... rest of execute logic
- * }
- * ```
- *
- * Example use case:
  *
  * A smart account with this module installed can require multiple signers to approve
  * operations before they are executed, such as requiring 3-of-5 guardians to approve
  * a social recovery operation.
  */
-abstract contract ERC7579Multisig is IERC7579Module {
+abstract contract ERC7579Multisig is ERC7579Validator {
     using EnumerableSetExtended for EnumerableSetExtended.BytesSet;
     using ERC7913Utils for bytes32;
     using ERC7913Utils for bytes;
@@ -178,11 +161,11 @@ abstract contract ERC7579Multisig is IERC7579Module {
      * Where `signingSigners` are the authorized signers and signatures are their corresponding
      * signatures of the operation `hash`.
      */
-    function _validateMultisignature(
+    function _rawERC7579Validation(
         address account,
         bytes32 hash,
         bytes calldata signature
-    ) internal view virtual returns (bool) {
+    ) internal view virtual override returns (bool) {
         (bytes[] memory signingSigners, bytes[] memory signatures) = abi.decode(signature, (bytes[], bytes[]));
         return
             _validateThreshold(account, signingSigners) &&
