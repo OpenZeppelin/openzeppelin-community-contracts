@@ -7,7 +7,7 @@ import {Initializable} from "@openzeppelin/contracts/proxy/utils/Initializable.s
 import {MODULE_TYPE_VALIDATOR} from "@openzeppelin/contracts/interfaces/draft-IERC7579.sol";
 import {AccountERC7579} from "../../../account/extensions/AccountERC7579.sol";
 
-contract MyAccount is Initializable, AccountERC7579 {
+contract MyAccountERC7579 is Initializable, AccountERC7579 {
     function initializeAccount(address validator, bytes calldata validatorData) public initializer {
         // Install a validator module to handle signature verification
         _installModule(MODULE_TYPE_VALIDATOR, validator, validatorData);
