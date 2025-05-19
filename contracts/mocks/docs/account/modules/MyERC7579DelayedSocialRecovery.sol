@@ -21,8 +21,8 @@ abstract contract MyERC7579DelayedSocialRecovery is EIP712, ERC7579DelayedExecut
     function onInstall(bytes calldata data) public override(ERC7579DelayedExecutor, ERC7579Multisig) {
         uint16 executorArgsLength = uint16(bytes2(data[0:2])); // First 2 bytes are the length
         bytes calldata executorArgs = data[2:2 + executorArgsLength]; // Next bytes are the args
-        uint16 multisigArgsLength = uint16(bytes2(data[2 + executorArgsLength:])); // Next 2 bytes are the length
-        bytes calldata multisigArgs = data[2 + executorArgsLength + 2:2 + executorArgsLength + 2 + multisigArgsLength]; // Next bytes are the args
+        uint16 multisigArgsLength = uint16(bytes2(data[2 + executorArgsLength:4 + executorArgsLength])); // Next 2 bytes are the length
+        bytes calldata multisigArgs = data[4 + executorArgsLength:4 + executorArgsLength + multisigArgsLength]; // Next bytes are the args
 
         ERC7579DelayedExecutor.onInstall(executorArgs);
         ERC7579Multisig.onInstall(multisigArgs);
