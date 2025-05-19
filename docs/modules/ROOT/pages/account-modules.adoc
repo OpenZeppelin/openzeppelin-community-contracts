@@ -34,7 +34,7 @@ See https://erc7579.com/modules[popular module implementations].
 
 The library provides _standard composable modules_ as building blocks with an internal API for developers. By combining these components, you can create a rich set of variants without including unnecessary features.
 
-A good starting point is the xref:api:account.adoc#ERC7579Executor[ERC7579Executor] or xref:api:account.adoc#ERC7579Validator[ERC7579Validator], which include an opinionated base layer easily combined with other abstract modules. Hooks and fallback handlers are more straightforward to implement directly from interfaces:
+A good starting point is the xref:api:account.adoc#ERC7579Executor[`ERC7579Executor`] or xref:api:account.adoc#ERC7579Validator[`ERC7579Validator`], which include an opinionated base layer easily combined with other abstract modules. Hooks and fallback handlers are more straightforward to implement directly from interfaces:
 
 [source,solidity]
 ----
