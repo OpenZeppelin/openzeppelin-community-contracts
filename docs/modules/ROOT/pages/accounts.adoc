@@ -35,7 +35,9 @@ TIP: Given xref:api:utils.adoc#SignerERC7913[`SignerERC7913`] provides a general
 
 The first time you send an user operation, your account will be created deterministically (i.e. its code and address can be predicted) using the the `initCode` field in the UserOperation. This field contains both the address of a smart contract (the factory) and the data required to call it and create your smart account.
 
-Suggestively, you can create your own account factory using the https://docs.openzeppelin.com/contracts/5.x/api/proxy#Clones[Clones library from OpenZeppelin Contracts], taking advantage of decreased deployment costs and account address predictability.
+The library offers an xref:api:account.adoc#AccountFactory[AccountFactory] contract you can start with. It uses the https://docs.openzeppelin.com/contracts/5.x/api/proxy#Clones[Clones library from OpenZeppelin Contracts] to take advantage of decreased deployment costs and account address predictability.
+
+TIP: Custom factory implementations may use a different approach to initializable clones. For example, some implementations could leverage https://docs.openzeppelin.com/contracts/5.x/api/proxy#Clones-cloneWithImmutableArgs-address-bytes-[clones with immutable arguments].
 
 [source,solidity]
 ----
