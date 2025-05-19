@@ -26,7 +26,7 @@ abstract contract ERC7579MultisigExecutorMock is EIP712, ERC7579Executor, ERC757
         bytes32 mode,
         bytes calldata data
     ) internal view override returns (bytes calldata) {
-        uint16 executionCalldataLength = uint16(uint256(bytes32(data[0:2]))); // First 2 bytes are the length
+        uint16 executionCalldataLength = uint16(bytes2(data[0:2])); // First 2 bytes are the length
         bytes calldata executionCalldata = data[2:2 + executionCalldataLength]; // Next bytes are the calldata
         bytes32 typeHash = _getExecuteTypeHash(account, salt, mode, executionCalldata);
         require(_rawERC7579Validation(account, typeHash, data[2 + executionCalldataLength:])); // Remaining bytes are the signature
@@ -39,7 +39,7 @@ abstract contract ERC7579MultisigExecutorMock is EIP712, ERC7579Executor, ERC757
         bytes32 mode,
         bytes calldata executionCalldata
     ) internal view returns (bytes32) {
-        return _hashTypedDataV4(keccak256(abi.encode(EXECUTE_OPERATION, account, mode, executionCalldata, salt)));
+        return _hashTypedDataV4(keccak256(abi.encode(EXECUTE_OPERATION, account, salt, mode, executionCalldata)));
     }
 }
 
@@ -58,7 +58,7 @@ abstract contract ERC7579MultisigWeightedExecutorMock is EIP712, ERC7579Executor
         bytes32 mode,
         bytes calldata data
     ) internal view override returns (bytes calldata) {
-        uint16 executionCalldataLength = uint16(uint256(bytes32(data[0:2]))); // First 2 bytes are the length
+        uint16 executionCalldataLength = uint16(bytes2(data[0:2])); // First 2 bytes are the length
         bytes calldata executionCalldata = data[2:2 + executionCalldataLength]; // Next bytes are the calldata
         bytes32 typeHash = _getExecuteTypeHash(account, salt, mode, executionCalldata);
         require(_rawERC7579Validation(account, typeHash, data[2 + executionCalldataLength:])); // Remaining bytes are the signature
@@ -71,7 +71,7 @@ abstract contract ERC7579MultisigWeightedExecutorMock is EIP712, ERC7579Executor
         bytes32 mode,
         bytes calldata executionCalldata
     ) internal view returns (bytes32) {
-        return _hashTypedDataV4(keccak256(abi.encode(EXECUTE_OPERATION, account, mode, executionCalldata, salt)));
+        return _hashTypedDataV4(keccak256(abi.encode(EXECUTE_OPERATION, account, salt, mode, executionCalldata)));
     }
 }
 
@@ -90,7 +90,7 @@ abstract contract ERC7579MultisigConfirmationExecutorMock is ERC7579Executor, ER
         bytes32 mode,
         bytes calldata data
     ) internal view override returns (bytes calldata) {
-        uint16 executionCalldataLength = uint16(uint256(bytes32(data[0:2]))); // First 2 bytes are the length
+        uint16 executionCalldataLength = uint16(bytes2(data[0:2])); // First 2 bytes are the length
         bytes calldata executionCalldata = data[2:2 + executionCalldataLength]; // Next bytes are the calldata
         bytes32 typeHash = _getExecuteTypeHash(account, salt, mode, executionCalldata);
         require(_rawERC7579Validation(account, typeHash, data[2 + executionCalldataLength:])); // Remaining bytes are the signature
@@ -103,6 +103,6 @@ abstract contract ERC7579MultisigConfirmationExecutorMock is ERC7579Executor, ER
         bytes32 mode,
         bytes calldata executionCalldata
     ) internal view returns (bytes32) {
-        return _hashTypedDataV4(keccak256(abi.encode(EXECUTE_OPERATION, account, mode, executionCalldata, salt)));
+        return _hashTypedDataV4(keccak256(abi.encode(EXECUTE_OPERATION, account, salt, mode, executionCalldata)));
     }
 }
