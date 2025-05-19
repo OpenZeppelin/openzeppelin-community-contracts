@@ -289,3 +289,19 @@ A common security practice to prevent user operation https://mirror.xyz/curiousa
 The problem with this approach is that the user might be prompted by the wallet provider to sign an https://x.com/howydev/status/1780353754333634738[obfuscated message], which is a phishing vector that may lead to a user losing its assets.
 
 To prevent this, developers may use xref:api:account#ERC7739Signer[`ERC7739Signer`], a utility that implements https://docs.openzeppelin.com/contracts/5.x/api/interfaces#IERC1271[`IERC1271`] for smart contract signatures with a defensive rehashing mechanism based on a https://github.com/frangio/eip712-wrapper-for-eip1271[nested EIP-712 approach] to wrap the signature request in a context where there's clearer information for the end user.
+
+=== EIP-7702 Delegation
+
+https://eips.ethereum.org/EIPS/eip-7702[EIP-7702] lets EOAs delegate to smart contracts while keeping their original signing key. This creates a hybrid account that works like an EOA for signing but has smart contract features. Protocols don't need major changes to support EIP-7702 since they already handle both EOAs and smart contracts (see https://docs.openzeppelin.com/contracts/5.x/api/utils#SignatureChecker[SignatureChecker]).
+
+The signature verification stays compatible: delegated EOAs are treated as contracts using ERC-1271, making it easy to redelegate to a contract with ERC-1271 support with little overhead by reusing the validation mechanism of the account. 
+
+TIP: Learn more about delegating to an ERC-7702 account in our xref:eoa-delegation.adoc[EOA Delegation] section.
+
+=== ERC-7579 Modules
+
+Smart accounts have evolved to embrace modularity as a design principle, with popular implementations like https://erc7579.com/#supporters[Safe, Pimlico, Rhinestone, Etherspot and many others] agreeing on ERC-7579 as the standard for module interoperability. This standardization enables accounts to extend their functionality through external contracts while maintaining compatibility across different implementations.
+
+OpenZeppelin Contracts provides both the building blocks for creating ERC-7579-compliant modules and an xref:api:account.adoc#AccountERC7579[`AccountERC7579`] implementation that supports installing and managing these modules. 
+
+TIP: Learn more in our xref:account-modules.adoc[account modules] section.
