@@ -102,7 +102,7 @@ Social recovery is not a single solution but a design space with multiple config
 * Cancellation windows
 * Confirmation requirements
 
-To support _different guardian types_, we can leverage ERC-7913 as discussed in the xref:multisig.adoc#beyond-standard-signature-verification[multisig] section. For ERC-7579 modules, this is implemented through the xref:api:account.adoc#ERC7579Multisig[`ERC7579Multisig`] validator.
+To support _different guardian types_, we can leverage ERC-7913 as discussed in the xref:multisig.adoc#beyond_standard_signature_verification[multisig] section. For ERC-7579 modules, this is implemented through the xref:api:account.adoc#ERC7579Multisig[`ERC7579Multisig`] validator.
 
 Combined with an xref:api:account.adoc#ERC7579Executor[`ERC7579Executor`], it provides a basic foundation that can be extended with more sophisticated features:
 
