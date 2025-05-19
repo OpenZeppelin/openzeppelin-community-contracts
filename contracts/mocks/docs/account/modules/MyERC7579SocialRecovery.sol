@@ -23,7 +23,7 @@ abstract contract MyERC7579SocialRecovery is EIP712, ERC7579Executor, ERC7579Mul
         bytes32 mode,
         bytes calldata data
     ) internal override returns (bytes calldata) {
-        uint16 executionCalldataLength = uint16(uint256(bytes32(data[0:2]))); // First 2 bytes are the length
+        uint16 executionCalldataLength = uint16(bytes2(data[0:2])); // First 2 bytes are the length
         bytes calldata executionCalldata = data[2:2 + executionCalldataLength]; // Next bytes are the calldata
         bytes calldata signature = data[2 + executionCalldataLength:]; // Remaining bytes are the signature
         require(_rawERC7579Validation(account, _getExecuteTypeHash(account, salt, mode, executionCalldata), signature));

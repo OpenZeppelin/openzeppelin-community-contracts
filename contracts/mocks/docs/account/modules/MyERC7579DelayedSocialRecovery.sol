@@ -19,9 +19,9 @@ abstract contract MyERC7579DelayedSocialRecovery is EIP712, ERC7579DelayedExecut
 
     // Data encoding: [uint16(executorArgsLength), executorArgs, uint16(multisigArgsLength), multisigArgs]
     function onInstall(bytes calldata data) public override(ERC7579DelayedExecutor, ERC7579Multisig) {
-        uint16 executorArgsLength = uint16(uint256(bytes32(data[0:2]))); // First 2 bytes are the length
+        uint16 executorArgsLength = uint16(bytes2(data[0:2])); // First 2 bytes are the length
         bytes calldata executorArgs = data[2:2 + executorArgsLength]; // Next bytes are the args
-        uint16 multisigArgsLength = uint16(uint256(bytes32(data[2 + executorArgsLength:]))); // Next 2 bytes are the length
+        uint16 multisigArgsLength = uint16(bytes2(data[2 + executorArgsLength:])); // Next 2 bytes are the length
         bytes calldata multisigArgs = data[2 + executorArgsLength + 2:2 + executorArgsLength + 2 + multisigArgsLength]; // Next bytes are the args
 
         ERC7579DelayedExecutor.onInstall(executorArgs);
@@ -40,7 +40,7 @@ abstract contract MyERC7579DelayedSocialRecovery is EIP712, ERC7579DelayedExecut
         bytes32 mode,
         bytes calldata data
     ) internal view override {
-        uint16 executionCalldataLength = uint16(uint256(bytes32(data[0:2]))); // First 2 bytes are the length
+        uint16 executionCalldataLength = uint16(bytes2(data[0:2])); // First 2 bytes are the length
         bytes calldata executionCalldata = data[2:2 + executionCalldataLength]; // Next bytes are the calldata
         bytes calldata signature = data[2 + executionCalldataLength:]; // Remaining bytes are the signature
         require(_rawERC7579Validation(account, _getExecuteTypeHash(account, salt, mode, executionCalldata), signature));
