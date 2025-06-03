@@ -6,7 +6,7 @@ import {IDKIMRegistry} from "@zk-email/contracts/DKIMRegistry.sol";
 import {IVerifier} from "@zk-email/email-tx-builder/src/interfaces/IVerifier.sol";
 import {EmailAuthMsg} from "@zk-email/email-tx-builder/src/interfaces/IEmailTypes.sol";
 import {AbstractSigner} from "./AbstractSigner.sol";
-import {ZKEmailUtils} from "./ZKEmailUtils.sol";
+import {ZKEmailUtils} from "../ZKEmailUtils.sol";
 
 /**
  * @dev Implementation of {AbstractSigner} using https://docs.zk.email[ZKEmail] signatures.
