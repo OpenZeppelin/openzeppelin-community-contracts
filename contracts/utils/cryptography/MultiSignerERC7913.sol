@@ -5,6 +5,7 @@ pragma solidity ^0.8.27;
 import {AbstractSigner} from "./AbstractSigner.sol";
 import {ERC7913Utils} from "./ERC7913Utils.sol";
 import {EnumerableSetExtended} from "../../utils/structs/EnumerableSetExtended.sol";
+import {SafeCast} from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
 /**
  * @dev Implementation of {AbstractSigner} using multiple ERC-7913 signers with a threshold-based
@@ -48,7 +49,7 @@ abstract contract MultiSignerERC7913 is AbstractSigner {
     using ERC7913Utils for *;
 
     EnumerableSetExtended.BytesSet private _signers;
-    uint256 private _threshold;
+    uint128 private _threshold;
 
     /// @dev Emitted when a signer is added.
     event ERC7913SignersAdded(bytes indexed signers);
@@ -136,7 +137,7 @@ abstract contract MultiSignerERC7913 is AbstractSigner {
      * * See {_validateReachableThreshold} for the threshold validation.
      */
     function _setThreshold(uint256 newThreshold) internal virtual {
-        _threshold = newThreshold;
+        _threshold = newThreshold.toUint128();
         _validateReachableThreshold();
         emit ERC7913ThresholdSet(newThreshold);
     }
@@ -207,29 +208,23 @@ abstract contract MultiSignerERC7913 is AbstractSigner {
      * IMPORTANT: For simplicity, this contract assumes that the signers are ordered by their `keccak256` hash
      * to avoid duplication when iterating through the signers (i.e. `keccak256(signer1) < keccak256(signer2)`).
      * The function will return false if the signers are not ordered.
+     *
+     * Requirements:
+     *
+     * * The `signatures` arrays must be at least as large as the `signingSigners` arrays. Panics otherwise.
      */
     function _validateSignatures(
         bytes32 hash,
         bytes[] memory signingSigners,
         bytes[] memory signatures
     ) internal view virtual returns (bool valid) {
-        if (signingSigners.length != signatures.length) return false;
-
-        // Signers must ordered by id to ensure no duplicates
-        bytes32 previousId = bytes32(0);
-
-        for (uint256 i = 0; i < signingSigners.length; ++i) {
-            bytes memory signer = signingSigners[i];
-            bytes memory signature = signatures[i];
-
-            bytes32 id = keccak256(signer);
-            if (previousId >= id || !isSigner(signer) || !signer.isValidSignatureNow(hash, signature)) {
+        uint256 signersLength = signingSigners.length;
+        for (uint256 i = 0; i < signersLength; i++) {
+            if (!isSigner(signingSigners[i])) {
                 return false;
             }
-            previousId = id;
         }
-
-        return true;
+        return hash.areValidSignaturesNow(signingSigners, signatures);
     }
 
     /**
