@@ -25,10 +25,10 @@ abstract contract ERC7579Multisig is ERC7579Validator {
     using ERC7913Utils for bytes;
 
     /// @dev Emitted when signers are added.
-    event ERC7913SignersAdded(address indexed account, bytes[] signers);
+    event ERC7913SignerAdded(address indexed account, bytes signer);
 
     /// @dev Emitted when signers are removed.
-    event ERC7913SignersRemoved(address indexed account, bytes[] signers);
+    event ERC7913SignerRemoved(address indexed account, bytes signer);
 
     /// @dev Emitted when the threshold is updated.
     event ERC7913ThresholdSet(address indexed account, uint256 threshold);
@@ -186,8 +186,8 @@ abstract contract ERC7579Multisig is ERC7579Validator {
             bytes memory signer = newSigners[i];
             require(signer.length >= 20, ERC7579MultisigInvalidSigner(signer));
             require(_signers(account).add(signer), ERC7579MultisigAlreadyExists(signer));
+            emit ERC7913SignerAdded(account, signer);
         }
-        emit ERC7913SignersAdded(account, newSigners);
     }
 
     /**
@@ -203,9 +203,9 @@ abstract contract ERC7579Multisig is ERC7579Validator {
         for (uint256 i = 0; i < oldSignersLength; i++) {
             bytes memory signer = oldSigners[i];
             require(_signers(account).remove(signer), ERC7579MultisigNonexistentSigner(signer));
+            emit ERC7913SignerRemoved(account, signer);
         }
         _validateReachableThreshold(account);
-        emit ERC7913SignersRemoved(account, oldSigners);
     }
 
     /**

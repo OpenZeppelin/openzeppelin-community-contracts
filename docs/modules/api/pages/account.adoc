@@ -1769,8 +1769,8 @@ Emitted when the signer is set.
 
 Thrown when the signer length is less than 20 bytes.
 
-:ERC7913SignersAdded: pass:normal[xref:#ERC7579Multisig-ERC7913SignersAdded-address-bytes---[`++ERC7913SignersAdded++`]]
-:ERC7913SignersRemoved: pass:normal[xref:#ERC7579Multisig-ERC7913SignersRemoved-address-bytes---[`++ERC7913SignersRemoved++`]]
+:ERC7913SignerAdded: pass:normal[xref:#ERC7579Multisig-ERC7913SignerAdded-address-bytes-[`++ERC7913SignerAdded++`]]
+:ERC7913SignerRemoved: pass:normal[xref:#ERC7579Multisig-ERC7913SignerRemoved-address-bytes-[`++ERC7913SignerRemoved++`]]
 :ERC7913ThresholdSet: pass:normal[xref:#ERC7579Multisig-ERC7913ThresholdSet-address-uint256-[`++ERC7913ThresholdSet++`]]
 :ERC7579MultisigAlreadyExists: pass:normal[xref:#ERC7579Multisig-ERC7579MultisigAlreadyExists-bytes-[`++ERC7579MultisigAlreadyExists++`]]
 :ERC7579MultisigNonexistentSigner: pass:normal[xref:#ERC7579Multisig-ERC7579MultisigNonexistentSigner-bytes-[`++ERC7579MultisigNonexistentSigner++`]]
@@ -1851,8 +1851,8 @@ a social recovery operation.
 [.contract-index]
 .Events
 --
-* `++ERC7913SignersAdded(account, signers)++`
-* `++ERC7913SignersRemoved(account, signers)++`
+* `++ERC7913SignerAdded(account, signer)++`
+* `++ERC7913SignerRemoved(account, signer)++`
 * `++ERC7913ThresholdSet(account, threshold)++`
 
 [.contract-subindex-inherited]
@@ -2055,14 +2055,14 @@ Validates that the number of signers meets the {threshold} requirement.
 Assumes the signers were already validated. See {_validateSignatures} for more details.
 
 [.contract-item]
-[[ERC7579Multisig-ERC7913SignersAdded-address-bytes---]]
-==== `[.contract-item-name]#++ERC7913SignersAdded++#++(address indexed account, bytes[] signers)++` [.item-kind]#event#
+[[ERC7579Multisig-ERC7913SignerAdded-address-bytes-]]
+==== `[.contract-item-name]#++ERC7913SignerAdded++#++(address indexed account, bytes signer)++` [.item-kind]#event#
 
 Emitted when signers are added.
 
 [.contract-item]
-[[ERC7579Multisig-ERC7913SignersRemoved-address-bytes---]]
-==== `[.contract-item-name]#++ERC7913SignersRemoved++#++(address indexed account, bytes[] signers)++` [.item-kind]#event#
+[[ERC7579Multisig-ERC7913SignerRemoved-address-bytes-]]
+==== `[.contract-item-name]#++ERC7913SignerRemoved++#++(address indexed account, bytes signer)++` [.item-kind]#event#
 
 Emitted when signers are removed.
 
@@ -2188,8 +2188,8 @@ signatures with a total weight of at least 4 (e.g., one with weight 1 and one wi
 
 [.contract-subindex-inherited]
 .ERC7579Multisig
-* `++ERC7913SignersAdded(account, signers)++`
-* `++ERC7913SignersRemoved(account, signers)++`
+* `++ERC7913SignerAdded(account, signer)++`
+* `++ERC7913SignerRemoved(account, signer)++`
 * `++ERC7913ThresholdSet(account, threshold)++`
 
 [.contract-subindex-inherited]
@@ -2437,8 +2437,8 @@ explicitly agreed to their roles.
 
 [.contract-subindex-inherited]
 .ERC7579Multisig
-* `++ERC7913SignersAdded(account, signers)++`
-* `++ERC7913SignersRemoved(account, signers)++`
+* `++ERC7913SignerAdded(account, signer)++`
+* `++ERC7913SignerRemoved(account, signer)++`
 * `++ERC7913ThresholdSet(account, threshold)++`
 
 [.contract-subindex-inherited]
