@@ -47,15 +47,16 @@ import {SafeCast} from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 abstract contract MultiSignerERC7913 is AbstractSigner {
     using EnumerableSetExtended for EnumerableSetExtended.BytesSet;
     using ERC7913Utils for *;
+    using SafeCast for uint256;
 
     EnumerableSetExtended.BytesSet private _signers;
     uint128 private _threshold;
 
     /// @dev Emitted when a signer is added.
-    event ERC7913SignersAdded(bytes indexed signers);
+    event ERC7913SignerAdded(bytes indexed signers);
 
     /// @dev Emitted when a signers is removed.
-    event ERC7913SignersRemoved(bytes indexed signers);
+    event ERC7913SignerRemoved(bytes indexed signers);
 
     /// @dev Emitted when the threshold is updated.
     event ERC7913ThresholdSet(uint256 threshold);
@@ -107,7 +108,7 @@ abstract contract MultiSignerERC7913 is AbstractSigner {
             bytes memory signer = newSigners[i];
             require(signer.length >= 20, MultiSignerERC7913InvalidSigner(signer));
             require(_signers.add(signer), MultiSignerERC7913AlreadyExists(signer));
-            emit ERC7913SignersAdded(signer);
+            emit ERC7913SignerAdded(signer);
         }
     }
 
@@ -123,7 +124,7 @@ abstract contract MultiSignerERC7913 is AbstractSigner {
         for (uint256 i = 0; i < oldSigners.length; ++i) {
             bytes memory signer = oldSigners[i];
             require(_signers.remove(signer), MultiSignerERC7913NonexistentSigner(signer));
-            emit ERC7913SignersRemoved(signer);
+            emit ERC7913SignerRemoved(signer);
         }
         _validateReachableThreshold();
     }
@@ -196,7 +197,6 @@ abstract contract MultiSignerERC7913 is AbstractSigner {
         bytes calldata signature
     ) internal view virtual override returns (bool) {
         if (signature.length == 0) return false; // For ERC-7739 compatibility
-
         (bytes[] memory signingSigners, bytes[] memory signatures) = abi.decode(signature, (bytes[], bytes[]));
         return _validateThreshold(signingSigners) && _validateSignatures(hash, signingSigners, signatures);
     }
