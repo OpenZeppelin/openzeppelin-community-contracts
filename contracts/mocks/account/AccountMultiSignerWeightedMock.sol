@@ -5,9 +5,9 @@ pragma solidity ^0.8.27;
 import {Account} from "../../account/Account.sol";
 import {ERC721Holder} from "@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol";
 import {ERC1155Holder} from "@openzeppelin/contracts/token/ERC1155/utils/ERC1155Holder.sol";
-import {ERC7739} from "../../utils/cryptography/ERC7739.sol";
+import {ERC7739} from "../../utils/cryptography/signers/ERC7739.sol";
 import {ERC7821} from "../../account/extensions/ERC7821.sol";
-import {MultiSignerERC7913Weighted} from "../../utils/cryptography/MultiSignerERC7913Weighted.sol";
+import {MultiSignerERC7913Weighted} from "../../utils/cryptography/signers/MultiSignerERC7913Weighted.sol";
 
 abstract contract AccountMultiSignerWeightedMock is
     Account,

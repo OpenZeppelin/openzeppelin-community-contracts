@@ -6,3 +6,4 @@
 * xref:proxy.adoc[Proxy]
 * xref:token.adoc[Token]
 * xref:utils.adoc[Utils]
+** xref:utils/cryptography.adoc[Cryptography]

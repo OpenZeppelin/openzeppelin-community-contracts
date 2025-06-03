@@ -5,7 +5,7 @@ pragma solidity ^0.8.20;
 import {ERC4337Utils, PackedUserOperation} from "@openzeppelin/contracts/account/utils/draft-ERC4337Utils.sol";
 import {EIP712} from "@openzeppelin/contracts/utils/cryptography/EIP712.sol";
 import {PaymasterCore} from "./PaymasterCore.sol";
-import {AbstractSigner} from "../../utils/cryptography/AbstractSigner.sol";
+import {AbstractSigner} from "../../utils/cryptography/signers/AbstractSigner.sol";
 
 /**
  * @dev Extension of {PaymasterCore} that adds signature validation. See {SignerECDSA}, {SignerP256} or {SignerRSA}.
