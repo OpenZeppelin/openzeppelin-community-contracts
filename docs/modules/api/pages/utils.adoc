@@ -496,8 +496,8 @@ Sets the signer (i.e. `verifier || key`) with an ERC-7913 formatted signer.
 
 Verifies a signature using {ERC7913Utils-isValidSignatureNow} with {signer}, `hash` and `signature`.
 
-:ERC7913SignersAdded: pass:normal[xref:#MultiSignerERC7913-ERC7913SignersAdded-bytes---[`++ERC7913SignersAdded++`]]
-:ERC7913SignersRemoved: pass:normal[xref:#MultiSignerERC7913-ERC7913SignersRemoved-bytes---[`++ERC7913SignersRemoved++`]]
+:ERC7913SignerAdded: pass:normal[xref:#MultiSignerERC7913-ERC7913SignerAdded-bytes-[`++ERC7913SignerAdded++`]]
+:ERC7913SignerRemoved: pass:normal[xref:#MultiSignerERC7913-ERC7913SignerRemoved-bytes-[`++ERC7913SignerRemoved++`]]
 :ERC7913ThresholdSet: pass:normal[xref:#MultiSignerERC7913-ERC7913ThresholdSet-uint256-[`++ERC7913ThresholdSet++`]]
 :MultiSignerERC7913AlreadyExists: pass:normal[xref:#MultiSignerERC7913-MultiSignerERC7913AlreadyExists-bytes-[`++MultiSignerERC7913AlreadyExists++`]]
 :MultiSignerERC7913NonexistentSigner: pass:normal[xref:#MultiSignerERC7913-MultiSignerERC7913NonexistentSigner-bytes-[`++MultiSignerERC7913NonexistentSigner++`]]
@@ -506,7 +506,6 @@ Verifies a signature using {ERC7913Utils-isValidSignatureNow} with {signer}, `ha
 :signers: pass:normal[xref:#MultiSignerERC7913-signers--[`++signers++`]]
 :isSigner: pass:normal[xref:#MultiSignerERC7913-isSigner-bytes-[`++isSigner++`]]
 :threshold: pass:normal[xref:#MultiSignerERC7913-threshold--[`++threshold++`]]
-:_signers: pass:normal[xref:#MultiSignerERC7913-_signers--[`++_signers++`]]
 :_addSigners: pass:normal[xref:#MultiSignerERC7913-_addSigners-bytes---[`++_addSigners++`]]
 :_removeSigners: pass:normal[xref:#MultiSignerERC7913-_removeSigners-bytes---[`++_removeSigners++`]]
 :_setThreshold: pass:normal[xref:#MultiSignerERC7913-_setThreshold-uint256-[`++_setThreshold++`]]
@@ -566,7 +565,6 @@ either front-runnable or unusable.
 * `++signers()++`
 * `++isSigner(signer)++`
 * `++threshold()++`
-* `++_signers()++`
 * `++_addSigners(newSigners)++`
 * `++_removeSigners(oldSigners)++`
 * `++_setThreshold(newThreshold)++`
@@ -583,8 +581,8 @@ either front-runnable or unusable.
 [.contract-index]
 .Events
 --
-* `++ERC7913SignersAdded(signers)++`
-* `++ERC7913SignersRemoved(signers)++`
+* `++ERC7913SignerAdded(signers)++`
+* `++ERC7913SignerRemoved(signers)++`
 * `++ERC7913ThresholdSet(threshold)++`
 
 [.contract-subindex-inherited]
@@ -626,12 +624,6 @@ Returns whether the `signer` is an authorized signer.
 ==== `[.contract-item-name]#++threshold++#++() → uint256++` [.item-kind]#public#
 
 Returns the minimum number of signers required to approve a multisignature operation.
-
-[.contract-item]
-[[MultiSignerERC7913-_signers--]]
-==== `[.contract-item-name]#++_signers++#++() → struct EnumerableSetExtended.BytesSet++` [.item-kind]#internal#
-
-Returns the set of authorized signers.
 
 [.contract-item]
 [[MultiSignerERC7913-_addSigners-bytes---]]
@@ -736,16 +728,16 @@ Validates that the number of signers meets the {threshold} requirement.
 Assumes the signers were already validated. See {_validateSignatures} for more details.
 
 [.contract-item]
-[[MultiSignerERC7913-ERC7913SignersAdded-bytes---]]
-==== `[.contract-item-name]#++ERC7913SignersAdded++#++(bytes[] indexed signers)++` [.item-kind]#event#
+[[MultiSignerERC7913-ERC7913SignerAdded-bytes-]]
+==== `[.contract-item-name]#++ERC7913SignerAdded++#++(bytes indexed signers)++` [.item-kind]#event#
 
-Emitted when signers are added.
+Emitted when a signer is added.
 
 [.contract-item]
-[[MultiSignerERC7913-ERC7913SignersRemoved-bytes---]]
-==== `[.contract-item-name]#++ERC7913SignersRemoved++#++(bytes[] indexed signers)++` [.item-kind]#event#
+[[MultiSignerERC7913-ERC7913SignerRemoved-bytes-]]
+==== `[.contract-item-name]#++ERC7913SignerRemoved++#++(bytes indexed signers)++` [.item-kind]#event#
 
-Emitted when signers are removed.
+Emitted when a signers is removed.
 
 [.contract-item]
 [[MultiSignerERC7913-ERC7913ThresholdSet-uint256-]]
@@ -857,7 +849,6 @@ least two signers (e.g., one with weight 1 and one with weight 3). See {signerWe
 * `++signers()++`
 * `++isSigner(signer)++`
 * `++threshold()++`
-* `++_signers()++`
 * `++_setThreshold(newThreshold)++`
 * `++_rawSignatureValidation(hash, signature)++`
 * `++_validateSignatures(hash, signingSigners, signatures)++`
@@ -874,8 +865,8 @@ least two signers (e.g., one with weight 1 and one with weight 3). See {signerWe
 
 [.contract-subindex-inherited]
 .MultiSignerERC7913
-* `++ERC7913SignersAdded(signers)++`
-* `++ERC7913SignersRemoved(signers)++`
+* `++ERC7913SignerAdded(signers)++`
+* `++ERC7913SignerRemoved(signers)++`
 * `++ERC7913ThresholdSet(threshold)++`
 
 [.contract-subindex-inherited]
