@@ -5,7 +5,7 @@ pragma solidity ^0.8.20;
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {ERC4337Utils, PackedUserOperation} from "@openzeppelin/contracts/account/utils/draft-ERC4337Utils.sol";
 import {PaymasterSigner} from "../../../account/paymaster/PaymasterSigner.sol";
-import {SignerECDSA} from "../../../utils/cryptography/SignerECDSA.sol";
+import {SignerECDSA} from "../../../utils/cryptography/signers/SignerECDSA.sol";
 
 abstract contract PaymasterSignerContextNoPostOpMock is PaymasterSigner, SignerECDSA, Ownable {
     using ERC4337Utils for *;
