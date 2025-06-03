@@ -81,8 +81,8 @@ describe('ERC7579MultisigConfirmation', function () {
 
       // Add the new signer with confirmation
       await expect(this.mockFromAccount.addSigners([encodedSigner]))
-        .to.emit(this.mock, 'ERC7913SignersAdded')
-        .withArgs(this.mockAccount.address, [signerToConfirm.address.toLowerCase()]);
+        .to.emit(this.mock, 'ERC7913SignerAdded')
+        .withArgs(this.mockAccount.address, signerToConfirm.address.toLowerCase());
 
       // Verify the signer was added
       await expect(this.mock.isSigner(this.mockAccount.address, signerToConfirm.address)).to.eventually.be.true;
@@ -171,11 +171,10 @@ describe('ERC7579MultisigConfirmation', function () {
 
       // Add both signers with confirmation
       await expect(this.mockFromAccount.addSigners([encodedSigner1, encodedSigner2]))
-        .to.emit(this.mock, 'ERC7913SignersAdded')
-        .withArgs(this.mockAccount.address, [
-          signerToConfirm.address.toLowerCase(),
-          anotherSigner.address.toLowerCase(),
-        ]);
+        .to.emit(this.mock, 'ERC7913SignerAdded')
+        .withArgs(this.mockAccount.address, signerToConfirm.address.toLowerCase())
+        .to.emit(this.mock, 'ERC7913SignerAdded')
+        .withArgs(this.mockAccount.address, anotherSigner.address.toLowerCase());
 
       // Verify both signers were added
       await expect(this.mock.isSigner(this.mockAccount.address, signerToConfirm.address)).to.eventually.be.true;
@@ -250,8 +249,8 @@ describe('ERC7579MultisigConfirmation', function () {
 
       // Now remove the signer (no confirmation required for removal)
       await expect(this.mockFromAccount.removeSigners([signerToConfirm.address]))
-        .to.emit(this.mock, 'ERC7913SignersRemoved')
-        .withArgs(this.mockAccount.address, [signerToConfirm.address.toLowerCase()]);
+        .to.emit(this.mock, 'ERC7913SignerRemoved')
+        .withArgs(this.mockAccount.address, signerToConfirm.address.toLowerCase());
 
       // Verify signer was removed
       await expect(this.mock.isSigner(this.mockAccount.address, signerToConfirm.address)).to.eventually.be.false;

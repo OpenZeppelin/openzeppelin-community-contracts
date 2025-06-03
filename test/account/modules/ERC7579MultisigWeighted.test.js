@@ -90,14 +90,12 @@ describe('ERC7579MultisigWeighted', function () {
   it('sets initial signers, weights, and threshold on installation', async function () {
     const tx = await this.mockAccountFromEntrypoint.installModule(this.moduleType, this.mock.target, this.installData);
 
-    await expect(tx)
-      .to.emit(this.mock, 'ERC7913SignersAdded')
-      .withArgs(
-        this.mockAccount.address,
-        this.signers.map(signer => signer.toLowerCase()),
-      )
-      .to.emit(this.mock, 'ERC7913ThresholdSet')
-      .withArgs(this.mockAccount.address, this.threshold);
+    for (const signer of this.signers) {
+      await expect(tx)
+        .to.emit(this.mock, 'ERC7913SignerAdded')
+        .withArgs(this.mockAccount.address, signer.toLowerCase());
+    }
+    await expect(tx).to.emit(this.mock, 'ERC7913ThresholdSet').withArgs(this.mockAccount.address, this.threshold);
 
     // Verify signers and weights were set correctly
     for (let i = 0; i < this.signers.length; i++) {
@@ -151,12 +149,12 @@ describe('ERC7579MultisigWeighted', function () {
       const signersBefore = await this.mock.signers(this.mockAccount.address);
 
       // Add new signer
-      await expect(this.mockFromAccount.addSigners(newSigners))
-        .to.emit(this.mock, 'ERC7913SignersAdded')
-        .withArgs(
-          this.mockAccount.address,
-          newSigners.map(address => address.toLowerCase()),
-        );
+      const tx = await this.mockFromAccount.addSigners(newSigners);
+      for (const signer of newSigners) {
+        await expect(tx)
+          .to.emit(this.mock, 'ERC7913SignerAdded')
+          .withArgs(this.mockAccount.address, signer.toLowerCase());
+      }
 
       // Get signers after adding
       const signersAfter = await this.mock.signers(this.mockAccount.address);
@@ -230,8 +228,8 @@ describe('ERC7579MultisigWeighted', function () {
 
       // Remove signer
       await expect(this.mockFromAccount.removeSigners([removedSigner]))
-        .to.emit(this.mock, 'ERC7913SignersRemoved')
-        .withArgs(this.mockAccount.address, [removedSigner]);
+        .to.emit(this.mock, 'ERC7913SignerRemoved')
+        .withArgs(this.mockAccount.address, removedSigner);
 
       // Check weight was updated
       const weightAfter = await this.mock.totalWeight(this.mockAccount.address);
