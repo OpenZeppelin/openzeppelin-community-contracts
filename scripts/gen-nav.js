@@ -8,6 +8,8 @@ const baseDir = process.argv[2];
 
 const files = glob.sync(baseDir + '/**/*.adoc').map(f => path.relative(baseDir, f));
 
+console.log('.API');
+
 function getPageTitle(directory) {
   switch (directory) {
     case 'metatx':
