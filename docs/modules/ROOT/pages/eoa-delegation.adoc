@@ -86,7 +86,7 @@ WARNING: Updating the delegation designator may render your EOA unusable due to 
 
 == Using with ERC-4337
 
-The ability to set code to execute logic on an EOA allows users to leverage ERC-4337 infrastructure to process user operations. Developers only need to combine an xref:api:account.adoc#Account[`Account`] contract with an xref:api:utils.adoc#SignerERC7702[`SignerERC7702`] to accomplish ERC-4337 compliance out of the box.
+The ability to set code to execute logic on an EOA allows users to leverage ERC-4337 infrastructure to process user operations. Developers only need to combine an xref:api:account.adoc#Account[`Account`] contract with an xref:api:utils/cryptography.adoc#SignerERC7702[`SignerERC7702`] to accomplish ERC-4337 compliance out of the box.
 
 === Sending a UserOp
 

@@ -28,7 +28,7 @@ Accounts (i.e. Smart Contract Wallets or Smart Accounts) are particularly likely
 
 On one hand, making sure that the Account signature is only valid for an specific smart contract (i.e. an application) is difficult since it requires to validate a signature whose domain is the application but also the Account itself. For these reason, the community developed https://eips.ethereum.org/EIPS/eip-7739[ERC-7739]; a defensive rehashing mechanism that binds a signature to a single domain using a nested EIP-712 approach (i.e. an EIP-712 typed structure wrapping another).
 
-In case your smart contract validates signatures, using xref:api:utils.adoc#ERC7739Signer[`ERC7739Signer`] will implement the https://docs.openzeppelin.com/contracts/api/interfaces#IERC1271[`IERC1271`] interface for validating smart contract signatures following the approach suggested by ERC-7739:
+In case your smart contract validates signatures, using xref:api:utils/cryptography.adoc#ERC7739Signer[`ERC7739Signer`] will implement the https://docs.openzeppelin.com/contracts/api/interfaces#IERC1271[`IERC1271`] interface for validating smart contract signatures following the approach suggested by ERC-7739:
 
 [source,solidity]
 ----
@@ -41,7 +41,7 @@ ERC-7913 extends the concept of signature verification to support keys that don'
 
 The standard defines a verifier interface that can be implemented to support different types of keys. A signer is represented as a `bytes` object that concatenates a verifier address and a key: `verifier || key`.
 
-xref:api:utils.adoc#ERC7913Utils[`ERC7913Utils`] provides functions for verifying signatures using ERC-7913 compatible verifiers:
+xref:api:utils/cryptography.adoc#ERC7913Utils[`ERC7913Utils`] provides functions for verifying signatures using ERC-7913 compatible verifiers:
 
 [source,solidity]
 ----
