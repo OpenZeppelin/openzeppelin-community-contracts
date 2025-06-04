@@ -34,7 +34,7 @@ import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
  *
  * Inspired by:
  *
- * * https://github.com/daimo-eth/p256-verifier/blob/master/src/WebAuthn.sol[daimo-eth implementation]
+ * - https://github.com/daimo-eth/p256-verifier/blob/master/src/WebAuthn.sol[daimo-eth implementation]
  * - https://github.com/base/webauthn-sol/blob/main/src/WebAuthn.sol[base implementation]
  */
 library WebAuthn {
