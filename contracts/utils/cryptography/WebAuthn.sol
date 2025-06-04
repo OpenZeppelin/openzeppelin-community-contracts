@@ -115,6 +115,7 @@ library WebAuthn {
      *
      * Same as {verifyMinimal}, but also verifies:
      *
+     * [start=4]
      * 4. {validateUserPresentBitSet} - confirming physical user presence during authentication
      *
      * This compliance level satisfies the core WebAuthn verification requirements while
