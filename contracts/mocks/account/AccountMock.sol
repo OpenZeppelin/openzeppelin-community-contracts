@@ -2,6 +2,7 @@
 
 pragma solidity ^0.8.20;
 
+import {Initializable} from "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 import {Account} from "../../account/Account.sol";
 import {ERC721Holder} from "@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol";
 import {ERC1155Holder} from "@openzeppelin/contracts/token/ERC1155/utils/ERC1155Holder.sol";
@@ -15,6 +16,19 @@ abstract contract AccountMock is Account, ERC7739, ERC7821, ERC721Holder, ERC115
     function _rawSignatureValidation(bytes32 hash, bytes calldata signature) internal pure override returns (bool) {
         return signature.length >= 32 && bytes32(signature) == hash;
     }
+
+    /// @inheritdoc ERC7821
+    function _erc7821AuthorizedExecutor(
+        address caller,
+        bytes32 mode,
+        bytes calldata executionData
+    ) internal view virtual override returns (bool) {
+        return caller == address(entryPoint()) || super._erc7821AuthorizedExecutor(caller, mode, executionData);
+    }
+}
+
+abstract contract AccountInitializableMock is Initializable, AccountMock {
+    function initialize() public initializer {}
 
     /// @inheritdoc ERC7821
     function _erc7821AuthorizedExecutor(
