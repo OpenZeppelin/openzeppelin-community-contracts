@@ -5,11 +5,11 @@ NOTE: This document is better viewed at https://docs.openzeppelin.com/community-
 
 A collection of contracts and libraries that implement various signature validation schemes and cryptographic primitives. These utilities enable secure authentication, multisignature operations, and advanced cryptographic operations in smart contracts.
 
- * {ERC7739}: An abstract contract to validate signatures following the rehashing scheme from `ERC7739Utils`.
  * {ERC7739Utils}: Utilities library that implements a defensive rehashing mechanism to prevent replayability of smart contract signatures based on ERC-7739.
  * {ERC7913Utils}: Utilities library that implements ERC-1271 and ECDSA signature verification with fallback to ERC-7913.
  * {ZKEmailUtils}: Library for ZKEmail signature validation utilities, enabling email-based authentication through zero-knowledge proofs.
  * {AbstractSigner}: Abstract contract for internal signature validation in smart contracts.
+ * {ERC7739}: An abstract contract to validate signatures following the rehashing scheme from `ERC7739Utils`.
  * {SignerECDSA}, {SignerP256}, {SignerRSA}: Implementations of an {AbstractSigner} with specific signature validation algorithms.
  * {SignerERC7702}: Implementation of {AbstractSigner} that validates signatures using the contract's own address as the signer, useful for delegated accounts following EIP-7702.
  * {SignerERC7913}, {MultiSignerERC7913}, {MultiSignerERC7913Weighted}: Implementations of {AbstractSigner} that validate signatures based on ERC-7913. Including a simple and weighted multisignature scheme.
@@ -18,7 +18,6 @@ A collection of contracts and libraries that implement various signature validat
 
 == Utils
 
-{{ERC7739}}
 
 {{ERC7739Utils}}
 
@@ -29,6 +28,8 @@ A collection of contracts and libraries that implement various signature validat
 == Abstract Signers
 
 {{AbstractSigner}}
+
+{{ERC7739}}
 
 {{SignerECDSA}}
 

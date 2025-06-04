@@ -1,9 +1,9 @@
 :github-icon: pass:[<svg class="icon"><use href="#github-icon"/></svg>]
-:ERC7739: pass:normal[xref:utils/cryptography.adoc#ERC7739[`ERC7739`]]
 :ERC7739Utils: pass:normal[xref:utils/cryptography.adoc#ERC7739Utils[`ERC7739Utils`]]
 :ERC7913Utils: pass:normal[xref:utils/cryptography.adoc#ERC7913Utils[`ERC7913Utils`]]
 :ZKEmailUtils: pass:normal[xref:utils/cryptography.adoc#ZKEmailUtils[`ZKEmailUtils`]]
 :AbstractSigner: pass:normal[xref:utils/cryptography.adoc#AbstractSigner[`AbstractSigner`]]
+:ERC7739: pass:normal[xref:utils/cryptography.adoc#ERC7739[`ERC7739`]]
 :SignerECDSA: pass:normal[xref:utils/cryptography.adoc#SignerECDSA[`SignerECDSA`]]
 :SignerP256: pass:normal[xref:utils/cryptography.adoc#SignerP256[`SignerP256`]]
 :SignerRSA: pass:normal[xref:utils/cryptography.adoc#SignerRSA[`SignerRSA`]]
@@ -19,8 +19,8 @@
 :ERC7913P256Verifier: pass:normal[xref:utils/cryptography.adoc#ERC7913P256Verifier[`ERC7913P256Verifier`]]
 :ERC7913RSAVerifier: pass:normal[xref:utils/cryptography.adoc#ERC7913RSAVerifier[`ERC7913RSAVerifier`]]
 :ERC7913ZKEmailVerifier: pass:normal[xref:utils/cryptography.adoc#ERC7913ZKEmailVerifier[`ERC7913ZKEmailVerifier`]]
-:ERC7739Utils: pass:normal[xref:utils/cryptography.adoc#ERC7739Utils[`ERC7739Utils`]]
 :IERC7913SignatureVerifier: pass:normal[xref:interfaces.adoc#IERC7913SignatureVerifier[`IERC7913SignatureVerifier`]]
+:ERC7739Utils: pass:normal[xref:utils/cryptography.adoc#ERC7739Utils[`ERC7739Utils`]]
 :AbstractSigner: pass:normal[xref:utils/cryptography.adoc#AbstractSigner[`AbstractSigner`]]
 :Account: pass:normal[xref:account.adoc#Account[`Account`]]
 :AbstractSigner: pass:normal[xref:utils/cryptography.adoc#AbstractSigner[`AbstractSigner`]]
@@ -44,11 +44,11 @@ NOTE: This document is better viewed at https://docs.openzeppelin.com/community-
 
 A collection of contracts and libraries that implement various signature validation schemes and cryptographic primitives. These utilities enable secure authentication, multisignature operations, and advanced cryptographic operations in smart contracts.
 
- * {ERC7739}: An abstract contract to validate signatures following the rehashing scheme from `ERC7739Utils`.
  * {ERC7739Utils}: Utilities library that implements a defensive rehashing mechanism to prevent replayability of smart contract signatures based on ERC-7739.
  * {ERC7913Utils}: Utilities library that implements ERC-1271 and ECDSA signature verification with fallback to ERC-7913.
  * {ZKEmailUtils}: Library for ZKEmail signature validation utilities, enabling email-based authentication through zero-knowledge proofs.
  * {AbstractSigner}: Abstract contract for internal signature validation in smart contracts.
+ * {ERC7739}: An abstract contract to validate signatures following the rehashing scheme from `ERC7739Utils`.
  * {SignerECDSA}, {SignerP256}, {SignerRSA}: Implementations of an {AbstractSigner} with specific signature validation algorithms.
  * {SignerERC7702}: Implementation of {AbstractSigner} that validates signatures using the contract's own address as the signer, useful for delegated accounts following EIP-7702.
  * {SignerERC7913}, {MultiSignerERC7913}, {MultiSignerERC7913Weighted}: Implementations of {AbstractSigner} that validate signatures based on ERC-7913. Including a simple and weighted multisignature scheme.
@@ -56,86 +56,6 @@ A collection of contracts and libraries that implement various signature validat
  * {ERC7913P256Verifier}, {ERC7913RSAVerifier}, {ERC7913ZKEmailVerifier}: Ready to use ERC-7913 signature verifiers for P256, RSA keys, and ZKEmail.
 
 == Utils
-
-:isValidSignature: pass:normal[xref:#ERC7739-isValidSignature-bytes32-bytes-[`++isValidSignature++`]]
-
-[.contract]
-[[ERC7739]]
-=== `++ERC7739++` link:https://github.com/OpenZeppelin/openzeppelin-community-contracts/blob/master/contracts/utils/cryptography/signers/ERC7739.sol[{github-icon},role=heading-link]
-
-[.hljs-theme-light.nopadding]
-```solidity
-import "@openzeppelin/community-contracts/utils/cryptography/signers/ERC7739.sol";
-```
-
-Validates signatures wrapping the message hash in a nested EIP712 type. See {ERC7739Utils}.
-
-Linking the signature to the EIP-712 domain separator is a security measure to prevent signature replay across different
-EIP-712 domains (e.g. a single offchain owner of multiple contracts).
-
-This contract requires implementing the {_rawSignatureValidation} function, which passes the wrapped message hash,
-which may be either an typed data or a personal sign nested type.
-
-NOTE: https://docs.openzeppelin.com/contracts/api/utils#EIP712[EIP-712] uses
-https://docs.openzeppelin.com/contracts/api/utils#ShortStrings[ShortStrings] to optimize gas costs for
-short strings (up to 31 characters). Consider that strings longer than that will use storage, which
-may limit the ability of the signer to be used within the ERC-4337 validation phase (due to
-https://eips.ethereum.org/EIPS/eip-7562#storage-rules[ERC-7562 storage access rules]).
-
-[.contract-index]
-.Functions
---
-* `++isValidSignature(hash, signature)++`
-
-[.contract-subindex-inherited]
-.IERC1271
-
-[.contract-subindex-inherited]
-.EIP712
-* `++_domainSeparatorV4()++`
-* `++_hashTypedDataV4(structHash)++`
-* `++eip712Domain()++`
-* `++_EIP712Name()++`
-* `++_EIP712Version()++`
-
-[.contract-subindex-inherited]
-.IERC5267
-
-[.contract-subindex-inherited]
-.AbstractSigner
-* `++_rawSignatureValidation(hash, signature)++`
-
---
-
-[.contract-index]
-.Events
---
-
-[.contract-subindex-inherited]
-.IERC1271
-
-[.contract-subindex-inherited]
-.EIP712
-
-[.contract-subindex-inherited]
-.IERC5267
-* `++EIP712DomainChanged()++`
-
-[.contract-subindex-inherited]
-.AbstractSigner
-
---
-
-[.contract-item]
-[[ERC7739-isValidSignature-bytes32-bytes-]]
-==== `[.contract-item-name]#++isValidSignature++#++(bytes32 hash, bytes signature) → bytes4 result++` [.item-kind]#public#
-
-Attempts validating the signature in a nested EIP-712 type.
-
-A nested EIP-712 type might be presented in 2 different ways:
-
-- As a nested EIP-712 typed data
-- As a _personal_ signature (an EIP-712 mimic of the `eth_personalSign` for a smart contract)
 
 :encodeTypedDataSig: pass:normal[xref:#ERC7739Utils-encodeTypedDataSig-bytes-bytes32-bytes32-string-[`++encodeTypedDataSig++`]]
 :decodeTypedDataSig: pass:normal[xref:#ERC7739Utils-decodeTypedDataSig-bytes-[`++decodeTypedDataSig++`]]
@@ -414,6 +334,86 @@ WARNING: Implementing a signature validation algorithm is a security-sensitive o
 cryptographic verification. It is important to review and test thoroughly before deployment. Consider
 using one of the signature verification libraries (https://docs.openzeppelin.com/contracts/api/utils#ECDSA[ECDSA],
 https://docs.openzeppelin.com/contracts/api/utils#P256[P256] or https://docs.openzeppelin.com/contracts/api/utils#RSA[RSA]).
+
+:isValidSignature: pass:normal[xref:#ERC7739-isValidSignature-bytes32-bytes-[`++isValidSignature++`]]
+
+[.contract]
+[[ERC7739]]
+=== `++ERC7739++` link:https://github.com/OpenZeppelin/openzeppelin-community-contracts/blob/master/contracts/utils/cryptography/signers/ERC7739.sol[{github-icon},role=heading-link]
+
+[.hljs-theme-light.nopadding]
+```solidity
+import "@openzeppelin/community-contracts/utils/cryptography/signers/ERC7739.sol";
+```
+
+Validates signatures wrapping the message hash in a nested EIP712 type. See {ERC7739Utils}.
+
+Linking the signature to the EIP-712 domain separator is a security measure to prevent signature replay across different
+EIP-712 domains (e.g. a single offchain owner of multiple contracts).
+
+This contract requires implementing the {_rawSignatureValidation} function, which passes the wrapped message hash,
+which may be either an typed data or a personal sign nested type.
+
+NOTE: https://docs.openzeppelin.com/contracts/api/utils#EIP712[EIP-712] uses
+https://docs.openzeppelin.com/contracts/api/utils#ShortStrings[ShortStrings] to optimize gas costs for
+short strings (up to 31 characters). Consider that strings longer than that will use storage, which
+may limit the ability of the signer to be used within the ERC-4337 validation phase (due to
+https://eips.ethereum.org/EIPS/eip-7562#storage-rules[ERC-7562 storage access rules]).
+
+[.contract-index]
+.Functions
+--
+* `++isValidSignature(hash, signature)++`
+
+[.contract-subindex-inherited]
+.IERC1271
+
+[.contract-subindex-inherited]
+.EIP712
+* `++_domainSeparatorV4()++`
+* `++_hashTypedDataV4(structHash)++`
+* `++eip712Domain()++`
+* `++_EIP712Name()++`
+* `++_EIP712Version()++`
+
+[.contract-subindex-inherited]
+.IERC5267
+
+[.contract-subindex-inherited]
+.AbstractSigner
+* `++_rawSignatureValidation(hash, signature)++`
+
+--
+
+[.contract-index]
+.Events
+--
+
+[.contract-subindex-inherited]
+.IERC1271
+
+[.contract-subindex-inherited]
+.EIP712
+
+[.contract-subindex-inherited]
+.IERC5267
+* `++EIP712DomainChanged()++`
+
+[.contract-subindex-inherited]
+.AbstractSigner
+
+--
+
+[.contract-item]
+[[ERC7739-isValidSignature-bytes32-bytes-]]
+==== `[.contract-item-name]#++isValidSignature++#++(bytes32 hash, bytes signature) → bytes4 result++` [.item-kind]#public#
+
+Attempts validating the signature in a nested EIP-712 type.
+
+A nested EIP-712 type might be presented in 2 different ways:
+
+- As a nested EIP-712 typed data
+- As a _personal_ signature (an EIP-712 mimic of the `eth_personalSign` for a smart contract)
 
 :_setSigner: pass:normal[xref:#SignerECDSA-_setSigner-address-[`++_setSigner++`]]
 :signer: pass:normal[xref:#SignerECDSA-signer--[`++signer++`]]

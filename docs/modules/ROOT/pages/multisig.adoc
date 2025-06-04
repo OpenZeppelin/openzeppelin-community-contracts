@@ -25,7 +25,7 @@ https://eips.ethereum.org/EIPS/eip-7913[ERC-7913] extends the concept of signer 
 
 === SignerERC7913
 
-The xref:api:utils.adoc#SignerERC7913[`SignerERC7913`] contract allows a single ERC-7913 formatted signer to control an account. The signer is represented as a `bytes` object that concatenates a verifier address and a key: `verifier || key`.
+The xref:api:utils/cryptography.adoc#SignerERC7913[`SignerERC7913`] contract allows a single ERC-7913 formatted signer to control an account. The signer is represented as a `bytes` object that concatenates a verifier address and a key: `verifier || key`.
 
 [source,solidity]
 ----
