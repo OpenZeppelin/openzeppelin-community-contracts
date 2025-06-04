@@ -12,7 +12,7 @@ import {WebAuthn} from "./WebAuthn.sol";
  * leveraging the P256 public key stored in the contract. It allows for both WebAuthn
  * and raw P256 signature validation, providing compatibility with both signature types.
  *
- * The signature is expected to be an abi-encoded {WebAuthn.WebAuthnAuth} struct.
+ * The signature is expected to be an abi-encoded {WebAuthn-WebAuthnAuth} struct.
  *
  * Example usage:
  *
