@@ -9,6 +9,7 @@ A collection of contracts and libraries that implement various signature validat
  * {ERC7739Utils}: Utilities library that implements a defensive rehashing mechanism to prevent replayability of smart contract signatures based on ERC-7739.
  * {ERC7913Utils}: Utilities library that implements ERC-1271 and ECDSA signature verification with fallback to ERC-7913.
  * {ZKEmailUtils}: Library for ZKEmail signature validation utilities, enabling email-based authentication through zero-knowledge proofs.
+ * {WebAuthn}: Library for verifying WebAuthn Authentication Assertions.
  * {AbstractSigner}: Abstract contract for internal signature validation in smart contracts.
  * {SignerECDSA}, {SignerP256}, {SignerRSA}: Implementations of an {AbstractSigner} with specific signature validation algorithms.
  * {SignerERC7702}: Implementation of {AbstractSigner} that validates signatures using the contract's own address as the signer, useful for delegated accounts following EIP-7702.
@@ -25,6 +26,8 @@ A collection of contracts and libraries that implement various signature validat
 {{ERC7913Utils}}
 
 {{ZKEmailUtils}}
+
+{{WebAuthn}}
 
 == Abstract Signers
 
