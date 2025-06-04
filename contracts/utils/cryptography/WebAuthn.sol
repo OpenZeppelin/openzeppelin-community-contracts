@@ -33,7 +33,8 @@ import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
  *   focuses on authentication (`webauthn.get`) rather than registration ceremonies.
  *
  * Inspired by:
- * - https://github.com/daimo-eth/p256-verifier/blob/master/src/WebAuthn.sol[daimo-eth implementation]
+ *
+ * * https://github.com/daimo-eth/p256-verifier/blob/master/src/WebAuthn.sol[daimo-eth implementation]
  * - https://github.com/base/webauthn-sol/blob/main/src/WebAuthn.sol[base implementation]
  */
 library WebAuthn {
@@ -135,11 +136,13 @@ library WebAuthn {
      *
      * Same as {verify}, but also also verifies:
      *
+     * [start=5]
      * 5. {validateUserVerifiedBitSet} - confirming stronger user authentication (biometrics/PIN)
      * 6. {validateBackupEligibilityAndState}- Backup Eligibility (`BE`) and Backup State (BS) bits
      * relationship is valid
      *
      * This strict verification is recommended for:
+     *
      * * High-value transactions
      * * Privileged operations
      * * Account recovery or critical settings changes
@@ -174,6 +177,7 @@ library WebAuthn {
      *
      * The UV bit indicates whether the user was verified using a stronger identification method
      * (biometrics, PIN, password). While optional, requiring UV=1 is recommended for:
+     *
      * * High-value transactions and sensitive operations
      * * Account recovery and critical settings changes
      * * Privileged operations
@@ -195,6 +199,7 @@ library WebAuthn {
      * with the WebAuthn spec.
      *
      * Returns true in these valid states:
+     *
      * * `BE=1`, `BS=0`: Credential is eligible but not backed up
      * * `BE=1`, `BS=1`: Credential is eligible and backed up
      * * `BE=0`, `BS=0`: Credential is not eligible and not backed up
