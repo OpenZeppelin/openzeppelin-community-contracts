@@ -7,6 +7,7 @@ import {IVerifier} from "@zk-email/email-tx-builder/src/interfaces/IVerifier.sol
 import {EmailAuthMsg} from "@zk-email/email-tx-builder/src/interfaces/IEmailTypes.sol";
 import {AbstractSigner} from "./AbstractSigner.sol";
 import {ZKEmailUtils} from "../ZKEmailUtils.sol";
+import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 
 /**
  * @dev Implementation of {AbstractSigner} using https://docs.zk.email[ZKEmail] signatures.
@@ -23,7 +24,7 @@ import {ZKEmailUtils} from "../ZKEmailUtils.sol";
  * * {accountSalt} - A unique identifier derived from the user's email address and account code.
  * * {DKIMRegistry} - An instance of the DKIM registry contract for domain verification.
  * * {verifier} - An instance of the Verifier contract for zero-knowledge proof validation.
- * * {templateId} - The template ID of the sign hash command, defining the expected format.
+ * * {templateIds} - The template IDs of the sign hash command, defining the expected format.
  *
  * Example of usage:
  *
@@ -33,13 +34,13 @@ import {ZKEmailUtils} from "../ZKEmailUtils.sol";
  *       bytes32 accountSalt,
  *       IDKIMRegistry registry,
  *       IVerifier verifier,
- *       uint256 templateId
+ *       bytes32[] templateIds
  *   ) public initializer {
  *       // Will revert if the signer is already initialized
  *       _setAccountSalt(accountSalt);
  *       _setDKIMRegistry(registry);
  *       _setVerifier(verifier);
- *       _setTemplateId(templateId);
+ *       _addTemplateIds(templateIds);
  *   }
  * }
  * ```
@@ -50,11 +51,18 @@ import {ZKEmailUtils} from "../ZKEmailUtils.sol";
  */
 abstract contract SignerZKEmail is AbstractSigner {
     using ZKEmailUtils for EmailAuthMsg;
+    using EnumerableSet for EnumerableSet.Bytes32Set;
 
     bytes32 private _accountSalt;
     IDKIMRegistry private _registry;
     IVerifier private _verifier;
-    uint256 private _templateId;
+    EnumerableSet.Bytes32Set private _templateIds;
+
+    /// @dev Emitted when a template ID is added.
+    event TemplateIdAdded(bytes32 indexed templateId);
+
+    /// @dev Emitted when a template ID is removed.
+    event TemplateIdRemoved(bytes32 indexed templateId);
 
     /// @dev Proof verification error.
     error InvalidEmailProof(ZKEmailUtils.EmailProofError err);
@@ -94,9 +102,15 @@ abstract contract SignerZKEmail is AbstractSigner {
         return _verifier;
     }
 
-    /// @dev The command template of the sign hash command.
-    function templateId() public view virtual returns (uint256) {
-        return _templateId;
+    /**
+     * @dev Command templates enabled for this signer.
+     *
+     * WARNING: This operation copies the entire templateIds set to memory, which can be expensive. This is designed
+     * for view accessors queried without gas fees. Using it in state-changing functions may become uncallable
+     * if the templateIds set grows too large.
+     */
+    function templateIds() public view virtual returns (bytes32[] memory) {
+        return _templateIds.values();
     }
 
     /// @dev Set the {accountSalt}.
@@ -114,9 +128,18 @@ abstract contract SignerZKEmail is AbstractSigner {
         _verifier = verifier_;
     }
 
-    /// @dev Set the command's {templateId}.
-    function _setTemplateId(uint256 templateId_) internal virtual {
-        _templateId = templateId_;
+    /// @dev Adds the `_templateIds` to the command's {templateIds}.
+    function _addTemplateIds(bytes32[] memory templateIds_) internal virtual {
+        for (uint256 i = 0; i < templateIds_.length; i++) {
+            if (_templateIds.add(templateIds_[i])) emit TemplateIdAdded(templateIds_[i]);
+        }
+    }
+
+    /// @dev Removes the `_templateIds` from the command's {templateIds}.
+    function _removeTemplateIds(bytes32[] memory templateIds_) internal virtual {
+        for (uint256 i = 0; i < templateIds_.length; i++) {
+            if (_templateIds.remove(templateIds_[i])) emit TemplateIdRemoved(templateIds_[i]);
+        }
     }
 
     /**
@@ -153,7 +176,7 @@ abstract contract SignerZKEmail is AbstractSigner {
         if (signature.length < 512) return false;
         EmailAuthMsg memory emailAuthMsg = abi.decode(signature, (EmailAuthMsg));
         return (abi.decode(emailAuthMsg.commandParams[0], (bytes32)) == hash &&
-            emailAuthMsg.templateId == templateId() &&
+            _templateIds.contains(emailAuthMsg.templateId) &&
             emailAuthMsg.proof.accountSalt == accountSalt() &&
             emailAuthMsg.isValidZKEmail(DKIMRegistry(), verifier()) == ZKEmailUtils.EmailProofError.NoError);
     }
