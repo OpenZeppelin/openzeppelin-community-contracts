@@ -8,7 +8,7 @@ To enable sponsorship, users sign their user operations including a special fiel
 
 == Signed Sponsorship
 
-The xref:api:accounts.adoc#PaymasterSigner[`PaymasterSigner`] implements signature-based sponsorship via authorization signatures, allowing designated paymaster signers to authorize and sponsor specific user operations without requiring users to hold native ETH.
+The xref:api:account.adoc#PaymasterSigner[`PaymasterSigner`] implements signature-based sponsorship via authorization signatures, allowing designated paymaster signers to authorize and sponsor specific user operations without requiring users to hold native ETH.
 
 TIP: Learn more about xref:accounts.adoc#selecting_a_signer[signers] to explore different approaches to user operation sponsorship via signatures.
 
