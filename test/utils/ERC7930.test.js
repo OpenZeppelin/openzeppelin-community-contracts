@@ -20,6 +20,10 @@ describe('ERC7390', function () {
       '0x01', // mainnet
       '0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045', // 20 bytes of the ethereum address
     ]);
+
+    await expect(this.mock.$formatEvmV1(1, '0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045')).to.eventually.equal(
+      '0x00010000010114D8DA6BF26964AF9D7EED9E03E53415D37AA96045'.toLowerCase(),
+    );
   });
 
   it('Example 2: Solana mainnet address', async function () {
@@ -62,5 +66,9 @@ describe('ERC7390', function () {
       '0xA4B1', // arbitrum one chainid (42161)
       '0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045', // 20 bytes of the ethereum address
     ]);
+
+    await expect(this.mock.$formatEvmV1(42161, '0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045')).to.eventually.equal(
+      '0x0001000002A4B114D8DA6BF26964AF9D7EED9E03E53415D37AA96045'.toLowerCase(),
+    );
   });
 });

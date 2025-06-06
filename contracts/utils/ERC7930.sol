@@ -34,6 +34,16 @@ library ERC7930 {
             );
     }
 
+    function formatEvmV1(uint256 chainid, address addr) internal pure returns (bytes memory) {
+        if (chainid < type(uint8).max)
+            return abi.encodePacked(bytes2(0x0001), bytes2(0x0000), uint8(1), uint8(chainid), uint8(20), addr);
+        if (chainid < type(uint16).max)
+            return abi.encodePacked(bytes2(0x0001), bytes2(0x0000), uint8(2), uint16(chainid), uint8(20), addr);
+        if (chainid < type(uint24).max)
+            return abi.encodePacked(bytes2(0x0001), bytes2(0x0000), uint8(3), uint24(chainid), uint8(20), addr);
+        else revert();
+    }
+
     function parseV1(
         bytes memory self
     ) internal pure returns (bytes2 chainType, bytes memory chainReference, bytes memory addr) {
