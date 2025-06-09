@@ -176,7 +176,7 @@ abstract contract SignerZKEmail is AbstractSigner {
         if (signature.length < 512) return false;
         EmailAuthMsg memory emailAuthMsg = abi.decode(signature, (EmailAuthMsg));
         return (abi.decode(emailAuthMsg.commandParams[0], (bytes32)) == hash &&
-            _templateIds.contains(emailAuthMsg.templateId) &&
+            _templateIds.contains(bytes32(emailAuthMsg.templateId)) &&
             emailAuthMsg.proof.accountSalt == accountSalt() &&
             emailAuthMsg.isValidZKEmail(DKIMRegistry(), verifier()) == ZKEmailUtils.EmailProofError.NoError);
     }
