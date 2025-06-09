@@ -16,12 +16,12 @@ contract AccountZKEmailMock is Account, SignerZKEmail, ERC7739, ERC7821, ERC721H
         bytes32 accountSalt_,
         IDKIMRegistry registry_,
         IVerifier verifier_,
-        uint256 templateId_
+        bytes32[] memory templateIds_
     ) EIP712("AccountZKEmailMock", "1") {
         _setAccountSalt(accountSalt_);
         _setDKIMRegistry(registry_);
         _setVerifier(verifier_);
-        _setTemplateId(templateId_);
+        _addTemplateIds(templateIds_);
     }
 
     /// @inheritdoc ERC7821
