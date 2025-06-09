@@ -54,6 +54,10 @@ describe('ERC7390', function () {
           asHex(address),
         ]);
 
+        await expect(
+          this.mock.$formatV1(CAIP350[type].chainType, asHex(reference), asHex(address)),
+        ).to.eventually.equal(binary);
+
         if (type == 'eip155' && reference && address) {
           await expect(this.mock.$formatEvmV1(reference, address)).to.eventually.equal(binary.toLowerCase());
         }

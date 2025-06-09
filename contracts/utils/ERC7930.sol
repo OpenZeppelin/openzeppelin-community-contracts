@@ -4,6 +4,7 @@ pragma solidity ^0.8.24;
 
 import {Bytes} from "@openzeppelin/contracts/utils/Bytes.sol";
 import {Calldata} from "@openzeppelin/contracts/utils/Calldata.sol";
+import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 import {SafeCast} from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
 // 0x00010000010114D8DA6BF26964AF9D7EED9E03E53415D37AA96045
@@ -35,13 +36,19 @@ library ERC7930 {
     }
 
     function formatEvmV1(uint256 chainid, address addr) internal pure returns (bytes memory) {
-        if (chainid <= type(uint8).max)
-            return abi.encodePacked(bytes2(0x0001), bytes2(0x0000), uint8(1), uint8(chainid), uint8(20), addr);
-        if (chainid <= type(uint16).max)
-            return abi.encodePacked(bytes2(0x0001), bytes2(0x0000), uint8(2), uint16(chainid), uint8(20), addr);
-        if (chainid <= type(uint24).max)
-            return abi.encodePacked(bytes2(0x0001), bytes2(0x0000), uint8(3), uint24(chainid), uint8(20), addr);
-        else revert();
+        unchecked {
+            // length fits in a uint8: log256(type(uint256).max) is 31
+            uint256 length = Math.log256(chainid) + 1;
+            return
+                abi.encodePacked(
+                    bytes2(0x0001),
+                    bytes2(0x0000),
+                    uint8(length),
+                    abi.encodePacked(chainid).slice(32 - length),
+                    uint8(20),
+                    addr
+                );
+        }
     }
 
     function parseV1(
