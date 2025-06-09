@@ -18,12 +18,14 @@ library ERC7930 {
     using Bytes for bytes;
 
     error ERC7930ParsingError(bytes);
+    error ERC7930EmptyReferenceAndAddress();
 
     function formatV1(
         bytes2 chainType,
         bytes memory chainReference,
         bytes memory addr
     ) internal pure returns (bytes memory) {
+        require(chainReference.length > 0 || addr.length > 0, ERC7930EmptyReferenceAndAddress());
         return
             abi.encodePacked(
                 bytes2(0x0001),

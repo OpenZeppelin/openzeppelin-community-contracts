@@ -14,9 +14,16 @@ describe('ERC7390', function () {
     Object.assign(this, await loadFixture(fixture));
   });
 
-  it('Address on the local chain', async function () {
+  it('formatEvmV1 address on the local chain', async function () {
     const { reference: chainid, toErc7930 } = await getLocalChain();
     await expect(this.mock.$formatEvmV1(chainid, this.mock)).to.eventually.equal(toErc7930(this.mock).binary);
+  });
+
+  it('formatV1 fails if both reference and address are empty', async function () {
+    await expect(this.mock.$formatV1('0x0000', '0x', '0x')).to.be.revertedWithCustomError(
+      this.mock,
+      'ERC7930EmptyReferenceAndAddress',
+    );
   });
 
   describe('reference examples', function () {

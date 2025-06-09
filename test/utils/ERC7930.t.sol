@@ -8,6 +8,7 @@ contract ERC7930Test is Test {
     using ERC7930 for bytes;
 
     function testFormatParse(bytes2 chainType, bytes calldata chainReference, bytes calldata addr) public view {
+        vm.assume(chainReference.length > 0 || addr.length > 0);
         {
             (bytes2 chainType_, bytes memory chainReference_, bytes memory addr_) = ERC7930
                 .formatV1(chainType, chainReference, addr)
