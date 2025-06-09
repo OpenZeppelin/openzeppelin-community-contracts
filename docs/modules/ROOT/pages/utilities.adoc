@@ -59,3 +59,67 @@ The verification process works as follows:
 * Otherwise: verification is done using an ERC-7913 verifier.
 
 This allows for backward compatibility with EOAs and ERC-1271 contracts while supporting new types of keys.
+
+=== UTXOs (Unspent Transaction Outputs)
+
+_For background on UTXO concepts, see the https://en.bitcoin.it/wiki/UTXO[Bitcoin UTXO model]_
+
+UTXOs represent discrete units of value that can be spent exactly once, providing transaction graph privacy by breaking linkability between transfers. The xref:api:utils.adoc#UTXOs[`UTXOs`] library offers a minimal, flexible foundation for implementing UTXO-like systems in Ethereum smart contracts.
+
+==== Basic UTXO Operations
+
+The library uses `bytes32` for values to support multiple representations: plaintext amounts, encrypted values (FHE), zero-knowledge commitments, or other privacy-preserving formats:
+
+[source,solidity]
+----
+import {UTXOs} from "@openzeppelin/contracts/utils/UTXOs.sol";
+
+contract BasicUTXOToken {
+    using UTXOs for UTXOs.Note;
+    
+    mapping(bytes32 => UTXOs.Note) private _notes;
+    mapping(address => bytes32[]) private _ownerToNotes;  // Separate indexing
+    
+    function mint(address to, uint256 amount) external {
+        bytes32 noteId = keccak256(abi.encode(block.timestamp, to, amount));
+        bytes32 value = bytes32(amount);  // Convert uint256 to bytes32
+        
+        _notes[noteId].create(to, value);
+        _ownerToNotes[to].push(noteId);
+    }
+    
+    function transfer(bytes32 fromNoteId, address to, uint256 amount) external {
+        UTXOs.Note storage fromNote = _notes[fromNoteId];
+        require(fromNote.owner == msg.sender, "Not owner");
+        
+        uint256 currentValue = uint256(fromNote.value);
+        require(currentValue >= amount, "Insufficient value");
+        
+        // Remove spent note
+        _removeFromIndex(msg.sender, fromNoteId);
+        fromNote.remove();
+        
+        // Create new notes
+        bytes32 toNoteId = keccak256(abi.encode(block.timestamp, to, "recipient"));
+        _notes[toNoteId].create(to, bytes32(amount));
+        _ownerToNotes[to].push(toNoteId);
+        
+        // Create change note if needed
+        if (currentValue > amount) {
+            bytes32 changeNoteId = keccak256(abi.encode(block.timestamp, msg.sender, "change"));
+            _notes[changeNoteId].create(msg.sender, bytes32(currentValue - amount));
+            _ownerToNotes[msg.sender].push(changeNoteId);
+        }
+    }
+}
+----
+
+==== Use Cases
+
+* **Privacy Tokens**: Combine with FHE for maximum privacy (encrypted amounts + untraceable transaction graphs)
+* **Mixer Protocols**: Break transaction links while maintaining verifiable balances  
+* **Layer-2 Solutions**: Efficient fraud proofs and state transitions
+* **DeFi Privacy**: Anonymous lending, trading, and yield farming
+* **Cross-Chain Bridges**: Interoperability with UTXO-based blockchains like Bitcoin
+
+The `bytes32` value design makes UTXOs a universal primitive for any privacy-preserving system on Ethereum.
