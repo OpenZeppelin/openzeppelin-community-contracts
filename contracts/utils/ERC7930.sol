@@ -90,9 +90,9 @@ library ERC7930 {
             success = true;
             if (self.length < 0x06) return (false, 0x0000, Calldata.emptyBytes(), Calldata.emptyBytes());
 
-            bytes2 version = _readBytes2(self, 0x00);
+            bytes2 version = _readBytes2Calldata(self, 0x00);
             if (version != bytes2(0x0001)) return (false, 0x0000, Calldata.emptyBytes(), Calldata.emptyBytes());
-            chainType = _readBytes2(self, 0x02);
+            chainType = _readBytes2Calldata(self, 0x02);
 
             uint8 chainReferenceLength = uint8(self[0x04]);
             if (self.length < 0x06 + chainReferenceLength)
@@ -110,6 +110,12 @@ library ERC7930 {
         // This is not memory safe in the general case, but all calls to this private function are within bounds.
         assembly ("memory-safe") {
             value := shl(240, shr(240, mload(add(add(buffer, 0x20), offset))))
+        }
+    }
+
+    function _readBytes2Calldata(bytes calldata buffer, uint256 offset) private pure returns (bytes2 value) {
+        assembly ("memory-safe") {
+            value := shl(240, shr(240, calldataload(add(buffer.offset, offset))))
         }
     }
 
