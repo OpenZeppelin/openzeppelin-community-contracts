@@ -59,7 +59,7 @@ const asHex = value => {
 const formatERC7913v1 = ({ type, reference, address }) => {
   const chainReferenceHex = asHex(reference);
   const addressHex = asHex(address);
-  const interoperableAddress = ethers.solidityPacked(
+  const binary = ethers.solidityPacked(
     [
       'uint16', // version
       'uint16', // type
@@ -77,10 +77,10 @@ const formatERC7913v1 = ({ type, reference, address }) => {
       addressHex,
     ],
   );
-  const checksum = ethers.keccak256(ethers.getBytes(interoperableAddress).slice(2)).slice(2, 10).toUpperCase();
-  const interoperableName = [address, '@', type, reference && `:${reference}`, '#', checksum].filter(Boolean).join('');
+  const checksum = ethers.keccak256(ethers.getBytes(binary).slice(2)).slice(2, 10).toUpperCase();
+  const name = [address, '@', type, reference && `:${reference}`, '#', checksum].filter(Boolean).join('');
 
-  return { address: interoperableAddress, name: interoperableName, fields: { type, reference, address, checksum } };
+  return { binary, name, fields: { type, reference, address, checksum } };
 };
 
 const parseERC7913v1 = input => {
@@ -110,13 +110,11 @@ const parseERC7913v1 = input => {
   }
 };
 
-const format = ({ namespace, reference, address }) => ({
+const format = ({ namespace, reference }) => ({
   namespace,
   reference: reference.toString(),
-  address,
   caip2: `${namespace}:${reference}`,
-  caip10: `${namespace}:${reference}:${address}`,
-  erc7930: formatERC7913v1({ type: namespace, reference, address }),
+  erc7930: formatERC7913v1({ type: namespace, reference }),
   toCaip10: other => `${namespace}:${reference}:${ethers.getAddress(other.target ?? other.address ?? other)}`,
   toErc7930: other => formatERC7913v1({ type: namespace, reference, address: other.target ?? other.address ?? other }),
 });
@@ -125,22 +123,14 @@ module.exports = {
   CAIP350,
   CHAINS: mapValues(
     Object.assign(
-      mapValues(ethereum, reference => ({
-        namespace: 'eip155',
-        reference,
-        address: ethers.Wallet.createRandom().address,
-      })),
-      mapValues(solana, reference => ({
-        namespace: 'solana',
-        reference,
-        address: ethers.encodeBase58(ethers.randomBytes(32)),
-      })),
+      mapValues(ethereum, reference => ({ namespace: 'eip155', reference })),
+      mapValues(solana, reference => ({ namespace: 'solana', reference })),
     ),
     format,
   ),
-  asHex,
+  getLocalChain: () =>
+    ethers.provider.getNetwork().then(({ chainId }) => format({ namespace: 'eip155', reference: chainId })),
   formatERC7913v1,
   parseERC7913v1,
-  local: address =>
-    ethers.provider.getNetwork().then(({ chainId }) => format({ namespace: 'eip155', reference: chainId, address })),
+  asHex,
 };
