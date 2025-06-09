@@ -35,11 +35,11 @@ library ERC7930 {
     }
 
     function formatEvmV1(uint256 chainid, address addr) internal pure returns (bytes memory) {
-        if (chainid < type(uint8).max)
+        if (chainid <= type(uint8).max)
             return abi.encodePacked(bytes2(0x0001), bytes2(0x0000), uint8(1), uint8(chainid), uint8(20), addr);
-        if (chainid < type(uint16).max)
+        if (chainid <= type(uint16).max)
             return abi.encodePacked(bytes2(0x0001), bytes2(0x0000), uint8(2), uint16(chainid), uint8(20), addr);
-        if (chainid < type(uint24).max)
+        if (chainid <= type(uint24).max)
             return abi.encodePacked(bytes2(0x0001), bytes2(0x0000), uint8(3), uint24(chainid), uint8(20), addr);
         else revert();
     }
@@ -110,12 +110,6 @@ library ERC7930 {
         // This is not memory safe in the general case, but all calls to this private function are within bounds.
         assembly ("memory-safe") {
             value := shl(240, shr(240, mload(add(add(buffer, 0x20), offset))))
-        }
-    }
-
-    function _readBytes2Calldata(bytes calldata buffer, uint256 offset) private pure returns (bytes2 value) {
-        assembly ("memory-safe") {
-            value := shl(240, shr(240, calldataload(add(buffer.offset, offset))))
         }
     }
 
