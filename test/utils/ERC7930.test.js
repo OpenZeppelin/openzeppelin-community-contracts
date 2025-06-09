@@ -2,6 +2,8 @@ const { ethers } = require('hardhat');
 const { expect } = require('chai');
 const { loadFixture } = require('@nomicfoundation/hardhat-network-helpers');
 
+const { CAIP350, asHex, parseERC7913v1, formatERC7913v1, local } = require('../helpers/chains');
+
 async function fixture() {
   const mock = await ethers.deployContract('$ERC7930');
   return { mock };
@@ -12,63 +14,53 @@ describe('ERC7390', function () {
     Object.assign(this, await loadFixture(fixture));
   });
 
-  it('Example 1: Ethereum mainnet address', async function () {
-    await expect(
-      this.mock.$parseV1('0x00010000010114D8DA6BF26964AF9D7EED9E03E53415D37AA96045'),
-    ).to.eventually.deep.equal([
-      '0x0000', // eip155
-      '0x01', // mainnet
-      '0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045', // 20 bytes of the ethereum address
-    ]);
-
-    await expect(this.mock.$formatEvmV1(1, '0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045')).to.eventually.equal(
-      '0x00010000010114D8DA6BF26964AF9D7EED9E03E53415D37AA96045'.toLowerCase(),
-    );
+  it('Address on the local chain', async function () {
+    const { reference: chainid, toErc7930 } = await local();
+    await expect(this.mock.$formatEvmV1(chainid, this.mock)).to.eventually.equal(toErc7930(this.mock).address);
   });
 
-  it('Example 2: Solana mainnet address', async function () {
-    await expect(
-      this.mock.$parseV1(
-        '0x000100022045296998a6f8e2a784db5d9f95e18fc23f70441a1039446801089879b08c7ef02005333498d5aea4ae009585c43f7b8c30df8e70187d4a713d134f977fc8dfe0b5',
-      ),
-    ).to.eventually.deep.equal([
-      '0x0002', // solana
-      '0x45296998a6f8e2a784db5d9f95e18fc23f70441a1039446801089879b08c7ef0', // 32 bytes of the solana genesis block
-      '0x05333498d5aea4ae009585c43f7b8c30df8e70187d4a713d134f977fc8dfe0b5', // 32 bytes of the solana address
-    ]);
-  });
+  describe('reference examples', function () {
+    for (const { title, interoperableName } of [
+      {
+        title: 'Example 1: Ethereum mainnet address',
+        interoperableName: '0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045@eip155:1#4CA88C9C',
+      },
+      {
+        title: 'Example 2: Solana mainnet address',
+        interoperableName:
+          'MJKqp326RZCHnAAbew9MDdui3iCKWco7fsK9sVuZTX2@solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdpKuc147dw2N9d#88835C11',
+      },
+      {
+        title: 'Example 3: EVM address without chainid',
+        interoperableName: '0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045@eip155#B26DB7CB',
+      },
+      {
+        title: 'Example 4: Solana mainnet network, no address',
+        interoperableName: '@solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdpKuc147dw2N9d#2EB18670',
+      },
+      {
+        title: 'Example 5: Arbitrum One address',
+        interoperableName: '0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045@eip155:42161#D2E02854',
+      },
+    ]) {
+      it(title, async function () {
+        const {
+          address: interoperableAddress,
+          fields: { type, reference, address },
+        } = formatERC7913v1(parseERC7913v1(interoperableName));
 
-  it('Example 3: EVM address without chainid', async function () {
-    await expect(this.mock.$parseV1('0x000100000014D8DA6BF26964AF9D7EED9E03E53415D37AA96045')).to.eventually.deep.equal(
-      [
-        '0x0000', // eip155
-        '0x', // no chainid
-        '0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045', // 20 bytes of the ethereum address
-      ],
-    );
-  });
+        await expect(this.mock.$parseV1(interoperableAddress)).to.eventually.deep.equal([
+          CAIP350[type].chainType,
+          asHex(reference),
+          asHex(address),
+        ]);
 
-  it('Example 4: Solana mainnet network, no address', async function () {
-    await expect(
-      this.mock.$parseV1('0x000100022045296998a6f8e2a784db5d9f95e18fc23f70441a1039446801089879b08c7ef000'),
-    ).to.eventually.deep.equal([
-      '0x0002', // solana
-      '0x45296998a6f8e2a784db5d9f95e18fc23f70441a1039446801089879b08c7ef0', // 32 bytes of the solana genesis block
-      '0x', // no address
-    ]);
-  });
-
-  it('Example 5: Arbitrum One address', async function () {
-    await expect(
-      this.mock.$parseV1('0x0001000002A4B114D8DA6BF26964AF9D7EED9E03E53415D37AA96045'),
-    ).to.eventually.deep.equal([
-      '0x0000', // eip155
-      '0xA4B1', // arbitrum one chainid (42161)
-      '0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045', // 20 bytes of the ethereum address
-    ]);
-
-    await expect(this.mock.$formatEvmV1(42161, '0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045')).to.eventually.equal(
-      '0x0001000002A4B114D8DA6BF26964AF9D7EED9E03E53415D37AA96045'.toLowerCase(),
-    );
+        if (type == 'eip155' && reference && address) {
+          await expect(this.mock.$formatEvmV1(reference, address)).to.eventually.equal(
+            interoperableAddress.toLowerCase(),
+          );
+        }
+      });
+    }
   });
 });
