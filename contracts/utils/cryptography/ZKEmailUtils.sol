@@ -5,9 +5,13 @@ pragma solidity ^0.8.24;
 import {Bytes} from "@openzeppelin/contracts/utils/Bytes.sol";
 import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 import {IDKIMRegistry} from "@zk-email/contracts/DKIMRegistry.sol";
-import {IVerifier} from "@zk-email/email-tx-builder/src/interfaces/IVerifier.sol";
 import {EmailAuthMsg} from "@zk-email/email-tx-builder/src/interfaces/IEmailTypes.sol";
 import {CommandUtils} from "@zk-email/email-tx-builder/src/libraries/CommandUtils.sol";
+
+interface IVerifier {
+    function commandBytes() external view returns (uint256);
+    function verifyEmailProof(bytes memory proof) external view returns (bool);
+}
 
 /**
  * @dev Library for https://docs.zk.email[ZKEmail] signature validation utilities.
@@ -102,7 +106,10 @@ library ZKEmailUtils {
         ) {
             return EmailProofError.DKIMPublicKeyHash;
         } else {
-            return verifier.verifyEmailProof(emailAuthMsg.proof) ? EmailProofError.NoError : EmailProofError.EmailProof;
+            return
+                verifier.verifyEmailProof(abi.encode(emailAuthMsg.proof))
+                    ? EmailProofError.NoError
+                    : EmailProofError.EmailProof;
         }
     }
 
