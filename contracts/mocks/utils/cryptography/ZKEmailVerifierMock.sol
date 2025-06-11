@@ -2,7 +2,8 @@
 
 pragma solidity ^0.8.20;
 
-import {IVerifier, EmailProof} from "@zk-email/email-tx-builder/src/interfaces/IVerifier.sol";
+import {EmailProof} from "@zk-email/email-tx-builder/src/interfaces/IVerifier.sol";
+import {IVerifier} from "../../../utils/cryptography/ZKEmailUtils.sol";
 
 contract ZKEmailVerifierMock is IVerifier {
     function commandBytes() external pure returns (uint256) {
@@ -10,7 +11,8 @@ contract ZKEmailVerifierMock is IVerifier {
         return 605;
     }
 
-    function verifyEmailProof(EmailProof memory proof) external pure returns (bool) {
-        return proof.proof.length > 0 && bytes1(proof.proof[0]) == 0x01; // boolean true
+    function verifyEmailProof(bytes memory proof) external pure returns (bool) {
+        EmailProof memory emailProof = abi.decode(proof, (EmailProof));
+        return emailProof.proof.length > 0 && bytes1(emailProof.proof[0]) == 0x01; // boolean true
     }
 }
