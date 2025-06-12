@@ -12,3 +12,11 @@
 [submodule "lib/email-tx-builder"]
 	path = lib/email-tx-builder
 	url = https://github.com/zkemail/email-tx-builder
+[submodule "lib/axelar-gmp-sdk-solidity"]
+	path = lib/axelar-gmp-sdk-solidity
+	tag = v6.0.6
+	url = https://github.com/axelarnetwork/axelar-gmp-sdk-solidity
+[submodule "lib/zk-email-verify"]
+	path = lib/zk-email-verify
+	branch = v6.3.2
+	url = https://github.com/zkemail/zk-email-verify

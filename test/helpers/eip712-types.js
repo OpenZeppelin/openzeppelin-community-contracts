@@ -26,6 +26,11 @@ module.exports = mapValues(
       validAfter: 'uint48',
       validUntil: 'uint48',
     },
+    MultisigConfirmation: {
+      account: 'address',
+      module: 'address',
+      deadline: 'uint256',
+    },
   },
   formatType,
 );

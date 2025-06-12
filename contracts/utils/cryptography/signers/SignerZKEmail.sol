@@ -6,7 +6,7 @@ import {IDKIMRegistry} from "@zk-email/contracts/DKIMRegistry.sol";
 import {IVerifier} from "@zk-email/email-tx-builder/src/interfaces/IVerifier.sol";
 import {EmailAuthMsg} from "@zk-email/email-tx-builder/src/interfaces/IEmailTypes.sol";
 import {AbstractSigner} from "./AbstractSigner.sol";
-import {ZKEmailUtils} from "./ZKEmailUtils.sol";
+import {ZKEmailUtils} from "../ZKEmailUtils.sol";
 
 /**
  * @dev Implementation of {AbstractSigner} using https://docs.zk.email[ZKEmail] signatures.
@@ -86,8 +86,10 @@ abstract contract SignerZKEmail is AbstractSigner {
         return _registry;
     }
 
-    /// @dev An instance of the Verifier contract.
-    /// See https://docs.zk.email/architecture/zk-proofs#how-zk-email-uses-zero-knowledge-proofs[ZK Proofs].
+    /**
+     * @dev An instance of the Verifier contract.
+     * See https://docs.zk.email/architecture/zk-proofs#how-zk-email-uses-zero-knowledge-proofs[ZK Proofs].
+     */
     function verifier() public view virtual returns (IVerifier) {
         return _verifier;
     }

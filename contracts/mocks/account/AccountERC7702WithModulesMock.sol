@@ -2,14 +2,14 @@
 
 pragma solidity ^0.8.27;
 
-import {AbstractSigner} from "../../utils/cryptography/AbstractSigner.sol";
+import {AbstractSigner} from "../../utils/cryptography/signers/AbstractSigner.sol";
 import {Account} from "../../account/Account.sol";
 import {AccountERC7579} from "../../account/extensions/AccountERC7579.sol";
 import {ERC721Holder} from "@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol";
 import {ERC1155Holder} from "@openzeppelin/contracts/token/ERC1155/utils/ERC1155Holder.sol";
-import {ERC7739} from "../../utils/cryptography/ERC7739.sol";
+import {ERC7739} from "../../utils/cryptography/signers/ERC7739.sol";
 import {PackedUserOperation} from "@openzeppelin/contracts/interfaces/draft-IERC4337.sol";
-import {SignerERC7702} from "../../utils/cryptography/SignerERC7702.sol";
+import {SignerERC7702} from "../../utils/cryptography/signers/SignerERC7702.sol";
 
 abstract contract AccountERC7702WithModulesMock is
     Account,

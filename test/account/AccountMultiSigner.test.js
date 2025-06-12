@@ -26,8 +26,8 @@ async function fixture() {
   const target = await ethers.deployContract('CallReceiverMockExtended');
 
   // ERC-7913 verifiers
-  const verifierP256 = await ethers.deployContract('ERC7913SignatureVerifierP256');
-  const verifierRSA = await ethers.deployContract('ERC7913SignatureVerifierRSA');
+  const verifierP256 = await ethers.deployContract('ERC7913P256Verifier');
+  const verifierRSA = await ethers.deployContract('ERC7913RSAVerifier');
 
   // ERC-4337 env
   const helper = new ERC4337Helper();
@@ -136,7 +136,7 @@ describe('AccountMultiSigner', function () {
 
       // Successfully adds a signer
       const signersArrayBefore = await this.mock.signers().then(s => s.map(ethers.getAddress));
-      await expect(this.mock.$_addSigners(signers)).to.emit(this.mock, 'ERC7913SignersAdded');
+      await expect(this.mock.$_addSigners(signers)).to.emit(this.mock, 'ERC7913SignerAdded');
       const signersArrayAfter = await this.mock.signers().then(s => s.map(ethers.getAddress));
       expect(signersArrayAfter.length).to.equal(signersArrayBefore.length + 1);
       expect(signersArrayAfter).to.include(ethers.getAddress(signerECDSA3.address));
@@ -152,7 +152,7 @@ describe('AccountMultiSigner', function () {
 
       // Successfully removes an already added signer
       const signersArrayBefore = await this.mock.signers().then(s => s.map(ethers.getAddress));
-      await expect(this.mock.$_removeSigners(signers)).to.emit(this.mock, 'ERC7913SignersRemoved');
+      await expect(this.mock.$_removeSigners(signers)).to.emit(this.mock, 'ERC7913SignerRemoved');
       const signersArrayAfter = await this.mock.signers().then(s => s.map(ethers.getAddress));
       expect(signersArrayAfter.length).to.equal(signersArrayBefore.length - 1);
       expect(signersArrayAfter).to.not.include(ethers.getAddress(signerECDSA2.address));

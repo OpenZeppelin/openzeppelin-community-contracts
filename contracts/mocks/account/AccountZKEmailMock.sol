@@ -5,9 +5,9 @@ pragma solidity ^0.8.24;
 import {Account} from "../../account/Account.sol";
 import {ERC721Holder} from "@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol";
 import {ERC1155Holder} from "@openzeppelin/contracts/token/ERC1155/utils/ERC1155Holder.sol";
-import {ERC7739, EIP712} from "../../utils/cryptography/ERC7739.sol";
+import {ERC7739, EIP712} from "../../utils/cryptography/signers/ERC7739.sol";
 import {ERC7821} from "../../account/extensions/ERC7821.sol";
-import {SignerZKEmail} from "../../utils/cryptography/SignerZKEmail.sol";
+import {SignerZKEmail} from "../../utils/cryptography/signers/SignerZKEmail.sol";
 import {IDKIMRegistry} from "@zk-email/contracts/DKIMRegistry.sol";
 import {IVerifier} from "@zk-email/email-tx-builder/src/interfaces/IVerifier.sol";
 

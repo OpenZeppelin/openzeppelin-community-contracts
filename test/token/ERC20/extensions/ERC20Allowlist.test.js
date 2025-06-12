@@ -156,5 +156,17 @@ describe('ERC20Allowlist', function () {
         );
       });
     });
+
+    describe('allowed', function () {
+      it('returns 1 when allowed', async function () {
+        await this.token.$_allowUser(this.holder);
+        await expect(this.token.allowed(this.holder)).to.eventually.equal(true);
+      });
+
+      it('returns 0 when disallowed', async function () {
+        await this.token.$_disallowUser(this.holder);
+        await expect(this.token.allowed(this.holder)).to.eventually.equal(false);
+      });
+    });
   });
 });
