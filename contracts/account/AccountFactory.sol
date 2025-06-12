@@ -40,6 +40,9 @@ contract AccountFactory {
      * @dev Create clone accounts on demand and return the address. Uses `callData` to initialize the clone.
      *
      * NOTE: The function will not revert if the predicted address already exists. Instead, it will return the existing address.
+     *
+     * WARNING: Make sure the ownership of the account is tied to `callData` to avoid front-running the salt with a
+     * malicious `callData` to steal the account.
      */
     function cloneAndInitialize(bytes32 salt, bytes calldata callData) public virtual returns (address) {
         return _cloneAndInitialize(salt, callData);
