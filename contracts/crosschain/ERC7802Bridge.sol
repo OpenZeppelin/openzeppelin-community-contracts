@@ -118,9 +118,7 @@ abstract contract ERC7802Bridge is IERC7786Receiver, Ownable, Pausable {
         require(msg.sender == getGateway(srcChain), ERC7802BridgeInvalidGateway());
 
         // identify local token (requested for mint) and validate sender is the correct bridge
-        // todo: should we check that local is indeed local ?
-        (, , bytes memory addr) = local.parseV1();
-        address token = address(bytes20(addr)); // This assumes tokens have the same address on both chains
+        (, address token) = local.parseEvmV1(); // todo: check chainid ?
         require(keccak256(sender) == keccak256(getRemoteBridge(token, srcChain)), ERC7802BridgeInvalidSender()); // todo: use Bytes.equal
 
         // get recipient
