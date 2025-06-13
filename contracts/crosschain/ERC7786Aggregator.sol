@@ -170,7 +170,7 @@ contract ERC7786Aggregator is IERC7786GatewaySource, IERC7786Receiver, Ownable, 
      * some value for unknown reason. In that case we want to register this gateway having delivered the message and
      * not revert. Any value accrued that way can be recovered by the admin using the {sweep} function.
      */
-    // slither-disable-next-line reentrancy-eth
+    // slither-disable-next-line reentrancy-no-eth
     function executeMessage(
         bytes32 /*receiveId*/,
         bytes calldata remote, // Binary Interoperable Address
