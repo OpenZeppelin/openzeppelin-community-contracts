@@ -216,9 +216,8 @@ contract ERC7786Aggregator is IERC7786GatewaySource, IERC7786Receiver, Ownable, 
                 (id, sender, unwrappedPayload, attributes)
             );
             // slither-disable-next-line reentrancy-no-eth
-            (, , bytes memory addr) = recipient.parseV1();
-            require(addr.length == 20);
-            (bool success, bytes memory returndata) = address(bytes20(addr)).call(call);
+            (, address target) = recipient.parseEvmV1();
+            (bool success, bytes memory returndata) = target.call(call);
 
             if (!success) {
                 // rollback to enable retry

@@ -2,9 +2,14 @@
 
 pragma solidity ^0.8.24;
 
+// ###################################################################################################################
+// #    This file is here temporarily. It should be fetched from @openzeppelin/contracts when PR #5736 is merged     #
+// ###################################################################################################################
+
+import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
+import {SafeCast} from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import {Bytes} from "@openzeppelin/contracts/utils/Bytes.sol";
 import {Calldata} from "@openzeppelin/contracts/utils/Calldata.sol";
-import {SafeCast} from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
 // 0x00010000010114D8DA6BF26964AF9D7EED9E03E53415D37AA96045
 // 0x000100022045296998a6f8e2a784db5d9f95e18fc23f70441a1039446801089879b08c7ef02005333498d5aea4ae009585c43f7b8c30df8e70187d4a713d134f977fc8dfe0b5
@@ -35,15 +40,49 @@ library ERC7930 {
     }
 
     function formatEvmV1(uint256 chainid, address addr) internal pure returns (bytes memory) {
-        if (chainid <= type(uint8).max)
-            return abi.encodePacked(bytes2(0x0001), bytes2(0x0000), uint8(1), uint8(chainid), uint8(20), addr);
-        if (chainid <= type(uint16).max)
-            return abi.encodePacked(bytes2(0x0001), bytes2(0x0000), uint8(2), uint16(chainid), uint8(20), addr);
-        if (chainid <= type(uint24).max)
-            return abi.encodePacked(bytes2(0x0001), bytes2(0x0000), uint8(3), uint24(chainid), uint8(20), addr);
-        else revert();
+        unchecked {
+            // length fits in a uint8: log256(type(uint256).max) is 31
+            uint256 length = Math.log256(chainid) + 1;
+            return
+                abi.encodePacked(
+                    bytes4(0x00010000),
+                    uint8(length),
+                    abi.encodePacked(chainid).slice(32 - length),
+                    uint8(20),
+                    addr
+                );
+        }
     }
 
+    /**
+     * @dev Variant of {formatEvmV1} that specifies an EVM chain without an address.
+     */
+    function formatEvmV1(uint256 chainid) internal pure returns (bytes memory) {
+        unchecked {
+            // length fits in a uint8: log256(type(uint256).max) is 31
+            uint256 length = Math.log256(chainid) + 1;
+            return
+                abi.encodePacked(
+                    bytes4(0x00010000),
+                    uint8(length),
+                    abi.encodePacked(chainid).slice(32 - length),
+                    uint8(0)
+                );
+        }
+    }
+
+    /**
+     * @dev Variant of {formatEvmV1} that specifies an EVM address without a chain reference.
+     */
+    function formatEvmV1(address addr) internal pure returns (bytes memory) {
+        return abi.encodePacked(bytes6(0x000100000014), addr);
+    }
+
+    /**
+     * @dev Parse a ERC-7930 interoperable address (version 1) into its different components.
+     *
+     * NOTE: This function will revert if the input is not following version 1 of ERC-7930.
+     */
     function parseV1(
         bytes memory self
     ) internal pure returns (bytes2 chainType, bytes memory chainReference, bytes memory addr) {
@@ -104,6 +143,82 @@ library ERC7930 {
                 return (false, 0x0000, Calldata.emptyBytes(), Calldata.emptyBytes());
             addr = self[0x06 + chainReferenceLength:0x06 + chainReferenceLength + addrLength];
         }
+    }
+
+    /**
+     * @dev Parse a ERC-7930 interoperable address (version 1) corresponding to an EIP-155 chain.
+     *
+     * NOTE: This function will revert if the input is not following version 1 of ERC-7930 or if the underlying
+     * chainType is not "eip-155". If the input doesn't include a chainReference, then 0 is returned as a chainId.
+     * Similarly if the input doesn't include an address, then address(0) is returned.
+     */
+    function parseEvmV1(bytes memory self) internal pure returns (uint256 chainId, address addr) {
+        bool success;
+        (success, chainId, addr) = tryParseEvmV1(self);
+        require(success, ERC7930ParsingError(self));
+    }
+
+    /**
+     * @dev Variant of {parseEvmV1} that handles calldata slices to reduce memory copy costs.
+     *
+     * NOTE: This function will revert if the input is not following version 1 of ERC-7930 or if the underlying
+     * chainType is not "eip-155". If the input doesn't include a chainReference, then 0 is returned as a chainId.
+     * Similarly if the input doesn't include an address, then address(0) is returned.
+     */
+    function parseEvmV1Calldata(bytes calldata self) internal pure returns (uint256 chainId, address addr) {
+        bool success;
+        (success, chainId, addr) = tryParseEvmV1Calldata(self);
+        require(success, ERC7930ParsingError(self));
+    }
+
+    /**
+     * @dev Parse a ERC-7930 interoperable address (version 1) corresponding to an EIP-155 chain.
+     *
+     * NOTE: This function will not revert if the input is not following version 1 of ERC-7930 or if the underlying
+     * chainType is not "eip-155". Instead it return a false boolean, indicating the parsing was a failure. If the
+     * input doesn't include a chainReference, then 0 is returned as a chainId. Similarly if the input doesn't include
+     * an address, then address(0) is returned.
+     */
+    function tryParseEvmV1(bytes memory self) internal pure returns (bool success, uint256 chainId, address addr) {
+        (bool success_, bytes2 chainType_, bytes memory chainReference_, bytes memory addr_) = tryParseV1(self);
+        return
+            (success_ &&
+                chainType_ == 0x0000 &&
+                chainReference_.length < 33 &&
+                (addr_.length == 0 || addr_.length == 20))
+                ? (
+                    true,
+                    uint256(bytes32(chainReference_)) >> (256 - 8 * chainReference_.length),
+                    address(bytes20(addr_))
+                )
+                : (false, 0, address(0));
+    }
+
+    /**
+     * @dev Variant of {tryParseEvmV1} that handles calldata slices to reduce memory copy costs.
+     *
+     * NOTE: This function will not revert if the input is not following version 1 of ERC-7930 or if the underlying
+     * chainType is not "eip-155". Instead it return a false boolean, indicating the parsing was a failure. If the
+     * input doesn't include a chainReference, then 0 is returned as a chainId. Similarly if the input doesn't include
+     * an address, then address(0) is returned.
+     */
+    function tryParseEvmV1Calldata(
+        bytes calldata self
+    ) internal pure returns (bool success, uint256 chainId, address addr) {
+        (bool success_, bytes2 chainType_, bytes calldata chainReference_, bytes calldata addr_) = tryParseV1Calldata(
+            self
+        );
+        return
+            (success_ &&
+                chainType_ == 0x0000 &&
+                chainReference_.length < 33 &&
+                (addr_.length == 0 || addr_.length == 20))
+                ? (
+                    true,
+                    uint256(bytes32(chainReference_)) >> (256 - 8 * chainReference_.length),
+                    address(bytes20(addr_))
+                )
+                : (false, 0, address(0));
     }
 
     function _readBytes2(bytes memory buffer, uint256 offset) private pure returns (bytes2 value) {
