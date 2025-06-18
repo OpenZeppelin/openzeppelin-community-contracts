@@ -82,7 +82,7 @@ describe('ERC7786Aggregator', function () {
       this.payload = ethers.randomBytes(128);
       this.attributes = [];
       this.opts = { value: 1n };
-      this.outcome = 'ERC7786AggregatorValueNotSupported';
+      this.outcome = 'UnsupportedNativeTransfer';
     });
 
     it('invalid receiver - receiver revert', async function () {

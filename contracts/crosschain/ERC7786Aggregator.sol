@@ -36,7 +36,7 @@ contract ERC7786Aggregator is IERC7786GatewaySource, IERC7786Receiver, Ownable, 
     event GatewayRemoved(address indexed gateway);
     event ThresholdUpdated(uint8 threshold);
 
-    error ERC7786AggregatorValueNotSupported();
+    error UnsupportedNativeTransfer();
     error ERC7786AggregatorInvalidCrosschainSender();
     error ERC7786AggregatorAlreadyExecuted();
     error ERC7786AggregatorRemoteNotRegistered(bytes2 chainType, bytes chainReference);
@@ -94,8 +94,10 @@ contract ERC7786Aggregator is IERC7786GatewaySource, IERC7786Receiver, Ownable, 
         bytes calldata payload,
         bytes[] calldata attributes
     ) public payable virtual whenNotPaused returns (bytes32 sendId) {
-        if (attributes.length > 0) revert UnsupportedAttribute(bytes4(attributes[0]));
-        if (msg.value > 0) revert ERC7786AggregatorValueNotSupported();
+        require(msg.value == 0, UnsupportedNativeTransfer());
+        // Use of `if () revert` syntax to avoid accessing attributes[0] if it's empty
+        if (attributes.length > 0)
+            revert UnsupportedAttribute(attributes[0].length < 0x04 ? bytes4(0) : bytes4(attributes[0][0:4]));
 
         // address of the remote aggregator, revert if not registered
         bytes memory aggregator = getRemoteAggregator(recipient);
@@ -173,18 +175,18 @@ contract ERC7786Aggregator is IERC7786GatewaySource, IERC7786Receiver, Ownable, 
     // slither-disable-next-line reentrancy-no-eth
     function executeMessage(
         bytes32 /*receiveId*/,
-        bytes calldata remote, // Binary Interoperable Address
+        bytes calldata sender, // Binary Interoperable Address
         bytes calldata payload,
         bytes[] calldata attributes
     ) public payable virtual whenNotPaused returns (bytes4) {
-        // Check remote is a trusted aggregator
+        // Check sender is a trusted aggregator
         require(
-            keccak256(getRemoteAggregator(remote)) == keccak256(remote),
+            keccak256(getRemoteAggregator(sender)) == keccak256(sender),
             ERC7786AggregatorInvalidCrosschainSender()
         );
 
         // Message reception tracker
-        bytes32 id = keccak256(abi.encode(remote, payload, attributes));
+        bytes32 id = keccak256(abi.encode(sender, payload, attributes));
         Tracker storage tracker = _trackers[id];
 
         // If call is first from a trusted gateway
@@ -201,7 +203,7 @@ contract ERC7786Aggregator is IERC7786GatewaySource, IERC7786Receiver, Ownable, 
         }
 
         // Parse payload
-        (, bytes memory sender, bytes memory recipient, bytes memory unwrappedPayload) = abi.decode(
+        (, bytes memory originalSender, bytes memory recipient, bytes memory unwrappedPayload) = abi.decode(
             payload,
             (uint256, bytes, bytes, bytes)
         );
@@ -213,7 +215,7 @@ contract ERC7786Aggregator is IERC7786GatewaySource, IERC7786Receiver, Ownable, 
 
             bytes memory call = abi.encodeCall(
                 IERC7786Receiver.executeMessage,
-                (id, sender, unwrappedPayload, attributes)
+                (id, originalSender, unwrappedPayload, attributes)
             );
             // slither-disable-next-line reentrancy-no-eth
             (, address target) = recipient.parseEvmV1();
@@ -255,7 +257,7 @@ contract ERC7786Aggregator is IERC7786GatewaySource, IERC7786Receiver, Ownable, 
         bytes memory chainReference
     ) public view virtual returns (bytes memory) {
         bytes memory addr = _remotes[chainType][chainReference];
-        if (bytes(addr).length == 0) revert ERC7786AggregatorRemoteNotRegistered(chainType, chainReference);
+        require(bytes(addr).length != 0, ERC7786AggregatorRemoteNotRegistered(chainType, chainReference));
         return ERC7930.formatV1(chainType, chainReference, addr);
     }
 
@@ -293,18 +295,18 @@ contract ERC7786Aggregator is IERC7786GatewaySource, IERC7786Receiver, Ownable, 
     // ================================================== Internal ===================================================
 
     function _addGateway(address gateway) internal virtual {
-        if (!_gateways.add(gateway)) revert ERC7786AggregatorGatewayAlreadyRegistered(gateway);
+        require(_gateways.add(gateway), ERC7786AggregatorGatewayAlreadyRegistered(gateway));
         emit GatewayAdded(gateway);
     }
 
     function _removeGateway(address gateway) internal virtual {
-        if (!_gateways.remove(gateway)) revert ERC7786AggregatorGatewayNotRegistered(gateway);
-        if (_threshold > _gateways.length()) revert ERC7786AggregatorThresholdViolation();
+        require(_gateways.remove(gateway), ERC7786AggregatorGatewayNotRegistered(gateway));
+        require(_threshold <= _gateways.length(), ERC7786AggregatorThresholdViolation());
         emit GatewayRemoved(gateway);
     }
 
     function _setThreshold(uint8 newThreshold) internal virtual {
-        if (newThreshold == 0 || _threshold > _gateways.length()) revert ERC7786AggregatorThresholdViolation();
+        require(newThreshold > 0 && _threshold <= _gateways.length(), ERC7786AggregatorThresholdViolation());
         _threshold = newThreshold;
         emit ThresholdUpdated(newThreshold);
     }
