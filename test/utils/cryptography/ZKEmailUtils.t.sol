@@ -2,12 +2,12 @@
 pragma solidity ^0.8.24;
 
 import {Test} from "forge-std/Test.sol";
-import {ZKEmailUtils} from "../../../contracts/utils/cryptography/ZKEmailUtils.sol";
+import {IVerifier, ZKEmailUtils} from "../../../contracts/utils/cryptography/ZKEmailUtils.sol";
 import {ECDSAOwnedDKIMRegistry} from "@zk-email/email-tx-builder/src/utils/ECDSAOwnedDKIMRegistry.sol";
 import {Groth16Verifier} from "@zk-email/email-tx-builder/test/fixtures/Groth16Verifier.sol";
 import {Verifier} from "@zk-email/email-tx-builder/src/utils/Verifier.sol";
 import {IDKIMRegistry} from "@zk-email/contracts/DKIMRegistry.sol";
-import {IVerifier, EmailProof} from "@zk-email/email-tx-builder/src/interfaces/IVerifier.sol";
+import {EmailProof} from "@zk-email/email-tx-builder/src/interfaces/IVerifier.sol";
 import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 import {CommandUtils} from "@zk-email/email-tx-builder/src/libraries/CommandUtils.sol";
 import {MessageHashUtils} from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
@@ -125,7 +125,7 @@ contract ZKEmailUtilsTest is Test {
         emailAuthMsg.proof.isCodeExist = isCodeExist;
         emailAuthMsg.proof.proof = proof;
 
-        _mockVerifyEmailProof(emailAuthMsg.proof);
+        _mockVerifyEmailProof(abi.encode(emailAuthMsg.proof));
 
         // Test validation
         ZKEmailUtils.EmailProofError err = ZKEmailUtils.isValidZKEmail(
@@ -166,7 +166,7 @@ contract ZKEmailUtilsTest is Test {
         template[0] = commandPrefix;
         template[1] = CommandUtils.UINT_MATCHER;
 
-        _mockVerifyEmailProof(emailAuthMsg.proof);
+        _mockVerifyEmailProof(abi.encode(emailAuthMsg.proof));
 
         ZKEmailUtils.EmailProofError err = ZKEmailUtils.isValidZKEmail(
             emailAuthMsg,
@@ -205,7 +205,7 @@ contract ZKEmailUtilsTest is Test {
             emailAuthMsg.proof.isCodeExist = isCodeExist;
             emailAuthMsg.proof.proof = proof;
 
-            _mockVerifyEmailProof(emailAuthMsg.proof);
+            _mockVerifyEmailProof(abi.encode(emailAuthMsg.proof));
 
             string[] memory template = new string[](2);
             template[0] = commandPrefix;
@@ -251,7 +251,7 @@ contract ZKEmailUtilsTest is Test {
         template[0] = commandPrefix;
         template[1] = CommandUtils.ETH_ADDR_MATCHER;
 
-        _mockVerifyEmailProof(emailAuthMsg.proof);
+        _mockVerifyEmailProof(abi.encode(emailAuthMsg.proof));
 
         ZKEmailUtils.EmailProofError err = ZKEmailUtils.isValidZKEmail(
             emailAuthMsg,
@@ -380,7 +380,7 @@ contract ZKEmailUtilsTest is Test {
         Verifier verifier = new Verifier();
         Groth16Verifier groth16Verifier = new Groth16Verifier();
         verifier.initialize(msg.sender, address(groth16Verifier));
-        return verifier;
+        return IVerifier(address(verifier));
     }
 
     function _createECDSAOwnedDKIMRegistry() private returns (IDKIMRegistry) {
@@ -394,7 +394,7 @@ contract ZKEmailUtilsTest is Test {
         return ecdsaDkim;
     }
 
-    function _mockVerifyEmailProof(EmailProof memory emailProof) private {
+    function _mockVerifyEmailProof(bytes memory emailProof) private {
         vm.mockCall(address(_verifier), abi.encodeCall(IVerifier.verifyEmailProof, (emailProof)), abi.encode(true));
     }
 
