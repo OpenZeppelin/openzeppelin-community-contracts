@@ -6,6 +6,7 @@ import {AxelarExecutable} from "@axelar-network/axelar-gmp-sdk-solidity/contract
 import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 import {IERC7786Receiver} from "../../interfaces/IERC7786.sol";
 import {AxelarGatewayBase} from "./AxelarGatewayBase.sol";
+import {ERC7930} from "../../utils/ERC7930.sol";
 
 /**
  * @dev Implementation of an ERC-7786 gateway destination adapter for the Axelar Network in dual mode.
@@ -15,8 +16,9 @@ import {AxelarGatewayBase} from "./AxelarGatewayBase.sol";
  */
 abstract contract AxelarGatewayDestination is AxelarGatewayBase, AxelarExecutable {
     using Strings for *;
+    using ERC7930 for bytes;
 
-    error InvalidOriginGateway(string sourceChain, string axelarSourceAddress);
+    error InvalidOriginGateway(string axelarSourceChain, string axelarSourceAddress);
     error ReceiverExecutionFailed();
 
     /**
@@ -37,26 +39,24 @@ abstract contract AxelarGatewayDestination is AxelarGatewayBase, AxelarExecutabl
         string calldata axelarSourceAddress, // address of the remote gateway
         bytes calldata adapterPayload
     ) internal override {
-        string memory messageId = uint256(commandId).toHexString(32);
-
         // Parse the package
-        (string memory sender, string memory receiver, bytes memory payload, bytes[] memory attributes) = abi.decode(
+        (bytes memory sender, bytes memory recipient, bytes memory payload, bytes[] memory attributes) = abi.decode(
             adapterPayload,
-            (string, string, bytes, bytes[])
+            (bytes, bytes, bytes, bytes[])
         );
         // Axelar to CAIP-2 translation
-        string memory sourceChain = getEquivalentChain(axelarSourceChain);
+        bytes memory addr = getRemoteGateway(getErc7930Chain(axelarSourceChain));
 
         // check message validity
         // - `axelarSourceAddress` is the remote gateway on the origin chain.
         require(
-            getRemoteGateway(sourceChain).equal(axelarSourceAddress),
-            InvalidOriginGateway(sourceChain, axelarSourceAddress)
+            address(bytes20(addr)).toChecksumHexString().equal(axelarSourceAddress),
+            InvalidOriginGateway(axelarSourceChain, axelarSourceAddress)
         );
 
-        bytes4 result = IERC7786Receiver(receiver.parseAddress()).executeMessage(
-            messageId,
-            sourceChain,
+        (, , bytes memory target) = recipient.parseV1();
+        bytes4 result = IERC7786Receiver(address(bytes20(target))).executeMessage(
+            commandId,
             sender,
             payload,
             attributes
