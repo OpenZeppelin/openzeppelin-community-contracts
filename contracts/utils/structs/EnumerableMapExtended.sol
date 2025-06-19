@@ -56,7 +56,7 @@ library EnumerableMapExtended {
 
     struct BytesToUintMap {
         // Storage of keys
-        EnumerableSetExtended.BytesSet _keys;
+        EnumerableSet.BytesSet _keys;
         mapping(bytes key => uint256) _values;
     }
 
@@ -150,7 +150,7 @@ library EnumerableMapExtended {
     }
 
     /**
-     * @dev Return the an array containing all the keys
+     * @dev Returns an array containing all the keys
      *
      * WARNING: This operation will copy the entire storage to memory, which can be quite expensive. This is designed
      * to mostly be used by view accessors that are queried without any gas fees. Developers should keep in mind that
@@ -162,13 +162,25 @@ library EnumerableMapExtended {
     }
 
     /**
+     * @dev Returns an array containing a slice of the keys
+     *
+     * WARNING: This operation will copy the entire storage to memory, which can be quite expensive. This is designed
+     * to mostly be used by view accessors that are queried without any gas fees. Developers should keep in mind that
+     * this function has an unbounded cost, and using it as part of a state-changing function may render the function
+     * uncallable if the map grows to a point where copying to memory consumes too much gas to fit in a block.
+     */
+    function keys(BytesToUintMap storage map, uint256 start, uint256 end) internal view returns (bytes[] memory) {
+        return map._keys.values(start, end);
+    }
+
+    /**
      * @dev Query for a nonexistent map key.
      */
     error EnumerableMapNonexistentStringKey(string key);
 
     struct StringToStringMap {
         // Storage of keys
-        EnumerableSetExtended.StringSet _keys;
+        EnumerableSet.StringSet _keys;
         mapping(string key => string) _values;
     }
 
@@ -268,7 +280,7 @@ library EnumerableMapExtended {
     }
 
     /**
-     * @dev Return the an array containing all the keys
+     * @dev Returns an array containing all the keys
      *
      * WARNING: This operation will copy the entire storage to memory, which can be quite expensive. This is designed
      * to mostly be used by view accessors that are queried without any gas fees. Developers should keep in mind that
@@ -277,5 +289,17 @@ library EnumerableMapExtended {
      */
     function keys(StringToStringMap storage map) internal view returns (string[] memory) {
         return map._keys.values();
+    }
+
+    /**
+     * @dev Returns an array containing a slice of the keys
+     *
+     * WARNING: This operation will copy the entire storage to memory, which can be quite expensive. This is designed
+     * to mostly be used by view accessors that are queried without any gas fees. Developers should keep in mind that
+     * this function has an unbounded cost, and using it as part of a state-changing function may render the function
+     * uncallable if the map grows to a point where copying to memory consumes too much gas to fit in a block.
+     */
+    function keys(StringToStringMap storage map, uint256 start, uint256 end) internal view returns (string[] memory) {
+        return map._keys.values(start, end);
     }
 }

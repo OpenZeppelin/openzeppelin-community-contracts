@@ -1,8 +1,9 @@
 const { ethers, entrypoint } = require('hardhat');
 const { expect } = require('chai');
 const { loadFixture, time } = require('@nomicfoundation/hardhat-network-helpers');
+
 const { impersonate } = require('@openzeppelin/contracts/test/helpers/account');
-const { ERC4337Helper } = require('../../helpers/erc4337');
+const { ERC4337Helper } = require('@openzeppelin/contracts/test/helpers/erc4337');
 const { OperationState } = require('../../helpers/enums');
 
 const {
@@ -19,7 +20,7 @@ async function fixture() {
 
   // Deploy ERC-7579 validator module
   const mock = await ethers.deployContract('$ERC7579DelayedExecutorMock');
-  const target = await ethers.deployContract('CallReceiverMockExtended');
+  const target = await ethers.deployContract('CallReceiverMock');
 
   // ERC-4337 env
   const helper = new ERC4337Helper();

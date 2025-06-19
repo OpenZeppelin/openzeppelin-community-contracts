@@ -2,7 +2,11 @@
 
 pragma solidity ^0.8.27;
 
-import {IERC7579Module, IERC7579Validator, MODULE_TYPE_VALIDATOR} from "@openzeppelin/contracts/interfaces/draft-IERC7579.sol";
+import {
+    IERC7579Module,
+    IERC7579Validator,
+    MODULE_TYPE_VALIDATOR
+} from "@openzeppelin/contracts/interfaces/draft-IERC7579.sol";
 import {PackedUserOperation} from "@openzeppelin/contracts/interfaces/draft-IERC4337.sol";
 import {ERC4337Utils} from "@openzeppelin/contracts/account/utils/draft-ERC4337Utils.sol";
 import {IERC1271} from "@openzeppelin/contracts/interfaces/IERC1271.sol";
