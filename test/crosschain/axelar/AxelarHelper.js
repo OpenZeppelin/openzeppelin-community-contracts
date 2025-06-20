@@ -1,5 +1,5 @@
 const { ethers } = require('hardhat');
-const { getLocalChain } = require('../../helpers/chains');
+const { getLocalChain } = require('@openzeppelin/contracts/test/helpers/chains');
 
 async function deploy(owner) {
   const chain = await getLocalChain();

@@ -43,14 +43,25 @@ jobs:
         run: npm run test
       - name: Check linearisation of the inheritance graph
         run: npm run test:inheritance
-      - name: Check pragma consistency between files
-        run: npm run test:pragma
+      - name: Check pragma validity
+        run: npm run test:pragma -- --concurrency 1
       - name: Check procedurally generated contracts are up-to-date
         run: npm run test:generation
       - name: Compare gas costs
         uses: ./.github/actions/gas-compare
         with:
           token: ${{ github.token }}
+
+  tests-foundry:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - name: Set up environment
+        uses: ./.github/actions/setup
+      - name: Run tests
+        run: forge test -vvv
 
   coverage:
     runs-on: ubuntu-latest
@@ -66,17 +77,6 @@ jobs:
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
-  tests-foundry:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          submodules: recursive
-      - name: Set up environment
-        uses: ./.github/actions/setup
-      - name: Run tests
-        run: forge test -vv
-
   slither:
     runs-on: ubuntu-latest
     steps:
@@ -85,14 +85,15 @@ jobs:
           submodules: recursive
       - name: Set up environment
         uses: ./.github/actions/setup
-      - uses: crytic/slither-action@v0.4.0
+      - uses: crytic/slither-action@v0.4.1
 
   codespell:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - name: Run CodeSpell
-        uses: codespell-project/actions-codespell@v2.0
+        uses: codespell-project/actions-codespell@v2.1
         with:
+          check_hidden: true
           check_filenames: true
           skip: package-lock.json

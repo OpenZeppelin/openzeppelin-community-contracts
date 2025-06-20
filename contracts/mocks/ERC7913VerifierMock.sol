@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.20;
 
-import {IERC7913SignatureVerifier} from "../../contracts/interfaces/IERC7913.sol";
+import {IERC7913SignatureVerifier} from "@openzeppelin/contracts/interfaces/IERC7913.sol";
 
 contract ERC7913VerifierMock is IERC7913SignatureVerifier {
     // Store valid keys and their corresponding signatures

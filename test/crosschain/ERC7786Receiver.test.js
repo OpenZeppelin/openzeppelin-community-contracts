@@ -3,8 +3,8 @@ const { expect } = require('chai');
 const { loadFixture } = require('@nomicfoundation/hardhat-network-helpers');
 const { anyValue } = require('@nomicfoundation/hardhat-chai-matchers/withArgs');
 
+const { getLocalChain } = require('@openzeppelin/contracts/test/helpers/chains');
 const { generators } = require('@openzeppelin/contracts/test/helpers/random');
-const { getLocalChain } = require('../helpers/chains');
 
 const payload = generators.hexBytes(128);
 const attributes = [];
