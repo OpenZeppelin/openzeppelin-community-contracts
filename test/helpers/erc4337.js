@@ -10,7 +10,7 @@ const parseInitCode = initCode => ({
 /// Global ERC-4337 environment helper.
 class ERC4337Helper {
   constructor() {
-    this.factoryAsPromise = ethers.deployContract('Create2Mock');
+    this.factoryAsPromise = ethers.deployContract('$Create2');
   }
 
   async wait() {

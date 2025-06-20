@@ -15,7 +15,7 @@ for (const [name, opts] of Object.entries({
     // EOAs and environment
     const [admin, receiver, other] = await ethers.getSigners();
     const target = await ethers.deployContract('CallReceiverMock');
-    const token = await ethers.deployContract('$ERC721Mock', ['Some NFT', 'SNFT']);
+    const token = await ethers.deployContract('$ERC721Enumerable', ['Some NFT', 'SNFT']);
 
     // signers
     const accountSigner = ethers.Wallet.createRandom();
