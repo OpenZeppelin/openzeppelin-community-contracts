@@ -21,7 +21,7 @@ for (const [name, opts] of Object.entries({
 
     // ERC-4337 account
     const helper = new ERC4337Helper();
-    const account = await helper.newAccount('$AccountECDSAMock', ['AccountECDSA', '1', accountSigner]);
+    const account = await helper.newAccount('$AccountECDSAMock', [accountSigner, 'AccountECDSA', '1']);
     await account.deploy();
 
     // ERC-4337 paymaster

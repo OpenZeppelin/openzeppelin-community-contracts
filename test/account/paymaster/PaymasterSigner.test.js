@@ -21,12 +21,16 @@ for (const [name, opts] of Object.entries({
 
     // ERC-4337 account
     const helper = new ERC4337Helper();
-    const account = await helper.newAccount('$AccountECDSAMock', ['AccountECDSA', '1', accountSigner]);
+    const account = await helper.newAccount('$AccountECDSAMock', [accountSigner, 'AccountECDSA', '1']);
     await account.deploy();
 
     // ERC-4337 paymaster
-    const paymaster = await ethers.deployContract(`$${name}Mock`, ['MyPaymasterECDSASigner', '1', admin]);
-    await paymaster.$_setSigner(paymasterSigner);
+    const paymaster = await ethers.deployContract(`$${name}Mock`, [
+      'MyPaymasterECDSASigner',
+      '1',
+      paymasterSigner,
+      admin,
+    ]);
 
     // Domains
     const entrypointDomain = await getDomain(entrypoint.v08);

@@ -5,7 +5,7 @@ pragma solidity ^0.8.20;
 import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import {EIP712} from "@openzeppelin/contracts/utils/cryptography/EIP712.sol";
 
-import {ERC7739} from "../../../../utils/cryptography/signers/ERC7739.sol";
+import {ERC7739} from "@openzeppelin/contracts/utils/cryptography/signers/draft-ERC7739.sol";
 
 contract ERC7739ECDSA is ERC7739 {
     address private immutable _signer;
