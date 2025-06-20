@@ -3,10 +3,10 @@
 pragma solidity ^0.8.27;
 
 import {AxelarExecutable} from "@axelar-network/axelar-gmp-sdk-solidity/contracts/executable/AxelarExecutable.sol";
+import {InteroperableAddress} from "@openzeppelin/contracts/utils/draft-InteroperableAddress.sol";
 import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 import {IERC7786Receiver} from "../../interfaces/IERC7786.sol";
 import {AxelarGatewayBase} from "./AxelarGatewayBase.sol";
-import {InteroperableAddress} from "@openzeppelin/contracts/utils/draft-InteroperableAddress.sol";
 
 /**
  * @dev Implementation of an ERC-7786 gateway destination adapter for the Axelar Network in dual mode.
@@ -30,8 +30,7 @@ abstract contract AxelarGatewayDestination is AxelarGatewayBase, AxelarExecutabl
      * - `axelarSourceAddress` is the sender of the Axelar message. That should be the remote gateway on the chain
      *   which the message originates from. It is NOT the sender of the ERC-7786 crosschain message.
      *
-     * Proper CAIP-10 encoding of the message sender (including the CAIP-2 name of the origin chain can be found in
-     * the message)
+     * Proper ERC-7930 encoding of the crosschain message sender can be found in the message
      */
     function _execute(
         bytes32 commandId,
@@ -50,7 +49,7 @@ abstract contract AxelarGatewayDestination is AxelarGatewayBase, AxelarExecutabl
         // check message validity
         // - `axelarSourceAddress` is the remote gateway on the origin chain.
         require(
-            address(bytes20(addr)).toChecksumHexString().equal(axelarSourceAddress),
+            address(bytes20(addr)).toChecksumHexString().equal(axelarSourceAddress), // TODO non-evm chains?
             InvalidOriginGateway(axelarSourceChain, axelarSourceAddress)
         );
 

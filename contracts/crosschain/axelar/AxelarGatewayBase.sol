@@ -2,8 +2,8 @@
 
 pragma solidity ^0.8.27;
 
-import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {IAxelarGateway} from "@axelar-network/axelar-gmp-sdk-solidity/contracts/interfaces/IAxelarGateway.sol";
+import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {InteroperableAddress} from "@openzeppelin/contracts/utils/draft-InteroperableAddress.sol";
 
 /**
@@ -32,9 +32,13 @@ abstract contract AxelarGatewayBase is Ownable {
     /// @dev Axelar's official gateway for the current chain.
     IAxelarGateway internal immutable _axelarGateway;
 
+    // Remote gateway.
+    // `addr` is the isolated address part of ERC-7930. Its not a full ERC-7930 interoperable address.
     mapping(bytes2 chainType => mapping(bytes chainReference => bytes addr)) private _remoteGateways;
-    mapping(bytes erc7930binary => string axelar) private _erc7930ToAxelar;
-    mapping(string axelar => bytes erc7930binary) private _axelarToErc7930;
+
+    // chain equivalence ERC-7930 (no address) <> Axelar
+    mapping(bytes erc7930 => string axelar) private _erc7930ToAxelar;
+    mapping(string axelar => bytes erc7930) private _axelarToErc7930;
 
     /// @dev Sets the local gateway address (i.e. Axelar's official gateway for the current chain).
     constructor(IAxelarGateway _gateway) {
@@ -52,7 +56,7 @@ abstract contract AxelarGatewayBase is Ownable {
         require(output.length > 0, UnsupportedAxelarChain(input));
     }
 
-    /// @dev Returns the address string of the remote gateway for a given chainType and chainReference.
+    /// @dev Returns the address of the remote gateway for a given chainType and chainReference.
     function getRemoteGateway(bytes memory chain) public view virtual returns (bytes memory) {
         (bytes2 chainType, bytes memory chainReference, ) = chain.parseV1();
         return getRemoteGateway(chainType, chainReference);

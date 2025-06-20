@@ -2,10 +2,10 @@
 
 pragma solidity ^0.8.27;
 
-import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
-import {AxelarGatewayBase} from "./AxelarGatewayBase.sol";
-import {IERC7786GatewaySource} from "../../interfaces/IERC7786.sol";
 import {InteroperableAddress} from "@openzeppelin/contracts/utils/draft-InteroperableAddress.sol";
+import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
+import {IERC7786GatewaySource} from "../../interfaces/IERC7786.sol";
+import {AxelarGatewayBase} from "./AxelarGatewayBase.sol";
 
 /**
  * @dev Implementation of an ERC-7786 gateway source adapter for the Axelar Network.
@@ -14,8 +14,8 @@ import {InteroperableAddress} from "@openzeppelin/contracts/utils/draft-Interope
  * using the {sendMessage} function.
  */
 abstract contract AxelarGatewaySource is IERC7786GatewaySource, AxelarGatewayBase {
-    using Strings for *;
     using InteroperableAddress for bytes;
+    using Strings for address;
 
     error UnsupportedNativeTransfer();
 
@@ -49,7 +49,7 @@ abstract contract AxelarGatewaySource is IERC7786GatewaySource, AxelarGatewayBas
         bytes memory remoteGateway = getRemoteGateway(chainType, chainReference);
         _axelarGateway.callContract(
             axelarDestination,
-            address(bytes20(remoteGateway)).toChecksumHexString(),
+            address(bytes20(remoteGateway)).toChecksumHexString(), // TODO non-evm chains?
             adapterPayload
         );
 
