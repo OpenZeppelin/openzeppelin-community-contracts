@@ -4,7 +4,9 @@ const { SET_TYPES } = require('./Enumerable.opts');
 const header = `\
 pragma solidity ^0.8.20;
 
+import {Arrays} from "@openzeppelin/contracts/utils/Arrays.sol";
 import {Hashes} from "@openzeppelin/contracts/utils/cryptography/Hashes.sol";
+import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 
 /**
  * @dev Library for managing
@@ -28,7 +30,7 @@ import {Hashes} from "@openzeppelin/contracts/utils/cryptography/Hashes.sol";
  * }
  * \`\`\`
  *
- * Sets of type \`string\` (\`StringSet\`), \`bytes\` (\`BytesSet\`) and 
+ * Sets of type \`string\` (\`StringSet\`), \`bytes\` (\`BytesSet\`) and
  * \`bytes32[2]\` (\`Bytes32x2Set\`) are supported.
  *
  * [WARNING]
@@ -169,6 +171,28 @@ function at(${name} storage self, uint256 index) internal view returns (${value.
 function values(${name} storage self) internal view returns (${value.type}[] memory) {
     return self._values;
 }
+
+/**
+ * @dev Return a slice of the set in an array
+ *
+ * WARNING: This operation will copy the entire storage to memory, which can be quite expensive. This is designed
+ * to mostly be used by view accessors that are queried without any gas fees. Developers should keep in mind that
+ * this function has an unbounded cost, and using it as part of a state-changing function may render the function
+ * uncallable if the set grows to a point where copying to memory consumes too much gas to fit in a block.
+ */
+function values(${name} storage set, uint256 start, uint256 end) internal view returns (${value.type}[] memory) {
+    unchecked {
+        end = Math.min(end, length(set));
+        start = Math.min(start, end);
+
+        uint256 len = end - start;
+        ${value.type}[] memory result = new ${value.type}[](len);
+        for (uint256 i = 0; i < len; ++i) {
+            result[i] = Arrays.unsafeAccess(set._values, start + i).value;
+        }
+        return result;
+    }
+}
 `;
 
 const arraySet = ({ name, value }) => `\
@@ -295,6 +319,28 @@ function at(${name} storage self, uint256 index) internal view returns (${value.
  */
 function values(${name} storage self) internal view returns (${value.type}[] memory) {
     return self._values;
+}
+
+/**
+ * @dev Return a slice of the set in an array
+ *
+ * WARNING: This operation will copy the entire storage to memory, which can be quite expensive. This is designed
+ * to mostly be used by view accessors that are queried without any gas fees. Developers should keep in mind that
+ * this function has an unbounded cost, and using it as part of a state-changing function may render the function
+ * uncallable if the set grows to a point where copying to memory consumes too much gas to fit in a block.
+ */
+function values(${name} storage set, uint256 start, uint256 end) internal view returns (${value.type}[] memory) {
+    unchecked {
+        end = Math.min(end, length(set));
+        start = Math.min(start, end);
+
+        uint256 len = end - start;
+        ${value.type}[] memory result = new ${value.type}[](len);
+        for (uint256 i = 0; i < len; ++i) {
+            result[i] = set._values[start + i];
+        }
+        return result;
+    }
 }
 `;
 

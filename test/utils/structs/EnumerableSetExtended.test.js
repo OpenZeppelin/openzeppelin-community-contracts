@@ -28,6 +28,7 @@ async function fixture() {
             length: `$length_EnumerableSetExtended_${name}(uint256)`,
             at: `$at_EnumerableSetExtended_${name}(uint256,uint256)`,
             values: `$values_EnumerableSetExtended_${name}(uint256)`,
+            valuesPage: `$values_EnumerableSetExtended_${name}(uint256,uint256,uint256)`,
           },
           fnSig =>
             (...args) =>
@@ -44,7 +45,7 @@ async function fixture() {
   return { mock, env };
 }
 
-describe('EnumerableSetExtended', function () {
+describe.only('EnumerableSetExtended', function () {
   beforeEach(async function () {
     Object.assign(this, await loadFixture(fixture));
   });
