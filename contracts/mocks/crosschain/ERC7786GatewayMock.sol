@@ -23,13 +23,12 @@ contract ERC7786GatewayMock is IERC7786GatewaySource {
         // Use of `if () revert` syntax to avoid accessing attributes[0] if it's empty
         if (attributes.length > 0) revert UnsupportedAttribute(bytes4(attributes[0][0:4]));
 
-        // TODO
-        // require(destination.equal(CAIP2.local()), "This mock only supports local messages");
+        (uint256 chainid, address target) = recipient.parseEvmV1Calldata();
+        require(chainid == block.chainid, "This mock only supports local messages");
 
         bytes memory sender = InteroperableAddress.formatEvmV1(block.chainid, msg.sender);
-        (, , bytes calldata target) = recipient.parseV1Calldata();
         require(
-            IERC7786Receiver(address(bytes20(target))).executeMessage(bytes32(0), sender, payload, attributes) ==
+            IERC7786Receiver(target).executeMessage(bytes32(0), sender, payload, attributes) ==
                 IERC7786Receiver.executeMessage.selector,
             "Receiver error"
         );
