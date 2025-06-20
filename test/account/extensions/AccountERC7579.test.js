@@ -18,8 +18,8 @@ const signerRSA = new NonNativeSigner(RSASHA256SigningKey.random());
 async function fixture() {
   // EOAs and environment
   const [other] = await ethers.getSigners();
-  const target = await ethers.deployContract('CallReceiverMockExtended');
-  const anotherTarget = await ethers.deployContract('CallReceiverMockExtended');
+  const target = await ethers.deployContract('CallReceiverMock');
+  const anotherTarget = await ethers.deployContract('CallReceiverMock');
 
   // ERC-7579 signature validator
   const erc7579Validator = await ethers.deployContract('$ERC7579Signature');

@@ -4,11 +4,11 @@ pragma solidity ^0.8.24;
 
 import {BitMaps} from "@openzeppelin/contracts/utils/structs/BitMaps.sol";
 import {IERC7786GatewaySource, IERC7786Receiver} from "../../interfaces/IERC7786.sol";
-import {ERC7930} from "../../utils/ERC7930.sol";
+import {InteroperableAddress} from "@openzeppelin/contracts/utils/draft-InteroperableAddress.sol";
 
 contract ERC7786GatewayMock is IERC7786GatewaySource {
     using BitMaps for BitMaps.BitMap;
-    using ERC7930 for *;
+    using InteroperableAddress for *;
 
     function supportsAttribute(bytes4 /*selector*/) public pure returns (bool) {
         return false;
@@ -26,7 +26,7 @@ contract ERC7786GatewayMock is IERC7786GatewaySource {
         // TODO
         // require(destination.equal(CAIP2.local()), "This mock only supports local messages");
 
-        bytes memory sender = ERC7930.formatEvmV1(block.chainid, msg.sender);
+        bytes memory sender = InteroperableAddress.formatEvmV1(block.chainid, msg.sender);
         (, , bytes calldata target) = recipient.parseV1Calldata();
         require(
             IERC7786Receiver(address(bytes20(target))).executeMessage(bytes32(0), sender, payload, attributes) ==

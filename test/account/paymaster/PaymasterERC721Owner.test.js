@@ -14,7 +14,7 @@ for (const [name, opts] of Object.entries({
   async function fixture() {
     // EOAs and environment
     const [admin, receiver, other] = await ethers.getSigners();
-    const target = await ethers.deployContract('CallReceiverMockExtended');
+    const target = await ethers.deployContract('CallReceiverMock');
     const token = await ethers.deployContract('$ERC721Mock', ['Some NFT', 'SNFT']);
 
     // signers

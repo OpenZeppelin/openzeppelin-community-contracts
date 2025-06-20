@@ -5,7 +5,7 @@ pragma solidity ^0.8.27;
 import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 import {AxelarGatewayBase} from "./AxelarGatewayBase.sol";
 import {IERC7786GatewaySource} from "../../interfaces/IERC7786.sol";
-import {ERC7930} from "../../utils/ERC7930.sol";
+import {InteroperableAddress} from "@openzeppelin/contracts/utils/draft-InteroperableAddress.sol";
 
 /**
  * @dev Implementation of an ERC-7786 gateway source adapter for the Axelar Network.
@@ -15,7 +15,7 @@ import {ERC7930} from "../../utils/ERC7930.sol";
  */
 abstract contract AxelarGatewaySource is IERC7786GatewaySource, AxelarGatewayBase {
     using Strings for *;
-    using ERC7930 for bytes;
+    using InteroperableAddress for bytes;
 
     error UnsupportedNativeTransfer();
 
@@ -36,7 +36,7 @@ abstract contract AxelarGatewaySource is IERC7786GatewaySource, AxelarGatewayBas
             revert UnsupportedAttribute(attributes[0].length < 0x04 ? bytes4(0) : bytes4(attributes[0][0:4]));
 
         // Create the package
-        bytes memory sender = ERC7930.formatEvmV1(block.chainid, msg.sender);
+        bytes memory sender = InteroperableAddress.formatEvmV1(block.chainid, msg.sender);
         bytes memory adapterPayload = abi.encode(sender, recipient, payload, attributes);
 
         // Emit event
@@ -45,7 +45,7 @@ abstract contract AxelarGatewaySource is IERC7786GatewaySource, AxelarGatewayBas
 
         // Send the message
         (bytes2 chainType, bytes calldata chainReference, ) = recipient.parseV1Calldata();
-        string memory axelarDestination = getAxelarChain(ERC7930.formatV1(chainType, chainReference, ""));
+        string memory axelarDestination = getAxelarChain(InteroperableAddress.formatV1(chainType, chainReference, ""));
         bytes memory remoteGateway = getRemoteGateway(chainType, chainReference);
         _axelarGateway.callContract(
             axelarDestination,

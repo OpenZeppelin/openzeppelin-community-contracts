@@ -4,7 +4,7 @@ pragma solidity ^0.8.27;
 
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {IAxelarGateway} from "@axelar-network/axelar-gmp-sdk-solidity/contracts/interfaces/IAxelarGateway.sol";
-import {ERC7930} from "../../utils/ERC7930.sol";
+import {InteroperableAddress} from "@openzeppelin/contracts/utils/draft-InteroperableAddress.sol";
 
 /**
  * @dev Base implementation of a cross-chain gateway adapter for the Axelar Network.
@@ -14,7 +14,7 @@ import {ERC7930} from "../../utils/ERC7930.sol";
  * facilitate cross-chain communication.
  */
 abstract contract AxelarGatewayBase is Ownable {
-    using ERC7930 for bytes;
+    using InteroperableAddress for bytes;
 
     /// @dev A remote gateway has been registered for a chain.
     event RegisteredRemoteGateway(bytes remote);
@@ -63,7 +63,8 @@ abstract contract AxelarGatewayBase is Ownable {
         bytes memory chainReference
     ) public view virtual returns (bytes memory) {
         bytes memory addr = _remoteGateways[chainType][chainReference];
-        if (addr.length == 0) revert UnsupportedERC7930Chain(ERC7930.formatV1(chainType, chainReference, ""));
+        if (addr.length == 0)
+            revert UnsupportedERC7930Chain(InteroperableAddress.formatV1(chainType, chainReference, ""));
         return addr;
     }
 

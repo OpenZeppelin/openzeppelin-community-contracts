@@ -7,7 +7,7 @@ import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet
 import {Address} from "@openzeppelin/contracts/utils/Address.sol";
 import {Pausable} from "@openzeppelin/contracts/utils/Pausable.sol";
 import {IERC7786GatewaySource, IERC7786Receiver} from "../interfaces/IERC7786.sol";
-import {ERC7930} from "../utils/ERC7930.sol";
+import {InteroperableAddress} from "@openzeppelin/contracts/utils/draft-InteroperableAddress.sol";
 
 /**
  * @dev N of M gateway: Sends your message through M independent gateways. It will be delivered to the receiver by an
@@ -15,7 +15,7 @@ import {ERC7930} from "../utils/ERC7930.sol";
  */
 contract ERC7786Aggregator is IERC7786GatewaySource, IERC7786Receiver, Ownable, Pausable {
     using EnumerableSet for EnumerableSet.AddressSet;
-    using ERC7930 for bytes;
+    using InteroperableAddress for bytes;
 
     struct Outbox {
         address gateway;
@@ -101,7 +101,7 @@ contract ERC7786Aggregator is IERC7786GatewaySource, IERC7786Receiver, Ownable, 
 
         // address of the remote aggregator, revert if not registered
         bytes memory aggregator = getRemoteAggregator(recipient);
-        bytes memory sender = ERC7930.formatEvmV1(block.chainid, msg.sender);
+        bytes memory sender = InteroperableAddress.formatEvmV1(block.chainid, msg.sender);
 
         // wrapping the payload
         bytes memory wrappedPayload = abi.encode(++_nonce, sender, recipient, payload);
@@ -258,7 +258,7 @@ contract ERC7786Aggregator is IERC7786GatewaySource, IERC7786Receiver, Ownable, 
     ) public view virtual returns (bytes memory) {
         bytes memory addr = _remotes[chainType][chainReference];
         require(bytes(addr).length != 0, ERC7786AggregatorRemoteNotRegistered(chainType, chainReference));
-        return ERC7930.formatV1(chainType, chainReference, addr);
+        return InteroperableAddress.formatV1(chainType, chainReference, addr);
     }
 
     // =================================================== Setters ===================================================

@@ -6,7 +6,7 @@ import {AxelarExecutable} from "@axelar-network/axelar-gmp-sdk-solidity/contract
 import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 import {IERC7786Receiver} from "../../interfaces/IERC7786.sol";
 import {AxelarGatewayBase} from "./AxelarGatewayBase.sol";
-import {ERC7930} from "../../utils/ERC7930.sol";
+import {InteroperableAddress} from "@openzeppelin/contracts/utils/draft-InteroperableAddress.sol";
 
 /**
  * @dev Implementation of an ERC-7786 gateway destination adapter for the Axelar Network in dual mode.
@@ -16,7 +16,7 @@ import {ERC7930} from "../../utils/ERC7930.sol";
  */
 abstract contract AxelarGatewayDestination is AxelarGatewayBase, AxelarExecutable {
     using Strings for *;
-    using ERC7930 for bytes;
+    using InteroperableAddress for bytes;
 
     error InvalidOriginGateway(string axelarSourceChain, string axelarSourceAddress);
     error ReceiverExecutionFailed();
