@@ -30,6 +30,7 @@ async function fixture() {
             at: `$at_EnumerableMapExtended_${name}(uint256,uint256)`,
             contains: `$contains(uint256,${key.type})`,
             keys: `$keys_EnumerableMapExtended_${name}(uint256)`,
+            keysPage: `$keys_EnumerableMapExtended_${name}(uint256,uint256,uint256)`,
           },
           fnSig =>
             (...args) =>
