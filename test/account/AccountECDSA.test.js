@@ -12,7 +12,7 @@ const { shouldBehaveLikeERC7821 } = require('./extensions/ERC7821.behavior');
 async function fixture() {
   // EOAs and environment
   const [beneficiary, other] = await ethers.getSigners();
-  const target = await ethers.deployContract('CallReceiverMockExtended');
+  const target = await ethers.deployContract('CallReceiverMock');
 
   // ERC-4337 signer
   const signer = ethers.Wallet.createRandom();

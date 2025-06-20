@@ -3,7 +3,6 @@
 :IERC7786Receiver: pass:normal[xref:interfaces.adoc#IERC7786Receiver[`IERC7786Receiver`]]
 :IERC7802: pass:normal[xref:interfaces.adoc#IERC7802[`IERC7802`]]
 :IERC7821: pass:normal[xref:interfaces.adoc#IERC7821[`IERC7821`]]
-:IERC7913SignatureVerifier: pass:normal[xref:interfaces.adoc#IERC7913SignatureVerifier[`IERC7913SignatureVerifier`]]
 = Interfaces
 
 [.readme-notice]
@@ -227,34 +226,4 @@ Only returns true for:
 
 * `bytes32(0x01000000000000000000...)`: does not support optional `opData`.
 * `bytes32(0x01000000000078210001...)`: supports optional `opData`.
-
-:verify: pass:normal[xref:#IERC7913SignatureVerifier-verify-bytes-bytes32-bytes-[`++verify++`]]
-
-[.contract]
-[[IERC7913SignatureVerifier]]
-=== `++IERC7913SignatureVerifier++` link:https://github.com/OpenZeppelin/openzeppelin-community-contracts/blob/master/contracts/interfaces/IERC7913.sol[{github-icon},role=heading-link]
-
-[.hljs-theme-light.nopadding]
-```solidity
-import "@openzeppelin/community-contracts/interfaces/IERC7913.sol";
-```
-
-Signature verifier interface.
-
-[.contract-index]
-.Functions
---
-* `++verify(key, hash, signature)++`
-
---
-
-[.contract-item]
-[[IERC7913SignatureVerifier-verify-bytes-bytes32-bytes-]]
-==== `[.contract-item-name]#++verify++#++(bytes key, bytes32 hash, bytes signature) → bytes4++` [.item-kind]#external#
-
-Verifies `signature` as a valid signature of `hash` by `key`.
-
-MUST return the bytes4 magic value IERC7913SignatureVerifier.verify.selector if the signature is valid.
-SHOULD return 0xffffffff or revert if the signature is not valid.
-SHOULD return 0xffffffff or revert if the key is empty
 

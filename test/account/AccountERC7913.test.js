@@ -27,7 +27,7 @@ const templateId = ethers.solidityPackedKeccak256(['string', 'uint256'], ['TEST'
 async function fixture() {
   // EOAs and environment
   const [admin, beneficiary, other] = await ethers.getSigners();
-  const target = await ethers.deployContract('CallReceiverMockExtended');
+  const target = await ethers.deployContract('CallReceiverMock');
 
   // DKIM Registry for ZKEmail
   const dkim = await ethers.deployContract('ECDSAOwnedDKIMRegistry');

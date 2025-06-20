@@ -22,6 +22,7 @@ Miscellaneous contracts and libraries containing utility functions you can use t
 :length: pass:normal[xref:#EnumerableSetExtended-length-struct-EnumerableSetExtended-StringSet-[`++length++`]]
 :at: pass:normal[xref:#EnumerableSetExtended-at-struct-EnumerableSetExtended-StringSet-uint256-[`++at++`]]
 :values: pass:normal[xref:#EnumerableSetExtended-values-struct-EnumerableSetExtended-StringSet-[`++values++`]]
+:values: pass:normal[xref:#EnumerableSetExtended-values-struct-EnumerableSetExtended-StringSet-uint256-uint256-[`++values++`]]
 :BytesSet: pass:normal[xref:#EnumerableSetExtended-BytesSet[`++BytesSet++`]]
 :add: pass:normal[xref:#EnumerableSetExtended-add-struct-EnumerableSetExtended-BytesSet-bytes-[`++add++`]]
 :remove: pass:normal[xref:#EnumerableSetExtended-remove-struct-EnumerableSetExtended-BytesSet-bytes-[`++remove++`]]
@@ -30,6 +31,7 @@ Miscellaneous contracts and libraries containing utility functions you can use t
 :length: pass:normal[xref:#EnumerableSetExtended-length-struct-EnumerableSetExtended-BytesSet-[`++length++`]]
 :at: pass:normal[xref:#EnumerableSetExtended-at-struct-EnumerableSetExtended-BytesSet-uint256-[`++at++`]]
 :values: pass:normal[xref:#EnumerableSetExtended-values-struct-EnumerableSetExtended-BytesSet-[`++values++`]]
+:values: pass:normal[xref:#EnumerableSetExtended-values-struct-EnumerableSetExtended-BytesSet-uint256-uint256-[`++values++`]]
 :Bytes32x2Set: pass:normal[xref:#EnumerableSetExtended-Bytes32x2Set[`++Bytes32x2Set++`]]
 :add: pass:normal[xref:#EnumerableSetExtended-add-struct-EnumerableSetExtended-Bytes32x2Set-bytes32-2--[`++add++`]]
 :remove: pass:normal[xref:#EnumerableSetExtended-remove-struct-EnumerableSetExtended-Bytes32x2Set-bytes32-2--[`++remove++`]]
@@ -38,6 +40,7 @@ Miscellaneous contracts and libraries containing utility functions you can use t
 :length: pass:normal[xref:#EnumerableSetExtended-length-struct-EnumerableSetExtended-Bytes32x2Set-[`++length++`]]
 :at: pass:normal[xref:#EnumerableSetExtended-at-struct-EnumerableSetExtended-Bytes32x2Set-uint256-[`++at++`]]
 :values: pass:normal[xref:#EnumerableSetExtended-values-struct-EnumerableSetExtended-Bytes32x2Set-[`++values++`]]
+:values: pass:normal[xref:#EnumerableSetExtended-values-struct-EnumerableSetExtended-Bytes32x2Set-uint256-uint256-[`++values++`]]
 
 [.contract]
 [[EnumerableSetExtended]]
@@ -94,6 +97,7 @@ NOTE: This is an extension of openzeppelin/contracts/utils/struct/EnumerableSet.
 * `++length(self)++`
 * `++at(self, index)++`
 * `++values(self)++`
+* `++values(set, start, end)++`
 * `++add(self, value)++`
 * `++remove(self, value)++`
 * `++clear(set)++`
@@ -101,6 +105,7 @@ NOTE: This is an extension of openzeppelin/contracts/utils/struct/EnumerableSet.
 * `++length(self)++`
 * `++at(self, index)++`
 * `++values(self)++`
+* `++values(set, start, end)++`
 * `++add(self, value)++`
 * `++remove(self, value)++`
 * `++clear(self)++`
@@ -108,6 +113,7 @@ NOTE: This is an extension of openzeppelin/contracts/utils/struct/EnumerableSet.
 * `++length(self)++`
 * `++at(self, index)++`
 * `++values(self)++`
+* `++values(set, start, end)++`
 
 --
 
@@ -168,6 +174,17 @@ Requirements:
 ==== `[.contract-item-name]#++values++#++(struct EnumerableSetExtended.StringSet self) → string[]++` [.item-kind]#internal#
 
 Return the entire set in an array
+
+WARNING: This operation will copy the entire storage to memory, which can be quite expensive. This is designed
+to mostly be used by view accessors that are queried without any gas fees. Developers should keep in mind that
+this function has an unbounded cost, and using it as part of a state-changing function may render the function
+uncallable if the set grows to a point where copying to memory consumes too much gas to fit in a block.
+
+[.contract-item]
+[[EnumerableSetExtended-values-struct-EnumerableSetExtended-StringSet-uint256-uint256-]]
+==== `[.contract-item-name]#++values++#++(struct EnumerableSetExtended.StringSet set, uint256 start, uint256 end) → string[]++` [.item-kind]#internal#
+
+Return a slice of the set in an array
 
 WARNING: This operation will copy the entire storage to memory, which can be quite expensive. This is designed
 to mostly be used by view accessors that are queried without any gas fees. Developers should keep in mind that
@@ -238,6 +255,17 @@ this function has an unbounded cost, and using it as part of a state-changing fu
 uncallable if the set grows to a point where copying to memory consumes too much gas to fit in a block.
 
 [.contract-item]
+[[EnumerableSetExtended-values-struct-EnumerableSetExtended-BytesSet-uint256-uint256-]]
+==== `[.contract-item-name]#++values++#++(struct EnumerableSetExtended.BytesSet set, uint256 start, uint256 end) → bytes[]++` [.item-kind]#internal#
+
+Return a slice of the set in an array
+
+WARNING: This operation will copy the entire storage to memory, which can be quite expensive. This is designed
+to mostly be used by view accessors that are queried without any gas fees. Developers should keep in mind that
+this function has an unbounded cost, and using it as part of a state-changing function may render the function
+uncallable if the set grows to a point where copying to memory consumes too much gas to fit in a block.
+
+[.contract-item]
 [[EnumerableSetExtended-add-struct-EnumerableSetExtended-Bytes32x2Set-bytes32-2--]]
 ==== `[.contract-item-name]#++add++#++(struct EnumerableSetExtended.Bytes32x2Set self, bytes32[2] value) → bool++` [.item-kind]#internal#
 
@@ -300,6 +328,17 @@ to mostly be used by view accessors that are queried without any gas fees. Devel
 this function has an unbounded cost, and using it as part of a state-changing function may render the function
 uncallable if the set grows to a point where copying to memory consumes too much gas to fit in a block.
 
+[.contract-item]
+[[EnumerableSetExtended-values-struct-EnumerableSetExtended-Bytes32x2Set-uint256-uint256-]]
+==== `[.contract-item-name]#++values++#++(struct EnumerableSetExtended.Bytes32x2Set set, uint256 start, uint256 end) → bytes32[2][]++` [.item-kind]#internal#
+
+Return a slice of the set in an array
+
+WARNING: This operation will copy the entire storage to memory, which can be quite expensive. This is designed
+to mostly be used by view accessors that are queried without any gas fees. Developers should keep in mind that
+this function has an unbounded cost, and using it as part of a state-changing function may render the function
+uncallable if the set grows to a point where copying to memory consumes too much gas to fit in a block.
+
 :EnumerableMapNonexistentBytesKey: pass:normal[xref:#EnumerableMapExtended-EnumerableMapNonexistentBytesKey-bytes-[`++EnumerableMapNonexistentBytesKey++`]]
 :BytesToUintMap: pass:normal[xref:#EnumerableMapExtended-BytesToUintMap[`++BytesToUintMap++`]]
 :set: pass:normal[xref:#EnumerableMapExtended-set-struct-EnumerableMapExtended-BytesToUintMap-bytes-uint256-[`++set++`]]
@@ -311,6 +350,7 @@ uncallable if the set grows to a point where copying to memory consumes too much
 :tryGet: pass:normal[xref:#EnumerableMapExtended-tryGet-struct-EnumerableMapExtended-BytesToUintMap-bytes-[`++tryGet++`]]
 :get: pass:normal[xref:#EnumerableMapExtended-get-struct-EnumerableMapExtended-BytesToUintMap-bytes-[`++get++`]]
 :keys: pass:normal[xref:#EnumerableMapExtended-keys-struct-EnumerableMapExtended-BytesToUintMap-[`++keys++`]]
+:keys: pass:normal[xref:#EnumerableMapExtended-keys-struct-EnumerableMapExtended-BytesToUintMap-uint256-uint256-[`++keys++`]]
 :EnumerableMapNonexistentStringKey: pass:normal[xref:#EnumerableMapExtended-EnumerableMapNonexistentStringKey-string-[`++EnumerableMapNonexistentStringKey++`]]
 :StringToStringMap: pass:normal[xref:#EnumerableMapExtended-StringToStringMap[`++StringToStringMap++`]]
 :set: pass:normal[xref:#EnumerableMapExtended-set-struct-EnumerableMapExtended-StringToStringMap-string-string-[`++set++`]]
@@ -322,6 +362,7 @@ uncallable if the set grows to a point where copying to memory consumes too much
 :tryGet: pass:normal[xref:#EnumerableMapExtended-tryGet-struct-EnumerableMapExtended-StringToStringMap-string-[`++tryGet++`]]
 :get: pass:normal[xref:#EnumerableMapExtended-get-struct-EnumerableMapExtended-StringToStringMap-string-[`++get++`]]
 :keys: pass:normal[xref:#EnumerableMapExtended-keys-struct-EnumerableMapExtended-StringToStringMap-[`++keys++`]]
+:keys: pass:normal[xref:#EnumerableMapExtended-keys-struct-EnumerableMapExtended-StringToStringMap-uint256-uint256-[`++keys++`]]
 
 [.contract]
 [[EnumerableMapExtended]]
@@ -382,6 +423,7 @@ NOTE: Extensions of openzeppelin/contracts/utils/struct/EnumerableMap.sol.
 * `++tryGet(map, key)++`
 * `++get(map, key)++`
 * `++keys(map)++`
+* `++keys(map, start, end)++`
 * `++set(map, key, value)++`
 * `++remove(map, key)++`
 * `++clear(map)++`
@@ -391,6 +433,7 @@ NOTE: Extensions of openzeppelin/contracts/utils/struct/EnumerableMap.sol.
 * `++tryGet(map, key)++`
 * `++get(map, key)++`
 * `++keys(map)++`
+* `++keys(map, start, end)++`
 
 --
 
@@ -475,7 +518,18 @@ Requirements:
 [[EnumerableMapExtended-keys-struct-EnumerableMapExtended-BytesToUintMap-]]
 ==== `[.contract-item-name]#++keys++#++(struct EnumerableMapExtended.BytesToUintMap map) → bytes[]++` [.item-kind]#internal#
 
-Return the an array containing all the keys
+Returns an array containing all the keys
+
+WARNING: This operation will copy the entire storage to memory, which can be quite expensive. This is designed
+to mostly be used by view accessors that are queried without any gas fees. Developers should keep in mind that
+this function has an unbounded cost, and using it as part of a state-changing function may render the function
+uncallable if the map grows to a point where copying to memory consumes too much gas to fit in a block.
+
+[.contract-item]
+[[EnumerableMapExtended-keys-struct-EnumerableMapExtended-BytesToUintMap-uint256-uint256-]]
+==== `[.contract-item-name]#++keys++#++(struct EnumerableMapExtended.BytesToUintMap map, uint256 start, uint256 end) → bytes[]++` [.item-kind]#internal#
+
+Returns an array containing a slice of the keys
 
 WARNING: This operation will copy the entire storage to memory, which can be quite expensive. This is designed
 to mostly be used by view accessors that are queried without any gas fees. Developers should keep in mind that
@@ -555,7 +609,18 @@ Requirements:
 [[EnumerableMapExtended-keys-struct-EnumerableMapExtended-StringToStringMap-]]
 ==== `[.contract-item-name]#++keys++#++(struct EnumerableMapExtended.StringToStringMap map) → string[]++` [.item-kind]#internal#
 
-Return the an array containing all the keys
+Returns an array containing all the keys
+
+WARNING: This operation will copy the entire storage to memory, which can be quite expensive. This is designed
+to mostly be used by view accessors that are queried without any gas fees. Developers should keep in mind that
+this function has an unbounded cost, and using it as part of a state-changing function may render the function
+uncallable if the map grows to a point where copying to memory consumes too much gas to fit in a block.
+
+[.contract-item]
+[[EnumerableMapExtended-keys-struct-EnumerableMapExtended-StringToStringMap-uint256-uint256-]]
+==== `[.contract-item-name]#++keys++#++(struct EnumerableMapExtended.StringToStringMap map, uint256 start, uint256 end) → string[]++` [.item-kind]#internal#
+
+Returns an array containing a slice of the keys
 
 WARNING: This operation will copy the entire storage to memory, which can be quite expensive. This is designed
 to mostly be used by view accessors that are queried without any gas fees. Developers should keep in mind that

@@ -1,7 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
-import {IERC7579Module, MODULE_TYPE_EXECUTOR, IERC7579Execution} from "@openzeppelin/contracts/interfaces/draft-IERC7579.sol";
+import {
+    IERC7579Module,
+    MODULE_TYPE_EXECUTOR,
+    IERC7579Execution
+} from "@openzeppelin/contracts/interfaces/draft-IERC7579.sol";
 
 /**
  * @dev Basic implementation for ERC-7579 executor modules that provides execution functionality

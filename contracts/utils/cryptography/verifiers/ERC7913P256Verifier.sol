@@ -3,7 +3,7 @@
 pragma solidity ^0.8.20;
 
 import {P256} from "@openzeppelin/contracts/utils/cryptography/P256.sol";
-import {IERC7913SignatureVerifier} from "../../../interfaces/IERC7913.sol";
+import {IERC7913SignatureVerifier} from "@openzeppelin/contracts/interfaces/IERC7913.sol";
 
 /**
  * @dev ERC-7913 signature verifier that support P256 (secp256r1) keys.

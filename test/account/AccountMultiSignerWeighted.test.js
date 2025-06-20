@@ -23,7 +23,7 @@ const signerRSA = new NonNativeSigner(RSASHA256SigningKey.random());
 async function fixture() {
   // EOAs and environment
   const [beneficiary, other] = await ethers.getSigners();
-  const target = await ethers.deployContract('CallReceiverMockExtended');
+  const target = await ethers.deployContract('CallReceiverMock');
 
   // ERC-7913 verifiers
   const verifierP256 = await ethers.deployContract('ERC7913P256Verifier');

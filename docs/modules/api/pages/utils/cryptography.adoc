@@ -19,7 +19,6 @@
 :ERC7913P256Verifier: pass:normal[xref:utils/cryptography.adoc#ERC7913P256Verifier[`ERC7913P256Verifier`]]
 :ERC7913RSAVerifier: pass:normal[xref:utils/cryptography.adoc#ERC7913RSAVerifier[`ERC7913RSAVerifier`]]
 :ERC7913ZKEmailVerifier: pass:normal[xref:utils/cryptography.adoc#ERC7913ZKEmailVerifier[`ERC7913ZKEmailVerifier`]]
-:IERC7913SignatureVerifier: pass:normal[xref:interfaces.adoc#IERC7913SignatureVerifier[`IERC7913SignatureVerifier`]]
 :ERC7739Utils: pass:normal[xref:utils/cryptography.adoc#ERC7739Utils[`ERC7739Utils`]]
 :AbstractSigner: pass:normal[xref:utils/cryptography.adoc#AbstractSigner[`AbstractSigner`]]
 :Account: pass:normal[xref:account.adoc#Account[`Account`]]
