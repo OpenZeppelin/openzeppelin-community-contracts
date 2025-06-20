@@ -3,7 +3,7 @@
 const path = require('path');
 const graphlib = require('graphlib');
 const { findAll } = require('solidity-ast/utils');
-const { _: artifacts } = require('yargs').argv;
+const { _: artifacts } = require('yargs/yargs')().argv;
 
 for (const artifact of artifacts) {
   const { output: solcOutput } = require(path.resolve(__dirname, '../..', artifact));
