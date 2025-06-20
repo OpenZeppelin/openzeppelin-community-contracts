@@ -9,10 +9,10 @@ async function deploy(owner) {
   const gatewayB = await ethers.deployContract('AxelarGatewayDuplex', [axelar, owner]);
 
   await Promise.all([
-    gatewayA.connect(owner).registerChainEquivalence(chain.erc7930.binary, 'local'),
-    gatewayB.connect(owner).registerChainEquivalence(chain.erc7930.binary, 'local'),
-    gatewayA.connect(owner).registerRemoteGateway(chain.toErc7930(gatewayB).binary),
-    gatewayB.connect(owner).registerRemoteGateway(chain.toErc7930(gatewayA).binary),
+    gatewayA.connect(owner).registerChainEquivalence(chain.erc7930, 'local'),
+    gatewayB.connect(owner).registerChainEquivalence(chain.erc7930, 'local'),
+    gatewayA.connect(owner).registerRemoteGateway(chain.toErc7930(gatewayB)),
+    gatewayB.connect(owner).registerRemoteGateway(chain.toErc7930(gatewayA)),
   ]);
 
   return { chain, axelar, gatewayA, gatewayB };

@@ -31,8 +31,8 @@ async function fixture() {
     protocoles.map(({ gatewayB }) => gatewayB),
     N,
   ]);
-  await aggregatorA.registerRemoteAggregator(chain.toErc7930(aggregatorB).binary);
-  await aggregatorB.registerRemoteAggregator(chain.toErc7930(aggregatorA).binary);
+  await aggregatorA.registerRemoteAggregator(chain.toErc7930(aggregatorB));
+  await aggregatorB.registerRemoteAggregator(chain.toErc7930(aggregatorA));
 
   return { owner, sender, accounts, chain, protocoles, aggregatorA, aggregatorB };
 }
@@ -47,16 +47,16 @@ describe('ERC7786Aggregator', function () {
       this.protocoles.map(({ gatewayA }) => getAddress(gatewayA)),
     );
     await expect(this.aggregatorA.getThreshold()).to.eventually.equal(N);
-    await expect(this.aggregatorA.getRemoteAggregator(this.chain.erc7930.binary)).to.eventually.equal(
-      this.chain.toErc7930(this.aggregatorB).binary,
+    await expect(this.aggregatorA.getRemoteAggregator(this.chain.erc7930)).to.eventually.equal(
+      this.chain.toErc7930(this.aggregatorB),
     );
 
     await expect(this.aggregatorB.getGateways()).to.eventually.deep.equal(
       this.protocoles.map(({ gatewayB }) => getAddress(gatewayB)),
     );
     await expect(this.aggregatorB.getThreshold()).to.eventually.equal(N);
-    await expect(this.aggregatorB.getRemoteAggregator(this.chain.erc7930.binary)).to.eventually.equal(
-      this.chain.toErc7930(this.aggregatorA).binary,
+    await expect(this.aggregatorB.getRemoteAggregator(this.chain.erc7930)).to.eventually.equal(
+      this.chain.toErc7930(this.aggregatorA),
     );
   });
 
@@ -112,7 +112,7 @@ describe('ERC7786Aggregator', function () {
     afterEach(async function () {
       const txPromise = this.aggregatorA
         .connect(this.sender)
-        .sendMessage(this.chain.toErc7930(this.destination).binary, this.payload, this.attributes, this.opts ?? {});
+        .sendMessage(this.chain.toErc7930(this.destination), this.payload, this.attributes, this.opts ?? {});
 
       switch (typeof this.outcome) {
         case 'string': {
@@ -128,8 +128,8 @@ describe('ERC7786Aggregator', function () {
             .to.emit(this.aggregatorA, 'MessageSent')
             .withArgs(
               ethers.ZeroHash,
-              this.chain.toErc7930(this.sender).binary,
-              this.chain.toErc7930(this.destination).binary,
+              this.chain.toErc7930(this.sender),
+              this.chain.toErc7930(this.destination),
               this.payload,
               0n,
               this.attributes,
@@ -141,8 +141,8 @@ describe('ERC7786Aggregator', function () {
               .to.emit(gatewayA, 'MessageSent')
               .withArgs(
                 ethers.ZeroHash,
-                this.chain.toErc7930(this.aggregatorA).binary,
-                this.chain.toErc7930(this.aggregatorB).binary,
+                this.chain.toErc7930(this.aggregatorA),
+                this.chain.toErc7930(this.aggregatorB),
                 anyValue,
                 0n,
                 anyValue,
@@ -154,13 +154,7 @@ describe('ERC7786Aggregator', function () {
           if (this.outcome) {
             await expect(txPromise)
               .to.emit(this.destination, 'MessageReceived')
-              .withArgs(
-                this.aggregatorB,
-                anyValue,
-                this.chain.toErc7930(this.sender).binary,
-                this.payload,
-                this.attributes,
-              )
+              .withArgs(this.aggregatorB, anyValue, this.chain.toErc7930(this.sender), this.payload, this.attributes)
               .to.emit(this.aggregatorB, 'ExecutionSuccess')
               .withArgs(resultId)
               .to.not.emit(this.aggregatorB, 'ExecutionFailed');

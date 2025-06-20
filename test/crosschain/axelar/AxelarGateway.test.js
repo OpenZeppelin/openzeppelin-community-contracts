@@ -23,23 +23,23 @@ describe('AxelarGateway', function () {
 
   it('initial setup', async function () {
     await expect(this.gatewayA.gateway()).to.eventually.equal(this.axelar);
-    await expect(this.gatewayA.getAxelarChain(this.chain.erc7930.binary)).to.eventually.equal('local');
-    await expect(this.gatewayA.getErc7930Chain('local')).to.eventually.equal(this.chain.erc7930.binary);
-    await expect(this.gatewayA.getRemoteGateway(this.chain.erc7930.binary)).to.eventually.equal(
+    await expect(this.gatewayA.getAxelarChain(this.chain.erc7930)).to.eventually.equal('local');
+    await expect(this.gatewayA.getErc7930Chain('local')).to.eventually.equal(this.chain.erc7930);
+    await expect(this.gatewayA.getRemoteGateway(this.chain.erc7930)).to.eventually.equal(
       this.gatewayB.target.toLowerCase(),
     );
 
     await expect(this.gatewayB.gateway()).to.eventually.equal(this.axelar);
-    await expect(this.gatewayB.getAxelarChain(this.chain.erc7930.binary)).to.eventually.equal('local');
-    await expect(this.gatewayB.getErc7930Chain('local')).to.eventually.equal(this.chain.erc7930.binary);
-    await expect(this.gatewayB.getRemoteGateway(this.chain.erc7930.binary)).to.eventually.equal(
+    await expect(this.gatewayB.getAxelarChain(this.chain.erc7930)).to.eventually.equal('local');
+    await expect(this.gatewayB.getErc7930Chain('local')).to.eventually.equal(this.chain.erc7930);
+    await expect(this.gatewayB.getRemoteGateway(this.chain.erc7930)).to.eventually.equal(
       this.gatewayA.target.toLowerCase(),
     );
   });
 
   it('workflow', async function () {
-    const erc7930Sender = this.chain.toErc7930(this.sender).binary;
-    const erc7930Recipient = this.chain.toErc7930(this.receiver).binary;
+    const erc7930Sender = this.chain.toErc7930(this.sender);
+    const erc7930Recipient = this.chain.toErc7930(this.receiver);
     const payload = ethers.randomBytes(128);
     const attributes = [];
     const encoded = ethers.AbiCoder.defaultAbiCoder().encode(
@@ -62,7 +62,7 @@ describe('AxelarGateway', function () {
     await expect(
       this.gatewayA
         .connect(this.sender)
-        .sendMessage(this.chain.toErc7930(this.invalidReceiver).binary, ethers.randomBytes(128), []),
+        .sendMessage(this.chain.toErc7930(this.invalidReceiver), ethers.randomBytes(128), []),
     ).to.be.revertedWithCustomError(this.gatewayB, 'ReceiverExecutionFailed');
   });
 
@@ -70,7 +70,7 @@ describe('AxelarGateway', function () {
     await expect(
       this.gatewayA
         .connect(this.sender)
-        .sendMessage(this.chain.toErc7930(this.accounts[0]).binary, ethers.randomBytes(128), []),
+        .sendMessage(this.chain.toErc7930(this.accounts[0]), ethers.randomBytes(128), []),
     ).to.be.revertedWithoutReason();
   });
 });

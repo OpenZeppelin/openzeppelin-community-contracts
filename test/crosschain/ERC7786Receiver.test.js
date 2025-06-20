@@ -26,19 +26,10 @@ describe('ERC7786Receiver', function () {
   });
 
   it('nominal workflow', async function () {
-    await expect(
-      this.gateway.connect(this.sender).sendMessage(this.toErc7930(this.receiver).binary, payload, attributes),
-    )
+    await expect(this.gateway.connect(this.sender).sendMessage(this.toErc7930(this.receiver), payload, attributes))
       .to.emit(this.gateway, 'MessageSent')
-      .withArgs(
-        ethers.ZeroHash,
-        this.toErc7930(this.sender).binary,
-        this.toErc7930(this.receiver).binary,
-        payload,
-        0n,
-        attributes,
-      )
+      .withArgs(ethers.ZeroHash, this.toErc7930(this.sender), this.toErc7930(this.receiver), payload, 0n, attributes)
       .to.emit(this.receiver, 'MessageReceived')
-      .withArgs(this.gateway, anyValue, this.toErc7930(this.sender).binary, payload, attributes); // ERC7786GatewayMock uses empty messageId
+      .withArgs(this.gateway, anyValue, this.toErc7930(this.sender), payload, attributes); // ERC7786GatewayMock uses empty messageId
   });
 });
