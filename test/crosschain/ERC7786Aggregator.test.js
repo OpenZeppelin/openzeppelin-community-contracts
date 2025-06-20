@@ -19,8 +19,7 @@ async function fixture() {
       .map(() => AxelarHelper.deploy(owner)),
   );
 
-  const { CAIP2 } = protocoles.at(0);
-  const asCAIP10 = account => `${CAIP2}:${getAddress(account)}`;
+  const { chain } = protocoles.at(0);
 
   const aggregatorA = await ethers.deployContract('ERC7786Aggregator', [
     owner,
@@ -32,10 +31,10 @@ async function fixture() {
     protocoles.map(({ gatewayB }) => gatewayB),
     N,
   ]);
-  await aggregatorA.registerRemoteAggregator(CAIP2, getAddress(aggregatorB));
-  await aggregatorB.registerRemoteAggregator(CAIP2, getAddress(aggregatorA));
+  await aggregatorA.registerRemoteAggregator(chain.toErc7930(aggregatorB));
+  await aggregatorB.registerRemoteAggregator(chain.toErc7930(aggregatorA));
 
-  return { owner, sender, accounts, CAIP2, asCAIP10, protocoles, aggregatorA, aggregatorB };
+  return { owner, sender, accounts, chain, protocoles, aggregatorA, aggregatorB };
 }
 
 describe('ERC7786Aggregator', function () {
@@ -48,13 +47,17 @@ describe('ERC7786Aggregator', function () {
       this.protocoles.map(({ gatewayA }) => getAddress(gatewayA)),
     );
     await expect(this.aggregatorA.getThreshold()).to.eventually.equal(N);
-    await expect(this.aggregatorA.getRemoteAggregator(this.CAIP2)).to.eventually.equal(getAddress(this.aggregatorB));
+    await expect(this.aggregatorA.getRemoteAggregator(this.chain.erc7930)).to.eventually.equal(
+      this.chain.toErc7930(this.aggregatorB),
+    );
 
     await expect(this.aggregatorB.getGateways()).to.eventually.deep.equal(
       this.protocoles.map(({ gatewayB }) => getAddress(gatewayB)),
     );
     await expect(this.aggregatorB.getThreshold()).to.eventually.equal(N);
-    await expect(this.aggregatorB.getRemoteAggregator(this.CAIP2)).to.eventually.equal(getAddress(this.aggregatorA));
+    await expect(this.aggregatorB.getRemoteAggregator(this.chain.erc7930)).to.eventually.equal(
+      this.chain.toErc7930(this.aggregatorA),
+    );
   });
 
   describe('cross chain call', function () {
@@ -79,7 +82,7 @@ describe('ERC7786Aggregator', function () {
       this.payload = ethers.randomBytes(128);
       this.attributes = [];
       this.opts = { value: 1n };
-      this.outcome = 'ERC7786AggregatorValueNotSupported';
+      this.outcome = 'UnsupportedNativeTransfer';
     });
 
     it('invalid receiver - receiver revert', async function () {
@@ -109,7 +112,7 @@ describe('ERC7786Aggregator', function () {
     afterEach(async function () {
       const txPromise = this.aggregatorA
         .connect(this.sender)
-        .sendMessage(this.CAIP2, getAddress(this.destination), this.payload, this.attributes, this.opts ?? {});
+        .sendMessage(this.chain.toErc7930(this.destination), this.payload, this.attributes, this.opts ?? {});
 
       switch (typeof this.outcome) {
         case 'string': {
@@ -122,24 +125,26 @@ describe('ERC7786Aggregator', function () {
 
           // Message was posted
           await expect(txPromise)
-            .to.emit(this.aggregatorA, 'MessagePosted')
+            .to.emit(this.aggregatorA, 'MessageSent')
             .withArgs(
               ethers.ZeroHash,
-              this.asCAIP10(this.sender),
-              this.asCAIP10(this.destination),
+              this.chain.toErc7930(this.sender),
+              this.chain.toErc7930(this.destination),
               this.payload,
+              0n,
               this.attributes,
             );
 
           // MessagePosted to all gateways on the A side and received from all gateways on the B side
           for (const { gatewayA, gatewayB } of this.protocoles) {
             await expect(txPromise)
-              .to.emit(gatewayA, 'MessagePosted')
+              .to.emit(gatewayA, 'MessageSent')
               .withArgs(
                 ethers.ZeroHash,
-                this.asCAIP10(this.aggregatorA),
-                this.asCAIP10(this.aggregatorB),
+                this.chain.toErc7930(this.aggregatorA),
+                this.chain.toErc7930(this.aggregatorB),
                 anyValue,
+                0n,
                 anyValue,
               )
               .to.emit(this.aggregatorB, 'Received')
@@ -149,7 +154,7 @@ describe('ERC7786Aggregator', function () {
           if (this.outcome) {
             await expect(txPromise)
               .to.emit(this.destination, 'MessageReceived')
-              .withArgs(this.aggregatorB, anyValue, this.CAIP2, getAddress(this.sender), this.payload, this.attributes)
+              .withArgs(this.aggregatorB, anyValue, this.chain.toErc7930(this.sender), this.payload, this.attributes)
               .to.emit(this.aggregatorB, 'ExecutionSuccess')
               .withArgs(resultId)
               .to.not.emit(this.aggregatorB, 'ExecutionFailed');

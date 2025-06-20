@@ -6,9 +6,8 @@ import {IERC7786Receiver} from "../../interfaces/IERC7786.sol";
 
 contract ERC7786ReceiverRevertMock is IERC7786Receiver {
     function executeMessage(
-        string calldata,
-        string calldata,
-        string calldata,
+        bytes32,
+        bytes calldata,
         bytes calldata,
         bytes[] calldata
     ) public payable virtual returns (bytes4) {

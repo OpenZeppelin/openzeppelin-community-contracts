@@ -22,14 +22,13 @@ abstract contract ERC7786Receiver is IERC7786Receiver {
 
     /// @inheritdoc IERC7786Receiver
     function executeMessage(
-        string calldata messageId,
-        string calldata source,
-        string calldata sender,
+        bytes32 receiveId,
+        bytes calldata sender, // Binary Interoperable Address
         bytes calldata payload,
         bytes[] calldata attributes
     ) public payable virtual returns (bytes4) {
         require(_isKnownGateway(msg.sender), ERC7786ReceiverInvalidGateway(msg.sender));
-        _processMessage(msg.sender, messageId, source, sender, payload, attributes);
+        _processMessage(msg.sender, receiveId, sender, payload, attributes);
         return IERC7786Receiver.executeMessage.selector;
     }
 
@@ -39,9 +38,8 @@ abstract contract ERC7786Receiver is IERC7786Receiver {
     /// @dev Virtual function that should contain the logic to execute when a cross-chain message is received.
     function _processMessage(
         address gateway,
-        string calldata messageId,
-        string calldata sourceChain,
-        string calldata sender,
+        bytes32 receiveId,
+        bytes calldata sender,
         bytes calldata payload,
         bytes[] calldata attributes
     ) internal virtual;
