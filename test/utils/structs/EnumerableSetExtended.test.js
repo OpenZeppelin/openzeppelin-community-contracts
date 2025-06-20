@@ -45,7 +45,7 @@ async function fixture() {
   return { mock, env };
 }
 
-describe.only('EnumerableSetExtended', function () {
+describe('EnumerableSetExtended', function () {
   beforeEach(async function () {
     Object.assign(this, await loadFixture(fixture));
   });
