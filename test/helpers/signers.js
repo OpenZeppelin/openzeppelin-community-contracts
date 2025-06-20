@@ -1,4 +1,5 @@
 const { AbiCoder, assertArgument, dataLength, toBigInt } = require('ethers');
+
 class ZKEmailSigningKey {
   #domainName;
   #publicKeyHash;

@@ -3,15 +3,14 @@ const { loadFixture } = require('@nomicfoundation/hardhat-network-helpers');
 const { expect } = require('chai');
 
 const { impersonate } = require('@openzeppelin/contracts/test/helpers/account');
+const { getDomain, PackedUserOperation } = require('@openzeppelin/contracts/test/helpers/eip712');
+const { ERC4337Helper } = require('@openzeppelin/contracts/test/helpers/erc4337');
+const { MODULE_TYPE_VALIDATOR } = require('@openzeppelin/contracts/test/helpers/erc7579');
 const {
   NonNativeSigner,
   P256SigningKey,
   RSASHA256SigningKey,
 } = require('@openzeppelin/contracts/test/helpers/signers');
-const { getDomain } = require('@openzeppelin/contracts/test/helpers/eip712');
-const { ERC4337Helper } = require('@openzeppelin/contracts/test/helpers/erc4337');
-const { MODULE_TYPE_VALIDATOR } = require('@openzeppelin/contracts/test/helpers/erc7579');
-const { PackedUserOperation } = require('../../helpers/eip712-types');
 
 const { shouldBehaveLikeERC7579Module, shouldBehaveLikeERC7579Validator } = require('./ERC7579Module.behavior');
 

@@ -3,7 +3,6 @@ const { expect } = require('chai');
 const { loadFixture } = require('@nomicfoundation/hardhat-network-helpers');
 
 const { impersonate } = require('@openzeppelin/contracts/test/helpers/account');
-const { NonNativeSigner, MultiERC7913SigningKey } = require('@openzeppelin/contracts/test/helpers/signers');
 const { ERC4337Helper } = require('@openzeppelin/contracts/test/helpers/erc4337');
 const {
   MODULE_TYPE_EXECUTOR,
@@ -12,6 +11,7 @@ const {
   encodeMode,
   encodeSingle,
 } = require('@openzeppelin/contracts/test/helpers/erc7579');
+const { NonNativeSigner, MultiERC7913SigningKey } = require('@openzeppelin/contracts/test/helpers/signers');
 
 const { shouldBehaveLikeERC7579Module } = require('./ERC7579Module.behavior');
 

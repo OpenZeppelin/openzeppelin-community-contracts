@@ -4,7 +4,6 @@ const { loadFixture } = require('@nomicfoundation/hardhat-network-helpers');
 
 const { impersonate } = require('@openzeppelin/contracts/test/helpers/account');
 const { ERC4337Helper } = require('@openzeppelin/contracts/test/helpers/erc4337');
-
 const {
   MODULE_TYPE_EXECUTOR,
   encodeSingle,
@@ -12,6 +11,7 @@ const {
   CALL_TYPE_CALL,
   EXEC_TYPE_DEFAULT,
 } = require('@openzeppelin/contracts/test/helpers/erc7579');
+
 const { shouldBehaveLikeERC7579Module } = require('./ERC7579Module.behavior');
 
 async function fixture() {
