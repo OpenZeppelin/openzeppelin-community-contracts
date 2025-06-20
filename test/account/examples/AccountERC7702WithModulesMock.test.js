@@ -1,16 +1,14 @@
 const { ethers, entrypoint } = require('hardhat');
 const { loadFixture, setBalance } = require('@nomicfoundation/hardhat-network-helpers');
 
-const { getDomain } = require('@openzeppelin/contracts/test/helpers/eip712');
-const { ERC4337Helper } = require('../../helpers/erc4337');
-const { PackedUserOperation } = require('../../helpers/eip712-types');
+const { getDomain, PackedUserOperation } = require('@openzeppelin/contracts/test/helpers/eip712');
+const { ERC4337Helper } = require('@openzeppelin/contracts/test//helpers/erc4337');
+const { MODULE_TYPE_VALIDATOR } = require('@openzeppelin/contracts/test/helpers/erc7579');
 
 const { shouldBehaveLikeAccountCore, shouldBehaveLikeAccountHolder } = require('../Account.behavior');
 const { shouldBehaveLikeAccountERC7579 } = require('../extensions/AccountERC7579.behavior');
 const { shouldBehaveLikeERC1271 } = require('../../utils/cryptography/ERC1271.behavior');
 const { shouldBehaveLikeERC7821 } = require('../extensions/ERC7821.behavior');
-
-const { MODULE_TYPE_VALIDATOR } = require('@openzeppelin/contracts/test/helpers/erc7579');
 
 async function fixture() {
   // EOAs and environment

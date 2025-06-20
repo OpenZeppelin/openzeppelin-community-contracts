@@ -1,7 +1,7 @@
 const { ethers } = require('hardhat');
 const { expect } = require('chai');
 const { Permit, formatType, getDomain } = require('@openzeppelin/contracts/test/helpers/eip712');
-const { ERC7739Signer } = require('../../helpers/erc7739');
+const { ERC7739Signer } = require('@openzeppelin/contracts/test/helpers/erc7739');
 
 function shouldBehaveLikeERC1271({ erc7739 = false } = {}) {
   const MAGIC_VALUE = '0x1626ba7e';
