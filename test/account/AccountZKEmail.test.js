@@ -1,12 +1,13 @@
 const { ethers } = require('hardhat');
 const { loadFixture } = require('@nomicfoundation/hardhat-network-helpers');
 
-const { ERC4337Helper } = require('../helpers/erc4337');
+const { ERC4337Helper } = require('@openzeppelin/contracts/test/helpers/erc4337');
+const { NonNativeSigner } = require('@openzeppelin/contracts/test/helpers/signers');
+const { ZKEmailSigningKey } = require('../helpers/signers');
 
 const { shouldBehaveLikeAccountCore, shouldBehaveLikeAccountHolder } = require('./Account.behavior');
 const { shouldBehaveLikeERC1271 } = require('../utils/cryptography/ERC1271.behavior');
 const { shouldBehaveLikeERC7821 } = require('./extensions/ERC7821.behavior');
-const { ZKEmailSigningKey, NonNativeSigner } = require('../helpers/signers');
 
 const accountSalt = '0x046582bce36cdd0a8953b9d40b8f20d58302bacf3bcecffeb6741c98a52725e2'; // keccak256("test@example.com")
 const selector = '12345';

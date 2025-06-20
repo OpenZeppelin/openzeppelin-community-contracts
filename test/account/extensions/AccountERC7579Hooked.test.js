@@ -1,9 +1,8 @@
 const { ethers, entrypoint } = require('hardhat');
 const { loadFixture } = require('@nomicfoundation/hardhat-network-helpers');
 
-const { getDomain } = require('@openzeppelin/contracts/test/helpers/eip712');
-const { ERC4337Helper } = require('../../helpers/erc4337');
-const { PackedUserOperation } = require('../../helpers/eip712-types');
+const { getDomain, PackedUserOperation } = require('@openzeppelin/contracts/test/helpers/eip712');
+const { ERC4337Helper } = require('@openzeppelin/contracts/test/helpers/erc4337');
 
 const { shouldBehaveLikeAccountCore } = require('../Account.behavior');
 const { shouldBehaveLikeAccountERC7579 } = require('./AccountERC7579.behavior');
