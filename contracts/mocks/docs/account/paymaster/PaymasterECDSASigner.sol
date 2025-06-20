@@ -8,9 +8,7 @@ import {SignerECDSA} from "@openzeppelin/contracts/utils/cryptography/signers/Si
 import {PaymasterSigner, EIP712} from "../../../../account/paymaster/PaymasterSigner.sol";
 
 contract PaymasterECDSASigner is PaymasterSigner, SignerECDSA, Ownable {
-    constructor(address signerAddr) EIP712("MyPaymasterECDSASigner", "1") Ownable(signerAddr) {
-        _setSigner(signerAddr);
-    }
+    constructor(address signerAddr) EIP712("MyPaymasterECDSASigner", "1") Ownable(signerAddr) SignerECDSA(signerAddr) {}
 
     function _authorizeWithdraw() internal virtual override onlyOwner {}
 }

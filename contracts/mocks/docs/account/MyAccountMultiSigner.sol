@@ -21,7 +21,10 @@ contract MyAccountMultiSigner is
     ERC1155Holder,
     Initializable
 {
-    constructor() EIP712("MyAccountMultiSigner", "1") {}
+    constructor(
+        bytes[] memory signers,
+        uint64 threshold
+    ) EIP712("MyAccountMultiSigner", "1") MultiSignerERC7913(signers, threshold) {}
 
     function initialize(bytes[] memory signers, uint64 threshold) public initializer {
         _addSigners(signers);

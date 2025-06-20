@@ -23,7 +23,11 @@ contract MyAccountMultiSignerWeighted is
     ERC1155Holder,
     Initializable
 {
-    constructor() EIP712("MyAccountMultiSignerWeighted", "1") {}
+    constructor(
+        bytes[] memory signers,
+        uint64[] memory weights,
+        uint64 threshold
+    ) EIP712("MyAccountMultiSignerWeighted", "1") MultiSignerERC7913Weighted(signers, weights, threshold) {}
 
     function initialize(bytes[] memory signers, uint64[] memory weights, uint64 threshold) public initializer {
         _addSigners(signers);

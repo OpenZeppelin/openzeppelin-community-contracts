@@ -13,7 +13,7 @@ import {ERC1155Holder} from "@openzeppelin/contracts/token/ERC1155/utils/ERC1155
 import {Initializable} from "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 
 contract MyAccountERC7913 is Account, SignerERC7913, ERC7739, ERC7821, ERC721Holder, ERC1155Holder, Initializable {
-    constructor() EIP712("MyAccount7913", "1") {}
+    constructor(bytes memory signer) EIP712("MyAccount7913", "1") SignerERC7913(signer) {}
 
     function initialize(bytes memory signer) public initializer {
         _setSigner(signer);

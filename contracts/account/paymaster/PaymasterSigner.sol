@@ -14,10 +14,7 @@ import {PaymasterCore} from "./PaymasterCore.sol";
  *
  * ```solidity
  * contract MyPaymasterECDSASigner is PaymasterSigner, SignerECDSA {
- *     constructor() EIP712("MyPaymasterECDSASigner", "1") {
- *       // Will revert if the signer is already initialized
- *       _setSigner(signerAddr);
- *     }
+ *     constructor(address signerAddr) EIP712("MyPaymasterECDSASigner", "1") SignerECDSA(signerAddr) {}
  * }
  * ```
  */
