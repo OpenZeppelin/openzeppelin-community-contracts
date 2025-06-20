@@ -15,8 +15,8 @@ const { MODULE_TYPE_VALIDATOR } = require('@openzeppelin/contracts/test/helpers/
 async function fixture() {
   // EOAs and environment
   const [beneficiary, other] = await ethers.getSigners();
-  const target = await ethers.deployContract('CallReceiverMockExtended');
-  const anotherTarget = await ethers.deployContract('CallReceiverMockExtended');
+  const target = await ethers.deployContract('CallReceiverMock');
+  const anotherTarget = await ethers.deployContract('CallReceiverMock');
 
   // Signer with EIP-7702 support + funding
   const eoa = ethers.Wallet.createRandom(ethers.provider);

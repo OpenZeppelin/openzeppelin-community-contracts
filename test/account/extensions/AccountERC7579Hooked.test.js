@@ -12,8 +12,8 @@ const { shouldBehaveLikeERC1271 } = require('../../utils/cryptography/ERC1271.be
 async function fixture() {
   // EOAs and environment
   const [other] = await ethers.getSigners();
-  const target = await ethers.deployContract('CallReceiverMockExtended');
-  const anotherTarget = await ethers.deployContract('CallReceiverMockExtended');
+  const target = await ethers.deployContract('CallReceiverMock');
+  const anotherTarget = await ethers.deployContract('CallReceiverMock');
 
   // ERC-7579 validator
   const validator = await ethers.deployContract('$ERC7579Signature');

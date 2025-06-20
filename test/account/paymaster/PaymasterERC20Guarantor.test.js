@@ -16,7 +16,7 @@ const value = ethers.parseEther('1');
 async function fixture() {
   // EOAs and environment
   const [admin, receiver, guarantor, other] = await ethers.getSigners();
-  const target = await ethers.deployContract('CallReceiverMockExtended');
+  const target = await ethers.deployContract('CallReceiverMock');
   const token = await ethers.deployContract('$ERC20Mock', ['Name', 'Symbol']);
 
   // signers
