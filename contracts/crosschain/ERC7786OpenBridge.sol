@@ -13,7 +13,7 @@ import {InteroperableAddress} from "@openzeppelin/contracts/utils/draft-Interope
  * @dev N of M gateway: Sends your message through M independent gateways. It will be delivered to the receiver by an
  * equivalent aggregator on the destination chain if N of the M gateways agree.
  */
-contract ERC7786Aggregator is IERC7786GatewaySource, IERC7786Receiver, Ownable, Pausable {
+contract ERC7786OpenBridge is IERC7786GatewaySource, IERC7786Receiver, Ownable, Pausable {
     using EnumerableSet for EnumerableSet.AddressSet;
     using InteroperableAddress for bytes;
 
@@ -37,13 +37,13 @@ contract ERC7786Aggregator is IERC7786GatewaySource, IERC7786Receiver, Ownable, 
     event ThresholdUpdated(uint8 threshold);
 
     error UnsupportedNativeTransfer();
-    error ERC7786AggregatorInvalidCrosschainSender();
-    error ERC7786AggregatorAlreadyExecuted();
-    error ERC7786AggregatorRemoteNotRegistered(bytes2 chainType, bytes chainReference);
-    error ERC7786AggregatorGatewayAlreadyRegistered(address gateway);
-    error ERC7786AggregatorGatewayNotRegistered(address gateway);
-    error ERC7786AggregatorThresholdViolation();
-    error ERC7786AggregatorInvalidExecutionReturnValue();
+    error ERC7786OpenBridgeInvalidCrosschainSender();
+    error ERC7786OpenBridgeAlreadyExecuted();
+    error ERC7786OpenBridgeRemoteNotRegistered(bytes2 chainType, bytes chainReference);
+    error ERC7786OpenBridgeGatewayAlreadyRegistered(address gateway);
+    error ERC7786OpenBridgeGatewayNotRegistered(address gateway);
+    error ERC7786OpenBridgeThresholdViolation();
+    error ERC7786OpenBridgeInvalidExecutionReturnValue();
 
     /****************************************************************************************************************
      *                                        S T A T E   V A R I A B L E S                                         *
@@ -182,7 +182,7 @@ contract ERC7786Aggregator is IERC7786GatewaySource, IERC7786Receiver, Ownable, 
         // Check sender is a trusted aggregator
         require(
             keccak256(getRemoteAggregator(sender)) == keccak256(sender),
-            ERC7786AggregatorInvalidCrosschainSender()
+            ERC7786OpenBridgeInvalidCrosschainSender()
         );
 
         // Message reception tracker
@@ -199,7 +199,7 @@ contract ERC7786Aggregator is IERC7786GatewaySource, IERC7786Receiver, Ownable, 
             // if already executed, leave gracefully
             if (tracker.executed) return IERC7786Receiver.executeMessage.selector;
         } else if (tracker.executed) {
-            revert ERC7786AggregatorAlreadyExecuted();
+            revert ERC7786OpenBridgeAlreadyExecuted();
         }
 
         // Parse payload
@@ -230,7 +230,7 @@ contract ERC7786Aggregator is IERC7786GatewaySource, IERC7786Receiver, Ownable, 
                 emit ExecutionSuccess(id);
             } else {
                 // call successful but invalid value returned, we need to revert the subcall
-                revert ERC7786AggregatorInvalidExecutionReturnValue();
+                revert ERC7786OpenBridgeInvalidExecutionReturnValue();
             }
         }
 
@@ -257,7 +257,7 @@ contract ERC7786Aggregator is IERC7786GatewaySource, IERC7786Receiver, Ownable, 
         bytes memory chainReference
     ) public view virtual returns (bytes memory) {
         bytes memory addr = _remotes[chainType][chainReference];
-        require(bytes(addr).length != 0, ERC7786AggregatorRemoteNotRegistered(chainType, chainReference));
+        require(bytes(addr).length != 0, ERC7786OpenBridgeRemoteNotRegistered(chainType, chainReference));
         return InteroperableAddress.formatV1(chainType, chainReference, addr);
     }
 
@@ -295,18 +295,18 @@ contract ERC7786Aggregator is IERC7786GatewaySource, IERC7786Receiver, Ownable, 
     // ================================================== Internal ===================================================
 
     function _addGateway(address gateway) internal virtual {
-        require(_gateways.add(gateway), ERC7786AggregatorGatewayAlreadyRegistered(gateway));
+        require(_gateways.add(gateway), ERC7786OpenBridgeGatewayAlreadyRegistered(gateway));
         emit GatewayAdded(gateway);
     }
 
     function _removeGateway(address gateway) internal virtual {
-        require(_gateways.remove(gateway), ERC7786AggregatorGatewayNotRegistered(gateway));
-        require(_threshold <= _gateways.length(), ERC7786AggregatorThresholdViolation());
+        require(_gateways.remove(gateway), ERC7786OpenBridgeGatewayNotRegistered(gateway));
+        require(_threshold <= _gateways.length(), ERC7786OpenBridgeThresholdViolation());
         emit GatewayRemoved(gateway);
     }
 
     function _setThreshold(uint8 newThreshold) internal virtual {
-        require(newThreshold > 0 && newThreshold <= _gateways.length(), ERC7786AggregatorThresholdViolation());
+        require(newThreshold > 0 && newThreshold <= _gateways.length(), ERC7786OpenBridgeThresholdViolation());
         _threshold = newThreshold;
         emit ThresholdUpdated(newThreshold);
     }

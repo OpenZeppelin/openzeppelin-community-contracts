@@ -21,12 +21,12 @@ async function fixture() {
 
   const { chain } = protocoles.at(0);
 
-  const aggregatorA = await ethers.deployContract('ERC7786Aggregator', [
+  const aggregatorA = await ethers.deployContract('ERC7786OpenBridge', [
     owner,
     protocoles.map(({ gatewayA }) => gatewayA),
     N,
   ]);
-  const aggregatorB = await ethers.deployContract('ERC7786Aggregator', [
+  const aggregatorB = await ethers.deployContract('ERC7786OpenBridge', [
     owner,
     protocoles.map(({ gatewayB }) => gatewayB),
     N,
@@ -37,7 +37,7 @@ async function fixture() {
   return { owner, sender, accounts, chain, protocoles, aggregatorA, aggregatorB };
 }
 
-describe('ERC7786Aggregator', function () {
+describe('ERC7786OpenBridge', function () {
   beforeEach(async function () {
     Object.assign(this, await loadFixture(fixture));
   });
@@ -98,7 +98,7 @@ describe('ERC7786Aggregator', function () {
       this.payload = ethers.randomBytes(128);
       this.attributes = [];
       this.opts = {};
-      this.outcome = 'ERC7786AggregatorInvalidExecutionReturnValue'; // revert with custom error
+      this.outcome = 'ERC7786OpenBridgeInvalidExecutionReturnValue'; // revert with custom error
     });
 
     it('invalid receiver - EOA', async function () {
@@ -106,7 +106,7 @@ describe('ERC7786Aggregator', function () {
       this.payload = ethers.randomBytes(128);
       this.attributes = [];
       this.opts = {};
-      this.outcome = 'ERC7786AggregatorInvalidExecutionReturnValue'; // revert with custom error
+      this.outcome = 'ERC7786OpenBridgeInvalidExecutionReturnValue'; // revert with custom error
     });
 
     afterEach(async function () {
