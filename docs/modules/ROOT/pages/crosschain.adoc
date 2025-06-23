@@ -84,13 +84,13 @@ For a destination gateway, the library provides an adapter of the `AxelarExecuta
 include::api:example$crosschain/MyCustomAxelarGatewayDestination.sol[]
 ----
 
-=== Multi Bridge Aggregator
+=== Open Bridge
 
-The xref:api:crosschain.adoc#ERC7786Aggregator[ERC7786Aggregator] is a special gateway that implements both xref:api:crosschain.adoc#IERC7786GatewaySource[IERC7786GatewaySource] and xref:api:crosschain.adoc#IERC7786Receiver[IERC7786Receiver] interfaces. It provides a way to send messages across multiple bridges simultaneously and ensures message delivery through a threshold-based confirmation system.
+The xref:api:crosschain.adoc#ERC7786OpenBridge[ERC7786OpenBridge] is a special gateway that implements both xref:api:crosschain.adoc#IERC7786GatewaySource[IERC7786GatewaySource] and xref:api:crosschain.adoc#IERC7786Receiver[IERC7786Receiver] interfaces. It provides a way to send messages across multiple bridges simultaneously and ensures message delivery through a threshold-based confirmation system.
 
-The aggregator maintains a list of known  gateways and a confirmation threshold. When sending a message, it broadcasts to all registered gateways, and when receiving, it requires a minimum number of confirmations before executing the message. This approach increases reliability by ensuring messages are properly delivered and validated across multiple bridges.
+The bridge maintains a list of known  gateways and a confirmation threshold. When sending a message, it broadcasts to all registered gateways, and when receiving, it requires a minimum number of confirmations before executing the message. This approach increases reliability by ensuring messages are properly delivered and validated across multiple bridges.
 
-When sending a message, the aggregator tracks the message IDs from each gateway to maintain a record of the message's journey across different bridges:
+When sending a message, the bridge tracks the message IDs from each gateway to maintain a record of the message's journey across different bridges:
 
 ```solidity
 function sendMessage(
@@ -110,7 +110,7 @@ function sendMessage(
         // send message
         bytes32 id = IERC7786GatewaySource(gateway).sendMessage(
             destinationChain,
-            aggregator,
+            bridge,
             wrappedPayload,
             attributes
         );
@@ -125,7 +125,7 @@ function sendMessage(
 }
 ```
 
-On the receiving end, the aggregator implements a threshold-based confirmation system. Messages are only executed after receiving enough confirmations from the gateways, ensuring message validity and preventing double execution. The xref:api:crosschain.adoc#ERC7786Aggregator-executeMessage-string-string-string-bytes-bytes---[`executeMessage`] function handles this process:
+On the receiving end, the bridge implements a threshold-based confirmation system. Messages are only executed after receiving enough confirmations from the gateways, ensuring message validity and preventing double execution. The xref:api:crosschain.adoc#ERC7786OpenBridge-executeMessage-string-string-string-bytes-bytes---[`executeMessage`] function handles this process:
 
 ```solidity
 function executeMessage(
@@ -148,7 +148,7 @@ function executeMessage(
         // if already executed, leave gracefully
         if (tracker.executed) return IERC7786Receiver.executeMessage.selector;
     } else if (tracker.executed) {
-        revert ERC7786AggregatorAlreadyExecuted();
+        revert ERC7786OpenBridgeAlreadyExecuted();
     }
     
     // ... Validate sender and prepare payload for execution ...
@@ -173,4 +173,4 @@ function executeMessage(
 }
 ```
 
-The aggregator is designed to be configurable. As an `Ownable` contract, it allows the owner to manage the list of trusted gateways and adjust the confirmation threshold. The `_gateways` list and threshold are initially set during contract deployment using the xref:api:crosschain.adoc#ERC7786Aggregator-_addGateway-address-[`++_addGateway++`] and xref:api:crosschain.adoc#ERC7786Aggregator-_setThreshold-uint8-[`++_setThreshold++`] functions. The owner can update these settings as needed to adapt to changing requirements or add new gateways.
+The bridge is designed to be configurable. As an `Ownable` contract, it allows the owner to manage the list of trusted gateways and adjust the confirmation threshold. The `_gateways` list and threshold are initially set during contract deployment using the xref:api:crosschain.adoc#ERC7786OpenBridge-_addGateway-address-[`++_addGateway++`] and xref:api:crosschain.adoc#ERC7786OpenBridge-_setThreshold-uint8-[`++_setThreshold++`] functions. The owner can update these settings as needed to adapt to changing requirements or add new gateways.
