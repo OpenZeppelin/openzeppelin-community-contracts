@@ -19,10 +19,10 @@ These interfaces are available as `.sol` files. These are useful to interact wit
 
 == Detailed ABI
 
-:MessagePosted: pass:normal[xref:#IERC7786GatewaySource-MessagePosted-bytes32-string-string-bytes-bytes---[`++MessagePosted++`]]
+:MessageSent: pass:normal[xref:#IERC7786GatewaySource-MessageSent-bytes32-bytes-bytes-bytes-uint256-bytes---[`++MessageSent++`]]
 :UnsupportedAttribute: pass:normal[xref:#IERC7786GatewaySource-UnsupportedAttribute-bytes4-[`++UnsupportedAttribute++`]]
 :supportsAttribute: pass:normal[xref:#IERC7786GatewaySource-supportsAttribute-bytes4-[`++supportsAttribute++`]]
-:sendMessage: pass:normal[xref:#IERC7786GatewaySource-sendMessage-string-string-bytes-bytes---[`++sendMessage++`]]
+:sendMessage: pass:normal[xref:#IERC7786GatewaySource-sendMessage-bytes-bytes-bytes---[`++sendMessage++`]]
 
 [.contract]
 [[IERC7786GatewaySource]]
@@ -41,14 +41,14 @@ See ERC-7786 for more details
 .Functions
 --
 * `++supportsAttribute(selector)++`
-* `++sendMessage(destinationChain, receiver, payload, attributes)++`
+* `++sendMessage(recipient, payload, attributes)++`
 
 --
 
 [.contract-index]
 .Events
 --
-* `++MessagePosted(outboxId, sender, receiver, payload, attributes)++`
+* `++MessageSent(sendId, sender, receiver, payload, value, attributes)++`
 
 --
 
@@ -66,16 +66,21 @@ See ERC-7786 for more details
 Getter to check whether an attribute is supported or not.
 
 [.contract-item]
-[[IERC7786GatewaySource-sendMessage-string-string-bytes-bytes---]]
-==== `[.contract-item-name]#++sendMessage++#++(string destinationChain, string receiver, bytes payload, bytes[] attributes) → bytes32 outboxId++` [.item-kind]#external#
+[[IERC7786GatewaySource-sendMessage-bytes-bytes-bytes---]]
+==== `[.contract-item-name]#++sendMessage++#++(bytes recipient, bytes payload, bytes[] attributes) → bytes32 sendId++` [.item-kind]#external#
 
 Endpoint for creating a new message. If the message requires further (gateway specific) processing before
 it can be sent to the destination chain, then a non-zero `outboxId` must be returned. Otherwise, the
 message MUST be sent and this function must return 0.
 
+* MUST emit a {MessageSent} event.
+
+If any of the `attributes` is not supported, this function SHOULD revert with an {UnsupportedAttribute} error.
+Other errors SHOULD revert with errors not specified in ERC-7786.
+
 [.contract-item]
-[[IERC7786GatewaySource-MessagePosted-bytes32-string-string-bytes-bytes---]]
-==== `[.contract-item-name]#++MessagePosted++#++(bytes32 indexed outboxId, string sender, string receiver, bytes payload, bytes[] attributes)++` [.item-kind]#event#
+[[IERC7786GatewaySource-MessageSent-bytes32-bytes-bytes-bytes-uint256-bytes---]]
+==== `[.contract-item-name]#++MessageSent++#++(bytes32 indexed sendId, bytes sender, bytes receiver, bytes payload, uint256 value, bytes[] attributes)++` [.item-kind]#event#
 
 Event emitted when a message is created. If `outboxId` is zero, no further processing is necessary. If
 `outboxId` is not zero, then further (gateway specific, and non-standardized) action is required.
@@ -86,7 +91,7 @@ Event emitted when a message is created. If `outboxId` is zero, no further proce
 
 This error is thrown when a message creation fails because of an unsupported attribute being specified.
 
-:executeMessage: pass:normal[xref:#IERC7786Receiver-executeMessage-string-string-string-bytes-bytes---[`++executeMessage++`]]
+:executeMessage: pass:normal[xref:#IERC7786Receiver-executeMessage-bytes32-bytes-bytes-bytes---[`++executeMessage++`]]
 
 [.contract]
 [[IERC7786Receiver]]
@@ -104,15 +109,17 @@ See ERC-7786 for more details
 [.contract-index]
 .Functions
 --
-* `++executeMessage(messageId, sourceChain, sender, payload, attributes)++`
+* `++executeMessage(receiveId, sender, payload, attributes)++`
 
 --
 
 [.contract-item]
-[[IERC7786Receiver-executeMessage-string-string-string-bytes-bytes---]]
-==== `[.contract-item-name]#++executeMessage++#++(string messageId, string sourceChain, string sender, bytes payload, bytes[] attributes) → bytes4++` [.item-kind]#external#
+[[IERC7786Receiver-executeMessage-bytes32-bytes-bytes-bytes---]]
+==== `[.contract-item-name]#++executeMessage++#++(bytes32 receiveId, bytes sender, bytes payload, bytes[] attributes) → bytes4++` [.item-kind]#external#
 
 Endpoint for receiving cross-chain message.
+
+This function may be called directly by the gateway.
 
 :CrosschainMint: pass:normal[xref:#IERC7802-CrosschainMint-address-uint256-address-[`++CrosschainMint++`]]
 :CrosschainBurn: pass:normal[xref:#IERC7802-CrosschainBurn-address-uint256-address-[`++CrosschainBurn++`]]

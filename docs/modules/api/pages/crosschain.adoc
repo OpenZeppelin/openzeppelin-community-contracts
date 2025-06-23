@@ -35,34 +35,35 @@ Developers can access interoperability protocols through gateway adapters. The l
 :GatewayAdded: pass:normal[xref:#ERC7786Aggregator-GatewayAdded-address-[`++GatewayAdded++`]]
 :GatewayRemoved: pass:normal[xref:#ERC7786Aggregator-GatewayRemoved-address-[`++GatewayRemoved++`]]
 :ThresholdUpdated: pass:normal[xref:#ERC7786Aggregator-ThresholdUpdated-uint8-[`++ThresholdUpdated++`]]
-:ERC7786AggregatorValueNotSupported: pass:normal[xref:#ERC7786Aggregator-ERC7786AggregatorValueNotSupported--[`++ERC7786AggregatorValueNotSupported++`]]
+:UnsupportedNativeTransfer: pass:normal[xref:#ERC7786Aggregator-UnsupportedNativeTransfer--[`++UnsupportedNativeTransfer++`]]
 :ERC7786AggregatorInvalidCrosschainSender: pass:normal[xref:#ERC7786Aggregator-ERC7786AggregatorInvalidCrosschainSender--[`++ERC7786AggregatorInvalidCrosschainSender++`]]
 :ERC7786AggregatorAlreadyExecuted: pass:normal[xref:#ERC7786Aggregator-ERC7786AggregatorAlreadyExecuted--[`++ERC7786AggregatorAlreadyExecuted++`]]
-:ERC7786AggregatorRemoteNotRegistered: pass:normal[xref:#ERC7786Aggregator-ERC7786AggregatorRemoteNotRegistered-string-[`++ERC7786AggregatorRemoteNotRegistered++`]]
+:ERC7786AggregatorRemoteNotRegistered: pass:normal[xref:#ERC7786Aggregator-ERC7786AggregatorRemoteNotRegistered-bytes2-bytes-[`++ERC7786AggregatorRemoteNotRegistered++`]]
 :ERC7786AggregatorGatewayAlreadyRegistered: pass:normal[xref:#ERC7786Aggregator-ERC7786AggregatorGatewayAlreadyRegistered-address-[`++ERC7786AggregatorGatewayAlreadyRegistered++`]]
 :ERC7786AggregatorGatewayNotRegistered: pass:normal[xref:#ERC7786Aggregator-ERC7786AggregatorGatewayNotRegistered-address-[`++ERC7786AggregatorGatewayNotRegistered++`]]
 :ERC7786AggregatorThresholdViolation: pass:normal[xref:#ERC7786Aggregator-ERC7786AggregatorThresholdViolation--[`++ERC7786AggregatorThresholdViolation++`]]
 :ERC7786AggregatorInvalidExecutionReturnValue: pass:normal[xref:#ERC7786Aggregator-ERC7786AggregatorInvalidExecutionReturnValue--[`++ERC7786AggregatorInvalidExecutionReturnValue++`]]
-:RemoteRegistered: pass:normal[xref:#ERC7786Aggregator-RemoteRegistered-string-string-[`++RemoteRegistered++`]]
-:RemoteAlreadyRegistered: pass:normal[xref:#ERC7786Aggregator-RemoteAlreadyRegistered-string-[`++RemoteAlreadyRegistered++`]]
+:RemoteRegistered: pass:normal[xref:#ERC7786Aggregator-RemoteRegistered-bytes-[`++RemoteRegistered++`]]
+:RemoteAlreadyRegistered: pass:normal[xref:#ERC7786Aggregator-RemoteAlreadyRegistered-bytes-[`++RemoteAlreadyRegistered++`]]
 :constructor: pass:normal[xref:#ERC7786Aggregator-constructor-address-address---uint8-[`++constructor++`]]
 :supportsAttribute: pass:normal[xref:#ERC7786Aggregator-supportsAttribute-bytes4-[`++supportsAttribute++`]]
-:sendMessage: pass:normal[xref:#ERC7786Aggregator-sendMessage-string-string-bytes-bytes---[`++sendMessage++`]]
-:executeMessage: pass:normal[xref:#ERC7786Aggregator-executeMessage-string-string-string-bytes-bytes---[`++executeMessage++`]]
+:sendMessage: pass:normal[xref:#ERC7786Aggregator-sendMessage-bytes-bytes-bytes---[`++sendMessage++`]]
+:executeMessage: pass:normal[xref:#ERC7786Aggregator-executeMessage-bytes32-bytes-bytes-bytes---[`++executeMessage++`]]
 :getGateways: pass:normal[xref:#ERC7786Aggregator-getGateways--[`++getGateways++`]]
 :getThreshold: pass:normal[xref:#ERC7786Aggregator-getThreshold--[`++getThreshold++`]]
-:getRemoteAggregator: pass:normal[xref:#ERC7786Aggregator-getRemoteAggregator-string-[`++getRemoteAggregator++`]]
+:getRemoteAggregator: pass:normal[xref:#ERC7786Aggregator-getRemoteAggregator-bytes-[`++getRemoteAggregator++`]]
+:getRemoteAggregator: pass:normal[xref:#ERC7786Aggregator-getRemoteAggregator-bytes2-bytes-[`++getRemoteAggregator++`]]
 :addGateway: pass:normal[xref:#ERC7786Aggregator-addGateway-address-[`++addGateway++`]]
 :removeGateway: pass:normal[xref:#ERC7786Aggregator-removeGateway-address-[`++removeGateway++`]]
 :setThreshold: pass:normal[xref:#ERC7786Aggregator-setThreshold-uint8-[`++setThreshold++`]]
-:registerRemoteAggregator: pass:normal[xref:#ERC7786Aggregator-registerRemoteAggregator-string-string-[`++registerRemoteAggregator++`]]
+:registerRemoteAggregator: pass:normal[xref:#ERC7786Aggregator-registerRemoteAggregator-bytes-[`++registerRemoteAggregator++`]]
 :pause: pass:normal[xref:#ERC7786Aggregator-pause--[`++pause++`]]
 :unpause: pass:normal[xref:#ERC7786Aggregator-unpause--[`++unpause++`]]
 :sweep: pass:normal[xref:#ERC7786Aggregator-sweep-address-payable-[`++sweep++`]]
 :_addGateway: pass:normal[xref:#ERC7786Aggregator-_addGateway-address-[`++_addGateway++`]]
 :_removeGateway: pass:normal[xref:#ERC7786Aggregator-_removeGateway-address-[`++_removeGateway++`]]
 :_setThreshold: pass:normal[xref:#ERC7786Aggregator-_setThreshold-uint8-[`++_setThreshold++`]]
-:_registerRemoteAggregator: pass:normal[xref:#ERC7786Aggregator-_registerRemoteAggregator-string-string-[`++_registerRemoteAggregator++`]]
+:_registerRemoteAggregator: pass:normal[xref:#ERC7786Aggregator-_registerRemoteAggregator-bytes-[`++_registerRemoteAggregator++`]]
 
 [.contract]
 [[ERC7786Aggregator]]
@@ -81,22 +82,23 @@ equivalent aggregator on the destination chain if N of the M gateways agree.
 --
 * `++constructor(owner_, gateways_, threshold_)++`
 * `++supportsAttribute()++`
-* `++sendMessage(destinationChain, receiver, payload, attributes)++`
-* `++executeMessage(, sourceChain, sender, payload, attributes)++`
+* `++sendMessage(recipient, payload, attributes)++`
+* `++executeMessage(, sender, payload, attributes)++`
 * `++getGateways()++`
 * `++getThreshold()++`
-* `++getRemoteAggregator(caip2)++`
+* `++getRemoteAggregator(chain)++`
+* `++getRemoteAggregator(chainType, chainReference)++`
 * `++addGateway(gateway)++`
 * `++removeGateway(gateway)++`
 * `++setThreshold(newThreshold)++`
-* `++registerRemoteAggregator(caip2, aggregator)++`
+* `++registerRemoteAggregator(aggregator)++`
 * `++pause()++`
 * `++unpause()++`
 * `++sweep(to)++`
 * `++_addGateway(gateway)++`
 * `++_removeGateway(gateway)++`
 * `++_setThreshold(newThreshold)++`
-* `++_registerRemoteAggregator(caip2, aggregator)++`
+* `++_registerRemoteAggregator(aggregator)++`
 
 [.contract-subindex-inherited]
 .Pausable
@@ -125,14 +127,14 @@ equivalent aggregator on the destination chain if N of the M gateways agree.
 [.contract-index]
 .Events
 --
-* `++OutboxDetails(outboxId, outbox)++`
+* `++OutboxDetails(sendId, outbox)++`
 * `++Received(receiveId, gateway)++`
 * `++ExecutionSuccess(receiveId)++`
 * `++ExecutionFailed(receiveId)++`
 * `++GatewayAdded(gateway)++`
 * `++GatewayRemoved(gateway)++`
 * `++ThresholdUpdated(threshold)++`
-* `++RemoteRegistered(chainId, aggregator)++`
+* `++RemoteRegistered(remote)++`
 
 [.contract-subindex-inherited]
 .Pausable
@@ -148,22 +150,22 @@ equivalent aggregator on the destination chain if N of the M gateways agree.
 
 [.contract-subindex-inherited]
 .IERC7786GatewaySource
-* `++MessagePosted(outboxId, sender, receiver, payload, attributes)++`
+* `++MessageSent(sendId, sender, receiver, payload, value, attributes)++`
 
 --
 
 [.contract-index]
 .Errors
 --
-* `++ERC7786AggregatorValueNotSupported()++`
+* `++UnsupportedNativeTransfer()++`
 * `++ERC7786AggregatorInvalidCrosschainSender()++`
 * `++ERC7786AggregatorAlreadyExecuted()++`
-* `++ERC7786AggregatorRemoteNotRegistered(caip2)++`
+* `++ERC7786AggregatorRemoteNotRegistered(chainType, chainReference)++`
 * `++ERC7786AggregatorGatewayAlreadyRegistered(gateway)++`
 * `++ERC7786AggregatorGatewayNotRegistered(gateway)++`
 * `++ERC7786AggregatorThresholdViolation()++`
 * `++ERC7786AggregatorInvalidExecutionReturnValue()++`
-* `++RemoteAlreadyRegistered(chainId)++`
+* `++RemoteAlreadyRegistered(remote)++`
 
 [.contract-subindex-inherited]
 .Pausable
@@ -195,14 +197,14 @@ equivalent aggregator on the destination chain if N of the M gateways agree.
 Getter to check whether an attribute is supported or not.
 
 [.contract-item]
-[[ERC7786Aggregator-sendMessage-string-string-bytes-bytes---]]
-==== `[.contract-item-name]#++sendMessage++#++(string destinationChain, string receiver, bytes payload, bytes[] attributes) → bytes32 outboxId++` [.item-kind]#public#
+[[ERC7786Aggregator-sendMessage-bytes-bytes-bytes---]]
+==== `[.contract-item-name]#++sendMessage++#++(bytes recipient, bytes payload, bytes[] attributes) → bytes32 sendId++` [.item-kind]#public#
 
 Using memory instead of calldata avoids stack too deep errors
 
 [.contract-item]
-[[ERC7786Aggregator-executeMessage-string-string-string-bytes-bytes---]]
-==== `[.contract-item-name]#++executeMessage++#++(string, string sourceChain, string sender, bytes payload, bytes[] attributes) → bytes4++` [.item-kind]#public#
+[[ERC7786Aggregator-executeMessage-bytes32-bytes-bytes-bytes---]]
+==== `[.contract-item-name]#++executeMessage++#++(bytes32, bytes sender, bytes payload, bytes[] attributes) → bytes4++` [.item-kind]#public#
 
 This function serves a dual purpose:
 
@@ -252,8 +254,12 @@ not revert. Any value accrued that way can be recovered by the admin using the {
 ==== `[.contract-item-name]#++getThreshold++#++() → uint8++` [.item-kind]#public#
 
 [.contract-item]
-[[ERC7786Aggregator-getRemoteAggregator-string-]]
-==== `[.contract-item-name]#++getRemoteAggregator++#++(string caip2) → string++` [.item-kind]#public#
+[[ERC7786Aggregator-getRemoteAggregator-bytes-]]
+==== `[.contract-item-name]#++getRemoteAggregator++#++(bytes chain) → bytes++` [.item-kind]#public#
+
+[.contract-item]
+[[ERC7786Aggregator-getRemoteAggregator-bytes2-bytes-]]
+==== `[.contract-item-name]#++getRemoteAggregator++#++(bytes2 chainType, bytes chainReference) → bytes++` [.item-kind]#public#
 
 [.contract-item]
 [[ERC7786Aggregator-addGateway-address-]]
@@ -268,8 +274,8 @@ not revert. Any value accrued that way can be recovered by the admin using the {
 ==== `[.contract-item-name]#++setThreshold++#++(uint8 newThreshold)++` [.item-kind]#public#
 
 [.contract-item]
-[[ERC7786Aggregator-registerRemoteAggregator-string-string-]]
-==== `[.contract-item-name]#++registerRemoteAggregator++#++(string caip2, string aggregator)++` [.item-kind]#public#
+[[ERC7786Aggregator-registerRemoteAggregator-bytes-]]
+==== `[.contract-item-name]#++registerRemoteAggregator++#++(bytes aggregator)++` [.item-kind]#public#
 
 [.contract-item]
 [[ERC7786Aggregator-pause--]]
@@ -298,12 +304,12 @@ Recovery method in case value is ever received through {executeMessage}
 ==== `[.contract-item-name]#++_setThreshold++#++(uint8 newThreshold)++` [.item-kind]#internal#
 
 [.contract-item]
-[[ERC7786Aggregator-_registerRemoteAggregator-string-string-]]
-==== `[.contract-item-name]#++_registerRemoteAggregator++#++(string caip2, string aggregator)++` [.item-kind]#internal#
+[[ERC7786Aggregator-_registerRemoteAggregator-bytes-]]
+==== `[.contract-item-name]#++_registerRemoteAggregator++#++(bytes aggregator)++` [.item-kind]#internal#
 
 [.contract-item]
 [[ERC7786Aggregator-OutboxDetails-bytes32-struct-ERC7786Aggregator-Outbox---]]
-==== `[.contract-item-name]#++OutboxDetails++#++(bytes32 indexed outboxId, struct ERC7786Aggregator.Outbox[] outbox)++` [.item-kind]#event#
+==== `[.contract-item-name]#++OutboxDetails++#++(bytes32 indexed sendId, struct ERC7786Aggregator.Outbox[] outbox)++` [.item-kind]#event#
 
 [.contract-item]
 [[ERC7786Aggregator-Received-bytes32-address-]]
@@ -330,12 +336,12 @@ Recovery method in case value is ever received through {executeMessage}
 ==== `[.contract-item-name]#++ThresholdUpdated++#++(uint8 threshold)++` [.item-kind]#event#
 
 [.contract-item]
-[[ERC7786Aggregator-RemoteRegistered-string-string-]]
-==== `[.contract-item-name]#++RemoteRegistered++#++(string chainId, string aggregator)++` [.item-kind]#event#
+[[ERC7786Aggregator-RemoteRegistered-bytes-]]
+==== `[.contract-item-name]#++RemoteRegistered++#++(bytes remote)++` [.item-kind]#event#
 
 [.contract-item]
-[[ERC7786Aggregator-ERC7786AggregatorValueNotSupported--]]
-==== `[.contract-item-name]#++ERC7786AggregatorValueNotSupported++#++()++` [.item-kind]#error#
+[[ERC7786Aggregator-UnsupportedNativeTransfer--]]
+==== `[.contract-item-name]#++UnsupportedNativeTransfer++#++()++` [.item-kind]#error#
 
 [.contract-item]
 [[ERC7786Aggregator-ERC7786AggregatorInvalidCrosschainSender--]]
@@ -346,8 +352,8 @@ Recovery method in case value is ever received through {executeMessage}
 ==== `[.contract-item-name]#++ERC7786AggregatorAlreadyExecuted++#++()++` [.item-kind]#error#
 
 [.contract-item]
-[[ERC7786Aggregator-ERC7786AggregatorRemoteNotRegistered-string-]]
-==== `[.contract-item-name]#++ERC7786AggregatorRemoteNotRegistered++#++(string caip2)++` [.item-kind]#error#
+[[ERC7786Aggregator-ERC7786AggregatorRemoteNotRegistered-bytes2-bytes-]]
+==== `[.contract-item-name]#++ERC7786AggregatorRemoteNotRegistered++#++(bytes2 chainType, bytes chainReference)++` [.item-kind]#error#
 
 [.contract-item]
 [[ERC7786Aggregator-ERC7786AggregatorGatewayAlreadyRegistered-address-]]
@@ -366,16 +372,16 @@ Recovery method in case value is ever received through {executeMessage}
 ==== `[.contract-item-name]#++ERC7786AggregatorInvalidExecutionReturnValue++#++()++` [.item-kind]#error#
 
 [.contract-item]
-[[ERC7786Aggregator-RemoteAlreadyRegistered-string-]]
-==== `[.contract-item-name]#++RemoteAlreadyRegistered++#++(string chainId)++` [.item-kind]#error#
+[[ERC7786Aggregator-RemoteAlreadyRegistered-bytes-]]
+==== `[.contract-item-name]#++RemoteAlreadyRegistered++#++(bytes remote)++` [.item-kind]#error#
 
 == Clients
 
 :ERC7786ReceiverInvalidGateway: pass:normal[xref:#ERC7786Receiver-ERC7786ReceiverInvalidGateway-address-[`++ERC7786ReceiverInvalidGateway++`]]
 :ERC7786ReceivePassiveModeValue: pass:normal[xref:#ERC7786Receiver-ERC7786ReceivePassiveModeValue--[`++ERC7786ReceivePassiveModeValue++`]]
-:executeMessage: pass:normal[xref:#ERC7786Receiver-executeMessage-string-string-string-bytes-bytes---[`++executeMessage++`]]
+:executeMessage: pass:normal[xref:#ERC7786Receiver-executeMessage-bytes32-bytes-bytes-bytes---[`++executeMessage++`]]
 :_isKnownGateway: pass:normal[xref:#ERC7786Receiver-_isKnownGateway-address-[`++_isKnownGateway++`]]
-:_processMessage: pass:normal[xref:#ERC7786Receiver-_processMessage-address-string-string-string-bytes-bytes---[`++_processMessage++`]]
+:_processMessage: pass:normal[xref:#ERC7786Receiver-_processMessage-address-bytes32-bytes-bytes-bytes---[`++_processMessage++`]]
 
 [.contract]
 [[ERC7786Receiver]]
@@ -400,9 +406,9 @@ this function returns true would be able to impersonate any account on any other
 [.contract-index]
 .Functions
 --
-* `++executeMessage(messageId, source, sender, payload, attributes)++`
+* `++executeMessage(receiveId, sender, payload, attributes)++`
 * `++_isKnownGateway(instance)++`
-* `++_processMessage(gateway, messageId, sourceChain, sender, payload, attributes)++`
+* `++_processMessage(gateway, receiveId, sender, payload, attributes)++`
 
 [.contract-subindex-inherited]
 .IERC7786Receiver
@@ -421,10 +427,12 @@ this function returns true would be able to impersonate any account on any other
 --
 
 [.contract-item]
-[[ERC7786Receiver-executeMessage-string-string-string-bytes-bytes---]]
-==== `[.contract-item-name]#++executeMessage++#++(string messageId, string source, string sender, bytes payload, bytes[] attributes) → bytes4++` [.item-kind]#public#
+[[ERC7786Receiver-executeMessage-bytes32-bytes-bytes-bytes---]]
+==== `[.contract-item-name]#++executeMessage++#++(bytes32 receiveId, bytes sender, bytes payload, bytes[] attributes) → bytes4++` [.item-kind]#public#
 
 Endpoint for receiving cross-chain message.
+
+This function may be called directly by the gateway.
 
 [.contract-item]
 [[ERC7786Receiver-_isKnownGateway-address-]]
@@ -433,8 +441,8 @@ Endpoint for receiving cross-chain message.
 Virtual getter that returns whether an address is a valid ERC-7786 gateway.
 
 [.contract-item]
-[[ERC7786Receiver-_processMessage-address-string-string-string-bytes-bytes---]]
-==== `[.contract-item-name]#++_processMessage++#++(address gateway, string messageId, string sourceChain, string sender, bytes payload, bytes[] attributes)++` [.item-kind]#internal#
+[[ERC7786Receiver-_processMessage-address-bytes32-bytes-bytes-bytes---]]
+==== `[.contract-item-name]#++_processMessage++#++(address gateway, bytes32 receiveId, bytes sender, bytes payload, bytes[] attributes)++` [.item-kind]#internal#
 
 Virtual function that should contain the logic to execute when a cross-chain message is received.
 
@@ -450,17 +458,21 @@ Virtual function that should contain the logic to execute when a cross-chain mes
 
 === Axelar
 
-:RegisteredRemoteGateway: pass:normal[xref:#AxelarGatewayBase-RegisteredRemoteGateway-string-string-[`++RegisteredRemoteGateway++`]]
-:RegisteredChainEquivalence: pass:normal[xref:#AxelarGatewayBase-RegisteredChainEquivalence-string-string-[`++RegisteredChainEquivalence++`]]
-:UnsupportedChain: pass:normal[xref:#AxelarGatewayBase-UnsupportedChain-string-[`++UnsupportedChain++`]]
-:ChainEquivalenceAlreadyRegistered: pass:normal[xref:#AxelarGatewayBase-ChainEquivalenceAlreadyRegistered-string-[`++ChainEquivalenceAlreadyRegistered++`]]
-:RemoteGatewayAlreadyRegistered: pass:normal[xref:#AxelarGatewayBase-RemoteGatewayAlreadyRegistered-string-[`++RemoteGatewayAlreadyRegistered++`]]
+:RegisteredRemoteGateway: pass:normal[xref:#AxelarGatewayBase-RegisteredRemoteGateway-bytes-[`++RegisteredRemoteGateway++`]]
+:RegisteredChainEquivalence: pass:normal[xref:#AxelarGatewayBase-RegisteredChainEquivalence-bytes-string-[`++RegisteredChainEquivalence++`]]
+:UnsupportedERC7930Chain: pass:normal[xref:#AxelarGatewayBase-UnsupportedERC7930Chain-bytes-[`++UnsupportedERC7930Chain++`]]
+:UnsupportedAxelarChain: pass:normal[xref:#AxelarGatewayBase-UnsupportedAxelarChain-string-[`++UnsupportedAxelarChain++`]]
+:InvalidChainIdentifier: pass:normal[xref:#AxelarGatewayBase-InvalidChainIdentifier-bytes-[`++InvalidChainIdentifier++`]]
+:ChainEquivalenceAlreadyRegistered: pass:normal[xref:#AxelarGatewayBase-ChainEquivalenceAlreadyRegistered-bytes-string-[`++ChainEquivalenceAlreadyRegistered++`]]
+:RemoteGatewayAlreadyRegistered: pass:normal[xref:#AxelarGatewayBase-RemoteGatewayAlreadyRegistered-bytes2-bytes-[`++RemoteGatewayAlreadyRegistered++`]]
 :_axelarGateway: pass:normal[xref:#AxelarGatewayBase-_axelarGateway-contract-IAxelarGateway[`++_axelarGateway++`]]
 :constructor: pass:normal[xref:#AxelarGatewayBase-constructor-contract-IAxelarGateway-[`++constructor++`]]
-:getEquivalentChain: pass:normal[xref:#AxelarGatewayBase-getEquivalentChain-string-[`++getEquivalentChain++`]]
-:getRemoteGateway: pass:normal[xref:#AxelarGatewayBase-getRemoteGateway-string-[`++getRemoteGateway++`]]
-:registerChainEquivalence: pass:normal[xref:#AxelarGatewayBase-registerChainEquivalence-string-string-[`++registerChainEquivalence++`]]
-:registerRemoteGateway: pass:normal[xref:#AxelarGatewayBase-registerRemoteGateway-string-string-[`++registerRemoteGateway++`]]
+:getAxelarChain: pass:normal[xref:#AxelarGatewayBase-getAxelarChain-bytes-[`++getAxelarChain++`]]
+:getErc7930Chain: pass:normal[xref:#AxelarGatewayBase-getErc7930Chain-string-[`++getErc7930Chain++`]]
+:getRemoteGateway: pass:normal[xref:#AxelarGatewayBase-getRemoteGateway-bytes-[`++getRemoteGateway++`]]
+:getRemoteGateway: pass:normal[xref:#AxelarGatewayBase-getRemoteGateway-bytes2-bytes-[`++getRemoteGateway++`]]
+:registerChainEquivalence: pass:normal[xref:#AxelarGatewayBase-registerChainEquivalence-bytes-string-[`++registerChainEquivalence++`]]
+:registerRemoteGateway: pass:normal[xref:#AxelarGatewayBase-registerRemoteGateway-bytes-[`++registerRemoteGateway++`]]
 
 [.contract]
 [[AxelarGatewayBase]]
@@ -473,18 +485,20 @@ import "@openzeppelin/community-contracts/crosschain/axelar/AxelarGatewayBase.so
 
 Base implementation of a cross-chain gateway adapter for the Axelar Network.
 
-This contract allows developers to register equivalence between chains (i.e. CAIP-2 chain identifiers
-to Axelar chain identifiers) and remote gateways (i.e. gateways on other chains) to
-facilitate cross-chain communication.
+This contract allows developers to register equivalence between chains (i.e. ERC-7930 chain type and reference
+to Axelar chain identifiers) and remote gateways (i.e. gateways on other chains) to facilitate cross-chain
+communication.
 
 [.contract-index]
 .Functions
 --
 * `++constructor(_gateway)++`
-* `++getEquivalentChain(input)++`
-* `++getRemoteGateway(caip2)++`
-* `++registerChainEquivalence(caip2, axelarSupported)++`
-* `++registerRemoteGateway(caip2, remoteGateway)++`
+* `++getAxelarChain(input)++`
+* `++getErc7930Chain(input)++`
+* `++getRemoteGateway(chain)++`
+* `++getRemoteGateway(chainType, chainReference)++`
+* `++registerChainEquivalence(chain, axelar)++`
+* `++registerRemoteGateway(remote)++`
 
 [.contract-subindex-inherited]
 .Ownable
@@ -499,8 +513,8 @@ facilitate cross-chain communication.
 [.contract-index]
 .Events
 --
-* `++RegisteredRemoteGateway(caip2, gatewayAddress)++`
-* `++RegisteredChainEquivalence(caip2, destinationChain)++`
+* `++RegisteredRemoteGateway(remote)++`
+* `++RegisteredChainEquivalence(erc7930binary, axelar)++`
 
 [.contract-subindex-inherited]
 .Ownable
@@ -511,9 +525,11 @@ facilitate cross-chain communication.
 [.contract-index]
 .Errors
 --
-* `++UnsupportedChain(caip2)++`
-* `++ChainEquivalenceAlreadyRegistered(caip2)++`
-* `++RemoteGatewayAlreadyRegistered(caip2)++`
+* `++UnsupportedERC7930Chain(erc7930binary)++`
+* `++UnsupportedAxelarChain(axelar)++`
+* `++InvalidChainIdentifier(erc7930binary)++`
+* `++ChainEquivalenceAlreadyRegistered(erc7930binary, axelar)++`
+* `++RemoteGatewayAlreadyRegistered(chainType, chainReference)++`
 
 [.contract-subindex-inherited]
 .Ownable
@@ -539,54 +555,70 @@ facilitate cross-chain communication.
 Sets the local gateway address (i.e. Axelar's official gateway for the current chain).
 
 [.contract-item]
-[[AxelarGatewayBase-getEquivalentChain-string-]]
-==== `[.contract-item-name]#++getEquivalentChain++#++(string input) → string output++` [.item-kind]#public#
+[[AxelarGatewayBase-getAxelarChain-bytes-]]
+==== `[.contract-item-name]#++getAxelarChain++#++(bytes input) → string output++` [.item-kind]#public#
 
-Returns the equivalent chain given an id that can be either CAIP-2 or an Axelar network identifier.
-
-[.contract-item]
-[[AxelarGatewayBase-getRemoteGateway-string-]]
-==== `[.contract-item-name]#++getRemoteGateway++#++(string caip2) → string remoteGateway++` [.item-kind]#public#
-
-Returns the address string of the remote gateway for a given CAIP-2 chain identifier.
+Returns the equivalent chain given an id that can be either either a binary interoperable address or an Axelar network identifier.
 
 [.contract-item]
-[[AxelarGatewayBase-registerChainEquivalence-string-string-]]
-==== `[.contract-item-name]#++registerChainEquivalence++#++(string caip2, string axelarSupported)++` [.item-kind]#public#
-
-Registers a chain equivalence between a CAIP-2 chain identifier and an Axelar network identifier.
+[[AxelarGatewayBase-getErc7930Chain-string-]]
+==== `[.contract-item-name]#++getErc7930Chain++#++(string input) → bytes output++` [.item-kind]#public#
 
 [.contract-item]
-[[AxelarGatewayBase-registerRemoteGateway-string-string-]]
-==== `[.contract-item-name]#++registerRemoteGateway++#++(string caip2, string remoteGateway)++` [.item-kind]#public#
+[[AxelarGatewayBase-getRemoteGateway-bytes-]]
+==== `[.contract-item-name]#++getRemoteGateway++#++(bytes chain) → bytes++` [.item-kind]#public#
 
-Registers the address string of the remote gateway for a given CAIP-2 chain identifier.
+Returns the address of the remote gateway for a given chainType and chainReference.
 
 [.contract-item]
-[[AxelarGatewayBase-RegisteredRemoteGateway-string-string-]]
-==== `[.contract-item-name]#++RegisteredRemoteGateway++#++(string caip2, string gatewayAddress)++` [.item-kind]#event#
+[[AxelarGatewayBase-getRemoteGateway-bytes2-bytes-]]
+==== `[.contract-item-name]#++getRemoteGateway++#++(bytes2 chainType, bytes chainReference) → bytes++` [.item-kind]#public#
+
+[.contract-item]
+[[AxelarGatewayBase-registerChainEquivalence-bytes-string-]]
+==== `[.contract-item-name]#++registerChainEquivalence++#++(bytes chain, string axelar)++` [.item-kind]#public#
+
+Registers a chain equivalence between a binary interoperable address an Axelar network identifier.
+
+[.contract-item]
+[[AxelarGatewayBase-registerRemoteGateway-bytes-]]
+==== `[.contract-item-name]#++registerRemoteGateway++#++(bytes remote)++` [.item-kind]#public#
+
+Registers the address of a remote gateway.
+
+[.contract-item]
+[[AxelarGatewayBase-RegisteredRemoteGateway-bytes-]]
+==== `[.contract-item-name]#++RegisteredRemoteGateway++#++(bytes remote)++` [.item-kind]#event#
 
 A remote gateway has been registered for a chain.
 
 [.contract-item]
-[[AxelarGatewayBase-RegisteredChainEquivalence-string-string-]]
-==== `[.contract-item-name]#++RegisteredChainEquivalence++#++(string caip2, string destinationChain)++` [.item-kind]#event#
+[[AxelarGatewayBase-RegisteredChainEquivalence-bytes-string-]]
+==== `[.contract-item-name]#++RegisteredChainEquivalence++#++(bytes erc7930binary, string axelar)++` [.item-kind]#event#
 
 A chain equivalence has been registered.
 
 [.contract-item]
-[[AxelarGatewayBase-UnsupportedChain-string-]]
-==== `[.contract-item-name]#++UnsupportedChain++#++(string caip2)++` [.item-kind]#error#
+[[AxelarGatewayBase-UnsupportedERC7930Chain-bytes-]]
+==== `[.contract-item-name]#++UnsupportedERC7930Chain++#++(bytes erc7930binary)++` [.item-kind]#error#
 
 Error emitted when an unsupported chain is queried.
 
 [.contract-item]
-[[AxelarGatewayBase-ChainEquivalenceAlreadyRegistered-string-]]
-==== `[.contract-item-name]#++ChainEquivalenceAlreadyRegistered++#++(string caip2)++` [.item-kind]#error#
+[[AxelarGatewayBase-UnsupportedAxelarChain-string-]]
+==== `[.contract-item-name]#++UnsupportedAxelarChain++#++(string axelar)++` [.item-kind]#error#
 
 [.contract-item]
-[[AxelarGatewayBase-RemoteGatewayAlreadyRegistered-string-]]
-==== `[.contract-item-name]#++RemoteGatewayAlreadyRegistered++#++(string caip2)++` [.item-kind]#error#
+[[AxelarGatewayBase-InvalidChainIdentifier-bytes-]]
+==== `[.contract-item-name]#++InvalidChainIdentifier++#++(bytes erc7930binary)++` [.item-kind]#error#
+
+[.contract-item]
+[[AxelarGatewayBase-ChainEquivalenceAlreadyRegistered-bytes-string-]]
+==== `[.contract-item-name]#++ChainEquivalenceAlreadyRegistered++#++(bytes erc7930binary, string axelar)++` [.item-kind]#error#
+
+[.contract-item]
+[[AxelarGatewayBase-RemoteGatewayAlreadyRegistered-bytes2-bytes-]]
+==== `[.contract-item-name]#++RemoteGatewayAlreadyRegistered++#++(bytes2 chainType, bytes chainReference)++` [.item-kind]#error#
 
 [.contract-item]
 [[AxelarGatewayBase-_axelarGateway-contract-IAxelarGateway]]
@@ -596,7 +628,7 @@ Axelar's official gateway for the current chain.
 
 :UnsupportedNativeTransfer: pass:normal[xref:#AxelarGatewaySource-UnsupportedNativeTransfer--[`++UnsupportedNativeTransfer++`]]
 :supportsAttribute: pass:normal[xref:#AxelarGatewaySource-supportsAttribute-bytes4-[`++supportsAttribute++`]]
-:sendMessage: pass:normal[xref:#AxelarGatewaySource-sendMessage-string-string-bytes-bytes---[`++sendMessage++`]]
+:sendMessage: pass:normal[xref:#AxelarGatewaySource-sendMessage-bytes-bytes-bytes---[`++sendMessage++`]]
 
 [.contract]
 [[AxelarGatewaySource]]
@@ -616,14 +648,16 @@ using the {sendMessage} function.
 .Functions
 --
 * `++supportsAttribute()++`
-* `++sendMessage(destinationChain, receiver, payload, attributes)++`
+* `++sendMessage(recipient, payload, attributes)++`
 
 [.contract-subindex-inherited]
 .AxelarGatewayBase
-* `++getEquivalentChain(input)++`
-* `++getRemoteGateway(caip2)++`
-* `++registerChainEquivalence(caip2, axelarSupported)++`
-* `++registerRemoteGateway(caip2, remoteGateway)++`
+* `++getAxelarChain(input)++`
+* `++getErc7930Chain(input)++`
+* `++getRemoteGateway(chain)++`
+* `++getRemoteGateway(chainType, chainReference)++`
+* `++registerChainEquivalence(chain, axelar)++`
+* `++registerRemoteGateway(remote)++`
 
 [.contract-subindex-inherited]
 .Ownable
@@ -644,8 +678,8 @@ using the {sendMessage} function.
 
 [.contract-subindex-inherited]
 .AxelarGatewayBase
-* `++RegisteredRemoteGateway(caip2, gatewayAddress)++`
-* `++RegisteredChainEquivalence(caip2, destinationChain)++`
+* `++RegisteredRemoteGateway(remote)++`
+* `++RegisteredChainEquivalence(erc7930binary, axelar)++`
 
 [.contract-subindex-inherited]
 .Ownable
@@ -653,7 +687,7 @@ using the {sendMessage} function.
 
 [.contract-subindex-inherited]
 .IERC7786GatewaySource
-* `++MessagePosted(outboxId, sender, receiver, payload, attributes)++`
+* `++MessageSent(sendId, sender, receiver, payload, value, attributes)++`
 
 --
 
@@ -664,9 +698,11 @@ using the {sendMessage} function.
 
 [.contract-subindex-inherited]
 .AxelarGatewayBase
-* `++UnsupportedChain(caip2)++`
-* `++ChainEquivalenceAlreadyRegistered(caip2)++`
-* `++RemoteGatewayAlreadyRegistered(caip2)++`
+* `++UnsupportedERC7930Chain(erc7930binary)++`
+* `++UnsupportedAxelarChain(axelar)++`
+* `++InvalidChainIdentifier(erc7930binary)++`
+* `++ChainEquivalenceAlreadyRegistered(erc7930binary, axelar)++`
+* `++RemoteGatewayAlreadyRegistered(chainType, chainReference)++`
 
 [.contract-subindex-inherited]
 .Ownable
@@ -686,12 +722,17 @@ using the {sendMessage} function.
 Getter to check whether an attribute is supported or not.
 
 [.contract-item]
-[[AxelarGatewaySource-sendMessage-string-string-bytes-bytes---]]
-==== `[.contract-item-name]#++sendMessage++#++(string destinationChain, string receiver, bytes payload, bytes[] attributes) → bytes32 outboxId++` [.item-kind]#external#
+[[AxelarGatewaySource-sendMessage-bytes-bytes-bytes---]]
+==== `[.contract-item-name]#++sendMessage++#++(bytes recipient, bytes payload, bytes[] attributes) → bytes32 sendId++` [.item-kind]#external#
 
 Endpoint for creating a new message. If the message requires further (gateway specific) processing before
 it can be sent to the destination chain, then a non-zero `outboxId` must be returned. Otherwise, the
 message MUST be sent and this function must return 0.
+
+* MUST emit a {MessageSent} event.
+
+If any of the `attributes` is not supported, this function SHOULD revert with an {UnsupportedAttribute} error.
+Other errors SHOULD revert with errors not specified in ERC-7786.
 
 [.contract-item]
 [[AxelarGatewaySource-UnsupportedNativeTransfer--]]
@@ -730,10 +771,12 @@ workflow into the standard ERC-7786.
 
 [.contract-subindex-inherited]
 .AxelarGatewayBase
-* `++getEquivalentChain(input)++`
-* `++getRemoteGateway(caip2)++`
-* `++registerChainEquivalence(caip2, axelarSupported)++`
-* `++registerRemoteGateway(caip2, remoteGateway)++`
+* `++getAxelarChain(input)++`
+* `++getErc7930Chain(input)++`
+* `++getRemoteGateway(chain)++`
+* `++getRemoteGateway(chainType, chainReference)++`
+* `++registerChainEquivalence(chain, axelar)++`
+* `++registerRemoteGateway(remote)++`
 
 [.contract-subindex-inherited]
 .Ownable
@@ -757,8 +800,8 @@ workflow into the standard ERC-7786.
 
 [.contract-subindex-inherited]
 .AxelarGatewayBase
-* `++RegisteredRemoteGateway(caip2, gatewayAddress)++`
-* `++RegisteredChainEquivalence(caip2, destinationChain)++`
+* `++RegisteredRemoteGateway(remote)++`
+* `++RegisteredChainEquivalence(erc7930binary, axelar)++`
 
 [.contract-subindex-inherited]
 .Ownable
@@ -769,7 +812,7 @@ workflow into the standard ERC-7786.
 [.contract-index]
 .Errors
 --
-* `++InvalidOriginGateway(sourceChain, axelarSourceAddress)++`
+* `++InvalidOriginGateway(axelarSourceChain, axelarSourceAddress)++`
 * `++ReceiverExecutionFailed()++`
 
 [.contract-subindex-inherited]
@@ -782,9 +825,11 @@ workflow into the standard ERC-7786.
 
 [.contract-subindex-inherited]
 .AxelarGatewayBase
-* `++UnsupportedChain(caip2)++`
-* `++ChainEquivalenceAlreadyRegistered(caip2)++`
-* `++RemoteGatewayAlreadyRegistered(caip2)++`
+* `++UnsupportedERC7930Chain(erc7930binary)++`
+* `++UnsupportedAxelarChain(axelar)++`
+* `++InvalidChainIdentifier(erc7930binary)++`
+* `++ChainEquivalenceAlreadyRegistered(erc7930binary, axelar)++`
+* `++RemoteGatewayAlreadyRegistered(chainType, chainReference)++`
 
 [.contract-subindex-inherited]
 .Ownable
@@ -801,16 +846,15 @@ Execution of a cross-chain message.
 
 In this function:
 
-- `axelarSourceChain` is in the Axelar format. It should not be expected to be a proper CAIP-2 format
+- `axelarSourceChain` is in the Axelar format. It should not be expected to be a proper ERC-7930 format
 - `axelarSourceAddress` is the sender of the Axelar message. That should be the remote gateway on the chain
   which the message originates from. It is NOT the sender of the ERC-7786 crosschain message.
 
-Proper CAIP-10 encoding of the message sender (including the CAIP-2 name of the origin chain can be found in
-the message)
+Proper ERC-7930 encoding of the crosschain message sender can be found in the message
 
 [.contract-item]
 [[AxelarGatewayDestination-InvalidOriginGateway-string-string-]]
-==== `[.contract-item-name]#++InvalidOriginGateway++#++(string sourceChain, string axelarSourceAddress)++` [.item-kind]#error#
+==== `[.contract-item-name]#++InvalidOriginGateway++#++(string axelarSourceChain, string axelarSourceAddress)++` [.item-kind]#error#
 
 [.contract-item]
 [[AxelarGatewayDestination-ReceiverExecutionFailed--]]
@@ -850,14 +894,16 @@ adapters for the Axelar Network. Allowing to either send or receive messages acr
 [.contract-subindex-inherited]
 .AxelarGatewaySource
 * `++supportsAttribute()++`
-* `++sendMessage(destinationChain, receiver, payload, attributes)++`
+* `++sendMessage(recipient, payload, attributes)++`
 
 [.contract-subindex-inherited]
 .AxelarGatewayBase
-* `++getEquivalentChain(input)++`
-* `++getRemoteGateway(caip2)++`
-* `++registerChainEquivalence(caip2, axelarSupported)++`
-* `++registerRemoteGateway(caip2, remoteGateway)++`
+* `++getAxelarChain(input)++`
+* `++getErc7930Chain(input)++`
+* `++getRemoteGateway(chain)++`
+* `++getRemoteGateway(chainType, chainReference)++`
+* `++registerChainEquivalence(chain, axelar)++`
+* `++registerRemoteGateway(remote)++`
 
 [.contract-subindex-inherited]
 .Ownable
@@ -890,8 +936,8 @@ adapters for the Axelar Network. Allowing to either send or receive messages acr
 
 [.contract-subindex-inherited]
 .AxelarGatewayBase
-* `++RegisteredRemoteGateway(caip2, gatewayAddress)++`
-* `++RegisteredChainEquivalence(caip2, destinationChain)++`
+* `++RegisteredRemoteGateway(remote)++`
+* `++RegisteredChainEquivalence(erc7930binary, axelar)++`
 
 [.contract-subindex-inherited]
 .Ownable
@@ -899,7 +945,7 @@ adapters for the Axelar Network. Allowing to either send or receive messages acr
 
 [.contract-subindex-inherited]
 .IERC7786GatewaySource
-* `++MessagePosted(outboxId, sender, receiver, payload, attributes)++`
+* `++MessageSent(sendId, sender, receiver, payload, value, attributes)++`
 
 --
 
@@ -909,7 +955,7 @@ adapters for the Axelar Network. Allowing to either send or receive messages acr
 
 [.contract-subindex-inherited]
 .AxelarGatewayDestination
-* `++InvalidOriginGateway(sourceChain, axelarSourceAddress)++`
+* `++InvalidOriginGateway(axelarSourceChain, axelarSourceAddress)++`
 * `++ReceiverExecutionFailed()++`
 
 [.contract-subindex-inherited]
@@ -926,9 +972,11 @@ adapters for the Axelar Network. Allowing to either send or receive messages acr
 
 [.contract-subindex-inherited]
 .AxelarGatewayBase
-* `++UnsupportedChain(caip2)++`
-* `++ChainEquivalenceAlreadyRegistered(caip2)++`
-* `++RemoteGatewayAlreadyRegistered(caip2)++`
+* `++UnsupportedERC7930Chain(erc7930binary)++`
+* `++UnsupportedAxelarChain(axelar)++`
+* `++InvalidChainIdentifier(erc7930binary)++`
+* `++ChainEquivalenceAlreadyRegistered(erc7930binary, axelar)++`
+* `++RemoteGatewayAlreadyRegistered(chainType, chainReference)++`
 
 [.contract-subindex-inherited]
 .Ownable

@@ -14,13 +14,10 @@ contract MyERC7786ReceiverContract is ERC7786Receiver, AccessManaged {
     }
 
     /// @dev Internal endpoint for receiving cross-chain message.
-    /// @param sourceChain {CAIP2} chain identifier
-    /// @param sender {CAIP10} account address (does not include the chain identifier)
     function _processMessage(
         address gateway,
-        string calldata messageId,
-        string calldata sourceChain,
-        string calldata sender,
+        bytes32 receiveId,
+        bytes calldata sender,
         bytes calldata payload,
         bytes[] calldata attributes
     ) internal virtual override restricted {
