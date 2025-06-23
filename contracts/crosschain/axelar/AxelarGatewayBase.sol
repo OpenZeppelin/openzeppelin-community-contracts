@@ -9,9 +9,9 @@ import {InteroperableAddress} from "@openzeppelin/contracts/utils/draft-Interope
 /**
  * @dev Base implementation of a cross-chain gateway adapter for the Axelar Network.
  *
- * This contract allows developers to register equivalence between chains (i.e. CAIP-2 chain identifiers
- * to Axelar chain identifiers) and remote gateways (i.e. gateways on other chains) to
- * facilitate cross-chain communication.
+ * This contract allows developers to register equivalence between chains (i.e. ERC-7930 chain type and reference
+ * to Axelar chain identifiers) and remote gateways (i.e. gateways on other chains) to facilitate cross-chain
+ * communication.
  */
 abstract contract AxelarGatewayBase is Ownable {
     using InteroperableAddress for bytes;
