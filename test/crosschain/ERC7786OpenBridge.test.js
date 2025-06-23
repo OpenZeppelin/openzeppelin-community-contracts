@@ -21,48 +21,48 @@ async function fixture() {
 
   const { chain } = protocoles.at(0);
 
-  const aggregatorA = await ethers.deployContract('ERC7786Aggregator', [
+  const bridgeA = await ethers.deployContract('ERC7786OpenBridge', [
     owner,
     protocoles.map(({ gatewayA }) => gatewayA),
     N,
   ]);
-  const aggregatorB = await ethers.deployContract('ERC7786Aggregator', [
+  const bridgeB = await ethers.deployContract('ERC7786OpenBridge', [
     owner,
     protocoles.map(({ gatewayB }) => gatewayB),
     N,
   ]);
-  await aggregatorA.registerRemoteAggregator(chain.toErc7930(aggregatorB));
-  await aggregatorB.registerRemoteAggregator(chain.toErc7930(aggregatorA));
+  await bridgeA.registerRemoteBridge(chain.toErc7930(bridgeB));
+  await bridgeB.registerRemoteBridge(chain.toErc7930(bridgeA));
 
-  return { owner, sender, accounts, chain, protocoles, aggregatorA, aggregatorB };
+  return { owner, sender, accounts, chain, protocoles, bridgeA, bridgeB };
 }
 
-describe('ERC7786Aggregator', function () {
+describe('ERC7786OpenBridge', function () {
   beforeEach(async function () {
     Object.assign(this, await loadFixture(fixture));
   });
 
   it('initial setup', async function () {
-    await expect(this.aggregatorA.getGateways()).to.eventually.deep.equal(
+    await expect(this.bridgeA.getGateways()).to.eventually.deep.equal(
       this.protocoles.map(({ gatewayA }) => getAddress(gatewayA)),
     );
-    await expect(this.aggregatorA.getThreshold()).to.eventually.equal(N);
-    await expect(this.aggregatorA.getRemoteAggregator(this.chain.erc7930)).to.eventually.equal(
-      this.chain.toErc7930(this.aggregatorB),
+    await expect(this.bridgeA.getThreshold()).to.eventually.equal(N);
+    await expect(this.bridgeA.getRemoteBridge(this.chain.erc7930)).to.eventually.equal(
+      this.chain.toErc7930(this.bridgeB),
     );
 
-    await expect(this.aggregatorB.getGateways()).to.eventually.deep.equal(
+    await expect(this.bridgeB.getGateways()).to.eventually.deep.equal(
       this.protocoles.map(({ gatewayB }) => getAddress(gatewayB)),
     );
-    await expect(this.aggregatorB.getThreshold()).to.eventually.equal(N);
-    await expect(this.aggregatorB.getRemoteAggregator(this.chain.erc7930)).to.eventually.equal(
-      this.chain.toErc7930(this.aggregatorA),
+    await expect(this.bridgeB.getThreshold()).to.eventually.equal(N);
+    await expect(this.bridgeB.getRemoteBridge(this.chain.erc7930)).to.eventually.equal(
+      this.chain.toErc7930(this.bridgeA),
     );
   });
 
   describe('cross chain call', function () {
     it('valid receiver', async function () {
-      this.destination = await ethers.deployContract('$ERC7786ReceiverMock', [this.aggregatorB]);
+      this.destination = await ethers.deployContract('$ERC7786ReceiverMock', [this.bridgeB]);
       this.payload = ethers.randomBytes(128);
       this.attributes = [];
       this.opts = {};
@@ -98,7 +98,7 @@ describe('ERC7786Aggregator', function () {
       this.payload = ethers.randomBytes(128);
       this.attributes = [];
       this.opts = {};
-      this.outcome = 'ERC7786AggregatorInvalidExecutionReturnValue'; // revert with custom error
+      this.outcome = 'ERC7786OpenBridgeInvalidExecutionReturnValue'; // revert with custom error
     });
 
     it('invalid receiver - EOA', async function () {
@@ -106,17 +106,17 @@ describe('ERC7786Aggregator', function () {
       this.payload = ethers.randomBytes(128);
       this.attributes = [];
       this.opts = {};
-      this.outcome = 'ERC7786AggregatorInvalidExecutionReturnValue'; // revert with custom error
+      this.outcome = 'ERC7786OpenBridgeInvalidExecutionReturnValue'; // revert with custom error
     });
 
     afterEach(async function () {
-      const txPromise = this.aggregatorA
+      const txPromise = this.bridgeA
         .connect(this.sender)
         .sendMessage(this.chain.toErc7930(this.destination), this.payload, this.attributes, this.opts ?? {});
 
       switch (typeof this.outcome) {
         case 'string': {
-          await expect(txPromise).to.be.revertedWithCustomError(this.aggregatorB, this.outcome);
+          await expect(txPromise).to.be.revertedWithCustomError(this.bridgeB, this.outcome);
           break;
         }
         case 'boolean': {
@@ -125,7 +125,7 @@ describe('ERC7786Aggregator', function () {
 
           // Message was posted
           await expect(txPromise)
-            .to.emit(this.aggregatorA, 'MessageSent')
+            .to.emit(this.bridgeA, 'MessageSent')
             .withArgs(
               ethers.ZeroHash,
               this.chain.toErc7930(this.sender),
@@ -141,31 +141,31 @@ describe('ERC7786Aggregator', function () {
               .to.emit(gatewayA, 'MessageSent')
               .withArgs(
                 ethers.ZeroHash,
-                this.chain.toErc7930(this.aggregatorA),
-                this.chain.toErc7930(this.aggregatorB),
+                this.chain.toErc7930(this.bridgeA),
+                this.chain.toErc7930(this.bridgeB),
                 anyValue,
                 0n,
                 anyValue,
               )
-              .to.emit(this.aggregatorB, 'Received')
+              .to.emit(this.bridgeB, 'Received')
               .withArgs(resultId, gatewayB);
           }
 
           if (this.outcome) {
             await expect(txPromise)
               .to.emit(this.destination, 'MessageReceived')
-              .withArgs(this.aggregatorB, anyValue, this.chain.toErc7930(this.sender), this.payload, this.attributes)
-              .to.emit(this.aggregatorB, 'ExecutionSuccess')
+              .withArgs(this.bridgeB, anyValue, this.chain.toErc7930(this.sender), this.payload, this.attributes)
+              .to.emit(this.bridgeB, 'ExecutionSuccess')
               .withArgs(resultId)
-              .to.not.emit(this.aggregatorB, 'ExecutionFailed');
+              .to.not.emit(this.bridgeB, 'ExecutionFailed');
 
             // Number of times the execution succeeded
             expect(logs.filter(ev => ev?.fragment?.name == 'ExecutionSuccess').length).to.equal(1);
           } else {
             await expect(txPromise)
-              .to.emit(this.aggregatorB, 'ExecutionFailed')
+              .to.emit(this.bridgeB, 'ExecutionFailed')
               .withArgs(resultId)
-              .to.not.emit(this.aggregatorB, 'ExecutionSuccess');
+              .to.not.emit(this.bridgeB, 'ExecutionSuccess');
 
             // Number of times the execution failed
             expect(logs.filter(ev => ev?.fragment?.name == 'ExecutionFailed').length).to.equal(M - N + 1);

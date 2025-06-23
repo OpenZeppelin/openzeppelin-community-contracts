@@ -1,6 +1,6 @@
 :github-icon: pass:[<svg class="icon"><use href="#github-icon"/></svg>]
 :ERC7786Receiver: pass:normal[xref:crosschain.adoc#ERC7786Receiver[`ERC7786Receiver`]]
-:ERC7786Aggregator: pass:normal[xref:crosschain.adoc#ERC7786Aggregator[`ERC7786Aggregator`]]
+:ERC7786OpenBridge: pass:normal[xref:crosschain.adoc#ERC7786OpenBridge[`ERC7786OpenBridge`]]
 :AxelarGatewayBase: pass:normal[xref:crosschain.adoc#AxelarGatewayBase[`AxelarGatewayBase`]]
 :AxelarGatewaySource: pass:normal[xref:crosschain.adoc#AxelarGatewaySource[`AxelarGatewaySource`]]
 :AxelarGatewayDestination: pass:normal[xref:crosschain.adoc#AxelarGatewayDestination[`AxelarGatewayDestination`]]
@@ -15,7 +15,7 @@ NOTE: This document is better viewed at https://docs.openzeppelin.com/community-
 Gateways are contracts that enable cross-chain communication. These can either be a message source or a destination according to ERC-7786.
 
  * {ERC7786Receiver}: ERC-7786 cross-chain message receiver.
- * {ERC7786Aggregator}: ERC-7786 "N out of M" gateway. Sends a message through M gateways and executes on the destination if N received it.
+ * {ERC7786OpenBridge}: ERC-7786 "N out of M" gateway. Sends a message through M gateways and executes on the destination if N received it.
 
 Developers can access interoperability protocols through gateway adapters. The library includes the following gateway adapters:
 
@@ -26,56 +26,56 @@ Developers can access interoperability protocols through gateway adapters. The l
 
 == Gateways
 
-:Outbox: pass:normal[xref:#ERC7786Aggregator-Outbox[`++Outbox++`]]
-:Tracker: pass:normal[xref:#ERC7786Aggregator-Tracker[`++Tracker++`]]
-:OutboxDetails: pass:normal[xref:#ERC7786Aggregator-OutboxDetails-bytes32-struct-ERC7786Aggregator-Outbox---[`++OutboxDetails++`]]
-:Received: pass:normal[xref:#ERC7786Aggregator-Received-bytes32-address-[`++Received++`]]
-:ExecutionSuccess: pass:normal[xref:#ERC7786Aggregator-ExecutionSuccess-bytes32-[`++ExecutionSuccess++`]]
-:ExecutionFailed: pass:normal[xref:#ERC7786Aggregator-ExecutionFailed-bytes32-[`++ExecutionFailed++`]]
-:GatewayAdded: pass:normal[xref:#ERC7786Aggregator-GatewayAdded-address-[`++GatewayAdded++`]]
-:GatewayRemoved: pass:normal[xref:#ERC7786Aggregator-GatewayRemoved-address-[`++GatewayRemoved++`]]
-:ThresholdUpdated: pass:normal[xref:#ERC7786Aggregator-ThresholdUpdated-uint8-[`++ThresholdUpdated++`]]
-:UnsupportedNativeTransfer: pass:normal[xref:#ERC7786Aggregator-UnsupportedNativeTransfer--[`++UnsupportedNativeTransfer++`]]
-:ERC7786AggregatorInvalidCrosschainSender: pass:normal[xref:#ERC7786Aggregator-ERC7786AggregatorInvalidCrosschainSender--[`++ERC7786AggregatorInvalidCrosschainSender++`]]
-:ERC7786AggregatorAlreadyExecuted: pass:normal[xref:#ERC7786Aggregator-ERC7786AggregatorAlreadyExecuted--[`++ERC7786AggregatorAlreadyExecuted++`]]
-:ERC7786AggregatorRemoteNotRegistered: pass:normal[xref:#ERC7786Aggregator-ERC7786AggregatorRemoteNotRegistered-bytes2-bytes-[`++ERC7786AggregatorRemoteNotRegistered++`]]
-:ERC7786AggregatorGatewayAlreadyRegistered: pass:normal[xref:#ERC7786Aggregator-ERC7786AggregatorGatewayAlreadyRegistered-address-[`++ERC7786AggregatorGatewayAlreadyRegistered++`]]
-:ERC7786AggregatorGatewayNotRegistered: pass:normal[xref:#ERC7786Aggregator-ERC7786AggregatorGatewayNotRegistered-address-[`++ERC7786AggregatorGatewayNotRegistered++`]]
-:ERC7786AggregatorThresholdViolation: pass:normal[xref:#ERC7786Aggregator-ERC7786AggregatorThresholdViolation--[`++ERC7786AggregatorThresholdViolation++`]]
-:ERC7786AggregatorInvalidExecutionReturnValue: pass:normal[xref:#ERC7786Aggregator-ERC7786AggregatorInvalidExecutionReturnValue--[`++ERC7786AggregatorInvalidExecutionReturnValue++`]]
-:RemoteRegistered: pass:normal[xref:#ERC7786Aggregator-RemoteRegistered-bytes-[`++RemoteRegistered++`]]
-:RemoteAlreadyRegistered: pass:normal[xref:#ERC7786Aggregator-RemoteAlreadyRegistered-bytes-[`++RemoteAlreadyRegistered++`]]
-:constructor: pass:normal[xref:#ERC7786Aggregator-constructor-address-address---uint8-[`++constructor++`]]
-:supportsAttribute: pass:normal[xref:#ERC7786Aggregator-supportsAttribute-bytes4-[`++supportsAttribute++`]]
-:sendMessage: pass:normal[xref:#ERC7786Aggregator-sendMessage-bytes-bytes-bytes---[`++sendMessage++`]]
-:executeMessage: pass:normal[xref:#ERC7786Aggregator-executeMessage-bytes32-bytes-bytes-bytes---[`++executeMessage++`]]
-:getGateways: pass:normal[xref:#ERC7786Aggregator-getGateways--[`++getGateways++`]]
-:getThreshold: pass:normal[xref:#ERC7786Aggregator-getThreshold--[`++getThreshold++`]]
-:getRemoteAggregator: pass:normal[xref:#ERC7786Aggregator-getRemoteAggregator-bytes-[`++getRemoteAggregator++`]]
-:getRemoteAggregator: pass:normal[xref:#ERC7786Aggregator-getRemoteAggregator-bytes2-bytes-[`++getRemoteAggregator++`]]
-:addGateway: pass:normal[xref:#ERC7786Aggregator-addGateway-address-[`++addGateway++`]]
-:removeGateway: pass:normal[xref:#ERC7786Aggregator-removeGateway-address-[`++removeGateway++`]]
-:setThreshold: pass:normal[xref:#ERC7786Aggregator-setThreshold-uint8-[`++setThreshold++`]]
-:registerRemoteAggregator: pass:normal[xref:#ERC7786Aggregator-registerRemoteAggregator-bytes-[`++registerRemoteAggregator++`]]
-:pause: pass:normal[xref:#ERC7786Aggregator-pause--[`++pause++`]]
-:unpause: pass:normal[xref:#ERC7786Aggregator-unpause--[`++unpause++`]]
-:sweep: pass:normal[xref:#ERC7786Aggregator-sweep-address-payable-[`++sweep++`]]
-:_addGateway: pass:normal[xref:#ERC7786Aggregator-_addGateway-address-[`++_addGateway++`]]
-:_removeGateway: pass:normal[xref:#ERC7786Aggregator-_removeGateway-address-[`++_removeGateway++`]]
-:_setThreshold: pass:normal[xref:#ERC7786Aggregator-_setThreshold-uint8-[`++_setThreshold++`]]
-:_registerRemoteAggregator: pass:normal[xref:#ERC7786Aggregator-_registerRemoteAggregator-bytes-[`++_registerRemoteAggregator++`]]
+:Outbox: pass:normal[xref:#ERC7786OpenBridge-Outbox[`++Outbox++`]]
+:Tracker: pass:normal[xref:#ERC7786OpenBridge-Tracker[`++Tracker++`]]
+:OutboxDetails: pass:normal[xref:#ERC7786OpenBridge-OutboxDetails-bytes32-struct-ERC7786OpenBridge-Outbox---[`++OutboxDetails++`]]
+:Received: pass:normal[xref:#ERC7786OpenBridge-Received-bytes32-address-[`++Received++`]]
+:ExecutionSuccess: pass:normal[xref:#ERC7786OpenBridge-ExecutionSuccess-bytes32-[`++ExecutionSuccess++`]]
+:ExecutionFailed: pass:normal[xref:#ERC7786OpenBridge-ExecutionFailed-bytes32-[`++ExecutionFailed++`]]
+:GatewayAdded: pass:normal[xref:#ERC7786OpenBridge-GatewayAdded-address-[`++GatewayAdded++`]]
+:GatewayRemoved: pass:normal[xref:#ERC7786OpenBridge-GatewayRemoved-address-[`++GatewayRemoved++`]]
+:ThresholdUpdated: pass:normal[xref:#ERC7786OpenBridge-ThresholdUpdated-uint8-[`++ThresholdUpdated++`]]
+:UnsupportedNativeTransfer: pass:normal[xref:#ERC7786OpenBridge-UnsupportedNativeTransfer--[`++UnsupportedNativeTransfer++`]]
+:ERC7786OpenBridgeInvalidCrosschainSender: pass:normal[xref:#ERC7786OpenBridge-ERC7786OpenBridgeInvalidCrosschainSender--[`++ERC7786OpenBridgeInvalidCrosschainSender++`]]
+:ERC7786OpenBridgeAlreadyExecuted: pass:normal[xref:#ERC7786OpenBridge-ERC7786OpenBridgeAlreadyExecuted--[`++ERC7786OpenBridgeAlreadyExecuted++`]]
+:ERC7786OpenBridgeRemoteNotRegistered: pass:normal[xref:#ERC7786OpenBridge-ERC7786OpenBridgeRemoteNotRegistered-bytes2-bytes-[`++ERC7786OpenBridgeRemoteNotRegistered++`]]
+:ERC7786OpenBridgeGatewayAlreadyRegistered: pass:normal[xref:#ERC7786OpenBridge-ERC7786OpenBridgeGatewayAlreadyRegistered-address-[`++ERC7786OpenBridgeGatewayAlreadyRegistered++`]]
+:ERC7786OpenBridgeGatewayNotRegistered: pass:normal[xref:#ERC7786OpenBridge-ERC7786OpenBridgeGatewayNotRegistered-address-[`++ERC7786OpenBridgeGatewayNotRegistered++`]]
+:ERC7786OpenBridgeThresholdViolation: pass:normal[xref:#ERC7786OpenBridge-ERC7786OpenBridgeThresholdViolation--[`++ERC7786OpenBridgeThresholdViolation++`]]
+:ERC7786OpenBridgeInvalidExecutionReturnValue: pass:normal[xref:#ERC7786OpenBridge-ERC7786OpenBridgeInvalidExecutionReturnValue--[`++ERC7786OpenBridgeInvalidExecutionReturnValue++`]]
+:RemoteRegistered: pass:normal[xref:#ERC7786OpenBridge-RemoteRegistered-bytes-[`++RemoteRegistered++`]]
+:RemoteAlreadyRegistered: pass:normal[xref:#ERC7786OpenBridge-RemoteAlreadyRegistered-bytes-[`++RemoteAlreadyRegistered++`]]
+:constructor: pass:normal[xref:#ERC7786OpenBridge-constructor-address-address---uint8-[`++constructor++`]]
+:supportsAttribute: pass:normal[xref:#ERC7786OpenBridge-supportsAttribute-bytes4-[`++supportsAttribute++`]]
+:sendMessage: pass:normal[xref:#ERC7786OpenBridge-sendMessage-bytes-bytes-bytes---[`++sendMessage++`]]
+:executeMessage: pass:normal[xref:#ERC7786OpenBridge-executeMessage-bytes32-bytes-bytes-bytes---[`++executeMessage++`]]
+:getGateways: pass:normal[xref:#ERC7786OpenBridge-getGateways--[`++getGateways++`]]
+:getThreshold: pass:normal[xref:#ERC7786OpenBridge-getThreshold--[`++getThreshold++`]]
+:getRemoteBridge: pass:normal[xref:#ERC7786OpenBridge-getRemoteBridge-bytes-[`++getRemoteBridge++`]]
+:getRemoteBridge: pass:normal[xref:#ERC7786OpenBridge-getRemoteBridge-bytes2-bytes-[`++getRemoteBridge++`]]
+:addGateway: pass:normal[xref:#ERC7786OpenBridge-addGateway-address-[`++addGateway++`]]
+:removeGateway: pass:normal[xref:#ERC7786OpenBridge-removeGateway-address-[`++removeGateway++`]]
+:setThreshold: pass:normal[xref:#ERC7786OpenBridge-setThreshold-uint8-[`++setThreshold++`]]
+:registerRemoteBridge: pass:normal[xref:#ERC7786OpenBridge-registerRemoteBridge-bytes-[`++registerRemoteBridge++`]]
+:pause: pass:normal[xref:#ERC7786OpenBridge-pause--[`++pause++`]]
+:unpause: pass:normal[xref:#ERC7786OpenBridge-unpause--[`++unpause++`]]
+:sweep: pass:normal[xref:#ERC7786OpenBridge-sweep-address-payable-[`++sweep++`]]
+:_addGateway: pass:normal[xref:#ERC7786OpenBridge-_addGateway-address-[`++_addGateway++`]]
+:_removeGateway: pass:normal[xref:#ERC7786OpenBridge-_removeGateway-address-[`++_removeGateway++`]]
+:_setThreshold: pass:normal[xref:#ERC7786OpenBridge-_setThreshold-uint8-[`++_setThreshold++`]]
+:_registerRemoteBridge: pass:normal[xref:#ERC7786OpenBridge-_registerRemoteBridge-bytes-[`++_registerRemoteBridge++`]]
 
 [.contract]
-[[ERC7786Aggregator]]
-=== `++ERC7786Aggregator++` link:https://github.com/OpenZeppelin/openzeppelin-community-contracts/blob/master/contracts/crosschain/ERC7786Aggregator.sol[{github-icon},role=heading-link]
+[[ERC7786OpenBridge]]
+=== `++ERC7786OpenBridge++` link:https://github.com/OpenZeppelin/openzeppelin-community-contracts/blob/master/contracts/crosschain/ERC7786OpenBridge.sol[{github-icon},role=heading-link]
 
 [.hljs-theme-light.nopadding]
 ```solidity
-import "@openzeppelin/community-contracts/crosschain/ERC7786Aggregator.sol";
+import "@openzeppelin/community-contracts/crosschain/ERC7786OpenBridge.sol";
 ```
 
 N of M gateway: Sends your message through M independent gateways. It will be delivered to the receiver by an
-equivalent aggregator on the destination chain if N of the M gateways agree.
+equivalent bridge on the destination chain if N of the M gateways agree.
 
 [.contract-index]
 .Functions
@@ -86,19 +86,19 @@ equivalent aggregator on the destination chain if N of the M gateways agree.
 * `++executeMessage(, sender, payload, attributes)++`
 * `++getGateways()++`
 * `++getThreshold()++`
-* `++getRemoteAggregator(chain)++`
-* `++getRemoteAggregator(chainType, chainReference)++`
+* `++getRemoteBridge(chain)++`
+* `++getRemoteBridge(chainType, chainReference)++`
 * `++addGateway(gateway)++`
 * `++removeGateway(gateway)++`
 * `++setThreshold(newThreshold)++`
-* `++registerRemoteAggregator(aggregator)++`
+* `++registerRemoteBridge(bridge)++`
 * `++pause()++`
 * `++unpause()++`
 * `++sweep(to)++`
 * `++_addGateway(gateway)++`
 * `++_removeGateway(gateway)++`
 * `++_setThreshold(newThreshold)++`
-* `++_registerRemoteAggregator(aggregator)++`
+* `++_registerRemoteBridge(bridge)++`
 
 [.contract-subindex-inherited]
 .Pausable
@@ -158,13 +158,13 @@ equivalent aggregator on the destination chain if N of the M gateways agree.
 .Errors
 --
 * `++UnsupportedNativeTransfer()++`
-* `++ERC7786AggregatorInvalidCrosschainSender()++`
-* `++ERC7786AggregatorAlreadyExecuted()++`
-* `++ERC7786AggregatorRemoteNotRegistered(chainType, chainReference)++`
-* `++ERC7786AggregatorGatewayAlreadyRegistered(gateway)++`
-* `++ERC7786AggregatorGatewayNotRegistered(gateway)++`
-* `++ERC7786AggregatorThresholdViolation()++`
-* `++ERC7786AggregatorInvalidExecutionReturnValue()++`
+* `++ERC7786OpenBridgeInvalidCrosschainSender()++`
+* `++ERC7786OpenBridgeAlreadyExecuted()++`
+* `++ERC7786OpenBridgeRemoteNotRegistered(chainType, chainReference)++`
+* `++ERC7786OpenBridgeGatewayAlreadyRegistered(gateway)++`
+* `++ERC7786OpenBridgeGatewayNotRegistered(gateway)++`
+* `++ERC7786OpenBridgeThresholdViolation()++`
+* `++ERC7786OpenBridgeInvalidExecutionReturnValue()++`
 * `++RemoteAlreadyRegistered(remote)++`
 
 [.contract-subindex-inherited]
@@ -187,28 +187,28 @@ equivalent aggregator on the destination chain if N of the M gateways agree.
 --
 
 [.contract-item]
-[[ERC7786Aggregator-constructor-address-address---uint8-]]
+[[ERC7786OpenBridge-constructor-address-address---uint8-]]
 ==== `[.contract-item-name]#++constructor++#++(address owner_, address[] gateways_, uint8 threshold_)++` [.item-kind]#public#
 
 [.contract-item]
-[[ERC7786Aggregator-supportsAttribute-bytes4-]]
+[[ERC7786OpenBridge-supportsAttribute-bytes4-]]
 ==== `[.contract-item-name]#++supportsAttribute++#++(bytes4) → bool++` [.item-kind]#public#
 
 Getter to check whether an attribute is supported or not.
 
 [.contract-item]
-[[ERC7786Aggregator-sendMessage-bytes-bytes-bytes---]]
+[[ERC7786OpenBridge-sendMessage-bytes-bytes-bytes---]]
 ==== `[.contract-item-name]#++sendMessage++#++(bytes recipient, bytes payload, bytes[] attributes) → bytes32 sendId++` [.item-kind]#public#
 
 Using memory instead of calldata avoids stack too deep errors
 
 [.contract-item]
-[[ERC7786Aggregator-executeMessage-bytes32-bytes-bytes-bytes---]]
+[[ERC7786OpenBridge-executeMessage-bytes32-bytes-bytes-bytes---]]
 ==== `[.contract-item-name]#++executeMessage++#++(bytes32, bytes sender, bytes payload, bytes[] attributes) → bytes4++` [.item-kind]#public#
 
 This function serves a dual purpose:
 
-It will be called by ERC-7786 gateways with message coming from the the corresponding aggregator on the source
+It will be called by ERC-7786 gateways with message coming from the the corresponding bridge on the source
 chain. These "signals" are tracked until the threshold is reached. At that point the message is sent to the
 destination.
 
@@ -221,7 +221,7 @@ function more than once (for a given message), only the first call is counts tow
 
 This function revert if:
 
-* the message is not properly formatted or does not originate from the registered aggregator on the source
+* the message is not properly formatted or does not originate from the registered bridge on the source
   chain.
 * someone tries re-execute a message that was already successfully delivered. This includes gateways that call
   this function a second time with a message that was already executed.
@@ -246,133 +246,133 @@ some value for unknown reason. In that case we want to register this gateway hav
 not revert. Any value accrued that way can be recovered by the admin using the {sweep} function.
 
 [.contract-item]
-[[ERC7786Aggregator-getGateways--]]
+[[ERC7786OpenBridge-getGateways--]]
 ==== `[.contract-item-name]#++getGateways++#++() → address[]++` [.item-kind]#public#
 
 [.contract-item]
-[[ERC7786Aggregator-getThreshold--]]
+[[ERC7786OpenBridge-getThreshold--]]
 ==== `[.contract-item-name]#++getThreshold++#++() → uint8++` [.item-kind]#public#
 
 [.contract-item]
-[[ERC7786Aggregator-getRemoteAggregator-bytes-]]
-==== `[.contract-item-name]#++getRemoteAggregator++#++(bytes chain) → bytes++` [.item-kind]#public#
+[[ERC7786OpenBridge-getRemoteBridge-bytes-]]
+==== `[.contract-item-name]#++getRemoteBridge++#++(bytes chain) → bytes++` [.item-kind]#public#
 
 [.contract-item]
-[[ERC7786Aggregator-getRemoteAggregator-bytes2-bytes-]]
-==== `[.contract-item-name]#++getRemoteAggregator++#++(bytes2 chainType, bytes chainReference) → bytes++` [.item-kind]#public#
+[[ERC7786OpenBridge-getRemoteBridge-bytes2-bytes-]]
+==== `[.contract-item-name]#++getRemoteBridge++#++(bytes2 chainType, bytes chainReference) → bytes++` [.item-kind]#public#
 
 [.contract-item]
-[[ERC7786Aggregator-addGateway-address-]]
+[[ERC7786OpenBridge-addGateway-address-]]
 ==== `[.contract-item-name]#++addGateway++#++(address gateway)++` [.item-kind]#public#
 
 [.contract-item]
-[[ERC7786Aggregator-removeGateway-address-]]
+[[ERC7786OpenBridge-removeGateway-address-]]
 ==== `[.contract-item-name]#++removeGateway++#++(address gateway)++` [.item-kind]#public#
 
 [.contract-item]
-[[ERC7786Aggregator-setThreshold-uint8-]]
+[[ERC7786OpenBridge-setThreshold-uint8-]]
 ==== `[.contract-item-name]#++setThreshold++#++(uint8 newThreshold)++` [.item-kind]#public#
 
 [.contract-item]
-[[ERC7786Aggregator-registerRemoteAggregator-bytes-]]
-==== `[.contract-item-name]#++registerRemoteAggregator++#++(bytes aggregator)++` [.item-kind]#public#
+[[ERC7786OpenBridge-registerRemoteBridge-bytes-]]
+==== `[.contract-item-name]#++registerRemoteBridge++#++(bytes bridge)++` [.item-kind]#public#
 
 [.contract-item]
-[[ERC7786Aggregator-pause--]]
+[[ERC7786OpenBridge-pause--]]
 ==== `[.contract-item-name]#++pause++#++()++` [.item-kind]#public#
 
 [.contract-item]
-[[ERC7786Aggregator-unpause--]]
+[[ERC7786OpenBridge-unpause--]]
 ==== `[.contract-item-name]#++unpause++#++()++` [.item-kind]#public#
 
 [.contract-item]
-[[ERC7786Aggregator-sweep-address-payable-]]
+[[ERC7786OpenBridge-sweep-address-payable-]]
 ==== `[.contract-item-name]#++sweep++#++(address payable to)++` [.item-kind]#public#
 
 Recovery method in case value is ever received through {executeMessage}
 
 [.contract-item]
-[[ERC7786Aggregator-_addGateway-address-]]
+[[ERC7786OpenBridge-_addGateway-address-]]
 ==== `[.contract-item-name]#++_addGateway++#++(address gateway)++` [.item-kind]#internal#
 
 [.contract-item]
-[[ERC7786Aggregator-_removeGateway-address-]]
+[[ERC7786OpenBridge-_removeGateway-address-]]
 ==== `[.contract-item-name]#++_removeGateway++#++(address gateway)++` [.item-kind]#internal#
 
 [.contract-item]
-[[ERC7786Aggregator-_setThreshold-uint8-]]
+[[ERC7786OpenBridge-_setThreshold-uint8-]]
 ==== `[.contract-item-name]#++_setThreshold++#++(uint8 newThreshold)++` [.item-kind]#internal#
 
 [.contract-item]
-[[ERC7786Aggregator-_registerRemoteAggregator-bytes-]]
-==== `[.contract-item-name]#++_registerRemoteAggregator++#++(bytes aggregator)++` [.item-kind]#internal#
+[[ERC7786OpenBridge-_registerRemoteBridge-bytes-]]
+==== `[.contract-item-name]#++_registerRemoteBridge++#++(bytes bridge)++` [.item-kind]#internal#
 
 [.contract-item]
-[[ERC7786Aggregator-OutboxDetails-bytes32-struct-ERC7786Aggregator-Outbox---]]
-==== `[.contract-item-name]#++OutboxDetails++#++(bytes32 indexed sendId, struct ERC7786Aggregator.Outbox[] outbox)++` [.item-kind]#event#
+[[ERC7786OpenBridge-OutboxDetails-bytes32-struct-ERC7786OpenBridge-Outbox---]]
+==== `[.contract-item-name]#++OutboxDetails++#++(bytes32 indexed sendId, struct ERC7786OpenBridge.Outbox[] outbox)++` [.item-kind]#event#
 
 [.contract-item]
-[[ERC7786Aggregator-Received-bytes32-address-]]
+[[ERC7786OpenBridge-Received-bytes32-address-]]
 ==== `[.contract-item-name]#++Received++#++(bytes32 indexed receiveId, address gateway)++` [.item-kind]#event#
 
 [.contract-item]
-[[ERC7786Aggregator-ExecutionSuccess-bytes32-]]
+[[ERC7786OpenBridge-ExecutionSuccess-bytes32-]]
 ==== `[.contract-item-name]#++ExecutionSuccess++#++(bytes32 indexed receiveId)++` [.item-kind]#event#
 
 [.contract-item]
-[[ERC7786Aggregator-ExecutionFailed-bytes32-]]
+[[ERC7786OpenBridge-ExecutionFailed-bytes32-]]
 ==== `[.contract-item-name]#++ExecutionFailed++#++(bytes32 indexed receiveId)++` [.item-kind]#event#
 
 [.contract-item]
-[[ERC7786Aggregator-GatewayAdded-address-]]
+[[ERC7786OpenBridge-GatewayAdded-address-]]
 ==== `[.contract-item-name]#++GatewayAdded++#++(address indexed gateway)++` [.item-kind]#event#
 
 [.contract-item]
-[[ERC7786Aggregator-GatewayRemoved-address-]]
+[[ERC7786OpenBridge-GatewayRemoved-address-]]
 ==== `[.contract-item-name]#++GatewayRemoved++#++(address indexed gateway)++` [.item-kind]#event#
 
 [.contract-item]
-[[ERC7786Aggregator-ThresholdUpdated-uint8-]]
+[[ERC7786OpenBridge-ThresholdUpdated-uint8-]]
 ==== `[.contract-item-name]#++ThresholdUpdated++#++(uint8 threshold)++` [.item-kind]#event#
 
 [.contract-item]
-[[ERC7786Aggregator-RemoteRegistered-bytes-]]
+[[ERC7786OpenBridge-RemoteRegistered-bytes-]]
 ==== `[.contract-item-name]#++RemoteRegistered++#++(bytes remote)++` [.item-kind]#event#
 
 [.contract-item]
-[[ERC7786Aggregator-UnsupportedNativeTransfer--]]
+[[ERC7786OpenBridge-UnsupportedNativeTransfer--]]
 ==== `[.contract-item-name]#++UnsupportedNativeTransfer++#++()++` [.item-kind]#error#
 
 [.contract-item]
-[[ERC7786Aggregator-ERC7786AggregatorInvalidCrosschainSender--]]
-==== `[.contract-item-name]#++ERC7786AggregatorInvalidCrosschainSender++#++()++` [.item-kind]#error#
+[[ERC7786OpenBridge-ERC7786OpenBridgeInvalidCrosschainSender--]]
+==== `[.contract-item-name]#++ERC7786OpenBridgeInvalidCrosschainSender++#++()++` [.item-kind]#error#
 
 [.contract-item]
-[[ERC7786Aggregator-ERC7786AggregatorAlreadyExecuted--]]
-==== `[.contract-item-name]#++ERC7786AggregatorAlreadyExecuted++#++()++` [.item-kind]#error#
+[[ERC7786OpenBridge-ERC7786OpenBridgeAlreadyExecuted--]]
+==== `[.contract-item-name]#++ERC7786OpenBridgeAlreadyExecuted++#++()++` [.item-kind]#error#
 
 [.contract-item]
-[[ERC7786Aggregator-ERC7786AggregatorRemoteNotRegistered-bytes2-bytes-]]
-==== `[.contract-item-name]#++ERC7786AggregatorRemoteNotRegistered++#++(bytes2 chainType, bytes chainReference)++` [.item-kind]#error#
+[[ERC7786OpenBridge-ERC7786OpenBridgeRemoteNotRegistered-bytes2-bytes-]]
+==== `[.contract-item-name]#++ERC7786OpenBridgeRemoteNotRegistered++#++(bytes2 chainType, bytes chainReference)++` [.item-kind]#error#
 
 [.contract-item]
-[[ERC7786Aggregator-ERC7786AggregatorGatewayAlreadyRegistered-address-]]
-==== `[.contract-item-name]#++ERC7786AggregatorGatewayAlreadyRegistered++#++(address gateway)++` [.item-kind]#error#
+[[ERC7786OpenBridge-ERC7786OpenBridgeGatewayAlreadyRegistered-address-]]
+==== `[.contract-item-name]#++ERC7786OpenBridgeGatewayAlreadyRegistered++#++(address gateway)++` [.item-kind]#error#
 
 [.contract-item]
-[[ERC7786Aggregator-ERC7786AggregatorGatewayNotRegistered-address-]]
-==== `[.contract-item-name]#++ERC7786AggregatorGatewayNotRegistered++#++(address gateway)++` [.item-kind]#error#
+[[ERC7786OpenBridge-ERC7786OpenBridgeGatewayNotRegistered-address-]]
+==== `[.contract-item-name]#++ERC7786OpenBridgeGatewayNotRegistered++#++(address gateway)++` [.item-kind]#error#
 
 [.contract-item]
-[[ERC7786Aggregator-ERC7786AggregatorThresholdViolation--]]
-==== `[.contract-item-name]#++ERC7786AggregatorThresholdViolation++#++()++` [.item-kind]#error#
+[[ERC7786OpenBridge-ERC7786OpenBridgeThresholdViolation--]]
+==== `[.contract-item-name]#++ERC7786OpenBridgeThresholdViolation++#++()++` [.item-kind]#error#
 
 [.contract-item]
-[[ERC7786Aggregator-ERC7786AggregatorInvalidExecutionReturnValue--]]
-==== `[.contract-item-name]#++ERC7786AggregatorInvalidExecutionReturnValue++#++()++` [.item-kind]#error#
+[[ERC7786OpenBridge-ERC7786OpenBridgeInvalidExecutionReturnValue--]]
+==== `[.contract-item-name]#++ERC7786OpenBridgeInvalidExecutionReturnValue++#++()++` [.item-kind]#error#
 
 [.contract-item]
-[[ERC7786Aggregator-RemoteAlreadyRegistered-bytes-]]
+[[ERC7786OpenBridge-RemoteAlreadyRegistered-bytes-]]
 ==== `[.contract-item-name]#++RemoteAlreadyRegistered++#++(bytes remote)++` [.item-kind]#error#
 
 == Clients

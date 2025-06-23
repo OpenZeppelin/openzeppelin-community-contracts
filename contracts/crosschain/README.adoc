@@ -6,7 +6,7 @@ NOTE: This document is better viewed at https://docs.openzeppelin.com/community-
 Gateways are contracts that enable cross-chain communication. These can either be a message source or a destination according to ERC-7786.
 
  * {ERC7786Receiver}: ERC-7786 cross-chain message receiver.
- * {ERC7786Aggregator}: ERC-7786 "N out of M" gateway. Sends a message through M gateways and executes on the destination if N received it.
+ * {ERC7786OpenBridge}: ERC-7786 "N out of M" gateway. Sends a message through M gateways and executes on the destination if N received it.
 
 Developers can access interoperability protocols through gateway adapters. The library includes the following gateway adapters:
 
@@ -17,7 +17,7 @@ Developers can access interoperability protocols through gateway adapters. The l
 
 == Gateways
 
-{{ERC7786Aggregator}}
+{{ERC7786OpenBridge}}
 
 == Clients
 
