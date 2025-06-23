@@ -2,7 +2,7 @@ const { ethers } = require('hardhat');
 const { expect } = require('chai');
 const { loadFixture } = require('@nomicfoundation/hardhat-network-helpers');
 
-const { getLocalCAIP } = require('@openzeppelin/contracts/test/helpers/chains');
+const { getLocalChain } = require('@openzeppelin/contracts/test/helpers/chains');
 const { generators } = require('@openzeppelin/contracts/test/helpers/random');
 
 const payload = generators.hexBytes(128);
@@ -12,7 +12,7 @@ const getAddress = account => ethers.getAddress(account.target ?? account.addres
 
 async function fixture() {
   const [sender, notAGateway] = await ethers.getSigners();
-  const { caip2, toCaip10 } = await getLocalCAIP();
+  const { caip2, toCaip10 } = await getLocalChain();
 
   const gateway = await ethers.deployContract('$ERC7786GatewayMock');
   const receiver = await ethers.deployContract('$ERC7786ReceiverMock', [gateway]);

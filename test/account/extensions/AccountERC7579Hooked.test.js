@@ -1,9 +1,8 @@
 const { ethers, entrypoint } = require('hardhat');
 const { loadFixture } = require('@nomicfoundation/hardhat-network-helpers');
 
-const { getDomain } = require('@openzeppelin/contracts/test/helpers/eip712');
-const { ERC4337Helper } = require('../../helpers/erc4337');
-const { PackedUserOperation } = require('../../helpers/eip712-types');
+const { getDomain, PackedUserOperation } = require('@openzeppelin/contracts/test/helpers/eip712');
+const { ERC4337Helper } = require('@openzeppelin/contracts/test/helpers/erc4337');
 
 const { shouldBehaveLikeAccountCore } = require('../Account.behavior');
 const { shouldBehaveLikeAccountERC7579 } = require('./AccountERC7579.behavior');
@@ -12,8 +11,8 @@ const { shouldBehaveLikeERC1271 } = require('../../utils/cryptography/ERC1271.be
 async function fixture() {
   // EOAs and environment
   const [other] = await ethers.getSigners();
-  const target = await ethers.deployContract('CallReceiverMockExtended');
-  const anotherTarget = await ethers.deployContract('CallReceiverMockExtended');
+  const target = await ethers.deployContract('CallReceiverMock');
+  const anotherTarget = await ethers.deployContract('CallReceiverMock');
 
   // ERC-7579 validator
   const validator = await ethers.deployContract('$ERC7579Signature');

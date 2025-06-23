@@ -3,7 +3,9 @@
 
 pragma solidity ^0.8.20;
 
+import {Arrays} from "@openzeppelin/contracts/utils/Arrays.sol";
 import {Hashes} from "@openzeppelin/contracts/utils/cryptography/Hashes.sol";
+import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 
 /**
  * @dev Library for managing
@@ -167,6 +169,28 @@ library EnumerableSetExtended {
         return self._values;
     }
 
+    /**
+     * @dev Return a slice of the set in an array
+     *
+     * WARNING: This operation will copy the entire storage to memory, which can be quite expensive. This is designed
+     * to mostly be used by view accessors that are queried without any gas fees. Developers should keep in mind that
+     * this function has an unbounded cost, and using it as part of a state-changing function may render the function
+     * uncallable if the set grows to a point where copying to memory consumes too much gas to fit in a block.
+     */
+    function values(StringSet storage set, uint256 start, uint256 end) internal view returns (string[] memory) {
+        unchecked {
+            end = Math.min(end, length(set));
+            start = Math.min(start, end);
+
+            uint256 len = end - start;
+            string[] memory result = new string[](len);
+            for (uint256 i = 0; i < len; ++i) {
+                result[i] = Arrays.unsafeAccess(set._values, start + i).value;
+            }
+            return result;
+        }
+    }
+
     struct BytesSet {
         // Storage of set values
         bytes[] _values;
@@ -289,6 +313,28 @@ library EnumerableSetExtended {
      */
     function values(BytesSet storage self) internal view returns (bytes[] memory) {
         return self._values;
+    }
+
+    /**
+     * @dev Return a slice of the set in an array
+     *
+     * WARNING: This operation will copy the entire storage to memory, which can be quite expensive. This is designed
+     * to mostly be used by view accessors that are queried without any gas fees. Developers should keep in mind that
+     * this function has an unbounded cost, and using it as part of a state-changing function may render the function
+     * uncallable if the set grows to a point where copying to memory consumes too much gas to fit in a block.
+     */
+    function values(BytesSet storage set, uint256 start, uint256 end) internal view returns (bytes[] memory) {
+        unchecked {
+            end = Math.min(end, length(set));
+            start = Math.min(start, end);
+
+            uint256 len = end - start;
+            bytes[] memory result = new bytes[](len);
+            for (uint256 i = 0; i < len; ++i) {
+                result[i] = Arrays.unsafeAccess(set._values, start + i).value;
+            }
+            return result;
+        }
     }
 
     struct Bytes32x2Set {
@@ -414,6 +460,28 @@ library EnumerableSetExtended {
      */
     function values(Bytes32x2Set storage self) internal view returns (bytes32[2][] memory) {
         return self._values;
+    }
+
+    /**
+     * @dev Return a slice of the set in an array
+     *
+     * WARNING: This operation will copy the entire storage to memory, which can be quite expensive. This is designed
+     * to mostly be used by view accessors that are queried without any gas fees. Developers should keep in mind that
+     * this function has an unbounded cost, and using it as part of a state-changing function may render the function
+     * uncallable if the set grows to a point where copying to memory consumes too much gas to fit in a block.
+     */
+    function values(Bytes32x2Set storage set, uint256 start, uint256 end) internal view returns (bytes32[2][] memory) {
+        unchecked {
+            end = Math.min(end, length(set));
+            start = Math.min(start, end);
+
+            uint256 len = end - start;
+            bytes32[2][] memory result = new bytes32[2][](len);
+            for (uint256 i = 0; i < len; ++i) {
+                result[i] = set._values[start + i];
+            }
+            return result;
+        }
     }
 
     function _hash(bytes32[2] memory value) private pure returns (bytes32) {

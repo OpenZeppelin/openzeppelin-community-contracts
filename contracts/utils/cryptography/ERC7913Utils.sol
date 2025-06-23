@@ -4,7 +4,7 @@ pragma solidity ^0.8.24;
 
 import {SignatureChecker} from "@openzeppelin/contracts/utils/cryptography/SignatureChecker.sol";
 import {Bytes} from "@openzeppelin/contracts/utils/Bytes.sol";
-import {IERC7913SignatureVerifier} from "../../interfaces/IERC7913.sol";
+import {IERC7913SignatureVerifier} from "@openzeppelin/contracts/interfaces/IERC7913.sol";
 
 /**
  * @dev Library that provides common ERC-7913 utility functions.

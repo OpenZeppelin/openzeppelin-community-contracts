@@ -3,11 +3,9 @@ const { expect } = require('chai');
 const { loadFixture } = require('@nomicfoundation/hardhat-network-helpers');
 const { anyValue } = require('@nomicfoundation/hardhat-chai-matchers/withArgs');
 
-const { getDomain } = require('@openzeppelin/contracts/test/helpers/eip712');
+const { getDomain, formatType, PackedUserOperation } = require('@openzeppelin/contracts/test/helpers/eip712');
+const { ERC4337Helper } = require('@openzeppelin/contracts/test/helpers/erc4337');
 const { encodeBatch, encodeMode, CALL_TYPE_BATCH } = require('@openzeppelin/contracts/test/helpers/erc7579');
-const { formatType } = require('@openzeppelin/contracts/test/helpers/eip712-types');
-const { PackedUserOperation } = require('../../helpers/eip712-types');
-const { ERC4337Helper } = require('../../helpers/erc4337');
 
 const { shouldBehaveLikePaymaster } = require('./Paymaster.behavior');
 
@@ -16,8 +14,8 @@ const value = ethers.parseEther('1');
 async function fixture() {
   // EOAs and environment
   const [admin, receiver, other] = await ethers.getSigners();
-  const target = await ethers.deployContract('CallReceiverMockExtended');
-  const token = await ethers.deployContract('$ERC20Mock', ['Name', 'Symbol']);
+  const target = await ethers.deployContract('CallReceiverMock');
+  const token = await ethers.deployContract('$ERC20', ['Name', 'Symbol']);
 
   // signers
   const accountSigner = ethers.Wallet.createRandom();

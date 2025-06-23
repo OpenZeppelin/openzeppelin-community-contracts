@@ -3,9 +3,15 @@ pragma solidity ^0.8.20;
 
 import {Test} from "forge-std/Test.sol";
 import {AccountERC7702Mock} from "../../contracts/mocks/account/AccountERC7702Mock.sol";
-import {CallReceiverMockExtended, CallReceiverMock} from "../../contracts/mocks/CallReceiverMock.sol";
+import {CallReceiverMock} from "@openzeppelin/contracts/mocks/CallReceiverMock.sol";
 import {EIP712} from "@openzeppelin/contracts/utils/cryptography/EIP712.sol";
-import {ERC7579Utils, Execution, Mode, ModeSelector, ModePayload} from "@openzeppelin/contracts/account/utils/draft-ERC7579Utils.sol";
+import {
+    ERC7579Utils,
+    Execution,
+    Mode,
+    ModeSelector,
+    ModePayload
+} from "@openzeppelin/contracts/account/utils/draft-ERC7579Utils.sol";
 import {ERC4337Utils, IEntryPointExtra} from "@openzeppelin/contracts/account/utils/draft-ERC4337Utils.sol";
 import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 import {PackedUserOperation} from "@openzeppelin/contracts/interfaces/draft-IERC4337.sol";
@@ -23,7 +29,7 @@ contract AccountERC7702Test is Test {
     uint256 private constant MAX_ETH = type(uint128).max;
 
     // Test accounts
-    CallReceiverMockExtended private _target;
+    CallReceiverMock private _target;
 
     // ERC-4337 signer
     uint256 private _signerPrivateKey;
@@ -31,7 +37,7 @@ contract AccountERC7702Test is Test {
 
     function setUp() public {
         // Deploy target contract
-        _target = new CallReceiverMockExtended();
+        _target = new CallReceiverMock();
 
         // Setup signer
         _signerPrivateKey = 0x1234;
@@ -61,7 +67,7 @@ contract AccountERC7702Test is Test {
         execution[0] = Execution({
             target: address(_target),
             value: 1 ether,
-            callData: abi.encodeCall(CallReceiverMockExtended.mockFunctionExtra, ())
+            callData: abi.encodeCall(CallReceiverMock.mockFunctionExtra, ())
         });
         execution[1] = Execution({
             target: address(_target),
@@ -90,7 +96,7 @@ contract AccountERC7702Test is Test {
 
         // Expect the events to be emitted
         vm.expectEmit(true, true, true, true);
-        emit CallReceiverMockExtended.MockFunctionCalledExtra(address(_signer), 1 ether);
+        emit CallReceiverMock.MockFunctionCalledExtra(address(_signer), 1 ether);
         vm.expectEmit(true, true, true, true);
         emit CallReceiverMock.MockFunctionCalledWithArgs(argA, argB);
 

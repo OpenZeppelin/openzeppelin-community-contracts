@@ -1,10 +1,9 @@
 const { ethers, entrypoint } = require('hardhat');
 const { expect } = require('chai');
 const { loadFixture } = require('@nomicfoundation/hardhat-network-helpers');
-const { impersonate } = require('@openzeppelin/contracts/test/helpers/account');
-const { ERC4337Helper } = require('../../helpers/erc4337');
-const { NonNativeSigner, MultiERC7913SigningKey } = require('../../helpers/signers');
 
+const { impersonate } = require('@openzeppelin/contracts/test/helpers/account');
+const { ERC4337Helper } = require('@openzeppelin/contracts/test/helpers/erc4337');
 const {
   MODULE_TYPE_EXECUTOR,
   CALL_TYPE_CALL,
@@ -12,6 +11,8 @@ const {
   encodeMode,
   encodeSingle,
 } = require('@openzeppelin/contracts/test/helpers/erc7579');
+const { NonNativeSigner, MultiERC7913SigningKey } = require('@openzeppelin/contracts/test/helpers/signers');
+
 const { shouldBehaveLikeERC7579Module } = require('./ERC7579Module.behavior');
 
 // Prepare signers in advance
@@ -23,7 +24,7 @@ const signerECDSA4 = ethers.Wallet.createRandom(); // Unauthorized signer
 async function fixture() {
   // Deploy ERC-7579 multisig module
   const mock = await ethers.deployContract('$ERC7579MultisigExecutorMock', ['MultisigExecutor', '1']);
-  const target = await ethers.deployContract('CallReceiverMockExtended');
+  const target = await ethers.deployContract('CallReceiverMock');
 
   // ERC-4337 env
   const helper = new ERC4337Helper();

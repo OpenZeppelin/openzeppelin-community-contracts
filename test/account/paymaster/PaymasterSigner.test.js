@@ -1,9 +1,8 @@
 const { ethers, entrypoint } = require('hardhat');
 const { loadFixture } = require('@nomicfoundation/hardhat-network-helpers');
 
-const { getDomain } = require('@openzeppelin/contracts/test/helpers/eip712');
-const { PackedUserOperation, UserOperationRequest } = require('../../helpers/eip712-types');
-const { ERC4337Helper } = require('../../helpers/erc4337');
+const { getDomain, PackedUserOperation, UserOperationRequest } = require('@openzeppelin/contracts/test/helpers/eip712');
+const { ERC4337Helper } = require('@openzeppelin/contracts/test/helpers/erc4337');
 
 const { shouldBehaveLikePaymaster } = require('./Paymaster.behavior');
 
@@ -14,7 +13,7 @@ for (const [name, opts] of Object.entries({
   async function fixture() {
     // EOAs and environment
     const [admin, receiver, other] = await ethers.getSigners();
-    const target = await ethers.deployContract('CallReceiverMockExtended');
+    const target = await ethers.deployContract('CallReceiverMock');
 
     // signers
     const accountSigner = ethers.Wallet.createRandom();

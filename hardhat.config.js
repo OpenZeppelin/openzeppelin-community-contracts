@@ -51,6 +51,10 @@ module.exports = {
       hardfork: argv.hardfork,
     },
   },
+  exposed: {
+    imports: true,
+    initializers: true,
+  },
   gasReporter: {
     enabled: argv.gas,
     showMethodSig: true,
