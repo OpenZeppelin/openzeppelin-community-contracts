@@ -43,7 +43,7 @@ abstract contract AxelarGatewayDestination is AxelarGatewayBase, AxelarExecutabl
             adapterPayload,
             (bytes, bytes, bytes, bytes[])
         );
-        // Axelar to CAIP-2 translation
+        // Axelar to ERC-7930 translation
         bytes memory addr = getRemoteGateway(getErc7930Chain(axelarSourceChain));
 
         // check message validity

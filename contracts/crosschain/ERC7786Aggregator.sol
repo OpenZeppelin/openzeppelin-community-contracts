@@ -306,7 +306,7 @@ contract ERC7786Aggregator is IERC7786GatewaySource, IERC7786Receiver, Ownable, 
     }
 
     function _setThreshold(uint8 newThreshold) internal virtual {
-        require(newThreshold > 0 && _threshold <= _gateways.length(), ERC7786AggregatorThresholdViolation());
+        require(newThreshold > 0 && newThreshold <= _gateways.length(), ERC7786AggregatorThresholdViolation());
         _threshold = newThreshold;
         emit ThresholdUpdated(newThreshold);
     }
