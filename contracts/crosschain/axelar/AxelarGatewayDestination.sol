@@ -26,7 +26,7 @@ abstract contract AxelarGatewayDestination is AxelarGatewayBase, AxelarExecutabl
      *
      * In this function:
      *
-     * - `axelarSourceChain` is in the Axelar format. It should not be expected to be a proper CAIP-2 format
+     * - `axelarSourceChain` is in the Axelar format. It should not be expected to be a proper ERC-7930 format
      * - `axelarSourceAddress` is the sender of the Axelar message. That should be the remote gateway on the chain
      *   which the message originates from. It is NOT the sender of the ERC-7786 crosschain message.
      *
