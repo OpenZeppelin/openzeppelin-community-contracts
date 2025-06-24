@@ -346,7 +346,6 @@ contract ZKEmailUtilsTest is Test {
         uint256[2][2] memory pB,
         uint256[2] memory pC
     ) public view {
-        // TODO: Remove these when the Verifier wrapper does not revert.
         pA[0] = bound(pA[0], 1, Q - 1);
         pA[1] = bound(pA[1], 1, Q - 1);
         pB[0][0] = bound(pB[0][0], 1, Q - 1);

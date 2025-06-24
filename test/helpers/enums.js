@@ -10,6 +10,14 @@ module.exports = {
     'MismatchedCommand',
     'EmailProof',
   ),
+  JWTProofError: enums.Enum(
+    'NoError',
+    'JWTPublicKeyHash',
+    'MaskedCommandLength',
+    'SkippedCommandPrefixSize',
+    'MismatchedCommand',
+    'JWTProof',
+  ),
   Case: enums.EnumTyped('CHECKSUM', 'LOWERCASE', 'UPPERCASE', 'ANY'),
   OperationState: enums.Enum('Unknown', 'Scheduled', 'Ready', 'Expired', 'Executed', 'Canceled'),
 };
