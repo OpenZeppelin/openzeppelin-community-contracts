@@ -7,13 +7,13 @@ import {IERC20, SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeE
 import {BitMaps} from "@openzeppelin/contracts/utils/structs/BitMaps.sol";
 import {Bytes} from "@openzeppelin/contracts/utils/Bytes.sol";
 import {Pausable} from "@openzeppelin/contracts/utils/Pausable.sol";
+import {InteroperableAddress} from "@openzeppelin/contracts/utils/draft-InteroperableAddress.sol";
 import {IERC7786GatewaySource, IERC7786Receiver} from "../interfaces/IERC7786.sol";
 import {IERC7802} from "../interfaces/IERC7802.sol";
-import {ERC7930} from "../utils/ERC7930.sol";
 
 abstract contract ERC7802Bridge is IERC7786Receiver, Ownable, Pausable {
     using BitMaps for BitMaps.BitMap;
-    using ERC7930 for bytes;
+    using InteroperableAddress for bytes;
 
     event Sent(address token, address from, bytes to, uint256 amount);
     event Received(address token, bytes from, address to, uint256 amount);
@@ -61,7 +61,7 @@ abstract contract ERC7802Bridge is IERC7786Receiver, Ownable, Pausable {
     // TODO: check that bridge includes an address ? prevent override ?
     function registerRemote(address token, bytes memory bridge, bytes memory remote) public virtual onlyOwner {
         (bytes2 chainType, bytes memory chainReference, ) = bridge.parseV1();
-        bytes memory chain = ERC7930.formatV1(chainType, chainReference, "");
+        bytes memory chain = InteroperableAddress.formatV1(chainType, chainReference, "");
 
         _remoteBridges[token][chain] = bridge;
         _remoteTokens[token][chain] = remote;
@@ -79,7 +79,7 @@ abstract contract ERC7802Bridge is IERC7786Receiver, Ownable, Pausable {
 
         // identify destination chain
         (bytes2 chainType, bytes memory chainReference, bytes memory recipient) = to.parseV1();
-        bytes memory destChain = ERC7930.formatV1(chainType, chainReference, "");
+        bytes memory destChain = InteroperableAddress.formatV1(chainType, chainReference, "");
 
         // get details for that bridge: gateway, remote bridge, remote token
         address gateway = getGateway(destChain);
@@ -87,7 +87,12 @@ abstract contract ERC7802Bridge is IERC7786Receiver, Ownable, Pausable {
         bytes memory remote = getRemoteToken(token, destChain);
 
         // prepare payload
-        bytes memory payload = abi.encode(remote, ERC7930.formatEvmV1(block.chainid, msg.sender), recipient, amount);
+        bytes memory payload = abi.encode(
+            remote,
+            InteroperableAddress.formatEvmV1(block.chainid, msg.sender),
+            recipient,
+            amount
+        );
 
         // send crosschain signal
         bytes32 sendId = IERC7786GatewaySource(gateway).sendMessage{value: msg.value}(bridge, payload, attributes);
@@ -114,7 +119,7 @@ abstract contract ERC7802Bridge is IERC7786Receiver, Ownable, Pausable {
 
         // identify source chain and validate corresponding gateway
         (bytes2 chainType, bytes memory chainReference, ) = from.parseV1();
-        bytes memory srcChain = ERC7930.formatV1(chainType, chainReference, "");
+        bytes memory srcChain = InteroperableAddress.formatV1(chainType, chainReference, "");
         require(msg.sender == getGateway(srcChain), ERC7802BridgeInvalidGateway());
 
         // identify local token (requested for mint) and validate sender is the correct bridge

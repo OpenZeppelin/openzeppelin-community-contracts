@@ -7,7 +7,6 @@ import {InteroperableAddress} from "@openzeppelin/contracts/utils/draft-Interope
 import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 import {IERC7786Receiver} from "../../interfaces/IERC7786.sol";
 import {AxelarGatewayBase} from "./AxelarGatewayBase.sol";
-import {ERC7930} from "../../utils/ERC7930.sol";
 
 /**
  * @dev Implementation of an ERC-7786 gateway destination adapter for the Axelar Network in dual mode.
