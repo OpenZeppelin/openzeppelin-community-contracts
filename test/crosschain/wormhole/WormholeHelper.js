@@ -1,24 +1,24 @@
 const { ethers } = require('hardhat');
+const { getLocalChain } = require('@openzeppelin/contracts/test/helpers/chains');
 
 const toUniversalAddress = addr => ethers.zeroPadValue(addr.target ?? addr.address ?? addr, 32);
 const fromUniversalAddress = addr => ethers.getAddress(ethers.hexlify(ethers.getBytes(addr).slice(-20)));
 
-async function deploy(owner, CAIP2 = undefined, wormholeChainId = 23600) {
-  CAIP2 ??= await ethers.provider.getNetwork().then(({ chainId }) => `eip155:${chainId}`);
+async function deploy(owner, wormholeChainId = 23600) {
+  const chain = await getLocalChain();
 
   const wormhole = await ethers.deployContract('WormholeRelayerMock');
-
   const gatewayA = await ethers.deployContract('WormholeGatewayDuplex', [wormhole, wormholeChainId, owner]);
   const gatewayB = await ethers.deployContract('WormholeGatewayDuplex', [wormhole, wormholeChainId, owner]);
 
   await Promise.all([
-    gatewayA.connect(owner).registerChainEquivalence(CAIP2, wormholeChainId),
-    gatewayB.connect(owner).registerChainEquivalence(CAIP2, wormholeChainId),
-    gatewayA.connect(owner).registerRemoteGateway(CAIP2, toUniversalAddress(gatewayB)),
-    gatewayB.connect(owner).registerRemoteGateway(CAIP2, toUniversalAddress(gatewayA)),
+    gatewayA.connect(owner).registerChainEquivalence(chain.erc7930, wormholeChainId),
+    gatewayB.connect(owner).registerChainEquivalence(chain.erc7930, wormholeChainId),
+    gatewayA.connect(owner).registerRemoteGateway(chain.toErc7930(gatewayB)),
+    gatewayB.connect(owner).registerRemoteGateway(chain.toErc7930(gatewayA)),
   ]);
 
-  return { CAIP2, wormholeChainId, wormhole, gatewayA, gatewayB };
+  return { chain, wormholeChainId, wormhole, gatewayA, gatewayB };
 }
 
 module.exports = {

@@ -4,26 +4,25 @@ pragma solidity ^0.8.27;
 
 import {VaaKey} from "wormhole-solidity-sdk/interfaces/IWormholeRelayer.sol";
 import {toUniversalAddress, fromUniversalAddress} from "wormhole-solidity-sdk/utils/UniversalAddress.sol";
-import {CAIP2} from "@openzeppelin/contracts/utils/CAIP2.sol";
-import {CAIP10} from "@openzeppelin/contracts/utils/CAIP10.sol";
+import {InteroperableAddress} from "@openzeppelin/contracts/utils/draft-InteroperableAddress.sol";
 import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 import {WormholeGatewayBase} from "./WormholeGatewayBase.sol";
 import {IERC7786GatewaySource} from "../../interfaces/IERC7786.sol";
 
 // TODO: allow non-evm destination chains via non-evm-specific finalize/retry variants
 abstract contract WormholeGatewaySource is IERC7786GatewaySource, WormholeGatewayBase {
-    using Strings for *;
+    using InteroperableAddress for bytes;
+    // using Strings for *;
 
     struct PendingMessage {
         uint64 sequence;
         address sender;
-        string destinationChain;
-        string receiver;
+        bytes recipient;
         bytes payload;
         bytes[] attributes;
     }
 
-    uint256 private _outboxId;
+    uint256 private _sendId;
     mapping(bytes32 => PendingMessage) private _pending;
 
     event MessagePushed(bytes32 outboxId);
@@ -38,37 +37,37 @@ abstract contract WormholeGatewaySource is IERC7786GatewaySource, WormholeGatewa
 
     /// @inheritdoc IERC7786GatewaySource
     function sendMessage(
-        string calldata destinationChain, // CAIP-2 chain identifier
-        string calldata receiver, // CAIP-10 account address (does not include the chain identifier)
+        bytes calldata recipient, // Binary Interoperable Address
         bytes calldata payload,
         bytes[] calldata attributes
-    ) external payable returns (bytes32 outboxId) {
+    ) external payable returns (bytes32 sendId) {
         require(msg.value == 0, UnsupportedNativeTransfer());
         // Use of `if () revert` syntax to avoid accessing attributes[0] if it's empty
         if (attributes.length > 0)
             revert UnsupportedAttribute(attributes[0].length < 0x04 ? bytes4(0) : bytes4(attributes[0][0:4]));
 
-        require(supportedChain(destinationChain), UnsupportedChain(destinationChain));
+        require(supportedChain(recipient), UnsupportedERC7930Chain(recipient));
 
-        outboxId = bytes32(++_outboxId);
-        _pending[outboxId] = PendingMessage(0, msg.sender, destinationChain, receiver, payload, attributes);
+        sendId = bytes32(++_sendId);
+        _pending[sendId] = PendingMessage(0, msg.sender, recipient, payload, attributes);
 
-        emit MessagePosted(
-            outboxId,
-            CAIP10.format(CAIP2.local(), msg.sender.toChecksumHexString()),
-            CAIP10.format(destinationChain, receiver),
+        emit MessageSent(
+            sendId,
+            InteroperableAddress.formatEvmV1(block.chainid, msg.sender),
+            recipient,
             payload,
+            0,
             attributes
         );
     }
 
-    function quoteEvmMessage(string memory destinationChain, uint256 gasLimit) public view returns (uint256) {
-        (uint256 cost, ) = _wormholeRelayer.quoteEVMDeliveryPrice(fromCAIP2(destinationChain), 0, gasLimit);
+    function quoteEvmMessage(bytes memory destinationChain, uint256 gasLimit) public view returns (uint256) {
+        (uint256 cost, ) = _wormholeRelayer.quoteEVMDeliveryPrice(getWormholeChain(destinationChain), 0, gasLimit);
         return cost;
     }
 
     function quoteEvmMessage(bytes32 outboxId, uint256 gasLimit) external view returns (uint256) {
-        return quoteEvmMessage(_pending[outboxId].destinationChain, gasLimit);
+        return quoteEvmMessage(_pending[outboxId].recipient, gasLimit);
     }
 
     function finalizeEvmMessage(bytes32 outboxId, uint256 gasLimit) external payable {
@@ -76,16 +75,19 @@ abstract contract WormholeGatewaySource is IERC7786GatewaySource, WormholeGatewa
 
         require(pmsg.sender != address(0), CannotFinalizeMessage(outboxId));
 
-        uint16 wormholeDestination = fromCAIP2(pmsg.destinationChain);
-        bytes32 remoteGateway = getRemoteGateway(pmsg.destinationChain);
-        string memory sender = pmsg.sender.toChecksumHexString();
-        bytes memory adapterPayload = abi.encode(outboxId, sender, pmsg.receiver, pmsg.payload, pmsg.attributes);
+        bytes memory adapterPayload = abi.encode(
+            outboxId,
+            InteroperableAddress.formatEvmV1(block.chainid, pmsg.sender),
+            pmsg.recipient,
+            pmsg.payload,
+            pmsg.attributes
+        );
 
         // TODO: potentially delete part/all of the message
 
         pmsg.sequence = _wormholeRelayer.sendPayloadToEvm{value: msg.value}(
-            wormholeDestination,
-            fromUniversalAddress(remoteGateway),
+            getWormholeChain(pmsg.recipient),
+            fromUniversalAddress(getRemoteGateway(pmsg.recipient)),
             adapterPayload,
             0,
             gasLimit
@@ -103,7 +105,7 @@ abstract contract WormholeGatewaySource is IERC7786GatewaySource, WormholeGatewa
 
         pmsg.sequence = _wormholeRelayer.resendToEvm(
             VaaKey(_wormholeChainId, toUniversalAddress(address(this)), pmsg.sequence),
-            fromCAIP2(pmsg.destinationChain),
+            getWormholeChain(pmsg.recipient),
             0,
             gasLimit,
             newDeliveryProvider

@@ -4,17 +4,17 @@ pragma solidity ^0.8.27;
 
 import {IWormholeReceiver} from "wormhole-solidity-sdk/interfaces/IWormholeReceiver.sol";
 import {BitMaps} from "@openzeppelin/contracts/utils/structs/BitMaps.sol";
-import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
+import {InteroperableAddress} from "@openzeppelin/contracts/utils/draft-InteroperableAddress.sol";
 import {IERC7786Receiver} from "../../interfaces/IERC7786.sol";
 import {WormholeGatewayBase} from "./WormholeGatewayBase.sol";
 
 abstract contract WormholeGatewayDestination is WormholeGatewayBase, IWormholeReceiver {
     using BitMaps for BitMaps.BitMap;
-    using Strings for *;
+    using InteroperableAddress for bytes;
 
     BitMaps.BitMap private _executed;
 
-    error InvalidOriginGateway(string sourceChain, bytes32 wormholeSourceAddress);
+    error InvalidOriginGateway(uint16 wormholeSourceChain, bytes32 wormholeSourceAddress);
     error MessageAlreadyExecuted(bytes32 outboxId);
     error ReceiverExecutionFailed();
     error AdditionalMessagesNotSupported();
@@ -26,33 +26,29 @@ abstract contract WormholeGatewayDestination is WormholeGatewayBase, IWormholeRe
         uint16 wormholeSourceChain,
         bytes32 deliveryHash
     ) public payable virtual onlyWormholeRelayer {
-        string memory sourceChain = toCAIP2(wormholeSourceChain);
-
         require(additionalMessages.length == 0, AdditionalMessagesNotSupported());
-        require(
-            getRemoteGateway(sourceChain) == wormholeSourceAddress,
-            InvalidOriginGateway(sourceChain, wormholeSourceAddress)
-        );
 
         (
             bytes32 outboxId,
-            string memory sender,
-            string memory receiver,
+            bytes memory sender,
+            bytes memory recipient,
             bytes memory payload,
             bytes[] memory attributes
-        ) = abi.decode(adapterPayload, (bytes32, string, string, bytes, bytes[]));
+        ) = abi.decode(adapterPayload, (bytes32, bytes, bytes, bytes, bytes[]));
+
+        // Axelar to ERC-7930 translation
+        bytes32 addr = getRemoteGateway(getErc7930Chain(wormholeSourceChain));
+
+        // check message validity
+        // - `axelarSourceAddress` is the remote gateway on the origin chain.
+        require(addr == wormholeSourceAddress, InvalidOriginGateway(wormholeSourceChain, wormholeSourceAddress));
 
         // prevent replay - deliveryHash might not be unique if a message is relayed multiple time
         require(!_executed.get(uint256(outboxId)), MessageAlreadyExecuted(outboxId));
         _executed.set(uint256(outboxId));
 
-        bytes4 result = IERC7786Receiver(receiver.parseAddress()).executeMessage(
-            uint256(deliveryHash).toHexString(32),
-            sourceChain,
-            sender,
-            payload,
-            attributes
-        );
+        (, address target) = recipient.parseEvmV1();
+        bytes4 result = IERC7786Receiver(target).executeMessage(deliveryHash, sender, payload, attributes);
         require(result == IERC7786Receiver.executeMessage.selector, ReceiverExecutionFailed());
     }
 }

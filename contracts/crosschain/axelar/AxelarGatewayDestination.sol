@@ -15,8 +15,8 @@ import {AxelarGatewayBase} from "./AxelarGatewayBase.sol";
  * workflow into the standard ERC-7786.
  */
 abstract contract AxelarGatewayDestination is AxelarGatewayBase, AxelarExecutable {
-    using Strings for *;
     using InteroperableAddress for bytes;
+    using Strings for *;
 
     error InvalidOriginGateway(string axelarSourceChain, string axelarSourceAddress);
     error ReceiverExecutionFailed();
@@ -43,6 +43,7 @@ abstract contract AxelarGatewayDestination is AxelarGatewayBase, AxelarExecutabl
             adapterPayload,
             (bytes, bytes, bytes, bytes[])
         );
+
         // Axelar to ERC-7930 translation
         bytes memory addr = getRemoteGateway(getErc7930Chain(axelarSourceChain));
 
@@ -53,13 +54,8 @@ abstract contract AxelarGatewayDestination is AxelarGatewayBase, AxelarExecutabl
             InvalidOriginGateway(axelarSourceChain, axelarSourceAddress)
         );
 
-        (, , bytes memory target) = recipient.parseV1();
-        bytes4 result = IERC7786Receiver(address(bytes20(target))).executeMessage(
-            commandId,
-            sender,
-            payload,
-            attributes
-        );
+        (, address target) = recipient.parseEvmV1();
+        bytes4 result = IERC7786Receiver(target).executeMessage(commandId, sender, payload, attributes);
         require(result == IERC7786Receiver.executeMessage.selector, ReceiverExecutionFailed());
     }
 }
