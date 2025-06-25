@@ -458,6 +458,7 @@ Virtual function that should contain the logic to execute when a cross-chain mes
 
 === Axelar
 
+:_axelarGateway: pass:normal[xref:#AxelarGatewayBase-_axelarGateway-contract-IAxelarGateway[`++_axelarGateway++`]]
 :RegisteredRemoteGateway: pass:normal[xref:#AxelarGatewayBase-RegisteredRemoteGateway-bytes-[`++RegisteredRemoteGateway++`]]
 :RegisteredChainEquivalence: pass:normal[xref:#AxelarGatewayBase-RegisteredChainEquivalence-bytes-string-[`++RegisteredChainEquivalence++`]]
 :UnsupportedERC7930Chain: pass:normal[xref:#AxelarGatewayBase-UnsupportedERC7930Chain-bytes-[`++UnsupportedERC7930Chain++`]]
@@ -465,7 +466,6 @@ Virtual function that should contain the logic to execute when a cross-chain mes
 :InvalidChainIdentifier: pass:normal[xref:#AxelarGatewayBase-InvalidChainIdentifier-bytes-[`++InvalidChainIdentifier++`]]
 :ChainEquivalenceAlreadyRegistered: pass:normal[xref:#AxelarGatewayBase-ChainEquivalenceAlreadyRegistered-bytes-string-[`++ChainEquivalenceAlreadyRegistered++`]]
 :RemoteGatewayAlreadyRegistered: pass:normal[xref:#AxelarGatewayBase-RemoteGatewayAlreadyRegistered-bytes2-bytes-[`++RemoteGatewayAlreadyRegistered++`]]
-:_axelarGateway: pass:normal[xref:#AxelarGatewayBase-_axelarGateway-contract-IAxelarGateway[`++_axelarGateway++`]]
 :constructor: pass:normal[xref:#AxelarGatewayBase-constructor-contract-IAxelarGateway-[`++constructor++`]]
 :getAxelarChain: pass:normal[xref:#AxelarGatewayBase-getAxelarChain-bytes-[`++getAxelarChain++`]]
 :getErc7930Chain: pass:normal[xref:#AxelarGatewayBase-getErc7930Chain-string-[`++getErc7930Chain++`]]
