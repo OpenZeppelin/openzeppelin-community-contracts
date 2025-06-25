@@ -2,14 +2,18 @@ const { ethers, entrypoint } = require('hardhat');
 const { expect } = require('chai');
 const { loadFixture } = require('@nomicfoundation/hardhat-network-helpers');
 
-const { getDomain } = require('@openzeppelin/contracts/test/helpers/eip712');
-const { ERC4337Helper } = require('../helpers/erc4337');
-const { NonNativeSigner, P256SigningKey, RSASHA256SigningKey, MultiERC7913SigningKey } = require('../helpers/signers');
+const { getDomain, PackedUserOperation } = require('@openzeppelin/contracts/test/helpers/eip712');
+const { ERC4337Helper } = require('@openzeppelin/contracts/test/helpers/erc4337');
+const {
+  NonNativeSigner,
+  P256SigningKey,
+  RSASHA256SigningKey,
+  MultiERC7913SigningKey,
+} = require('@openzeppelin/contracts/test/helpers/signers');
 
 const { shouldBehaveLikeAccountCore, shouldBehaveLikeAccountHolder } = require('./Account.behavior');
 const { shouldBehaveLikeERC1271 } = require('../utils/cryptography/ERC1271.behavior');
 const { shouldBehaveLikeERC7821 } = require('./extensions/ERC7821.behavior');
-const { PackedUserOperation } = require('../helpers/eip712-types');
 
 // Prepare signers in advance (RSA are long to initialize)
 const signerECDSA1 = ethers.Wallet.createRandom();
@@ -23,7 +27,7 @@ const signerRSA = new NonNativeSigner(RSASHA256SigningKey.random());
 async function fixture() {
   // EOAs and environment
   const [beneficiary, other] = await ethers.getSigners();
-  const target = await ethers.deployContract('CallReceiverMockExtended');
+  const target = await ethers.deployContract('CallReceiverMock');
 
   // ERC-7913 verifiers
   const verifierP256 = await ethers.deployContract('ERC7913P256Verifier');

@@ -1,6 +1,10 @@
 const { ethers } = require('hardhat');
+const {
+  NonNativeSigner,
+  P256SigningKey,
+  RSASHA256SigningKey,
+} = require('@openzeppelin/contracts/test/helpers/signers');
 const { shouldBehaveLikeERC1271 } = require('./ERC1271.behavior');
-const { NonNativeSigner, P256SigningKey, RSASHA256SigningKey } = require('../../helpers/signers');
 
 describe('ERC7739', function () {
   describe('for an ECDSA signer', function () {

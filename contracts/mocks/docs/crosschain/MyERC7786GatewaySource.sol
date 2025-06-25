@@ -3,7 +3,7 @@
 pragma solidity ^0.8.24;
 
 import {IERC7786GatewaySource} from "../../../interfaces/IERC7786.sol";
-import {ERC7930} from "../../../utils/ERC7930.sol";
+import {InteroperableAddress} from "@openzeppelin/contracts/utils/draft-InteroperableAddress.sol";
 
 abstract contract MyERC7786GatewaySource is IERC7786GatewaySource {
     error UnsupportedNativeTransfer();
@@ -26,7 +26,14 @@ abstract contract MyERC7786GatewaySource is IERC7786GatewaySource {
 
         // Emit event
         sendId = bytes32(0); // Explicitly set to 0. Can be used for post-processing
-        emit MessageSent(sendId, ERC7930.formatEvmV1(block.chainid, msg.sender), recipient, payload, 0, attributes);
+        emit MessageSent(
+            sendId,
+            InteroperableAddress.formatEvmV1(block.chainid, msg.sender),
+            recipient,
+            payload,
+            0,
+            attributes
+        );
 
         // Optionally: If this is an adapter, send the message to a protocol gateway for processing
         // This may require the logic for tracking destination gateway addresses and chain identifiers

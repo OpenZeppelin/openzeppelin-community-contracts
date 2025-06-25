@@ -25,9 +25,9 @@ Since the minimum requirement of xref:api:account.adoc#Account[`Account`] is to 
 * xref:api:utils/cryptography.adoc#SignerRSA[`SignerRSA`]: Verifies signatures of traditional PKI systems and X.509 certificates.
 * xref:api:utils/cryptography.adoc#SignerERC7702[`SignerERC7702`]: Checks EOA signatures delegated to this signer using https://eips.ethereum.org/EIPS/eip-7702#set-code-transaction[EIP-7702 authorizations]
 * xref:api:utils/cryptography.adoc#SignerERC7913[`SignerERC7913`]: Verifies generalized signatures following https://eips.ethereum.org/EIPS/eip-7913[ERC-7913].
-* xref:api:utils/cryptography.adoc#SignerERC7913[`SignerZKEmail`]: Enables email-based authentication for smart contracts using zero knowledge proofs of email authority signatures.
-* xref:api:utils/cryptography.adoc#SignerERC7913[`MultiSignerERC7913`]: Allows using multiple ERC-7913 signers with a threshold-based signature verification system.
-* xref:api:utils/cryptography.adoc#SignerERC7913[`MultiSignerERC7913Weighted`]: Overrides the threshold mechanism of xref:api:utils/cryptography.adoc#SignerERC7913[`MultiSignerERC7913`], offering different weights per signer.
+* xref:api:utils/cryptography.adoc#SignerZKEmail[`SignerZKEmail`]: Enables email-based authentication for smart contracts using zero knowledge proofs of email authority signatures.
+* xref:api:utils/cryptography.adoc#MultiSignerERC7913[`MultiSignerERC7913`]: Allows using multiple ERC-7913 signers with a threshold-based signature verification system.
+* xref:api:utils/cryptography.adoc#MultiSignerERC7913Weighted[`MultiSignerERC7913Weighted`]: Overrides the threshold mechanism of xref:api:utils/cryptography.adoc#MultiSignerERC7913[`MultiSignerERC7913`], offering different weights per signer.
 
 TIP: Given xref:api:utils/cryptography.adoc#SignerERC7913[`SignerERC7913`] provides a generalized standard for signature validation, you don't need to implement your own xref:api:utils/cryptography.adoc#AbstractSigner[`AbstractSigner`] for different signature schemes, consider bringing your own ERC-7913 verifier instead.
 
