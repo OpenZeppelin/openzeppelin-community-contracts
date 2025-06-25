@@ -40,7 +40,7 @@ abstract contract ERC20Allowlist is ERC20 {
     /**
      * @dev Returns the allowed status of an account.
      */
-    function allowed(address account) public virtual returns (bool) {
+    function allowed(address account) public view virtual returns (bool) {
         return _allowed[account];
     }
 

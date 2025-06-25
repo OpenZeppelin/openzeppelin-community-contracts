@@ -2,12 +2,20 @@
 
 pragma solidity ^0.8.20;
 
-import {ERC7579Utils, Mode, CallType, ExecType, ModeSelector} from "@openzeppelin/contracts/account/utils/draft-ERC7579Utils.sol";
+import {
+    ERC7579Utils,
+    Mode,
+    CallType,
+    ExecType,
+    ModeSelector
+} from "@openzeppelin/contracts/account/utils/draft-ERC7579Utils.sol";
 import {IERC7821} from "../../interfaces/IERC7821.sol";
-import {AccountCore} from "../AccountCore.sol";
+import {Account} from "../Account.sol";
 
 /**
- * @dev Minimal batch executor following ERC-7821. Only supports basic mode (no optional "opData").
+ * @dev Minimal batch executor following ERC-7821.
+ *
+ * Only supports supports single batch mode (`0x01000000000000000000`). Does not support optional "opData".
  */
 abstract contract ERC7821 is IERC7821 {
     using ERC7579Utils for *;
@@ -18,13 +26,13 @@ abstract contract ERC7821 is IERC7821 {
      * @dev Executes the calls in `executionData` with no optional `opData` support.
      *
      * NOTE: Access to this function is controlled by {_erc7821AuthorizedExecutor}. Changing access permissions, for
-     * example to approve calls by the ERC-4337 entrypoint, should be implement by overriding it.
+     * example to approve calls by the ERC-4337 entrypoint, should be implemented by overriding it.
      *
      * Reverts and bubbles up error if any call fails.
      */
     function execute(bytes32 mode, bytes calldata executionData) public payable virtual {
         if (!_erc7821AuthorizedExecutor(msg.sender, mode, executionData))
-            revert AccountCore.AccountUnauthorized(msg.sender);
+            revert Account.AccountUnauthorized(msg.sender);
         if (!supportsExecutionMode(mode)) revert UnsupportedExecutionMode();
         executionData.execBatch(ERC7579Utils.EXECTYPE_DEFAULT);
     }

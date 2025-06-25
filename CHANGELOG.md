@@ -1,3 +1,69 @@
+## 23-06-2025
+
+- `AxelarGatewayBase`, `AxelarGatewayDestination`, `AxelarGatewaySource`, `ERC7786Receiver` and `ERC7786Aggregator`: Changed support from CAIP addresses to ERC-7930 addresses.
+- `ERC7786Aggregator`: Renamed to `ERC7786OpenBridge`.
+
+## 20-06-2025
+
+- `EnumerableMap`: Add `keys(uint256,uint256)` that returns a subset (slice) of the keys in the map.
+- `EnumerableSet`: Add `values(uint256,uint256)` that returns a subset (slice) of the values in the set.
+
+## 03-06-2025
+
+- Moved `ERC7739Utils`, `ERC7913Utils`, `ZKEmailUtils`, abstract signers and ERC-7913 verifiers to `/contracts/utils/cryptography`
+
+## 15-05-2025
+
+- `ERC7579Multisig`: Add an abstract multisig module for ERC-7579 accounts using ERC-7913 signer keys.
+- `ERC7579MultisigWeighted`: Add an abstract weighted multisig module that allows different weights to be assigned to signers.
+- `ERC7579MultisigConfirmation`: Add an abstract confirmation-based multisig module that each signer to provide a confirmation signature.
+- `ERC7579Executor`: Add an executor module that enables executing calls from accounts where the it's installed.
+- `ERC7579DelayedExecutor`: Add executor module that adds a delay before executing an account operation.
+
+## 06-05-2025
+
+- `ERC7913ZKEmailVerifier`: Add ERC-7913 signature verifier that enables email-based authentication through zero-knowledge proofs.
+
+## 05-05-2025
+
+- `PaymasterERC20Guarantor`: Add extension of `PaymasterERC20` that enables third parties to guarantee user operations by prefunding gas costs upfront, with repayment handling for successful operations.
+- `ERC7579Validator`: Add abstract validator module for ERC-7579 accounts that provides base implementation for signature validation.
+- `ERC7579Signature`: Add implementation of `ERC7579Validator` that enables ERC-7579 accounts to integrate with address-less cryptographic keys and account signatures through ERC-7913 signature verification.
+
+## 29-04-2025
+
+- `ERC7913Utils`: Add `areValidSignaturesNow` function to verify multiple signatures from a set of ordered signers.
+
+## 21-04-2025
+
+- `MultiSignerERC7913`: Implementation of `AbstractSigner` that supports multiple ERC-7913 signers with a threshold-based signature verification system.
+- `MultiSignerERC7913Weighted`: Extension of `MultiSignerERC7913` that supports assigning different weights to each signer, enabling more flexible governance schemes.
+
+## 16-04-2025
+
+- `ZKEmailUtils`: Add library for ZKEmail signature validation utilities that enables email-based authentication through zero-knowledge proofs, with support for DKIM verification and command template validation.
+- `SignerZKEmail`: Add implementation of `AbstractSigner` that enables accounts to use ZKEmail signatures for authentication, leveraging DKIM registry and zero-knowledge proof verification.
+
+## 12-04-2025
+
+- `SignerERC7913`: Abstract signer that verifies signatures using the ERC-7913 workflow.
+- `ERC7913P256Verifier` and `ERC7913RSAVerifier`: Ready to use ERC-7913 verifiers that implement key verification for P256 (secp256r1) and RSA keys.
+- `ERC7913Utils`: Utilities library for verifying signatures by ERC-7913 formatted signers.
+
+## 11-04-2025
+
+- `EnumerableSetExtended` and `EnumerableMapExtended`: Extensions of the `EnumerableSet` and `EnumerableMap` libraries with more types, including non-value types.
+
+## 03-04-2025
+
+- `PaymasterERC20`: Extension of `PaymasterCore` that sponsors user operations against payment in ERC-20 tokens.
+- `PaymasterERC721Owner`: Extension of `PaymasterCore` that approves sponsoring of user operation based on ownership of an ERC-721 NFT.
+
+## 28-03-2025
+
+- Deprecate `Account` and rename `AccountCore` to `Account`.
+- Update `Account` and `Paymaster` to support entrypoint v0.8.0.
+
 ## 07-03-2025
 
 - `ERC7786Aggregator`: Add an aggregator that implements a meta gateway on top of multiple ERC-7786 gateways.

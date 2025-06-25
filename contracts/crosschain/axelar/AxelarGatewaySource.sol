@@ -2,11 +2,10 @@
 
 pragma solidity ^0.8.27;
 
-import {CAIP2} from "@openzeppelin/contracts/utils/CAIP2.sol";
-import {CAIP10} from "@openzeppelin/contracts/utils/CAIP10.sol";
+import {InteroperableAddress} from "@openzeppelin/contracts/utils/draft-InteroperableAddress.sol";
 import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
-import {AxelarGatewayBase} from "./AxelarGatewayBase.sol";
 import {IERC7786GatewaySource} from "../../interfaces/IERC7786.sol";
+import {AxelarGatewayBase} from "./AxelarGatewayBase.sol";
 
 /**
  * @dev Implementation of an ERC-7786 gateway source adapter for the Axelar Network.
@@ -15,6 +14,7 @@ import {IERC7786GatewaySource} from "../../interfaces/IERC7786.sol";
  * using the {sendMessage} function.
  */
 abstract contract AxelarGatewaySource is IERC7786GatewaySource, AxelarGatewayBase {
+    using InteroperableAddress for bytes;
     using Strings for address;
 
     error UnsupportedNativeTransfer();
@@ -26,35 +26,33 @@ abstract contract AxelarGatewaySource is IERC7786GatewaySource, AxelarGatewayBas
 
     /// @inheritdoc IERC7786GatewaySource
     function sendMessage(
-        string calldata destinationChain, // CAIP-2 chain identifier
-        string calldata receiver, // CAIP-10 account address (does not include the chain identifier)
+        bytes calldata recipient, // Binary Interoperable Address
         bytes calldata payload,
         bytes[] calldata attributes
-    ) external payable returns (bytes32 outboxId) {
+    ) external payable returns (bytes32 sendId) {
         require(msg.value == 0, UnsupportedNativeTransfer());
         // Use of `if () revert` syntax to avoid accessing attributes[0] if it's empty
         if (attributes.length > 0)
             revert UnsupportedAttribute(attributes[0].length < 0x04 ? bytes4(0) : bytes4(attributes[0][0:4]));
 
         // Create the package
-        string memory sender = msg.sender.toChecksumHexString();
-        bytes memory adapterPayload = abi.encode(sender, receiver, payload, attributes);
+        bytes memory sender = InteroperableAddress.formatEvmV1(block.chainid, msg.sender);
+        bytes memory adapterPayload = abi.encode(sender, recipient, payload, attributes);
 
         // Emit event
-        outboxId = bytes32(0); // Explicitly set to 0
-        emit MessagePosted(
-            outboxId,
-            CAIP10.format(CAIP2.local(), sender),
-            CAIP10.format(destinationChain, receiver),
-            payload,
-            attributes
-        );
+        sendId = bytes32(0); // Explicitly set to 0
+        emit MessageSent(sendId, sender, recipient, payload, 0, attributes);
 
         // Send the message
-        string memory axelarDestination = getEquivalentChain(destinationChain);
-        string memory remoteGateway = getRemoteGateway(destinationChain);
-        _axelarGateway.callContract(axelarDestination, remoteGateway, adapterPayload);
+        (bytes2 chainType, bytes calldata chainReference, ) = recipient.parseV1Calldata();
+        string memory axelarDestination = getAxelarChain(InteroperableAddress.formatV1(chainType, chainReference, ""));
+        bytes memory remoteGateway = getRemoteGateway(chainType, chainReference);
+        _axelarGateway.callContract(
+            axelarDestination,
+            address(bytes20(remoteGateway)).toChecksumHexString(), // TODO non-evm chains?
+            adapterPayload
+        );
 
-        return outboxId;
+        return sendId;
     }
 }

@@ -10,7 +10,7 @@ function shouldBehaveLikeAccountCore() {
   describe('entryPoint', function () {
     it('should return the canonical entrypoint', async function () {
       await this.mock.deploy();
-      await expect(this.mock.entryPoint()).to.eventually.equal(entrypoint);
+      await expect(this.mock.entryPoint()).to.eventually.equal(entrypoint.v08);
     });
   });
 
@@ -32,7 +32,7 @@ function shouldBehaveLikeAccountCore() {
 
     describe('when the caller is the canonical entrypoint', function () {
       beforeEach(async function () {
-        this.mockFromEntrypoint = this.mock.connect(await impersonate(entrypoint.target));
+        this.mockFromEntrypoint = this.mock.connect(await impersonate(entrypoint.v08.target));
       });
 
       it('should return SIG_VALIDATION_SUCCESS if the signature is valid', async function () {
@@ -47,7 +47,7 @@ function shouldBehaveLikeAccountCore() {
       it('should return SIG_VALIDATION_FAILURE if the signature is invalid', async function () {
         // empty operation (does nothing)
         const operation = await this.mock.createUserOp(this.userOp);
-        operation.signature = '0x00';
+        operation.signature = (await this.invalidSig?.()) ?? '0x00';
 
         expect(await this.mockFromEntrypoint.validateUserOp.staticCall(operation.packed, operation.hash(), 0)).to.eq(
           SIG_VALIDATION_FAILURE,
@@ -61,7 +61,7 @@ function shouldBehaveLikeAccountCore() {
 
         await expect(
           this.mockFromEntrypoint.validateUserOp(operation.packed, operation.hash(), value),
-        ).to.changeEtherBalances([this.mock, entrypoint], [-value, value]);
+        ).to.changeEtherBalances([this.mock, entrypoint.v08], [-value, value]);
       });
     });
   });
@@ -93,7 +93,7 @@ function shouldBehaveLikeAccountHolder() {
       const data = '0x12345678';
 
       beforeEach(async function () {
-        this.token = await ethers.deployContract('$ERC1155Mock', ['https://somedomain.com/{id}.json']);
+        this.token = await ethers.deployContract('$ERC1155', ['https://somedomain.com/{id}.json']);
         await this.token.$_mintBatch(this.other, ids, values, '0x');
       });
 
@@ -130,7 +130,7 @@ function shouldBehaveLikeAccountHolder() {
       const tokenId = 1n;
 
       beforeEach(async function () {
-        this.token = await ethers.deployContract('$ERC721Mock', ['Some NFT', 'SNFT']);
+        this.token = await ethers.deployContract('$ERC721', ['Some NFT', 'SNFT']);
         await this.token.$_mint(this.other, tokenId);
       });
 

@@ -13,7 +13,7 @@ import {IEntryPoint, IPaymaster, PackedUserOperation} from "@openzeppelin/contra
  * and payment logic. The `context` parameter is used to pass data between the validation and execution phases.
  *
  * The paymaster includes support to call the {IEntryPointStake} interface to manage the paymaster's deposits and stakes
- * through the internal functions {_deposit}, {_withdraw}, {_addStake}, {_unlockStake} and {_withdrawStake}.
+ * through the internal functions {deposit}, {withdraw}, {addStake}, {unlockStake} and {withdrawStake}.
  *
  * * Deposits are used to pay for user operations.
  * * Stakes are used to guarantee the paymaster's reputation and obtain more flexibility in accessing storage.
@@ -38,7 +38,7 @@ abstract contract PaymasterCore is IPaymaster {
 
     /// @dev Canonical entry point for the account that forwards and validates user operations.
     function entryPoint() public view virtual returns (IEntryPoint) {
-        return ERC4337Utils.ENTRYPOINT_V07;
+        return ERC4337Utils.ENTRYPOINT_V08;
     }
 
     /// @inheritdoc IPaymaster

@@ -37,14 +37,16 @@ function shouldBehaveLikeAccountERC7579({ withHooks = false } = {}) {
       this.modules[MODULE_TYPE_FALLBACK] = await ethers.deployContract('$ERC7579ModuleMock', [MODULE_TYPE_FALLBACK]);
       this.modules[MODULE_TYPE_HOOK] = await ethers.deployContract('$ERC7579HookMock');
 
-      this.mockFromEntrypoint = this.mock.connect(await impersonate(entrypoint.target));
+      this.mockFromEntrypoint = this.mock.connect(await impersonate(entrypoint.v08.target));
       this.mockFromExecutor = this.mock.connect(await impersonate(this.modules[MODULE_TYPE_EXECUTOR].target));
     });
 
     describe('accountId', function () {
       it('should return the account ID', async function () {
         await expect(this.mock.accountId()).to.eventually.equal(
-          '@openzeppelin/community-contracts.AccountERC7579.v0.0.0',
+          withHooks
+            ? '@openzeppelin/community-contracts.AccountERC7579Hooked.v0.0.0'
+            : '@openzeppelin/community-contracts.AccountERC7579.v0.0.0',
         );
       });
     });
@@ -141,8 +143,11 @@ function shouldBehaveLikeAccountERC7579({ withHooks = false } = {}) {
           await expect(this.mock.isModuleInstalled(moduleTypeId, instance, fullData)).to.eventually.equal(true);
 
           await expect(this.mockFromEntrypoint.installModule(moduleTypeId, instance, fullData))
-            .to.be.revertedWithCustomError(this.mock, 'ERC7579AlreadyInstalledModule')
-            .withArgs(moduleTypeId, instance);
+            .to.be.revertedWithCustomError(
+              this.mock,
+              moduleTypeId == MODULE_TYPE_HOOK ? 'ERC7579HookModuleAlreadyPresent' : 'ERC7579AlreadyInstalledModule',
+            )
+            .withArgs(...[moduleTypeId != MODULE_TYPE_HOOK && moduleTypeId, instance].filter(Boolean));
         });
       }
 
@@ -164,7 +169,7 @@ function shouldBehaveLikeAccountERC7579({ withHooks = false } = {}) {
 
             await expect(this.mockFromEntrypoint.installModule(MODULE_TYPE_EXECUTOR, instance, initData))
               .to.emit(this.modules[MODULE_TYPE_HOOK], 'PreCheck')
-              .withArgs(entrypoint, 0n, precheckData)
+              .withArgs(entrypoint.v08, 0n, precheckData)
               .to.emit(this.modules[MODULE_TYPE_HOOK], 'PostCheck')
               .withArgs(precheckData);
           });
@@ -176,6 +181,12 @@ function shouldBehaveLikeAccountERC7579({ withHooks = false } = {}) {
         await expect(this.mock.connect(this.other).uninstallModule(MODULE_TYPE_VALIDATOR, this.mock, '0x'))
           .to.be.revertedWithCustomError(this.mock, 'AccountUnauthorized')
           .withArgs(this.other);
+      });
+
+      it('should revert if the module type is not supported', async function () {
+        await expect(this.mockFromEntrypoint.uninstallModule(MODULE_TYPE_INVALID, this.mock, '0x'))
+          .to.be.revertedWithCustomError(this.mock, 'ERC7579UnsupportedModuleType')
+          .withArgs(MODULE_TYPE_INVALID);
       });
 
       for (const moduleTypeId of [
@@ -243,7 +254,7 @@ function shouldBehaveLikeAccountERC7579({ withHooks = false } = {}) {
             await this.mock.$_installModule(MODULE_TYPE_EXECUTOR, instance, initData);
             await expect(this.mockFromEntrypoint.uninstallModule(MODULE_TYPE_EXECUTOR, instance, initData))
               .to.emit(this.modules[MODULE_TYPE_HOOK], 'PreCheck')
-              .withArgs(entrypoint, 0n, precheckData)
+              .withArgs(entrypoint.v08, 0n, precheckData)
               .to.emit(this.modules[MODULE_TYPE_HOOK], 'PostCheck')
               .withArgs(precheckData);
           });
@@ -450,7 +461,7 @@ function shouldBehaveLikeAccountERC7579({ withHooks = false } = {}) {
               });
 
               it(`should call the hook of the installed module when executing ${execFn}`, async function () {
-                const caller = execFn === 'execute' ? entrypoint : this.modules[MODULE_TYPE_EXECUTOR];
+                const caller = execFn === 'execute' ? entrypoint.v08 : this.modules[MODULE_TYPE_EXECUTOR];
                 const value = 17;
                 const data = this.target.interface.encodeFunctionData('mockFunctionWithArgs', [42, '0x1234']);
 

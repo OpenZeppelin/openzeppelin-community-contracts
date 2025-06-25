@@ -3,6 +3,7 @@
 pragma solidity ^0.8.27;
 
 import {AxelarExecutable} from "@axelar-network/axelar-gmp-sdk-solidity/contracts/executable/AxelarExecutable.sol";
+import {InteroperableAddress} from "@openzeppelin/contracts/utils/draft-InteroperableAddress.sol";
 import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 import {IERC7786Receiver} from "../../interfaces/IERC7786.sol";
 import {AxelarGatewayBase} from "./AxelarGatewayBase.sol";
@@ -15,8 +16,9 @@ import {AxelarGatewayBase} from "./AxelarGatewayBase.sol";
  */
 abstract contract AxelarGatewayDestination is AxelarGatewayBase, AxelarExecutable {
     using Strings for *;
+    using InteroperableAddress for bytes;
 
-    error InvalidOriginGateway(string sourceChain, string axelarSourceAddress);
+    error InvalidOriginGateway(string axelarSourceChain, string axelarSourceAddress);
     error ReceiverExecutionFailed();
 
     /**
@@ -24,12 +26,11 @@ abstract contract AxelarGatewayDestination is AxelarGatewayBase, AxelarExecutabl
      *
      * In this function:
      *
-     * - `axelarSourceChain` is in the Axelar format. It should not be expected to be a proper CAIP-2 format
+     * - `axelarSourceChain` is in the Axelar format. It should not be expected to be a proper ERC-7930 format
      * - `axelarSourceAddress` is the sender of the Axelar message. That should be the remote gateway on the chain
      *   which the message originates from. It is NOT the sender of the ERC-7786 crosschain message.
      *
-     * Proper CAIP-10 encoding of the message sender (including the CAIP-2 name of the origin chain can be found in
-     * the message)
+     * Proper ERC-7930 encoding of the crosschain message sender can be found in the message
      */
     function _execute(
         bytes32 commandId,
@@ -37,26 +38,24 @@ abstract contract AxelarGatewayDestination is AxelarGatewayBase, AxelarExecutabl
         string calldata axelarSourceAddress, // address of the remote gateway
         bytes calldata adapterPayload
     ) internal override {
-        string memory messageId = uint256(commandId).toHexString(32);
-
         // Parse the package
-        (string memory sender, string memory receiver, bytes memory payload, bytes[] memory attributes) = abi.decode(
+        (bytes memory sender, bytes memory recipient, bytes memory payload, bytes[] memory attributes) = abi.decode(
             adapterPayload,
-            (string, string, bytes, bytes[])
+            (bytes, bytes, bytes, bytes[])
         );
-        // Axelar to CAIP-2 translation
-        string memory sourceChain = getEquivalentChain(axelarSourceChain);
+        // Axelar to ERC-7930 translation
+        bytes memory addr = getRemoteGateway(getErc7930Chain(axelarSourceChain));
 
         // check message validity
         // - `axelarSourceAddress` is the remote gateway on the origin chain.
         require(
-            getRemoteGateway(sourceChain).equal(axelarSourceAddress),
-            InvalidOriginGateway(sourceChain, axelarSourceAddress)
+            address(bytes20(addr)).toChecksumHexString().equal(axelarSourceAddress), // TODO non-evm chains?
+            InvalidOriginGateway(axelarSourceChain, axelarSourceAddress)
         );
 
-        bytes4 result = IERC7786Receiver(receiver.parseAddress()).executeMessage(
-            messageId,
-            sourceChain,
+        (, , bytes memory target) = recipient.parseV1();
+        bytes4 result = IERC7786Receiver(address(bytes20(target))).executeMessage(
+            commandId,
             sender,
             payload,
             attributes
