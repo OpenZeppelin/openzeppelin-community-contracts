@@ -33,7 +33,7 @@ abstract contract ERC7802Bridge is IERC7786Receiver, Ownable, Pausable {
     mapping(bytes chain => address gateway) private _gateways;
     BitMaps.BitMap private _processed;
 
-    function getGateway(bytes memory chain) public virtual returns (address gateway) {
+    function getGateway(bytes memory chain) public view virtual returns (address gateway) {
         gateway = _gateways[chain];
         require(gateway != address(0), ERC7802BridgeMissingGateway(chain));
     }
@@ -48,12 +48,12 @@ abstract contract ERC7802Bridge is IERC7786Receiver, Ownable, Pausable {
         emit GatewayRegistered(gateway, chain);
     }
 
-    function getRemoteBridge(address token, bytes memory chain) public virtual returns (bytes memory bridge) {
+    function getRemoteBridge(address token, bytes memory chain) public view virtual returns (bytes memory bridge) {
         bridge = _remoteBridges[token][chain];
         require(bridge.length > 0, ERC7802BridgeMissingRemote(token, chain));
     }
 
-    function getRemoteToken(address token, bytes memory chain) public virtual returns (bytes memory remote) {
+    function getRemoteToken(address token, bytes memory chain) public view virtual returns (bytes memory remote) {
         remote = _remoteTokens[token][chain];
         require(remote.length > 0, ERC7802BridgeMissingRemote(token, chain));
     }
