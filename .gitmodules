@@ -20,3 +20,6 @@
 	path = lib/zk-email-verify
 	branch = v6.3.2
 	url = https://github.com/zkemail/zk-email-verify
+[submodule "lib/wormhole-solidity-sdk"]
+	path = lib/wormhole-solidity-sdk
+	url = https://github.com/wormhole-foundation/wormhole-solidity-sdk
