@@ -38,16 +38,6 @@ abstract contract ERC7802Bridge is IERC7786Receiver, Ownable, Pausable {
         require(gateway != address(0), ERC7802BridgeMissingGateway(chain));
     }
 
-    // TODO: check that gateway is not address(0) ? prevent  override ?
-    function registerGateway(address gateway, bytes memory chain) public virtual onlyOwner {
-        (, , bytes memory addr) = chain.parseV1();
-        require(addr.length == 0, ERC7802BridgeImproperChainIdentifier(chain));
-
-        _gateways[chain] = gateway;
-
-        emit GatewayRegistered(gateway, chain);
-    }
-
     function getRemoteBridge(address token, bytes memory chain) public view virtual returns (bytes memory bridge) {
         bridge = _remoteBridges[token][chain];
         require(bridge.length > 0, ERC7802BridgeMissingRemote(token, chain));
@@ -58,10 +48,25 @@ abstract contract ERC7802Bridge is IERC7786Receiver, Ownable, Pausable {
         require(remote.length > 0, ERC7802BridgeMissingRemote(token, chain));
     }
 
+    // TODO: check that gateway is not address(0) ? prevent  override ?
+    function registerGateway(address gateway, bytes memory chain) public virtual onlyOwner {
+        (, , bytes memory addr) = chain.parseV1();
+        require(addr.length == 0, ERC7802BridgeImproperChainIdentifier(chain));
+
+        _gateways[chain] = gateway;
+
+        emit GatewayRegistered(gateway, chain);
+    }
+
     // TODO: check that bridge includes an address ? prevent override ?
-    function registerRemote(address token, bytes memory bridge, bytes memory remote) public virtual onlyOwner {
+    function registerRemote(address token, bytes memory bridge, bytes memory remote) public virtual {
+        if (token != msg.sender) _checkOwner();
+
         (bytes2 chainType, bytes memory chainReference, ) = bridge.parseV1();
         bytes memory chain = InteroperableAddress.formatV1(chainType, chainReference, "");
+
+        // Check that there is a gateway registered for that chain (revert is no gateway is registered)
+        getGateway(chain);
 
         _remoteBridges[token][chain] = bridge;
         _remoteTokens[token][chain] = remote;
