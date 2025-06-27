@@ -5,7 +5,7 @@ pragma solidity ^0.8.24;
 import {IDKIMRegistry} from "@zk-email/contracts/DKIMRegistry.sol";
 import {IVerifier} from "@zk-email/email-tx-builder/src/interfaces/IVerifier.sol";
 import {EmailAuthMsg} from "@zk-email/email-tx-builder/src/interfaces/IEmailTypes.sol";
-import {AbstractSigner} from "./AbstractSigner.sol";
+import {AbstractSigner} from "@openzeppelin/contracts/utils/cryptography/signers/AbstractSigner.sol";
 import {ZKEmailUtils} from "../ZKEmailUtils.sol";
 
 /**
