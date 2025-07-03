@@ -16,6 +16,17 @@ import {InteroperableAddress} from "@openzeppelin/contracts/utils/draft-Interope
 abstract contract AxelarGatewayBase is Ownable {
     using InteroperableAddress for bytes;
 
+    /// @dev Axelar's official gateway for the current chain.
+    IAxelarGateway internal immutable _axelarGateway;
+
+    // Remote gateway.
+    // `addr` is the isolated address part of ERC-7930. Its not a full ERC-7930 interoperable address.
+    mapping(bytes2 chainType => mapping(bytes chainReference => bytes addr)) private _remoteGateways;
+
+    // chain equivalence ERC-7930 (no address) <> Axelar
+    mapping(bytes erc7930 => string axelar) private _erc7930ToAxelar;
+    mapping(string axelar => bytes erc7930) private _axelarToErc7930;
+
     /// @dev A remote gateway has been registered for a chain.
     event RegisteredRemoteGateway(bytes remote);
 
@@ -28,17 +39,6 @@ abstract contract AxelarGatewayBase is Ownable {
     error InvalidChainIdentifier(bytes erc7930binary);
     error ChainEquivalenceAlreadyRegistered(bytes erc7930binary, string axelar);
     error RemoteGatewayAlreadyRegistered(bytes2 chainType, bytes chainReference);
-
-    /// @dev Axelar's official gateway for the current chain.
-    IAxelarGateway internal immutable _axelarGateway;
-
-    // Remote gateway.
-    // `addr` is the isolated address part of ERC-7930. Its not a full ERC-7930 interoperable address.
-    mapping(bytes2 chainType => mapping(bytes chainReference => bytes addr)) private _remoteGateways;
-
-    // chain equivalence ERC-7930 (no address) <> Axelar
-    mapping(bytes erc7930 => string axelar) private _erc7930ToAxelar;
-    mapping(string axelar => bytes erc7930) private _axelarToErc7930;
 
     /// @dev Sets the local gateway address (i.e. Axelar's official gateway for the current chain).
     constructor(IAxelarGateway _gateway) {
