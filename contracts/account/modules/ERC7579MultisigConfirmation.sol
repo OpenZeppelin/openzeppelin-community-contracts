@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
-import {ERC7913Utils} from "../../utils/cryptography/ERC7913Utils.sol";
-import {ERC7579Multisig} from "./ERC7579Multisig.sol";
+import {SignatureChecker} from "@openzeppelin/contracts/utils/cryptography/SignatureChecker.sol";
 import {EIP712} from "@openzeppelin/contracts/utils/cryptography/EIP712.sol";
+import {ERC7579Multisig} from "./ERC7579Multisig.sol";
 
 /**
  * @dev Extension of {ERC7579Multisig} that requires explicit confirmation signatures
@@ -54,7 +54,7 @@ abstract contract ERC7579MultisigConfirmation is ERC7579Multisig, EIP712 {
             );
             require(deadline > block.timestamp, ERC7579MultisigExpiredConfirmation(deadline));
             require(
-                ERC7913Utils.isValidSignatureNow(signer, _signableConfirmationHash(account, deadline), signature),
+                SignatureChecker.isValidSignatureNow(signer, _signableConfirmationHash(account, deadline), signature),
                 ERC7579MultisigInvalidConfirmationSignature(signer)
             );
             newSigners[i] = signer; // Replace the ABI-encoded value with the signer

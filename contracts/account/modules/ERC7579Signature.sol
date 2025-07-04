@@ -2,9 +2,9 @@
 
 pragma solidity ^0.8.27;
 
-import {ERC7579Validator} from "./ERC7579Validator.sol";
-import {ERC7913Utils} from "../../utils/cryptography/ERC7913Utils.sol";
 import {IERC7579Module} from "@openzeppelin/contracts/interfaces/draft-IERC7579.sol";
+import {SignatureChecker} from "@openzeppelin/contracts/utils/cryptography/SignatureChecker.sol";
+import {ERC7579Validator} from "./ERC7579Validator.sol";
 
 /**
  * @dev Implementation of {ERC7579Validator} module using ERC-7913 signature verification.
@@ -81,6 +81,6 @@ contract ERC7579Signature is ERC7579Validator {
         bytes32 hash,
         bytes calldata signature
     ) internal view virtual override returns (bool) {
-        return ERC7913Utils.isValidSignatureNow(signer(account), hash, signature);
+        return SignatureChecker.isValidSignatureNow(signer(account), hash, signature);
     }
 }
