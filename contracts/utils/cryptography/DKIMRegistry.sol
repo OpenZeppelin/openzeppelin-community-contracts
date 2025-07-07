@@ -33,7 +33,7 @@ import {IDKIMRegistry} from "../../interfaces/IERC7969.sol";
  * }
  * ```
  */
-contract DKIMRegistry is IDKIMRegistry {
+abstract contract DKIMRegistry is IDKIMRegistry {
     /// @dev Mapping from domain hash to key hash to validity status
     mapping(bytes32 domainHash => mapping(bytes32 keyHash => bool)) private _keyHashes;
 
