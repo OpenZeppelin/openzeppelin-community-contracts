@@ -2,6 +2,7 @@
 :ERC7739Utils: pass:normal[xref:utils/cryptography.adoc#ERC7739Utils[`ERC7739Utils`]]
 :ERC7913Utils: pass:normal[xref:utils/cryptography.adoc#ERC7913Utils[`ERC7913Utils`]]
 :ZKEmailUtils: pass:normal[xref:utils/cryptography.adoc#ZKEmailUtils[`ZKEmailUtils`]]
+:WebAuthn: pass:normal[xref:utils/cryptography.adoc#WebAuthn[`WebAuthn`]]
 :AbstractSigner: pass:normal[xref:utils/cryptography.adoc#AbstractSigner[`AbstractSigner`]]
 :ERC7739: pass:normal[xref:utils/cryptography.adoc#ERC7739[`ERC7739`]]
 :SignerECDSA: pass:normal[xref:utils/cryptography.adoc#SignerECDSA[`SignerECDSA`]]
@@ -16,6 +17,8 @@
 :AbstractSigner: pass:normal[xref:utils/cryptography.adoc#AbstractSigner[`AbstractSigner`]]
 :SignerZKEmail: pass:normal[xref:utils/cryptography.adoc#SignerZKEmail[`SignerZKEmail`]]
 :AbstractSigner: pass:normal[xref:utils/cryptography.adoc#AbstractSigner[`AbstractSigner`]]
+:SignerWebAuthn: pass:normal[xref:utils/cryptography.adoc#SignerWebAuthn[`SignerWebAuthn`]]
+:SignerP256: pass:normal[xref:utils/cryptography.adoc#SignerP256[`SignerP256`]]
 :ERC7913P256Verifier: pass:normal[xref:utils/cryptography.adoc#ERC7913P256Verifier[`ERC7913P256Verifier`]]
 :ERC7913RSAVerifier: pass:normal[xref:utils/cryptography.adoc#ERC7913RSAVerifier[`ERC7913RSAVerifier`]]
 :ERC7913ZKEmailVerifier: pass:normal[xref:utils/cryptography.adoc#ERC7913ZKEmailVerifier[`ERC7913ZKEmailVerifier`]]
@@ -36,6 +39,9 @@
 :MultiSignerERC7913-_removeSigners: pass:normal[xref:utils/cryptography.adoc#MultiSignerERC7913-_removeSigners-bytes---[`MultiSignerERC7913._removeSigners`]]
 :AbstractSigner: pass:normal[xref:utils/cryptography.adoc#AbstractSigner[`AbstractSigner`]]
 :AbstractSigner-_rawSignatureValidation: pass:normal[xref:utils/cryptography.adoc#AbstractSigner-_rawSignatureValidation-bytes32-bytes-[`AbstractSigner._rawSignatureValidation`]]
+:SignerP256: pass:normal[xref:utils/cryptography.adoc#SignerP256[`SignerP256`]]
+:WebAuthn-WebAuthnAuth: pass:normal[xref:utils/cryptography.adoc#WebAuthn-WebAuthnAuth[`WebAuthn.WebAuthnAuth`]]
+:SignerP256-_rawSignatureValidation: pass:normal[xref:utils/cryptography.adoc#SignerP256-_rawSignatureValidation-bytes32-bytes-[`SignerP256._rawSignatureValidation`]]
 = Cryptography
 
 [.readme-notice]
@@ -46,12 +52,14 @@ A collection of contracts and libraries that implement various signature validat
  * {ERC7739Utils}: Utilities library that implements a defensive rehashing mechanism to prevent replayability of smart contract signatures based on ERC-7739.
  * {ERC7913Utils}: Utilities library that implements ERC-1271 and ECDSA signature verification with fallback to ERC-7913.
  * {ZKEmailUtils}: Library for ZKEmail signature validation utilities, enabling email-based authentication through zero-knowledge proofs.
+ * {WebAuthn}: Library for verifying WebAuthn Authentication Assertions.
  * {AbstractSigner}: Abstract contract for internal signature validation in smart contracts.
  * {ERC7739}: An abstract contract to validate signatures following the rehashing scheme from `ERC7739Utils`.
  * {SignerECDSA}, {SignerP256}, {SignerRSA}: Implementations of an {AbstractSigner} with specific signature validation algorithms.
  * {SignerERC7702}: Implementation of {AbstractSigner} that validates signatures using the contract's own address as the signer, useful for delegated accounts following EIP-7702.
  * {SignerERC7913}, {MultiSignerERC7913}, {MultiSignerERC7913Weighted}: Implementations of {AbstractSigner} that validate signatures based on ERC-7913. Including a simple and weighted multisignature scheme.
  * {SignerZKEmail}: Implementation of an {AbstractSigner} that enables email-based authentication through zero-knowledge proofs.
+ * {SignerWebAuthn}: Implementation of {SignerP256} that supports WebAuthn authentication assertions.
  * {ERC7913P256Verifier}, {ERC7913RSAVerifier}, {ERC7913ZKEmailVerifier}: Ready to use ERC-7913 signature verifiers for P256, RSA keys, and ZKEmail.
 
 == Utils
@@ -298,6 +306,187 @@ NOTE: Attempts to validate the command for all possible string {Case} values.
 Variant of {isValidZKEmail} that validates a template with a specific string {Case}.
 
 Useful for templates with Ethereum address matchers (i.e. `{ethAddr}`), which are case-sensitive (e.g., `["someCommand", "{address}"]`).
+
+:WebAuthnAuth: pass:normal[xref:#WebAuthn-WebAuthnAuth[`++WebAuthnAuth++`]]
+:verifyMinimal: pass:normal[xref:#WebAuthn-verifyMinimal-bytes-struct-WebAuthn-WebAuthnAuth-bytes32-bytes32-[`++verifyMinimal++`]]
+:verify: pass:normal[xref:#WebAuthn-verify-bytes-struct-WebAuthn-WebAuthnAuth-bytes32-bytes32-[`++verify++`]]
+:verifyStrict: pass:normal[xref:#WebAuthn-verifyStrict-bytes-struct-WebAuthn-WebAuthnAuth-bytes32-bytes32-[`++verifyStrict++`]]
+:validateUserPresentBitSet: pass:normal[xref:#WebAuthn-validateUserPresentBitSet-bytes1-[`++validateUserPresentBitSet++`]]
+:validateUserVerifiedBitSet: pass:normal[xref:#WebAuthn-validateUserVerifiedBitSet-bytes1-[`++validateUserVerifiedBitSet++`]]
+:validateBackupEligibilityAndState: pass:normal[xref:#WebAuthn-validateBackupEligibilityAndState-bytes1-[`++validateBackupEligibilityAndState++`]]
+:validateExpectedTypeHash: pass:normal[xref:#WebAuthn-validateExpectedTypeHash-bytes-uint256-[`++validateExpectedTypeHash++`]]
+:validateChallenge: pass:normal[xref:#WebAuthn-validateChallenge-bytes-uint256-bytes-[`++validateChallenge++`]]
+
+[.contract]
+[[WebAuthn]]
+=== `++WebAuthn++` link:https://github.com/OpenZeppelin/openzeppelin-community-contracts/blob/master/contracts/utils/cryptography/WebAuthn.sol[{github-icon},role=heading-link]
+
+[.hljs-theme-light.nopadding]
+```solidity
+import "@openzeppelin/community-contracts/utils/cryptography/WebAuthn.sol";
+```
+
+Library for verifying WebAuthn Authentication Assertions.
+
+WebAuthn enables strong authentication for smart contracts using
+https://docs.openzeppelin.com/contracts/5.x/api/utils#P256[P256]
+as an alternative to traditional secp256k1 ECDSA signatures. This library verifies
+signatures generated during WebAuthn authentication ceremonies as specified in the
+https://www.w3.org/TR/webauthn-2/[WebAuthn Level 2 standard].
+
+For blockchain use cases, the following WebAuthn validations are intentionally omitted:
+
+* Origin validation: Origin verification in `clientDataJSON` is omitted as blockchain
+  contexts rely on authenticator and dapp frontend enforcement. Standard authenticators
+  implement proper origin validation.
+* RP ID hash validation: Verification of `rpIdHash` in authenticatorData against expected
+  RP ID hash is omitted. This is typically handled by platform-level security measures.
+  Including an expiry timestamp in signed data is recommended for enhanced security.
+* Signature counter: Verification of signature counter increments is omitted. While
+  useful for detecting credential cloning, on-chain operations typically include nonce
+  protection, making this check redundant.
+* Extension outputs: Extension output value verification is omitted as these are not
+  essential for core authentication security in blockchain applications.
+* Attestation: Attestation object verification is omitted as this implementation
+  focuses on authentication (`webauthn.get`) rather than registration ceremonies.
+
+Inspired by:
+
+* https://github.com/daimo-eth/p256-verifier/blob/master/src/WebAuthn.sol[daimo-eth implementation]
+* https://github.com/base/webauthn-sol/blob/main/src/WebAuthn.sol[base implementation]
+
+[.contract-index]
+.Functions
+--
+* `++verifyMinimal(challenge, auth, qx, qy)++`
+* `++verify(challenge, auth, qx, qy)++`
+* `++verifyStrict(challenge, auth, qx, qy)++`
+* `++validateUserPresentBitSet(flags)++`
+* `++validateUserVerifiedBitSet(flags)++`
+* `++validateBackupEligibilityAndState(flags)++`
+* `++validateExpectedTypeHash(clientDataJSON, typeIndex)++`
+* `++validateChallenge(clientDataJSON, challengeIndex, expectedChallenge)++`
+
+--
+
+[.contract-item]
+[[WebAuthn-verifyMinimal-bytes-struct-WebAuthn-WebAuthnAuth-bytes32-bytes32-]]
+==== `[.contract-item-name]#++verifyMinimal++#++(bytes challenge, struct WebAuthn.WebAuthnAuth auth, bytes32 qx, bytes32 qy) → bool++` [.item-kind]#internal#
+
+Performs the absolute minimal verification of a WebAuthn Authentication Assertion.
+This function includes only the essential checks required for basic WebAuthn security:
+
+1. Type is "webauthn.get" (see {validateExpectedTypeHash})
+2. Challenge matches the expected value (see {validateChallenge})
+3. Cryptographic signature is valid for the given public key
+
+For most applications, use {verify} or {verifyStrict} instead.
+
+NOTE: This function intentionally omits User Presence (UP), User Verification (UV),
+and Backup State/Eligibility checks. Use this only when broader compatibility with
+authenticators is required or in constrained environments.
+
+[.contract-item]
+[[WebAuthn-verify-bytes-struct-WebAuthn-WebAuthnAuth-bytes32-bytes32-]]
+==== `[.contract-item-name]#++verify++#++(bytes challenge, struct WebAuthn.WebAuthnAuth auth, bytes32 qx, bytes32 qy) → bool++` [.item-kind]#internal#
+
+Performs standard verification of a WebAuthn Authentication Assertion.
+
+Same as {verifyMinimal}, but also verifies:
+
+[start=4]
+4. {validateUserPresentBitSet} - confirming physical user presence during authentication
+
+This compliance level satisfies the core WebAuthn verification requirements while
+maintaining broad compatibility with authenticators. For higher security requirements,
+consider using {verifyStrict}.
+
+[.contract-item]
+[[WebAuthn-verifyStrict-bytes-struct-WebAuthn-WebAuthnAuth-bytes32-bytes32-]]
+==== `[.contract-item-name]#++verifyStrict++#++(bytes challenge, struct WebAuthn.WebAuthnAuth auth, bytes32 qx, bytes32 qy) → bool++` [.item-kind]#internal#
+
+Performs strict verification of a WebAuthn Authentication Assertion.
+
+Same as {verify}, but also also verifies:
+
+[start=5]
+5. {validateUserVerifiedBitSet} - confirming stronger user authentication (biometrics/PIN)
+6. {validateBackupEligibilityAndState}- Backup Eligibility (`BE`) and Backup State (BS) bits
+relationship is valid
+
+This strict verification is recommended for:
+
+* High-value transactions
+* Privileged operations
+* Account recovery or critical settings changes
+* Applications where security takes precedence over broad authenticator compatibility
+
+[.contract-item]
+[[WebAuthn-validateUserPresentBitSet-bytes1-]]
+==== `[.contract-item-name]#++validateUserPresentBitSet++#++(bytes1 flags) → bool++` [.item-kind]#internal#
+
+Validates that the https://www.w3.org/TR/webauthn-2/#up[User Present (UP)] bit is set.
+Step 16 in https://www.w3.org/TR/webauthn-2/#sctn-verifying-assertion[verifying an assertion].
+
+NOTE: Required by WebAuthn spec but may be skipped for platform authenticators
+(Touch ID, Windows Hello) in controlled environments. Enforce for public-facing apps.
+
+[.contract-item]
+[[WebAuthn-validateUserVerifiedBitSet-bytes1-]]
+==== `[.contract-item-name]#++validateUserVerifiedBitSet++#++(bytes1 flags) → bool++` [.item-kind]#internal#
+
+Validates that the https://www.w3.org/TR/webauthn-2/#uv[User Verified (UV)] bit is set.
+Step 17 in https://www.w3.org/TR/webauthn-2/#sctn-verifying-assertion[verifying an assertion].
+
+The UV bit indicates whether the user was verified using a stronger identification method
+(biometrics, PIN, password). While optional, requiring UV=1 is recommended for:
+
+* High-value transactions and sensitive operations
+* Account recovery and critical settings changes
+* Privileged operations
+
+NOTE: For routine operations or when using hardware authenticators without verification capabilities,
+`UV=0` may be acceptable. The choice of whether to require UV represents a security vs. usability
+tradeoff - for blockchain applications handling valuable assets, requiring UV is generally safer.
+
+[.contract-item]
+[[WebAuthn-validateBackupEligibilityAndState-bytes1-]]
+==== `[.contract-item-name]#++validateBackupEligibilityAndState++#++(bytes1 flags) → bool++` [.item-kind]#internal#
+
+Validates the relationship between Backup Eligibility (`BE`) and Backup State (`BS`) bits
+according to the WebAuthn specification.
+
+The function enforces that if a credential is backed up (`BS=1`), it must also be eligible
+for backup (`BE=1`). This prevents unauthorized credential backup and ensures compliance
+with the WebAuthn spec.
+
+Returns true in these valid states:
+
+* `BE=1`, `BS=0`: Credential is eligible but not backed up
+* `BE=1`, `BS=1`: Credential is eligible and backed up
+* `BE=0`, `BS=0`: Credential is not eligible and not backed up
+
+Returns false only when `BE=0` and `BS=1`, which is an invalid state indicating
+a credential that's backed up but not eligible for backup.
+
+NOTE: While the WebAuthn spec defines this relationship between `BE` and `BS` bits,
+validating it is not explicitly required as part of the core verification procedure.
+Some implementations may choose to skip this check for broader authenticator
+compatibility or when the application's threat model doesn't consider credential
+syncing a major risk.
+
+[.contract-item]
+[[WebAuthn-validateExpectedTypeHash-bytes-uint256-]]
+==== `[.contract-item-name]#++validateExpectedTypeHash++#++(bytes clientDataJSON, uint256 typeIndex) → bool++` [.item-kind]#internal#
+
+Validates that the https://www.w3.org/TR/webauthn-2/#type[Type] field in the client data JSON
+is set to "webauthn.get".
+
+[.contract-item]
+[[WebAuthn-validateChallenge-bytes-uint256-bytes-]]
+==== `[.contract-item-name]#++validateChallenge++#++(bytes clientDataJSON, uint256 challengeIndex, bytes expectedChallenge) → bool++` [.item-kind]#internal#
+
+Validates that the challenge in the client data JSON matches the `expectedChallenge`.
 
 == Abstract Signers
 
@@ -1394,6 +1583,76 @@ See {AbstractSigner-_rawSignatureValidation}. Validates a raw signature by:
 ==== `[.contract-item-name]#++InvalidEmailProof++#++(enum ZKEmailUtils.EmailProofError err)++` [.item-kind]#error#
 
 Proof verification error.
+
+:_rawSignatureValidation: pass:normal[xref:#SignerWebAuthn-_rawSignatureValidation-bytes32-bytes-[`++_rawSignatureValidation++`]]
+
+[.contract]
+[[SignerWebAuthn]]
+=== `++SignerWebAuthn++` link:https://github.com/OpenZeppelin/openzeppelin-community-contracts/blob/master/contracts/utils/cryptography/signers/SignerWebAuthn.sol[{github-icon},role=heading-link]
+
+[.hljs-theme-light.nopadding]
+```solidity
+import "@openzeppelin/community-contracts/utils/cryptography/signers/SignerWebAuthn.sol";
+```
+
+Implementation of {SignerP256} that supports WebAuthn authentication assertions.
+
+This contract enables signature validation using WebAuthn authentication assertions,
+leveraging the P256 public key stored in the contract. It allows for both WebAuthn
+and raw P256 signature validation, providing compatibility with both signature types.
+
+The signature is expected to be an abi-encoded {WebAuthn-WebAuthnAuth} struct.
+
+Example usage:
+
+```solidity
+contract MyAccountWebAuthn is Account, SignerWebAuthn, Initializable {
+    function initialize(bytes32 qx, bytes32 qy) public initializer {
+        _setSigner(qx, qy);
+    }
+}
+```
+
+IMPORTANT: Failing to call {_setSigner} either during construction (if used standalone)
+or during initialization (if used as a clone) may leave the signer either front-runnable or unusable.
+
+[.contract-index]
+.Functions
+--
+* `++_rawSignatureValidation(hash, signature)++`
+
+[.contract-subindex-inherited]
+.SignerP256
+* `++_setSigner(qx, qy)++`
+* `++signer()++`
+
+[.contract-subindex-inherited]
+.AbstractSigner
+
+--
+
+[.contract-index]
+.Errors
+--
+
+[.contract-subindex-inherited]
+.SignerP256
+* `++SignerP256InvalidPublicKey(qx, qy)++`
+
+[.contract-subindex-inherited]
+.AbstractSigner
+
+--
+
+[.contract-item]
+[[SignerWebAuthn-_rawSignatureValidation-bytes32-bytes-]]
+==== `[.contract-item-name]#++_rawSignatureValidation++#++(bytes32 hash, bytes signature) → bool++` [.item-kind]#internal#
+
+Validates a raw signature using the WebAuthn authentication assertion.
+
+In case the signature can't be validated, it falls back to the
+{SignerP256-_rawSignatureValidation} method for raw P256 signature validation by passing
+the raw `r` and `s` values from the signature.
 
 == Verifiers
 
