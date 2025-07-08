@@ -5,6 +5,7 @@
 :ERC7821: pass:normal[xref:account.adoc#ERC7821[`ERC7821`]]
 :ERC7579Executor: pass:normal[xref:account.adoc#ERC7579Executor[`ERC7579Executor`]]
 :ERC7579DelayedExecutor: pass:normal[xref:account.adoc#ERC7579DelayedExecutor[`ERC7579DelayedExecutor`]]
+:ERC7579SelectorExecutor: pass:normal[xref:account.adoc#ERC7579SelectorExecutor[`ERC7579SelectorExecutor`]]
 :ERC7579Validator: pass:normal[xref:account.adoc#ERC7579Validator[`ERC7579Validator`]]
 :ERC7579Signature: pass:normal[xref:account.adoc#ERC7579Signature[`ERC7579Signature`]]
 :ERC7579Validator: pass:normal[xref:account.adoc#ERC7579Validator[`ERC7579Validator`]]
@@ -13,6 +14,8 @@
 :ERC7579MultisigWeighted: pass:normal[xref:account.adoc#ERC7579MultisigWeighted[`ERC7579MultisigWeighted`]]
 :ERC7579Multisig: pass:normal[xref:account.adoc#ERC7579Multisig[`ERC7579Multisig`]]
 :ERC7579MultisigConfirmation: pass:normal[xref:account.adoc#ERC7579MultisigConfirmation[`ERC7579MultisigConfirmation`]]
+:ERC7579Multisig: pass:normal[xref:account.adoc#ERC7579Multisig[`ERC7579Multisig`]]
+:ERC7579MultisigStorage: pass:normal[xref:account.adoc#ERC7579MultisigStorage[`ERC7579MultisigStorage`]]
 :ERC7579Multisig: pass:normal[xref:account.adoc#ERC7579Multisig[`ERC7579Multisig`]]
 :PaymasterCore: pass:normal[xref:account.adoc#PaymasterCore[`PaymasterCore`]]
 :PaymasterERC20: pass:normal[xref:account.adoc#PaymasterERC20[`PaymasterERC20`]]
@@ -41,6 +44,9 @@
 :ERC7579Executor: pass:normal[xref:account.adoc#ERC7579Executor[`ERC7579Executor`]]
 :ERC7579Executor-_execute: pass:normal[xref:account.adoc#ERC7579Executor-_execute-address-bytes32-bytes32-bytes-[`ERC7579Executor._execute`]]
 :ERC7579Executor-_execute: pass:normal[xref:account.adoc#ERC7579Executor-_execute-address-bytes32-bytes32-bytes-[`ERC7579Executor._execute`]]
+:ERC7579Executor: pass:normal[xref:account.adoc#ERC7579Executor[`ERC7579Executor`]]
+:EnumerableSetExtended-clear: pass:normal[xref:utils.adoc#EnumerableSetExtended-clear-struct-EnumerableSetExtended-Bytes32x2Set-[`EnumerableSetExtended.clear`]]
+:ERC7579Executor-_validateExecution: pass:normal[xref:account.adoc#ERC7579Executor-_validateExecution-address-bytes32-bytes32-bytes-[`ERC7579Executor._validateExecution`]]
 :ERC7579Validator: pass:normal[xref:account.adoc#ERC7579Validator[`ERC7579Validator`]]
 :AccountERC7579-uninstallModule: pass:normal[xref:account.adoc#AccountERC7579-uninstallModule-uint256-address-bytes-[`AccountERC7579.uninstallModule`]]
 :ERC7579Validator-_rawERC7579Validation: pass:normal[xref:account.adoc#ERC7579Validator-_rawERC7579Validation-address-bytes32-bytes-[`ERC7579Validator._rawERC7579Validation`]]
@@ -54,6 +60,8 @@
 :ERC7579Multisig-_removeSigners: pass:normal[xref:account.adoc#ERC7579Multisig-_removeSigners-address-bytes---[`ERC7579Multisig._removeSigners`]]
 :ERC7579Multisig: pass:normal[xref:account.adoc#ERC7579Multisig[`ERC7579Multisig`]]
 :ERC7579Multisig-_addSigners: pass:normal[xref:account.adoc#ERC7579Multisig-_addSigners-address-bytes---[`ERC7579Multisig._addSigners`]]
+:ERC7579Multisig: pass:normal[xref:account.adoc#ERC7579Multisig[`ERC7579Multisig`]]
+:ERC7579Multisig-_validateSignatures: pass:normal[xref:account.adoc#ERC7579Multisig-_validateSignatures-address-bytes32-bytes---bytes---[`ERC7579Multisig._validateSignatures`]]
 :PaymasterCore-_validatePaymasterUserOp: pass:normal[xref:account.adoc#PaymasterCore-_validatePaymasterUserOp-struct-PackedUserOperation-bytes32-uint256-[`PaymasterCore._validatePaymasterUserOp`]]
 :PaymasterCore: pass:normal[xref:account.adoc#PaymasterCore[`PaymasterCore`]]
 :PaymasterCore-_validatePaymasterUserOp: pass:normal[xref:account.adoc#PaymasterCore-_validatePaymasterUserOp-struct-PackedUserOperation-bytes32-uint256-[`PaymasterCore._validatePaymasterUserOp`]]
@@ -77,11 +85,13 @@ This directory includes contracts to build accounts for ERC-4337. These include:
  * {ERC7821}: Minimal batch executor implementation contracts. Useful to enable easy batch execution for smart contracts.
  * {ERC7579Executor}: An executor module that enables executing calls from accounts where the it's installed.
  * {ERC7579DelayedExecutor}: An executor module that adds a delay before executing an account operation.
+ * {ERC7579SelectorExecutor}: An executor module that restricts execution to specific function selectors.
  * {ERC7579Validator}: Abstract validator module for ERC-7579 accounts that provides base implementation for signature validation.
  * {ERC7579Signature}: Implementation of {ERC7579Validator} using ERC-7913 signature verification for address-less cryptographic keys and account signatures.
  * {ERC7579Multisig}: An extension of {ERC7579Validator} that enables validation using ERC-7913 signer keys.
  * {ERC7579MultisigWeighted}: An extension of {ERC7579Multisig} that allows different weights to be assigned to signers.
  * {ERC7579MultisigConfirmation}: An extension of {ERC7579Multisig} that requires each signer to provide a confirmation signature.
+ * {ERC7579MultisigStorage}: An extension of {ERC7579Multisig} that allows storing presigned approvals in storage.
  * {PaymasterCore}: An ERC-4337 paymaster implementation that includes the core logic to validate and pay for user operations.
  * {PaymasterERC20}: A paymaster that allows users to pay for user operations using ERC-20 tokens.
  * {PaymasterERC20Guarantor}: A paymaster that enables third parties to guarantee user operations by pre-funding gas costs, with the option for users to repay or for guarantors to absorb the cost.
@@ -1514,6 +1524,166 @@ NOTE: If `expectedState` is `bytes32(0)`, the operation is expected to not be in
 
 The module is not installed on the account.
 
+:ERC7579ExecutorSelectorAuthorized: pass:normal[xref:#ERC7579SelectorExecutor-ERC7579ExecutorSelectorAuthorized-address-bytes4-[`++ERC7579ExecutorSelectorAuthorized++`]]
+:ERC7579ExecutorSelectorRemoved: pass:normal[xref:#ERC7579SelectorExecutor-ERC7579ExecutorSelectorRemoved-address-bytes4-[`++ERC7579ExecutorSelectorRemoved++`]]
+:ERC7579ExecutorSelectorNotAuthorized: pass:normal[xref:#ERC7579SelectorExecutor-ERC7579ExecutorSelectorNotAuthorized-bytes4-[`++ERC7579ExecutorSelectorNotAuthorized++`]]
+:isAuthorized: pass:normal[xref:#ERC7579SelectorExecutor-isAuthorized-address-bytes4-[`++isAuthorized++`]]
+:selectors: pass:normal[xref:#ERC7579SelectorExecutor-selectors-address-[`++selectors++`]]
+:onInstall: pass:normal[xref:#ERC7579SelectorExecutor-onInstall-bytes-[`++onInstall++`]]
+:onUninstall: pass:normal[xref:#ERC7579SelectorExecutor-onUninstall-bytes-[`++onUninstall++`]]
+:addSelectors: pass:normal[xref:#ERC7579SelectorExecutor-addSelectors-bytes4---[`++addSelectors++`]]
+:removeSelectors: pass:normal[xref:#ERC7579SelectorExecutor-removeSelectors-bytes4---[`++removeSelectors++`]]
+:_addSelectors: pass:normal[xref:#ERC7579SelectorExecutor-_addSelectors-address-bytes4---[`++_addSelectors++`]]
+:_removeSelectors: pass:normal[xref:#ERC7579SelectorExecutor-_removeSelectors-address-bytes4---[`++_removeSelectors++`]]
+:_validateExecution: pass:normal[xref:#ERC7579SelectorExecutor-_validateExecution-address-bytes32-bytes32-bytes-[`++_validateExecution++`]]
+
+[.contract]
+[[ERC7579SelectorExecutor]]
+=== `++ERC7579SelectorExecutor++` link:https://github.com/OpenZeppelin/openzeppelin-community-contracts/blob/master/contracts/account/modules/ERC7579SelectorExecutor.sol[{github-icon},role=heading-link]
+
+[.hljs-theme-light.nopadding]
+```solidity
+import "@openzeppelin/community-contracts/account/modules/ERC7579SelectorExecutor.sol";
+```
+
+Implementation of an {ERC7579Executor} that allows authorizing specific function selectors
+that can be executed on the account.
+
+This module provides a way to restrict which functions can be executed on the account by
+maintaining a set of allowed function selectors. Only calls to functions with selectors
+in the set will be allowed to execute.
+
+[.contract-index]
+.Functions
+--
+* `++isAuthorized(account, selector)++`
+* `++selectors(account)++`
+* `++onInstall(initData)++`
+* `++onUninstall()++`
+* `++addSelectors(newSelectors)++`
+* `++removeSelectors(oldSelectors)++`
+* `++_addSelectors(account, newSelectors)++`
+* `++_removeSelectors(account, oldSelectors)++`
+* `++_validateExecution(account, , , data)++`
+
+[.contract-subindex-inherited]
+.ERC7579Executor
+* `++isModuleType(moduleTypeId)++`
+* `++execute(account, salt, mode, data)++`
+* `++_execute(account, mode, salt, executionCalldata)++`
+
+[.contract-subindex-inherited]
+.IERC7579Module
+
+--
+
+[.contract-index]
+.Events
+--
+* `++ERC7579ExecutorSelectorAuthorized(account, selector)++`
+* `++ERC7579ExecutorSelectorRemoved(account, selector)++`
+
+[.contract-subindex-inherited]
+.ERC7579Executor
+* `++ERC7579ExecutorOperationExecuted(account, salt, mode, executionCalldata)++`
+
+[.contract-subindex-inherited]
+.IERC7579Module
+
+--
+
+[.contract-index]
+.Errors
+--
+* `++ERC7579ExecutorSelectorNotAuthorized(selector)++`
+
+[.contract-subindex-inherited]
+.ERC7579Executor
+
+[.contract-subindex-inherited]
+.IERC7579Module
+
+--
+
+[.contract-item]
+[[ERC7579SelectorExecutor-isAuthorized-address-bytes4-]]
+==== `[.contract-item-name]#++isAuthorized++#++(address account, bytes4 selector) → bool++` [.item-kind]#public#
+
+[.contract-item]
+[[ERC7579SelectorExecutor-selectors-address-]]
+==== `[.contract-item-name]#++selectors++#++(address account) → bytes4[]++` [.item-kind]#public#
+
+Returns the set of authorized selectors for the specified account.
+
+WARNING: This operation copies the entire selectors set to memory, which
+can be expensive or may result in unbounded computation.
+
+[.contract-item]
+[[ERC7579SelectorExecutor-onInstall-bytes-]]
+==== `[.contract-item-name]#++onInstall++#++(bytes initData)++` [.item-kind]#public#
+
+Sets up the module's initial configuration when installed by an account.
+The initData should be encoded as: `abi.encode(bytes4[] selectors)`
+
+[.contract-item]
+[[ERC7579SelectorExecutor-onUninstall-bytes-]]
+==== `[.contract-item-name]#++onUninstall++#++(bytes)++` [.item-kind]#public#
+
+Cleans up module's configuration when uninstalled from an account.
+Clears all selectors.
+
+WARNING: This function has unbounded gas costs and may become uncallable if the set grows too large.
+See {EnumerableSetExtended-clear}.
+
+[.contract-item]
+[[ERC7579SelectorExecutor-addSelectors-bytes4---]]
+==== `[.contract-item-name]#++addSelectors++#++(bytes4[] newSelectors)++` [.item-kind]#public#
+
+Adds `selectors` to the set for the calling account
+
+[.contract-item]
+[[ERC7579SelectorExecutor-removeSelectors-bytes4---]]
+==== `[.contract-item-name]#++removeSelectors++#++(bytes4[] oldSelectors)++` [.item-kind]#public#
+
+Removes a selector from the set for the calling account
+
+[.contract-item]
+[[ERC7579SelectorExecutor-_addSelectors-address-bytes4---]]
+==== `[.contract-item-name]#++_addSelectors++#++(address account, bytes4[] newSelectors)++` [.item-kind]#internal#
+
+Internal version of {addSelectors} that takes an `account` as argument
+
+[.contract-item]
+[[ERC7579SelectorExecutor-_removeSelectors-address-bytes4---]]
+==== `[.contract-item-name]#++_removeSelectors++#++(address account, bytes4[] oldSelectors)++` [.item-kind]#internal#
+
+Internal version of {removeSelectors} that takes an `account` as argument
+
+[.contract-item]
+[[ERC7579SelectorExecutor-_validateExecution-address-bytes32-bytes32-bytes-]]
+==== `[.contract-item-name]#++_validateExecution++#++(address account, bytes32, bytes32, bytes data) → bytes++` [.item-kind]#internal#
+
+See {ERC7579Executor-_validateExecution}.
+Validates that the selector (first 4 bytes of the actual callData) is authorized before execution.
+
+[.contract-item]
+[[ERC7579SelectorExecutor-ERC7579ExecutorSelectorAuthorized-address-bytes4-]]
+==== `[.contract-item-name]#++ERC7579ExecutorSelectorAuthorized++#++(address indexed account, bytes4 selector)++` [.item-kind]#event#
+
+Emitted when a selector is added to the set
+
+[.contract-item]
+[[ERC7579SelectorExecutor-ERC7579ExecutorSelectorRemoved-address-bytes4-]]
+==== `[.contract-item-name]#++ERC7579ExecutorSelectorRemoved++#++(address indexed account, bytes4 selector)++` [.item-kind]#event#
+
+Emitted when a selector is removed from the set
+
+[.contract-item]
+[[ERC7579SelectorExecutor-ERC7579ExecutorSelectorNotAuthorized-bytes4-]]
+==== `[.contract-item-name]#++ERC7579ExecutorSelectorNotAuthorized++#++(bytes4 selector)++` [.item-kind]#error#
+
+Error thrown when attempting to execute a non-authorized selector
+
 === Validators
 
 :isModuleType: pass:normal[xref:#ERC7579Validator-isModuleType-uint256-[`++isModuleType++`]]
@@ -2516,6 +2686,147 @@ Error thrown when a `signer`'s confirmation signature is invalid
 ==== `[.contract-item-name]#++ERC7579MultisigExpiredConfirmation++#++(uint256 deadline)++` [.item-kind]#error#
 
 Error thrown when a confirmation signature has expired
+
+:ERC7579MultisigStoragePresigned: pass:normal[xref:#ERC7579MultisigStorage-ERC7579MultisigStoragePresigned-address-bytes32-bytes-[`++ERC7579MultisigStoragePresigned++`]]
+:presigned: pass:normal[xref:#ERC7579MultisigStorage-presigned-address-bytes-bytes32-[`++presigned++`]]
+:presign: pass:normal[xref:#ERC7579MultisigStorage-presign-address-bytes-bytes32-bytes-[`++presign++`]]
+:_validateSignatures: pass:normal[xref:#ERC7579MultisigStorage-_validateSignatures-address-bytes32-bytes---bytes---[`++_validateSignatures++`]]
+
+[.contract]
+[[ERC7579MultisigStorage]]
+=== `++ERC7579MultisigStorage++` link:https://github.com/OpenZeppelin/openzeppelin-community-contracts/blob/master/contracts/account/modules/ERC7579MultisigStorage.sol[{github-icon},role=heading-link]
+
+[.hljs-theme-light.nopadding]
+```solidity
+import "@openzeppelin/community-contracts/account/modules/ERC7579MultisigStorage.sol";
+```
+
+Extension of {ERC7579Multisig} that allows storing presigned approvals in storage.
+
+This module extends the multisignature module to allow signers to presign operations,
+which are then stored in a mapping and can be used during validation. This enables
+more flexible multisignature workflows where signatures can be collected over time
+without requiring all signers to be online simultaneously.
+
+When validating signatures, if a signature is empty, it indicates a presignature
+and the validation will check the storage mapping instead of cryptographic verification.
+
+[.contract-index]
+.Functions
+--
+* `++presigned(account, signer, hash)++`
+* `++presign(account, signer, hash, signature)++`
+* `++_validateSignatures(account, hash, signingSigners, signatures)++`
+
+[.contract-subindex-inherited]
+.ERC7579Multisig
+* `++onInstall(initData)++`
+* `++onUninstall()++`
+* `++signers(account)++`
+* `++isSigner(account, signer)++`
+* `++_signers(account)++`
+* `++threshold(account)++`
+* `++addSigners(newSigners)++`
+* `++removeSigners(oldSigners)++`
+* `++setThreshold(newThreshold)++`
+* `++_rawERC7579Validation(account, hash, signature)++`
+* `++_addSigners(account, newSigners)++`
+* `++_removeSigners(account, oldSigners)++`
+* `++_setThreshold(account, newThreshold)++`
+* `++_validateReachableThreshold(account)++`
+* `++_validateThreshold(account, validatingSigners)++`
+
+[.contract-subindex-inherited]
+.ERC7579Validator
+* `++isModuleType(moduleTypeId)++`
+* `++validateUserOp(userOp, userOpHash)++`
+* `++isValidSignatureWithSender(, hash, signature)++`
+
+[.contract-subindex-inherited]
+.IERC7579Validator
+
+[.contract-subindex-inherited]
+.IERC7579Module
+
+--
+
+[.contract-index]
+.Events
+--
+* `++ERC7579MultisigStoragePresigned(account, hash, signer)++`
+
+[.contract-subindex-inherited]
+.ERC7579Multisig
+* `++ERC7913SignerAdded(account, signer)++`
+* `++ERC7913SignerRemoved(account, signer)++`
+* `++ERC7913ThresholdSet(account, threshold)++`
+
+[.contract-subindex-inherited]
+.ERC7579Validator
+
+[.contract-subindex-inherited]
+.IERC7579Validator
+
+[.contract-subindex-inherited]
+.IERC7579Module
+
+--
+
+[.contract-index]
+.Errors
+--
+
+[.contract-subindex-inherited]
+.ERC7579Multisig
+* `++ERC7579MultisigAlreadyExists(signer)++`
+* `++ERC7579MultisigNonexistentSigner(signer)++`
+* `++ERC7579MultisigInvalidSigner(signer)++`
+* `++ERC7579MultisigUnreachableThreshold(signers, threshold)++`
+
+[.contract-subindex-inherited]
+.ERC7579Validator
+
+[.contract-subindex-inherited]
+.IERC7579Validator
+
+[.contract-subindex-inherited]
+.IERC7579Module
+
+--
+
+[.contract-item]
+[[ERC7579MultisigStorage-presigned-address-bytes-bytes32-]]
+==== `[.contract-item-name]#++presigned++#++(address account, bytes signer, bytes32 hash) → bool++` [.item-kind]#public#
+
+Returns whether a signer has presigned a specific hash for the account
+
+[.contract-item]
+[[ERC7579MultisigStorage-presign-address-bytes-bytes32-bytes-]]
+==== `[.contract-item-name]#++presign++#++(address account, bytes signer, bytes32 hash, bytes signature)++` [.item-kind]#public#
+
+Allows a signer to presign a hash by providing a valid signature.
+The signature will be verified and if valid, the presignature will be stored.
+
+Emits {ERC7579MultisigStoragePresigned} if the signature is valid and the hash is not already
+signed, otherwise acts as a no-op.
+
+NOTE: Does not check if the signer is authorized for the account. Valid signatures from
+invalid signers won't be executable. See {_validateSignatures} for more details.
+
+[.contract-item]
+[[ERC7579MultisigStorage-_validateSignatures-address-bytes32-bytes---bytes---]]
+==== `[.contract-item-name]#++_validateSignatures++#++(address account, bytes32 hash, bytes[] signingSigners, bytes[] signatures) → bool valid++` [.item-kind]#internal#
+
+See {ERC7579Multisig-_validateSignatures}.
+
+If a signature is empty, it indicates a presignature and the validation will check the storage mapping
+instead of cryptographic verification. See {sign} for more details.
+
+[.contract-item]
+[[ERC7579MultisigStorage-ERC7579MultisigStoragePresigned-address-bytes32-bytes-]]
+==== `[.contract-item-name]#++ERC7579MultisigStoragePresigned++#++(address indexed account, bytes32 indexed hash, bytes signer)++` [.item-kind]#event#
+
+Emitted when a signer signs a hash
 
 == Paymaster
 

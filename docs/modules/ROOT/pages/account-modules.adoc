@@ -126,3 +126,4 @@ For additional functionality, developers can use:
 
 * xref:api:account.adoc#ERC7579MultisigWeighted[`ERC7579MultisigWeighted`] to assign different weights to signers
 * xref:api:account.adoc#ERC7579MultisigConfirmation[`ERC7579MultisigConfirmation`] to implement a confirmation system that verifies signatures when adding signers
+* xref:api:account.adoc#ERC7579MultisigStorage[`ERC7579MultisigStorage`] to allow guardians to presign recovery operations for more flexible coordination
