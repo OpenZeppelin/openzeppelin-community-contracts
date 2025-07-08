@@ -3,6 +3,7 @@ pragma solidity ^0.8.27;
 
 import {IERC7579Module, MODULE_TYPE_EXECUTOR} from "@openzeppelin/contracts/interfaces/draft-IERC7579.sol";
 import {ERC7579Executor} from "./ERC7579Executor.sol";
+import {ERC7579Utils} from "@openzeppelin/contracts/account/utils/draft-ERC7579Utils.sol";
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 
 /**
@@ -40,12 +41,12 @@ abstract contract ERC7579SelectorExecutor is ERC7579Executor {
      * can be expensive or may result in unbounded computation.
      */
     function selectors(address account) public view virtual returns (bytes4[] memory) {
-        bytes32[] memory _selectors = _selectors(account).values();
-        bytes4[] memory selectors = new bytes4[](_selectors.length);
-        for (uint256 i = 0; i < _selectors.length; i++) {
-            selectors[i] = bytes4(_selectors[i]);
+        bytes32[] memory bytes32Selectors = _selectors(account).values();
+        bytes4[] memory selectors_ = new bytes4[](bytes32Selectors.length);
+        for (uint256 i = 0; i < bytes32Selectors.length; i++) {
+            selectors_[i] = bytes4(bytes32Selectors[i]);
         }
-        return selectors;
+        return selectors_;
     }
 
     /**
@@ -54,8 +55,8 @@ abstract contract ERC7579SelectorExecutor is ERC7579Executor {
      */
     function onInstall(bytes calldata initData) public virtual override {
         if (initData.length > 0) {
-            bytes4[] memory selectors = abi.decode(initData, (bytes4[]));
-            _addSelectors(msg.sender, selectors);
+            bytes4[] memory selectors_ = abi.decode(initData, (bytes4[]));
+            _addSelectors(msg.sender, selectors_);
         }
     }
 
@@ -71,13 +72,13 @@ abstract contract ERC7579SelectorExecutor is ERC7579Executor {
     }
 
     /// @dev Adds `selectors` to the set for the calling account
-    function addSelectors(bytes4[] memory selectors) public virtual {
-        _addSelectors(msg.sender, selectors);
+    function addSelectors(bytes4[] memory newSelectors) public virtual {
+        _addSelectors(msg.sender, newSelectors);
     }
 
     /// @dev Removes a selector from the set for the calling account
-    function removeSelectors(bytes4[] memory selectors) public virtual {
-        _removeSelectors(msg.sender, selectors);
+    function removeSelectors(bytes4[] memory oldSelectors) public virtual {
+        _removeSelectors(msg.sender, oldSelectors);
     }
 
     /// @dev Returns the set of authorized selectors for the specified account.
@@ -86,28 +87,28 @@ abstract contract ERC7579SelectorExecutor is ERC7579Executor {
     }
 
     /// @dev Internal version of {addSelectors} that takes an `account` as argument
-    function _addSelectors(address account, bytes4[] memory selectors) internal virtual {
-        uint256 selectorsLength = selectors.length;
-        for (uint256 i = 0; i < selectorsLength; i++) {
-            if (_selectors(account).add(selectors[i])) {
-                emit ERC7579ExecutorSelectorAuthorized(account, selectors[i]);
+    function _addSelectors(address account, bytes4[] memory newSelectors) internal virtual {
+        uint256 newSelectorsLength = newSelectors.length;
+        for (uint256 i = 0; i < newSelectorsLength; i++) {
+            if (_selectors(account).add(newSelectors[i])) {
+                emit ERC7579ExecutorSelectorAuthorized(account, newSelectors[i]);
             } // no-op if the selector is already in the set
         }
     }
 
     /// @dev Internal version of {removeSelectors} that takes an `account` as argument
-    function _removeSelectors(address account, bytes4[] memory selectors) internal virtual {
-        uint256 selectorsLength = selectors.length;
-        for (uint256 i = 0; i < selectorsLength; i++) {
-            if (_selectors(account).remove(selectors[i])) {
-                emit ERC7579ExecutorSelectorRemoved(account, selectors[i]);
+    function _removeSelectors(address account, bytes4[] memory oldSelectors) internal virtual {
+        uint256 oldSelectorsLength = oldSelectors.length;
+        for (uint256 i = 0; i < oldSelectorsLength; i++) {
+            if (_selectors(account).remove(oldSelectors[i])) {
+                emit ERC7579ExecutorSelectorRemoved(account, oldSelectors[i]);
             } // no-op if the selector is not in the set
         }
     }
 
     /**
      * @dev See {ERC7579Executor-_validateExecution}.
-     * Validates that the selector (first 4 bytes of `data`) is authorized before execution.
+     * Validates that the selector (first 4 bytes of the actual callData) is authorized before execution.
      */
     function _validateExecution(
         address account,
@@ -115,8 +116,12 @@ abstract contract ERC7579SelectorExecutor is ERC7579Executor {
         bytes32 /* mode */,
         bytes calldata data
     ) internal virtual override returns (bytes calldata) {
-        bytes4 selector = bytes4(data[0:4]);
+        // Decode ERC7579 single execution calldata to extract the actual function callData
+        (, , bytes calldata callData) = ERC7579Utils.decodeSingle(data);
+
+        bytes4 selector = bytes4(callData[0:4]);
         require(isAuthorized(account, selector), ERC7579ExecutorSelectorNotAuthorized(selector));
+
         return data;
     }
 }
