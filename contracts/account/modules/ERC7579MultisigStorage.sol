@@ -19,29 +19,29 @@ abstract contract ERC7579MultisigStorage is ERC7579Multisig {
     using ERC7913Utils for bytes;
 
     /// @dev Emitted when a signer signs a hash
-    event ERC7579MultisigStorageSigned(address indexed account, bytes32 indexed hash, bytes signer);
+    event ERC7579MultisigStoragePresigned(address indexed account, bytes32 indexed hash, bytes signer);
 
-    mapping(address account => mapping(bytes signer => mapping(bytes32 hash => bool))) private _signed;
+    mapping(address account => mapping(bytes signer => mapping(bytes32 hash => bool))) private _presigned;
 
     /// @dev Returns whether a signer has presigned a specific hash for the account
-    function signed(address account, bytes memory signer, bytes32 hash) public view virtual returns (bool) {
-        return _signed[account][signer][hash];
+    function presigned(address account, bytes memory signer, bytes32 hash) public view virtual returns (bool) {
+        return _presigned[account][signer][hash];
     }
 
     /**
      * @dev Allows a signer to presign a hash by providing a valid signature.
      * The signature will be verified and if valid, the presignature will be stored.
      *
-     * Emits {ERC7579MultisigStorageSigned} if the signature is valid and the hash is not already
+     * Emits {ERC7579MultisigStoragePresigned} if the signature is valid and the hash is not already
      * signed, otherwise acts as a no-op.
      *
      * NOTE: Does not check if the signer is authorized for the account. Valid signatures from
      * invalid signers won't be executable. See {_validateSignatures} for more details.
      */
-    function sign(address account, bytes calldata signer, bytes32 hash, bytes calldata signature) public virtual {
-        if (!signed(account, signer, hash) && signer.isValidSignatureNow(hash, signature)) {
-            _signed[account][signer][hash] = true;
-            emit ERC7579MultisigStorageSigned(account, hash, signer);
+    function presign(address account, bytes calldata signer, bytes32 hash, bytes calldata signature) public virtual {
+        if (!presigned(account, signer, hash) && signer.isValidSignatureNow(hash, signature)) {
+            _presigned[account][signer][hash] = true;
+            emit ERC7579MultisigStoragePresigned(account, hash, signer);
         }
     }
 
@@ -64,7 +64,7 @@ abstract contract ERC7579MultisigStorage is ERC7579Multisig {
         for (uint256 i = 0; i < signersLength; i++) {
             if (signatures[i].length == 0) {
                 // Presigned signature
-                if (!isSigner(account, signingSigners[i]) || !signed(account, signingSigners[i], hash)) {
+                if (!isSigner(account, signingSigners[i]) || !presigned(account, signingSigners[i], hash)) {
                     return false;
                 }
                 presigned++;
