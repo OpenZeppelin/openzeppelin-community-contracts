@@ -95,7 +95,7 @@ abstract contract ERC7579SelectorExecutor is ERC7579Executor {
         }
     }
 
-    /// @dev Internal version of {removeSelector} that takes an `account` as argument
+    /// @dev Internal version of {removeSelectors} that takes an `account` as argument
     function _removeSelectors(address account, bytes4[] memory selectors) internal virtual {
         uint256 selectorsLength = selectors.length;
         for (uint256 i = 0; i < selectorsLength; i++) {
