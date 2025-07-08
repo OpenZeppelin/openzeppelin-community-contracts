@@ -60,19 +60,19 @@ abstract contract ERC7579MultisigStorage is ERC7579Multisig {
         uint256 signersLength = signingSigners.length;
 
         // Check validity of presigned signatures
-        uint256 presigned = 0;
+        uint256 presignedCount = 0;
         for (uint256 i = 0; i < signersLength; i++) {
             if (signatures[i].length == 0) {
                 // Presigned signature
                 if (!isSigner(account, signingSigners[i]) || !presigned(account, signingSigners[i], hash)) {
                     return false;
                 }
-                presigned++;
+                presignedCount++;
             }
         }
 
         // Filter out presigned signatures
-        uint256 regular = signersLength - presigned;
+        uint256 regular = signersLength - presignedCount;
         bytes[] memory _signingSigners = new bytes[](regular);
         bytes[] memory _signatures = new bytes[](regular);
 
