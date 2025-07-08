@@ -3,7 +3,7 @@ const { expect } = require('chai');
 const { loadFixture } = require('@nomicfoundation/hardhat-network-helpers');
 const { impersonate } = require('@openzeppelin/contracts/test/helpers/account');
 const { ERC4337Helper } = require('@openzeppelin/contracts/test/helpers/erc4337');
-const { NonNativeSigner, MultiERC7913SigningKey } = require('../../helpers/signers');
+const { NonNativeSigner, MultiERC7913SigningKey } = require('@openzeppelin/contracts/test/helpers/signers');
 
 const {
   MODULE_TYPE_EXECUTOR,
@@ -336,12 +336,11 @@ describe('ERC7579MultisigStorage', function () {
       // Test that we can still add/remove signers like the base contract
       const newSigners = [signerECDSA3.address];
 
-      await expect(this.mockFromAccount.addSigners(newSigners))
-        .to.emit(this.mock, 'ERC7913SignersAdded')
-        .withArgs(
-          this.mockAccount.address,
-          newSigners.map(address => address.toLowerCase()),
-        );
+      for (const signer of newSigners) {
+        await expect(this.mockFromAccount.addSigners([signer]))
+          .to.emit(this.mock, 'ERC7913SignerAdded')
+          .withArgs(this.mockAccount.address, signer.toLowerCase());
+      }
 
       await expect(this.mock.isSigner(this.mockAccount.address, signerECDSA3.address)).to.eventually.be.true;
     });
