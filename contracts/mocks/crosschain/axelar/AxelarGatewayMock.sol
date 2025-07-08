@@ -3,7 +3,9 @@
 pragma solidity ^0.8.27;
 
 import {IAxelarGateway} from "@axelar-network/axelar-gmp-sdk-solidity/contracts/interfaces/IAxelarGateway.sol";
-import {IBaseAmplifierGateway} from "@axelar-network/axelar-gmp-sdk-solidity/contracts/interfaces/IBaseAmplifierGateway.sol";
+import {
+    IBaseAmplifierGateway
+} from "@axelar-network/axelar-gmp-sdk-solidity/contracts/interfaces/IBaseAmplifierGateway.sol";
 import {IAxelarExecutable} from "@axelar-network/axelar-gmp-sdk-solidity/contracts/interfaces/IAxelarExecutable.sol";
 import {BitMaps} from "@openzeppelin/contracts/utils/structs/BitMaps.sol";
 import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";

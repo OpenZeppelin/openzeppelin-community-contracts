@@ -1,10 +1,9 @@
 const { ethers, entrypoint } = require('hardhat');
 const { expect } = require('chai');
 const { loadFixture } = require('@nomicfoundation/hardhat-network-helpers');
-const { impersonate } = require('@openzeppelin/contracts/test/helpers/account');
-const { ERC4337Helper } = require('../../helpers/erc4337');
-const { NonNativeSigner, MultiERC7913SigningKey } = require('../../helpers/signers');
 
+const { impersonate } = require('@openzeppelin/contracts/test/helpers/account');
+const { ERC4337Helper } = require('@openzeppelin/contracts/test/helpers/erc4337');
 const {
   MODULE_TYPE_EXECUTOR,
   CALL_TYPE_CALL,
@@ -12,6 +11,8 @@ const {
   encodeMode,
   encodeSingle,
 } = require('@openzeppelin/contracts/test/helpers/erc7579');
+const { NonNativeSigner, MultiERC7913SigningKey } = require('@openzeppelin/contracts/test/helpers/signers');
+
 const { shouldBehaveLikeERC7579Module } = require('./ERC7579Module.behavior');
 
 // Prepare signers in advance
@@ -23,7 +24,7 @@ const signerECDSA4 = ethers.Wallet.createRandom(); // Unauthorized signer
 async function fixture() {
   // Deploy ERC-7579 multisig module
   const mock = await ethers.deployContract('$ERC7579MultisigExecutorMock', ['MultisigExecutor', '1']);
-  const target = await ethers.deployContract('CallReceiverMockExtended');
+  const target = await ethers.deployContract('CallReceiverMock');
 
   // ERC-4337 env
   const helper = new ERC4337Helper();
@@ -81,14 +82,13 @@ describe('ERC7579Multisig', function () {
   it('sets initial signers and threshold on installation', async function () {
     const tx = await this.mockAccountFromEntrypoint.installModule(this.moduleType, this.mock.target, this.installData);
 
-    await expect(tx)
-      .to.emit(this.mock, 'ERC7913SignersAdded')
-      .withArgs(
-        this.mockAccount.address,
-        this.signers.map(signer => signer.toLowerCase()),
-      )
-      .to.emit(this.mock, 'ERC7913ThresholdSet')
-      .withArgs(this.mockAccount.address, this.threshold);
+    for (const signer of this.signers) {
+      await expect(tx)
+        .to.emit(this.mock, 'ERC7913SignerAdded')
+        .withArgs(this.mockAccount.address, signer.toLowerCase());
+    }
+
+    await expect(tx).to.emit(this.mock, 'ERC7913ThresholdSet').withArgs(this.mockAccount.address, this.threshold);
 
     // Verify signers and threshold
     await expect(this.mock.signers(this.mockAccount.address)).to.eventually.deep.equal(this.signers);
@@ -131,12 +131,12 @@ describe('ERC7579Multisig', function () {
       const signersBefore = await this.mock.signers(this.mockAccount.address);
 
       // Add new signers
-      await expect(this.mockFromAccount.addSigners(newSigners))
-        .to.emit(this.mock, 'ERC7913SignersAdded')
-        .withArgs(
-          this.mockAccount.address,
-          newSigners.map(address => address.toLowerCase()),
-        );
+      const tx = await this.mockFromAccount.addSigners(newSigners);
+      for (const signer of newSigners) {
+        await expect(tx)
+          .to.emit(this.mock, 'ERC7913SignerAdded')
+          .withArgs(this.mockAccount.address, signer.toLowerCase());
+      }
 
       // Get signers after adding
       const signersAfter = await this.mock.signers(this.mockAccount.address);
@@ -161,9 +161,12 @@ describe('ERC7579Multisig', function () {
       const signersBefore = await this.mock.signers(this.mockAccount.address);
 
       // Remove signers
-      await expect(this.mockFromAccount.removeSigners(removedSigners))
-        .to.emit(this.mock, 'ERC7913SignersRemoved')
-        .withArgs(this.mockAccount.address, removedSigners);
+      const tx = await this.mockFromAccount.removeSigners(removedSigners);
+      for (const signer of removedSigners) {
+        await expect(tx)
+          .to.emit(this.mock, 'ERC7913SignerRemoved')
+          .withArgs(this.mockAccount.address, signer.toLowerCase());
+      }
 
       // Get signers after removing
       const signersAfter = await this.mock.signers(this.mockAccount.address);

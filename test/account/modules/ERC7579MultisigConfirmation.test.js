@@ -1,13 +1,13 @@
 const { ethers, entrypoint } = require('hardhat');
 const { expect } = require('chai');
-const { loadFixture } = require('@nomicfoundation/hardhat-network-helpers');
+const { loadFixture, time } = require('@nomicfoundation/hardhat-network-helpers');
+
 const { impersonate } = require('@openzeppelin/contracts/test/helpers/account');
-const { ERC4337Helper } = require('../../helpers/erc4337');
-const { time } = require('@nomicfoundation/hardhat-network-helpers');
 const { getDomain } = require('@openzeppelin/contracts/test/helpers/eip712');
+const { ERC4337Helper } = require('@openzeppelin/contracts/test/helpers/erc4337');
+const { MODULE_TYPE_EXECUTOR } = require('@openzeppelin/contracts/test/helpers/erc7579');
 const { MultisigConfirmation } = require('../../helpers/eip712-types');
 
-const { MODULE_TYPE_EXECUTOR } = require('@openzeppelin/contracts/test/helpers/erc7579');
 const { shouldBehaveLikeERC7579Module } = require('./ERC7579Module.behavior');
 
 // Prepare signers in advance
@@ -81,8 +81,8 @@ describe('ERC7579MultisigConfirmation', function () {
 
       // Add the new signer with confirmation
       await expect(this.mockFromAccount.addSigners([encodedSigner]))
-        .to.emit(this.mock, 'ERC7913SignersAdded')
-        .withArgs(this.mockAccount.address, [signerToConfirm.address.toLowerCase()]);
+        .to.emit(this.mock, 'ERC7913SignerAdded')
+        .withArgs(this.mockAccount.address, signerToConfirm.address.toLowerCase());
 
       // Verify the signer was added
       await expect(this.mock.isSigner(this.mockAccount.address, signerToConfirm.address)).to.eventually.be.true;
@@ -171,11 +171,10 @@ describe('ERC7579MultisigConfirmation', function () {
 
       // Add both signers with confirmation
       await expect(this.mockFromAccount.addSigners([encodedSigner1, encodedSigner2]))
-        .to.emit(this.mock, 'ERC7913SignersAdded')
-        .withArgs(this.mockAccount.address, [
-          signerToConfirm.address.toLowerCase(),
-          anotherSigner.address.toLowerCase(),
-        ]);
+        .to.emit(this.mock, 'ERC7913SignerAdded')
+        .withArgs(this.mockAccount.address, signerToConfirm.address.toLowerCase())
+        .to.emit(this.mock, 'ERC7913SignerAdded')
+        .withArgs(this.mockAccount.address, anotherSigner.address.toLowerCase());
 
       // Verify both signers were added
       await expect(this.mock.isSigner(this.mockAccount.address, signerToConfirm.address)).to.eventually.be.true;
@@ -250,8 +249,8 @@ describe('ERC7579MultisigConfirmation', function () {
 
       // Now remove the signer (no confirmation required for removal)
       await expect(this.mockFromAccount.removeSigners([signerToConfirm.address]))
-        .to.emit(this.mock, 'ERC7913SignersRemoved')
-        .withArgs(this.mockAccount.address, [signerToConfirm.address.toLowerCase()]);
+        .to.emit(this.mock, 'ERC7913SignerRemoved')
+        .withArgs(this.mockAccount.address, signerToConfirm.address.toLowerCase());
 
       // Verify signer was removed
       await expect(this.mock.isSigner(this.mockAccount.address, signerToConfirm.address)).to.eventually.be.false;

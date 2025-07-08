@@ -93,7 +93,7 @@ function shouldBehaveLikeAccountHolder() {
       const data = '0x12345678';
 
       beforeEach(async function () {
-        this.token = await ethers.deployContract('$ERC1155Mock', ['https://somedomain.com/{id}.json']);
+        this.token = await ethers.deployContract('$ERC1155', ['https://somedomain.com/{id}.json']);
         await this.token.$_mintBatch(this.other, ids, values, '0x');
       });
 
@@ -130,7 +130,7 @@ function shouldBehaveLikeAccountHolder() {
       const tokenId = 1n;
 
       beforeEach(async function () {
-        this.token = await ethers.deployContract('$ERC721Mock', ['Some NFT', 'SNFT']);
+        this.token = await ethers.deployContract('$ERC721', ['Some NFT', 'SNFT']);
         await this.token.$_mint(this.other, tokenId);
       });
 

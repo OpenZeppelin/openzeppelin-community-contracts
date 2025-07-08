@@ -1,3 +1,17 @@
+## 23-06-2025
+
+- `AxelarGatewayBase`, `AxelarGatewayDestination`, `AxelarGatewaySource`, `ERC7786Receiver` and `ERC7786Aggregator`: Changed support from CAIP addresses to ERC-7930 addresses.
+- `ERC7786Aggregator`: Renamed to `ERC7786OpenBridge`.
+
+## 20-06-2025
+
+- `EnumerableMap`: Add `keys(uint256,uint256)` that returns a subset (slice) of the keys in the map.
+- `EnumerableSet`: Add `values(uint256,uint256)` that returns a subset (slice) of the values in the set.
+
+## 03-06-2025
+
+- Moved `ERC7739Utils`, `ERC7913Utils`, `ZKEmailUtils`, abstract signers and ERC-7913 verifiers to `/contracts/utils/cryptography`
+
 ## 15-05-2025
 
 - `ERC7579Multisig`: Add an abstract multisig module for ERC-7579 accounts using ERC-7913 signer keys.
