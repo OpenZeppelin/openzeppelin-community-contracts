@@ -36,7 +36,7 @@ abstract contract ERC7579MultisigStorage is ERC7579Multisig {
      * signed, otherwise acts as a no-op.
      *
      * NOTE: Does not check if the signer is authorized for the account. Valid signatures from
-     * invalid signatures won't be executable. See {_validateSignatures} for more details.
+     * invalid signers won't be executable. See {_validateSignatures} for more details.
      */
     function sign(address account, bytes calldata signer, bytes32 hash, bytes calldata signature) public virtual {
         if (!signed(account, signer, hash) && signer.isValidSignatureNow(hash, signature)) {
