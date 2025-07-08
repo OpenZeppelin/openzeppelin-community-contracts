@@ -2,7 +2,7 @@ const { ethers, entrypoint } = require('hardhat');
 const { expect } = require('chai');
 const { loadFixture } = require('@nomicfoundation/hardhat-network-helpers');
 const { impersonate } = require('@openzeppelin/contracts/test/helpers/account');
-const { ERC4337Helper } = require('../../helpers/erc4337');
+const { ERC4337Helper } = require('@openzeppelin/contracts/test/helpers/erc4337');
 const { NonNativeSigner, MultiERC7913SigningKey } = require('../../helpers/signers');
 
 const {
