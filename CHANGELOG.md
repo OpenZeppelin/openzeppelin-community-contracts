@@ -1,3 +1,10 @@
+## 08-07-2025
+
+- `WebAuthn.sol`: Add library for on-chain verification of WebAuthn authentication assertions and P256 signatures.
+- `SignerWebAuthn.sol`: Add abstract contract for signature validation using WebAuthn or raw P256 signatures.
+- `ERC7579SelectorExecutor.sol`: Add an ERC-7579 executor module restricting execution to authorized function selectors per account.
+- `ERC7579MultisigStorage.sol`: Add an ERC-7579 multisig module supporting presigned approvals stored in contract storage.
+
 ## 23-06-2025
 
 - `AxelarGatewayBase`, `AxelarGatewayDestination`, `AxelarGatewaySource`, `ERC7786Receiver` and `ERC7786Aggregator`: Changed support from CAIP addresses to ERC-7930 addresses.
