@@ -1,0 +1,77 @@
+// SPDX-License-Identifier: MIT
+
+pragma solidity ^0.8.26;
+
+import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import {IERC7943} from "../../../interfaces/IERC7943.sol";
+
+/**
+ * @dev Extension of {ERC20} that allows to implement a freezing
+ * mechanism that can be managed by an authorized account with the
+ * {_freezeTokens} and {_unfreezeTokens} functions.
+ *
+ * The freezing mechanism provides the guarantee to the contract owner
+ * (e.g. a DAO or a well-configured multisig) that a specific amount
+ * of tokens held by an account won't be transferable until those
+ * tokens are unfrozen using {_unfreezeTokens}.
+ */
+abstract contract ERC20Freezable is ERC20 {
+    /// @dev Frozen amount of tokens per address.
+    mapping(address account => uint256) private _frozenBalances;
+
+    /// @dev The operation failed because the user has insufficient unfrozen balance.
+    error ERC20InsufficientUnfrozenBalance(address user, uint256 needed, uint256 available);
+
+    /// @dev Returns the frozen balance of an account.
+    function frozen(address account) public view virtual returns (uint256) {
+        return _frozenBalances[account];
+    }
+
+    /// @dev Returns the available (unfrozen) balance of an account. Up to {balanceOf}.
+    function available(address account) public view virtual returns (uint256) {
+        return balanceOf(account) - _frozenBalances[account];
+    }
+
+    /// @dev Sets the frozen token amount for a user. Use {_checkFreezer} for access control.
+    function setFrozen(address user, uint256, uint256 amount) public virtual {
+        _checkFreezer(user, amount);
+        _setFrozen(user, amount);
+    }
+
+    /// @dev Internal function to set the frozen token amount for a user.
+    function _setFrozen(address user, uint256 amount) internal virtual {
+        _frozenBalances[user] = amount;
+        emit IERC7943.Frozen(user, 0, amount);
+    }
+
+    /**
+     * @dev See {ERC20-_update}.
+     *
+     * Requirements:
+     *
+     * * `from` must have sufficient unfrozen balance.
+     */
+    function _update(address from, address to, uint256 value) internal virtual override {
+        uint256 unfrozen = available(from);
+        require(unfrozen >= value, ERC20InsufficientUnfrozenBalance(from, value, unfrozen));
+        super._update(from, to, value);
+    }
+
+    /// @dev See {ERC20-_approve}.
+    function _approve(address owner, address spender, uint256 value, bool emitEvent) internal virtual override {
+        // We don't check frozen balance for approvals since the actual transfer
+        // will be checked in _update. This allows for more flexible approval patterns.
+        super._approve(owner, spender, value, emitEvent);
+    }
+
+    /**
+     * @dev Internal function to check if the user has sufficient unfrozen balance.
+     *
+     * Example usage with {AccessControl-onlyRole}:
+     *
+     * ```solidity
+     * function _checkFreezer(address user, uint256 amount) internal view override onlyRole(FREEZER_ROLE) {}
+     * ```
+     */
+    function _checkFreezer(address user, uint256 amount) internal view virtual;
+}
