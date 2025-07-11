@@ -63,8 +63,11 @@ abstract contract ERC20Restrictions is ERC20 {
         super._update(from, to, value);
     }
 
+    // We don't check restrictions for approvals since the actual transfer
+    // will be checked in _update. This allows for more flexible approval patterns.
+
     /// @dev Updates the restriction of a user.
-    function _updateRestrictions(address user, Restriction restriction) internal virtual {
+    function _setRestriction(address user, Restriction restriction) internal virtual {
         if (getRestriction(user) != restriction) {
             _restrictions[user] = restriction;
             emit UserRestrictionsUpdated(user, restriction);
@@ -73,17 +76,17 @@ abstract contract ERC20Restrictions is ERC20 {
 
     /// @dev Convenience function to restrict a user (set to RESTRICTED).
     function _allowUser(address user) internal virtual {
-        _updateRestrictions(user, Restriction.RESTRICTED);
+        _setRestriction(user, Restriction.RESTRICTED);
     }
 
     /// @dev Convenience function to disallow a user (set to UNRESTRICTED).
     function _disallowUser(address user) internal virtual {
-        _updateRestrictions(user, Restriction.UNRESTRICTED);
+        _setRestriction(user, Restriction.UNRESTRICTED);
     }
 
     /// @dev Convenience function to reset a user to default restriction.
     function _resetUser(address user) internal virtual {
-        _updateRestrictions(user, Restriction.DEFAULT);
+        _setRestriction(user, Restriction.DEFAULT);
     }
 
     /// @dev Checks if a user is restricted. Reverts with {ERC20Restricted} if so.

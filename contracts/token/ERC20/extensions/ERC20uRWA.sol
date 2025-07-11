@@ -3,7 +3,7 @@ pragma solidity ^0.8.26;
 
 import {IERC7943} from "../../../interfaces/IERC7943.sol";
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
+import {ERC165, IERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 import {ERC20Freezable} from "./ERC20Freezable.sol";
 import {ERC20Restrictions} from "./ERC20Restrictions.sol";
 
@@ -14,15 +14,15 @@ import {ERC20Restrictions} from "./ERC20Restrictions.sol";
  * asset freezing, and forced asset transfers.
  */
 // solhint-disable-next-line contract-name-capwords
-abstract contract uRWA20 is ERC20, ERC20Freezable, ERC20Restrictions, IERC7943 {
+abstract contract uRWA20 is ERC20, ERC20Freezable, ERC20Restrictions, IERC7943, ERC165 {
     /// @inheritdoc ERC20Restrictions
     function isUserAllowed(address user) public view virtual override(IERC7943, ERC20Restrictions) returns (bool) {
         return super.isUserAllowed(user);
     }
 
-    /// @inheritdoc IERC165
-    function supportsInterface(bytes4 interfaceId) public view virtual returns (bool) {
-        return interfaceId == type(IERC7943).interfaceId;
+    /// @inheritdoc ERC165
+    function supportsInterface(bytes4 interfaceId) public view virtual override(ERC165, IERC165) returns (bool) {
+        return interfaceId == type(IERC7943).interfaceId || super.supportsInterface(interfaceId);
     }
 
     /// @inheritdoc IERC7943
@@ -37,20 +37,24 @@ abstract contract uRWA20 is ERC20, ERC20Freezable, ERC20Restrictions, IERC7943 {
 
     /// @inheritdoc IERC7943
     function setFrozen(address user, uint256, uint256 amount) public virtual {
+        require(amount <= balanceOf(user), ERC20InsufficientBalance(user, balanceOf(user), amount));
+        _checkFreezer(user, amount);
         _setFrozen(user, amount);
     }
 
     /// @inheritdoc IERC7943
     function forceTransfer(address from, address to, uint256, uint256 amount) public virtual {
+        require(isUserAllowed(to), ERC7943NotAllowedUser(to));
         _checkEnforcer(from, to, amount);
 
         // Update frozen balance if needed
-        uint256 unfrozen = available(from);
-        if (amount > unfrozen) {
-            _setFrozen(from, unfrozen);
+        uint256 currentFrozen = frozen(from);
+        uint256 currentBalance = balanceOf(from);
+        if (currentFrozen > currentBalance - amount) {
+            _setFrozen(from, currentBalance - amount);
         }
 
-        super._update(from, to, amount);
+        ERC20._update(from, to, amount); // Explicit raw update to bypass all restrictions
         emit ForcedTransfer(from, to, 0, amount);
     }
 
@@ -66,7 +70,13 @@ abstract contract uRWA20 is ERC20, ERC20Freezable, ERC20Restrictions, IERC7943 {
         address to,
         uint256 amount
     ) internal virtual override(ERC20, ERC20Freezable, ERC20Restrictions) {
-        require(isTransferAllowed(from, to, 0, amount), ERC7943NotAllowedTransfer(from, to, 0, amount));
+        if (from == address(0)) {
+            // Minting
+            require(isUserAllowed(to), ERC7943NotAllowedUser(to));
+        } else if (to != address(0)) {
+            // Transfer
+            require(isTransferAllowed(from, to, 0, amount), ERC7943NotAllowedTransfer(from, to, 0, amount));
+        }
         super._update(from, to, amount);
     }
 
@@ -80,4 +90,15 @@ abstract contract uRWA20 is ERC20, ERC20Freezable, ERC20Restrictions, IERC7943 {
      * ```
      */
     function _checkEnforcer(address from, address to, uint256 amount) internal view virtual;
+
+    /**
+     * @dev Internal function to check if the user has sufficient unfrozen balance.
+     *
+     * Example usage with {AccessControl-onlyRole}:
+     *
+     * ```solidity
+     * function _checkFreezer(address user, uint256 amount) internal view override onlyRole(FREEZER_ROLE) {}
+     * ```
+     */
+    function _checkFreezer(address user, uint256 amount) internal view virtual;
 }

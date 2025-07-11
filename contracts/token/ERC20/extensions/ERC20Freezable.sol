@@ -46,8 +46,10 @@ abstract contract ERC20Freezable is ERC20 {
      * * `from` must have sufficient unfrozen balance.
      */
     function _update(address from, address to, uint256 value) internal virtual override {
-        uint256 unfrozen = available(from);
-        require(unfrozen >= value, ERC20InsufficientUnfrozenBalance(from, value, unfrozen));
+        if (from != address(0)) {
+            uint256 unfrozen = available(from);
+            require(unfrozen >= value, ERC20InsufficientUnfrozenBalance(from, value, unfrozen));
+        }
         super._update(from, to, value);
     }
 
