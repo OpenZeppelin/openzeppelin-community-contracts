@@ -3,6 +3,7 @@
 pragma solidity ^0.8.26;
 
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 import {IERC7943} from "../../../interfaces/IERC7943.sol";
 
 /**
@@ -29,7 +30,8 @@ abstract contract ERC20Freezable is ERC20 {
 
     /// @dev Returns the available (unfrozen) balance of an account. Up to {balanceOf}.
     function available(address account) public view virtual returns (uint256) {
-        return balanceOf(account) - _frozenBalances[account];
+        (bool success, uint256 unfrozen) = Math.trySub(balanceOf(account), _frozenBalances[account]);
+        return success ? unfrozen : 0;
     }
 
     /// @dev Internal function to set the frozen token amount for a user.
