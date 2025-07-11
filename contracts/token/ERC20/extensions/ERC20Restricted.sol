@@ -25,7 +25,7 @@ abstract contract ERC20Restricted is ERC20 {
     event UserRestrictionsUpdated(address indexed user, Restriction restriction);
 
     /// @dev The operation failed because the user is restricted.
-    error ERC20Restricted(address user);
+    error ERC20UserRestricted(address user);
 
     /// @dev Returns the restriction of an account.
     function getRestriction(address user) public view virtual returns (Restriction) {
@@ -91,6 +91,6 @@ abstract contract ERC20Restricted is ERC20 {
 
     /// @dev Checks if a user is restricted. Reverts with {ERC20Restricted} if so.
     function _checkRestricted(address user) internal view virtual {
-        require(isUserAllowed(user), ERC20Restricted(user));
+        require(isUserAllowed(user), ERC20UserRestricted(user));
     }
 }
