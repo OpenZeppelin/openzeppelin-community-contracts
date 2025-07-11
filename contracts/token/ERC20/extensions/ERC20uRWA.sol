@@ -5,7 +5,7 @@ import {IERC7943} from "../../../interfaces/IERC7943.sol";
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import {ERC165, IERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 import {ERC20Freezable} from "./ERC20Freezable.sol";
-import {ERC20Restrictions} from "./ERC20Restrictions.sol";
+import {ERC20Restricted} from "./ERC20Restricted.sol";
 
 /**
  * @dev Extension of {ERC20} according to https://eips.ethereum.org/EIPS/eip-7943[EIP-7943].
@@ -14,9 +14,9 @@ import {ERC20Restrictions} from "./ERC20Restrictions.sol";
  * asset freezing, and forced asset transfers.
  */
 // solhint-disable-next-line contract-name-capwords
-abstract contract uRWA20 is ERC20, ERC20Freezable, ERC20Restrictions, IERC7943, ERC165 {
-    /// @inheritdoc ERC20Restrictions
-    function isUserAllowed(address user) public view virtual override(IERC7943, ERC20Restrictions) returns (bool) {
+abstract contract uRWA20 is ERC20, ERC20Freezable, ERC20Restricted, IERC7943, ERC165 {
+    /// @inheritdoc ERC20Restricted
+    function isUserAllowed(address user) public view virtual override(IERC7943, ERC20Restricted) returns (bool) {
         return super.isUserAllowed(user);
     }
 
@@ -69,7 +69,7 @@ abstract contract uRWA20 is ERC20, ERC20Freezable, ERC20Restrictions, IERC7943, 
         address from,
         address to,
         uint256 amount
-    ) internal virtual override(ERC20, ERC20Freezable, ERC20Restrictions) {
+    ) internal virtual override(ERC20, ERC20Freezable, ERC20Restricted) {
         if (from == address(0)) {
             // Minting
             require(isUserAllowed(to), ERC7943NotAllowedUser(to));

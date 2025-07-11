@@ -12,7 +12,7 @@ import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
  * an allowlist. Developers can override {isUserAllowed} to check that `restriction != RESTRICTED`
  * to implement a blocklist.
  */
-abstract contract ERC20Restrictions is ERC20 {
+abstract contract ERC20Restricted is ERC20 {
     enum Restriction {
         DEFAULT, // User has no explicit restriction
         RESTRICTED, // User is explicitly restricted
