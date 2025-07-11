@@ -4,37 +4,22 @@ pragma solidity ^0.8.26;
 import {IERC7943} from "../../../interfaces/IERC7943.sol";
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
-import {Context} from "@openzeppelin/contracts/utils/Context.sol";
 import {ERC20Freezable} from "./ERC20Freezable.sol";
+import {ERC20Restrictions} from "./ERC20Restrictions.sol";
 
 /**
  * @dev Extension of {ERC20} according to https://eips.ethereum.org/EIPS/eip-7943[EIP-7943].
  *
- * Combines standard ERC-20 functionality with RWA-specific features like allowlist,
- * blocklist, controlled minting/burning, and forced asset transfers.
- *
- * ERC-7943 requires implementing {isUserAllowed} function which should be based on
- * your chosen user control mechanism. We recommend using {ERC20Allowlist} or {ERC20Blocklist}
- * for this.
- *
- * ```solidity
- * // Using ERC20Allowlist
- * contract MyuRWA20 is uRWA20, ERC20Allowlist {
- *     function isUserAllowed(address user) public view virtual override returns (bool) {
- *         return allowed(user);
- *     }
- * }
- *
- * // Using ERC20Blocklist
- * contract MyuRWA20 is uRWA20, ERC20Blocklist {
- *     function isUserAllowed(address user) public view virtual override returns (bool) {
- *         return !blocked(user);
- *     }
- * }
- * ```
+ * Combines standard ERC-20 functionality with RWA-specific features like user restrictions,
+ * asset freezing, and forced asset transfers.
  */
 // solhint-disable-next-line contract-name-capwords
-abstract contract uRWA20 is Context, ERC20, ERC20Freezable, IERC7943 {
+abstract contract uRWA20 is ERC20, ERC20Freezable, ERC20Restrictions, IERC7943 {
+    /// @inheritdoc ERC20Restrictions
+    function isUserAllowed(address user) public view virtual override(IERC7943, ERC20Restrictions) returns (bool) {
+        return super.isUserAllowed(user);
+    }
+
     /// @inheritdoc IERC165
     function supportsInterface(bytes4 interfaceId) public view virtual returns (bool) {
         return interfaceId == type(IERC7943).interfaceId;
@@ -46,11 +31,13 @@ abstract contract uRWA20 is Context, ERC20, ERC20Freezable, IERC7943 {
     }
 
     /// @inheritdoc IERC7943
-    function isUserAllowed(address user) public view virtual returns (bool);
-
-    /// @inheritdoc IERC7943
     function getFrozen(address user, uint256) public view virtual returns (uint256 amount) {
         return frozen(user);
+    }
+
+    /// @inheritdoc IERC7943
+    function setFrozen(address user, uint256, uint256 amount) public virtual {
+        _setFrozen(user, amount);
     }
 
     /// @inheritdoc IERC7943
@@ -72,17 +59,14 @@ abstract contract uRWA20 is Context, ERC20, ERC20Freezable, IERC7943 {
      *
      * Requirements:
      *
-     * * `from` must be allowed to transfer tokens (see {isUserAllowed}).
-     * * `to` must be allowed to receive tokens (see {isUserAllowed}).
-     * * `amount` must be available to transfer (see {_validateAvailable}).
      * * `from` and `to` must be allowed to transfer `amount` tokens (see {isTransferAllowed}).
      */
-    function _update(address from, address to, uint256 amount) internal virtual override {
-        require(from != address(0) && isUserAllowed(from), ERC7943NotAllowedUser(from)); // Discard minting
-        require(to != address(0) && isUserAllowed(to), ERC7943NotAllowedUser(to)); // Discard burning
-        require(amount <= available(from), ERC7943InsufficientUnfrozenBalance(from, 0, amount, available(from)));
+    function _update(
+        address from,
+        address to,
+        uint256 amount
+    ) internal virtual override(ERC20, ERC20Freezable, ERC20Restrictions) {
         require(isTransferAllowed(from, to, 0, amount), ERC7943NotAllowedTransfer(from, to, 0, amount));
-
         super._update(from, to, amount);
     }
 

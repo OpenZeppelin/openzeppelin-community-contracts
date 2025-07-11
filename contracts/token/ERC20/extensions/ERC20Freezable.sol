@@ -32,12 +32,6 @@ abstract contract ERC20Freezable is ERC20 {
         return balanceOf(account) - _frozenBalances[account];
     }
 
-    /// @dev Sets the frozen token amount for a user. Use {_checkFreezer} for access control.
-    function setFrozen(address user, uint256, uint256 amount) public virtual {
-        _checkFreezer(user, amount);
-        _setFrozen(user, amount);
-    }
-
     /// @dev Internal function to set the frozen token amount for a user.
     function _setFrozen(address user, uint256 amount) internal virtual {
         _frozenBalances[user] = amount;
@@ -57,21 +51,6 @@ abstract contract ERC20Freezable is ERC20 {
         super._update(from, to, value);
     }
 
-    /// @dev See {ERC20-_approve}.
-    function _approve(address owner, address spender, uint256 value, bool emitEvent) internal virtual override {
-        // We don't check frozen balance for approvals since the actual transfer
-        // will be checked in _update. This allows for more flexible approval patterns.
-        super._approve(owner, spender, value, emitEvent);
-    }
-
-    /**
-     * @dev Internal function to check if the user has sufficient unfrozen balance.
-     *
-     * Example usage with {AccessControl-onlyRole}:
-     *
-     * ```solidity
-     * function _checkFreezer(address user, uint256 amount) internal view override onlyRole(FREEZER_ROLE) {}
-     * ```
-     */
-    function _checkFreezer(address user, uint256 amount) internal view virtual;
+    // We don't check frozen balance for approvals since the actual transfer
+    // will be checked in _update. This allows for more flexible approval patterns.
 }
