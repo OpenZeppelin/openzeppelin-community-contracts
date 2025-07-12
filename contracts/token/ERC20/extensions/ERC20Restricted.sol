@@ -41,7 +41,7 @@ abstract contract ERC20Restricted is ERC20 {
      *
      * ```solidity
      * function isUserAllowed(address user) public view virtual override returns (bool) {
-     *     return getRestriction(user) != Restriction.UNRESTRICTED; // i.e. DEFAULT && RESTRICTED
+     *     return getRestriction(user) == Restriction.UNRESTRICTED;
      * }
      * ```
      */
