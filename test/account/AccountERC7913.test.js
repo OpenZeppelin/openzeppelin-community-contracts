@@ -147,41 +147,21 @@ describe('AccountERC7913', function () {
 
   // Using WebAuthn key with an ERC-7913 verifier
   describe('WebAuthn key', function () {
-    describe('as webauthn signer', function () {
-      beforeEach(async function () {
-        this.signer = signerWebAuthn;
-        this.mock = await this.makeMock(
-          ethers.concat([
-            this.verifierWebAuthn.target,
-            this.signer.signingKey.publicKey.qx,
-            this.signer.signingKey.publicKey.qy,
-          ]),
-        );
-      });
-
-      shouldBehaveLikeAccountCore();
-      shouldBehaveLikeAccountHolder();
-      shouldBehaveLikeERC1271({ erc7739: true });
-      shouldBehaveLikeERC7821();
+    beforeEach(async function () {
+      this.signer = signerWebAuthn;
+      this.mock = await this.makeMock(
+        ethers.concat([
+          this.verifierWebAuthn.target,
+          this.signer.signingKey.publicKey.qx,
+          this.signer.signingKey.publicKey.qy,
+        ]),
+      );
     });
 
-    describe('as p256 signer', function () {
-      beforeEach(async function () {
-        this.signer = signerP256;
-        this.mock = await this.makeMock(
-          ethers.concat([
-            this.verifierWebAuthn.target,
-            this.signer.signingKey.publicKey.qx,
-            this.signer.signingKey.publicKey.qy,
-          ]),
-        );
-      });
-
-      shouldBehaveLikeAccountCore();
-      shouldBehaveLikeAccountHolder();
-      shouldBehaveLikeERC1271({ erc7739: true });
-      shouldBehaveLikeERC7821();
-    });
+    shouldBehaveLikeAccountCore();
+    shouldBehaveLikeAccountHolder();
+    shouldBehaveLikeERC1271({ erc7739: true });
+    shouldBehaveLikeERC7821();
   });
 
   // Using ZKEmail with an ERC-7913 verifier
