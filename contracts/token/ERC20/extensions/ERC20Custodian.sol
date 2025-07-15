@@ -70,14 +70,14 @@ abstract contract ERC20Custodian is ERC20 {
     /**
      * @dev Adjusts the amount of tokens frozen for a user.
      * @param user The address of the user whose tokens to freeze.
-     * @param amount The amount of tokens frozen.
+     * @param amount The total amount of tokens frozen for the user.
      *
      * Requirements:
      *
-     * - The user must have sufficient unfrozen balance.
+     * - The amount must not exceed the user's total balance.
      */
     function freeze(address user, uint256 amount) external virtual onlyCustodian {
-        if (availableBalance(user) < amount) revert ERC20InsufficientUnfrozenBalance(user);
+        if (balanceOf(user) < amount) revert ERC20InsufficientUnfrozenBalance(user);
         _frozen[user] = amount;
         emit TokensFrozen(user, amount);
     }

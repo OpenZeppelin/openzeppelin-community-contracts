@@ -132,6 +132,19 @@ describe('ERC20CustodianMock', function () {
           'ERC20InsufficientUnfrozenBalance',
         );
       });
+
+      it('should allow reducing frozen amount', async function () {
+        // First, freeze 80 tokens out of 100
+        await this.token.freeze(this.holder, 80n);
+        expect(await this.token.frozen(this.holder)).to.equal(80n);
+
+        // Now reduce frozen amount to 50 (this should work with the fix)
+        await this.token.freeze(this.holder, 50n);
+        expect(await this.token.frozen(this.holder)).to.equal(50n);
+
+        // Verify available balance is now 100 - 50 = 50
+        expect(await this.token.availableBalance(this.holder)).to.equal(50n);
+      });
     });
   });
 });
