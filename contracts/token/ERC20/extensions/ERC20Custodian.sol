@@ -14,7 +14,7 @@ import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
  * of a user.
  *
  * The frozen balance is not available for transfers or approvals
- * to other entities to operate on its behalf if. The frozen balance
+ * to other entities to operate on its behalf. The frozen balance
  * can be reduced by calling {freeze} again with a lower amount.
  */
 abstract contract ERC20Custodian is ERC20 {
@@ -31,21 +31,9 @@ abstract contract ERC20Custodian is ERC20 {
     event TokensFrozen(address indexed user, uint256 amount);
 
     /**
-     * @dev Emitted when tokens are unfrozen for a user.
-     * @param user The address of the user whose tokens were unfrozen.
-     * @param amount The amount of tokens that were unfrozen.
-     */
-    event TokensUnfrozen(address indexed user, uint256 amount);
-
-    /**
      * @dev The operation failed because the user has insufficient unfrozen balance.
      */
     error ERC20InsufficientUnfrozenBalance(address user);
-
-    /**
-     * @dev The operation failed because the user has insufficient frozen balance.
-     */
-    error ERC20InsufficientFrozenBalance(address user);
 
     /**
      * @dev Error thrown when a non-custodian account attempts to perform a custodian-only operation.
@@ -98,6 +86,10 @@ abstract contract ERC20Custodian is ERC20 {
      */
     function _isCustodian(address user) internal view virtual returns (bool);
 
+    /**
+     * @dev Override of {ERC20-_update} that enforces frozen balance restrictions.
+     * Prevents transfers when the sender doesn't have sufficient unfrozen balance.
+     */
     function _update(address from, address to, uint256 value) internal virtual override {
         if (from != address(0) && availableBalance(from) < value) revert ERC20InsufficientUnfrozenBalance(from);
         super._update(from, to, value);
