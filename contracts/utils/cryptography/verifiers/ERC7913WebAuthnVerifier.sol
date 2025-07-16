@@ -20,15 +20,13 @@ import {IERC7913SignatureVerifier} from "@openzeppelin/contracts/interfaces/IERC
 contract ERC7913WebAuthnVerifier is IERC7913SignatureVerifier {
     /// @inheritdoc IERC7913SignatureVerifier
     function verify(bytes calldata key, bytes32 hash, bytes calldata signature) public view virtual returns (bytes4) {
-        // Signature length may be 0x40 or 0x41.
-        if (key.length == 0x40 && signature.length >= 0x40) {
-            bytes32 qx = bytes32(key[0x00:0x20]);
-            bytes32 qy = bytes32(key[0x20:0x40]);
-            WebAuthn.WebAuthnAuth memory auth = abi.decode(signature, (WebAuthn.WebAuthnAuth));
-            if (WebAuthn.verifyMinimal(abi.encodePacked(hash), auth, qx, qy)) {
-                return IERC7913SignatureVerifier.verify.selector;
-            }
-        }
-        return 0xFFFFFFFF;
+        (bool decodeSuccess, WebAuthn.WebAuthnAuth calldata auth) = WebAuthn.tryDecodeAuth(signature);
+
+        return
+            (decodeSuccess &&
+                key.length == 0x40 &&
+                WebAuthn.verifyMinimal(abi.encodePacked(hash), auth, bytes32(key[0x00:0x20]), bytes32(key[0x20:0x40])))
+                ? IERC7913SignatureVerifier.verify.selector
+                : bytes4(0xFFFFFFFF);
     }
 }
