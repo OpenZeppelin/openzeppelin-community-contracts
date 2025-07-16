@@ -60,11 +60,6 @@ library WebAuthn {
     /// @dev Bit 4 of the authenticator data flags: "Backup State" bit.
     bytes1 private constant AUTH_DATA_FLAGS_BS = 0x10;
 
-    /// @dev The expected type string in the client data JSON when verifying assertion signatures.
-    /// https://www.w3.org/TR/webauthn-2/#dom-collectedclientdata-type
-    // solhint-disable-next-line quotes
-    bytes32 private constant EXPECTED_TYPE_HASH = keccak256('"type":"webauthn.get"');
-
     /**
      * @dev Performs the absolute minimal verification of a WebAuthn Authentication Assertion.
      * This function includes only the essential checks required for basic WebAuthn security:
@@ -89,18 +84,16 @@ library WebAuthn {
         // - 32 bytes for rpIdHash
         // - 1 byte for flags
         // - 4 bytes for signature counter
-        if (auth.authenticatorData.length < 37) return false;
-        bytes memory clientDataJSON = bytes(auth.clientDataJSON);
-
         return
-            validateExpectedTypeHash(clientDataJSON, auth.typeIndex) && // 11
-            validateChallenge(clientDataJSON, auth.challengeIndex, challenge) && // 12
+            auth.authenticatorData.length > 36 &&
+            validateExpectedTypeHash(auth.clientDataJSON, auth.typeIndex) && // 11
+            validateChallenge(auth.clientDataJSON, auth.challengeIndex, challenge) && // 12
             // Handles signature malleability internally
             P256.verify(
                 sha256(
                     abi.encodePacked(
                         auth.authenticatorData,
-                        sha256(clientDataJSON) // 19
+                        sha256(bytes(auth.clientDataJSON)) // 19
                     )
                 ),
                 auth.r,
@@ -222,30 +215,27 @@ library WebAuthn {
      * @dev Validates that the https://www.w3.org/TR/webauthn-2/#type[Type] field in the client data JSON
      * is set to "webauthn.get".
      */
-    function validateExpectedTypeHash(bytes memory clientDataJSON, uint256 typeIndex) internal pure returns (bool) {
+    function validateExpectedTypeHash(string memory clientDataJSON, uint256 typeIndex) internal pure returns (bool) {
         // 21 = length of '"type":"webauthn.get"'
-        bytes memory typeValueBytes = Bytes.slice(clientDataJSON, typeIndex, typeIndex + 21);
-        return keccak256(typeValueBytes) == EXPECTED_TYPE_HASH;
+        bytes memory typeValueBytes = Bytes.slice(bytes(clientDataJSON), typeIndex, typeIndex + 21);
+
+        // solhint-disable-next-line quotes
+        return bytes21(typeValueBytes) == bytes21('"type":"webauthn.get"');
     }
 
     /// @dev Validates that the challenge in the client data JSON matches the `expectedChallenge`.
     function validateChallenge(
-        bytes memory clientDataJSON,
+        string memory clientDataJSON,
         uint256 challengeIndex,
-        bytes memory expectedChallenge
+        bytes memory challenge
     ) internal pure returns (bool) {
-        bytes memory expectedChallengeBytes = bytes(
-            // solhint-disable-next-line quotes
-            string.concat('"challenge":"', Base64.encodeURL(expectedChallenge), '"')
-        );
-        if (challengeIndex + expectedChallengeBytes.length > clientDataJSON.length) return false;
-        bytes memory actualChallengeBytes = Bytes.slice(
-            clientDataJSON,
-            challengeIndex,
-            challengeIndex + expectedChallengeBytes.length
+        // solhint-disable-next-line quotes
+        string memory expectedChallenge = string.concat('"challenge":"', Base64.encodeURL(challenge), '"');
+        string memory actualChallenge = string(
+            Bytes.slice(bytes(clientDataJSON), challengeIndex, challengeIndex + bytes(expectedChallenge).length)
         );
 
-        return Strings.equal(string(actualChallengeBytes), string(expectedChallengeBytes));
+        return Strings.equal(actualChallenge, expectedChallenge);
     }
 
     /**
