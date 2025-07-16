@@ -247,4 +247,35 @@ library WebAuthn {
 
         return Strings.equal(string(actualChallengeBytes), string(expectedChallengeBytes));
     }
+
+    function tryDecodeAuth(bytes calldata input) internal pure returns (bool success, WebAuthnAuth calldata auth) {
+        // Default result (optimistic)
+        success = true;
+        assembly ("memory-safe") {
+            auth := input.offset
+        }
+
+        // Minimum length to hold 6 objects (32 bytes each)
+        if (input.length < 0xC0) return (false, auth);
+
+        // Get offset of non-value-type elements relative to the input buffer
+        uint256 authenticatorDataOffset = uint256(bytes32(input[0x80:]));
+        uint256 clientDataJSONOffset = uint256(bytes32(input[0xa0:]));
+
+        // The elements length (at the offset) should be 32 bytes long. We check that this is within the
+        // buffer bounds. Since we know input.length is at least 32, we can subtract with no overflow risk.
+        if (input.length - 0x20 < authenticatorDataOffset || input.length - 0x20 < clientDataJSONOffset)
+            return (false, auth);
+
+        // Get the lengths. offset + 32 is bounded by input.length so it does not overflow.
+        uint256 authenticatorDataLength = uint256(bytes32(input[authenticatorDataOffset:]));
+        uint256 clientDataJSONLength = uint256(bytes32(input[clientDataJSONOffset:]));
+
+        // Check that the input buffer is long enough to store the non-value-type elements
+        // Since we know input.length is at least xxxOffset + 32, we can subtract with no overflow risk.
+        if (
+            input.length - authenticatorDataOffset - 0x20 < authenticatorDataLength ||
+            input.length - clientDataJSONOffset - 0x20 < clientDataJSONLength
+        ) return (false, auth);
+    }
 }

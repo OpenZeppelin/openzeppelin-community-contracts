@@ -92,16 +92,14 @@ class WebAuthnSigningKey extends P256SigningKey {
     const { r, s } = super.sign(sha256(concat([authenticatorData, sha256(toUtf8Bytes(clientDataJSON))])));
 
     const serialized = AbiCoder.defaultAbiCoder().encode(
-      ['tuple(bytes32,bytes32,uint256,uint256,bytes,string)'],
+      ['bytes32', 'bytes32', 'uint256', 'uint256', 'bytes', 'string'],
       [
-        [
-          r,
-          s,
-          clientDataJSON.indexOf('"challenge"'),
-          clientDataJSON.indexOf('"type"'),
-          authenticatorData,
-          clientDataJSON,
-        ],
+        r,
+        s,
+        clientDataJSON.indexOf('"challenge"'),
+        clientDataJSON.indexOf('"type"'),
+        authenticatorData,
+        clientDataJSON,
       ],
     );
 
