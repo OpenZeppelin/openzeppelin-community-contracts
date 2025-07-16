@@ -246,7 +246,6 @@ library WebAuthn {
      * cause revert/panic.
      */
     function tryDecodeAuth(bytes calldata input) internal pure returns (bool success, WebAuthnAuth calldata auth) {
-        // Default result (optimistic)
         assembly ("memory-safe") {
             auth := input.offset
         }
