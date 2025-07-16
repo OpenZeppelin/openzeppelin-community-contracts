@@ -314,8 +314,9 @@ Useful for templates with Ethereum address matchers (i.e. `{ethAddr}`), which ar
 :validateUserPresentBitSet: pass:normal[xref:#WebAuthn-validateUserPresentBitSet-bytes1-[`++validateUserPresentBitSet++`]]
 :validateUserVerifiedBitSet: pass:normal[xref:#WebAuthn-validateUserVerifiedBitSet-bytes1-[`++validateUserVerifiedBitSet++`]]
 :validateBackupEligibilityAndState: pass:normal[xref:#WebAuthn-validateBackupEligibilityAndState-bytes1-[`++validateBackupEligibilityAndState++`]]
-:validateExpectedTypeHash: pass:normal[xref:#WebAuthn-validateExpectedTypeHash-bytes-uint256-[`++validateExpectedTypeHash++`]]
-:validateChallenge: pass:normal[xref:#WebAuthn-validateChallenge-bytes-uint256-bytes-[`++validateChallenge++`]]
+:validateExpectedTypeHash: pass:normal[xref:#WebAuthn-validateExpectedTypeHash-string-uint256-[`++validateExpectedTypeHash++`]]
+:validateChallenge: pass:normal[xref:#WebAuthn-validateChallenge-string-uint256-bytes-[`++validateChallenge++`]]
+:tryDecodeAuth: pass:normal[xref:#WebAuthn-tryDecodeAuth-bytes-[`++tryDecodeAuth++`]]
 
 [.contract]
 [[WebAuthn]]
@@ -365,7 +366,8 @@ Inspired by:
 * `++validateUserVerifiedBitSet(flags)++`
 * `++validateBackupEligibilityAndState(flags)++`
 * `++validateExpectedTypeHash(clientDataJSON, typeIndex)++`
-* `++validateChallenge(clientDataJSON, challengeIndex, expectedChallenge)++`
+* `++validateChallenge(clientDataJSON, challengeIndex, challenge)++`
+* `++tryDecodeAuth(input)++`
 
 --
 
@@ -476,17 +478,27 @@ compatibility or when the application's threat model doesn't consider credential
 syncing a major risk.
 
 [.contract-item]
-[[WebAuthn-validateExpectedTypeHash-bytes-uint256-]]
-==== `[.contract-item-name]#++validateExpectedTypeHash++#++(bytes clientDataJSON, uint256 typeIndex) → bool++` [.item-kind]#internal#
+[[WebAuthn-validateExpectedTypeHash-string-uint256-]]
+==== `[.contract-item-name]#++validateExpectedTypeHash++#++(string clientDataJSON, uint256 typeIndex) → bool++` [.item-kind]#internal#
 
 Validates that the https://www.w3.org/TR/webauthn-2/#type[Type] field in the client data JSON
 is set to "webauthn.get".
 
 [.contract-item]
-[[WebAuthn-validateChallenge-bytes-uint256-bytes-]]
-==== `[.contract-item-name]#++validateChallenge++#++(bytes clientDataJSON, uint256 challengeIndex, bytes expectedChallenge) → bool++` [.item-kind]#internal#
+[[WebAuthn-validateChallenge-string-uint256-bytes-]]
+==== `[.contract-item-name]#++validateChallenge++#++(string clientDataJSON, uint256 challengeIndex, bytes challenge) → bool++` [.item-kind]#internal#
 
 Validates that the challenge in the client data JSON matches the `expectedChallenge`.
+
+[.contract-item]
+[[WebAuthn-tryDecodeAuth-bytes-]]
+==== `[.contract-item-name]#++tryDecodeAuth++#++(bytes input) → bool success, struct WebAuthn.WebAuthnAuth auth++` [.item-kind]#internal#
+
+Verifies that calldata bytes (`input`) represents a valid `WebAuthnAuth` object. If encoding is valid,
+returns true and the calldata view at the object. Otherwise, returns false and an invalid calldata object.
+
+NOTE: The returned `auth` object should not be accessed if `success` is false. Trying to access the data may
+cause revert/panic.
 
 == Abstract Signers
 
