@@ -1,4 +1,4 @@
-## 14-07-2025
+## 16-07-2025
 
 - `ERC7913WebAuthnVerifier`: Add an ERC-7913 signature verifier that supports WebAuthn authentication assertions using P256 keys.
 
