@@ -22,6 +22,7 @@
 :ERC7913P256Verifier: pass:normal[xref:utils/cryptography.adoc#ERC7913P256Verifier[`ERC7913P256Verifier`]]
 :ERC7913RSAVerifier: pass:normal[xref:utils/cryptography.adoc#ERC7913RSAVerifier[`ERC7913RSAVerifier`]]
 :ERC7913ZKEmailVerifier: pass:normal[xref:utils/cryptography.adoc#ERC7913ZKEmailVerifier[`ERC7913ZKEmailVerifier`]]
+:ERC7913WebAuthnVerifier: pass:normal[xref:utils/cryptography.adoc#ERC7913WebAuthnVerifier[`ERC7913WebAuthnVerifier`]]
 :ERC7739Utils: pass:normal[xref:utils/cryptography.adoc#ERC7739Utils[`ERC7739Utils`]]
 :AbstractSigner: pass:normal[xref:utils/cryptography.adoc#AbstractSigner[`AbstractSigner`]]
 :Account: pass:normal[xref:account.adoc#Account[`Account`]]
@@ -42,6 +43,8 @@
 :SignerP256: pass:normal[xref:utils/cryptography.adoc#SignerP256[`SignerP256`]]
 :WebAuthn-WebAuthnAuth: pass:normal[xref:utils/cryptography.adoc#WebAuthn-WebAuthnAuth[`WebAuthn.WebAuthnAuth`]]
 :SignerP256-_rawSignatureValidation: pass:normal[xref:utils/cryptography.adoc#SignerP256-_rawSignatureValidation-bytes32-bytes-[`SignerP256._rawSignatureValidation`]]
+:WebAuthn-WebAuthnAuth: pass:normal[xref:utils/cryptography.adoc#WebAuthn-WebAuthnAuth[`WebAuthn.WebAuthnAuth`]]
+:WebAuthn-verifyMinimal: pass:normal[xref:utils/cryptography.adoc#WebAuthn-verifyMinimal-bytes-struct-WebAuthn-WebAuthnAuth-bytes32-bytes32-[`WebAuthn.verifyMinimal`]]
 = Cryptography
 
 [.readme-notice]
@@ -60,7 +63,7 @@ A collection of contracts and libraries that implement various signature validat
  * {SignerERC7913}, {MultiSignerERC7913}, {MultiSignerERC7913Weighted}: Implementations of {AbstractSigner} that validate signatures based on ERC-7913. Including a simple and weighted multisignature scheme.
  * {SignerZKEmail}: Implementation of an {AbstractSigner} that enables email-based authentication through zero-knowledge proofs.
  * {SignerWebAuthn}: Implementation of {SignerP256} that supports WebAuthn authentication assertions.
- * {ERC7913P256Verifier}, {ERC7913RSAVerifier}, {ERC7913ZKEmailVerifier}: Ready to use ERC-7913 signature verifiers for P256, RSA keys, and ZKEmail.
+ * {ERC7913P256Verifier}, {ERC7913RSAVerifier}, {ERC7913ZKEmailVerifier}, {ERC7913WebAuthnVerifier}: Ready to use ERC-7913 signature verifiers for P256, RSA keys, ZKEmail and WebAuthn.
 
 == Utils
 
@@ -1829,4 +1832,46 @@ Decodes the key into its components.
 ```solidity
 bytes memory key = abi.encode(registry, accountSalt, verifier, templateId);
 ```
+
+:verify: pass:normal[xref:#ERC7913WebAuthnVerifier-verify-bytes-bytes32-bytes-[`++verify++`]]
+
+[.contract]
+[[ERC7913WebAuthnVerifier]]
+=== `++ERC7913WebAuthnVerifier++` link:https://github.com/OpenZeppelin/openzeppelin-community-contracts/blob/master/contracts/utils/cryptography/verifiers/ERC7913WebAuthnVerifier.sol[{github-icon},role=heading-link]
+
+[.hljs-theme-light.nopadding]
+```solidity
+import "@openzeppelin/community-contracts/utils/cryptography/verifiers/ERC7913WebAuthnVerifier.sol";
+```
+
+ERC-7913 signature verifier that supports WebAuthn authentication assertions.
+
+This verifier enables the validation of WebAuthn signatures using P256 public keys.
+The key is expected to be a 64-byte concatenation of the P256 public key coordinates (qx || qy).
+The signature is expected to be an abi-encoded {WebAuthn-WebAuthnAuth} struct.
+
+Uses {WebAuthn-verifyMinimal} for signature verification, which performs the essential
+WebAuthn checks: type validation, challenge matching, and cryptographic signature verification.
+
+NOTE: Wallets that may require default P256 validation may install a P256 verifier separately.
+
+[.contract-index]
+.Functions
+--
+* `++verify(key, hash, signature)++`
+
+[.contract-subindex-inherited]
+.IERC7913SignatureVerifier
+
+--
+
+[.contract-item]
+[[ERC7913WebAuthnVerifier-verify-bytes-bytes32-bytes-]]
+==== `[.contract-item-name]#++verify++#++(bytes key, bytes32 hash, bytes signature) → bytes4++` [.item-kind]#public#
+
+Verifies `signature` as a valid signature of `hash` by `key`.
+
+MUST return the bytes4 magic value IERC7913SignatureVerifier.verify.selector if the signature is valid.
+SHOULD return 0xffffffff or revert if the signature is not valid.
+SHOULD return 0xffffffff or revert if the key is empty
 

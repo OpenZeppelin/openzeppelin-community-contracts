@@ -8,7 +8,7 @@ const {
   P256SigningKey,
   RSASHA256SigningKey,
 } = require('@openzeppelin/contracts/test/helpers/signers');
-const { ZKEmailSigningKey } = require('../helpers/signers');
+const { ZKEmailSigningKey, WebAuthnSigningKey } = require('../helpers/signers');
 
 const { shouldBehaveLikeAccountCore, shouldBehaveLikeAccountHolder } = require('./Account.behavior');
 const { shouldBehaveLikeERC1271 } = require('../utils/cryptography/ERC1271.behavior');
@@ -18,6 +18,7 @@ const { shouldBehaveLikeERC7821 } = require('./extensions/ERC7821.behavior');
 const signerECDSA = ethers.Wallet.createRandom();
 const signerP256 = new NonNativeSigner(P256SigningKey.random());
 const signerRSA = new NonNativeSigner(RSASHA256SigningKey.random());
+const signerWebAuthn = new NonNativeSigner(WebAuthnSigningKey.random());
 
 // Constants for ZKEmail
 const accountSalt = '0x046582bce36cdd0a8953b9d40b8f20d58302bacf3bcecffeb6741c98a52725e2'; // keccak256("test@example.com")
@@ -48,6 +49,7 @@ async function fixture() {
   // ERC-7913 verifiers
   const verifierP256 = await ethers.deployContract('ERC7913P256Verifier');
   const verifierRSA = await ethers.deployContract('ERC7913RSAVerifier');
+  const verifierWebAuthn = await ethers.deployContract('ERC7913WebAuthnVerifier');
   const verifierZKEmail = await ethers.deployContract('$ERC7913ZKEmailVerifier');
 
   // ERC-4337 env
@@ -72,6 +74,7 @@ async function fixture() {
     helper,
     verifierP256,
     verifierRSA,
+    verifierWebAuthn,
     verifierZKEmail,
     dkim,
     zkEmailVerifier,
@@ -132,6 +135,25 @@ describe('AccountERC7913', function () {
             ['bytes', 'bytes'],
             [this.signer.signingKey.publicKey.e, this.signer.signingKey.publicKey.n],
           ),
+        ]),
+      );
+    });
+
+    shouldBehaveLikeAccountCore();
+    shouldBehaveLikeAccountHolder();
+    shouldBehaveLikeERC1271({ erc7739: true });
+    shouldBehaveLikeERC7821();
+  });
+
+  // Using WebAuthn key with an ERC-7913 verifier
+  describe('WebAuthn key', function () {
+    beforeEach(async function () {
+      this.signer = signerWebAuthn;
+      this.mock = await this.makeMock(
+        ethers.concat([
+          this.verifierWebAuthn.target,
+          this.signer.signingKey.publicKey.qx,
+          this.signer.signingKey.publicKey.qy,
         ]),
       );
     });
