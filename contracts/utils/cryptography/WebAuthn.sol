@@ -248,6 +248,13 @@ library WebAuthn {
         return Strings.equal(string(actualChallengeBytes), string(expectedChallengeBytes));
     }
 
+    /**
+     * @dev Verifies that calldata bytes (`input`) represents a valid `WebAuthnAuth` object. If encoding is valid,
+     * returns true and the calldata view at the object. Otherwise, returns false and an invalid calldata object.
+     *
+     * NOTE: The returned `auth` object should not be accessed if `success` is false. Trying to access the data may
+     * cause revert/panic.
+     */
     function tryDecodeAuth(bytes calldata input) internal pure returns (bool success, WebAuthnAuth calldata auth) {
         // Default result (optimistic)
         success = true;
