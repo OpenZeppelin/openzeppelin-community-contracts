@@ -23,9 +23,9 @@ contract ERC7913WebAuthnVerifier is IERC7913SignatureVerifier {
         (bool decodeSuccess, WebAuthn.WebAuthnAuth calldata auth) = WebAuthn.tryDecodeAuth(signature);
 
         return
-            (decodeSuccess &&
+            decodeSuccess &&
                 key.length == 0x40 &&
-                WebAuthn.verifyMinimal(abi.encodePacked(hash), auth, bytes32(key[0x00:0x20]), bytes32(key[0x20:0x40])))
+                WebAuthn.verifyMinimal(abi.encodePacked(hash), auth, bytes32(key[0x00:0x20]), bytes32(key[0x20:0x40]))
                 ? IERC7913SignatureVerifier.verify.selector
                 : bytes4(0xFFFFFFFF);
     }
