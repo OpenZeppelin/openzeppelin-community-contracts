@@ -247,7 +247,6 @@ library WebAuthn {
      */
     function tryDecodeAuth(bytes calldata input) internal pure returns (bool success, WebAuthnAuth calldata auth) {
         // Default result (optimistic)
-        success = true;
         assembly ("memory-safe") {
             auth := input.offset
         }
@@ -274,5 +273,7 @@ library WebAuthn {
             input.length - authenticatorDataOffset - 0x20 < authenticatorDataLength ||
             input.length - clientDataJSONOffset - 0x20 < clientDataJSONLength
         ) return (false, auth);
+
+        return (true, auth);
     }
 }
