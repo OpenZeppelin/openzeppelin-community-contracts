@@ -4,3 +4,4 @@
 @axelar-network/axelar-gmp-sdk-solidity/=lib/axelar-gmp-sdk-solidity/
 @zk-email/email-tx-builder/=lib/email-tx-builder/packages/contracts/
 @zk-email/contracts/=lib/zk-email-verify/packages/contracts/
+wormhole-solidity-sdk/=lib/wormhole-solidity-sdk/src/
