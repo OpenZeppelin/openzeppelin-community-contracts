@@ -1,3 +1,24 @@
+## 08-07-2025
+
+- `WebAuthn.sol`: Add library for on-chain verification of WebAuthn authentication assertions and P256 signatures.
+- `SignerWebAuthn.sol`: Add abstract contract for signature validation using WebAuthn or raw P256 signatures.
+- `ERC7579SelectorExecutor.sol`: Add an ERC-7579 executor module restricting execution to authorized function selectors per account.
+- `ERC7579MultisigStorage.sol`: Add an ERC-7579 multisig module supporting presigned approvals stored in contract storage.
+
+## 23-06-2025
+
+- `AxelarGatewayBase`, `AxelarGatewayDestination`, `AxelarGatewaySource`, `ERC7786Receiver` and `ERC7786Aggregator`: Changed support from CAIP addresses to ERC-7930 addresses.
+- `ERC7786Aggregator`: Renamed to `ERC7786OpenBridge`.
+
+## 20-06-2025
+
+- `EnumerableMap`: Add `keys(uint256,uint256)` that returns a subset (slice) of the keys in the map.
+- `EnumerableSet`: Add `values(uint256,uint256)` that returns a subset (slice) of the values in the set.
+
+## 03-06-2025
+
+- Moved `ERC7739Utils`, `ERC7913Utils`, `ZKEmailUtils`, abstract signers and ERC-7913 verifiers to `/contracts/utils/cryptography`
+
 ## 15-05-2025
 
 - `ERC7579Multisig`: Add an abstract multisig module for ERC-7579 accounts using ERC-7913 signer keys.

@@ -6,18 +6,23 @@ NOTE: This document is better viewed at https://docs.openzeppelin.com/community-
 A collection of contracts and libraries that implement various signature validation schemes and cryptographic primitives. These utilities enable secure authentication, multisignature operations, and advanced cryptographic operations in smart contracts.
 
  * {ZKEmailUtils}: Library for ZKEmail signature validation utilities, enabling email-based authentication through zero-knowledge proofs.
+ * {WebAuthn}: Library for verifying WebAuthn Authentication Assertions.
  * {SignerZKEmail}: Implementation of an {AbstractSigner} that enables email-based authentication through zero-knowledge proofs.
- * {ERC7913ZKEmailVerifier}: Ready to use ERC-7913 signature verifiers for P256, RSA keys, and ZKEmail.
+ * {SignerWebAuthn}: Implementation of {SignerP256} that supports WebAuthn authentication assertions.
+ * {ERC7913ZKEmailVerifier}: Ready to use ERC-7913 signature verifiers for ZKEmail.
 
 == Utils
 
 {{ZKEmailUtils}}
 
+{{WebAuthn}}
+
 == Abstract Signers
 
 {{SignerZKEmail}}
 
-== Verifiers
+{{SignerWebAuthn}}
 
+== Verifiers
 
 {{ERC7913ZKEmailVerifier}}

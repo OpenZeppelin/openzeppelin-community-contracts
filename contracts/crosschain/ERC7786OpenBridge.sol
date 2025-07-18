@@ -5,19 +5,17 @@ pragma solidity ^0.8.27;
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import {Address} from "@openzeppelin/contracts/utils/Address.sol";
-import {CAIP2} from "@openzeppelin/contracts/utils/CAIP2.sol";
-import {CAIP10} from "@openzeppelin/contracts/utils/CAIP10.sol";
 import {Pausable} from "@openzeppelin/contracts/utils/Pausable.sol";
-import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 import {IERC7786GatewaySource, IERC7786Receiver} from "../interfaces/IERC7786.sol";
+import {InteroperableAddress} from "@openzeppelin/contracts/utils/draft-InteroperableAddress.sol";
 
 /**
  * @dev N of M gateway: Sends your message through M independent gateways. It will be delivered to the receiver by an
- * equivalent aggregator on the destination chain if N of the M gateways agree.
+ * equivalent bridge on the destination chain if N of the M gateways agree.
  */
-contract ERC7786Aggregator is IERC7786GatewaySource, IERC7786Receiver, Ownable, Pausable {
-    using EnumerableSet for *;
-    using Strings for *;
+contract ERC7786OpenBridge is IERC7786GatewaySource, IERC7786Receiver, Ownable, Pausable {
+    using EnumerableSet for EnumerableSet.AddressSet;
+    using InteroperableAddress for bytes;
 
     struct Outbox {
         address gateway;
@@ -30,7 +28,7 @@ contract ERC7786Aggregator is IERC7786GatewaySource, IERC7786Receiver, Ownable, 
         bool executed;
     }
 
-    event OutboxDetails(bytes32 indexed outboxId, Outbox[] outbox);
+    event OutboxDetails(bytes32 indexed sendId, Outbox[] outbox);
     event Received(bytes32 indexed receiveId, address gateway);
     event ExecutionSuccess(bytes32 indexed receiveId);
     event ExecutionFailed(bytes32 indexed receiveId);
@@ -38,21 +36,21 @@ contract ERC7786Aggregator is IERC7786GatewaySource, IERC7786Receiver, Ownable, 
     event GatewayRemoved(address indexed gateway);
     event ThresholdUpdated(uint8 threshold);
 
-    error ERC7786AggregatorValueNotSupported();
-    error ERC7786AggregatorInvalidCrosschainSender();
-    error ERC7786AggregatorAlreadyExecuted();
-    error ERC7786AggregatorRemoteNotRegistered(string caip2);
-    error ERC7786AggregatorGatewayAlreadyRegistered(address gateway);
-    error ERC7786AggregatorGatewayNotRegistered(address gateway);
-    error ERC7786AggregatorThresholdViolation();
-    error ERC7786AggregatorInvalidExecutionReturnValue();
+    error UnsupportedNativeTransfer();
+    error ERC7786OpenBridgeInvalidCrosschainSender();
+    error ERC7786OpenBridgeAlreadyExecuted();
+    error ERC7786OpenBridgeRemoteNotRegistered(bytes2 chainType, bytes chainReference);
+    error ERC7786OpenBridgeGatewayAlreadyRegistered(address gateway);
+    error ERC7786OpenBridgeGatewayNotRegistered(address gateway);
+    error ERC7786OpenBridgeThresholdViolation();
+    error ERC7786OpenBridgeInvalidExecutionReturnValue();
 
     /****************************************************************************************************************
      *                                        S T A T E   V A R I A B L E S                                         *
      ****************************************************************************************************************/
 
-    /// @dev address of the matching aggregator for a given CAIP2 chain
-    mapping(string caip2 => string) private _remotes;
+    /// @dev address of the matching bridge for a given CAIP2 chain
+    mapping(bytes2 chainType => mapping(bytes chainReference => bytes addr)) private _remotes;
 
     /// @dev Tracking of the received message pending final delivery
     mapping(bytes32 id => Tracker) private _trackers;
@@ -69,8 +67,8 @@ contract ERC7786Aggregator is IERC7786GatewaySource, IERC7786Receiver, Ownable, 
     /****************************************************************************************************************
      *                                        E V E N T S   &   E R R O R S                                         *
      ****************************************************************************************************************/
-    event RemoteRegistered(string chainId, string aggregator);
-    error RemoteAlreadyRegistered(string chainId);
+    event RemoteRegistered(bytes remote);
+    error RemoteAlreadyRegistered(bytes remote);
 
     /****************************************************************************************************************
      *                                              F U N C T I O N S                                               *
@@ -92,18 +90,21 @@ contract ERC7786Aggregator is IERC7786GatewaySource, IERC7786Receiver, Ownable, 
     /// @inheritdoc IERC7786GatewaySource
     /// @dev Using memory instead of calldata avoids stack too deep errors
     function sendMessage(
-        string calldata destinationChain,
-        string memory receiver,
-        bytes memory payload,
-        bytes[] memory attributes
-    ) public payable virtual whenNotPaused returns (bytes32 outboxId) {
-        if (attributes.length > 0) revert UnsupportedAttribute(bytes4(attributes[0]));
-        if (msg.value > 0) revert ERC7786AggregatorValueNotSupported();
-        // address of the remote aggregator, revert if not registered
-        string memory aggregator = getRemoteAggregator(destinationChain);
+        bytes calldata recipient, // Binary Interoperable Address
+        bytes calldata payload,
+        bytes[] calldata attributes
+    ) public payable virtual whenNotPaused returns (bytes32 sendId) {
+        require(msg.value == 0, UnsupportedNativeTransfer());
+        // Use of `if () revert` syntax to avoid accessing attributes[0] if it's empty
+        if (attributes.length > 0)
+            revert UnsupportedAttribute(attributes[0].length < 0x04 ? bytes4(0) : bytes4(attributes[0][0:4]));
+
+        // address of the remote bridge, revert if not registered
+        bytes memory bridge = getRemoteBridge(recipient);
+        bytes memory sender = InteroperableAddress.formatEvmV1(block.chainid, msg.sender);
 
         // wrapping the payload
-        bytes memory wrappedPayload = abi.encode(++_nonce, msg.sender.toChecksumHexString(), receiver, payload);
+        bytes memory wrappedPayload = abi.encode(++_nonce, sender, recipient, payload);
 
         // Post on all gateways
         Outbox[] memory outbox = new Outbox[](_gateways.length());
@@ -111,12 +112,7 @@ contract ERC7786Aggregator is IERC7786GatewaySource, IERC7786Receiver, Ownable, 
         for (uint256 i = 0; i < outbox.length; ++i) {
             address gateway = _gateways.at(i);
             // send message
-            bytes32 id = IERC7786GatewaySource(gateway).sendMessage(
-                destinationChain,
-                aggregator,
-                wrappedPayload,
-                attributes
-            );
+            bytes32 id = IERC7786GatewaySource(gateway).sendMessage(bridge, wrappedPayload, attributes);
             // if ID, track it
             if (id != bytes32(0)) {
                 outbox[i] = Outbox(gateway, id);
@@ -125,17 +121,11 @@ contract ERC7786Aggregator is IERC7786GatewaySource, IERC7786Receiver, Ownable, 
         }
 
         if (needsId) {
-            outboxId = keccak256(abi.encode(outbox));
-            emit OutboxDetails(outboxId, outbox);
+            sendId = keccak256(abi.encode(outbox));
+            emit OutboxDetails(sendId, outbox);
         }
 
-        emit MessagePosted(
-            outboxId,
-            CAIP10.local(msg.sender),
-            CAIP10.format(destinationChain, receiver),
-            payload,
-            attributes
-        );
+        emit MessageSent(sendId, sender, recipient, payload, 0, attributes);
     }
 
     // ============================================== IERC7786Receiver ===============================================
@@ -145,7 +135,7 @@ contract ERC7786Aggregator is IERC7786GatewaySource, IERC7786Receiver, Ownable, 
      *
      * @dev This function serves a dual purpose:
      *
-     * It will be called by ERC-7786 gateways with message coming from the the corresponding aggregator on the source
+     * It will be called by ERC-7786 gateways with message coming from the the corresponding bridge on the source
      * chain. These "signals" are tracked until the threshold is reached. At that point the message is sent to the
      * destination.
      *
@@ -158,7 +148,7 @@ contract ERC7786Aggregator is IERC7786GatewaySource, IERC7786Receiver, Ownable, 
      *
      * This function revert if:
      *
-     * * the message is not properly formatted or does not originate from the registered aggregator on the source
+     * * the message is not properly formatted or does not originate from the registered bridge on the source
      *   chain.
      * * someone tries re-execute a message that was already successfully delivered. This includes gateways that call
      *   this function a second time with a message that was already executed.
@@ -182,18 +172,18 @@ contract ERC7786Aggregator is IERC7786GatewaySource, IERC7786Receiver, Ownable, 
      * some value for unknown reason. In that case we want to register this gateway having delivered the message and
      * not revert. Any value accrued that way can be recovered by the admin using the {sweep} function.
      */
+    // slither-disable-next-line reentrancy-no-eth
     function executeMessage(
-        string calldata /*messageId*/, // gateway specific, empty or unique
-        string calldata sourceChain, // CAIP-2 chain identifier
-        string calldata sender, // CAIP-10 account address (does not include the chain identifier)
+        bytes32 /*receiveId*/,
+        bytes calldata sender, // Binary Interoperable Address
         bytes calldata payload,
         bytes[] calldata attributes
     ) public payable virtual whenNotPaused returns (bytes4) {
-        // Check sender is a trusted remote aggregator
-        if (!_remotes[sourceChain].equal(sender)) revert ERC7786AggregatorInvalidCrosschainSender();
+        // Check sender is a trusted bridge
+        require(keccak256(getRemoteBridge(sender)) == keccak256(sender), ERC7786OpenBridgeInvalidCrosschainSender());
 
         // Message reception tracker
-        bytes32 id = keccak256(abi.encode(sourceChain, sender, payload, attributes));
+        bytes32 id = keccak256(abi.encode(sender, payload, attributes));
         Tracker storage tracker = _trackers[id];
 
         // If call is first from a trusted gateway
@@ -206,13 +196,13 @@ contract ERC7786Aggregator is IERC7786GatewaySource, IERC7786Receiver, Ownable, 
             // if already executed, leave gracefully
             if (tracker.executed) return IERC7786Receiver.executeMessage.selector;
         } else if (tracker.executed) {
-            revert ERC7786AggregatorAlreadyExecuted();
+            revert ERC7786OpenBridgeAlreadyExecuted();
         }
 
         // Parse payload
-        (, string memory originalSender, string memory receiver, bytes memory unwrappedPayload) = abi.decode(
+        (, bytes memory originalSender, bytes memory recipient, bytes memory unwrappedPayload) = abi.decode(
             payload,
-            (uint256, string, string, bytes)
+            (uint256, bytes, bytes, bytes)
         );
 
         // If ready to execute, and not yet executed
@@ -222,10 +212,11 @@ contract ERC7786Aggregator is IERC7786GatewaySource, IERC7786Receiver, Ownable, 
 
             bytes memory call = abi.encodeCall(
                 IERC7786Receiver.executeMessage,
-                (uint256(id).toHexString(32), sourceChain, originalSender, unwrappedPayload, attributes)
+                (id, originalSender, unwrappedPayload, attributes)
             );
             // slither-disable-next-line reentrancy-no-eth
-            (bool success, bytes memory returndata) = receiver.parseAddress().call(call);
+            (, address target) = recipient.parseEvmV1();
+            (bool success, bytes memory returndata) = target.call(call);
 
             if (!success) {
                 // rollback to enable retry
@@ -236,7 +227,7 @@ contract ERC7786Aggregator is IERC7786GatewaySource, IERC7786Receiver, Ownable, 
                 emit ExecutionSuccess(id);
             } else {
                 // call successful but invalid value returned, we need to revert the subcall
-                revert ERC7786AggregatorInvalidExecutionReturnValue();
+                revert ERC7786OpenBridgeInvalidExecutionReturnValue();
             }
         }
 
@@ -253,10 +244,15 @@ contract ERC7786Aggregator is IERC7786GatewaySource, IERC7786Receiver, Ownable, 
         return _threshold;
     }
 
-    function getRemoteAggregator(string calldata caip2) public view virtual returns (string memory) {
-        string memory aggregator = _remotes[caip2];
-        if (bytes(aggregator).length == 0) revert ERC7786AggregatorRemoteNotRegistered(caip2);
-        return aggregator;
+    function getRemoteBridge(bytes memory chain) public view virtual returns (bytes memory) {
+        (bytes2 chainType, bytes memory chainReference, ) = chain.parseV1();
+        return getRemoteBridge(chainType, chainReference);
+    }
+
+    function getRemoteBridge(bytes2 chainType, bytes memory chainReference) public view virtual returns (bytes memory) {
+        bytes memory addr = _remotes[chainType][chainReference];
+        require(bytes(addr).length != 0, ERC7786OpenBridgeRemoteNotRegistered(chainType, chainReference));
+        return InteroperableAddress.formatV1(chainType, chainReference, addr);
     }
 
     // =================================================== Setters ===================================================
@@ -273,8 +269,8 @@ contract ERC7786Aggregator is IERC7786GatewaySource, IERC7786Receiver, Ownable, 
         _setThreshold(newThreshold);
     }
 
-    function registerRemoteAggregator(string memory caip2, string memory aggregator) public virtual onlyOwner {
-        _registerRemoteAggregator(caip2, aggregator);
+    function registerRemoteBridge(bytes calldata bridge) public virtual onlyOwner {
+        _registerRemoteBridge(bridge);
     }
 
     function pause() public virtual onlyOwner {
@@ -293,25 +289,25 @@ contract ERC7786Aggregator is IERC7786GatewaySource, IERC7786Receiver, Ownable, 
     // ================================================== Internal ===================================================
 
     function _addGateway(address gateway) internal virtual {
-        if (!_gateways.add(gateway)) revert ERC7786AggregatorGatewayAlreadyRegistered(gateway);
+        require(_gateways.add(gateway), ERC7786OpenBridgeGatewayAlreadyRegistered(gateway));
         emit GatewayAdded(gateway);
     }
 
     function _removeGateway(address gateway) internal virtual {
-        if (!_gateways.remove(gateway)) revert ERC7786AggregatorGatewayNotRegistered(gateway);
-        if (_threshold > _gateways.length()) revert ERC7786AggregatorThresholdViolation();
+        require(_gateways.remove(gateway), ERC7786OpenBridgeGatewayNotRegistered(gateway));
+        require(_threshold <= _gateways.length(), ERC7786OpenBridgeThresholdViolation());
         emit GatewayRemoved(gateway);
     }
 
     function _setThreshold(uint8 newThreshold) internal virtual {
-        if (newThreshold == 0 || _threshold > _gateways.length()) revert ERC7786AggregatorThresholdViolation();
+        require(newThreshold > 0 && newThreshold <= _gateways.length(), ERC7786OpenBridgeThresholdViolation());
         _threshold = newThreshold;
         emit ThresholdUpdated(newThreshold);
     }
 
-    function _registerRemoteAggregator(string memory caip2, string memory aggregator) internal virtual {
-        _remotes[caip2] = aggregator;
-
-        emit RemoteRegistered(caip2, aggregator);
+    function _registerRemoteBridge(bytes calldata bridge) internal virtual {
+        (bytes2 chainType, bytes calldata chainReference, bytes calldata addr) = bridge.parseV1Calldata();
+        _remotes[chainType][chainReference] = addr;
+        emit RemoteRegistered(bridge);
     }
 }
