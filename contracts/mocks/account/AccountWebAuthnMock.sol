@@ -10,10 +10,6 @@ import {ERC7821} from "@openzeppelin/contracts/account/extensions/draft-ERC7821.
 import {SignerWebAuthn} from "../../utils/cryptography/signers/SignerWebAuthn.sol";
 
 abstract contract AccountWebAuthnMock is Account, SignerWebAuthn, ERC7739, ERC7821, ERC721Holder, ERC1155Holder {
-    constructor(bytes32 qx, bytes32 qy) {
-        _setSigner(qx, qy);
-    }
-
     /// @inheritdoc ERC7821
     function _erc7821AuthorizedExecutor(
         address caller,
