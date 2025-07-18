@@ -7,7 +7,10 @@ const { NonNativeSigner, P256SigningKey } = require('@openzeppelin/contracts/tes
 const { WebAuthnSigningKey } = require('../helpers/signers');
 const { PackedUserOperation } = require('@openzeppelin/contracts/test/helpers/eip712-types');
 
-const { shouldBehaveLikeAccountCore, shouldBehaveLikeAccountHolder } = require('./Account.behavior');
+const {
+  shouldBehaveLikeAccountCore,
+  shouldBehaveLikeAccountHolder,
+} = require('@openzeppelin/contracts/test/account/Account.behavior');
 const { shouldBehaveLikeERC1271 } = require('../utils/cryptography/ERC1271.behavior');
 const { shouldBehaveLikeERC7821 } = require('./extensions/ERC7821.behavior');
 
