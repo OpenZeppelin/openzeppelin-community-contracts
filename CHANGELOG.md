@@ -1,3 +1,7 @@
+## 16-07-2025
+
+- `ERC7913WebAuthnVerifier`: Add an ERC-7913 signature verifier that supports WebAuthn authentication assertions using P256 keys.
+
 ## 08-07-2025
 
 - `WebAuthn.sol`: Add library for on-chain verification of WebAuthn authentication assertions and P256 signatures.

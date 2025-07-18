@@ -26,3 +26,5 @@ A collection of contracts and libraries that implement various signature validat
 == Verifiers
 
 {{ERC7913ZKEmailVerifier}}
+
+{{ERC7913WebAuthnVerifier}}
