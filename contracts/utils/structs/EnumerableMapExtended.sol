@@ -56,7 +56,7 @@ library EnumerableMapExtended {
 
     struct BytesToUintMap {
         // Storage of keys
-        EnumerableSetExtended.BytesSet _keys;
+        EnumerableSet.BytesSet _keys;
         mapping(bytes key => uint256) _values;
     }
 
@@ -180,7 +180,7 @@ library EnumerableMapExtended {
 
     struct StringToStringMap {
         // Storage of keys
-        EnumerableSetExtended.StringSet _keys;
+        EnumerableSet.StringSet _keys;
         mapping(string key => string) _values;
     }
 

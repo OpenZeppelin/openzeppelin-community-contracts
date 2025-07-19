@@ -22,13 +22,7 @@ const toMapTypeDescr = ({ key, value }) => ({
   value,
 });
 
-const SET_TYPES = [
-  { type: 'bytes32', size: 2 },
-  { type: 'string', memory: true },
-  { type: 'bytes', memory: true },
-]
-  .map(typeDescr)
-  .map(toSetTypeDescr);
+const SET_TYPES = [{ type: 'bytes32', size: 2 }].map(typeDescr).map(toSetTypeDescr);
 
 const MAP_TYPES = [
   { key: { type: 'bytes', memory: true }, value: { type: 'uint256' } },

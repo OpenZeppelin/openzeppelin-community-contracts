@@ -3,9 +3,9 @@
 pragma solidity ^0.8.20;
 
 import {ERC4337Utils, PackedUserOperation} from "@openzeppelin/contracts/account/utils/draft-ERC4337Utils.sol";
+import {AbstractSigner} from "@openzeppelin/contracts/utils/cryptography/signers/AbstractSigner.sol";
 import {EIP712} from "@openzeppelin/contracts/utils/cryptography/EIP712.sol";
 import {PaymasterCore} from "./PaymasterCore.sol";
-import {AbstractSigner} from "../../utils/cryptography/signers/AbstractSigner.sol";
 
 /**
  * @dev Extension of {PaymasterCore} that adds signature validation. See {SignerECDSA}, {SignerP256} or {SignerRSA}.
@@ -14,10 +14,7 @@ import {AbstractSigner} from "../../utils/cryptography/signers/AbstractSigner.so
  *
  * ```solidity
  * contract MyPaymasterECDSASigner is PaymasterSigner, SignerECDSA {
- *     constructor() EIP712("MyPaymasterECDSASigner", "1") {
- *       // Will revert if the signer is already initialized
- *       _setSigner(signerAddr);
- *     }
+ *     constructor(address signerAddr) EIP712("MyPaymasterECDSASigner", "1") SignerECDSA(signerAddr) {}
  * }
  * ```
  */

@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
-import {ERC7913Utils} from "../../utils/cryptography/ERC7913Utils.sol";
-import {EnumerableSetExtended} from "../../utils/structs/EnumerableSetExtended.sol";
 import {Mode} from "@openzeppelin/contracts/account/utils/draft-ERC7579Utils.sol";
+import {SignatureChecker} from "@openzeppelin/contracts/utils/cryptography/SignatureChecker.sol";
+import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import {ERC7579Validator} from "./ERC7579Validator.sol";
 
 /**
@@ -20,9 +20,9 @@ import {ERC7579Validator} from "./ERC7579Validator.sol";
  * a social recovery operation.
  */
 abstract contract ERC7579Multisig is ERC7579Validator {
-    using EnumerableSetExtended for EnumerableSetExtended.BytesSet;
-    using ERC7913Utils for bytes32;
-    using ERC7913Utils for bytes;
+    using EnumerableSet for EnumerableSet.BytesSet;
+    using SignatureChecker for bytes32;
+    using SignatureChecker for bytes;
 
     /// @dev Emitted when signers are added.
     event ERC7913SignerAdded(address indexed account, bytes signer);
@@ -45,7 +45,7 @@ abstract contract ERC7579Multisig is ERC7579Validator {
     /// @dev The `threshold` is unreachable given the number of `signers`.
     error ERC7579MultisigUnreachableThreshold(uint256 signers, uint256 threshold);
 
-    mapping(address account => EnumerableSetExtended.BytesSet) private _signersSetByAccount;
+    mapping(address account => EnumerableSet.BytesSet) private _signersSetByAccount;
     mapping(address account => uint256) private _thresholdByAccount;
 
     /**
@@ -78,7 +78,7 @@ abstract contract ERC7579Multisig is ERC7579Validator {
      * See {ERC7579DelayedExecutor-onUninstall}.
      *
      * WARNING: This function has unbounded gas costs and may become uncallable if the set grows too large.
-     * See {EnumerableSetExtended-clear}.
+     * See {EnumerableSet-clear}.
      */
     function onUninstall(bytes calldata /* data */) public virtual {
         _signersSetByAccount[msg.sender].clear();
@@ -101,7 +101,7 @@ abstract contract ERC7579Multisig is ERC7579Validator {
     }
 
     /// @dev Returns the set of authorized signers for the specified account.
-    function _signers(address account) internal view virtual returns (EnumerableSetExtended.BytesSet storage) {
+    function _signers(address account) internal view virtual returns (EnumerableSet.BytesSet storage) {
         return _signersSetByAccount[account];
     }
 
