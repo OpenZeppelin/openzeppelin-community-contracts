@@ -74,7 +74,7 @@ library WebAuthn {
 
     /**
      * @dev Performs verification of a WebAuthn Authentication Assertion. This variants allow the caller to select
-     * wether of not to require the UV flag (step 17).
+     * whether of not to require the UV flag (step 17).
      *
      * Verifies:
      *
