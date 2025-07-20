@@ -44,7 +44,7 @@ abstract contract SignerWebAuthn is SignerP256 {
 
         return
             decodeSuccess
-                ? WebAuthn.verifyMinimal(abi.encodePacked(hash), auth, qx, qy)
+                ? WebAuthn.verify(abi.encodePacked(hash), auth, qx, qy)
                 : super._rawSignatureValidation(hash, signature);
     }
 }

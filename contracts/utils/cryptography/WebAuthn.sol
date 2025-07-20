@@ -52,49 +52,16 @@ library WebAuthn {
     }
 
     /// @dev Bit 0 of the authenticator data flags: "User Present" bit.
-    bytes1 private constant AUTH_DATA_FLAGS_UP = 0x01;
+    bytes1 internal constant AUTH_DATA_FLAGS_UP = 0x01;
     /// @dev Bit 2 of the authenticator data flags: "User Verified" bit.
-    bytes1 private constant AUTH_DATA_FLAGS_UV = 0x04;
+    bytes1 internal constant AUTH_DATA_FLAGS_UV = 0x04;
     /// @dev Bit 3 of the authenticator data flags: "Backup Eligibility" bit.
-    bytes1 private constant AUTH_DATA_FLAGS_BE = 0x08;
+    bytes1 internal constant AUTH_DATA_FLAGS_BE = 0x08;
     /// @dev Bit 4 of the authenticator data flags: "Backup State" bit.
-    bytes1 private constant AUTH_DATA_FLAGS_BS = 0x10;
-
-    /**
-     * @dev Performs the absolute minimal verification of a WebAuthn Authentication Assertion.
-     *
-     * This function includes only the essential checks required for basic WebAuthn security:
-     *
-     * 1. Type is "webauthn.get" (see {_validateExpectedTypeHash})
-     * 2. Challenge matches the expected value (see {_validateChallenge})
-     * 3. Cryptographic signature is valid for the given public key
-     *
-     * For most applications, use {verify} or {verifyStrict} instead.
-     *
-     * NOTE: This function intentionally omits User Presence (UP), User Verification (UV),
-     * and Backup State/Eligibility checks. Use this only when broader compatibility with
-     * authenticators is required or in constrained environments.
-     */
-    function verifyMinimal(
-        bytes memory challenge,
-        WebAuthnAuth memory auth,
-        bytes32 qx,
-        bytes32 qy
-    ) internal view returns (bool) {
-        return verifyCustom(challenge, auth, qx, qy, false, false, false);
-    }
+    bytes1 internal constant AUTH_DATA_FLAGS_BS = 0x10;
 
     /**
      * @dev Performs standard verification of a WebAuthn Authentication Assertion.
-     *
-     * Same as {verifyMinimal}, but also verifies:
-     *
-     * [start=4]
-     * 4. confirming physical user presence during authentication
-     *
-     * This compliance level satisfies the core WebAuthn verification requirements while
-     * maintaining broad compatibility with authenticators. For higher security requirements,
-     * consider using {verifyStrict}.
      */
     function verify(
         bytes memory challenge,
@@ -102,56 +69,28 @@ library WebAuthn {
         bytes32 qx,
         bytes32 qy
     ) internal view returns (bool) {
-        return verifyCustom(challenge, auth, qx, qy, true, false, false);
-    }
-
-    /**
-     * @dev Performs strict verification of a WebAuthn Authentication Assertion.
-     *
-     * Same as {verify}, but also also verifies:
-     *
-     * [start=5]
-     * 5. confirming stronger user authentication (biometrics/PIN)
-     * 6. Backup Eligibility (`BE`) and Backup State (BS) bits relationship is valid
-     *
-     * This strict verification is recommended for:
-     * * High-value transactions
-     * * Privileged operations
-     * * Account recovery or critical settings changes
-     * * Applications where security takes precedence over broad authenticator compatibility
-     */
-    function verifyStrict(
-        bytes memory challenge,
-        WebAuthnAuth memory auth,
-        bytes32 qx,
-        bytes32 qy
-    ) internal view returns (bool) {
-        return verifyCustom(challenge, auth, qx, qy, true, true, true);
+        return verify(challenge, auth, qx, qy, true);
     }
 
     /**
      * @dev Performs verification of a WebAuthn Authentication Assertion. This variants allow the caller to select
-     * which extra verification steps are required, and which ones are not.
+     * wether of not to require the UV flag (step 17).
      *
      * Verifies:
      *
-     * 1. Type is "webauthn.get" (see {_validateExpectedTypeHash}) -- Always
-     * 2. Challenge matches the expected value (see {_validateChallenge}) -- Always
-     * 3. Cryptographic signature is valid for the given public key -- Always
-     * 4. confirming physical user presence during authentication -- If `requireUP` is true
-     * 5. confirming stronger user authentication (biometrics/PIN) -- If `requireUV` is true
-     * 6. Backup Eligibility (`BE`) and Backup State (BS) bits relationship is valid -- If `requireBSBE` is true
-     *
-     * For predefined settings, check out {verifyMinimal}, {verify} and {verifyStrict}.
+     * 1. Type is "webauthn.get" (see {_validateExpectedTypeHash})
+     * 2. Challenge matches the expected value (see {_validateChallenge})
+     * 3. Cryptographic signature is valid for the given public key
+     * 4. confirming physical user presence during authentication
+     * 5. (if `requireUV` is true) confirming stronger user authentication (biometrics/PIN)
+     * 6. Backup Eligibility (`BE`) and Backup State (BS) bits relationship is valid
      */
-    function verifyCustom(
+    function verify(
         bytes memory challenge,
         WebAuthnAuth memory auth,
         bytes32 qx,
         bytes32 qy,
-        bool requireUP,
-        bool requireUV,
-        bool requireBSBE
+        bool requireUV
     ) internal view returns (bool) {
         // Verify authenticator data has sufficient length (37 bytes minimum):
         // - 32 bytes for rpIdHash
@@ -161,9 +100,9 @@ library WebAuthn {
             auth.authenticatorData.length > 36 &&
             _validateExpectedTypeHash(auth.clientDataJSON, auth.typeIndex) && // 11
             _validateChallenge(auth.clientDataJSON, auth.challengeIndex, challenge) && // 12
-            (!requireUP || _validateUserPresentBitSet(auth.authenticatorData[32])) && // 16
+            _validateUserPresentBitSet(auth.authenticatorData[32]) && // 16
             (!requireUV || _validateUserVerifiedBitSet(auth.authenticatorData[32])) && // 17
-            (!requireBSBE || _validateBackupEligibilityAndState(auth.authenticatorData[32])) && // Consistency check
+            _validateBackupEligibilityAndState(auth.authenticatorData[32]) && // Consistency check
             // P256.verify handles signature malleability internally
             P256.verify(
                 sha256(
