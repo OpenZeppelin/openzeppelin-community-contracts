@@ -31,7 +31,7 @@ abstract contract ERC7579Multisig is ERC7579Validator {
     event ERC7913SignerRemoved(address indexed account, bytes signer);
 
     /// @dev Emitted when the threshold is updated.
-    event ERC7913ThresholdSet(address indexed account, uint256 threshold);
+    event ERC7913ThresholdSet(address indexed account, uint64 threshold);
 
     /// @dev The `signer` already exists.
     error ERC7579MultisigAlreadyExists(bytes signer);
@@ -42,11 +42,14 @@ abstract contract ERC7579Multisig is ERC7579Validator {
     /// @dev The `signer` is less than 20 bytes long.
     error ERC7579MultisigInvalidSigner(bytes signer);
 
+    /// @dev The `threshold` is zero.
+    error ERC7579MultisigZeroThreshold();
+
     /// @dev The `threshold` is unreachable given the number of `signers`.
-    error ERC7579MultisigUnreachableThreshold(uint256 signers, uint256 threshold);
+    error ERC7579MultisigUnreachableThreshold(uint64 signers, uint64 threshold);
 
     mapping(address account => EnumerableSet.BytesSet) private _signersSetByAccount;
-    mapping(address account => uint256) private _thresholdByAccount;
+    mapping(address account => uint64) private _thresholdByAccount;
 
     /**
      * @dev Sets up the module's initial configuration when installed by an account.
@@ -54,7 +57,7 @@ abstract contract ERC7579Multisig is ERC7579Validator {
      * include `signers` and `threshold`.
      *
      * The initData should be encoded as:
-     * `abi.encode(bytes[] signers, uint256 threshold)`
+     * `abi.encode(bytes[] signers, uint64 threshold)`
      *
      * If no signers or threshold are provided, the multisignature functionality will be
      * disabled until they are added later.
@@ -63,9 +66,9 @@ abstract contract ERC7579Multisig is ERC7579Validator {
      * the signer will be set to the provided data. Future installations will behave as a no-op.
      */
     function onInstall(bytes calldata initData) public virtual {
-        if (initData.length > 32 && _signers(msg.sender).length() == 0) {
+        if (initData.length > 32 && getSignerCount(msg.sender) == 0) {
             // More than just delay parameter
-            (bytes[] memory signers_, uint256 threshold_) = abi.decode(initData, (bytes[], uint256));
+            (bytes[] memory signers_, uint64 threshold_) = abi.decode(initData, (bytes[], uint64));
             _addSigners(msg.sender, signers_);
             _setThreshold(msg.sender, threshold_);
         }
@@ -86,30 +89,33 @@ abstract contract ERC7579Multisig is ERC7579Validator {
     }
 
     /**
-     * @dev Returns the set of authorized signers for the specified account.
+     * @dev Returns a slice of the set of authorized signers for the specified account.
      *
-     * WARNING: This operation copies the entire signers set to memory, which
-     * can be expensive or may result in unbounded computation.
+     * Using `start = 0` and `end = type(uint64).max` will return the entire set of signers.
+     *
+     * WARNING: Depending on the `start` and `end`, this operation can copy a large amount of data to memory, which
+     * can be expensive. This is designed for view accessors queried without gas fees. Using it in state-changing
+     * functions may become uncallable if the slice grows too large.
      */
-    function signers(address account) public view virtual returns (bytes[] memory) {
-        return _signers(account).values();
+    function getSigners(address account, uint64 start, uint64 end) public view virtual returns (bytes[] memory) {
+        return _signersSetByAccount[account].values(start, end);
+    }
+
+    /// @dev Returns the number of authorized signers for the specified account.
+    function getSignerCount(address account) public view virtual returns (uint256) {
+        return _signersSetByAccount[account].length();
     }
 
     /// @dev Returns whether the `signer` is an authorized signer for the specified account.
     function isSigner(address account, bytes memory signer) public view virtual returns (bool) {
-        return _signers(account).contains(signer);
-    }
-
-    /// @dev Returns the set of authorized signers for the specified account.
-    function _signers(address account) internal view virtual returns (EnumerableSet.BytesSet storage) {
-        return _signersSetByAccount[account];
+        return _signersSetByAccount[account].contains(signer);
     }
 
     /**
      * @dev Returns the minimum number of signers required to approve a multisignature operation
      * for the specified account.
      */
-    function threshold(address account) public view virtual returns (uint256) {
+    function threshold(address account) public view virtual returns (uint64) {
         return _thresholdByAccount[account];
     }
 
@@ -147,7 +153,7 @@ abstract contract ERC7579Multisig is ERC7579Validator {
      *
      * * The threshold must be reachable with the current number of signers.
      */
-    function setThreshold(uint256 newThreshold) public virtual {
+    function setThreshold(uint64 newThreshold) public virtual {
         _setThreshold(msg.sender, newThreshold);
     }
 
@@ -181,11 +187,10 @@ abstract contract ERC7579Multisig is ERC7579Validator {
      * * Each of `newSigners` must not be authorized. Reverts with {ERC7579MultisigAlreadyExists} if it already exists.
      */
     function _addSigners(address account, bytes[] memory newSigners) internal virtual {
-        uint256 newSignersLength = newSigners.length;
-        for (uint256 i = 0; i < newSignersLength; i++) {
+        for (uint256 i = 0; i < newSigners.length; ++i) {
             bytes memory signer = newSigners[i];
             require(signer.length >= 20, ERC7579MultisigInvalidSigner(signer));
-            require(_signers(account).add(signer), ERC7579MultisigAlreadyExists(signer));
+            require(_signersSetByAccount[account].add(signer), ERC7579MultisigAlreadyExists(signer));
             emit ERC7913SignerAdded(account, signer);
         }
     }
@@ -199,10 +204,9 @@ abstract contract ERC7579Multisig is ERC7579Validator {
      * * The threshold must remain reachable after removal. See {_validateReachableThreshold} for details.
      */
     function _removeSigners(address account, bytes[] memory oldSigners) internal virtual {
-        uint256 oldSignersLength = oldSigners.length;
-        for (uint256 i = 0; i < oldSignersLength; i++) {
+        for (uint256 i = 0; i < oldSigners.length; ++i) {
             bytes memory signer = oldSigners[i];
-            require(_signers(account).remove(signer), ERC7579MultisigNonexistentSigner(signer));
+            require(_signersSetByAccount[account].remove(signer), ERC7579MultisigNonexistentSigner(signer));
             emit ERC7913SignerRemoved(account, signer);
         }
         _validateReachableThreshold(account);
@@ -213,9 +217,11 @@ abstract contract ERC7579Multisig is ERC7579Validator {
      *
      * Requirements:
      *
+     * * The threshold must be greater than 0. Reverts with {ERC7579MultisigZeroThreshold} if not.
      * * The threshold must be reachable with the current number of signers. See {_validateReachableThreshold} for details.
      */
-    function _setThreshold(address account, uint256 newThreshold) internal virtual {
+    function _setThreshold(address account, uint64 newThreshold) internal virtual {
+        require(newThreshold > 0, ERC7579MultisigZeroThreshold());
         _thresholdByAccount[account] = newThreshold;
         _validateReachableThreshold(account);
         emit ERC7913ThresholdSet(account, newThreshold);
@@ -229,9 +235,15 @@ abstract contract ERC7579Multisig is ERC7579Validator {
      * * The number of signers must be >= the threshold. Reverts with {ERC7579MultisigUnreachableThreshold} if not.
      */
     function _validateReachableThreshold(address account) internal view virtual {
-        uint256 totalSigners = _signers(account).length();
-        uint256 currentThreshold = threshold(account);
-        require(totalSigners >= currentThreshold, ERC7579MultisigUnreachableThreshold(totalSigners, currentThreshold));
+        uint256 totalSigners = getSignerCount(account);
+        uint64 currentThreshold = threshold(account);
+        require(
+            totalSigners >= currentThreshold,
+            ERC7579MultisigUnreachableThreshold(
+                uint64(totalSigners), // Safe cast. Economically impossible to overflow.
+                currentThreshold
+            )
+        );
     }
 
     /**
@@ -252,8 +264,7 @@ abstract contract ERC7579Multisig is ERC7579Validator {
         bytes[] memory signingSigners,
         bytes[] memory signatures
     ) internal view virtual returns (bool valid) {
-        uint256 signersLength = signingSigners.length;
-        for (uint256 i = 0; i < signersLength; i++) {
+        for (uint256 i = 0; i < signingSigners.length; ++i) {
             if (!isSigner(account, signingSigners[i])) {
                 return false;
             }

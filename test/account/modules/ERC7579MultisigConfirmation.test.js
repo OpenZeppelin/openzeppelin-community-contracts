@@ -11,6 +11,7 @@ const { MultisigConfirmation } = require('../../helpers/eip712-types');
 const { shouldBehaveLikeERC7579Module } = require('./ERC7579Module.behavior');
 
 // Prepare signers in advance
+const initialSigner = ethers.Wallet.createRandom();
 const signerToConfirm = ethers.Wallet.createRandom();
 
 async function fixture() {
@@ -24,9 +25,6 @@ async function fixture() {
   const helper = new ERC4337Helper();
   await helper.wait();
 
-  // Prepare module installation data
-  const installData = ethers.AbiCoder.defaultAbiCoder().encode(['bytes[]', 'uint256'], [[], 0]); // Empty
-
   // ERC-7579 account
   const mockAccount = await helper.newAccount('$AccountERC7579');
   const mockFromAccount = await impersonate(mockAccount.address).then(asAccount => mock.connect(asAccount));
@@ -34,13 +32,33 @@ async function fixture() {
     mockAccount.connect(asEntrypoint),
   );
 
+  // Get the EIP-712 domain for the mock module
+  const domain = await getDomain(mock);
+
+  // Prepare module installation data
+  const abiCoder = ethers.AbiCoder.defaultAbiCoder();
+  const signers = abiCoder.encode(
+    ['uint256', 'bytes', 'bytes'],
+    [
+      (await time.latest()) + time.duration.days(1),
+      initialSigner.address,
+      await initialSigner.signTypedData(
+        domain,
+        { MultisigConfirmation },
+        {
+          account: mockAccount.address,
+          module: mock.target,
+          deadline: (await time.latest()) + time.duration.days(1),
+        },
+      ),
+    ],
+  );
+  const installData = abiCoder.encode(['bytes[]', 'uint64'], [[signers], 1]);
+
   const moduleType = MODULE_TYPE_EXECUTOR;
 
   await mockAccount.deploy();
   await mockAccountFromEntrypoint.installModule(moduleType, mock.target, installData);
-
-  // Get the EIP-712 domain for the mock module
-  const domain = await getDomain(mock);
 
   return {
     moduleType,

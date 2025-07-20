@@ -12,6 +12,7 @@ const {
   encodeSingle,
 } = require('@openzeppelin/contracts/test/helpers/erc7579');
 const { NonNativeSigner, MultiERC7913SigningKey } = require('@openzeppelin/contracts/test/helpers/signers');
+const { MAX_UINT64 } = require('@openzeppelin/contracts/test/helpers/constants');
 
 const { shouldBehaveLikeERC7579Module } = require('./ERC7579Module.behavior');
 
@@ -121,7 +122,7 @@ describe('ERC7579MultisigWeighted', function () {
     );
 
     // Should still have the original signers, weights, and threshold
-    await expect(this.mock.signers(this.mockAccount.address)).to.eventually.deep.equal(this.signers);
+    await expect(this.mock.getSigners(this.mockAccount.address, 0, MAX_UINT64)).to.eventually.deep.equal(this.signers);
 
     await expect(this.mock.threshold(this.mockAccount.address)).to.eventually.equal(this.threshold);
   });
@@ -131,7 +132,7 @@ describe('ERC7579MultisigWeighted', function () {
     await this.mockAccountFromEntrypoint.uninstallModule(this.moduleType, this.mock.target, '0x');
 
     // Verify signers and threshold are cleared
-    await expect(this.mock.signers(this.mockAccount.address)).to.eventually.deep.equal([]);
+    await expect(this.mock.getSigners(this.mockAccount.address, 0, MAX_UINT64)).to.eventually.deep.equal([]);
     await expect(this.mock.threshold(this.mockAccount.address)).to.eventually.equal(0);
 
     // Verify weights are cleared (by checking a previously existing signer)
@@ -147,7 +148,7 @@ describe('ERC7579MultisigWeighted', function () {
       const newSigners = [signerECDSA4.address];
 
       // Get signers before adding
-      const signersBefore = await this.mock.signers(this.mockAccount.address);
+      const signersBefore = await this.mock.getSigners(this.mockAccount.address, 0, MAX_UINT64);
 
       // Add new signer
       const tx = await this.mockFromAccount.addSigners(newSigners);
@@ -158,7 +159,7 @@ describe('ERC7579MultisigWeighted', function () {
       }
 
       // Get signers after adding
-      const signersAfter = await this.mock.signers(this.mockAccount.address);
+      const signersAfter = await this.mock.getSigners(this.mockAccount.address, 0, MAX_UINT64);
 
       // Check that new signer was added
       expect(signersAfter.length).to.equal(signersBefore.length + 1);

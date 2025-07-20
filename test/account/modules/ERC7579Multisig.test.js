@@ -12,6 +12,7 @@ const {
   encodeSingle,
 } = require('@openzeppelin/contracts/test/helpers/erc7579');
 const { NonNativeSigner, MultiERC7913SigningKey } = require('@openzeppelin/contracts/test/helpers/signers');
+const { MAX_UINT64 } = require('@openzeppelin/contracts/test/helpers/constants');
 
 const { shouldBehaveLikeERC7579Module } = require('./ERC7579Module.behavior');
 
@@ -91,7 +92,7 @@ describe('ERC7579Multisig', function () {
     await expect(tx).to.emit(this.mock, 'ERC7913ThresholdSet').withArgs(this.mockAccount.address, this.threshold);
 
     // Verify signers and threshold
-    await expect(this.mock.signers(this.mockAccount.address)).to.eventually.deep.equal(this.signers);
+    await expect(this.mock.getSigners(this.mockAccount.address, 0, MAX_UINT64)).to.eventually.deep.equal(this.signers);
     await expect(this.mock.threshold(this.mockAccount.address)).to.eventually.equal(this.threshold);
 
     // onInstall is allowed again but is a noop
@@ -100,7 +101,7 @@ describe('ERC7579Multisig', function () {
     );
 
     // Should still have the original signers and threshold
-    await expect(this.mock.signers(this.mockAccount.address)).to.eventually.deep.equal(this.signers);
+    await expect(this.mock.getSigners(this.mockAccount.address, 0, MAX_UINT64)).to.eventually.deep.equal(this.signers);
     await expect(this.mock.threshold(this.mockAccount.address)).to.eventually.equal(this.threshold);
   });
 
@@ -109,7 +110,7 @@ describe('ERC7579Multisig', function () {
     await this.mockAccountFromEntrypoint.uninstallModule(this.moduleType, this.mock.target, '0x');
 
     // Verify signers and threshold are cleared
-    await expect(this.mock.signers(this.mockAccount.address)).to.eventually.deep.equal([]);
+    await expect(this.mock.getSigners(this.mockAccount.address, 0, MAX_UINT64)).to.eventually.deep.equal([]);
     await expect(this.mock.threshold(this.mockAccount.address)).to.eventually.equal(0);
   });
 
@@ -128,7 +129,7 @@ describe('ERC7579Multisig', function () {
       const newSigners = [signerECDSA3.address];
 
       // Get signers before adding
-      const signersBefore = await this.mock.signers(this.mockAccount.address);
+      const signersBefore = await this.mock.getSigners(this.mockAccount.address, 0, MAX_UINT64);
 
       // Add new signers
       const tx = await this.mockFromAccount.addSigners(newSigners);
@@ -139,7 +140,7 @@ describe('ERC7579Multisig', function () {
       }
 
       // Get signers after adding
-      const signersAfter = await this.mock.signers(this.mockAccount.address);
+      const signersAfter = await this.mock.getSigners(this.mockAccount.address, 0, MAX_UINT64);
 
       // Check that new signers were added
       expect(signersAfter.length).to.equal(signersBefore.length + 1);
@@ -158,7 +159,7 @@ describe('ERC7579Multisig', function () {
       const removedSigners = [signerECDSA1.address].map(address => address.toLowerCase());
 
       // Get signers before removing
-      const signersBefore = await this.mock.signers(this.mockAccount.address);
+      const signersBefore = await this.mock.getSigners(this.mockAccount.address, 0, MAX_UINT64);
 
       // Remove signers
       const tx = await this.mockFromAccount.removeSigners(removedSigners);
@@ -169,7 +170,7 @@ describe('ERC7579Multisig', function () {
       }
 
       // Get signers after removing
-      const signersAfter = await this.mock.signers(this.mockAccount.address);
+      const signersAfter = await this.mock.getSigners(this.mockAccount.address, 0, MAX_UINT64);
 
       // Check that signers were removed
       expect(signersAfter.length).to.equal(signersBefore.length - 1);
