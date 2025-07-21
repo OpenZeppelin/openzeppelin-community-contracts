@@ -10,7 +10,7 @@ import {WebAuthn} from "../../../contracts/utils/cryptography/WebAuthn.sol";
 
 contract WebAuthnTest is Test {
     /// forge-config: default.fuzz.runs = 512
-    function testFuzzVerify(bytes memory challenge, uint256 seed) public view {
+    function testVerify(bytes memory challenge, uint256 seed) public view {
         assertTrue(
             _runVerify(
                 seed,
@@ -23,7 +23,7 @@ contract WebAuthnTest is Test {
     }
 
     /// forge-config: default.fuzz.runs = 512
-    function testFuzzVerifyInvalidType(bytes memory challenge, uint256 seed) public view {
+    function testVerifyInvalidType(bytes memory challenge, uint256 seed) public view {
         assertFalse(
             _runVerify(
                 seed,
@@ -37,7 +37,7 @@ contract WebAuthnTest is Test {
     }
 
     /// forge-config: default.fuzz.runs = 512
-    function testFuzzVerifyInvalidChallenge(bytes memory challenge, uint256 seed) public view {
+    function testVerifyInvalidChallenge(bytes memory challenge, uint256 seed) public view {
         assertFalse(
             _runVerify(
                 seed,
@@ -50,7 +50,7 @@ contract WebAuthnTest is Test {
     }
 
     /// forge-config: default.fuzz.runs = 512
-    function testFuzzVerifyFlagsUP(bytes memory challenge, uint256 seed) public view {
+    function testVerifyFlagsUP(bytes memory challenge, uint256 seed) public view {
         // UP = false: FAIL
         assertFalse(
             _runVerify(
@@ -64,7 +64,7 @@ contract WebAuthnTest is Test {
     }
 
     /// forge-config: default.fuzz.runs = 512
-    function testFuzzVerifyFlagsUV(bytes memory challenge, uint256 seed) public view {
+    function testVerifyFlagsUV(bytes memory challenge, uint256 seed) public view {
         // UV = false, requireUV = false: SUCCESS
         assertTrue(
             _runVerify(
@@ -98,7 +98,7 @@ contract WebAuthnTest is Test {
     }
 
     /// forge-config: default.fuzz.runs = 512
-    function testFuzzVerifyFlagsBEBS(bytes memory challenge, uint256 seed) public view {
+    function testVerifyFlagsBEBS(bytes memory challenge, uint256 seed) public view {
         // BS = true, BE = false: FAIL
         assertFalse(
             _runVerify(
