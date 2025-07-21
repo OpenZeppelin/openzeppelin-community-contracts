@@ -4,8 +4,29 @@ const { loadFixture } = require('@nomicfoundation/hardhat-network-helpers');
 
 const AxelarHelper = require('./axelar/AxelarHelper');
 
-const keccak256AbiEncode = (types, values) => ethers.keccak256(ethers.AbiCoder.defaultAbiCoder().encode(types, values));
-const sortBytes32 = values => values.sort((a, b) => (BigInt(a) < BigInt(b) ? -1 : 1));
+const buildBridgeHash = (...chains) => {
+  const cmp = (a, b) => (BigInt(a) < BigInt(b) ? -1 : 1);
+  const chainIds = chains.map(({ token, flags = ethers.ZeroHash, links }) =>
+    ethers.keccak256(
+      ethers.AbiCoder.defaultAbiCoder().encode(
+        ['bytes', 'bytes32', 'bytes32[]'],
+        [
+          token,
+          flags,
+          links
+            .map(({ gateway, remote }) =>
+              ethers.keccak256(ethers.AbiCoder.defaultAbiCoder().encode(['bytes', 'bytes'], [gateway, remote])),
+            )
+            .sort(cmp),
+        ],
+      ),
+    ),
+  );
+  return {
+    id: ethers.solidityPackedKeccak256(['bytes32[]'], [chainIds.toSorted(cmp)]),
+    chainIds,
+  };
+};
 
 async function fixture() {
   const [admin, ...accounts] = await ethers.getSigners();
@@ -20,34 +41,26 @@ async function fixture() {
   const bridgeB = await ethers.deployContract('$ERC7802Bridge');
   const tokenB = await ethers.deployContract('$ERC20BridgeableMock', ['Token B', 'TB', admin]);
 
-  // Bridge side identifiers
-  const chainAId = keccak256AbiEncode(
-    ['bytes', 'bytes32', 'bytes32[]'],
-    [
-      chain.toErc7930(tokenA),
-      '0x0000000000000000000000000000000000000000000000000000000000000001', // custodial
-      sortBytes32([keccak256AbiEncode(['bytes', 'bytes'], [chain.toErc7930(gatewayA), chain.toErc7930(bridgeB)])]),
-    ],
+  // Compute bridge identifier and local hashes
+  const { id, chainIds } = buildBridgeHash(
+    {
+      token: chain.toErc7930(tokenA),
+      flags: '0x0000000000000000000000000000000000000000000000000000000000000001',
+      links: [{ gateway: chain.toErc7930(gatewayA), remote: chain.toErc7930(bridgeB) }],
+    },
+    {
+      token: chain.toErc7930(tokenB),
+      flags: '0x0000000000000000000000000000000000000000000000000000000000000000',
+      links: [{ gateway: chain.toErc7930(gatewayB), remote: chain.toErc7930(bridgeA) }],
+    },
   );
-
-  const chainBId = keccak256AbiEncode(
-    ['bytes', 'bytes32', 'bytes32[]'],
-    [
-      chain.toErc7930(tokenB),
-      '0x0000000000000000000000000000000000000000000000000000000000000000', // crosschain
-      sortBytes32([keccak256AbiEncode(['bytes', 'bytes'], [chain.toErc7930(gatewayB), chain.toErc7930(bridgeA)])]),
-    ],
-  );
-
-  // Bridge global identifier
-  const id = ethers.solidityPackedKeccak256(['bytes32[]'], [sortBytes32([chainAId, chainBId])]);
 
   // Register bridge
   await expect(
     bridgeA.createBridge(
       tokenA,
       true, // is custodial
-      [{ id: chainBId, gateway: gatewayA, remote: chain.toErc7930(bridgeB) }], // link to B + id of B
+      [{ id: chainIds[1], gateway: gatewayA, remote: chain.toErc7930(bridgeB) }], // link to B + id of B
     ),
   )
     .to.emit(bridgeA, 'NewBridge')
@@ -57,7 +70,7 @@ async function fixture() {
     bridgeB.createBridge(
       tokenB,
       false, // is crosschain
-      [{ id: chainAId, gateway: gatewayB, remote: chain.toErc7930(bridgeA) }], // link to B + id of B
+      [{ id: chainIds[0], gateway: gatewayB, remote: chain.toErc7930(bridgeA) }], // link to B + id of B
     ),
   )
     .to.emit(bridgeB, 'NewBridge')
