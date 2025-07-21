@@ -3,7 +3,7 @@
 pragma solidity ^0.8.20;
 
 import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
-import {ERC20Bridgeable} from "../../token/ERC20/extensions/ERC20Bridgeable.sol";
+import {ERC20Bridgeable} from "@openzeppelin/contracts/token/ERC20/extensions/draft-ERC20Bridgeable.sol";
 
 abstract contract ERC20BridgeableMock is ERC20Bridgeable, AccessControl {
     bytes32 public constant BRIDGE_ROLE = keccak256("BRIDGE");
