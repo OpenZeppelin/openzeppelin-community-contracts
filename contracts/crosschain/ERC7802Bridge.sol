@@ -31,14 +31,12 @@ contract ERC7802Bridge is IERC7786Receiver {
 
     event Sent(address token, address from, bytes to, uint256 amount);
     event Received(address token, bytes from, address to, uint256 amount);
-
-    // event GatewayRegistered(address indexed gateway, bytes chain);
-    // event RemoteBridgeRegistered(address indexed token, bytes chain);
+    event NewBridge(bytes32 indexed bridgeId, address indexed token);
+    event NewBridgeLink(bytes32 indexed bridgeId, address gateway, bytes remote);
 
     error ERC7802BridgeInvalidBidgeId(bytes32 bridgeId);
     error ERC7802BridgeMissingGateway(bytes32 bridgeId, bytes chain);
     error ERC7802BridgeMissingRemote(bytes32 bridgeId, bytes chain);
-    // error ERC7802BridgeImproperChainIdentifier(bytes chain);
     error ERC7802BridgeDuplicate();
     error ERC7802BridgeInvalidGateway();
     error ERC7802BridgeInvalidSender();
@@ -74,6 +72,8 @@ contract ERC7802Bridge is IERC7786Receiver {
         bytes32[] memory ids = new bytes32[](foreign.length + 1);
         bytes32[] memory links = new bytes32[](foreign.length);
         for (uint256 i = 0; i < foreign.length; ++i) {
+            require(foreign[i].gateway != address(0));
+            require(foreign[i].remote.length > 0);
             ids[i] = foreign[i].id;
             links[i] = keccak256(
                 abi.encode(InteroperableAddress.formatEvmV1(block.chainid, foreign[i].gateway), foreign[i].remote)
@@ -87,18 +87,23 @@ contract ERC7802Bridge is IERC7786Receiver {
             )
         );
 
-        bytes32 bridgeId = keccak256(abi.encode(Arrays.sort(ids)));
+        bytes32 bridgeId = keccak256(abi.encodePacked(Arrays.sort(ids)));
 
         // Should we check for collision. I don't think that is necessary
         BridgeMetadata storage details = _bridges[bridgeId];
         details.token = token;
         details.isCustodial = isCustodial;
 
+        emit NewBridge(bridgeId, token);
+
         for (uint256 i = 0; i < foreign.length; ++i) {
             (bytes2 chainType, bytes memory chainReference, ) = foreign[i].remote.parseV1();
             bytes memory chain = InteroperableAddress.formatV1(chainType, chainReference, "");
+            require(details.gateway[chain] == address(0));
             details.gateway[chain] = foreign[i].gateway;
             details.remote[chain] = foreign[i].remote;
+
+            emit NewBridgeLink(bridgeId, foreign[i].gateway, foreign[i].remote);
         }
 
         return bridgeId;

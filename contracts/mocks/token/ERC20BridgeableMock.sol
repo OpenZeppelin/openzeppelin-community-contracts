@@ -2,26 +2,29 @@
 
 pragma solidity ^0.8.20;
 
-import {ERC20, ERC20Bridgeable} from "../../token/ERC20/extensions/ERC20Bridgeable.sol";
+import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
+import {ERC20Bridgeable} from "../../token/ERC20/extensions/ERC20Bridgeable.sol";
 
-abstract contract ERC20BridgeableMock is ERC20Bridgeable {
-    address bridge;
-
-    error OnlyTokenBridge();
+abstract contract ERC20BridgeableMock is ERC20Bridgeable, AccessControl {
+    bytes32 public constant BRIDGE_ROLE = keccak256("BRIDGE");
 
     event OnlyTokenBridgeFnCalled(address caller);
 
-    constructor(address bridge_) {
-        bridge = bridge_;
+    error OnlyTokenBridge();
+
+    constructor(address admin) {
+        _grantRole(DEFAULT_ADMIN_ROLE, admin);
+    }
+
+    function supportsInterface(
+        bytes4 interfaceId
+    ) public view virtual override(AccessControl, ERC20Bridgeable) returns (bool) {
+        return super.supportsInterface(interfaceId);
     }
 
     function onlyTokenBridgeFn() external onlyTokenBridge {
         emit OnlyTokenBridgeFnCalled(msg.sender);
     }
 
-    function _checkTokenBridge(address sender) internal view override {
-        if (sender != bridge) {
-            revert OnlyTokenBridge();
-        }
-    }
+    function _checkTokenBridge(address sender) internal view override onlyRole(BRIDGE_ROLE) {}
 }
