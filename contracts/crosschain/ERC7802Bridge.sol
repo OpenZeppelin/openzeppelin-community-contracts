@@ -8,35 +8,18 @@ import {IERC7802} from "@openzeppelin/contracts/interfaces/draft-IERC7802.sol";
 import {IERC7786GatewaySource, IERC7786Receiver} from "../interfaces/IERC7786.sol";
 
 // Utilities
-import {Clones} from "@openzeppelin/contracts/proxy/Clones.sol";
 import {ERC721} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import {Arrays} from "@openzeppelin/contracts/utils/Arrays.sol";
 import {BitMaps} from "@openzeppelin/contracts/utils/structs/BitMaps.sol";
 import {Bytes} from "@openzeppelin/contracts/utils/Bytes.sol";
 import {SafeCast} from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import {InteroperableAddress} from "@openzeppelin/contracts/utils/draft-InteroperableAddress.sol";
-
-contract ERC7802BridgeSatellite {
-    address private immutable _bridge = msg.sender;
-
-    fallback(bytes calldata data) external payable returns (bytes memory) {
-        require(msg.sender == _bridge && data.length >= 20);
-
-        (bool success, bytes memory returndata) = address(bytes20(data)).call{value: msg.value}(data[20:]);
-
-        if (!success) {
-            assembly ("memory-safe") {
-                revert(add(returndata, 0x20), mload(returndata))
-            }
-        } else {
-            return returndata;
-        }
-    }
-}
+import {IndirectCall} from "../utils/IndirectCall.sol";
 
 contract ERC7802Bridge is ERC721("ERC7802Bridge", "ERC7802Bridge"), IERC7786Receiver {
     using BitMaps for BitMaps.BitMap;
     using InteroperableAddress for bytes;
+
     struct BridgeMetadata {
         address token;
         bool isPaused;
@@ -45,7 +28,6 @@ contract ERC7802Bridge is ERC721("ERC7802Bridge", "ERC7802Bridge"), IERC7786Rece
         mapping(bytes chain => bytes) remote;
     }
 
-    address private immutable _satellite = address(new ERC7802BridgeSatellite());
     mapping(bytes32 bridgeId => BridgeMetadata) private _bridges;
     BitMaps.BitMap private _processed;
 
@@ -70,8 +52,8 @@ contract ERC7802Bridge is ERC721("ERC7802Bridge", "ERC7802Bridge"), IERC7786Rece
     // ┌─────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
     // │                                                   Getters                                                   │
     // └─────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
-    function getBridgeEndpoint(bytes32 bridgeId) public view returns (address) {
-        return Clones.predictDeterministicAddress(_satellite, bridgeId);
+    function getBridgeEndpoint(bytes32 bridgeId) public returns (address) {
+        return IndirectCall.getRelayer(bridgeId);
     }
 
     function getBridgeToken(bytes32 bridgeId) public view returns (address token, bool isCustodial) {
@@ -128,7 +110,6 @@ contract ERC7802Bridge is ERC721("ERC7802Bridge", "ERC7802Bridge"), IERC7786Rece
         details.token = token;
         details.isCustodial = isCustodial;
 
-        Clones.cloneDeterministic(_satellite, bridgeId);
         _safeMint(admin == address(0) ? address(1) : admin, uint256(bridgeId));
 
         for (uint256 i = 0; i < foreign.length; ++i) {
@@ -237,11 +218,10 @@ contract ERC7802Bridge is ERC721("ERC7802Bridge", "ERC7802Bridge"), IERC7786Rece
     function _fetchTokens(bytes32 bridgeId, address from, uint256 amount) private returns (address) {
         address token = _bridges[bridgeId].token;
         if (_bridges[bridgeId].isCustodial) {
-            (bool success, bytes memory returndata) = getBridgeEndpoint(bridgeId).call(
-                abi.encodePacked(
-                    token,
-                    abi.encodeCall(IERC20.transferFrom, (from, getBridgeEndpoint(bridgeId), amount))
-                )
+            (bool success, bytes memory returndata) = IndirectCall.indirectCall(
+                token,
+                abi.encodeCall(IERC20.transferFrom, (from, getBridgeEndpoint(bridgeId), amount)),
+                bridgeId
             );
             require(success && (returndata.length == 0 ? token.code.length == 0 : uint256(bytes32(returndata)) == 1));
         } else {
@@ -256,8 +236,10 @@ contract ERC7802Bridge is ERC721("ERC7802Bridge", "ERC7802Bridge"), IERC7786Rece
     function _distributeTokens(bytes32 bridgeId, address to, uint256 amount) private returns (address) {
         address token = _bridges[bridgeId].token;
         if (_bridges[bridgeId].isCustodial) {
-            (bool success, bytes memory returndata) = getBridgeEndpoint(bridgeId).call(
-                abi.encodePacked(token, abi.encodeCall(IERC20.transfer, (to, amount)))
+            (bool success, bytes memory returndata) = IndirectCall.indirectCall(
+                token,
+                abi.encodeCall(IERC20.transfer, (to, amount)),
+                bridgeId
             );
             require(success && (returndata.length == 0 ? token.code.length == 0 : uint256(bytes32(returndata)) == 1));
         } else {
