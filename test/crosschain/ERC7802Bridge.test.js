@@ -45,12 +45,12 @@ async function fixture() {
   const { id, chainIds } = buildBridgeHash(
     {
       token: chain.toErc7930(tokenA),
-      flags: '0x0000000000000000000000000000000000000000000000000000000000000001',
+      flags: ethers.solidityPacked(['address', 'uint88', 'bool'], [admin.address, 0n, true]),
       links: [{ gateway: chain.toErc7930(gatewayA), remote: chain.toErc7930(bridgeB) }],
     },
     {
       token: chain.toErc7930(tokenB),
-      flags: '0x0000000000000000000000000000000000000000000000000000000000000000',
+      flags: ethers.solidityPacked(['address', 'uint88', 'bool'], [ethers.ZeroAddress, 0n, false]),
       links: [{ gateway: chain.toErc7930(gatewayB), remote: chain.toErc7930(bridgeA) }],
     },
   );
@@ -59,22 +59,24 @@ async function fixture() {
   await expect(
     bridgeA.createBridge(
       tokenA,
+      admin, // with admin
       true, // is custodial
       [{ id: chainIds[1], gateway: gatewayA, remote: chain.toErc7930(bridgeB) }], // link to B + id of B
     ),
   )
-    .to.emit(bridgeA, 'NewBridge')
-    .withArgs(id, tokenA);
+    .to.emit(bridgeA, 'Transfer')
+    .withArgs(ethers.ZeroAddress, admin, id);
 
   await expect(
     bridgeB.createBridge(
       tokenB,
+      ethers.ZeroAddress, // no admin
       false, // is crosschain
       [{ id: chainIds[0], gateway: gatewayB, remote: chain.toErc7930(bridgeA) }], // link to B + id of B
     ),
   )
-    .to.emit(bridgeB, 'NewBridge')
-    .withArgs(id, tokenB);
+    .to.emit(bridgeB, 'Transfer')
+    .withArgs(ethers.ZeroAddress, '0x0000000000000000000000000000000000000001', id);
 
   // Get endpoint for that bridge
   const endpointA = await bridgeA.getBridgeEndpoint.staticCall(id);
