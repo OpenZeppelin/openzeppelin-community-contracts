@@ -7,7 +7,6 @@
 :ERC7913WebAuthnVerifier: pass:normal[xref:utils/cryptography.adoc#ERC7913WebAuthnVerifier[`ERC7913WebAuthnVerifier`]]
 :WebAuthn-WebAuthnAuth: pass:normal[xref:utils/cryptography.adoc#WebAuthn-WebAuthnAuth[`WebAuthn.WebAuthnAuth`]]
 :WebAuthn-WebAuthnAuth: pass:normal[xref:utils/cryptography.adoc#WebAuthn-WebAuthnAuth[`WebAuthn.WebAuthnAuth`]]
-:WebAuthn-verifyMinimal: pass:normal[xref:utils/cryptography.adoc#WebAuthn-verifyMinimal-bytes-struct-WebAuthn-WebAuthnAuth-bytes32-bytes32-[`WebAuthn.verifyMinimal`]]
 = Cryptography
 
 [.readme-notice]
@@ -90,14 +89,12 @@ Variant of {isValidZKEmail} that validates a template with a specific string {Ca
 Useful for templates with Ethereum address matchers (i.e. `{ethAddr}`), which are case-sensitive (e.g., `["someCommand", "{address}"]`).
 
 :WebAuthnAuth: pass:normal[xref:#WebAuthn-WebAuthnAuth[`++WebAuthnAuth++`]]
-:verifyMinimal: pass:normal[xref:#WebAuthn-verifyMinimal-bytes-struct-WebAuthn-WebAuthnAuth-bytes32-bytes32-[`++verifyMinimal++`]]
+:AUTH_DATA_FLAGS_UP: pass:normal[xref:#WebAuthn-AUTH_DATA_FLAGS_UP-bytes1[`++AUTH_DATA_FLAGS_UP++`]]
+:AUTH_DATA_FLAGS_UV: pass:normal[xref:#WebAuthn-AUTH_DATA_FLAGS_UV-bytes1[`++AUTH_DATA_FLAGS_UV++`]]
+:AUTH_DATA_FLAGS_BE: pass:normal[xref:#WebAuthn-AUTH_DATA_FLAGS_BE-bytes1[`++AUTH_DATA_FLAGS_BE++`]]
+:AUTH_DATA_FLAGS_BS: pass:normal[xref:#WebAuthn-AUTH_DATA_FLAGS_BS-bytes1[`++AUTH_DATA_FLAGS_BS++`]]
 :verify: pass:normal[xref:#WebAuthn-verify-bytes-struct-WebAuthn-WebAuthnAuth-bytes32-bytes32-[`++verify++`]]
-:verifyStrict: pass:normal[xref:#WebAuthn-verifyStrict-bytes-struct-WebAuthn-WebAuthnAuth-bytes32-bytes32-[`++verifyStrict++`]]
-:validateUserPresentBitSet: pass:normal[xref:#WebAuthn-validateUserPresentBitSet-bytes1-[`++validateUserPresentBitSet++`]]
-:validateUserVerifiedBitSet: pass:normal[xref:#WebAuthn-validateUserVerifiedBitSet-bytes1-[`++validateUserVerifiedBitSet++`]]
-:validateBackupEligibilityAndState: pass:normal[xref:#WebAuthn-validateBackupEligibilityAndState-bytes1-[`++validateBackupEligibilityAndState++`]]
-:validateExpectedTypeHash: pass:normal[xref:#WebAuthn-validateExpectedTypeHash-string-uint256-[`++validateExpectedTypeHash++`]]
-:validateChallenge: pass:normal[xref:#WebAuthn-validateChallenge-string-uint256-bytes-[`++validateChallenge++`]]
+:verify: pass:normal[xref:#WebAuthn-verify-bytes-struct-WebAuthn-WebAuthnAuth-bytes32-bytes32-bool-[`++verify++`]]
 :tryDecodeAuth: pass:normal[xref:#WebAuthn-tryDecodeAuth-bytes-[`++tryDecodeAuth++`]]
 
 [.contract]
@@ -141,34 +138,21 @@ Inspired by:
 [.contract-index]
 .Functions
 --
-* `++verifyMinimal(challenge, auth, qx, qy)++`
 * `++verify(challenge, auth, qx, qy)++`
-* `++verifyStrict(challenge, auth, qx, qy)++`
-* `++validateUserPresentBitSet(flags)++`
-* `++validateUserVerifiedBitSet(flags)++`
-* `++validateBackupEligibilityAndState(flags)++`
-* `++validateExpectedTypeHash(clientDataJSON, typeIndex)++`
-* `++validateChallenge(clientDataJSON, challengeIndex, challenge)++`
+* `++verify(challenge, auth, qx, qy, requireUV)++`
 * `++tryDecodeAuth(input)++`
 
 --
 
-[.contract-item]
-[[WebAuthn-verifyMinimal-bytes-struct-WebAuthn-WebAuthnAuth-bytes32-bytes32-]]
-==== `[.contract-item-name]#++verifyMinimal++#++(bytes challenge, struct WebAuthn.WebAuthnAuth auth, bytes32 qx, bytes32 qy) → bool++` [.item-kind]#internal#
+[.contract-index]
+.Internal Variables
+--
+* `++bytes1 constant AUTH_DATA_FLAGS_UP++`
+* `++bytes1 constant AUTH_DATA_FLAGS_UV++`
+* `++bytes1 constant AUTH_DATA_FLAGS_BE++`
+* `++bytes1 constant AUTH_DATA_FLAGS_BS++`
 
-Performs the absolute minimal verification of a WebAuthn Authentication Assertion.
-This function includes only the essential checks required for basic WebAuthn security:
-
-1. Type is "webauthn.get" (see {validateExpectedTypeHash})
-2. Challenge matches the expected value (see {validateChallenge})
-3. Cryptographic signature is valid for the given public key
-
-For most applications, use {verify} or {verifyStrict} instead.
-
-NOTE: This function intentionally omits User Presence (UP), User Verification (UV),
-and Backup State/Eligibility checks. Use this only when broader compatibility with
-authenticators is required or in constrained environments.
+--
 
 [.contract-item]
 [[WebAuthn-verify-bytes-struct-WebAuthn-WebAuthnAuth-bytes32-bytes32-]]
@@ -176,101 +160,21 @@ authenticators is required or in constrained environments.
 
 Performs standard verification of a WebAuthn Authentication Assertion.
 
-Same as {verifyMinimal}, but also verifies:
-
-[start=4]
-4. {validateUserPresentBitSet} - confirming physical user presence during authentication
-
-This compliance level satisfies the core WebAuthn verification requirements while
-maintaining broad compatibility with authenticators. For higher security requirements,
-consider using {verifyStrict}.
-
 [.contract-item]
-[[WebAuthn-verifyStrict-bytes-struct-WebAuthn-WebAuthnAuth-bytes32-bytes32-]]
-==== `[.contract-item-name]#++verifyStrict++#++(bytes challenge, struct WebAuthn.WebAuthnAuth auth, bytes32 qx, bytes32 qy) → bool++` [.item-kind]#internal#
+[[WebAuthn-verify-bytes-struct-WebAuthn-WebAuthnAuth-bytes32-bytes32-bool-]]
+==== `[.contract-item-name]#++verify++#++(bytes challenge, struct WebAuthn.WebAuthnAuth auth, bytes32 qx, bytes32 qy, bool requireUV) → bool++` [.item-kind]#internal#
 
-Performs strict verification of a WebAuthn Authentication Assertion.
+Performs verification of a WebAuthn Authentication Assertion. This variants allow the caller to select
+whether of not to require the UV flag (step 17).
 
-Same as {verify}, but also also verifies:
+Verifies:
 
-[start=5]
-5. {validateUserVerifiedBitSet} - confirming stronger user authentication (biometrics/PIN)
-6. {validateBackupEligibilityAndState}- Backup Eligibility (`BE`) and Backup State (BS) bits
-relationship is valid
-
-This strict verification is recommended for:
-
-* High-value transactions
-* Privileged operations
-* Account recovery or critical settings changes
-* Applications where security takes precedence over broad authenticator compatibility
-
-[.contract-item]
-[[WebAuthn-validateUserPresentBitSet-bytes1-]]
-==== `[.contract-item-name]#++validateUserPresentBitSet++#++(bytes1 flags) → bool++` [.item-kind]#internal#
-
-Validates that the https://www.w3.org/TR/webauthn-2/#up[User Present (UP)] bit is set.
-Step 16 in https://www.w3.org/TR/webauthn-2/#sctn-verifying-assertion[verifying an assertion].
-
-NOTE: Required by WebAuthn spec but may be skipped for platform authenticators
-(Touch ID, Windows Hello) in controlled environments. Enforce for public-facing apps.
-
-[.contract-item]
-[[WebAuthn-validateUserVerifiedBitSet-bytes1-]]
-==== `[.contract-item-name]#++validateUserVerifiedBitSet++#++(bytes1 flags) → bool++` [.item-kind]#internal#
-
-Validates that the https://www.w3.org/TR/webauthn-2/#uv[User Verified (UV)] bit is set.
-Step 17 in https://www.w3.org/TR/webauthn-2/#sctn-verifying-assertion[verifying an assertion].
-
-The UV bit indicates whether the user was verified using a stronger identification method
-(biometrics, PIN, password). While optional, requiring UV=1 is recommended for:
-
-* High-value transactions and sensitive operations
-* Account recovery and critical settings changes
-* Privileged operations
-
-NOTE: For routine operations or when using hardware authenticators without verification capabilities,
-`UV=0` may be acceptable. The choice of whether to require UV represents a security vs. usability
-tradeoff - for blockchain applications handling valuable assets, requiring UV is generally safer.
-
-[.contract-item]
-[[WebAuthn-validateBackupEligibilityAndState-bytes1-]]
-==== `[.contract-item-name]#++validateBackupEligibilityAndState++#++(bytes1 flags) → bool++` [.item-kind]#internal#
-
-Validates the relationship between Backup Eligibility (`BE`) and Backup State (`BS`) bits
-according to the WebAuthn specification.
-
-The function enforces that if a credential is backed up (`BS=1`), it must also be eligible
-for backup (`BE=1`). This prevents unauthorized credential backup and ensures compliance
-with the WebAuthn spec.
-
-Returns true in these valid states:
-
-* `BE=1`, `BS=0`: Credential is eligible but not backed up
-* `BE=1`, `BS=1`: Credential is eligible and backed up
-* `BE=0`, `BS=0`: Credential is not eligible and not backed up
-
-Returns false only when `BE=0` and `BS=1`, which is an invalid state indicating
-a credential that's backed up but not eligible for backup.
-
-NOTE: While the WebAuthn spec defines this relationship between `BE` and `BS` bits,
-validating it is not explicitly required as part of the core verification procedure.
-Some implementations may choose to skip this check for broader authenticator
-compatibility or when the application's threat model doesn't consider credential
-syncing a major risk.
-
-[.contract-item]
-[[WebAuthn-validateExpectedTypeHash-string-uint256-]]
-==== `[.contract-item-name]#++validateExpectedTypeHash++#++(string clientDataJSON, uint256 typeIndex) → bool++` [.item-kind]#internal#
-
-Validates that the https://www.w3.org/TR/webauthn-2/#type[Type] field in the client data JSON
-is set to "webauthn.get".
-
-[.contract-item]
-[[WebAuthn-validateChallenge-string-uint256-bytes-]]
-==== `[.contract-item-name]#++validateChallenge++#++(string clientDataJSON, uint256 challengeIndex, bytes challenge) → bool++` [.item-kind]#internal#
-
-Validates that the challenge in the client data JSON matches the `expectedChallenge`.
+1. Type is "webauthn.get" (see {_validateExpectedTypeHash})
+2. Challenge matches the expected value (see {_validateChallenge})
+3. Cryptographic signature is valid for the given public key
+4. confirming physical user presence during authentication
+5. (if `requireUV` is true) confirming stronger user authentication (biometrics/PIN)
+6. Backup Eligibility (`BE`) and Backup State (BS) bits relationship is valid
 
 [.contract-item]
 [[WebAuthn-tryDecodeAuth-bytes-]]
@@ -281,6 +185,30 @@ returns true and the calldata view at the object. Otherwise, returns false and a
 
 NOTE: The returned `auth` object should not be accessed if `success` is false. Trying to access the data may
 cause revert/panic.
+
+[.contract-item]
+[[WebAuthn-AUTH_DATA_FLAGS_UP-bytes1]]
+==== `bytes1 [.contract-item-name]#++AUTH_DATA_FLAGS_UP++#` [.item-kind]#internal constant#
+
+Bit 0 of the authenticator data flags: "User Present" bit.
+
+[.contract-item]
+[[WebAuthn-AUTH_DATA_FLAGS_UV-bytes1]]
+==== `bytes1 [.contract-item-name]#++AUTH_DATA_FLAGS_UV++#` [.item-kind]#internal constant#
+
+Bit 2 of the authenticator data flags: "User Verified" bit.
+
+[.contract-item]
+[[WebAuthn-AUTH_DATA_FLAGS_BE-bytes1]]
+==== `bytes1 [.contract-item-name]#++AUTH_DATA_FLAGS_BE++#` [.item-kind]#internal constant#
+
+Bit 3 of the authenticator data flags: "Backup Eligibility" bit.
+
+[.contract-item]
+[[WebAuthn-AUTH_DATA_FLAGS_BS-bytes1]]
+==== `bytes1 [.contract-item-name]#++AUTH_DATA_FLAGS_BS++#` [.item-kind]#internal constant#
+
+Bit 4 of the authenticator data flags: "Backup State" bit.
 
 == Abstract Signers
 
