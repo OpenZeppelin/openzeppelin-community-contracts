@@ -37,11 +37,11 @@ library ZKJWTUtils {
     using Strings for string;
 
     /// @dev Enumeration of possible JWT proof validation errors.
+    /// See https://docs.zk.email/jwt-tx-builder/architecture[ZK JWT Architecture] for validation flow details.
     enum JWTProofError {
         NoError,
         JWTPublicKeyHash, // The JWT public key hash verification fails
-        MaskedCommandLength, // The masked command length exceeds the maximum
-        SkippedCommandPrefixSize, // The skipped command prefix size is invalid
+        MaskedCommandLength, // The masked command length exceeds the maximum allowed by the circuit
         MismatchedCommand, // The command does not match the proof command
         JWTProof // The JWT proof verification fails
     }
@@ -58,12 +58,13 @@ library ZKJWTUtils {
     function isValidZKJWT(
         EmailProof memory jwtProof,
         IDKIMRegistry jwtRegistry,
-        IVerifier verifier
+        IVerifier verifier,
+        bytes32 hash
     ) internal returns (JWTProofError) {
         string[] memory signHashTemplate = new string[](2);
         signHashTemplate[0] = "signHash";
         signHashTemplate[1] = CommandUtils.UINT_MATCHER; // UINT_MATCHER is always lowercase
-        return isValidZKJWT(jwtProof, jwtRegistry, verifier, signHashTemplate, Case.LOWERCASE);
+        return isValidZKJWT(jwtProof, jwtRegistry, verifier, signHashTemplate, _asSingletonArray(hash), Case.LOWERCASE);
     }
 
     /**
@@ -80,9 +81,10 @@ library ZKJWTUtils {
         EmailProof memory jwtProof,
         IDKIMRegistry jwtRegistry,
         IVerifier verifier,
-        string[] memory template
+        string[] memory template,
+        bytes[] memory templateParams
     ) internal returns (JWTProofError) {
-        return isValidZKJWT(jwtProof, jwtRegistry, verifier, template, Case.ANY);
+        return isValidZKJWT(jwtProof, jwtRegistry, verifier, template, templateParams, Case.ANY);
     }
 
     /**
@@ -96,11 +98,12 @@ library ZKJWTUtils {
         IDKIMRegistry jwtRegistry,
         IVerifier verifier,
         string[] memory template,
+        bytes[] memory templateParams,
         Case stringCase
     ) internal returns (JWTProofError) {
         if (bytes(jwtProof.maskedCommand).length > verifier.getCommandBytes()) {
             return JWTProofError.MaskedCommandLength;
-        } else if (!_commandMatch(jwtProof, template, stringCase)) {
+        } else if (!_commandMatch(jwtProof, template, templateParams, stringCase)) {
             return JWTProofError.MismatchedCommand;
         } else if (!jwtRegistry.isDKIMPublicKeyHashValid(jwtProof.domainName, jwtProof.publicKeyHash)) {
             // Validate JWT public key and authorized party through registry
@@ -117,25 +120,28 @@ library ZKJWTUtils {
     function _commandMatch(
         EmailProof memory jwtProof,
         string[] memory template,
+        bytes[] memory templateParams,
         Case stringCase
     ) private pure returns (bool) {
-        // For JWT proofs, we extract command parameters from the maskedCommand
-        // Since JWTs don't use the same command structure as emails, we adapt the validation
-        string memory command = jwtProof.maskedCommand;
-
         // Convert template to expected command format
-        bytes[] memory commandParams = new bytes[](template.length);
-        for (uint256 i = 0; i < template.length; i++) {
-            commandParams[i] = bytes(template[i]);
-        }
+        uint256 commandPrefixLength = bytes(jwtProof.maskedCommand).indexOf(bytes1(" "));
+        string memory command = string(bytes(jwtProof.maskedCommand).slice(commandPrefixLength + 1));
 
-        if (stringCase != Case.ANY) {
-            return commandParams.computeExpectedCommand(template, uint8(stringCase)).equal(command);
-        }
-
+        if (stringCase != Case.ANY)
+            return templateParams.computeExpectedCommand(template, uint8(stringCase)).equal(command);
         return
-            commandParams.computeExpectedCommand(template, uint8(Case.LOWERCASE)).equal(command) ||
-            commandParams.computeExpectedCommand(template, uint8(Case.UPPERCASE)).equal(command) ||
-            commandParams.computeExpectedCommand(template, uint8(Case.CHECKSUM)).equal(command);
+            templateParams.computeExpectedCommand(template, uint8(Case.LOWERCASE)).equal(command) ||
+            templateParams.computeExpectedCommand(template, uint8(Case.UPPERCASE)).equal(command) ||
+            templateParams.computeExpectedCommand(template, uint8(Case.CHECKSUM)).equal(command);
+    }
+
+    /// @dev Creates an array in memory with only one value for each of the elements provided.
+    function _asSingletonArray(bytes32 element) private pure returns (bytes[] memory array) {
+        assembly ("memory-safe") {
+            array := mload(0x40) // Load free memory pointer
+            mstore(array, 1) // Set array length to 1
+            mstore(add(array, 0x20), element) // Store the single element
+            mstore(0x40, add(array, 0x40)) // Update memory pointer
+        }
     }
 }
