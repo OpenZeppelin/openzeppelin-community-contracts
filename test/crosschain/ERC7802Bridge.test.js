@@ -2,6 +2,8 @@ const { ethers } = require('hardhat');
 const { expect } = require('chai');
 const { loadFixture } = require('@nomicfoundation/hardhat-network-helpers');
 
+const { impersonate } = require('@openzeppelin/contracts/test/helpers/account');
+
 const AxelarHelper = require('./axelar/AxelarHelper');
 
 const buildBridgeHash = (...chains) => {
@@ -152,5 +154,30 @@ describe('ERC7802Bridge', function () {
     await expect(this.tokenB.balanceOf(this.bridgeB)).to.eventually.equal(0n);
     await expect(this.tokenA.balanceOf(this.endpointA)).to.eventually.equal(0n);
     await expect(this.tokenA.balanceOf(this.endpointB)).to.eventually.equal(0n);
+  });
+
+  it('cannot call endpoint directly to mint tokens', async function () {
+    const [receiver, malicious] = this.accounts;
+    const value = 1_000_000_000n;
+
+    // Deploy endpoint (that is whitelisted by tokenB)
+    await this.bridgeB.getBridgeEndpoint(this.id);
+
+    const tx = {
+      to: this.endpointB,
+      data: ethers.concat([
+        this.tokenB.target,
+        this.tokenB.interface.encodeFunctionData('crosschainMint', [receiver.address, value]),
+      ]),
+    };
+
+    // The bridge is able to make that call
+    const bridgeAsWallet = await impersonate(this.bridgeB.target);
+    await expect(bridgeAsWallet.sendTransaction(tx))
+      .to.emit(this.tokenB, 'Transfer')
+      .withArgs(ethers.ZeroAddress, receiver, value);
+
+    // An malicious user cannot
+    await expect(malicious.sendTransaction(tx)).to.be.revertedWithoutReason();
   });
 });
