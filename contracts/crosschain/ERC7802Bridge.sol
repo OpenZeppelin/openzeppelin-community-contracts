@@ -225,8 +225,10 @@ contract ERC7802Bridge is ERC721("ERC7802Bridge", "ERC7802Bridge"), IERC7786Rece
             );
             require(success && (returndata.length == 0 ? token.code.length == 0 : uint256(bytes32(returndata)) == 1));
         } else {
-            (bool success, ) = getBridgeEndpoint(bridgeId).call(
-                abi.encodePacked(token, abi.encodeCall(IERC7802.crosschainBurn, (from, amount)))
+            (bool success, ) = IndirectCall.indirectCall(
+                token,
+                abi.encodeCall(IERC7802.crosschainBurn, (from, amount)),
+                bridgeId
             );
             require(success);
         }
@@ -243,8 +245,10 @@ contract ERC7802Bridge is ERC721("ERC7802Bridge", "ERC7802Bridge"), IERC7786Rece
             );
             require(success && (returndata.length == 0 ? token.code.length == 0 : uint256(bytes32(returndata)) == 1));
         } else {
-            (bool success, ) = getBridgeEndpoint(bridgeId).call(
-                abi.encodePacked(token, abi.encodeCall(IERC7802.crosschainMint, (to, amount)))
+            (bool success, ) = IndirectCall.indirectCall(
+                token,
+                abi.encodeCall(IERC7802.crosschainMint, (to, amount)),
+                bridgeId
             );
             require(success);
         }
