@@ -5,7 +5,7 @@ pragma solidity ^0.8.24;
 import {Bytes} from "@openzeppelin/contracts/utils/Bytes.sol";
 import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 import {IDKIMRegistry} from "@zk-email/contracts/DKIMRegistry.sol";
-import {IVerifier, EmailProof} from "@zk-email/zk-jwt/src/interfaces/IVerifier.sol";
+import {IVerifier, EmailProof} from "@zk-email/email-tx-builder/src/interfaces/IVerifier.sol";
 import {CommandUtils} from "@zk-email/email-tx-builder/src/libraries/CommandUtils.sol";
 
 /**
@@ -60,7 +60,7 @@ library ZKJWTUtils {
         IDKIMRegistry jwtRegistry,
         IVerifier verifier,
         bytes32 hash
-    ) internal returns (JWTProofError) {
+    ) internal view returns (JWTProofError) {
         string[] memory signHashTemplate = new string[](2);
         signHashTemplate[0] = "signHash";
         signHashTemplate[1] = CommandUtils.UINT_MATCHER; // UINT_MATCHER is always lowercase
@@ -83,7 +83,7 @@ library ZKJWTUtils {
         IVerifier verifier,
         string[] memory template,
         bytes[] memory templateParams
-    ) internal returns (JWTProofError) {
+    ) internal view returns (JWTProofError) {
         return isValidZKJWT(jwtProof, jwtRegistry, verifier, template, templateParams, Case.ANY);
     }
 
@@ -100,8 +100,8 @@ library ZKJWTUtils {
         string[] memory template,
         bytes[] memory templateParams,
         Case stringCase
-    ) internal returns (JWTProofError) {
-        if (bytes(jwtProof.maskedCommand).length > verifier.getCommandBytes()) {
+    ) internal view returns (JWTProofError) {
+        if (bytes(jwtProof.maskedCommand).length > verifier.commandBytes()) {
             return JWTProofError.MaskedCommandLength;
         } else if (!_commandMatch(jwtProof, template, templateParams, stringCase)) {
             return JWTProofError.MismatchedCommand;

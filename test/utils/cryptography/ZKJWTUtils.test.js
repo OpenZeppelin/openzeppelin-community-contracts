@@ -58,28 +58,20 @@ describe('ZKJWTUtils', function () {
   });
 
   describe('JWT Proof Validation', function () {
-    it.only('should validate ZK JWT with default signHash template', async function () {
+    it('should validate ZK JWT with default signHash template', async function () {
       const hash = ethers.hexlify(ethers.randomBytes(32));
       const command = SIGN_HASH_COMMAND + ' ' + ethers.toBigInt(hash).toString();
       const jwtProof = buildJWTProof(command);
 
       // Use the working overload with templateParams instead of the default function
-      const template = [SIGN_HASH_COMMAND, UINT_MATCHER];
+      const template = [UINT_MATCHER];
       const templateParams = [ethers.AbiCoder.defaultAbiCoder().encode(['uint256'], [ethers.toBigInt(hash)])];
 
       const fnSig =
         '$isValidZKJWT((string,bytes32,uint256,string,bytes32,bytes32,bool,bytes),address,address,string[],bytes[])';
-      const tx = await this.mock[fnSig](
-        jwtProof,
-        this.jwtRegistry.target,
-        this.verifier.target,
-        template,
-        templateParams,
-      );
-      console.log(tx.provider);
-      // await expect(this.mock[fnSig](jwtProof, this.jwtRegistry.target, this.verifier.target, template, templateParams))
-      //   .to.emit(this.mock, 'return$isValidZKJWT')
-      //   .withArgs(JWTProofError.NoError);
+      await expect(
+        this.mock[fnSig](jwtProof, this.jwtRegistry.target, this.verifier.target, template, templateParams),
+      ).to.eventually.equal(JWTProofError.NoError);
     });
 
     it('should validate ZK JWT with custom template', async function () {
@@ -87,7 +79,7 @@ describe('ZKJWTUtils', function () {
       const commandPrefix = 'jwtCommand';
       const command = commandPrefix + ' ' + ethers.toBigInt(hash).toString();
       const jwtProof = buildJWTProof(command);
-      const template = [commandPrefix, UINT_MATCHER];
+      const template = [UINT_MATCHER];
       const templateParams = [ethers.AbiCoder.defaultAbiCoder().encode(['uint256'], [ethers.toBigInt(hash)])];
 
       const fnSig =
@@ -99,7 +91,7 @@ describe('ZKJWTUtils', function () {
 
     it('should validate JWT command with address match in different cases', async function () {
       const commandPrefix = 'authorize';
-      const template = [commandPrefix, ETH_ADDR_MATCHER];
+      const template = [ETH_ADDR_MATCHER];
 
       const testCases = [
         {
@@ -131,7 +123,7 @@ describe('ZKJWTUtils', function () {
 
     it('should validate JWT command with address match using ANY case', async function () {
       const commandPrefix = 'grant';
-      const template = [commandPrefix, ETH_ADDR_MATCHER];
+      const template = [ETH_ADDR_MATCHER]; // Only parameter matchers
 
       // Test with different cases that should all work with ANY case
       const addresses = [
@@ -168,7 +160,7 @@ describe('ZKJWTUtils', function () {
       const jwtProof = buildJWTProof(command);
       jwtProof.publicKeyHash = ethers.hexlify(ethers.randomBytes(32)); // Invalid public key hash
 
-      const template = [SIGN_HASH_COMMAND, UINT_MATCHER];
+      const template = [UINT_MATCHER];
       const templateParams = [ethers.AbiCoder.defaultAbiCoder().encode(['uint256'], [ethers.toBigInt(hash)])];
       const fnSig =
         '$isValidZKJWT((string,bytes32,uint256,string,bytes32,bytes32,bool,bytes),address,address,string[],bytes[])';
@@ -185,7 +177,7 @@ describe('ZKJWTUtils', function () {
       // Use a domain that hasn't been registered
       jwtProof.domainName = 'unregistered-kid|https://unregistered.com|unregistered-client';
 
-      const template = [SIGN_HASH_COMMAND, UINT_MATCHER];
+      const template = [UINT_MATCHER];
       const templateParams = [ethers.AbiCoder.defaultAbiCoder().encode(['uint256'], [ethers.toBigInt(hash)])];
       const fnSig =
         '$isValidZKJWT((string,bytes32,uint256,string,bytes32,bytes32,bool,bytes),address,address,string[],bytes[])';
@@ -200,7 +192,7 @@ describe('ZKJWTUtils', function () {
       const longCommand = 'a'.repeat(606);
       const jwtProof = buildJWTProof(longCommand);
 
-      const template = [SIGN_HASH_COMMAND, UINT_MATCHER];
+      const template = [UINT_MATCHER];
       const templateParams = [ethers.AbiCoder.defaultAbiCoder().encode(['uint256'], [0])];
       const fnSig =
         '$isValidZKJWT((string,bytes32,uint256,string,bytes32,bytes32,bool,bytes),address,address,string[],bytes[])';
@@ -214,8 +206,8 @@ describe('ZKJWTUtils', function () {
       const hash = ethers.hexlify(ethers.randomBytes(32));
       const command = 'invalidJWTCommand ' + ethers.toBigInt(hash).toString();
       const jwtProof = buildJWTProof(command);
-      const template = ['invalidJWTCommand', UINT_MATCHER];
-      const templateParams = [ethers.AbiCoder.defaultAbiCoder().encode(['uint256'], [ethers.toBigInt(hash)])];
+      const template = ['{string}'];
+      const templateParams = [ethers.AbiCoder.defaultAbiCoder().encode(['string'], ['differentValue'])];
 
       const fnSig =
         '$isValidZKJWT((string,bytes32,uint256,string,bytes32,bytes32,bool,bytes),address,address,string[],bytes[])';
@@ -230,7 +222,7 @@ describe('ZKJWTUtils', function () {
       const jwtProof = buildJWTProof(command);
       jwtProof.proof = '0x00'; // Invalid proof that will fail verification
 
-      const template = [SIGN_HASH_COMMAND, UINT_MATCHER];
+      const template = [UINT_MATCHER];
       const templateParams = [ethers.AbiCoder.defaultAbiCoder().encode(['uint256'], [ethers.toBigInt(hash)])];
       const fnSig =
         '$isValidZKJWT((string,bytes32,uint256,string,bytes32,bytes32,bool,bytes),address,address,string[],bytes[])';
@@ -242,23 +234,28 @@ describe('ZKJWTUtils', function () {
   });
 
   describe('JWT-Specific Domain Format', function () {
+    beforeEach(async function () {
+      this.validDomains = [
+        'test-kid|https://accounts.google.com|1234567890.apps.googleusercontent.com',
+        'auth0-key|https://your-domain.auth0.com/|your-auth0-client-id',
+        'google-key-id-123|https://accounts.google.com|1234567890.apps.googleusercontent.com',
+      ];
+
+      for (const domain of this.validDomains) {
+        await this.jwtRegistry.connect(this.admin).setJwtPublicKey(domain, publicKeyHash);
+      }
+    });
+
     it('should validate proper kid|iss|azp domain format', async function () {
       const hash = ethers.hexlify(ethers.randomBytes(32));
       const command = SIGN_HASH_COMMAND + ' ' + ethers.toBigInt(hash).toString();
 
-      // Test various valid JWT domain formats
-      const validDomains = [
-        '12345|https://example.com|client-id-12345', // From actual tests
-        'test-kid|https://accounts.google.com|1234567890.apps.googleusercontent.com', // Google
-        'auth0-key|https://your-domain.auth0.com/|your-auth0-client-id', // Auth0
-      ];
-
-      const template = [SIGN_HASH_COMMAND, UINT_MATCHER];
+      const template = [UINT_MATCHER];
       const templateParams = [ethers.AbiCoder.defaultAbiCoder().encode(['uint256'], [ethers.toBigInt(hash)])];
       const fnSig =
         '$isValidZKJWT((string,bytes32,uint256,string,bytes32,bytes32,bool,bytes),address,address,string[],bytes[])';
 
-      for (const domain of validDomains) {
+      for (const domain of this.validDomains) {
         const jwtProof = buildJWTProof(command);
         jwtProof.domainName = domain;
 
@@ -281,7 +278,7 @@ describe('ZKJWTUtils', function () {
       const jwtProof = buildJWTProof(command);
       jwtProof.domainName = googleDomain;
 
-      const template = ['grant', UINT_MATCHER];
+      const template = [UINT_MATCHER];
       const templateParams = [ethers.AbiCoder.defaultAbiCoder().encode(['uint256'], [nonceValue])];
       const fnSig =
         '$isValidZKJWT((string,bytes32,uint256,string,bytes32,bytes32,bool,bytes),address,address,string[],bytes[])';
@@ -298,7 +295,7 @@ describe('ZKJWTUtils', function () {
       const recipient = this.other.address;
       const command = `transfer ${amount.toString()} ${recipient}`;
       const jwtProof = buildJWTProof(command);
-      const template = ['transfer', UINT_MATCHER, ETH_ADDR_MATCHER];
+      const template = [UINT_MATCHER, ETH_ADDR_MATCHER];
       const templateParams = [
         ethers.AbiCoder.defaultAbiCoder().encode(['uint256'], [amount]),
         ethers.AbiCoder.defaultAbiCoder().encode(['address'], [recipient]),
@@ -317,7 +314,7 @@ describe('ZKJWTUtils', function () {
       const recipient = '0x1234000000000000000000000000000000000000';
       const command = `Send ${amount.toString()} ETH to ${recipient}`;
       const jwtProof = buildJWTProof(command);
-      const template = ['Send', UINT_MATCHER, 'ETH', 'to', ETH_ADDR_MATCHER];
+      const template = [UINT_MATCHER, 'ETH', 'to', ETH_ADDR_MATCHER];
       const templateParams = [
         ethers.AbiCoder.defaultAbiCoder().encode(['uint256'], [amount]),
         ethers.AbiCoder.defaultAbiCoder().encode(['address'], [recipient]),
