@@ -37,7 +37,7 @@ abstract contract AxelarGatewaySource is IERC7786GatewaySource, AxelarGatewayBas
 
         // Create the package
         bytes memory sender = InteroperableAddress.formatEvmV1(block.chainid, msg.sender);
-        bytes memory adapterPayload = abi.encode(sender, recipient, payload, attributes);
+        bytes memory adapterPayload = abi.encode(sender, recipient, payload);
 
         // Emit event
         sendId = bytes32(0); // Explicitly set to 0

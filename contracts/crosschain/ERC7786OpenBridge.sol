@@ -173,17 +173,16 @@ contract ERC7786OpenBridge is IERC7786GatewaySource, IERC7786Receiver, Ownable, 
      * not revert. Any value accrued that way can be recovered by the admin using the {sweep} function.
      */
     // slither-disable-next-line reentrancy-no-eth
-    function executeMessage(
+    function receiveMessage(
         bytes32 /*receiveId*/,
         bytes calldata sender, // Binary Interoperable Address
-        bytes calldata payload,
-        bytes[] calldata attributes
+        bytes calldata payload
     ) public payable virtual whenNotPaused returns (bytes4) {
         // Check sender is a trusted bridge
         require(keccak256(getRemoteBridge(sender)) == keccak256(sender), ERC7786OpenBridgeInvalidCrosschainSender());
 
         // Message reception tracker
-        bytes32 id = keccak256(abi.encode(sender, payload, attributes));
+        bytes32 id = keccak256(abi.encode(sender, payload));
         Tracker storage tracker = _trackers[id];
 
         // If call is first from a trusted gateway
@@ -194,7 +193,7 @@ contract ERC7786OpenBridge is IERC7786GatewaySource, IERC7786Receiver, Ownable, 
             emit Received(id, msg.sender);
 
             // if already executed, leave gracefully
-            if (tracker.executed) return IERC7786Receiver.executeMessage.selector;
+            if (tracker.executed) return IERC7786Receiver.receiveMessage.selector;
         } else if (tracker.executed) {
             revert ERC7786OpenBridgeAlreadyExecuted();
         }
@@ -210,10 +209,7 @@ contract ERC7786OpenBridge is IERC7786GatewaySource, IERC7786Receiver, Ownable, 
             // prevent re-entry
             tracker.executed = true;
 
-            bytes memory call = abi.encodeCall(
-                IERC7786Receiver.executeMessage,
-                (id, originalSender, unwrappedPayload, attributes)
-            );
+            bytes memory call = abi.encodeCall(IERC7786Receiver.receiveMessage, (id, originalSender, unwrappedPayload));
             // slither-disable-next-line reentrancy-no-eth
             (, address target) = recipient.parseEvmV1();
             (bool success, bytes memory returndata) = target.call(call);
@@ -222,7 +218,7 @@ contract ERC7786OpenBridge is IERC7786GatewaySource, IERC7786Receiver, Ownable, 
                 // rollback to enable retry
                 tracker.executed = false;
                 emit ExecutionFailed(id);
-            } else if (bytes32(returndata) == bytes32(IERC7786Receiver.executeMessage.selector)) {
+            } else if (bytes32(returndata) == bytes32(IERC7786Receiver.receiveMessage.selector)) {
                 // call successful and correct value returned
                 emit ExecutionSuccess(id);
             } else {
@@ -231,7 +227,7 @@ contract ERC7786OpenBridge is IERC7786GatewaySource, IERC7786Receiver, Ownable, 
             }
         }
 
-        return IERC7786Receiver.executeMessage.selector;
+        return IERC7786Receiver.receiveMessage.selector;
     }
 
     // =================================================== Getters ===================================================
@@ -281,7 +277,7 @@ contract ERC7786OpenBridge is IERC7786GatewaySource, IERC7786Receiver, Ownable, 
         _unpause();
     }
 
-    /// @dev Recovery method in case value is ever received through {executeMessage}
+    /// @dev Recovery method in case value is ever received through {receiveMessage}
     function sweep(address payable to) public virtual onlyOwner {
         Address.sendValue(to, address(this).balance);
     }

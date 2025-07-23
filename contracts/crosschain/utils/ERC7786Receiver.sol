@@ -7,7 +7,7 @@ import {IERC7786Receiver} from "../../interfaces/IERC7786.sol";
 /**
  * @dev Base implementation of an ERC-7786 compliant cross-chain message receiver.
  *
- * This abstract contract exposes the `executeMessage` function that is used for communication with (one or multiple)
+ * This abstract contract exposes the `receiveMessage` function that is used for communication with (one or multiple)
  * destination gateways. This contract leaves two functions unimplemented:
  *
  * {_isKnownGateway}, an internal getter used to verify whether an address is recognised by the contract as a valid
@@ -21,15 +21,14 @@ abstract contract ERC7786Receiver is IERC7786Receiver {
     error ERC7786ReceivePassiveModeValue();
 
     /// @inheritdoc IERC7786Receiver
-    function executeMessage(
+    function receiveMessage(
         bytes32 receiveId,
         bytes calldata sender, // Binary Interoperable Address
-        bytes calldata payload,
-        bytes[] calldata attributes
+        bytes calldata payload
     ) public payable virtual returns (bytes4) {
         require(_isKnownGateway(msg.sender), ERC7786ReceiverInvalidGateway(msg.sender));
-        _processMessage(msg.sender, receiveId, sender, payload, attributes);
-        return IERC7786Receiver.executeMessage.selector;
+        _processMessage(msg.sender, receiveId, sender, payload);
+        return IERC7786Receiver.receiveMessage.selector;
     }
 
     /// @dev Virtual getter that returns whether an address is a valid ERC-7786 gateway.
@@ -40,7 +39,6 @@ abstract contract ERC7786Receiver is IERC7786Receiver {
         address gateway,
         bytes32 receiveId,
         bytes calldata sender,
-        bytes calldata payload,
-        bytes[] calldata attributes
+        bytes calldata payload
     ) internal virtual;
 }

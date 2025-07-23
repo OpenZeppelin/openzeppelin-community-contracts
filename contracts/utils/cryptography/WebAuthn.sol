@@ -52,33 +52,45 @@ library WebAuthn {
     }
 
     /// @dev Bit 0 of the authenticator data flags: "User Present" bit.
-    bytes1 private constant AUTH_DATA_FLAGS_UP = 0x01;
+    bytes1 internal constant AUTH_DATA_FLAGS_UP = 0x01;
     /// @dev Bit 2 of the authenticator data flags: "User Verified" bit.
-    bytes1 private constant AUTH_DATA_FLAGS_UV = 0x04;
+    bytes1 internal constant AUTH_DATA_FLAGS_UV = 0x04;
     /// @dev Bit 3 of the authenticator data flags: "Backup Eligibility" bit.
-    bytes1 private constant AUTH_DATA_FLAGS_BE = 0x08;
+    bytes1 internal constant AUTH_DATA_FLAGS_BE = 0x08;
     /// @dev Bit 4 of the authenticator data flags: "Backup State" bit.
-    bytes1 private constant AUTH_DATA_FLAGS_BS = 0x10;
+    bytes1 internal constant AUTH_DATA_FLAGS_BS = 0x10;
 
     /**
-     * @dev Performs the absolute minimal verification of a WebAuthn Authentication Assertion.
-     * This function includes only the essential checks required for basic WebAuthn security:
-     *
-     * 1. Type is "webauthn.get" (see {validateExpectedTypeHash})
-     * 2. Challenge matches the expected value (see {validateChallenge})
-     * 3. Cryptographic signature is valid for the given public key
-     *
-     * For most applications, use {verify} or {verifyStrict} instead.
-     *
-     * NOTE: This function intentionally omits User Presence (UP), User Verification (UV),
-     * and Backup State/Eligibility checks. Use this only when broader compatibility with
-     * authenticators is required or in constrained environments.
+     * @dev Performs standard verification of a WebAuthn Authentication Assertion.
      */
-    function verifyMinimal(
+    function verify(
         bytes memory challenge,
         WebAuthnAuth memory auth,
         bytes32 qx,
         bytes32 qy
+    ) internal view returns (bool) {
+        return verify(challenge, auth, qx, qy, true);
+    }
+
+    /**
+     * @dev Performs verification of a WebAuthn Authentication Assertion. This variants allow the caller to select
+     * whether of not to require the UV flag (step 17).
+     *
+     * Verifies:
+     *
+     * 1. Type is "webauthn.get" (see {_validateExpectedTypeHash})
+     * 2. Challenge matches the expected value (see {_validateChallenge})
+     * 3. Cryptographic signature is valid for the given public key
+     * 4. confirming physical user presence during authentication
+     * 5. (if `requireUV` is true) confirming stronger user authentication (biometrics/PIN)
+     * 6. Backup Eligibility (`BE`) and Backup State (BS) bits relationship is valid
+     */
+    function verify(
+        bytes memory challenge,
+        WebAuthnAuth memory auth,
+        bytes32 qx,
+        bytes32 qy,
+        bool requireUV
     ) internal view returns (bool) {
         // Verify authenticator data has sufficient length (37 bytes minimum):
         // - 32 bytes for rpIdHash
@@ -86,9 +98,12 @@ library WebAuthn {
         // - 4 bytes for signature counter
         return
             auth.authenticatorData.length > 36 &&
-            validateExpectedTypeHash(auth.clientDataJSON, auth.typeIndex) && // 11
-            validateChallenge(auth.clientDataJSON, auth.challengeIndex, challenge) && // 12
-            // Handles signature malleability internally
+            _validateExpectedTypeHash(auth.clientDataJSON, auth.typeIndex) && // 11
+            _validateChallenge(auth.clientDataJSON, auth.challengeIndex, challenge) && // 12
+            _validateUserPresentBitSet(auth.authenticatorData[32]) && // 16
+            (!requireUV || _validateUserVerifiedBitSet(auth.authenticatorData[32])) && // 17
+            _validateBackupEligibilityAndState(auth.authenticatorData[32]) && // Consistency check
+            // P256.verify handles signature malleability internally
             P256.verify(
                 sha256(
                     abi.encodePacked(
@@ -104,69 +119,63 @@ library WebAuthn {
     }
 
     /**
-     * @dev Performs standard verification of a WebAuthn Authentication Assertion.
+     * @dev Validates that the https://www.w3.org/TR/webauthn-2/#type[Type] field in the client data JSON is set to
+     * "webauthn.get".
      *
-     * Same as {verifyMinimal}, but also verifies:
-     *
-     * [start=4]
-     * 4. {validateUserPresentBitSet} - confirming physical user presence during authentication
-     *
-     * This compliance level satisfies the core WebAuthn verification requirements while
-     * maintaining broad compatibility with authenticators. For higher security requirements,
-     * consider using {verifyStrict}.
+     * Step 11 in https://www.w3.org/TR/webauthn-2/#sctn-verifying-assertion[verifying an assertion].
      */
-    function verify(
-        bytes memory challenge,
-        WebAuthnAuth memory auth,
-        bytes32 qx,
-        bytes32 qy
-    ) internal view returns (bool) {
-        // 16 && rest
-        return validateUserPresentBitSet(auth.authenticatorData[32]) && verifyMinimal(challenge, auth, qx, qy);
+    function _validateExpectedTypeHash(
+        string memory clientDataJSON,
+        uint256 typeIndex
+    ) private pure returns (bool success) {
+        assembly ("memory-safe") {
+            success := and(
+                // clientDataJson.length >= typeIndex + 21
+                gt(mload(clientDataJSON), add(typeIndex, 20)),
+                eq(
+                    // get 32 bytes starting at index typexIndex in clientDataJSON, and keep the leftmost 21 bytes
+                    and(mload(add(add(clientDataJSON, 0x20), typeIndex)), shl(88, not(0))),
+                    // solhint-disable-next-line quotes
+                    '"type":"webauthn.get"'
+                )
+            )
+        }
     }
 
     /**
-     * @dev Performs strict verification of a WebAuthn Authentication Assertion.
+     * @dev Validates that the challenge in the client data JSON matches the `expectedChallenge`.
      *
-     * Same as {verify}, but also also verifies:
-     *
-     * [start=5]
-     * 5. {validateUserVerifiedBitSet} - confirming stronger user authentication (biometrics/PIN)
-     * 6. {validateBackupEligibilityAndState}- Backup Eligibility (`BE`) and Backup State (BS) bits
-     * relationship is valid
-     *
-     * This strict verification is recommended for:
-     *
-     * * High-value transactions
-     * * Privileged operations
-     * * Account recovery or critical settings changes
-     * * Applications where security takes precedence over broad authenticator compatibility
+     * Step 12 in https://www.w3.org/TR/webauthn-2/#sctn-verifying-assertion[verifying an assertion].
      */
-    function verifyStrict(
-        bytes memory challenge,
-        WebAuthnAuth memory auth,
-        bytes32 qx,
-        bytes32 qy
-    ) internal view returns (bool) {
-        return
-            validateUserVerifiedBitSet(auth.authenticatorData[32]) && // 17
-            validateBackupEligibilityAndState(auth.authenticatorData[32]) && // Consistency check
-            verify(challenge, auth, qx, qy);
+    function _validateChallenge(
+        string memory clientDataJSON,
+        uint256 challengeIndex,
+        bytes memory challenge
+    ) private pure returns (bool) {
+        // solhint-disable-next-line quotes
+        string memory expectedChallenge = string.concat('"challenge":"', Base64.encodeURL(challenge), '"');
+        string memory actualChallenge = string(
+            Bytes.slice(bytes(clientDataJSON), challengeIndex, challengeIndex + bytes(expectedChallenge).length)
+        );
+
+        return Strings.equal(actualChallenge, expectedChallenge);
     }
 
     /**
      * @dev Validates that the https://www.w3.org/TR/webauthn-2/#up[User Present (UP)] bit is set.
+     *
      * Step 16 in https://www.w3.org/TR/webauthn-2/#sctn-verifying-assertion[verifying an assertion].
      *
      * NOTE: Required by WebAuthn spec but may be skipped for platform authenticators
      * (Touch ID, Windows Hello) in controlled environments. Enforce for public-facing apps.
      */
-    function validateUserPresentBitSet(bytes1 flags) internal pure returns (bool) {
+    function _validateUserPresentBitSet(bytes1 flags) private pure returns (bool) {
         return (flags & AUTH_DATA_FLAGS_UP) == AUTH_DATA_FLAGS_UP;
     }
 
     /**
      * @dev Validates that the https://www.w3.org/TR/webauthn-2/#uv[User Verified (UV)] bit is set.
+     *
      * Step 17 in https://www.w3.org/TR/webauthn-2/#sctn-verifying-assertion[verifying an assertion].
      *
      * The UV bit indicates whether the user was verified using a stronger identification method
@@ -180,7 +189,7 @@ library WebAuthn {
      * `UV=0` may be acceptable. The choice of whether to require UV represents a security vs. usability
      * tradeoff - for blockchain applications handling valuable assets, requiring UV is generally safer.
      */
-    function validateUserVerifiedBitSet(bytes1 flags) internal pure returns (bool) {
+    function _validateUserVerifiedBitSet(bytes1 flags) private pure returns (bool) {
         return (flags & AUTH_DATA_FLAGS_UV) == AUTH_DATA_FLAGS_UV;
     }
 
@@ -207,35 +216,8 @@ library WebAuthn {
      * compatibility or when the application's threat model doesn't consider credential
      * syncing a major risk.
      */
-    function validateBackupEligibilityAndState(bytes1 flags) internal pure returns (bool) {
-        return (flags & AUTH_DATA_FLAGS_BE) != 0 || (flags & AUTH_DATA_FLAGS_BS) == 0;
-    }
-
-    /**
-     * @dev Validates that the https://www.w3.org/TR/webauthn-2/#type[Type] field in the client data JSON
-     * is set to "webauthn.get".
-     */
-    function validateExpectedTypeHash(string memory clientDataJSON, uint256 typeIndex) internal pure returns (bool) {
-        // 21 = length of '"type":"webauthn.get"'
-        bytes memory typeValueBytes = Bytes.slice(bytes(clientDataJSON), typeIndex, typeIndex + 21);
-
-        // solhint-disable-next-line quotes
-        return bytes21(typeValueBytes) == bytes21('"type":"webauthn.get"');
-    }
-
-    /// @dev Validates that the challenge in the client data JSON matches the `expectedChallenge`.
-    function validateChallenge(
-        string memory clientDataJSON,
-        uint256 challengeIndex,
-        bytes memory challenge
-    ) internal pure returns (bool) {
-        // solhint-disable-next-line quotes
-        string memory expectedChallenge = string.concat('"challenge":"', Base64.encodeURL(challenge), '"');
-        string memory actualChallenge = string(
-            Bytes.slice(bytes(clientDataJSON), challengeIndex, challengeIndex + bytes(expectedChallenge).length)
-        );
-
-        return Strings.equal(actualChallenge, expectedChallenge);
+    function _validateBackupEligibilityAndState(bytes1 flags) private pure returns (bool) {
+        return (flags & AUTH_DATA_FLAGS_BE) == AUTH_DATA_FLAGS_BE || (flags & AUTH_DATA_FLAGS_BS) == 0;
     }
 
     /**

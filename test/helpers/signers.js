@@ -1,11 +1,12 @@
 const { P256SigningKey } = require('@openzeppelin/contracts/test/helpers/signers');
 const {
   AbiCoder,
+  ZeroHash,
   assertArgument,
   concat,
   dataLength,
   sha256,
-  toBeHex,
+  solidityPacked,
   toBigInt,
   encodeBase64,
   toUtf8Bytes,
@@ -86,7 +87,8 @@ class WebAuthnSigningKey extends P256SigningKey {
       challenge: encodeBase64(digest).replaceAll('+', '-').replaceAll('/', '_').replaceAll('=', ''),
     });
 
-    const authenticatorData = toBeHex(0n, 37); // equivalent to `hexlify(new Uint8Array(37))`
+    // Flags 0x05 = AUTH_DATA_FLAGS_UP | AUTH_DATA_FLAGS_UV
+    const authenticatorData = solidityPacked(['bytes32', 'bytes1', 'bytes4'], [ZeroHash, '0x05', '0x00000000']);
 
     // Regular P256 signature
     const { r, s } = super.sign(sha256(concat([authenticatorData, sha256(toUtf8Bytes(clientDataJSON))])));
