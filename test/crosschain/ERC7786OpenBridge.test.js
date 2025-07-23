@@ -154,7 +154,7 @@ describe('ERC7786OpenBridge', function () {
           if (this.outcome) {
             await expect(txPromise)
               .to.emit(this.destination, 'MessageReceived')
-              .withArgs(this.bridgeB, anyValue, this.chain.toErc7930(this.sender), this.payload, this.attributes)
+              .withArgs(this.bridgeB, anyValue, this.chain.toErc7930(this.sender), this.payload)
               .to.emit(this.bridgeB, 'ExecutionSuccess')
               .withArgs(resultId)
               .to.not.emit(this.bridgeB, 'ExecutionFailed');
