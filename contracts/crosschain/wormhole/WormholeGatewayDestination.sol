@@ -28,13 +28,10 @@ abstract contract WormholeGatewayDestination is WormholeGatewayBase, IWormholeRe
     ) public payable virtual onlyWormholeRelayer {
         require(additionalMessages.length == 0, AdditionalMessagesNotSupported());
 
-        (
-            bytes32 outboxId,
-            bytes memory sender,
-            bytes memory recipient,
-            bytes memory payload,
-            bytes[] memory attributes
-        ) = abi.decode(adapterPayload, (bytes32, bytes, bytes, bytes, bytes[]));
+        (bytes32 outboxId, bytes memory sender, bytes memory recipient, bytes memory payload) = abi.decode(
+            adapterPayload,
+            (bytes32, bytes, bytes, bytes)
+        );
 
         // Axelar to ERC-7930 translation
         bytes32 addr = getRemoteGateway(getErc7930Chain(wormholeSourceChain));
@@ -48,7 +45,7 @@ abstract contract WormholeGatewayDestination is WormholeGatewayBase, IWormholeRe
         _executed.set(uint256(outboxId));
 
         (, address target) = recipient.parseEvmV1();
-        bytes4 result = IERC7786Receiver(target).executeMessage(deliveryHash, sender, payload, attributes);
-        require(result == IERC7786Receiver.executeMessage.selector, ReceiverExecutionFailed());
+        bytes4 result = IERC7786Receiver(target).receiveMessage(deliveryHash, sender, payload);
+        require(result == IERC7786Receiver.receiveMessage.selector, ReceiverExecutionFailed());
     }
 }

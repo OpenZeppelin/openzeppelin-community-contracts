@@ -19,7 +19,6 @@ abstract contract WormholeGatewaySource is IERC7786GatewaySource, WormholeGatewa
         address sender;
         bytes recipient;
         bytes payload;
-        bytes[] attributes;
     }
 
     uint256 private _sendId;
@@ -49,7 +48,7 @@ abstract contract WormholeGatewaySource is IERC7786GatewaySource, WormholeGatewa
         require(supportedChain(recipient), UnsupportedERC7930Chain(recipient));
 
         sendId = bytes32(++_sendId);
-        _pending[sendId] = PendingMessage(0, msg.sender, recipient, payload, attributes);
+        _pending[sendId] = PendingMessage(0, msg.sender, recipient, payload);
 
         emit MessageSent(
             sendId,
@@ -79,8 +78,7 @@ abstract contract WormholeGatewaySource is IERC7786GatewaySource, WormholeGatewa
             outboxId,
             InteroperableAddress.formatEvmV1(block.chainid, pmsg.sender),
             pmsg.recipient,
-            pmsg.payload,
-            pmsg.attributes
+            pmsg.payload
         );
 
         // TODO: potentially delete part/all of the message

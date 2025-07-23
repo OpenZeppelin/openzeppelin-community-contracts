@@ -66,7 +66,7 @@ describe('WormholeGateway', function () {
 
     await expect(this.gatewayA.finalizeEvmMessage(outboxId, 100_000n))
       .to.emit(this.receiver, 'MessageReceived')
-      .withArgs(this.gatewayB, anyValue, erc7930Sender, payload, attributes);
+      .withArgs(this.gatewayB, anyValue, erc7930Sender, payload);
   });
 
   it('invalid receiver - bad return value', async function () {
