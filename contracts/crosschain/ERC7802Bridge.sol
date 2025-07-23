@@ -180,11 +180,10 @@ contract ERC7802Bridge is ERC721("ERC7802Bridge", "ERC7802Bridge"), IERC7786Rece
         return sendId;
     }
 
-    function executeMessage(
+    function receiveMessage(
         bytes32 receiveId,
         bytes memory sender,
-        bytes memory payload,
-        bytes[] memory /*attributes*/
+        bytes memory payload
     ) public payable virtual returns (bytes4) {
         // prevent duplicate
         require(!_processed.get(uint256(receiveId)), ERC7802BridgeDuplicate());
@@ -212,7 +211,7 @@ contract ERC7802Bridge is ERC721("ERC7802Bridge", "ERC7802Bridge"), IERC7786Rece
         address token = _distributeTokens(bridgeId, to, amount);
         emit Received(token, from, to, amount);
 
-        return IERC7786Receiver.executeMessage.selector;
+        return IERC7786Receiver.receiveMessage.selector;
     }
 
     function _fetchTokens(bytes32 bridgeId, address from, uint256 amount) private returns (address) {
