@@ -28,7 +28,7 @@ Accounts (i.e. Smart Contract Wallets or Smart Accounts) are particularly likely
 
 On one hand, making sure that the Account signature is only valid for an specific smart contract (i.e. an application) is difficult since it requires to validate a signature whose domain is the application but also the Account itself. For these reason, the community developed https://eips.ethereum.org/EIPS/eip-7739[ERC-7739]; a defensive rehashing mechanism that binds a signature to a single domain using a nested EIP-712 approach (i.e. an EIP-712 typed structure wrapping another).
 
-In case your smart contract validates signatures, using xref:api:utils/cryptography.adoc#ERC7739Signer[`ERC7739Signer`] will implement the https://docs.openzeppelin.com/contracts/api/interfaces#IERC1271[`IERC1271`] interface for validating smart contract signatures following the approach suggested by ERC-7739:
+In case your smart contract validates signatures, using https://docs.openzeppelin.com/contracts/api/utils/cryptography#ERC7739[`ERC7739`] signer will implement the https://docs.openzeppelin.com/contracts/api/interfaces#IERC1271[`IERC1271`] interface for validating smart contract signatures following the approach suggested by ERC-7739:
 
 [source,solidity]
 ----

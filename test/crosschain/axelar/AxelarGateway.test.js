@@ -43,8 +43,8 @@ describe('AxelarGateway', function () {
     const payload = ethers.randomBytes(128);
     const attributes = [];
     const encoded = ethers.AbiCoder.defaultAbiCoder().encode(
-      ['bytes', 'bytes', 'bytes', 'bytes[]'],
-      [erc7930Sender, erc7930Recipient, payload, attributes],
+      ['bytes', 'bytes', 'bytes'],
+      [erc7930Sender, erc7930Recipient, payload],
     );
 
     await expect(this.gatewayA.connect(this.sender).sendMessage(erc7930Recipient, payload, attributes))
@@ -55,7 +55,7 @@ describe('AxelarGateway', function () {
       .to.emit(this.axelar, 'MessageExecuted')
       .withArgs(anyValue)
       .to.emit(this.receiver, 'MessageReceived')
-      .withArgs(this.gatewayB, anyValue, erc7930Sender, payload, attributes);
+      .withArgs(this.gatewayB, anyValue, erc7930Sender, payload);
   });
 
   it('invalid receiver - bad return value', async function () {

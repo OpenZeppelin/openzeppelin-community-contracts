@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
-import {ERC7579Multisig} from "./ERC7579Multisig.sol";
 import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
-import {EnumerableSetExtended} from "../../utils/structs/EnumerableSetExtended.sol";
+import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
+import {ERC7579Multisig} from "./ERC7579Multisig.sol";
 
 /**
  * @dev Extension of {ERC7579Multisig} that supports weighted signatures.
@@ -24,7 +24,7 @@ import {EnumerableSetExtended} from "../../utils/structs/EnumerableSetExtended.s
  * signatures with a total weight of at least 4 (e.g., one with weight 1 and one with weight 3).
  */
 abstract contract ERC7579MultisigWeighted is ERC7579Multisig {
-    using EnumerableSetExtended for EnumerableSetExtended.BytesSet;
+    using EnumerableSet for EnumerableSet.BytesSet;
 
     // Mapping from account => signer => weight
     mapping(address account => mapping(bytes signer => uint256)) private _weights;
