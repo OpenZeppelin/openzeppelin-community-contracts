@@ -14,9 +14,9 @@ To address the lack of composability in a simple and unopinionated way, ERC-7786
 
 The ERC defines a source and a destination gateway. Both are contracts that implement a protocol to send a message and process its reception respectively. These two processes are identified explicitly by the ERC-7786 specification since they define the minimal requirements for both gateways.
 
-* On the **source chain**, the contract implements a standard xref:api:crosschain.adoc#AxelarGatewaySource-sendMessage-string-string-bytes-[`sendMessage`] function and emits a xref:api:crosschain.adoc#AxelarGatewaySource-MessagePosted-bytes32-string-string-bytes-bytes---[`MessagePosted`] event to signal that the message should be relayed by the underlying protocol.
+* On the **source chain**, the contract implements a standard xref:api:crosschain.adoc#AxelarGatewaySource-sendMessage-bytes-bytes-bytes---[`sendMessage`] function and emits a xref:api:crosschain.adoc#AxelarGatewaySource-MessageSent-bytes32-string-string-bytes-bytes---[`MessageSent`] event to signal that the message should be relayed by the underlying protocol.
 
-* On the **destination chain**, the gateway receives the message and passes it to the receiver contract by calling the xref:api:crosschain.adoc#ERC7786Receiver-receiveMessage-string-string-string-bytes-bytes---[`receiveMessage`] function.
+* On the **destination chain**, the gateway receives the message and passes it to the receiver contract by calling the xref:api:crosschain.adoc#ERC7786Receiver-receiveMessage-bytes32-bytes-bytes-[`receiveMessage`] function.
 
 Smart contract developers only need to worry about implementing the xref:api:crosschain.adoc#IERC7786GatewaySource[IERC7786GatewaySource] interface to send a message on the source chain and the xref:api:crosschain.adoc#IERC7786GatewaySource[IERC7786GatewaySource] and xref:api:crosschain.adoc#IERC7786Receiver[IERC7786Receiver] interface to receive such message on the destination chain.
 
@@ -37,7 +37,7 @@ NOTE: Developers can register supported chains and destination gateways using th
 
 === Sending a message
 
-The interface for a source gateway is general enough that it allows wrapping a custom protocol to authenticate messages. Depending on the use case, developers can implement any offchain mechanism to read the standard xref:api:crosschain.adoc#IERC7786GatewaySource-MessagePosted-bytes32-string-string-bytes-bytes---[`MessagePosted`] event and deliver it to the receiver on the destination chain.
+The interface for a source gateway is general enough that it allows wrapping a custom protocol to authenticate messages. Depending on the use case, developers can implement any offchain mechanism to read the standard xref:api:crosschain.adoc#IERC7786GatewaySource-MessageSent-bytes32-string-string-bytes-bytes---[`MessageSent`] event and deliver it to the receiver on the destination chain.
 
 [source,solidity]
 ----
