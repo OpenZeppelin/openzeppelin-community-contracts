@@ -48,7 +48,7 @@ Developers can access interoperability protocols through gateway adapters. The l
 :constructor: pass:normal[xref:#ERC7786OpenBridge-constructor-address-address---uint8-[`++constructor++`]]
 :supportsAttribute: pass:normal[xref:#ERC7786OpenBridge-supportsAttribute-bytes4-[`++supportsAttribute++`]]
 :sendMessage: pass:normal[xref:#ERC7786OpenBridge-sendMessage-bytes-bytes-bytes---[`++sendMessage++`]]
-:executeMessage: pass:normal[xref:#ERC7786OpenBridge-executeMessage-bytes32-bytes-bytes-bytes---[`++executeMessage++`]]
+:receiveMessage: pass:normal[xref:#ERC7786OpenBridge-receiveMessage-bytes32-bytes-bytes-[`++receiveMessage++`]]
 :getGateways: pass:normal[xref:#ERC7786OpenBridge-getGateways--[`++getGateways++`]]
 :getThreshold: pass:normal[xref:#ERC7786OpenBridge-getThreshold--[`++getThreshold++`]]
 :getRemoteBridge: pass:normal[xref:#ERC7786OpenBridge-getRemoteBridge-bytes-[`++getRemoteBridge++`]]
@@ -83,7 +83,7 @@ equivalent bridge on the destination chain if N of the M gateways agree.
 * `++constructor(owner_, gateways_, threshold_)++`
 * `++supportsAttribute()++`
 * `++sendMessage(recipient, payload, attributes)++`
-* `++executeMessage(, sender, payload, attributes)++`
+* `++receiveMessage(, sender, payload)++`
 * `++getGateways()++`
 * `++getThreshold()++`
 * `++getRemoteBridge(chain)++`
@@ -203,8 +203,8 @@ Getter to check whether an attribute is supported or not.
 Using memory instead of calldata avoids stack too deep errors
 
 [.contract-item]
-[[ERC7786OpenBridge-executeMessage-bytes32-bytes-bytes-bytes---]]
-==== `[.contract-item-name]#++executeMessage++#++(bytes32, bytes sender, bytes payload, bytes[] attributes) → bytes4++` [.item-kind]#public#
+[[ERC7786OpenBridge-receiveMessage-bytes32-bytes-bytes-]]
+==== `[.contract-item-name]#++receiveMessage++#++(bytes32, bytes sender, bytes payload) → bytes4++` [.item-kind]#public#
 
 This function serves a dual purpose:
 
@@ -289,7 +289,7 @@ not revert. Any value accrued that way can be recovered by the admin using the {
 [[ERC7786OpenBridge-sweep-address-payable-]]
 ==== `[.contract-item-name]#++sweep++#++(address payable to)++` [.item-kind]#public#
 
-Recovery method in case value is ever received through {executeMessage}
+Recovery method in case value is ever received through {receiveMessage}
 
 [.contract-item]
 [[ERC7786OpenBridge-_addGateway-address-]]
@@ -379,9 +379,9 @@ Recovery method in case value is ever received through {executeMessage}
 
 :ERC7786ReceiverInvalidGateway: pass:normal[xref:#ERC7786Receiver-ERC7786ReceiverInvalidGateway-address-[`++ERC7786ReceiverInvalidGateway++`]]
 :ERC7786ReceivePassiveModeValue: pass:normal[xref:#ERC7786Receiver-ERC7786ReceivePassiveModeValue--[`++ERC7786ReceivePassiveModeValue++`]]
-:executeMessage: pass:normal[xref:#ERC7786Receiver-executeMessage-bytes32-bytes-bytes-bytes---[`++executeMessage++`]]
+:receiveMessage: pass:normal[xref:#ERC7786Receiver-receiveMessage-bytes32-bytes-bytes-[`++receiveMessage++`]]
 :_isKnownGateway: pass:normal[xref:#ERC7786Receiver-_isKnownGateway-address-[`++_isKnownGateway++`]]
-:_processMessage: pass:normal[xref:#ERC7786Receiver-_processMessage-address-bytes32-bytes-bytes-bytes---[`++_processMessage++`]]
+:_processMessage: pass:normal[xref:#ERC7786Receiver-_processMessage-address-bytes32-bytes-bytes-[`++_processMessage++`]]
 
 [.contract]
 [[ERC7786Receiver]]
@@ -394,7 +394,7 @@ import "@openzeppelin/community-contracts/crosschain/utils/ERC7786Receiver.sol";
 
 Base implementation of an ERC-7786 compliant cross-chain message receiver.
 
-This abstract contract exposes the `executeMessage` function that is used for communication with (one or multiple)
+This abstract contract exposes the `receiveMessage` function that is used for communication with (one or multiple)
 destination gateways. This contract leaves two functions unimplemented:
 
 {_isKnownGateway}, an internal getter used to verify whether an address is recognised by the contract as a valid
@@ -406,9 +406,9 @@ this function returns true would be able to impersonate any account on any other
 [.contract-index]
 .Functions
 --
-* `++executeMessage(receiveId, sender, payload, attributes)++`
+* `++receiveMessage(receiveId, sender, payload)++`
 * `++_isKnownGateway(instance)++`
-* `++_processMessage(gateway, receiveId, sender, payload, attributes)++`
+* `++_processMessage(gateway, receiveId, sender, payload)++`
 
 [.contract-subindex-inherited]
 .IERC7786Receiver
@@ -427,8 +427,8 @@ this function returns true would be able to impersonate any account on any other
 --
 
 [.contract-item]
-[[ERC7786Receiver-executeMessage-bytes32-bytes-bytes-bytes---]]
-==== `[.contract-item-name]#++executeMessage++#++(bytes32 receiveId, bytes sender, bytes payload, bytes[] attributes) → bytes4++` [.item-kind]#public#
+[[ERC7786Receiver-receiveMessage-bytes32-bytes-bytes-]]
+==== `[.contract-item-name]#++receiveMessage++#++(bytes32 receiveId, bytes sender, bytes payload) → bytes4++` [.item-kind]#public#
 
 Endpoint for receiving cross-chain message.
 
@@ -441,8 +441,8 @@ This function may be called directly by the gateway.
 Virtual getter that returns whether an address is a valid ERC-7786 gateway.
 
 [.contract-item]
-[[ERC7786Receiver-_processMessage-address-bytes32-bytes-bytes-bytes---]]
-==== `[.contract-item-name]#++_processMessage++#++(address gateway, bytes32 receiveId, bytes sender, bytes payload, bytes[] attributes)++` [.item-kind]#internal#
+[[ERC7786Receiver-_processMessage-address-bytes32-bytes-bytes-]]
+==== `[.contract-item-name]#++_processMessage++#++(address gateway, bytes32 receiveId, bytes sender, bytes payload)++` [.item-kind]#internal#
 
 Virtual function that should contain the logic to execute when a cross-chain message is received.
 

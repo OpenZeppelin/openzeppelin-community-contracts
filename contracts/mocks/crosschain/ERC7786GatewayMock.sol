@@ -28,8 +28,8 @@ contract ERC7786GatewayMock is IERC7786GatewaySource {
 
         bytes memory sender = InteroperableAddress.formatEvmV1(block.chainid, msg.sender);
         require(
-            IERC7786Receiver(target).executeMessage(bytes32(0), sender, payload, attributes) ==
-                IERC7786Receiver.executeMessage.selector,
+            IERC7786Receiver(target).receiveMessage(bytes32(0), sender, payload) ==
+                IERC7786Receiver.receiveMessage.selector,
             "Receiver error"
         );
 

@@ -93,7 +93,7 @@ Event emitted when a message is created. If `outboxId` is zero, no further proce
 
 This error is thrown when a message creation fails because of an unsupported attribute being specified.
 
-:executeMessage: pass:normal[xref:#IERC7786Receiver-executeMessage-bytes32-bytes-bytes-bytes---[`++executeMessage++`]]
+:receiveMessage: pass:normal[xref:#IERC7786Receiver-receiveMessage-bytes32-bytes-bytes-[`++receiveMessage++`]]
 
 [.contract]
 [[IERC7786Receiver]]
@@ -111,13 +111,13 @@ See ERC-7786 for more details
 [.contract-index]
 .Functions
 --
-* `++executeMessage(receiveId, sender, payload, attributes)++`
+* `++receiveMessage(receiveId, sender, payload)++`
 
 --
 
 [.contract-item]
-[[IERC7786Receiver-executeMessage-bytes32-bytes-bytes-bytes---]]
-==== `[.contract-item-name]#++executeMessage++#++(bytes32 receiveId, bytes sender, bytes payload, bytes[] attributes) → bytes4++` [.item-kind]#external#
+[[IERC7786Receiver-receiveMessage-bytes32-bytes-bytes-]]
+==== `[.contract-item-name]#++receiveMessage++#++(bytes32 receiveId, bytes sender, bytes payload) → bytes4++` [.item-kind]#external#
 
 Endpoint for receiving cross-chain message.
 

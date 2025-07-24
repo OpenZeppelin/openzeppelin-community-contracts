@@ -18,8 +18,7 @@ contract MyERC7786ReceiverContract is ERC7786Receiver, AccessManaged {
         address gateway,
         bytes32 receiveId,
         bytes calldata sender,
-        bytes calldata payload,
-        bytes[] calldata attributes
+        bytes calldata payload
     ) internal virtual override restricted {
         // Process the message here
     }
