@@ -44,8 +44,8 @@ abstract contract uRWA20 is ERC20, ERC165, ERC20Freezable, ERC20Restricted, IERC
 
     /// @inheritdoc IERC7943
     function forceTransfer(address from, address to, uint256, uint256 amount) public virtual {
-        require(isUserAllowed(to), ERC7943NotAllowedUser(to));
         _checkEnforcer(from, to, amount);
+        require(isUserAllowed(to), ERC7943NotAllowedUser(to));
 
         // Update frozen balance if needed
         uint256 currentFrozen = frozen(from);
