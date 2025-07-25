@@ -28,7 +28,7 @@ async function fixture() {
 }
 
 describe('WormholeGateway', function () {
-  const outboxId = '0x0000000000000000000000000000000000000000000000000000000000000001';
+  const sendId = '0x0000000000000000000000000000000000000000000000000000000000000001';
 
   beforeEach(async function () {
     Object.assign(this, await loadFixture(fixture));
@@ -73,14 +73,16 @@ describe('WormholeGateway', function () {
     const attributes = [];
     // const encoded = ethers.AbiCoder.defaultAbiCoder().encode(
     //   ['bytes32', 'string', 'string', 'bytes', 'bytes[]'],
-    //   [outboxId, getAddress(this.sender), getAddress(this.receiver), payload, attributes],
+    //   [sendId, getAddress(this.sender), getAddress(this.receiver), payload, attributes],
     // );
 
     await expect(this.gatewayA.connect(this.sender).sendMessage(erc7930Recipient, payload, attributes))
       .to.emit(this.gatewayA, 'MessageSent')
-      .withArgs(outboxId, erc7930Sender, erc7930Recipient, payload, 0n, attributes);
+      .withArgs(sendId, erc7930Sender, erc7930Recipient, payload, 0n, attributes);
 
-    await expect(this.gatewayA.requestRelay(outboxId, 100_000n, ethers.ZeroAddress))
+    await expect(this.gatewayA.requestRelay(sendId, 100_000n, ethers.ZeroAddress))
+      .to.emit(this.gatewayA, 'MessageRelayed')
+      .withArgs(sendId)
       .to.emit(this.receiver, 'MessageReceived')
       .withArgs(this.gatewayB, anyValue, erc7930Sender, payload);
   });
@@ -90,7 +92,7 @@ describe('WormholeGateway', function () {
       .connect(this.sender)
       .sendMessage(this.chain.toErc7930(this.invalidReceiver), ethers.randomBytes(128), []);
 
-    await expect(this.gatewayA.requestRelay(outboxId, 100_000n, ethers.ZeroAddress)).to.be.revertedWithCustomError(
+    await expect(this.gatewayA.requestRelay(sendId, 100_000n, ethers.ZeroAddress)).to.be.revertedWithCustomError(
       this.gatewayB,
       'ReceiverExecutionFailed',
     );
@@ -101,6 +103,12 @@ describe('WormholeGateway', function () {
       .connect(this.sender)
       .sendMessage(this.chain.toErc7930(this.accounts[0]), ethers.randomBytes(128), []);
 
-    await expect(this.gatewayA.requestRelay(outboxId, 100_000n, ethers.ZeroAddress)).to.be.revertedWithoutReason();
+    await expect(this.gatewayA.requestRelay(sendId, 100_000n, ethers.ZeroAddress)).to.be.revertedWithoutReason();
+  });
+
+  it('invalid sendId', async function () {
+    await expect(this.gatewayA.requestRelay(sendId, 100_000n, ethers.ZeroAddress))
+      .to.be.revertedWithCustomError(this.gatewayA, 'InvalidSendId')
+      .withArgs(sendId);
   });
 });

@@ -25,10 +25,8 @@ abstract contract WormholeGatewaySource is IERC7786GatewaySource, WormholeGatewa
     uint256 private _sendId;
     mapping(bytes32 => PendingMessage) private _pending;
 
-    event MessagePushed(bytes32 outboxId);
-    error CannotFinalizeMessage(bytes32 outboxId);
-    error CannotRetryMessage(bytes32 outboxId);
-    error UnsupportedNativeTransfer();
+    event MessageRelayed(bytes32 sendId);
+    error InvalidSendId(bytes32 sendId);
 
     /// @inheritdoc IERC7786GatewaySource
     function supportsAttribute(bytes4 /*selector*/) public pure returns (bool) {
@@ -77,13 +75,13 @@ abstract contract WormholeGatewaySource is IERC7786GatewaySource, WormholeGatewa
     function requestRelay(bytes32 sendId, uint256 gasLimit, address /*refundRecipient*/) external payable {
         // TODO: revert if refundRecipient is not address(0)?
 
-        PendingMessage storage pmsg = _pending[sendId];
+        PendingMessage memory pmsg = _pending[sendId];
+        require(pmsg.pending, InvalidSendId(sendId));
 
-        require(pmsg.pending, CannotFinalizeMessage(sendId));
-        pmsg.pending = false;
+        // Do we want to do that to get a gas refund? Would it be valuable to keep that information stored?
+        delete _pending[sendId];
 
         // TODO: Do we care about the returned "sequence"?
-        // slither-disable-next-line reentrancy-no-eth
         _wormholeRelayer.sendPayloadToEvm{value: pmsg.value + msg.value}(
             getWormholeChain(pmsg.recipient),
             getRemoteGateway(pmsg.recipient),
@@ -97,7 +95,6 @@ abstract contract WormholeGatewaySource is IERC7786GatewaySource, WormholeGatewa
             gasLimit
         );
 
-        // Do we want to do that to get a gas refund? Would it be valuable to keep that information stored?
-        delete _pending[sendId];
+        emit MessageRelayed(sendId);
     }
 }
