@@ -1,16 +1,16 @@
 const { P256SigningKey } = require('@openzeppelin/contracts/test/helpers/signers');
 const {
   AbiCoder,
+  ZeroHash,
   assertArgument,
   concat,
   dataLength,
   sha256,
-  toBeHex,
+  solidityPacked,
   toBigInt,
   encodeBase64,
   toUtf8Bytes,
 } = require('ethers');
-const { secp256r1 } = require('@noble/curves/p256');
 
 class ZKEmailSigningKey {
   #domainName;
@@ -79,46 +79,33 @@ class ZKEmailSigningKey {
 }
 
 class WebAuthnSigningKey extends P256SigningKey {
-  constructor(privateKey) {
-    super(privateKey);
-  }
-
-  static random() {
-    return new this(secp256r1.utils.randomPrivateKey());
-  }
-
-  get PREFIX() {
-    return '{"type":"webauthn.get","challenge":"';
-  }
-
-  get SUFFIX() {
-    return '"}';
-  }
-
-  base64toBase64Url = str => str.replaceAll('+', '-').replaceAll('/', '_').replaceAll('=', '');
-
   sign(digest /*: BytesLike*/) /*: { serialized: string } */ {
     assertArgument(dataLength(digest) === 32, 'invalid digest length', 'digest', digest);
 
-    const clientDataJSON = this.PREFIX.concat(this.base64toBase64Url(encodeBase64(toBeHex(digest, 32)))).concat(
-      this.SUFFIX,
-    );
+    const clientDataJSON = JSON.stringify({
+      type: 'webauthn.get',
+      challenge: encodeBase64(digest).replaceAll('+', '-').replaceAll('/', '_').replaceAll('=', ''),
+    });
 
-    const authenticatorData = toBeHex('0', 37);
+    // Flags 0x05 = AUTH_DATA_FLAGS_UP | AUTH_DATA_FLAGS_UV
+    const authenticatorData = solidityPacked(['bytes32', 'bytes1', 'bytes4'], [ZeroHash, '0x05', '0x00000000']);
 
     // Regular P256 signature
-    const sig = super.sign(sha256(concat([authenticatorData, sha256(toUtf8Bytes(clientDataJSON))])));
+    const { r, s } = super.sign(sha256(concat([authenticatorData, sha256(toUtf8Bytes(clientDataJSON))])));
 
-    return {
-      serialized: this.serialize(sig.r, sig.s, authenticatorData, clientDataJSON),
-    };
-  }
-
-  serialize(r, s, authenticatorData, clientDataJSON) {
-    return AbiCoder.defaultAbiCoder().encode(
-      ['tuple(bytes32,bytes32,uint256,uint256,bytes,string)'],
-      [[r, s, 23, 1, authenticatorData, clientDataJSON]],
+    const serialized = AbiCoder.defaultAbiCoder().encode(
+      ['bytes32', 'bytes32', 'uint256', 'uint256', 'bytes', 'string'],
+      [
+        r,
+        s,
+        clientDataJSON.indexOf('"challenge"'),
+        clientDataJSON.indexOf('"type"'),
+        authenticatorData,
+        clientDataJSON,
+      ],
     );
+
+    return { serialized };
   }
 }
 

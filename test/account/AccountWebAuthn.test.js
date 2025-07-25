@@ -7,9 +7,12 @@ const { NonNativeSigner, P256SigningKey } = require('@openzeppelin/contracts/tes
 const { WebAuthnSigningKey } = require('../helpers/signers');
 const { PackedUserOperation } = require('@openzeppelin/contracts/test/helpers/eip712-types');
 
-const { shouldBehaveLikeAccountCore, shouldBehaveLikeAccountHolder } = require('./Account.behavior');
-const { shouldBehaveLikeERC1271 } = require('../utils/cryptography/ERC1271.behavior');
-const { shouldBehaveLikeERC7821 } = require('./extensions/ERC7821.behavior');
+const {
+  shouldBehaveLikeAccountCore,
+  shouldBehaveLikeAccountHolder,
+} = require('@openzeppelin/contracts/test/account/Account.behavior');
+const { shouldBehaveLikeERC1271 } = require('@openzeppelin/contracts/test/utils/cryptography/ERC1271.behavior');
+const { shouldBehaveLikeERC7821 } = require('@openzeppelin/contracts/test/account/extensions/ERC7821.behavior');
 
 const webAuthnSigner = new NonNativeSigner(WebAuthnSigningKey.random());
 const p256Signer = new NonNativeSigner(P256SigningKey.random());
@@ -33,16 +36,16 @@ async function fixture() {
   };
 
   const webAuthnMock = await helper.newAccount('$AccountWebAuthnMock', [
-    'AccountWebAuthn',
-    '1',
     webAuthnSigner.signingKey.publicKey.qx,
     webAuthnSigner.signingKey.publicKey.qy,
-  ]);
-  const p256Mock = await helper.newAccount('$AccountWebAuthnMock', [
     'AccountWebAuthn',
     '1',
+  ]);
+  const p256Mock = await helper.newAccount('$AccountWebAuthnMock', [
     p256Signer.signingKey.publicKey.qx,
     p256Signer.signingKey.publicKey.qy,
+    'AccountWebAuthn',
+    '1',
   ]);
 
   // This function signs using P256 signature for fallback testing

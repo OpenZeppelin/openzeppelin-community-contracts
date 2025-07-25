@@ -24,19 +24,19 @@ async function fixture() {
             add: `$add(uint256,${value.type})`,
             remove: `$remove(uint256,${value.type})`,
             contains: `$contains(uint256,${value.type})`,
-            clear: `$clear_EnumerableSetExtended_${name}(uint256)`,
-            length: `$length_EnumerableSetExtended_${name}(uint256)`,
-            at: `$at_EnumerableSetExtended_${name}(uint256,uint256)`,
-            values: `$values_EnumerableSetExtended_${name}(uint256)`,
-            valuesPage: `$values_EnumerableSetExtended_${name}(uint256,uint256,uint256)`,
+            clear: `$clear(uint256)`, // `$clear_EnumerableSetExtended_${name}(uint256)` when more types are added
+            length: `$length(uint256)`, // `$length_EnumerableSetExtended_${name}(uint256)` when more types are added
+            at: `$at(uint256,uint256)`, // `$at_EnumerableSetExtended_${name}(uint256,uint256)` when more types are added
+            values: `$values(uint256)`, // `$values_EnumerableSetExtended_${name}(uint256)` when more types are added
+            valuesPage: `$values(uint256,uint256,uint256)`, // `$values_EnumerableSetExtended_${name}(uint256,uint256,uint256)` when more types are added
           },
           fnSig =>
             (...args) =>
               mock.getFunction(fnSig)(0, ...args),
         ),
         events: {
-          addReturn: `return$add_EnumerableSetExtended_${name}_${value.type.replace(/[[\]]/g, '_')}`,
-          removeReturn: `return$remove_EnumerableSetExtended_${name}_${value.type.replace(/[[\]]/g, '_')}`,
+          addReturn: 'return$add', // `return$add_EnumerableSetExtended_${name}_${value.type.replace(/[[\]]/g, '_')}`,
+          removeReturn: 'return$remove', // `return$remove_EnumerableSetExtended_${name}_${value.type.replace(/[[\]]/g, '_')}`,
         },
       },
     ]),
