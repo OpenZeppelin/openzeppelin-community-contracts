@@ -15,8 +15,9 @@ abstract contract WormholeGatewaySource is IERC7786GatewaySource, WormholeGatewa
     // using Strings for *;
 
     struct PendingMessage {
-        uint64 sequence;
+        bool pending;
         address sender;
+        uint256 value;
         bytes recipient;
         bytes payload;
     }
@@ -40,7 +41,6 @@ abstract contract WormholeGatewaySource is IERC7786GatewaySource, WormholeGatewa
         bytes calldata payload,
         bytes[] calldata attributes
     ) external payable returns (bytes32 sendId) {
-        require(msg.value == 0, UnsupportedNativeTransfer());
         // Use of `if () revert` syntax to avoid accessing attributes[0] if it's empty
         if (attributes.length > 0)
             revert UnsupportedAttribute(attributes[0].length < 0x04 ? bytes4(0) : bytes4(attributes[0][0:4]));
@@ -50,7 +50,7 @@ abstract contract WormholeGatewaySource is IERC7786GatewaySource, WormholeGatewa
         getRemoteGateway(recipient);
 
         sendId = bytes32(++_sendId);
-        _pending[sendId] = PendingMessage(0, msg.sender, recipient, payload);
+        _pending[sendId] = PendingMessage(true, msg.sender, msg.value, recipient, payload);
 
         emit MessageSent(
             sendId,
@@ -62,53 +62,41 @@ abstract contract WormholeGatewaySource is IERC7786GatewaySource, WormholeGatewa
         );
     }
 
-    function quoteEvmMessage(bytes memory destinationChain, uint256 gasLimit) public view returns (uint256) {
-        (uint256 cost, ) = _wormholeRelayer.quoteEVMDeliveryPrice(getWormholeChain(destinationChain), 0, gasLimit);
-        return cost;
+    function quoteRelay(
+        bytes calldata recipient, // Binary Interoperable Address
+        bytes calldata /*payload*/,
+        bytes[] calldata /*attributes*/,
+        uint256 value,
+        uint256 gasLimit,
+        address /*refundRecipient*/
+    ) external view returns (uint256) {
+        (uint256 cost, ) = _wormholeRelayer.quoteEVMDeliveryPrice(getWormholeChain(recipient), value, gasLimit);
+        return cost - value;
     }
 
-    function quoteEvmMessage(bytes32 outboxId, uint256 gasLimit) external view returns (uint256) {
-        return quoteEvmMessage(_pending[outboxId].recipient, gasLimit);
-    }
+    function requestRelay(bytes32 sendId, uint256 gasLimit, address /*refundRecipient*/) external payable {
+        PendingMessage storage pmsg = _pending[sendId];
 
-    function finalizeEvmMessage(bytes32 outboxId, uint256 gasLimit) external payable {
-        PendingMessage storage pmsg = _pending[outboxId];
+        require(pmsg.pending, CannotFinalizeMessage(sendId));
+        pmsg.pending = false;
 
-        require(pmsg.sender != address(0), CannotFinalizeMessage(outboxId));
+        // TODO: revert if refundRecipient is not address(0)?
 
-        bytes memory adapterPayload = abi.encode(
-            outboxId,
-            InteroperableAddress.formatEvmV1(block.chainid, pmsg.sender),
-            pmsg.recipient,
-            pmsg.payload
-        );
-
-        // TODO: potentially delete part/all of the message
-
-        pmsg.sequence = _wormholeRelayer.sendPayloadToEvm{value: msg.value}(
+        // TODO: Do we care about the returned "sequence"?
+        _wormholeRelayer.sendPayloadToEvm{value: pmsg.value + msg.value}(
             getWormholeChain(pmsg.recipient),
             getRemoteGateway(pmsg.recipient),
-            adapterPayload,
-            0,
+            abi.encode(
+                sendId,
+                InteroperableAddress.formatEvmV1(block.chainid, pmsg.sender),
+                pmsg.recipient,
+                pmsg.payload
+            ),
+            pmsg.value,
             gasLimit
         );
 
-        emit MessagePushed(outboxId);
-    }
-
-    // Is this necessary ? How does that work since we are not providing any additional payment ?
-    // Is re-calling finalizeEvmMessage an alternative ?
-    function retryEvmMessage(bytes32 outboxId, uint256 gasLimit, address newDeliveryProvider) external {
-        PendingMessage storage pmsg = _pending[outboxId];
-
-        require(pmsg.sequence != 0, CannotRetryMessage(outboxId));
-
-        pmsg.sequence = _wormholeRelayer.resendToEvm(
-            VaaKey(_wormholeChainId, toUniversalAddress(address(this)), pmsg.sequence),
-            getWormholeChain(pmsg.recipient),
-            0,
-            gasLimit,
-            newDeliveryProvider
-        );
+        // Do we want to do that to get a gas refund? Would it be valuable to keep that infomation stored?
+        delete _pending[sendId];
     }
 }

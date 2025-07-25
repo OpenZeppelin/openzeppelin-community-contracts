@@ -80,7 +80,7 @@ describe('WormholeGateway', function () {
       .to.emit(this.gatewayA, 'MessageSent')
       .withArgs(outboxId, erc7930Sender, erc7930Recipient, payload, 0n, attributes);
 
-    await expect(this.gatewayA.finalizeEvmMessage(outboxId, 100_000n))
+    await expect(this.gatewayA.requestRelay(outboxId, 100_000n, ethers.ZeroAddress))
       .to.emit(this.receiver, 'MessageReceived')
       .withArgs(this.gatewayB, anyValue, erc7930Sender, payload);
   });
@@ -90,7 +90,7 @@ describe('WormholeGateway', function () {
       .connect(this.sender)
       .sendMessage(this.chain.toErc7930(this.invalidReceiver), ethers.randomBytes(128), []);
 
-    await expect(this.gatewayA.finalizeEvmMessage(outboxId, 100_000n)).to.be.revertedWithCustomError(
+    await expect(this.gatewayA.requestRelay(outboxId, 100_000n, ethers.ZeroAddress)).to.be.revertedWithCustomError(
       this.gatewayB,
       'ReceiverExecutionFailed',
     );
@@ -101,6 +101,6 @@ describe('WormholeGateway', function () {
       .connect(this.sender)
       .sendMessage(this.chain.toErc7930(this.accounts[0]), ethers.randomBytes(128), []);
 
-    await expect(this.gatewayA.finalizeEvmMessage(outboxId, 100_000n)).to.be.revertedWithoutReason();
+    await expect(this.gatewayA.requestRelay(outboxId, 100_000n, ethers.ZeroAddress)).to.be.revertedWithoutReason();
   });
 });
