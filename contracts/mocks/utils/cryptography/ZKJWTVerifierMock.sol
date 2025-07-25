@@ -2,10 +2,10 @@
 
 pragma solidity ^0.8.20;
 
-import {IVerifier, EmailProof} from "@zk-email/email-tx-builder/src/interfaces/IVerifier.sol";
+import {IVerifier, EmailProof} from "@zk-email/zk-jwt/src/interfaces/IVerifier.sol";
 
 contract ZKJWTVerifierMock is IVerifier {
-    function commandBytes() external pure returns (uint256) {
+    function getCommandBytes() external pure returns (uint256) {
         // Same as in https://github.com/zkemail/email-tx-builder/blob/1452943807a5fdc732e1113c34792c76cf7dd031/packages/contracts/src/utils/Verifier.sol#L15
         return 605;
     }
