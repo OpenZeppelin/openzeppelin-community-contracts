@@ -31,7 +31,7 @@ async function fixture() {
     .then(() => jwtRegistry.isJwtPublicKeyValid(domainName, publicKeyHash));
 
   // JWT Verifier
-  const verifier = await ethers.deployContract('ZKJWTVerifierMock');
+  const verifier = await ethers.deployContract('$ZKJWTVerifierMock');
 
   // ZKJWTUtils mock contract
   const mock = await ethers.deployContract('$ZKJWTUtils');

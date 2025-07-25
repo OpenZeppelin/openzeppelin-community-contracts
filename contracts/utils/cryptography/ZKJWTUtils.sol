@@ -5,7 +5,7 @@ pragma solidity ^0.8.24;
 import {Bytes} from "@openzeppelin/contracts/utils/Bytes.sol";
 import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 import {IDKIMRegistry} from "@zk-email/contracts/DKIMRegistry.sol";
-import {IVerifier, EmailProof} from "@zk-email/email-tx-builder/src/interfaces/IVerifier.sol";
+import {IVerifier, EmailProof} from "@zk-email/zk-jwt/src/interfaces/IVerifier.sol";
 import {CommandUtils} from "@zk-email/email-tx-builder/src/libraries/CommandUtils.sol";
 
 /**
@@ -101,7 +101,7 @@ library ZKJWTUtils {
         bytes[] memory templateParams,
         Case stringCase
     ) internal view returns (JWTProofError) {
-        if (bytes(jwtProof.maskedCommand).length > verifier.commandBytes()) {
+        if (bytes(jwtProof.maskedCommand).length > verifier.getCommandBytes()) {
             return JWTProofError.MaskedCommandLength;
         } else if (!_commandMatch(jwtProof, template, templateParams, stringCase)) {
             return JWTProofError.MismatchedCommand;
