@@ -75,12 +75,12 @@ abstract contract ERC20Restricted is ERC20 {
     }
 
     /// @dev Convenience function to restrict a user (set to RESTRICTED).
-    function _allowUser(address user) internal virtual {
+    function _restrictUser(address user) internal virtual {
         _setRestriction(user, Restriction.RESTRICTED);
     }
 
     /// @dev Convenience function to disallow a user (set to UNRESTRICTED).
-    function _disallowUser(address user) internal virtual {
+    function _unrestrictUser(address user) internal virtual {
         _setRestriction(user, Restriction.UNRESTRICTED);
     }
 
