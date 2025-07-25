@@ -15,6 +15,8 @@ import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
  * on its behalf if {_allowUser} was not called with such account as an
  * argument. Similarly, the account will be disallowed again if
  * {_disallowUser} is called.
+ *
+ * IMPORTANT: Deprecated. Use {ERC20Restricted} instead.
  */
 abstract contract ERC20Allowlist is ERC20 {
     /**
