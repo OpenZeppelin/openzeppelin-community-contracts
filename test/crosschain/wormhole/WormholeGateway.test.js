@@ -36,17 +36,33 @@ describe('WormholeGateway', function () {
 
   it('initial setup', async function () {
     await expect(this.gatewayA.relayer()).to.eventually.equal(this.wormhole);
-    await expect(this.gatewayA.getWormholeChain(this.chain.erc7930)).to.eventually.equal(this.wormholeChainId);
-    await expect(this.gatewayA.getErc7930Chain(this.wormholeChainId)).to.eventually.equal(this.chain.erc7930);
-    await expect(this.gatewayA.getRemoteGateway(this.chain.erc7930)).to.eventually.equal(
-      WormholeHelper.toUniversalAddress(this.gatewayB),
+    await expect(this.gatewayA.getChainId(this.wormholeChainId)).to.eventually.equal(this.chain.reference);
+    await expect(this.gatewayA.getWormholeChain(ethers.Typed.bytes(this.chain.erc7930))).to.eventually.equal(
+      this.wormholeChainId,
+    );
+    await expect(this.gatewayA.getWormholeChain(ethers.Typed.uint256(this.chain.reference))).to.eventually.equal(
+      this.wormholeChainId,
+    );
+    await expect(this.gatewayA.getRemoteGateway(ethers.Typed.bytes(this.chain.erc7930))).to.eventually.equal(
+      this.gatewayB,
+    );
+    await expect(this.gatewayA.getRemoteGateway(ethers.Typed.uint256(this.chain.reference))).to.eventually.equal(
+      this.gatewayB,
     );
 
     await expect(this.gatewayB.relayer()).to.eventually.equal(this.wormhole);
-    await expect(this.gatewayB.getWormholeChain(this.chain.erc7930)).to.eventually.equal(this.wormholeChainId);
-    await expect(this.gatewayB.getErc7930Chain(this.wormholeChainId)).to.eventually.equal(this.chain.erc7930);
-    await expect(this.gatewayB.getRemoteGateway(this.chain.erc7930)).to.eventually.equal(
-      WormholeHelper.toUniversalAddress(this.gatewayA),
+    await expect(this.gatewayB.getChainId(this.wormholeChainId)).to.eventually.equal(this.chain.reference);
+    await expect(this.gatewayB.getWormholeChain(ethers.Typed.bytes(this.chain.erc7930))).to.eventually.equal(
+      this.wormholeChainId,
+    );
+    await expect(this.gatewayB.getWormholeChain(ethers.Typed.uint256(this.chain.reference))).to.eventually.equal(
+      this.wormholeChainId,
+    );
+    await expect(this.gatewayB.getRemoteGateway(ethers.Typed.bytes(this.chain.erc7930))).to.eventually.equal(
+      this.gatewayA,
+    );
+    await expect(this.gatewayB.getRemoteGateway(ethers.Typed.uint256(this.chain.reference))).to.eventually.equal(
+      this.gatewayA,
     );
   });
 

@@ -3,7 +3,7 @@
 pragma solidity ^0.8.27;
 
 import {VaaKey} from "wormhole-solidity-sdk/interfaces/IWormholeRelayer.sol";
-import {toUniversalAddress, fromUniversalAddress} from "wormhole-solidity-sdk/utils/UniversalAddress.sol";
+import {toUniversalAddress} from "wormhole-solidity-sdk/utils/UniversalAddress.sol";
 import {InteroperableAddress} from "@openzeppelin/contracts/utils/draft-InteroperableAddress.sol";
 import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 import {WormholeGatewayBase} from "./WormholeGatewayBase.sol";
@@ -45,7 +45,9 @@ abstract contract WormholeGatewaySource is IERC7786GatewaySource, WormholeGatewa
         if (attributes.length > 0)
             revert UnsupportedAttribute(attributes[0].length < 0x04 ? bytes4(0) : bytes4(attributes[0][0:4]));
 
-        require(supportedChain(recipient), UnsupportedERC7930Chain(recipient));
+        // Note: this reverts with UnsupportedChainId if the recipient is not on a supported chain.
+        // No real need to check the return value.
+        getRemoteGateway(recipient);
 
         sendId = bytes32(++_sendId);
         _pending[sendId] = PendingMessage(0, msg.sender, recipient, payload);
@@ -85,7 +87,7 @@ abstract contract WormholeGatewaySource is IERC7786GatewaySource, WormholeGatewa
 
         pmsg.sequence = _wormholeRelayer.sendPayloadToEvm{value: msg.value}(
             getWormholeChain(pmsg.recipient),
-            fromUniversalAddress(getRemoteGateway(pmsg.recipient)),
+            getRemoteGateway(pmsg.recipient),
             adapterPayload,
             0,
             gasLimit

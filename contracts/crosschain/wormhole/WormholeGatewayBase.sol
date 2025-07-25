@@ -6,32 +6,31 @@ import {IWormholeRelayer} from "wormhole-solidity-sdk/interfaces/IWormholeRelaye
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {InteroperableAddress} from "@openzeppelin/contracts/utils/draft-InteroperableAddress.sol";
 
+/// Note: only EVM chains are currently supported
 abstract contract WormholeGatewayBase is Ownable {
     using InteroperableAddress for bytes;
 
     IWormholeRelayer internal immutable _wormholeRelayer;
     uint16 internal immutable _wormholeChainId;
+    uint24 private constant MASK = 1 << 16;
 
     // Remote gateway.
-    // `addr` is the isolated address part of ERC-7930. Its not a full ERC-7930 interoperable address.
-    mapping(bytes2 chainType => mapping(bytes chainReference => bytes32 addr)) private _remoteGateways;
+    mapping(uint256 chainId => address) private _remoteGateways;
 
-    // chain equivalence ERC-7930 (no address) <> Wormhole
-    mapping(bytes erc7930 => uint24 wormholeId) private _erc7930ToWormhole;
-    mapping(uint16 wormholeId => bytes erc7930) private _wormholeToErc7930;
+    // chain equivalence ChainId <> Wormhole
+    mapping(uint256 chainId => uint24 wormholeId) private _chainIdToWormhole;
+    mapping(uint16 wormholeId => uint256 chainId) private _wormholeToChainId;
 
     /// @dev A remote gateway has been registered for a chain.
-    event RegisteredRemoteGateway(bytes remote);
+    event RegisteredRemoteGateway(uint256 chainId, address remote);
 
     /// @dev A chain equivalence has been registered.
-    event RegisteredChainEquivalence(bytes erc7930binary, uint16 wormholeId);
+    event RegisteredChainEquivalence(uint256 chainId, uint16 wormholeId);
 
-    /// @dev Error emitted when an unsupported chain is queried.
-    error UnsupportedERC7930Chain(bytes erc7930binary);
+    error UnsupportedChainId(uint256 chainId);
     error UnsupportedWormholeChain(uint16 wormholeId);
-    error InvalidChainIdentifier(bytes erc7930binary);
-    error ChainEquivalenceAlreadyRegistered(bytes erc7930binary, uint16 wormhole);
-    error RemoteGatewayAlreadyRegistered(bytes2 chainType, bytes chainReference);
+    error ChainEquivalenceAlreadyRegistered(uint256 chainId, uint16 wormhole);
+    error RemoteGatewayAlreadyRegistered(uint256 chainId);
     error UnauthorizedCaller(address);
 
     modifier onlyWormholeRelayer() {
@@ -49,55 +48,71 @@ abstract contract WormholeGatewayBase is Ownable {
     }
 
     function supportedChain(bytes memory chain) public view virtual returns (bool) {
-        (bytes2 chainType, bytes memory chainReference, ) = chain.parseV1();
-        return _erc7930ToWormhole[InteroperableAddress.formatV1(chainType, chainReference, "")] & (1 << 16) != 0;
+        (bool success, uint256 chainId, ) = chain.tryParseEvmV1();
+        return success && supportedChain(chainId);
+    }
+
+    function supportedChain(uint256 chainId) public view virtual returns (bool) {
+        return _chainIdToWormhole[chainId] & MASK == MASK;
     }
 
     function getWormholeChain(bytes memory chain) public view virtual returns (uint16) {
-        (bytes2 chainType, bytes memory chainReference, ) = chain.parseV1();
-        uint24 wormholeId = _erc7930ToWormhole[InteroperableAddress.formatV1(chainType, chainReference, "")];
-        require(wormholeId & (1 << 16) != 0, UnsupportedERC7930Chain(chain));
+        (uint256 chainId, ) = chain.parseEvmV1();
+        return getWormholeChain(chainId);
+    }
+
+    function getWormholeChain(uint256 chainId) public view virtual returns (uint16) {
+        uint24 wormholeId = _chainIdToWormhole[chainId];
+        require(wormholeId & MASK == MASK, UnsupportedChainId(chainId));
         return uint16(wormholeId);
     }
 
-    function getErc7930Chain(uint16 wormholeId) public view virtual returns (bytes memory output) {
-        output = _wormholeToErc7930[wormholeId];
-        require(output.length > 0, UnsupportedWormholeChain(wormholeId));
+    function getChainId(uint16 wormholeId) public view virtual returns (uint256) {
+        uint256 chainId = _wormholeToChainId[wormholeId];
+        require(chainId != 0, UnsupportedWormholeChain(wormholeId));
+        return chainId;
     }
 
     /// @dev Returns the address of the remote gateway for a given chainType and chainReference.
-    function getRemoteGateway(bytes memory chain) public view virtual returns (bytes32) {
-        (bytes2 chainType, bytes memory chainReference, ) = chain.parseV1();
-        return getRemoteGateway(chainType, chainReference);
+    function getRemoteGateway(bytes memory chain) public view virtual returns (address) {
+        (uint256 chainId, ) = chain.parseEvmV1();
+        return getRemoteGateway(chainId);
     }
 
-    function getRemoteGateway(bytes2 chainType, bytes memory chainReference) public view virtual returns (bytes32) {
-        bytes32 addr = _remoteGateways[chainType][chainReference];
-        if (addr == 0) revert UnsupportedERC7930Chain(InteroperableAddress.formatV1(chainType, chainReference, ""));
+    function getRemoteGateway(uint256 chainId) public view virtual returns (address) {
+        address addr = _remoteGateways[chainId];
+        require(addr != address(0), UnsupportedChainId(chainId));
         return addr;
     }
 
-    function registerChainEquivalence(bytes calldata chain, uint16 wormholeId) public virtual onlyOwner {
-        (, , bytes calldata addr) = chain.parseV1Calldata();
-        require(addr.length == 0, InvalidChainIdentifier(chain));
-        require(
-            _erc7930ToWormhole[chain] == 0 && _wormholeToErc7930[wormholeId].length == 0,
-            ChainEquivalenceAlreadyRegistered(chain, wormholeId)
-        );
-
-        _erc7930ToWormhole[chain] = wormholeId | (1 << 16);
-        _wormholeToErc7930[wormholeId] = chain;
-        emit RegisteredChainEquivalence(chain, wormholeId);
+    function registerChainEquivalence(
+        bytes calldata chain,
+        uint16 wormholeId
+    ) public virtual /*onlyOwner in registerChainEquivalence*/ {
+        (uint256 chainId, ) = chain.parseEvmV1Calldata();
+        registerChainEquivalence(chainId, wormholeId);
     }
 
-    function registerRemoteGateway(bytes calldata remote) public virtual onlyOwner {
-        (bytes2 chainType, bytes calldata chainReference, bytes calldata addr) = remote.parseV1Calldata();
+    function registerChainEquivalence(uint256 chainId, uint16 wormholeId) public virtual onlyOwner {
         require(
-            _remoteGateways[chainType][chainReference] == 0,
-            RemoteGatewayAlreadyRegistered(chainType, chainReference)
+            _chainIdToWormhole[chainId] == 0 && _wormholeToChainId[wormholeId] == 0,
+            ChainEquivalenceAlreadyRegistered(chainId, wormholeId)
         );
-        require(addr.length <= 32); // TODO: error if that is not an valid universal address
-        _remoteGateways[chainType][chainReference] = bytes32(addr) >> (256 - 8 * addr.length); // align right
-        emit RegisteredRemoteGateway(remote);
+
+        _chainIdToWormhole[chainId] = wormholeId | MASK;
+        _wormholeToChainId[wormholeId] = chainId;
+        emit RegisteredChainEquivalence(chainId, wormholeId);
+    }
+
+    function registerRemoteGateway(bytes calldata remote) public virtual /*onlyOwner in registerRemoteGateway*/ {
+        (uint256 chainId, address addr) = remote.parseEvmV1Calldata();
+        registerRemoteGateway(chainId, addr);
+    }
+
+    function registerRemoteGateway(uint256 chainId, address addr) public virtual onlyOwner {
+        require(supportedChain(chainId), UnsupportedChainId(chainId));
+        require(_remoteGateways[chainId] == address(0), RemoteGatewayAlreadyRegistered(chainId));
+        _remoteGateways[chainId] = addr;
+        emit RegisteredRemoteGateway(chainId, addr);
     }
 }

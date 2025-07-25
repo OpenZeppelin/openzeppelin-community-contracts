@@ -3,6 +3,7 @@
 pragma solidity ^0.8.27;
 
 import {IWormholeReceiver} from "wormhole-solidity-sdk/interfaces/IWormholeReceiver.sol";
+import {fromUniversalAddress} from "wormhole-solidity-sdk/utils/UniversalAddress.sol";
 import {BitMaps} from "@openzeppelin/contracts/utils/structs/BitMaps.sol";
 import {InteroperableAddress} from "@openzeppelin/contracts/utils/draft-InteroperableAddress.sol";
 import {IERC7786Receiver} from "../../interfaces/IERC7786.sol";
@@ -33,12 +34,15 @@ abstract contract WormholeGatewayDestination is WormholeGatewayBase, IWormholeRe
             (bytes32, bytes, bytes, bytes)
         );
 
-        // Axelar to ERC-7930 translation
-        bytes32 addr = getRemoteGateway(getErc7930Chain(wormholeSourceChain));
+        // Wormhole to ERC-7930 translation
+        address addr = getRemoteGateway(getChainId(wormholeSourceChain));
 
         // check message validity
-        // - `axelarSourceAddress` is the remote gateway on the origin chain.
-        require(addr == wormholeSourceAddress, InvalidOriginGateway(wormholeSourceChain, wormholeSourceAddress));
+        // - `wormholeSourceAddress` is the remote gateway on the origin chain.
+        require(
+            addr == fromUniversalAddress(wormholeSourceAddress),
+            InvalidOriginGateway(wormholeSourceChain, wormholeSourceAddress)
+        );
 
         // prevent replay - deliveryHash might not be unique if a message is relayed multiple time
         require(!_executed.get(uint256(outboxId)), MessageAlreadyExecuted(outboxId));

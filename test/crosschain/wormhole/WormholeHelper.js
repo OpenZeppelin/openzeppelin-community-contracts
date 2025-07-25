@@ -12,10 +12,10 @@ async function deploy(owner, wormholeChainId = 23600) {
   const gatewayB = await ethers.deployContract('WormholeGatewayDuplex', [wormhole, wormholeChainId, owner]);
 
   await Promise.all([
-    gatewayA.connect(owner).registerChainEquivalence(chain.erc7930, wormholeChainId),
-    gatewayB.connect(owner).registerChainEquivalence(chain.erc7930, wormholeChainId),
-    gatewayA.connect(owner).registerRemoteGateway(chain.toErc7930(gatewayB)),
-    gatewayB.connect(owner).registerRemoteGateway(chain.toErc7930(gatewayA)),
+    gatewayA.connect(owner).registerChainEquivalence(ethers.Typed.bytes(chain.erc7930), wormholeChainId),
+    gatewayB.connect(owner).registerChainEquivalence(ethers.Typed.bytes(chain.erc7930), wormholeChainId),
+    gatewayA.connect(owner).registerRemoteGateway(ethers.Typed.bytes(chain.toErc7930(gatewayB))),
+    gatewayB.connect(owner).registerRemoteGateway(ethers.Typed.bytes(chain.toErc7930(gatewayA))),
   ]);
 
   return { chain, wormholeChainId, wormhole, gatewayA, gatewayB };
