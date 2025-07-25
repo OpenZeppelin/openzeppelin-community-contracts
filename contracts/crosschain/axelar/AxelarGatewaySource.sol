@@ -5,6 +5,8 @@ pragma solidity ^0.8.27;
 import {InteroperableAddress} from "@openzeppelin/contracts/utils/draft-InteroperableAddress.sol";
 import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 import {IERC7786GatewaySource} from "../../interfaces/IERC7786.sol";
+import {IERC7786Attributes} from "../../interfaces/IERC7786Attributes.sol";
+import {ERC7786Attributes} from "../utils/ERC7786Attributes.sol";
 import {AxelarGatewayBase} from "./AxelarGatewayBase.sol";
 
 /**
@@ -17,11 +19,20 @@ abstract contract AxelarGatewaySource is IERC7786GatewaySource, AxelarGatewayBas
     using InteroperableAddress for bytes;
     using Strings for address;
 
+    struct MessageDetails {
+        string destination;
+        string target;
+        bytes payload;
+    }
+
+    uint256 private _sendId;
+    mapping(bytes32 => MessageDetails) private _details;
+
     error UnsupportedNativeTransfer();
 
     /// @inheritdoc IERC7786GatewaySource
-    function supportsAttribute(bytes4 /*selector*/) public pure returns (bool) {
-        return false;
+    function supportsAttribute(bytes4 selector) public pure returns (bool) {
+        return selector == IERC7786Attributes.requestRelay.selector;
     }
 
     /// @inheritdoc IERC7786GatewaySource
@@ -30,29 +41,58 @@ abstract contract AxelarGatewaySource is IERC7786GatewaySource, AxelarGatewayBas
         bytes calldata payload,
         bytes[] calldata attributes
     ) external payable returns (bytes32 sendId) {
-        require(msg.value == 0, UnsupportedNativeTransfer());
-        // Use of `if () revert` syntax to avoid accessing attributes[0] if it's empty
-        if (attributes.length > 0)
-            revert UnsupportedAttribute(attributes[0].length < 0x04 ? bytes4(0) : bytes4(attributes[0][0:4]));
+        // Process attributes (relay)
+        bool withRelay = false;
+        uint256 value = 0;
+        address refundRecipient = address(0);
+
+        for (uint256 i = 0; i < attributes.length; ++i) {
+            (withRelay, value, , refundRecipient) = ERC7786Attributes.tryDecodeRequestRelayCalldata(attributes[i]);
+            require(withRelay, UnsupportedAttribute(attributes[i].length < 0x04 ? bytes4(0) : bytes4(attributes[i])));
+        }
+        if (!withRelay) {
+            sendId = bytes32(++_sendId);
+        }
+        require(msg.value == value, UnsupportedNativeTransfer());
 
         // Create the package
         bytes memory sender = InteroperableAddress.formatEvmV1(block.chainid, msg.sender);
         bytes memory adapterPayload = abi.encode(sender, recipient, payload);
 
-        // Emit event
-        sendId = bytes32(0); // Explicitly set to 0
+        // Emit event early (stack too deep)
         emit MessageSent(sendId, sender, recipient, payload, 0, attributes);
 
         // Send the message
         (bytes2 chainType, bytes calldata chainReference, ) = recipient.parseV1Calldata();
-        string memory axelarDestination = getAxelarChain(InteroperableAddress.formatV1(chainType, chainReference, ""));
         bytes memory remoteGateway = getRemoteGateway(chainType, chainReference);
-        _axelarGateway.callContract(
-            axelarDestination,
-            address(bytes20(remoteGateway)).toChecksumHexString(), // TODO non-evm chains?
-            adapterPayload
-        );
+        string memory axelarDestination = getAxelarChain(InteroperableAddress.formatV1(chainType, chainReference, ""));
+        string memory axelarTarget = address(bytes20(remoteGateway)).toChecksumHexString(); // TODO non-evm chains?
 
-        return sendId;
+        _axelarGateway.callContract(axelarDestination, axelarTarget, adapterPayload);
+
+        if (withRelay) {
+            _axelarGasService.payNativeGasForContractCall{value: msg.value}(
+                address(this),
+                axelarDestination,
+                axelarTarget,
+                adapterPayload,
+                refundRecipient
+            );
+        } else {
+            _details[sendId] = MessageDetails(axelarDestination, axelarTarget, adapterPayload);
+        }
+    }
+
+    function requestRelay(bytes32 sendId, uint256 /*gasLimit*/, address refundRecipient) external payable {
+        MessageDetails storage details = _details[sendId];
+        require(details.payload.length > 0);
+
+        _axelarGasService.payNativeGasForContractCall{value: msg.value}(
+            address(this),
+            details.destination,
+            details.target,
+            details.payload,
+            refundRecipient
+        );
     }
 }
