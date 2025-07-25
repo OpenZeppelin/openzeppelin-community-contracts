@@ -37,8 +37,8 @@ abstract contract uRWA20 is ERC20, ERC165, ERC20Freezable, ERC20Restricted, IERC
 
     /// @inheritdoc IERC7943
     function setFrozen(address user, uint256, uint256 amount) public virtual {
-        require(amount <= balanceOf(user), ERC20InsufficientBalance(user, balanceOf(user), amount));
         _checkFreezer(user, amount);
+        require(amount <= balanceOf(user), ERC20InsufficientBalance(user, balanceOf(user), amount));
         _setFrozen(user, amount);
     }
 
