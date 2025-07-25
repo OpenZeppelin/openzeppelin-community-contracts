@@ -9,8 +9,8 @@ import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
  * through the {isUserAllowed} function. Inspired by https://eips.ethereum.org/EIPS/eip-7943[EIP-7943].
  *
  * By default, each user has no explicit restriction. The {isUserAllowed} function acts as
- * an allowlist. Developers can override {isUserAllowed} to check that `restriction != RESTRICTED`
- * to implement a blocklist.
+ * an blocklist. Developers can override {isUserAllowed} to check that `restriction == UNRESTRICTED`
+ * to implement an allowlist.
  */
 abstract contract ERC20Restricted is ERC20 {
     enum Restriction {
