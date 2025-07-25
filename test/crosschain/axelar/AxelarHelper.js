@@ -9,8 +9,8 @@ async function deploy(owner) {
     ethers.deployContract('AxelarGasServiceMock'),
   ]).then(([gateway, gasService]) => ({ gateway, gasService }));
 
-  const gatewayA = await ethers.deployContract('AxelarGatewayDuplex', [axelar.gateway, axelar.gasService, owner]);
-  const gatewayB = await ethers.deployContract('AxelarGatewayDuplex', [axelar.gateway, axelar.gasService, owner]);
+  const gatewayA = await ethers.deployContract('AxelarGatewayAdaptor', [axelar.gateway, axelar.gasService, owner]);
+  const gatewayB = await ethers.deployContract('AxelarGatewayAdaptor', [axelar.gateway, axelar.gasService, owner]);
 
   await Promise.all([
     gatewayA.connect(owner).registerChainEquivalence(chain.erc7930, 'local'),

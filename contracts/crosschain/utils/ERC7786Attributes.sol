@@ -7,7 +7,7 @@ import {IERC7786Attributes} from "../../interfaces/IERC7786Attributes.sol";
 library ERC7786Attributes {
     function tryDecodeRequestRelay(
         bytes memory attribute
-    ) internal returns (bool success, uint256 value, uint256 gasLimit, address refundRecipient) {
+    ) internal pure returns (bool success, uint256 value, uint256 gasLimit, address refundRecipient) {
         success = bytes4(attribute) == IERC7786Attributes.requestRelay.selector && attribute.length >= 0x64;
         if (success) {
             assembly ("memory-safe") {
@@ -20,7 +20,7 @@ library ERC7786Attributes {
 
     function tryDecodeRequestRelayCalldata(
         bytes calldata attribute
-    ) internal returns (bool success, uint256 value, uint256 gasLimit, address refundRecipient) {
+    ) internal pure returns (bool success, uint256 value, uint256 gasLimit, address refundRecipient) {
         success = bytes4(attribute) == IERC7786Attributes.requestRelay.selector && attribute.length >= 0x64;
         if (success) {
             assembly ("memory-safe") {
