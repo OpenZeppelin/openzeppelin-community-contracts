@@ -16,7 +16,7 @@ describe('ERC7786Attributes', function () {
   });
 
   describe('requestRelay', function () {
-    it('decode properly formated attribute', async function () {
+    it('decode properly formatted attribute', async function () {
       const value = ethers.toBigInt(ethers.randomBytes(32));
       const gasLimit = ethers.toBigInt(ethers.randomBytes(32));
       const refundRecipient = ethers.getAddress(ethers.hexlify(ethers.randomBytes(20)));
