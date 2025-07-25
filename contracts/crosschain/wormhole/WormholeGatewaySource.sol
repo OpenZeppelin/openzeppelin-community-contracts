@@ -75,14 +75,15 @@ abstract contract WormholeGatewaySource is IERC7786GatewaySource, WormholeGatewa
     }
 
     function requestRelay(bytes32 sendId, uint256 gasLimit, address /*refundRecipient*/) external payable {
+        // TODO: revert if refundRecipient is not address(0)?
+
         PendingMessage storage pmsg = _pending[sendId];
 
         require(pmsg.pending, CannotFinalizeMessage(sendId));
         pmsg.pending = false;
 
-        // TODO: revert if refundRecipient is not address(0)?
-
         // TODO: Do we care about the returned "sequence"?
+        // slither-disable-next-line reentrancy-no-eth
         _wormholeRelayer.sendPayloadToEvm{value: pmsg.value + msg.value}(
             getWormholeChain(pmsg.recipient),
             getRemoteGateway(pmsg.recipient),
@@ -96,7 +97,7 @@ abstract contract WormholeGatewaySource is IERC7786GatewaySource, WormholeGatewa
             gasLimit
         );
 
-        // Do we want to do that to get a gas refund? Would it be valuable to keep that infomation stored?
+        // Do we want to do that to get a gas refund? Would it be valuable to keep that information stored?
         delete _pending[sendId];
     }
 }
