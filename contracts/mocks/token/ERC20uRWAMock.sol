@@ -10,7 +10,7 @@ abstract contract uRWA20Mock is uRWA20, AccessControl {
     bytes32 public constant FREEZER_ROLE = keccak256("FREEZER_ROLE");
     bytes32 public constant ENFORCER_ROLE = keccak256("ENFORCER_ROLE");
 
-    constructor(string memory name, string memory symbol, address freezer, address enforcer) ERC20(name, symbol) {
+    constructor(address freezer, address enforcer) {
         _grantRole(FREEZER_ROLE, freezer);
         _grantRole(ENFORCER_ROLE, enforcer);
     }
