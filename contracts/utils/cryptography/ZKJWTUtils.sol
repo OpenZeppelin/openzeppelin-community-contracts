@@ -64,7 +64,7 @@ library ZKJWTUtils {
         string[] memory signHashTemplate = new string[](1);
         signHashTemplate[0] = CommandUtils.UINT_MATCHER;
         bytes[] memory signHashParams = new bytes[](1);
-        signHashParams[0] = abi.encodePacked(hash);
+        signHashParams[0] = abi.encode(hash);
         return isValidZKJWT(jwtProof, jwtRegistry, verifier, signHashTemplate, signHashParams, Case.LOWERCASE); // UINT_MATCHER is always lowercase
     }
 

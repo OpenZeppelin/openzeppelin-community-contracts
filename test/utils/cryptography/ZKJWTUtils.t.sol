@@ -172,16 +172,15 @@ contract ZKJWTUtilsTest is Test {
         assertEq(uint256(err), uint256(ZKJWTUtils.JWTProofError.MaskedCommandLength));
     }
 
-    // function testMismatchedCommand(bytes32 hash) public view {
-    //     // Use a fixed invalid command that won't match signHash pattern
-    //     string memory invalidCommand = string(abi.encodePacked("invalidJWTCommand ", uint256(hash).toString()));
+    function testMismatchedCommand(bytes32 hash) public view {
+        string memory invalidCommand = string(abi.encodePacked("invalidJWTCommand ", hash));
 
-    //     EmailProof memory jwtProof = _buildJWTProofMock(invalidCommand);
+        EmailProof memory jwtProof = _buildJWTProofMock(invalidCommand);
 
-    //     ZKJWTUtils.JWTProomnfError err = ZKJWTUtils.isValidZKJWT(jwtProof, _jwtRegistry, _verifier, hash);
+        ZKJWTUtils.JWTProofError err = ZKJWTUtils.isValidZKJWT(jwtProof, _jwtRegistry, _verifier, hash);
 
-    //     assertEq(uint256(err), uint256(ZKJWTUtils.JWTProofError.MismatchedCommand));
-    // }
+        assertEq(uint256(err), uint256(ZKJWTUtils.JWTProofError.MismatchedCommand));
+    }
 
     function testMismatchedCommandWithTemplate(bytes32 hash) public view {
         string[] memory template = new string[](1);
