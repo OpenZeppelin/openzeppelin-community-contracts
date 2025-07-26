@@ -63,7 +63,9 @@ library ZKJWTUtils {
     ) internal view returns (JWTProofError) {
         string[] memory signHashTemplate = new string[](1);
         signHashTemplate[0] = CommandUtils.UINT_MATCHER;
-        return isValidZKJWT(jwtProof, jwtRegistry, verifier, signHashTemplate, _asSingletonArray(hash), Case.LOWERCASE); // UINT_MATCHER is always lowercase
+        bytes[] memory signHashParams = new bytes[](1);
+        signHashParams[0] = abi.encodePacked(hash);
+        return isValidZKJWT(jwtProof, jwtRegistry, verifier, signHashTemplate, signHashParams, Case.LOWERCASE); // UINT_MATCHER is always lowercase
     }
 
     /**
@@ -131,17 +133,5 @@ library ZKJWTUtils {
             templateParams.computeExpectedCommand(template, uint8(Case.LOWERCASE)).equal(command) ||
             templateParams.computeExpectedCommand(template, uint8(Case.UPPERCASE)).equal(command) ||
             templateParams.computeExpectedCommand(template, uint8(Case.CHECKSUM)).equal(command);
-    }
-
-    /// @dev Creates an array in memory with only one value for each of the elements provided.
-    function _asSingletonArray(bytes32 element) private pure returns (bytes[] memory array) {
-        assembly ("memory-safe") {
-            array := mload(0x40) // Load free memory pointer
-            mstore(array, 1) // Set array length to 1
-            mstore(add(array, 0x20), add(array, 0x40)) // Store the offset to the array content
-            mstore(add(array, 0x40), 32) // Store the length of the element
-            mstore(add(array, 0x60), element) // Store the single element
-            mstore(0x40, add(array, 0x80)) // Update memory pointer
-        }
     }
 }

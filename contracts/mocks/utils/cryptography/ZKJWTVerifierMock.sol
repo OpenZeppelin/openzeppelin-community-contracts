@@ -6,7 +6,7 @@ import {IVerifier, EmailProof} from "@zk-email/zk-jwt/src/interfaces/IVerifier.s
 
 contract ZKJWTVerifierMock is IVerifier {
     function getCommandBytes() external pure returns (uint256) {
-        // Same as in https://github.com/zkemail/email-tx-builder/blob/1452943807a5fdc732e1113c34792c76cf7dd031/packages/contracts/src/utils/Verifier.sol#L15
+        // Same as in https://github.com/zkemail/zk-jwt/blob/27436a2f23e78e89cf624f649ec1d125f13772dd/packages/contracts/src/utils/JwtVerifier.sol#L20
         return 605;
     }
 
