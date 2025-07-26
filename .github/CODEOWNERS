@@ -18,5 +18,6 @@
 ## ZKEmail
 
 /contracts/utils/cryptography/ZKEmailUtils.sol @zkfriendly @benceharomi
+/contracts/utils/cryptography/ZKJWTUtils.sol @zkfriendly @benceharomi
 /contracts/utils/cryptography/signers/SignerZKEmail.sol @zkfriendly @benceharomi
 /contracts/utils/cryptography/verifiers/ERC7913ZKEmailVerifier.sol @zkfriendly @benceharomi
