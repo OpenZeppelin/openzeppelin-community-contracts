@@ -267,16 +267,16 @@ contract ZKEmailUtilsTest is Test {
         assertEq(uint256(err), uint256(ZKEmailUtils.EmailProofError.SkippedCommandPrefixSize));
     }
 
-    // function testMismatchedCommand(bytes32 hash, string memory invalidCommand) public view {
-    //     bytes[] memory commandParams = new bytes[](1);
-    //     commandParams[0] = abi.encode(hash);
+    function testMismatchedCommand(bytes32 hash, string memory invalidCommand) public view {
+        bytes[] memory commandParams = new bytes[](1);
+        commandParams[0] = abi.encode(hash);
 
-    //     EmailAuthMsg memory emailAuthMsg = _buildEmailAuthMsgMock(invalidCommand, commandParams, 0);
+        EmailAuthMsg memory emailAuthMsg = _buildEmailAuthMsgMock(invalidCommand, commandParams, 0);
 
-    //     ZKEmailUtils.EmailProofError err = ZKEmailUtils.isValidZKEmail(emailAuthMsg, _dkimRegistry, _verifier);
+        ZKEmailUtils.EmailProofError err = ZKEmailUtils.isValidZKEmail(emailAuthMsg, _dkimRegistry, _verifier);
 
-    //     assertEq(uint256(err), uint256(ZKEmailUtils.EmailProofError.MismatchedCommand));
-    // }
+        assertEq(uint256(err), uint256(ZKEmailUtils.EmailProofError.MismatchedCommand));
+    }
 
     function testInvalidEmailProof(
         bytes32 hash,
