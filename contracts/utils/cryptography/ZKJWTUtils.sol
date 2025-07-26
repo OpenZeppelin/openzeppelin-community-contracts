@@ -61,10 +61,9 @@ library ZKJWTUtils {
         IVerifier verifier,
         bytes32 hash
     ) internal view returns (JWTProofError) {
-        string[] memory signHashTemplate = new string[](2);
-        signHashTemplate[0] = "signHash";
-        signHashTemplate[1] = CommandUtils.UINT_MATCHER; // UINT_MATCHER is always lowercase
-        return isValidZKJWT(jwtProof, jwtRegistry, verifier, signHashTemplate, _asSingletonArray(hash), Case.LOWERCASE);
+        string[] memory signHashTemplate = new string[](1);
+        signHashTemplate[0] = CommandUtils.UINT_MATCHER;
+        return isValidZKJWT(jwtProof, jwtRegistry, verifier, signHashTemplate, _asSingletonArray(hash), Case.LOWERCASE); // UINT_MATCHER is always lowercase
     }
 
     /**
@@ -112,7 +111,6 @@ library ZKJWTUtils {
         }
 
         // Verify the zero-knowledge proof of JWT signature
-        // TODO: Is `verifyEmailProof` supposed to be non-view?
         return verifier.verifyEmailProof(jwtProof) ? JWTProofError.NoError : JWTProofError.JWTProof;
     }
 
@@ -140,8 +138,10 @@ library ZKJWTUtils {
         assembly ("memory-safe") {
             array := mload(0x40) // Load free memory pointer
             mstore(array, 1) // Set array length to 1
-            mstore(add(array, 0x20), element) // Store the single element
-            mstore(0x40, add(array, 0x40)) // Update memory pointer
+            mstore(add(array, 0x20), add(array, 0x40)) // Store the offset to the array content
+            mstore(add(array, 0x40), 32) // Store the length of the element
+            mstore(add(array, 0x60), element) // Store the single element
+            mstore(0x40, add(array, 0x80)) // Update memory pointer
         }
     }
 }
