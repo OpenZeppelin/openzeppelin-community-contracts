@@ -36,11 +36,11 @@ async function fixture() {
   const { chain, gatewayA, gatewayB } = await AxelarHelper.deploy(admin);
 
   // On chain A, we have a "legacy" token
-  const bridgeA = await ethers.deployContract('$ERC7802Bridge');
+  const bridgeA = await ethers.deployContract('$ERC7802BridgeCounterfactual');
   const tokenA = await ethers.deployContract('$ERC20', ['Token A', 'TA']);
 
   // On chain B we have a bridgeable token
-  const bridgeB = await ethers.deployContract('$ERC7802Bridge');
+  const bridgeB = await ethers.deployContract('$ERC7802BridgeCounterfactual');
   const tokenB = await ethers.deployContract('$ERC20BridgeableMock', ['Token B', 'TB', admin]);
 
   // Compute bridge identifier and local hashes

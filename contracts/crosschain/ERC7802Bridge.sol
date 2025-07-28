@@ -16,7 +16,7 @@ import {SafeCast} from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import {InteroperableAddress} from "@openzeppelin/contracts/utils/draft-InteroperableAddress.sol";
 import {IndirectCall} from "../utils/IndirectCall.sol";
 
-contract ERC7802Bridge is ERC721("ERC7802Bridge", "ERC7802Bridge"), IERC7786Receiver {
+abstract contract ERC7802Bridge is ERC721("ERC7802Bridge", "ERC7802Bridge"), IERC7786Receiver {
     using BitMaps for BitMaps.BitMap;
     using InteroperableAddress for bytes;
 
@@ -72,74 +72,37 @@ contract ERC7802Bridge is ERC721("ERC7802Bridge", "ERC7802Bridge"), IERC7786Rece
     }
 
     // ┌─────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
-    // │                                     Bridge creation and administration                                      │
+    // │                                              Bridge management                                              │
     // └─────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
-    struct Foreign {
-        bytes32 id;
-        address gateway;
-        bytes remote;
-    }
-
-    function createBridge(
-        address token,
-        address admin,
-        bool isCustodial,
-        Foreign[] calldata foreign
-    ) public returns (bytes32) {
-        bytes32[] memory ids = new bytes32[](foreign.length + 1);
-        bytes32[] memory links = new bytes32[](foreign.length);
-        for (uint256 i = 0; i < foreign.length; ++i) {
-            require(foreign[i].gateway != address(0) && foreign[i].remote.length > 0);
-            ids[i] = foreign[i].id;
-            links[i] = keccak256(
-                abi.encode(InteroperableAddress.formatEvmV1(block.chainid, foreign[i].gateway), foreign[i].remote)
-            );
-        }
-        ids[foreign.length] = keccak256(
-            abi.encode(
-                InteroperableAddress.formatEvmV1(block.chainid, token), // bytes token
-                bytes32(bytes20(admin)) | bytes32(SafeCast.toUint(isCustodial)), // bytes32 tokenOptions
-                Arrays.sort(links)
-            )
-        );
-
-        bytes32 bridgeId = keccak256(abi.encodePacked(Arrays.sort(ids)));
-
-        // Should we check for collision. I don't think that is necessary
-        BridgeMetadata storage details = _bridges[bridgeId];
-        details.token = token;
-        details.isCustodial = isCustodial;
-
-        _safeMint(admin == address(0) ? address(1) : admin, uint256(bridgeId));
-
-        for (uint256 i = 0; i < foreign.length; ++i) {
-            (bytes2 chainType, bytes memory chainReference, ) = foreign[i].remote.parseV1();
-            bytes memory chain = InteroperableAddress.formatV1(chainType, chainReference, "");
-            require(details.gateway[chain] == address(0));
-            details.gateway[chain] = foreign[i].gateway;
-            details.remote[chain] = foreign[i].remote;
-
-            emit BridgeLinkSet(bridgeId, foreign[i].gateway, foreign[i].remote);
-        }
-
-        return bridgeId;
-    }
 
     function setPaused(bytes32 bridgeId, bool isPaused) public bridgeAdminRestricted(bridgeId) {
-        _bridges[bridgeId].isPaused = isPaused;
-        emit BridgePaused(bridgeId, isPaused);
+        _setPaused(bridgeId, isPaused);
     }
 
     function updateGateway(
         bytes32 bridgeId,
-        bytes calldata chain,
+        bytes memory chain,
         address gateway,
-        bytes calldata remote
-    ) public bridgeAdminRestricted(bridgeId) {
-        require(gateway != address(0) && remote.length > 0);
+        bytes memory remote
+    ) public virtual bridgeAdminRestricted(bridgeId) {
+        _setGateway(bridgeId, chain, gateway, remote);
+    }
+
+    function _setBridge(bytes32 bridgeId, address token, address admin, bool isCustodial) internal {
+        _safeMint(admin == address(0) ? address(1) : admin, uint256(bridgeId));
+        _bridges[bridgeId].token = token;
+        _bridges[bridgeId].isCustodial = isCustodial;
+    }
+
+    function _setGateway(bytes32 bridgeId, bytes memory chain, address gateway, bytes memory remote) internal {
         _bridges[bridgeId].gateway[chain] = gateway;
         _bridges[bridgeId].remote[chain] = remote;
         emit BridgeLinkSet(bridgeId, gateway, remote);
+    }
+
+    function _setPaused(bytes32 bridgeId, bool isPaused) internal {
+        _bridges[bridgeId].isPaused = isPaused;
+        emit BridgePaused(bridgeId, isPaused);
     }
 
     // ┌─────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
@@ -252,5 +215,79 @@ contract ERC7802Bridge is ERC721("ERC7802Bridge", "ERC7802Bridge"), IERC7786Rece
             require(success);
         }
         return token;
+    }
+}
+
+contract ERC7802BridgeLinks is ERC7802Bridge {
+    function createBridge(address token, bool isCustodial, bytes32 salt) public returns (bytes32) {
+        bytes32 bridgeId = keccak256(abi.encodePacked(msg.sender, salt));
+
+        _setBridge(bridgeId, token, msg.sender, isCustodial);
+
+        return bridgeId;
+    }
+}
+
+contract ERC7802BridgeCounterfactual is ERC7802Bridge {
+    using InteroperableAddress for bytes;
+
+    struct Foreign {
+        bytes32 id;
+        address gateway;
+        bytes remote;
+    }
+
+    function createBridge(
+        address token,
+        address admin,
+        bool isCustodial,
+        Foreign[] calldata foreign
+    ) public returns (bytes32) {
+        bytes32 bridgeId = _counterfactualBridgeId(
+            token,
+            bytes32(bytes20(admin)) | bytes32(SafeCast.toUint(isCustodial)),
+            foreign
+        );
+
+        _setBridge(bridgeId, token, admin, isCustodial);
+        for (uint256 i = 0; i < foreign.length; ++i) {
+            (bytes2 chainType, bytes memory chainReference, ) = foreign[i].remote.parseV1Calldata();
+            bytes memory chain = InteroperableAddress.formatV1(chainType, chainReference, "");
+            _setGateway(bridgeId, chain, foreign[i].gateway, foreign[i].remote);
+        }
+
+        return bridgeId;
+    }
+
+    function updateGateway(
+        bytes32 bridgeId,
+        bytes memory chain,
+        address gateway,
+        bytes memory remote
+    ) public virtual override {
+        require(gateway != address(0) && remote.length > 0);
+        // super call is bridgeAdminRestricted(bridgeId)
+        super.updateGateway(bridgeId, chain, gateway, remote);
+    }
+
+    function _counterfactualBridgeId(
+        address token,
+        bytes32 opts,
+        Foreign[] calldata foreign
+    ) private view returns (bytes32) {
+        bytes32[] memory ids = new bytes32[](foreign.length + 1);
+        bytes32[] memory links = new bytes32[](foreign.length);
+        for (uint256 i = 0; i < foreign.length; ++i) {
+            require(foreign[i].gateway != address(0) && foreign[i].remote.length > 0);
+            ids[i] = foreign[i].id;
+            links[i] = keccak256(
+                abi.encode(InteroperableAddress.formatEvmV1(block.chainid, foreign[i].gateway), foreign[i].remote)
+            );
+        }
+        ids[foreign.length] = keccak256(
+            abi.encode(InteroperableAddress.formatEvmV1(block.chainid, token), opts, Arrays.sort(links))
+        );
+
+        return keccak256(abi.encodePacked(Arrays.sort(ids)));
     }
 }
