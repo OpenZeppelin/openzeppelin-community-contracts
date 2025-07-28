@@ -73,7 +73,7 @@ library ZKJWTUtils {
      *
      * This function takes a JWT proof, a JWT registry contract, and a verifier contract
      * as inputs. It performs several validation checks and returns a {JWTProofError} indicating the result.
-     * Returns {JWTProofError.NoError} if all validations pass, or a specific {JWTProofError} indicating
+     * Returns {JWTProofError-NoError} if all validations pass, or a specific {JWTProofError} indicating
      * which validation check failed.
      *
      * NOTE: Attempts to validate the command for all possible string {Case} values.
@@ -112,8 +112,13 @@ library ZKJWTUtils {
             return JWTProofError.JWTPublicKeyHash;
         }
 
+        // TODO: Can we remove the try catch? Or add it to ZKEmailUtils.sol?
         // Verify the zero-knowledge proof of JWT signature
-        return verifier.verifyEmailProof(jwtProof) ? JWTProofError.NoError : JWTProofError.JWTProof;
+        try verifier.verifyEmailProof(jwtProof) returns (bool isValid) {
+            return isValid ? JWTProofError.NoError : JWTProofError.JWTProof;
+        } catch {
+            return JWTProofError.JWTProof;
+        }
     }
 
     /// @dev Compares the command in the JWT proof with the expected command template.

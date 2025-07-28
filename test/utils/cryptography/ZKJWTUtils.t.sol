@@ -20,10 +20,10 @@ contract ZKJWTUtilsTest is Test {
     IVerifier private _verifier;
     bytes32 private _accountSalt;
 
-    string private _kid = "12345";
+    string private _kid = "123456";
     string private _iss = "https://example.com";
-    string private _azp = "client-id-12345";
-    string private _domainName = "12345|https://example.com|client-id-12345"; // kid|iss|azp format
+    string private _azp = "client-id-123456";
+    string private _domainName = "123456|https://example.com|client-id-123456"; // kid|iss|azp format
     bytes32 private _publicKeyHash = 0x0ea9c777dc7110e5a9e89b13f0cfc540e3845ba120b2b6dc24024d61488d4788;
     bytes32 private _emailNullifier = 0x00a83fce3d4b1c9ef0f600644c1ecc6c8115b57b1596e0e3295e2c5105fbfd8a;
     bytes private _mockProof;
@@ -187,7 +187,7 @@ contract ZKJWTUtilsTest is Test {
         template[0] = CommandUtils.UINT_MATCHER;
 
         bytes[] memory templateParams = new bytes[](1);
-        templateParams[0] = abi.encode(uint256(12345)); // Different value than what's in command
+        templateParams[0] = abi.encode(uint256(123456)); // Different value than what's in command
 
         EmailProof memory jwtProof = _buildJWTProofMock(string(abi.encodePacked("testCmd", " ", hash))); // Different from templateParams
 
@@ -202,29 +202,29 @@ contract ZKJWTUtilsTest is Test {
         assertEq(uint256(err), uint256(ZKJWTUtils.JWTProofError.MismatchedCommand));
     }
 
-    // function testInvalidJWTProof(
-    //     bytes32 hash,
-    //     uint256[2] memory pA,
-    //     uint256[2][2] memory pB,
-    //     uint256[2] memory pC
-    // ) public view {
-    //     pA[0] = bound(pA[0], 1, Q - 1);
-    //     pA[1] = bound(pA[1], 1, Q - 1);
-    //     pB[0][0] = bound(pB[0][0], 1, Q - 1);
-    //     pB[0][1] = bound(pB[0][1], 1, Q - 1);
-    //     pB[1][0] = bound(pB[1][0], 1, Q - 1);
-    //     pB[1][1] = bound(pB[1][1], 1, Q - 1);
-    //     pC[0] = bound(pC[0], 1, Q - 1);
-    //     pC[1] = bound(pC[1], 1, Q - 1);
+    function testInvalidJWTProof(
+        bytes32 hash,
+        uint256[2] memory pA,
+        uint256[2][2] memory pB,
+        uint256[2] memory pC
+    ) public view {
+        pA[0] = bound(pA[0], 1, Q - 1);
+        pA[1] = bound(pA[1], 1, Q - 1);
+        pB[0][0] = bound(pB[0][0], 1, Q - 1);
+        pB[0][1] = bound(pB[0][1], 1, Q - 1);
+        pB[1][0] = bound(pB[1][0], 1, Q - 1);
+        pB[1][1] = bound(pB[1][1], 1, Q - 1);
+        pC[0] = bound(pC[0], 1, Q - 1);
+        pC[1] = bound(pC[1], 1, Q - 1);
 
-    //     EmailProof memory jwtProof = _buildJWTProofMock(string.concat(SIGN_HASH_COMMAND, uint256(hash).toString()));
+        EmailProof memory jwtProof = _buildJWTProofMock(string.concat(SIGN_HASH_COMMAND, uint256(hash).toString()));
 
-    //     jwtProof.proof = abi.encode(pA, pB, pC);
+        jwtProof.proof = abi.encode(pA, pB, pC);
 
-    //     ZKJWTUtils.JWTProofError err = ZKJWTUtils.isValidZKJWT(jwtProof, _jwtRegistry, _verifier, hash);
+        ZKJWTUtils.JWTProofError err = ZKJWTUtils.isValidZKJWT(jwtProof, _jwtRegistry, _verifier, hash);
 
-    //     assertEq(uint256(err), uint256(ZKJWTUtils.JWTProofError.JWTProof));
-    // }
+        assertEq(uint256(err), uint256(ZKJWTUtils.JWTProofError.JWTProof));
+    }
 
     function testComplexJWTCommand(
         uint256 amount,
