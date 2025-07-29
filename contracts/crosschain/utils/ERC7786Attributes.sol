@@ -4,7 +4,9 @@ pragma solidity ^0.8.27;
 
 import {IERC7786Attributes} from "../../interfaces/IERC7786Attributes.sol";
 
+/// @dev Library of helper to parse/process ERC-7786 attributes
 library ERC7786Attributes {
+    /// @dev Parse the `requestRelay(uint256,uint256,address)` (0x4cbb573a) attribute into its components.
     function tryDecodeRequestRelay(
         bytes memory attribute
     ) internal pure returns (bool success, uint256 value, uint256 gasLimit, address refundRecipient) {
@@ -17,6 +19,7 @@ library ERC7786Attributes {
         }
     }
 
+    /// @dev Calldata variant of {tryDecodeRequestRelay}.
     function tryDecodeRequestRelayCalldata(
         bytes calldata attribute
     ) internal pure returns (bool success, uint256 value, uint256 gasLimit, address refundRecipient) {
