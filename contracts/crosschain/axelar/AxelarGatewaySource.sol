@@ -17,7 +17,6 @@ import {AxelarGatewayBase} from "./AxelarGatewayBase.sol";
  */
 abstract contract AxelarGatewaySource is IERC7786GatewaySource, AxelarGatewayBase {
     using InteroperableAddress for bytes;
-    using Strings for address;
 
     struct MessageDetails {
         string destination;
@@ -25,7 +24,7 @@ abstract contract AxelarGatewaySource is IERC7786GatewaySource, AxelarGatewayBas
         bytes payload;
     }
 
-    uint256 private _sendId;
+    uint256 private _lastSendId;
     mapping(bytes32 => MessageDetails) private _details;
 
     error UnsupportedNativeTransfer();
@@ -51,7 +50,7 @@ abstract contract AxelarGatewaySource is IERC7786GatewaySource, AxelarGatewayBas
             require(withRelay, UnsupportedAttribute(attributes[i].length < 0x04 ? bytes4(0) : bytes4(attributes[i])));
         }
         if (!withRelay) {
-            sendId = bytes32(++_sendId);
+            sendId = bytes32(++_lastSendId);
         }
         require(msg.value == value, UnsupportedNativeTransfer());
 
@@ -66,9 +65,11 @@ abstract contract AxelarGatewaySource is IERC7786GatewaySource, AxelarGatewayBas
         (bytes2 chainType, bytes calldata chainReference, ) = recipient.parseV1Calldata();
         bytes memory remoteGateway = getRemoteGateway(chainType, chainReference);
         string memory axelarDestination = getAxelarChain(InteroperableAddress.formatV1(chainType, chainReference, ""));
-        string memory axelarTarget = address(bytes20(remoteGateway)).toChecksumHexString(); // TODO non-evm chains?
-
-        _axelarGateway.callContract(axelarDestination, axelarTarget, adapterPayload);
+        // TODO: How should we "stringify" addresses on non-evm chains. Axelar doesn't yet support hex format for all
+        // non evm addresses. Do we want to use Hex? Base58? Base64?
+        string memory axelarTarget = chainType == 0x0000
+            ? Strings.toChecksumHexString(address(bytes20(remoteGateway)))
+            : Strings.toHexString(remoteGateway);
 
         if (withRelay) {
             _axelarGasService.payNativeGasForContractCall{value: msg.value}(
@@ -81,11 +82,22 @@ abstract contract AxelarGatewaySource is IERC7786GatewaySource, AxelarGatewayBas
         } else {
             _details[sendId] = MessageDetails(axelarDestination, axelarTarget, adapterPayload);
         }
+
+        _axelarGateway.callContract(axelarDestination, axelarTarget, adapterPayload);
     }
 
+    /**
+     * @dev Request relaying of a message initiated using `sendMessage`.
+     *
+     * NOTE: AxelarGasService does NOT take a gasLimit. Instead it uses the msg.value sent to determine the gas limit.
+     * This function ignores the provided `gasLimit` parameter.
+     */
     function requestRelay(bytes32 sendId, uint256 /*gasLimit*/, address refundRecipient) external payable {
-        MessageDetails storage details = _details[sendId];
+        MessageDetails memory details = _details[sendId];
         require(details.payload.length > 0);
+
+        // delete storage for some refund
+        delete _details[sendId];
 
         _axelarGasService.payNativeGasForContractCall{value: msg.value}(
             address(this),

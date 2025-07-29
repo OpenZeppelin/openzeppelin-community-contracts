@@ -48,12 +48,6 @@ abstract contract AxelarGatewayBase is Ownable {
         _axelarGasService = _gasService;
     }
 
-    // This is already exposed by AxelarExecutable which AxelarDestinationGateway inherit from. Because its not
-    // virtual, resolution is not possible. Therefore, we should not expose it.
-    // function gateway() public view virtual returns (IAxelarGateway) {
-    //     return _axelarGateway;
-    // }
-
     function gasService() public view virtual returns (IAxelarGasService) {
         return _axelarGasService;
     }
