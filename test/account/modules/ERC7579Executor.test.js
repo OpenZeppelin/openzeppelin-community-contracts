@@ -1,4 +1,4 @@
-const { ethers, entrypoint } = require('hardhat');
+const { ethers, predeploy } = require('hardhat');
 const { expect } = require('chai');
 const { loadFixture } = require('@nomicfoundation/hardhat-network-helpers');
 
@@ -33,7 +33,7 @@ async function fixture() {
   const moduleType = MODULE_TYPE_EXECUTOR;
 
   await mockAccount.deploy();
-  await impersonate(entrypoint.v08.target).then(asEntrypoint =>
+  await impersonate(predeploy.entrypoint.v08.target).then(asEntrypoint =>
     mockAccount.connect(asEntrypoint).installModule(moduleType, mock.target, installData),
   );
 

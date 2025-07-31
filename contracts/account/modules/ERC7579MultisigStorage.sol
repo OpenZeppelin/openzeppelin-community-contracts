@@ -2,7 +2,7 @@
 pragma solidity ^0.8.27;
 
 import {ERC7579Multisig} from "./ERC7579Multisig.sol";
-import {ERC7913Utils} from "../../utils/cryptography/ERC7913Utils.sol";
+import {SignatureChecker} from "@openzeppelin/contracts/utils/cryptography/SignatureChecker.sol";
 
 /**
  * @dev Extension of {ERC7579Multisig} that allows storing presigned approvals in storage.
@@ -16,7 +16,7 @@ import {ERC7913Utils} from "../../utils/cryptography/ERC7913Utils.sol";
  * and the validation will check the storage mapping instead of cryptographic verification.
  */
 abstract contract ERC7579MultisigStorage is ERC7579Multisig {
-    using ERC7913Utils for bytes;
+    using SignatureChecker for bytes;
 
     /// @dev Emitted when a signer signs a hash
     event ERC7579MultisigStoragePresigned(address indexed account, bytes32 indexed hash, bytes signer);

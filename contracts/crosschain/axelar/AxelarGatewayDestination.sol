@@ -39,9 +39,9 @@ abstract contract AxelarGatewayDestination is AxelarGatewayBase, AxelarExecutabl
         bytes calldata adapterPayload
     ) internal override {
         // Parse the package
-        (bytes memory sender, bytes memory recipient, bytes memory payload, bytes[] memory attributes) = abi.decode(
+        (bytes memory sender, bytes memory recipient, bytes memory payload) = abi.decode(
             adapterPayload,
-            (bytes, bytes, bytes, bytes[])
+            (bytes, bytes, bytes)
         );
 
         // Axelar to ERC-7930 translation
@@ -55,7 +55,7 @@ abstract contract AxelarGatewayDestination is AxelarGatewayBase, AxelarExecutabl
         );
 
         (, address target) = recipient.parseEvmV1();
-        bytes4 result = IERC7786Receiver(target).executeMessage(commandId, sender, payload, attributes);
-        require(result == IERC7786Receiver.executeMessage.selector, ReceiverExecutionFailed());
+        bytes4 result = IERC7786Receiver(target).receiveMessage(commandId, sender, payload);
+        require(result == IERC7786Receiver.receiveMessage.selector, ReceiverExecutionFailed());
     }
 }

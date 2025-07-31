@@ -4,10 +4,6 @@ NOTE: This document is better viewed at https://docs.openzeppelin.com/community-
 
 This directory includes contracts to build accounts for ERC-4337. These include:
 
- * {Account}: An ERC-4337 smart account implementation that includes the core logic to process user operations.
- * {AccountERC7579}: An extension of `Account` that implements support for ERC-7579 modules.
- * {AccountERC7579Hooked}: An extension of `AccountERC7579` with support for a single hook module (type 4).
- * {ERC7821}: Minimal batch executor implementation contracts. Useful to enable easy batch execution for smart contracts.
  * {ERC7579Executor}: An executor module that enables executing calls from accounts where the it's installed.
  * {ERC7579DelayedExecutor}: An executor module that adds a delay before executing an account operation.
  * {ERC7579SelectorExecutor}: An executor module that restricts execution to specific function selectors.
@@ -22,18 +18,6 @@ This directory includes contracts to build accounts for ERC-4337. These include:
  * {PaymasterERC20Guarantor}: A paymaster that enables third parties to guarantee user operations by pre-funding gas costs, with the option for users to repay or for guarantors to absorb the cost.
  * {PaymasterERC721Owner}: A paymaster that allows users to pay for user operations based on ERC-721 ownership.
  * {PaymasterSigner}: A paymaster that allows users to pay for user operations using an authorized signature.
-
-== Core
-
-{{Account}}
-
-== Extensions
-
-{{AccountERC7579}}
-
-{{AccountERC7579Hooked}}
-
-{{ERC7821}}
 
 == Modules
 

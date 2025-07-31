@@ -1,4 +1,4 @@
-const { ethers, entrypoint } = require('hardhat');
+const { ethers, predeploy } = require('hardhat');
 const { loadFixture } = require('@nomicfoundation/hardhat-network-helpers');
 
 const { getDomain, PackedUserOperation } = require('@openzeppelin/contracts/test/helpers/eip712');
@@ -21,14 +21,14 @@ for (const [name, opts] of Object.entries({
 
     // ERC-4337 account
     const helper = new ERC4337Helper();
-    const account = await helper.newAccount('$AccountECDSAMock', ['AccountECDSA', '1', accountSigner]);
+    const account = await helper.newAccount('$AccountECDSAMock', [accountSigner, 'AccountECDSA', '1']);
     await account.deploy();
 
     // ERC-4337 paymaster
     const paymaster = await ethers.deployContract(`$${name}Mock`, [token, admin]);
 
     // Domains
-    const entrypointDomain = await getDomain(entrypoint.v08);
+    const entrypointDomain = await getDomain(predeploy.entrypoint.v08);
 
     const signUserOp = userOp =>
       accountSigner
