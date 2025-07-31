@@ -30,30 +30,30 @@ describe('ERC20Restricted', function () {
     });
 
     it('allows users with UNRESTRICTED status', async function () {
-      await this.token.$_unrestrictUser(this.holder); // Sets to UNRESTRICTED
+      await this.token.$_allowUser(this.holder); // Sets to UNRESTRICTED
       await expect(this.token.getRestriction(this.holder)).to.eventually.equal(2); // UNRESTRICTED
       await expect(this.token.isUserAllowed(this.holder)).to.eventually.equal(true);
     });
 
     it('blocks users with RESTRICTED status', async function () {
-      await this.token.$_restrictUser(this.holder); // Sets to RESTRICTED
+      await this.token.$_blockUser(this.holder); // Sets to RESTRICTED
       await expect(this.token.getRestriction(this.holder)).to.eventually.equal(1); // RESTRICTED
       await expect(this.token.isUserAllowed(this.holder)).to.eventually.equal(false);
     });
 
     it('resets user to DEFAULT restriction', async function () {
-      await this.token.$_restrictUser(this.holder); // Sets to RESTRICTED
+      await this.token.$_blockUser(this.holder); // Sets to RESTRICTED
       await this.token.$_resetUser(this.holder); // Sets to DEFAULT
       await expect(this.token.getRestriction(this.holder)).to.eventually.equal(0); // DEFAULT
       await expect(this.token.isUserAllowed(this.holder)).to.eventually.equal(true);
     });
 
     it('emits UserRestrictionsUpdated event when restriction changes', async function () {
-      await expect(this.token.$_restrictUser(this.holder))
+      await expect(this.token.$_blockUser(this.holder))
         .to.emit(this.token, 'UserRestrictionsUpdated')
         .withArgs(this.holder, 1); // RESTRICTED
 
-      await expect(this.token.$_unrestrictUser(this.holder))
+      await expect(this.token.$_allowUser(this.holder))
         .to.emit(this.token, 'UserRestrictionsUpdated')
         .withArgs(this.holder, 2); // UNRESTRICTED
 
@@ -63,8 +63,8 @@ describe('ERC20Restricted', function () {
     });
 
     it('does not emit event when restriction is unchanged', async function () {
-      await this.token.$_restrictUser(this.holder); // Sets to RESTRICTED
-      await expect(this.token.$_restrictUser(this.holder)).to.not.emit(this.token, 'UserRestrictionsUpdated');
+      await this.token.$_blockUser(this.holder); // Sets to RESTRICTED
+      await expect(this.token.$_blockUser(this.holder)).to.not.emit(this.token, 'UserRestrictionsUpdated');
     });
   });
 
@@ -79,8 +79,8 @@ describe('ERC20Restricted', function () {
       });
 
       it('allows transfer when sender and recipient are UNRESTRICTED', async function () {
-        await this.token.$_unrestrictUser(this.holder); // Sets to UNRESTRICTED
-        await this.token.$_unrestrictUser(this.recipient); // Sets to UNRESTRICTED
+        await this.token.$_allowUser(this.holder); // Sets to UNRESTRICTED
+        await this.token.$_allowUser(this.recipient); // Sets to UNRESTRICTED
 
         await expect(this.token.connect(this.holder).transfer(this.recipient, initialSupply)).to.changeTokenBalances(
           this.token,
@@ -90,7 +90,7 @@ describe('ERC20Restricted', function () {
       });
 
       it('reverts when sender is RESTRICTED', async function () {
-        await this.token.$_restrictUser(this.holder); // Sets to RESTRICTED
+        await this.token.$_blockUser(this.holder); // Sets to RESTRICTED
 
         await expect(this.token.connect(this.holder).transfer(this.recipient, initialSupply))
           .to.be.revertedWithCustomError(this.token, 'ERC20UserRestricted')
@@ -98,7 +98,7 @@ describe('ERC20Restricted', function () {
       });
 
       it('reverts when recipient is RESTRICTED', async function () {
-        await this.token.$_restrictUser(this.recipient); // Sets to RESTRICTED
+        await this.token.$_blockUser(this.recipient); // Sets to RESTRICTED
 
         await expect(this.token.connect(this.holder).transfer(this.recipient, initialSupply))
           .to.be.revertedWithCustomError(this.token, 'ERC20UserRestricted')
@@ -106,7 +106,7 @@ describe('ERC20Restricted', function () {
       });
 
       it('allows transfer when restricted user is then unrestricted', async function () {
-        await this.token.$_restrictUser(this.holder); // Sets to RESTRICTED
+        await this.token.$_blockUser(this.holder); // Sets to RESTRICTED
         await this.token.$_resetUser(this.holder); // Sets back to DEFAULT
 
         await expect(this.token.connect(this.holder).transfer(this.recipient, initialSupply)).to.changeTokenBalances(
@@ -131,7 +131,7 @@ describe('ERC20Restricted', function () {
       });
 
       it('reverts when sender is RESTRICTED', async function () {
-        await this.token.$_restrictUser(this.holder); // Sets to RESTRICTED
+        await this.token.$_blockUser(this.holder); // Sets to RESTRICTED
 
         await expect(this.token.connect(this.approved).transferFrom(this.holder, this.recipient, allowance))
           .to.be.revertedWithCustomError(this.token, 'ERC20UserRestricted')
@@ -139,7 +139,7 @@ describe('ERC20Restricted', function () {
       });
 
       it('reverts when recipient is RESTRICTED', async function () {
-        await this.token.$_restrictUser(this.recipient); // Sets to RESTRICTED
+        await this.token.$_blockUser(this.recipient); // Sets to RESTRICTED
 
         await expect(this.token.connect(this.approved).transferFrom(this.holder, this.recipient, allowance))
           .to.be.revertedWithCustomError(this.token, 'ERC20UserRestricted')
@@ -147,8 +147,8 @@ describe('ERC20Restricted', function () {
       });
 
       it('allows transferFrom when restricted user is then unrestricted', async function () {
-        await this.token.$_restrictUser(this.holder); // Sets to RESTRICTED
-        await this.token.$_unrestrictUser(this.holder); // Sets to UNRESTRICTED
+        await this.token.$_blockUser(this.holder); // Sets to RESTRICTED
+        await this.token.$_allowUser(this.holder); // Sets to UNRESTRICTED
 
         await expect(
           this.token.connect(this.approved).transferFrom(this.holder, this.recipient, allowance),
@@ -164,13 +164,13 @@ describe('ERC20Restricted', function () {
       });
 
       it('allows minting to UNRESTRICTED users', async function () {
-        await this.token.$_unrestrictUser(this.recipient); // Sets to UNRESTRICTED
+        await this.token.$_allowUser(this.recipient); // Sets to UNRESTRICTED
 
         await expect(this.token.$_mint(this.recipient, value)).to.changeTokenBalance(this.token, this.recipient, value);
       });
 
       it('reverts when trying to mint to RESTRICTED user', async function () {
-        await this.token.$_restrictUser(this.recipient); // Sets to RESTRICTED
+        await this.token.$_blockUser(this.recipient); // Sets to RESTRICTED
 
         await expect(this.token.$_mint(this.recipient, value))
           .to.be.revertedWithCustomError(this.token, 'ERC20UserRestricted')
@@ -178,7 +178,7 @@ describe('ERC20Restricted', function () {
       });
 
       it('allows minting when restricted user is then unrestricted', async function () {
-        await this.token.$_restrictUser(this.recipient); // Sets to RESTRICTED
+        await this.token.$_blockUser(this.recipient); // Sets to RESTRICTED
         await this.token.$_resetUser(this.recipient); // Sets back to DEFAULT
 
         await expect(this.token.$_mint(this.recipient, value)).to.changeTokenBalance(this.token, this.recipient, value);
@@ -193,13 +193,13 @@ describe('ERC20Restricted', function () {
       });
 
       it('allows burning from UNRESTRICTED users', async function () {
-        await this.token.$_unrestrictUser(this.holder); // Sets to UNRESTRICTED
+        await this.token.$_allowUser(this.holder); // Sets to UNRESTRICTED
 
         await expect(this.token.$_burn(this.holder, value)).to.changeTokenBalance(this.token, this.holder, -value);
       });
 
       it('reverts when trying to burn from RESTRICTED user', async function () {
-        await this.token.$_restrictUser(this.holder); // Sets to RESTRICTED
+        await this.token.$_blockUser(this.holder); // Sets to RESTRICTED
 
         await expect(this.token.$_burn(this.holder, value))
           .to.be.revertedWithCustomError(this.token, 'ERC20UserRestricted')
@@ -207,8 +207,8 @@ describe('ERC20Restricted', function () {
       });
 
       it('allows burning when restricted user is then unrestricted', async function () {
-        await this.token.$_restrictUser(this.holder); // Sets to RESTRICTED
-        await this.token.$_unrestrictUser(this.holder); // Sets to UNRESTRICTED
+        await this.token.$_blockUser(this.holder); // Sets to RESTRICTED
+        await this.token.$_allowUser(this.holder); // Sets to UNRESTRICTED
 
         await expect(this.token.$_burn(this.holder, value)).to.changeTokenBalance(this.token, this.holder, -value);
       });
@@ -223,14 +223,14 @@ describe('ERC20Restricted', function () {
       });
 
       it('allows approval from UNRESTRICTED users', async function () {
-        await this.token.$_unrestrictUser(this.holder); // Sets to UNRESTRICTED
+        await this.token.$_allowUser(this.holder); // Sets to UNRESTRICTED
 
         await this.token.connect(this.holder).approve(this.approved, allowance);
         await expect(this.token.allowance(this.holder, this.approved)).to.eventually.equal(allowance);
       });
 
       it('allows approval from RESTRICTED users (approvals are not restricted)', async function () {
-        await this.token.$_restrictUser(this.holder); // Sets to RESTRICTED
+        await this.token.$_blockUser(this.holder); // Sets to RESTRICTED
 
         await this.token.connect(this.holder).approve(this.approved, allowance);
         await expect(this.token.allowance(this.holder, this.approved)).to.eventually.equal(allowance);

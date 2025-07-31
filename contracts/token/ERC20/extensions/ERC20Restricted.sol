@@ -5,48 +5,48 @@ pragma solidity ^0.8.26;
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 /**
- * @dev Extension of {ERC20} that allows to implement user access restrictions
+ * @dev Extension of {ERC20} that allows to implement user account transfer restrictions
  * through the {isUserAllowed} function. Inspired by https://eips.ethereum.org/EIPS/eip-7943[EIP-7943].
  *
- * By default, each user has no explicit restriction. The {isUserAllowed} function acts as
- * a blocklist. Developers can override {isUserAllowed} to check that `restriction == UNRESTRICTED`
+ * By default, each account has no explicit restriction. The {isUserAllowed} function acts as
+ * a blocklist. Developers can override {isUserAllowed} to check that `restriction == ALLOWED`
  * to implement an allowlist.
  */
 abstract contract ERC20Restricted is ERC20 {
     enum Restriction {
         DEFAULT, // User has no explicit restriction
-        RESTRICTED, // User is explicitly restricted
-        UNRESTRICTED // User is explicitly unrestricted
+        BLOCKED, // User is explicitly blocked
+        ALLOWED // User is explicitly allowed
     }
 
-    mapping(address user => Restriction) private _restrictions;
+    mapping(address account => Restriction) private _restrictions;
 
-    /// @dev Emitted when a user's restriction is updated.
-    event UserRestrictionsUpdated(address indexed user, Restriction restriction);
+    /// @dev Emitted when a user account's restriction is updated.
+    event UserRestrictionsUpdated(address indexed account, Restriction restriction);
 
-    /// @dev The operation failed because the user is restricted.
-    error ERC20UserRestricted(address user);
+    /// @dev The operation failed because the user account is restricted.
+    error ERC20UserRestricted(address account);
 
-    /// @dev Returns the restriction of an account.
-    function getRestriction(address user) public view virtual returns (Restriction) {
-        return _restrictions[user];
+    /// @dev Returns the restriction of a user account.
+    function getRestriction(address account) public view virtual returns (Restriction) {
+        return _restrictions[account];
     }
 
     /**
-     * @dev Returns whether a user is allowed to interact with the token.
+     * @dev Returns whether a user account is allowed to interact with the token.
      *
-     * Default implementation only disallows explicitly RESTRICTED users (i.e. a blocklist).
+     * Default implementation only disallows explicitly BLOCKED accounts (i.e. a blocklist).
      *
      * To convert into an allowlist, override as:
      *
      * ```solidity
-     * function isUserAllowed(address user) public view virtual override returns (bool) {
-     *     return getRestriction(user) == Restriction.UNRESTRICTED;
+     * function isUserAllowed(address account) public view virtual override returns (bool) {
+     *     return getRestriction(account) == Restriction.ALLOWED;
      * }
      * ```
      */
-    function isUserAllowed(address user) public view virtual returns (bool) {
-        return getRestriction(user) != Restriction.RESTRICTED; // i.e. DEFAULT && UNRESTRICTED
+    function isUserAllowed(address account) public view virtual returns (bool) {
+        return getRestriction(account) != Restriction.BLOCKED; // i.e. DEFAULT && ALLOWED
     }
 
     /**
@@ -66,31 +66,31 @@ abstract contract ERC20Restricted is ERC20 {
     // We don't check restrictions for approvals since the actual transfer
     // will be checked in _update. This allows for more flexible approval patterns.
 
-    /// @dev Updates the restriction of a user.
-    function _setRestriction(address user, Restriction restriction) internal virtual {
-        if (getRestriction(user) != restriction) {
-            _restrictions[user] = restriction;
-            emit UserRestrictionsUpdated(user, restriction);
+    /// @dev Updates the restriction of a user account.
+    function _setRestriction(address account, Restriction restriction) internal virtual {
+        if (getRestriction(account) != restriction) {
+            _restrictions[account] = restriction;
+            emit UserRestrictionsUpdated(account, restriction);
         } // no-op if restriction is unchanged
     }
 
-    /// @dev Convenience function to restrict a user (set to RESTRICTED).
-    function _restrictUser(address user) internal virtual {
-        _setRestriction(user, Restriction.RESTRICTED);
+    /// @dev Convenience function to block a user account (set to BLOCKED).
+    function _blockUser(address account) internal virtual {
+        _setRestriction(account, Restriction.BLOCKED);
     }
 
-    /// @dev Convenience function to disallow a user (set to UNRESTRICTED).
-    function _unrestrictUser(address user) internal virtual {
-        _setRestriction(user, Restriction.UNRESTRICTED);
+    /// @dev Convenience function to allow a user account (set to ALLOWED).
+    function _allowUser(address account) internal virtual {
+        _setRestriction(account, Restriction.ALLOWED);
     }
 
-    /// @dev Convenience function to reset a user to default restriction.
-    function _resetUser(address user) internal virtual {
-        _setRestriction(user, Restriction.DEFAULT);
+    /// @dev Convenience function to reset a user account to default restriction.
+    function _resetUser(address account) internal virtual {
+        _setRestriction(account, Restriction.DEFAULT);
     }
 
-    /// @dev Checks if a user is restricted. Reverts with {ERC20Restricted} if so.
-    function _checkRestricted(address user) internal view virtual {
-        require(isUserAllowed(user), ERC20UserRestricted(user));
+    /// @dev Checks if a user account is restricted. Reverts with {ERC20Restricted} if so.
+    function _checkRestricted(address account) internal view virtual {
+        require(isUserAllowed(account), ERC20UserRestricted(account));
     }
 }

@@ -47,7 +47,7 @@ describe('uRWA20', function () {
     });
 
     it('reverts when sender is restricted', async function () {
-      await this.token.$_restrictUser(this.holder); // Sets to RESTRICTED
+      await this.token.$_blockUser(this.holder); // Sets to RESTRICTED
 
       await expect(this.token.connect(this.holder).transfer(this.recipient, 30n))
         .to.be.revertedWithCustomError(this.token, 'ERC7943NotAllowedTransfer')
@@ -55,7 +55,7 @@ describe('uRWA20', function () {
     });
 
     it('reverts when recipient is restricted', async function () {
-      await this.token.$_restrictUser(this.recipient); // Sets to RESTRICTED
+      await this.token.$_blockUser(this.recipient); // Sets to RESTRICTED
 
       await expect(this.token.connect(this.holder).transfer(this.recipient, 30n))
         .to.be.revertedWithCustomError(this.token, 'ERC7943NotAllowedTransfer')
@@ -78,8 +78,8 @@ describe('uRWA20', function () {
       const transferAmount = 30n; // Available: 100 - 20 = 80, transferring 30
 
       await this.token.connect(this.freezer).setFrozen(this.holder, 0, frozenAmount);
-      await this.token.$_unrestrictUser(this.holder); // Sets to UNRESTRICTED
-      await this.token.$_unrestrictUser(this.recipient); // Sets to UNRESTRICTED
+      await this.token.$_allowUser(this.holder); // Sets to UNRESTRICTED
+      await this.token.$_allowUser(this.recipient); // Sets to UNRESTRICTED
 
       await expect(this.token.connect(this.holder).transfer(this.recipient, transferAmount)).to.changeTokenBalances(
         this.token,
@@ -96,13 +96,13 @@ describe('uRWA20', function () {
     });
 
     it('returns false when sender is restricted', async function () {
-      await this.token.$_restrictUser(this.holder); // Sets to RESTRICTED
+      await this.token.$_blockUser(this.holder); // Sets to RESTRICTED
 
       await expect(this.token.isTransferAllowed(this.holder, this.recipient, 0, 30n)).to.eventually.equal(false);
     });
 
     it('returns false when recipient is restricted', async function () {
-      await this.token.$_restrictUser(this.recipient); // Sets to RESTRICTED
+      await this.token.$_blockUser(this.recipient); // Sets to RESTRICTED
 
       await expect(this.token.isTransferAllowed(this.holder, this.recipient, 0, 30n)).to.eventually.equal(false);
     });
@@ -196,7 +196,7 @@ describe('uRWA20', function () {
       });
 
       it('reverts when forcing transfer to restricted recipient', async function () {
-        await this.token.$_restrictUser(this.recipient); // Sets to RESTRICTED
+        await this.token.$_blockUser(this.recipient); // Sets to RESTRICTED
 
         await expect(this.token.connect(this.enforcer).forceTransfer(this.holder, this.recipient, 0, 40n))
           .to.be.revertedWithCustomError(this.token, 'ERC7943NotAllowedUser')
@@ -205,7 +205,7 @@ describe('uRWA20', function () {
 
       it('allows force transfer from restricted sender', async function () {
         const transferAmount = 40n;
-        await this.token.$_restrictUser(this.holder); // Sets to RESTRICTED
+        await this.token.$_blockUser(this.holder); // Sets to RESTRICTED
 
         const tx = this.token.connect(this.enforcer).forceTransfer(this.holder, this.recipient, 0, transferAmount);
         await expect(tx).to.emit(this.token, 'ForcedTransfer').withArgs(this.holder, this.recipient, 0, transferAmount);
@@ -263,7 +263,7 @@ describe('uRWA20', function () {
       });
 
       it('reverts when minting to restricted user', async function () {
-        await this.token.$_restrictUser(this.recipient); // Sets to RESTRICTED
+        await this.token.$_blockUser(this.recipient); // Sets to RESTRICTED
 
         await expect(this.token.$_mint(this.recipient, value))
           .to.be.revertedWithCustomError(this.token, 'ERC7943NotAllowedUser')
@@ -286,7 +286,7 @@ describe('uRWA20', function () {
       });
 
       it('reverts when burning from restricted user', async function () {
-        await this.token.$_restrictUser(this.holder); // Sets to RESTRICTED
+        await this.token.$_blockUser(this.holder); // Sets to RESTRICTED
 
         await expect(this.token.$_burn(this.holder, value))
           .to.be.revertedWithCustomError(this.token, 'ERC20UserRestricted')
@@ -308,7 +308,7 @@ describe('uRWA20', function () {
     const allowance = 40n;
 
     it('allows approval regardless of frozen or restricted status', async function () {
-      await this.token.$_restrictUser(this.holder); // Sets to RESTRICTED
+      await this.token.$_blockUser(this.holder); // Sets to RESTRICTED
       await this.token.connect(this.freezer).setFrozen(this.holder, 0, 80n);
 
       await this.token.connect(this.holder).approve(this.approved, allowance);
@@ -327,7 +327,7 @@ describe('uRWA20', function () {
       });
 
       it('reverts transferFrom when sender is restricted', async function () {
-        await this.token.$_restrictUser(this.holder); // Sets to RESTRICTED
+        await this.token.$_blockUser(this.holder); // Sets to RESTRICTED
 
         await expect(this.token.connect(this.approved).transferFrom(this.holder, this.recipient, allowance))
           .to.be.revertedWithCustomError(this.token, 'ERC7943NotAllowedTransfer')
@@ -335,7 +335,7 @@ describe('uRWA20', function () {
       });
 
       it('reverts transferFrom when recipient is restricted', async function () {
-        await this.token.$_restrictUser(this.recipient); // Sets to RESTRICTED
+        await this.token.$_blockUser(this.recipient); // Sets to RESTRICTED
 
         await expect(this.token.connect(this.approved).transferFrom(this.holder, this.recipient, allowance))
           .to.be.revertedWithCustomError(this.token, 'ERC7943NotAllowedTransfer')
