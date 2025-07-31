@@ -13,8 +13,7 @@ import {ERC20Restricted} from "./ERC20Restricted.sol";
  * Combines standard ERC-20 functionality with RWA-specific features like user restrictions,
  * asset freezing, and forced asset transfers.
  */
-// solhint-disable-next-line contract-name-capwords
-abstract contract uRWA20 is ERC20, ERC165, ERC20Freezable, ERC20Restricted, IERC7943 {
+abstract contract ERC20uRWA is ERC20, ERC165, ERC20Freezable, ERC20Restricted, IERC7943 {
     /// @inheritdoc ERC20Restricted
     function isUserAllowed(address user) public view virtual override(IERC7943, ERC20Restricted) returns (bool) {
         return super.isUserAllowed(user);

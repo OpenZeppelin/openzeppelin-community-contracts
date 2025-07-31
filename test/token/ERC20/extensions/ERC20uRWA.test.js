@@ -12,13 +12,13 @@ const initialSupply = 100n;
 async function fixture() {
   const [holder, recipient, approved, freezer, enforcer, other] = await ethers.getSigners();
 
-  const token = await ethers.deployContract('$uRWA20Mock', [name, symbol, freezer.address, enforcer.address]);
+  const token = await ethers.deployContract('$ERC20uRWAMock', [name, symbol, freezer.address, enforcer.address]);
   await token.$_mint(holder, initialSupply);
 
   return { holder, recipient, approved, freezer, enforcer, other, token };
 }
 
-describe('uRWA20', function () {
+describe('ERC20uRWA', function () {
   beforeEach(async function () {
     Object.assign(this, await loadFixture(fixture));
   });
