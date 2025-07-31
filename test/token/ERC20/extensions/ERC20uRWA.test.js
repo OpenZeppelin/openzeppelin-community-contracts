@@ -50,7 +50,7 @@ describe('ERC20uRWA', function () {
       await this.token.$_blockUser(this.holder); // Sets to RESTRICTED
 
       await expect(this.token.connect(this.holder).transfer(this.recipient, 30n))
-        .to.be.revertedWithCustomError(this.token, 'ERC7943NotAllowedTransfer')
+        .to.be.revertedWithCustomError(this.token, 'ERC20UserRestricted')
         .withArgs(this.holder, this.recipient, 0, 30n);
     });
 
@@ -58,7 +58,7 @@ describe('ERC20uRWA', function () {
       await this.token.$_blockUser(this.recipient); // Sets to RESTRICTED
 
       await expect(this.token.connect(this.holder).transfer(this.recipient, 30n))
-        .to.be.revertedWithCustomError(this.token, 'ERC7943NotAllowedTransfer')
+        .to.be.revertedWithCustomError(this.token, 'ERC20UserRestricted')
         .withArgs(this.holder, this.recipient, 0, 30n);
     });
 
@@ -69,7 +69,7 @@ describe('ERC20uRWA', function () {
       await this.token.connect(this.freezer).setFrozen(this.holder, 0, frozenAmount);
 
       await expect(this.token.connect(this.holder).transfer(this.recipient, transferAmount))
-        .to.be.revertedWithCustomError(this.token, 'ERC7943NotAllowedTransfer')
+        .to.be.revertedWithCustomError(this.token, 'ERC20UserRestricted')
         .withArgs(this.holder, this.recipient, 0, transferAmount);
     });
 
@@ -330,7 +330,7 @@ describe('ERC20uRWA', function () {
         await this.token.$_blockUser(this.holder); // Sets to RESTRICTED
 
         await expect(this.token.connect(this.approved).transferFrom(this.holder, this.recipient, allowance))
-          .to.be.revertedWithCustomError(this.token, 'ERC7943NotAllowedTransfer')
+          .to.be.revertedWithCustomError(this.token, 'ERC20UserRestricted')
           .withArgs(this.holder, this.recipient, 0, allowance);
       });
 
@@ -338,7 +338,7 @@ describe('ERC20uRWA', function () {
         await this.token.$_blockUser(this.recipient); // Sets to RESTRICTED
 
         await expect(this.token.connect(this.approved).transferFrom(this.holder, this.recipient, allowance))
-          .to.be.revertedWithCustomError(this.token, 'ERC7943NotAllowedTransfer')
+          .to.be.revertedWithCustomError(this.token, 'ERC20UserRestricted')
           .withArgs(this.holder, this.recipient, 0, allowance);
       });
 
@@ -347,7 +347,7 @@ describe('ERC20uRWA', function () {
         await this.token.connect(this.freezer).setFrozen(this.holder, 0, frozenAmount);
 
         await expect(this.token.connect(this.approved).transferFrom(this.holder, this.recipient, allowance))
-          .to.be.revertedWithCustomError(this.token, 'ERC7943NotAllowedTransfer')
+          .to.be.revertedWithCustomError(this.token, 'ERC20UserRestricted')
           .withArgs(this.holder, this.recipient, 0, allowance);
       });
     });

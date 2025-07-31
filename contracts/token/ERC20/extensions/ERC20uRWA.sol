@@ -24,8 +24,13 @@ abstract contract ERC20uRWA is ERC20, ERC165, ERC20Freezable, ERC20Restricted, I
         return interfaceId == type(IERC7943).interfaceId || super.supportsInterface(interfaceId);
     }
 
-    /// @inheritdoc IERC7943
-    function isTransferAllowed(address from, address to, uint256, uint256 amount) public view virtual returns (bool) {
+    /**
+     * @dev See {IERC7943-isTransferAllowed}.
+     *
+     * CAUTION: This function is only meant for external use. Overriding it will not apply the new checks to
+     * the internal {_update} function. Consider overriding {_update} accordingly to keep both functions in sync.
+     */
+    function isTransferAllowed(address from, address to, uint256, uint256 amount) external view virtual returns (bool) {
         return (amount <= available(from) && isUserAllowed(from) && isUserAllowed(to));
     }
 
@@ -49,8 +54,9 @@ abstract contract ERC20uRWA is ERC20, ERC165, ERC20Freezable, ERC20Restricted, I
         // Update frozen balance if needed
         uint256 currentFrozen = frozen(from);
         uint256 currentBalance = balanceOf(from);
-        if (currentFrozen > currentBalance - amount) {
-            _setFrozen(from, currentBalance - amount);
+        uint256 newAmount = currentBalance - amount;
+        if (currentFrozen > newAmount) {
+            _setFrozen(from, newAmount);
         }
 
         ERC20._update(from, to, amount); // Explicit raw update to bypass all restrictions
@@ -72,10 +78,10 @@ abstract contract ERC20uRWA is ERC20, ERC165, ERC20Freezable, ERC20Restricted, I
         if (from == address(0)) {
             // Minting
             require(isUserAllowed(to), ERC7943NotAllowedUser(to));
-        } else if (to != address(0)) {
-            // Transfer
-            require(isTransferAllowed(from, to, 0, amount), ERC7943NotAllowedTransfer(from, to, 0, amount));
         }
+        // Note that `isTransferAllowed` duplicates the `available` check made by `super._update` in ERC20Freezable,
+        // so, the following line is not needed but left for reference:
+        // require(isTransferAllowed(from, to, 0, amount), ERC7943NotAllowedTransfer(from, to, 0, amount));
         super._update(from, to, amount);
     }
 
