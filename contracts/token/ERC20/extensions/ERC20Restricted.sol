@@ -58,8 +58,8 @@ abstract contract ERC20Restricted is ERC20 {
      * * `to` must be allowed to receive tokens (see {isUserAllowed}).
      */
     function _update(address from, address to, uint256 value) internal virtual override {
-        if (from != address(0)) _checkRestricted(from); // Minting
-        if (to != address(0)) _checkRestricted(to); // Burning
+        if (from != address(0)) _checkRestriction(from); // Minting
+        if (to != address(0)) _checkRestriction(to); // Burning
         super._update(from, to, value);
     }
 
@@ -90,7 +90,7 @@ abstract contract ERC20Restricted is ERC20 {
     }
 
     /// @dev Checks if a user account is restricted. Reverts with {ERC20Restricted} if so.
-    function _checkRestricted(address account) internal view virtual {
+    function _checkRestriction(address account) internal view virtual {
         require(isUserAllowed(account), ERC20UserRestricted(account));
     }
 }
