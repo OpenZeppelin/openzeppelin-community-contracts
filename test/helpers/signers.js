@@ -77,7 +77,7 @@ class ZKEmailSigningKey {
               this.#emailNullifier,
               this.#accountSalt,
               isCodeExist,
-              validProof, // Use proper proof structure instead of '0x01'
+              validProof,
             ],
           ],
         ],
