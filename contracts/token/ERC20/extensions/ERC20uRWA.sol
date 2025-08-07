@@ -83,9 +83,9 @@ abstract contract ERC20uRWA is ERC20, ERC165, ERC20Freezable, ERC20Restricted, I
             // Minting
             require(isUserAllowed(to), ERC7943NotAllowedUser(to));
         }
-        // Note that `isTransferAllowed` duplicates the `available` check made by `super._update` in ERC20Freezable,
-        // so, the following line is not needed but left for reference even though isTransferAllowed is external:
-        // require(isTransferAllowed(from, to, 0, amount), ERC7943NotAllowedTransfer(from, to, 0, amount));
+        // Note: We rely on the inherited _update chain (ERC20Freezable + ERC20Restricted) to enforce
+        // the same restrictions that isTransferAllowed would check. This avoids duplicate validation
+        // while maintaining consistency between external queries and internal transfer logic.
         super._update(from, to, amount);
     }
 
