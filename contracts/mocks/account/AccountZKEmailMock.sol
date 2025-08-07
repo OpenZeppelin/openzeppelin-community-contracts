@@ -9,18 +9,18 @@ import {ERC721Holder} from "@openzeppelin/contracts/token/ERC721/utils/ERC721Hol
 import {ERC1155Holder} from "@openzeppelin/contracts/token/ERC1155/utils/ERC1155Holder.sol";
 import {SignerZKEmail} from "../../utils/cryptography/signers/SignerZKEmail.sol";
 import {IDKIMRegistry} from "@zk-email/contracts/DKIMRegistry.sol";
-import {IVerifier} from "@zk-email/email-tx-builder/src/interfaces/IVerifier.sol";
+import {IGroth16Verifier} from "@zk-email/email-tx-builder/src/interfaces/IGroth16Verifier.sol";
 
 contract AccountZKEmailMock is Account, SignerZKEmail, ERC7739, ERC7821, ERC721Holder, ERC1155Holder {
     constructor(
         bytes32 accountSalt_,
         IDKIMRegistry registry_,
-        IVerifier verifier_,
+        IGroth16Verifier groth16Verifier_,
         uint256 templateId_
     ) EIP712("AccountZKEmailMock", "1") {
         _setAccountSalt(accountSalt_);
         _setDKIMRegistry(registry_);
-        _setVerifier(verifier_);
+        _setVerifier(groth16Verifier_);
         _setTemplateId(templateId_);
     }
 
