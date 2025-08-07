@@ -47,19 +47,19 @@ describe('ERC20uRWA', function () {
     });
 
     it('reverts when sender is restricted', async function () {
-      await this.token.$_blockUser(this.holder); // Sets to RESTRICTED
+      await this.token.$_blockUser(this.holder); // Sets to BLOCKED
 
       await expect(this.token.connect(this.holder).transfer(this.recipient, 30n))
         .to.be.revertedWithCustomError(this.token, 'ERC20UserRestricted')
-        .withArgs(this.holder, this.recipient, 0, 30n);
+        .withArgs(this.holder);
     });
 
     it('reverts when recipient is restricted', async function () {
-      await this.token.$_blockUser(this.recipient); // Sets to RESTRICTED
+      await this.token.$_blockUser(this.recipient); // Sets to BLOCKED
 
       await expect(this.token.connect(this.holder).transfer(this.recipient, 30n))
         .to.be.revertedWithCustomError(this.token, 'ERC20UserRestricted')
-        .withArgs(this.holder, this.recipient, 0, 30n);
+        .withArgs(this.recipient);
     });
 
     it('reverts when sender has insufficient unfrozen balance', async function () {
@@ -69,8 +69,8 @@ describe('ERC20uRWA', function () {
       await this.token.connect(this.freezer).setFrozen(this.holder, 0, frozenAmount);
 
       await expect(this.token.connect(this.holder).transfer(this.recipient, transferAmount))
-        .to.be.revertedWithCustomError(this.token, 'ERC20UserRestricted')
-        .withArgs(this.holder, this.recipient, 0, transferAmount);
+        .to.be.revertedWithCustomError(this.token, 'ERC20InsufficientUnfrozenBalance')
+        .withArgs(this.holder, transferAmount, initialSupply - frozenAmount);
     });
 
     it('allows transfer when both restrictions and freezing allow it', async function () {
@@ -78,8 +78,8 @@ describe('ERC20uRWA', function () {
       const transferAmount = 30n; // Available: 100 - 20 = 80, transferring 30
 
       await this.token.connect(this.freezer).setFrozen(this.holder, 0, frozenAmount);
-      await this.token.$_allowUser(this.holder); // Sets to UNRESTRICTED
-      await this.token.$_allowUser(this.recipient); // Sets to UNRESTRICTED
+      await this.token.$_allowUser(this.holder); // Sets to ALLOWED
+      await this.token.$_allowUser(this.recipient); // Sets to ALLOWED
 
       await expect(this.token.connect(this.holder).transfer(this.recipient, transferAmount)).to.changeTokenBalances(
         this.token,
@@ -96,13 +96,13 @@ describe('ERC20uRWA', function () {
     });
 
     it('returns false when sender is restricted', async function () {
-      await this.token.$_blockUser(this.holder); // Sets to RESTRICTED
+      await this.token.$_blockUser(this.holder); // Sets to BLOCKED
 
       await expect(this.token.isTransferAllowed(this.holder, this.recipient, 0, 30n)).to.eventually.equal(false);
     });
 
     it('returns false when recipient is restricted', async function () {
-      await this.token.$_blockUser(this.recipient); // Sets to RESTRICTED
+      await this.token.$_blockUser(this.recipient); // Sets to BLOCKED
 
       await expect(this.token.isTransferAllowed(this.holder, this.recipient, 0, 30n)).to.eventually.equal(false);
     });
@@ -151,12 +151,15 @@ describe('ERC20uRWA', function () {
         );
       });
 
-      it('reverts when trying to freeze more than balance', async function () {
-        const frozenAmount = initialSupply + 10n;
+      it('caps frozen amount to user balance when trying to freeze more than balance', async function () {
+        const requestedFrozenAmount = initialSupply + 10n;
+        const expectedFrozenAmount = initialSupply; // Should be capped to balance
 
-        await expect(this.token.connect(this.freezer).setFrozen(this.holder, 0, frozenAmount))
-          .to.be.revertedWithCustomError(this.token, 'ERC20InsufficientBalance')
-          .withArgs(this.holder, initialSupply, frozenAmount);
+        await expect(this.token.connect(this.freezer).setFrozen(this.holder, 0, requestedFrozenAmount))
+          .to.emit(this.token, 'Frozen')
+          .withArgs(this.holder, 0, expectedFrozenAmount);
+
+        await expect(this.token.frozen(this.holder)).to.eventually.equal(expectedFrozenAmount);
       });
 
       it('allows freezer to update frozen amount', async function () {
@@ -196,7 +199,7 @@ describe('ERC20uRWA', function () {
       });
 
       it('reverts when forcing transfer to restricted recipient', async function () {
-        await this.token.$_blockUser(this.recipient); // Sets to RESTRICTED
+        await this.token.$_blockUser(this.recipient); // Sets to BLOCKED
 
         await expect(this.token.connect(this.enforcer).forceTransfer(this.holder, this.recipient, 0, 40n))
           .to.be.revertedWithCustomError(this.token, 'ERC7943NotAllowedUser')
@@ -205,7 +208,7 @@ describe('ERC20uRWA', function () {
 
       it('allows force transfer from restricted sender', async function () {
         const transferAmount = 40n;
-        await this.token.$_blockUser(this.holder); // Sets to RESTRICTED
+        await this.token.$_blockUser(this.holder); // Sets to BLOCKED
 
         const tx = this.token.connect(this.enforcer).forceTransfer(this.holder, this.recipient, 0, transferAmount);
         await expect(tx).to.emit(this.token, 'ForcedTransfer').withArgs(this.holder, this.recipient, 0, transferAmount);
@@ -263,7 +266,7 @@ describe('ERC20uRWA', function () {
       });
 
       it('reverts when minting to restricted user', async function () {
-        await this.token.$_blockUser(this.recipient); // Sets to RESTRICTED
+        await this.token.$_blockUser(this.recipient); // Sets to BLOCKED
 
         await expect(this.token.$_mint(this.recipient, value))
           .to.be.revertedWithCustomError(this.token, 'ERC7943NotAllowedUser')
@@ -286,7 +289,7 @@ describe('ERC20uRWA', function () {
       });
 
       it('reverts when burning from restricted user', async function () {
-        await this.token.$_blockUser(this.holder); // Sets to RESTRICTED
+        await this.token.$_blockUser(this.holder); // Sets to BLOCKED
 
         await expect(this.token.$_burn(this.holder, value))
           .to.be.revertedWithCustomError(this.token, 'ERC20UserRestricted')
@@ -308,7 +311,7 @@ describe('ERC20uRWA', function () {
     const allowance = 40n;
 
     it('allows approval regardless of frozen or restricted status', async function () {
-      await this.token.$_blockUser(this.holder); // Sets to RESTRICTED
+      await this.token.$_blockUser(this.holder); // Sets to BLOCKED
       await this.token.connect(this.freezer).setFrozen(this.holder, 0, 80n);
 
       await this.token.connect(this.holder).approve(this.approved, allowance);
@@ -327,19 +330,19 @@ describe('ERC20uRWA', function () {
       });
 
       it('reverts transferFrom when sender is restricted', async function () {
-        await this.token.$_blockUser(this.holder); // Sets to RESTRICTED
+        await this.token.$_blockUser(this.holder); // Sets to BLOCKED
 
         await expect(this.token.connect(this.approved).transferFrom(this.holder, this.recipient, allowance))
           .to.be.revertedWithCustomError(this.token, 'ERC20UserRestricted')
-          .withArgs(this.holder, this.recipient, 0, allowance);
+          .withArgs(this.holder);
       });
 
       it('reverts transferFrom when recipient is restricted', async function () {
-        await this.token.$_blockUser(this.recipient); // Sets to RESTRICTED
+        await this.token.$_blockUser(this.recipient); // Sets to BLOCKED
 
         await expect(this.token.connect(this.approved).transferFrom(this.holder, this.recipient, allowance))
           .to.be.revertedWithCustomError(this.token, 'ERC20UserRestricted')
-          .withArgs(this.holder, this.recipient, 0, allowance);
+          .withArgs(this.recipient);
       });
 
       it('reverts transferFrom when insufficient unfrozen balance', async function () {
@@ -347,8 +350,8 @@ describe('ERC20uRWA', function () {
         await this.token.connect(this.freezer).setFrozen(this.holder, 0, frozenAmount);
 
         await expect(this.token.connect(this.approved).transferFrom(this.holder, this.recipient, allowance))
-          .to.be.revertedWithCustomError(this.token, 'ERC20UserRestricted')
-          .withArgs(this.holder, this.recipient, 0, allowance);
+          .to.be.revertedWithCustomError(this.token, 'ERC20InsufficientUnfrozenBalance')
+          .withArgs(this.holder, allowance, initialSupply - frozenAmount);
       });
     });
   });

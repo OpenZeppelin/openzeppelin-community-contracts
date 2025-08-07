@@ -4,6 +4,7 @@ pragma solidity ^0.8.26;
 import {IERC7943} from "../../../interfaces/IERC7943.sol";
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import {ERC165, IERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
+import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 import {ERC20Freezable} from "./ERC20Freezable.sol";
 import {ERC20Restricted} from "./ERC20Restricted.sol";
 
@@ -41,9 +42,9 @@ abstract contract ERC20uRWA is ERC20, ERC165, ERC20Freezable, ERC20Restricted, I
 
     /// @inheritdoc IERC7943
     function setFrozen(address user, uint256, uint256 amount) public virtual {
-        _checkFreezer(user, amount);
-        require(amount <= balanceOf(user), ERC20InsufficientBalance(user, balanceOf(user), amount));
-        _setFrozen(user, amount);
+        uint256 actualAmount = Math.min(amount, balanceOf(user));
+        _checkFreezer(user, actualAmount);
+        _setFrozen(user, actualAmount);
     }
 
     /// @inheritdoc IERC7943
@@ -51,12 +52,15 @@ abstract contract ERC20uRWA is ERC20, ERC165, ERC20Freezable, ERC20Restricted, I
         _checkEnforcer(from, to, amount);
         require(isUserAllowed(to), ERC7943NotAllowedUser(to));
 
-        // Update frozen balance if needed
+        // Update frozen balance if needed. ERC-7943 requires that balance is unfrozen first and then send the tokens.
         uint256 currentFrozen = frozen(from);
-        uint256 currentBalance = balanceOf(from);
-        uint256 newAmount = currentBalance - amount;
-        if (currentFrozen > newAmount) {
-            _setFrozen(from, newAmount);
+        uint256 newBalance;
+        unchecked {
+            // Safe because ERC20._update will check that balanceOf(from) >= amount
+            newBalance = balanceOf(from) - amount;
+        }
+        if (currentFrozen > newBalance) {
+            _setFrozen(from, newBalance);
         }
 
         ERC20._update(from, to, amount); // Explicit raw update to bypass all restrictions
@@ -80,13 +84,13 @@ abstract contract ERC20uRWA is ERC20, ERC165, ERC20Freezable, ERC20Restricted, I
             require(isUserAllowed(to), ERC7943NotAllowedUser(to));
         }
         // Note that `isTransferAllowed` duplicates the `available` check made by `super._update` in ERC20Freezable,
-        // so, the following line is not needed but left for reference:
+        // so, the following line is not needed but left for reference even though isTransferAllowed is external:
         // require(isTransferAllowed(from, to, 0, amount), ERC7943NotAllowedTransfer(from, to, 0, amount));
         super._update(from, to, amount);
     }
 
     /**
-     * @dev Internal function to check if the enforcer is allowed to force transfer.
+     * @dev Internal function to check if the `enforcer` is allowed to forcibly transfer the `amount` of `tokens`.
      *
      * Example usage with {AccessControl-onlyRole}:
      *
@@ -97,7 +101,7 @@ abstract contract ERC20uRWA is ERC20, ERC165, ERC20Freezable, ERC20Restricted, I
     function _checkEnforcer(address from, address to, uint256 amount) internal view virtual;
 
     /**
-     * @dev Internal function to check if the user has sufficient unfrozen balance.
+     * @dev Internal function to check if the `freezer` is allowed to freeze the `amount` of `tokens`.
      *
      * Example usage with {AccessControl-onlyRole}:
      *
