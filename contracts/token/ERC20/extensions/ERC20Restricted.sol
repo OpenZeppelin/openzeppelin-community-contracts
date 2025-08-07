@@ -58,8 +58,8 @@ abstract contract ERC20Restricted is ERC20 {
      * * `to` must be allowed to receive tokens (see {isUserAllowed}).
      */
     function _update(address from, address to, uint256 value) internal virtual override {
-        if (from != address(0)) _checkRestriction(from); // Minting
-        if (to != address(0)) _checkRestriction(to); // Burning
+        if (from != address(0)) _checkRestriction(from); // Not minting
+        if (to != address(0)) _checkRestriction(to); // Not burning
         super._update(from, to, value);
     }
 

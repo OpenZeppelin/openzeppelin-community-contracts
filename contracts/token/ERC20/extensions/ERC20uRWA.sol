@@ -40,14 +40,24 @@ abstract contract ERC20uRWA is ERC20, ERC165, ERC20Freezable, ERC20Restricted, I
         return frozen(user);
     }
 
-    /// @inheritdoc IERC7943
+    /**
+     * @dev See {IERC7943-setFrozen}.
+     *
+     * NOTE: The `amount` is capped to the balance of the `user` to ensure the {IERC7943-Frozen} event
+     * emits values that consistently reflect the actual amount of tokens that are frozen.
+     */
     function setFrozen(address user, uint256, uint256 amount) public virtual {
         uint256 actualAmount = Math.min(amount, balanceOf(user));
         _checkFreezer(user, actualAmount);
         _setFrozen(user, actualAmount);
     }
 
-    /// @inheritdoc IERC7943
+    /**
+     * @dev See {IERC7943-forceTransfer}.
+     *
+     * NOTE: Allows to bypass the freezing mechanism. However, in cases where the balance after
+     * the transfer is less than the frozen balance, the frozen balance is adjusted to the new balance.
+     */
     function forceTransfer(address from, address to, uint256, uint256 amount) public virtual {
         _checkEnforcer(from, to, amount);
         require(isUserAllowed(to), ERC7943NotAllowedUser(to));
@@ -67,22 +77,12 @@ abstract contract ERC20uRWA is ERC20, ERC165, ERC20Freezable, ERC20Restricted, I
         emit ForcedTransfer(from, to, 0, amount);
     }
 
-    /**
-     * @dev See {ERC20-_update}.
-     *
-     * Requirements:
-     *
-     * * `from` and `to` must be allowed to transfer `amount` tokens (see {isTransferAllowed}).
-     */
+    /// @inheritdoc ERC20
     function _update(
         address from,
         address to,
         uint256 amount
     ) internal virtual override(ERC20, ERC20Freezable, ERC20Restricted) {
-        if (from == address(0)) {
-            // Minting
-            require(isUserAllowed(to), ERC7943NotAllowedUser(to));
-        }
         // Note: We rely on the inherited _update chain (ERC20Freezable + ERC20Restricted) to enforce
         // the same restrictions that isTransferAllowed would check. This avoids duplicate validation
         // while maintaining consistency between external queries and internal transfer logic.

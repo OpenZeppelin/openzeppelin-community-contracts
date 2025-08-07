@@ -269,7 +269,8 @@ describe('ERC20uRWA', function () {
         await this.token.$_blockUser(this.recipient); // Sets to BLOCKED
 
         await expect(this.token.$_mint(this.recipient, value))
-          .to.be.revertedWithCustomError(this.token, 'ERC7943NotAllowedUser')
+          // ERC7943NotAllowedUser is not required by ERC-7943
+          .to.be.revertedWithCustomError(this.token, 'ERC20UserRestricted')
           .withArgs(this.recipient);
       });
 
