@@ -35,7 +35,8 @@ async function fixture() {
     .then(message => admin.signMessage(message))
     .then(signature => dkim.setDKIMPublicKeyHash(selector, domainName, publicKeyHash, signature));
 
-  const verifier = await ethers.deployContract('ZKEmailGroth16VerifierMock');
+  // Verifier
+  const verifier = await ethers.deployContract('ZKEmailVerifierMock');
 
   // ERC-4337 signer
   const signer = new NonNativeSigner(
@@ -58,18 +59,7 @@ async function fixture() {
     const timestamp = Math.floor(Date.now() / 1000);
     const command = SIGN_HASH_COMMAND + ' ' + ethers.toBigInt(hash).toString();
     const isCodeExist = true;
-
-    // Create invalid proof that won't match ZKEmailGroth16VerifierMock expectations
-    const pA = [999n, 999n];
-    const pB = [
-      [999n, 999n],
-      [999n, 999n],
-    ];
-    const pC = [999n, 999n];
-    const invalidProof = ethers.AbiCoder.defaultAbiCoder().encode(
-      ['uint256[2]', 'uint256[2][2]', 'uint256[2]'],
-      [pA, pB, pC],
-    );
+    const proof = '0x00'; // Mocked in ZKEmailVerifierMock
 
     // Encode the email auth message as the signature
     return ethers.AbiCoder.defaultAbiCoder().encode(
@@ -79,7 +69,7 @@ async function fixture() {
           templateId,
           [hash],
           0, // skippedCommandPrefix
-          [domainName, publicKeyHash, timestamp, command, emailNullifier, accountSalt, isCodeExist, invalidProof],
+          [domainName, publicKeyHash, timestamp, command, emailNullifier, accountSalt, isCodeExist, proof],
         ],
       ],
     );

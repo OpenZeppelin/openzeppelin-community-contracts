@@ -12,7 +12,6 @@ const publicKeyHash = '0x0ea9c777dc7110e5a9e89b13f0cfc540e3845ba120b2b6dc24024d6
 const emailNullifier = '0x00a83fce3d4b1c9ef0f600644c1ecc6c8115b57b1596e0e3295e2c5105fbfd8a';
 
 const templateId = ethers.solidityPackedKeccak256(['string', 'uint256'], ['TEST', 0n]);
-const commandBytes = 605;
 
 const SIGN_HASH_COMMAND = 'signHash';
 const UINT_MATCHER = '{uint}';
@@ -30,8 +29,8 @@ async function fixture() {
     .then(message => admin.signMessage(message))
     .then(signature => dkim.setDKIMPublicKeyHash(selector, domainName, publicKeyHash, signature));
 
-  // Use the correct mock
-  const verifier = await ethers.deployContract('ZKEmailGroth16VerifierMock');
+  // Verifier
+  const verifier = await ethers.deployContract('ZKEmailVerifierMock');
 
   // Mock
   const mock = await ethers.deployContract('$ZKEmailUtils');
@@ -40,19 +39,6 @@ async function fixture() {
 }
 
 function buildEmailAuthMsg(command, params, skippedPrefix) {
-  // Values specific to ZKEmailGroth16VerifierMock
-  const pA = [1n, 2n];
-  const pB = [
-    [3n, 4n],
-    [5n, 6n],
-  ];
-  const pC = [7n, 8n];
-
-  const validProof = ethers.AbiCoder.defaultAbiCoder().encode(
-    ['uint256[2]', 'uint256[2][2]', 'uint256[2]'],
-    [pA, pB, pC],
-  );
-
   const emailProof = {
     domainName,
     publicKeyHash,
@@ -61,7 +47,7 @@ function buildEmailAuthMsg(command, params, skippedPrefix) {
     emailNullifier,
     accountSalt,
     isCodeExist: true,
-    proof: validProof,
+    proof: '0x01', // Mocked in ZKEmailVerifierMock
   };
 
   return {
@@ -161,6 +147,7 @@ describe('ZKEmail', function () {
 
   it('should detect invalid skipped command prefix', async function () {
     const hash = ethers.hexlify(ethers.randomBytes(32));
+    const commandBytes = await this.verifier.commandBytes();
     const emailAuthMsg = buildEmailAuthMsg(
       SIGN_HASH_COMMAND + ' ' + ethers.toBigInt(hash).toString(),
       [hash],
@@ -182,17 +169,7 @@ describe('ZKEmail', function () {
   it('should detect invalid email proof', async function () {
     const hash = ethers.hexlify(ethers.randomBytes(32));
     const emailAuthMsg = buildEmailAuthMsg(SIGN_HASH_COMMAND + ' ' + ethers.toBigInt(hash).toString(), [hash], 0);
-    const pA = [1n, 1n];
-    const pB = [
-      [1n, 1n],
-      [1n, 1n],
-    ];
-    const pC = [1n, 1n];
-    const invalidProof = ethers.AbiCoder.defaultAbiCoder().encode(
-      ['uint256[2]', 'uint256[2][2]', 'uint256[2]'],
-      [pA, pB, pC],
-    );
-    emailAuthMsg.proof.proof = invalidProof;
+    emailAuthMsg.proof.proof = '0x00'; // Use an invalid proof
     await expect(this.mock.$isValidZKEmail(emailAuthMsg, this.dkim.target, this.verifier.target)).to.eventually.equal(
       EmailProofError.EmailProof,
     );
