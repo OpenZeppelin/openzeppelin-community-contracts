@@ -9,8 +9,8 @@ contract ZKEmailGroth16VerifierMock is IGroth16Verifier {
         uint[2] calldata _pA,
         uint[2][2] calldata _pB,
         uint[2] calldata _pC,
-        uint[34] calldata _pubSignals
-    ) public view returns (bool) {
+        uint[34] calldata /* _pubSignals */
+    ) public pure returns (bool) {
         return
             _pA[0] == 1 &&
             _pA[1] == 2 &&
