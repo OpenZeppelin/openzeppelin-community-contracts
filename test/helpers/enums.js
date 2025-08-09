@@ -8,6 +8,7 @@ module.exports = {
     'MaskedCommandLength',
     'SkippedCommandPrefixSize',
     'MismatchedCommand',
+    'InvalidFieldPoint',
     'EmailProof',
   ),
   Case: enums.EnumTyped('CHECKSUM', 'LOWERCASE', 'UPPERCASE', 'ANY'),

@@ -3,7 +3,7 @@
 pragma solidity ^0.8.24;
 
 import {IDKIMRegistry} from "@zk-email/contracts/DKIMRegistry.sol";
-import {IVerifier} from "@zk-email/email-tx-builder/src/interfaces/IVerifier.sol";
+import {IGroth16Verifier} from "@zk-email/email-tx-builder/src/interfaces/IGroth16Verifier.sol";
 import {EmailAuthMsg} from "@zk-email/email-tx-builder/src/interfaces/IEmailTypes.sol";
 import {IERC7913SignatureVerifier} from "@openzeppelin/contracts/interfaces/IERC7913.sol";
 import {ZKEmailUtils} from "../ZKEmailUtils.sol";
@@ -25,7 +25,7 @@ import {ZKEmailUtils} from "../ZKEmailUtils.sol";
  *   function _decodeKey(bytes calldata key) internal view override returns (
  *       IDKIMRegistry registry,
  *       bytes32 accountSalt,
- *       IVerifier verifier,
+ *       IGroth16Verifier verifier,
  *       uint256 templateId
  *   ) {
  *       (registry, accountSalt, verifier, templateId) = super._decodeKey(key);
@@ -35,17 +35,17 @@ import {ZKEmailUtils} from "../ZKEmailUtils.sol";
  *   }
  * ```
  */
-abstract contract ERC7913ZKEmailVerifier is IERC7913SignatureVerifier {
+contract ERC7913ZKEmailVerifier is IERC7913SignatureVerifier {
     using ZKEmailUtils for EmailAuthMsg;
 
     /**
      * @dev Verifies a zero-knowledge proof of an email signature validated by a {DKIMRegistry} contract.
      *
-     * The key format is ABI-encoded (IDKIMRegistry, bytes32, IVerifier, uint256) where:
+     * The key format is ABI-encoded (IDKIMRegistry, bytes32, IGroth16Verifier, uint256) where:
      *
      * * IDKIMRegistry: The registry contract that validates DKIM public key hashes
      * * bytes32: The account salt that uniquely identifies the user's email address
-     * * IVerifier: The verifier contract instance for ZK proof verification.
+     * * IGroth16Verifier: The verifier contract instance for ZK proof verification.
      * * uint256: The template ID for the command
      *
      * See {_decodeKey} for the key encoding format.
@@ -77,7 +77,9 @@ abstract contract ERC7913ZKEmailVerifier is IERC7913SignatureVerifier {
         bytes32 hash,
         bytes calldata signature
     ) public view virtual override returns (bytes4) {
-        (IDKIMRegistry registry_, bytes32 accountSalt_, IVerifier verifier_, uint256 templateId_) = _decodeKey(key);
+        (IDKIMRegistry registry_, bytes32 accountSalt_, IGroth16Verifier verifier_, uint256 templateId_) = _decodeKey(
+            key
+        );
         EmailAuthMsg memory emailAuthMsg = abi.decode(signature, (EmailAuthMsg));
 
         return
@@ -102,8 +104,8 @@ abstract contract ERC7913ZKEmailVerifier is IERC7913SignatureVerifier {
         internal
         view
         virtual
-        returns (IDKIMRegistry registry, bytes32 accountSalt, IVerifier verifier, uint256 templateId)
+        returns (IDKIMRegistry registry, bytes32 accountSalt, IGroth16Verifier verifier, uint256 templateId)
     {
-        return abi.decode(key, (IDKIMRegistry, bytes32, IVerifier, uint256));
+        return abi.decode(key, (IDKIMRegistry, bytes32, IGroth16Verifier, uint256));
     }
 }

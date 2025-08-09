@@ -22,11 +22,17 @@ A collection of contracts and libraries that implement various signature validat
 
 == Utils
 
+:DOMAIN_FIELDS: pass:normal[xref:#ZKEmailUtils-DOMAIN_FIELDS-uint256[`++DOMAIN_FIELDS++`]]
+:DOMAIN_BYTES: pass:normal[xref:#ZKEmailUtils-DOMAIN_BYTES-uint256[`++DOMAIN_BYTES++`]]
+:COMMAND_FIELDS: pass:normal[xref:#ZKEmailUtils-COMMAND_FIELDS-uint256[`++COMMAND_FIELDS++`]]
+:COMMAND_BYTES: pass:normal[xref:#ZKEmailUtils-COMMAND_BYTES-uint256[`++COMMAND_BYTES++`]]
+:Q: pass:normal[xref:#ZKEmailUtils-Q-uint256[`++Q++`]]
 :EmailProofError: pass:normal[xref:#ZKEmailUtils-EmailProofError[`++EmailProofError++`]]
 :Case: pass:normal[xref:#ZKEmailUtils-Case[`++Case++`]]
-:isValidZKEmail: pass:normal[xref:#ZKEmailUtils-isValidZKEmail-struct-EmailAuthMsg-contract-IDKIMRegistry-contract-IVerifier-[`++isValidZKEmail++`]]
-:isValidZKEmail: pass:normal[xref:#ZKEmailUtils-isValidZKEmail-struct-EmailAuthMsg-contract-IDKIMRegistry-contract-IVerifier-string---[`++isValidZKEmail++`]]
-:isValidZKEmail: pass:normal[xref:#ZKEmailUtils-isValidZKEmail-struct-EmailAuthMsg-contract-IDKIMRegistry-contract-IVerifier-string---enum-ZKEmailUtils-Case-[`++isValidZKEmail++`]]
+:isValidZKEmail: pass:normal[xref:#ZKEmailUtils-isValidZKEmail-struct-EmailAuthMsg-contract-IDKIMRegistry-contract-IGroth16Verifier-[`++isValidZKEmail++`]]
+:isValidZKEmail: pass:normal[xref:#ZKEmailUtils-isValidZKEmail-struct-EmailAuthMsg-contract-IDKIMRegistry-contract-IGroth16Verifier-string---[`++isValidZKEmail++`]]
+:isValidZKEmail: pass:normal[xref:#ZKEmailUtils-isValidZKEmail-struct-EmailAuthMsg-contract-IDKIMRegistry-contract-IGroth16Verifier-string---enum-ZKEmailUtils-Case-[`++isValidZKEmail++`]]
+:toPubSignals: pass:normal[xref:#ZKEmailUtils-toPubSignals-struct-EmailAuthMsg-[`++toPubSignals++`]]
 
 [.contract]
 [[ZKEmailUtils]]
@@ -37,7 +43,7 @@ A collection of contracts and libraries that implement various signature validat
 import "@openzeppelin/community-contracts/utils/cryptography/ZKEmailUtils.sol";
 ```
 
-Library for https://docs.zk.email[ZKEmail] signature validation utilities.
+Library for https://docs.zk.email[ZKEmail] Groth16 proof validation utilities.
 
 ZKEmail is a protocol that enables email-based authentication and authorization for smart contracts
 using zero-knowledge proofs. It allows users to prove ownership of an email address without revealing
@@ -50,26 +56,38 @@ mechanism to ensure the email was sent from a valid domain. Defined by an `IDKIM
 * A https://docs.zk.email/email-tx-builder/architecture/command-templates[command template] validation
 mechanism to ensure the email command matches the expected format and parameters.
 * A https://docs.zk.email/architecture/zk-proofs#how-zk-email-uses-zero-knowledge-proofs[zero-knowledge proof] verification
-mechanism to ensure the email was actually sent and received without revealing its contents. Defined by an `IVerifier` interface.
+mechanism to ensure the email was actually sent and received without revealing its contents. Defined by an `IGroth16Verifier` interface.
 
 [.contract-index]
 .Functions
 --
-* `++isValidZKEmail(emailAuthMsg, dkimregistry, verifier)++`
-* `++isValidZKEmail(emailAuthMsg, dkimregistry, verifier, template)++`
-* `++isValidZKEmail(emailAuthMsg, dkimregistry, verifier, template, stringCase)++`
+* `++isValidZKEmail(emailAuthMsg, dkimregistry, groth16Verifier)++`
+* `++isValidZKEmail(emailAuthMsg, dkimregistry, groth16Verifier, template)++`
+* `++isValidZKEmail(emailAuthMsg, dkimregistry, groth16Verifier, template, stringCase)++`
+* `++toPubSignals(emailAuthMsg)++`
+* `++DOMAIN_FIELDS()++`
+* `++DOMAIN_BYTES()++`
+* `++COMMAND_FIELDS()++`
+* `++COMMAND_BYTES()++`
+
+--
+
+[.contract-index]
+.Internal Variables
+--
+* `++uint256 constant Q++`
 
 --
 
 [.contract-item]
-[[ZKEmailUtils-isValidZKEmail-struct-EmailAuthMsg-contract-IDKIMRegistry-contract-IVerifier-]]
-==== `[.contract-item-name]#++isValidZKEmail++#++(struct EmailAuthMsg emailAuthMsg, contract IDKIMRegistry dkimregistry, contract IVerifier verifier) → enum ZKEmailUtils.EmailProofError++` [.item-kind]#internal#
+[[ZKEmailUtils-isValidZKEmail-struct-EmailAuthMsg-contract-IDKIMRegistry-contract-IGroth16Verifier-]]
+==== `[.contract-item-name]#++isValidZKEmail++#++(struct EmailAuthMsg emailAuthMsg, contract IDKIMRegistry dkimregistry, contract IGroth16Verifier groth16Verifier) → enum ZKEmailUtils.EmailProofError++` [.item-kind]#internal#
 
 Variant of {isValidZKEmail} that validates the `["signHash", "{uint}"]` command template.
 
 [.contract-item]
-[[ZKEmailUtils-isValidZKEmail-struct-EmailAuthMsg-contract-IDKIMRegistry-contract-IVerifier-string---]]
-==== `[.contract-item-name]#++isValidZKEmail++#++(struct EmailAuthMsg emailAuthMsg, contract IDKIMRegistry dkimregistry, contract IVerifier verifier, string[] template) → enum ZKEmailUtils.EmailProofError++` [.item-kind]#internal#
+[[ZKEmailUtils-isValidZKEmail-struct-EmailAuthMsg-contract-IDKIMRegistry-contract-IGroth16Verifier-string---]]
+==== `[.contract-item-name]#++isValidZKEmail++#++(struct EmailAuthMsg emailAuthMsg, contract IDKIMRegistry dkimregistry, contract IGroth16Verifier groth16Verifier, string[] template) → enum ZKEmailUtils.EmailProofError++` [.item-kind]#internal#
 
 Validates a ZKEmail authentication message.
 
@@ -81,12 +99,43 @@ or false with a specific {EmailProofError} indicating which validation check fai
 NOTE: Attempts to validate the command for all possible string {Case} values.
 
 [.contract-item]
-[[ZKEmailUtils-isValidZKEmail-struct-EmailAuthMsg-contract-IDKIMRegistry-contract-IVerifier-string---enum-ZKEmailUtils-Case-]]
-==== `[.contract-item-name]#++isValidZKEmail++#++(struct EmailAuthMsg emailAuthMsg, contract IDKIMRegistry dkimregistry, contract IVerifier verifier, string[] template, enum ZKEmailUtils.Case stringCase) → enum ZKEmailUtils.EmailProofError++` [.item-kind]#internal#
+[[ZKEmailUtils-isValidZKEmail-struct-EmailAuthMsg-contract-IDKIMRegistry-contract-IGroth16Verifier-string---enum-ZKEmailUtils-Case-]]
+==== `[.contract-item-name]#++isValidZKEmail++#++(struct EmailAuthMsg emailAuthMsg, contract IDKIMRegistry dkimregistry, contract IGroth16Verifier groth16Verifier, string[] template, enum ZKEmailUtils.Case stringCase) → enum ZKEmailUtils.EmailProofError++` [.item-kind]#internal#
 
 Variant of {isValidZKEmail} that validates a template with a specific string {Case}.
 
 Useful for templates with Ethereum address matchers (i.e. `{ethAddr}`), which are case-sensitive (e.g., `["someCommand", "{address}"]`).
+
+[.contract-item]
+[[ZKEmailUtils-toPubSignals-struct-EmailAuthMsg-]]
+==== `[.contract-item-name]#++toPubSignals++#++(struct EmailAuthMsg emailAuthMsg) → uint256[34] pubSignals++` [.item-kind]#internal#
+
+Builds the expected public signals array for the Groth16 verifier from the given EmailAuthMsg.
+
+Packs the domain, public key hash, email nullifier, timestamp, masked command, account salt, and isCodeExist fields
+into a uint256 array in the order expected by the verifier circuit.
+
+[.contract-item]
+[[ZKEmailUtils-DOMAIN_FIELDS-uint256]]
+==== `[.contract-item-name]#++DOMAIN_FIELDS++#++() → uint256++` [.item-kind]#public#
+
+[.contract-item]
+[[ZKEmailUtils-DOMAIN_BYTES-uint256]]
+==== `[.contract-item-name]#++DOMAIN_BYTES++#++() → uint256++` [.item-kind]#public#
+
+[.contract-item]
+[[ZKEmailUtils-COMMAND_FIELDS-uint256]]
+==== `[.contract-item-name]#++COMMAND_FIELDS++#++() → uint256++` [.item-kind]#public#
+
+[.contract-item]
+[[ZKEmailUtils-COMMAND_BYTES-uint256]]
+==== `[.contract-item-name]#++COMMAND_BYTES++#++() → uint256++` [.item-kind]#public#
+
+[.contract-item]
+[[ZKEmailUtils-Q-uint256]]
+==== `uint256 [.contract-item-name]#++Q++#` [.item-kind]#internal constant#
+
+The base field size for BN254 elliptic curve used in Groth16 proofs.
 
 :WebAuthnAuth: pass:normal[xref:#WebAuthn-WebAuthnAuth[`++WebAuthnAuth++`]]
 :AUTH_DATA_FLAGS_UP: pass:normal[xref:#WebAuthn-AUTH_DATA_FLAGS_UP-bytes1[`++AUTH_DATA_FLAGS_UP++`]]
@@ -219,7 +268,7 @@ Bit 4 of the authenticator data flags: "Backup State" bit.
 :templateId: pass:normal[xref:#SignerZKEmail-templateId--[`++templateId++`]]
 :_setAccountSalt: pass:normal[xref:#SignerZKEmail-_setAccountSalt-bytes32-[`++_setAccountSalt++`]]
 :_setDKIMRegistry: pass:normal[xref:#SignerZKEmail-_setDKIMRegistry-contract-IDKIMRegistry-[`++_setDKIMRegistry++`]]
-:_setVerifier: pass:normal[xref:#SignerZKEmail-_setVerifier-contract-IVerifier-[`++_setVerifier++`]]
+:_setVerifier: pass:normal[xref:#SignerZKEmail-_setVerifier-contract-IGroth16Verifier-[`++_setVerifier++`]]
 :_setTemplateId: pass:normal[xref:#SignerZKEmail-_setTemplateId-uint256-[`++_setTemplateId++`]]
 :_rawSignatureValidation: pass:normal[xref:#SignerZKEmail-_rawSignatureValidation-bytes32-bytes-[`++_rawSignatureValidation++`]]
 
@@ -245,7 +294,7 @@ Developers must set the following components during contract initialization:
 
 * {accountSalt} - A unique identifier derived from the user's email address and account code.
 * {DKIMRegistry} - An instance of the DKIM registry contract for domain verification.
-* {verifier} - An instance of the Verifier contract for zero-knowledge proof validation.
+* {verifier} - An instance of the Groth16Verifier contract for zero-knowledge proof validation.
 * {templateId} - The template ID of the sign hash command, defining the expected format.
 
 Example of usage:
@@ -255,13 +304,13 @@ contract MyAccountZKEmail is Account, SignerZKEmail, Initializable {
   function initialize(
       bytes32 accountSalt,
       IDKIMRegistry registry,
-      IVerifier verifier,
+      IGroth16Verifier groth16Verifier,
       uint256 templateId
   ) public initializer {
       // Will revert if the signer is already initialized
       _setAccountSalt(accountSalt);
       _setDKIMRegistry(registry);
-      _setVerifier(verifier);
+      _setGroth16Verifier(groth16Verifier);
       _setTemplateId(templateId);
   }
 }
@@ -327,9 +376,9 @@ See https://docs.zk.email/architecture/dkim-verification[DKIM Verification].
 
 [.contract-item]
 [[SignerZKEmail-verifier--]]
-==== `[.contract-item-name]#++verifier++#++() → contract IVerifier++` [.item-kind]#public#
+==== `[.contract-item-name]#++verifier++#++() → contract IGroth16Verifier++` [.item-kind]#public#
 
-An instance of the Verifier contract.
+An instance of the Groth16Verifier contract.
 See https://docs.zk.email/architecture/zk-proofs#how-zk-email-uses-zero-knowledge-proofs[ZK Proofs].
 
 [.contract-item]
@@ -351,8 +400,8 @@ Set the {accountSalt}.
 Set the {DKIMRegistry} contract address.
 
 [.contract-item]
-[[SignerZKEmail-_setVerifier-contract-IVerifier-]]
-==== `[.contract-item-name]#++_setVerifier++#++(contract IVerifier verifier_)++` [.item-kind]#internal#
+[[SignerZKEmail-_setVerifier-contract-IGroth16Verifier-]]
+==== `[.contract-item-name]#++_setVerifier++#++(contract IGroth16Verifier verifier_)++` [.item-kind]#internal#
 
 Set the {verifier} contract address.
 
@@ -480,7 +529,7 @@ Example of overriding _decodeKey to enforce a specific verifier, registry, (or t
   function _decodeKey(bytes calldata key) internal view override returns (
       IDKIMRegistry registry,
       bytes32 accountSalt,
-      IVerifier verifier,
+      IGroth16Verifier verifier,
       uint256 templateId
   ) {
       (registry, accountSalt, verifier, templateId) = super._decodeKey(key);
@@ -507,11 +556,11 @@ Example of overriding _decodeKey to enforce a specific verifier, registry, (or t
 
 Verifies a zero-knowledge proof of an email signature validated by a {DKIMRegistry} contract.
 
-The key format is ABI-encoded (IDKIMRegistry, bytes32, IVerifier, uint256) where:
+The key format is ABI-encoded (IDKIMRegistry, bytes32, IGroth16Verifier, uint256) where:
 
 * IDKIMRegistry: The registry contract that validates DKIM public key hashes
 * bytes32: The account salt that uniquely identifies the user's email address
-* IVerifier: The verifier contract instance for ZK proof verification.
+* IGroth16Verifier: The verifier contract instance for ZK proof verification.
 * uint256: The template ID for the command
 
 See {_decodeKey} for the key encoding format.
@@ -540,7 +589,7 @@ bytes memory signature = abi.encode(EmailAuthMsg({
 
 [.contract-item]
 [[ERC7913ZKEmailVerifier-_decodeKey-bytes-]]
-==== `[.contract-item-name]#++_decodeKey++#++(bytes key) → contract IDKIMRegistry registry, bytes32 accountSalt, contract IVerifier verifier, uint256 templateId++` [.item-kind]#internal#
+==== `[.contract-item-name]#++_decodeKey++#++(bytes key) → contract IDKIMRegistry registry, bytes32 accountSalt, contract IGroth16Verifier verifier, uint256 templateId++` [.item-kind]#internal#
 
 Decodes the key into its components.
 
