@@ -11,6 +11,7 @@ module.exports = {
     'InvalidFieldPoint',
     'EmailProof',
   ),
+  JWTProofError: enums.Enum('NoError', 'JWTPublicKeyHash', 'MaskedCommandLength', 'MismatchedCommand', 'JWTProof'),
   Case: enums.EnumTyped('CHECKSUM', 'LOWERCASE', 'UPPERCASE', 'ANY'),
   OperationState: enums.Enum('Unknown', 'Scheduled', 'Ready', 'Expired', 'Executed', 'Canceled'),
 };
