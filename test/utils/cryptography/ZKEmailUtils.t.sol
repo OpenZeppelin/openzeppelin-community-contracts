@@ -130,7 +130,7 @@ contract ZKEmailUtilsTest is Test {
         emailAuthMsg.proof.isCodeExist = isCodeExist;
         emailAuthMsg.proof.proof = proof;
 
-        _mockVerifyEmailProof(emailAuthMsg.proof);
+        _mockVerifyEmailProof();
 
         // Test validation
         ZKEmailUtils.EmailProofError err = ZKEmailUtils.isValidZKEmail(
@@ -176,7 +176,7 @@ contract ZKEmailUtilsTest is Test {
         template[0] = commandPrefix;
         template[1] = CommandUtils.UINT_MATCHER;
 
-        _mockVerifyEmailProof(emailAuthMsg.proof);
+        _mockVerifyEmailProof();
 
         ZKEmailUtils.EmailProofError err = ZKEmailUtils.isValidZKEmail(
             emailAuthMsg,
@@ -220,7 +220,7 @@ contract ZKEmailUtilsTest is Test {
             emailAuthMsg.proof.isCodeExist = isCodeExist;
             emailAuthMsg.proof.proof = proof;
 
-            _mockVerifyEmailProof(emailAuthMsg.proof);
+            _mockVerifyEmailProof();
 
             string[] memory template = new string[](2);
             template[0] = commandPrefix;
@@ -271,7 +271,7 @@ contract ZKEmailUtilsTest is Test {
         template[0] = commandPrefix;
         template[1] = CommandUtils.ETH_ADDR_MATCHER;
 
-        _mockVerifyEmailProof(emailAuthMsg.proof);
+        _mockVerifyEmailProof();
 
         ZKEmailUtils.EmailProofError err = ZKEmailUtils.isValidZKEmail(
             emailAuthMsg,
@@ -399,7 +399,7 @@ contract ZKEmailUtilsTest is Test {
         return ecdsaDkim;
     }
 
-    function _mockVerifyEmailProof(EmailProof memory emailProof) private {
+    function _mockVerifyEmailProof() private {
         vm.mockCall(
             address(_verifier),
             abi.encodeWithSelector(IGroth16Verifier.verifyProof.selector),

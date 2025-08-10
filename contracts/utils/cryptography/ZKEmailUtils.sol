@@ -30,13 +30,13 @@ library ZKEmailUtils {
     using Bytes for bytes;
     using Strings for string;
 
-    uint256 public constant DOMAIN_FIELDS = 9;
-    uint256 public constant DOMAIN_BYTES = 255;
-    uint256 public constant COMMAND_FIELDS = 20;
-    uint256 public constant COMMAND_BYTES = 605;
+    uint256 internal constant DOMAIN_FIELDS = 9;
+    uint256 internal constant DOMAIN_BYTES = 255;
+    uint256 internal constant COMMAND_FIELDS = 20;
+    uint256 internal constant COMMAND_BYTES = 605;
 
     /// @dev The base field size for BN254 elliptic curve used in Groth16 proofs.
-    uint256 constant Q = 21888242871839275222246405745257275088696311157297823662689037894645226208583;
+    uint256 internal constant Q = 21888242871839275222246405745257275088696311157297823662689037894645226208583;
 
     /// @dev Enumeration of possible email proof validation errors.
     enum EmailProofError {
