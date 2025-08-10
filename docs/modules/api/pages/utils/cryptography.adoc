@@ -65,16 +65,16 @@ mechanism to ensure the email was actually sent and received without revealing i
 * `++isValidZKEmail(emailAuthMsg, dkimregistry, groth16Verifier, template)++`
 * `++isValidZKEmail(emailAuthMsg, dkimregistry, groth16Verifier, template, stringCase)++`
 * `++toPubSignals(emailAuthMsg)++`
-* `++DOMAIN_FIELDS()++`
-* `++DOMAIN_BYTES()++`
-* `++COMMAND_FIELDS()++`
-* `++COMMAND_BYTES()++`
 
 --
 
 [.contract-index]
 .Internal Variables
 --
+* `++uint256 constant DOMAIN_FIELDS++`
+* `++uint256 constant DOMAIN_BYTES++`
+* `++uint256 constant COMMAND_FIELDS++`
+* `++uint256 constant COMMAND_BYTES++`
 * `++uint256 constant Q++`
 
 --
@@ -117,19 +117,19 @@ into a uint256 array in the order expected by the verifier circuit.
 
 [.contract-item]
 [[ZKEmailUtils-DOMAIN_FIELDS-uint256]]
-==== `[.contract-item-name]#++DOMAIN_FIELDS++#++() → uint256++` [.item-kind]#public#
+==== `uint256 [.contract-item-name]#++DOMAIN_FIELDS++#` [.item-kind]#internal constant#
 
 [.contract-item]
 [[ZKEmailUtils-DOMAIN_BYTES-uint256]]
-==== `[.contract-item-name]#++DOMAIN_BYTES++#++() → uint256++` [.item-kind]#public#
+==== `uint256 [.contract-item-name]#++DOMAIN_BYTES++#` [.item-kind]#internal constant#
 
 [.contract-item]
 [[ZKEmailUtils-COMMAND_FIELDS-uint256]]
-==== `[.contract-item-name]#++COMMAND_FIELDS++#++() → uint256++` [.item-kind]#public#
+==== `uint256 [.contract-item-name]#++COMMAND_FIELDS++#` [.item-kind]#internal constant#
 
 [.contract-item]
 [[ZKEmailUtils-COMMAND_BYTES-uint256]]
-==== `[.contract-item-name]#++COMMAND_BYTES++#++() → uint256++` [.item-kind]#public#
+==== `uint256 [.contract-item-name]#++COMMAND_BYTES++#` [.item-kind]#internal constant#
 
 [.contract-item]
 [[ZKEmailUtils-Q-uint256]]
