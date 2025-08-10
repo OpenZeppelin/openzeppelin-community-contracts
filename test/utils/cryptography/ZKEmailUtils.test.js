@@ -106,7 +106,7 @@ describe('ZKEmail', function () {
         caseType: Case.LOWERCASE,
         address: this.other.address.toLowerCase(),
       },
-      { caseType: Case.UPPERCASE, address: this.other.address.toUpperCase() },
+      { caseType: Case.UPPERCASE, address: this.other.address.toUpperCase().replace('0X', '0x') },
       { caseType: Case.CHECKSUM, address: ethers.getAddress(this.other.address) },
     ]) {
       const emailAuthMsg = buildEmailAuthMsg(commandPrefix + ' ' + address, [ethers.zeroPadValue(address, 32)], 0);
@@ -123,7 +123,7 @@ describe('ZKEmail', function () {
     // Test with different cases that should all work with ANY case
     const addresses = [
       this.other.address.toLowerCase(),
-      this.other.address.toUpperCase(),
+      this.other.address.toUpperCase().replace('0X', '0x'),
       ethers.getAddress(this.other.address),
     ];
 
