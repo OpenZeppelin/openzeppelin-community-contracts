@@ -4,7 +4,7 @@ const { loadFixture } = require('@nomicfoundation/hardhat-network-helpers');
 const { getDomain, PackedUserOperation } = require('@openzeppelin/contracts/test/helpers/eip712');
 const { ERC4337Helper } = require('@openzeppelin/contracts/test/helpers/erc4337');
 const { NonNativeSigner } = require('@openzeppelin/contracts/test/helpers/signers');
-const { ZKEmailSigningKey, WebAuthnSigningKey } = require('../helpers/signers');
+const { ZKEmailSigningKey } = require('../helpers/signers');
 
 const {
   shouldBehaveLikeAccountCore,
@@ -22,7 +22,6 @@ const emailNullifier = '0x00a83fce3d4b1c9ef0f600644c1ecc6c8115b57b1596e0e3295e2c
 const templateId = ethers.solidityPackedKeccak256(['string', 'uint256'], ['TEST', 0n]);
 
 // Prepare signer in advance
-const signerWebAuthn = new NonNativeSigner(WebAuthnSigningKey.random());
 const signerZKEmail = new NonNativeSigner(
   new ZKEmailSigningKey(domainName, publicKeyHash, emailNullifier, accountSalt, templateId),
 );
@@ -46,7 +45,6 @@ async function fixture() {
   const zkEmailVerifier = await ethers.deployContract('ZKEmailGroth16VerifierMock');
 
   // ERC-7913 verifiers
-  const verifierWebAuthn = await ethers.deployContract('ERC7913WebAuthnVerifier');
   const verifierZKEmail = await ethers.deployContract('$ERC7913ZKEmailVerifier');
 
   // ERC-4337 env
@@ -69,7 +67,6 @@ async function fixture() {
 
   return {
     helper,
-    verifierWebAuthn,
     verifierZKEmail,
     dkim,
     zkEmailVerifier,
@@ -85,25 +82,6 @@ async function fixture() {
 describe('AccountERC7913', function () {
   beforeEach(async function () {
     Object.assign(this, await loadFixture(fixture));
-  });
-
-  // Using WebAuthn key with an ERC-7913 verifier
-  describe('WebAuthn key', function () {
-    beforeEach(async function () {
-      this.signer = signerWebAuthn;
-      this.mock = await this.makeMock(
-        ethers.concat([
-          this.verifierWebAuthn.target,
-          this.signer.signingKey.publicKey.qx,
-          this.signer.signingKey.publicKey.qy,
-        ]),
-      );
-    });
-
-    shouldBehaveLikeAccountCore();
-    shouldBehaveLikeAccountHolder();
-    shouldBehaveLikeERC1271({ erc7739: true });
-    shouldBehaveLikeERC7821();
   });
 
   // Using ZKEmail with an ERC-7913 verifier
