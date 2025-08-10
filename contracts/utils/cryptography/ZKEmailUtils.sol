@@ -6,7 +6,7 @@ import {Bytes} from "@openzeppelin/contracts/utils/Bytes.sol";
 import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 import {IDKIMRegistry} from "@zk-email/contracts/DKIMRegistry.sol";
 import {IGroth16Verifier} from "@zk-email/email-tx-builder/src/interfaces/IGroth16Verifier.sol";
-import {EmailAuthMsg} from "@zk-email/email-tx-builder/src/interfaces/IEmailTypes.sol";
+import {EmailAuthMsg, EmailProof} from "@zk-email/email-tx-builder/src/interfaces/IEmailTypes.sol";
 import {CommandUtils} from "@zk-email/email-tx-builder/src/libraries/CommandUtils.sol";
 
 /**
@@ -129,7 +129,7 @@ library ZKEmailUtils {
         ) return EmailProofError.InvalidFieldPoint;
 
         return
-            groth16Verifier.verifyProof(pA, pB, pC, toPubSignals(emailAuthMsg))
+            groth16Verifier.verifyProof(pA, pB, pC, toPubSignals(emailAuthMsg.proof))
                 ? EmailProofError.NoError
                 : EmailProofError.EmailProof;
     }
@@ -159,26 +159,26 @@ library ZKEmailUtils {
      * into a uint256 array in the order expected by the verifier circuit.
      */
     function toPubSignals(
-        EmailAuthMsg memory emailAuthMsg
+        EmailProof memory proof
     ) internal pure returns (uint256[DOMAIN_FIELDS + COMMAND_FIELDS + 5] memory pubSignals) {
         uint256[] memory stringFields;
 
-        stringFields = _packBytes2Fields(bytes(emailAuthMsg.proof.domainName), DOMAIN_BYTES);
+        stringFields = _packBytes2Fields(bytes(proof.domainName), DOMAIN_BYTES);
         for (uint256 i = 0; i < DOMAIN_FIELDS; i++) {
             pubSignals[i] = stringFields[i];
         }
 
-        pubSignals[DOMAIN_FIELDS] = uint256(emailAuthMsg.proof.publicKeyHash);
-        pubSignals[DOMAIN_FIELDS + 1] = uint256(emailAuthMsg.proof.emailNullifier);
-        pubSignals[DOMAIN_FIELDS + 2] = uint256(emailAuthMsg.proof.timestamp);
+        pubSignals[DOMAIN_FIELDS] = uint256(proof.publicKeyHash);
+        pubSignals[DOMAIN_FIELDS + 1] = uint256(proof.emailNullifier);
+        pubSignals[DOMAIN_FIELDS + 2] = uint256(proof.timestamp);
 
-        stringFields = _packBytes2Fields(bytes(emailAuthMsg.proof.maskedCommand), COMMAND_BYTES);
+        stringFields = _packBytes2Fields(bytes(proof.maskedCommand), COMMAND_BYTES);
         for (uint256 i = 0; i < COMMAND_FIELDS; i++) {
             pubSignals[DOMAIN_FIELDS + 3 + i] = stringFields[i];
         }
 
-        pubSignals[DOMAIN_FIELDS + 3 + COMMAND_FIELDS] = uint256(emailAuthMsg.proof.accountSalt);
-        pubSignals[DOMAIN_FIELDS + 3 + COMMAND_FIELDS + 1] = emailAuthMsg.proof.isCodeExist ? 1 : 0;
+        pubSignals[DOMAIN_FIELDS + 3 + COMMAND_FIELDS] = uint256(proof.accountSalt);
+        pubSignals[DOMAIN_FIELDS + 3 + COMMAND_FIELDS + 1] = proof.isCodeExist ? 1 : 0;
 
         return pubSignals;
     }
@@ -193,11 +193,11 @@ library ZKEmailUtils {
         if (remain > 0) {
             numFields += 1;
         }
-        uint256[] memory fields = new uint[](numFields);
-        uint256 idx = 0;
-        uint256 byteVal = 0;
-        for (uint256 i = 0; i < numFields; i++) {
-            for (uint256 j = 0; j < 31; j++) {
+        uint256[] memory fields = new uint256[](numFields);
+        uint256 idx;
+        uint256 byteVal;
+        for (uint256 i; i < numFields; i++) {
+            for (uint256 j; j < 31; j++) {
                 idx = i * 31 + j;
                 if (idx >= _paddedSize) {
                     break;

@@ -32,7 +32,7 @@ A collection of contracts and libraries that implement various signature validat
 :isValidZKEmail: pass:normal[xref:#ZKEmailUtils-isValidZKEmail-struct-EmailAuthMsg-contract-IDKIMRegistry-contract-IGroth16Verifier-[`++isValidZKEmail++`]]
 :isValidZKEmail: pass:normal[xref:#ZKEmailUtils-isValidZKEmail-struct-EmailAuthMsg-contract-IDKIMRegistry-contract-IGroth16Verifier-string---[`++isValidZKEmail++`]]
 :isValidZKEmail: pass:normal[xref:#ZKEmailUtils-isValidZKEmail-struct-EmailAuthMsg-contract-IDKIMRegistry-contract-IGroth16Verifier-string---enum-ZKEmailUtils-Case-[`++isValidZKEmail++`]]
-:toPubSignals: pass:normal[xref:#ZKEmailUtils-toPubSignals-struct-EmailAuthMsg-[`++toPubSignals++`]]
+:toPubSignals: pass:normal[xref:#ZKEmailUtils-toPubSignals-struct-EmailProof-[`++toPubSignals++`]]
 
 [.contract]
 [[ZKEmailUtils]]
@@ -64,7 +64,7 @@ mechanism to ensure the email was actually sent and received without revealing i
 * `++isValidZKEmail(emailAuthMsg, dkimregistry, groth16Verifier)++`
 * `++isValidZKEmail(emailAuthMsg, dkimregistry, groth16Verifier, template)++`
 * `++isValidZKEmail(emailAuthMsg, dkimregistry, groth16Verifier, template, stringCase)++`
-* `++toPubSignals(emailAuthMsg)++`
+* `++toPubSignals(proof)++`
 
 --
 
@@ -107,8 +107,8 @@ Variant of {isValidZKEmail} that validates a template with a specific string {Ca
 Useful for templates with Ethereum address matchers (i.e. `{ethAddr}`), which are case-sensitive (e.g., `["someCommand", "{address}"]`).
 
 [.contract-item]
-[[ZKEmailUtils-toPubSignals-struct-EmailAuthMsg-]]
-==== `[.contract-item-name]#++toPubSignals++#++(struct EmailAuthMsg emailAuthMsg) → uint256[34] pubSignals++` [.item-kind]#internal#
+[[ZKEmailUtils-toPubSignals-struct-EmailProof-]]
+==== `[.contract-item-name]#++toPubSignals++#++(struct EmailProof proof) → uint256[34] pubSignals++` [.item-kind]#internal#
 
 Builds the expected public signals array for the Groth16 verifier from the given EmailAuthMsg.
 
