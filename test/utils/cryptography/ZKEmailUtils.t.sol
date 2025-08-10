@@ -5,9 +5,9 @@ import {Test} from "forge-std/Test.sol";
 import {ZKEmailUtils} from "../../../contracts/utils/cryptography/ZKEmailUtils.sol";
 import {ECDSAOwnedDKIMRegistry} from "@zk-email/email-tx-builder/src/utils/ECDSAOwnedDKIMRegistry.sol";
 import {Groth16Verifier} from "@zk-email/email-tx-builder/test/fixtures/Groth16Verifier.sol";
-import {Verifier} from "@zk-email/email-tx-builder/src/utils/Verifier.sol";
+import {IGroth16Verifier} from "@zk-email/email-tx-builder/src/interfaces/IGroth16Verifier.sol";
 import {IDKIMRegistry} from "@zk-email/contracts/DKIMRegistry.sol";
-import {IVerifier, EmailProof} from "@zk-email/email-tx-builder/src/interfaces/IVerifier.sol";
+import {EmailProof} from "@zk-email/email-tx-builder/src/interfaces/IEmailTypes.sol";
 import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 import {CommandUtils} from "@zk-email/email-tx-builder/src/libraries/CommandUtils.sol";
 import {MessageHashUtils} from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
@@ -21,7 +21,7 @@ contract ZKEmailUtilsTest is Test {
     uint256 constant Q = 21888242871839275222246405745257275088696311157297823662689037894645226208583;
 
     IDKIMRegistry private _dkimRegistry;
-    IVerifier private _verifier;
+    IGroth16Verifier private _verifier;
     bytes32 private _accountSalt;
     uint256 private _templateId;
     // From https://github.com/zkemail/email-tx-builder/blob/main/packages/contracts/test/helpers/DeploymentHelper.sol#L36-L41
@@ -38,7 +38,7 @@ contract ZKEmailUtilsTest is Test {
         _dkimRegistry = _createECDSAOwnedDKIMRegistry();
 
         // Deploy Verifier
-        _verifier = _createVerifier();
+        _verifier = IGroth16Verifier(address(new Groth16Verifier()));
 
         // Generate test data
         _accountSalt = keccak256("test@example.com");
@@ -106,8 +106,13 @@ contract ZKEmailUtilsTest is Test {
         bytes32 emailNullifier,
         bytes32 accountSalt,
         bool isCodeExist,
-        bytes memory proof
+        uint256[2] memory pA,
+        uint256[2][2] memory pB,
+        uint256[2] memory pC
     ) public {
+        (pA, pB, pC) = _boundPoints(pA, pB, pC);
+        bytes memory proof = abi.encode(pA, pB, pC);
+
         // Build email auth message with fuzzed parameters
         bytes[] memory commandParams = new bytes[](1);
         commandParams[0] = abi.encode(hash);
@@ -125,7 +130,7 @@ contract ZKEmailUtilsTest is Test {
         emailAuthMsg.proof.isCodeExist = isCodeExist;
         emailAuthMsg.proof.proof = proof;
 
-        _mockVerifyEmailProof(emailAuthMsg.proof);
+        _mockVerifyEmailProof();
 
         // Test validation
         ZKEmailUtils.EmailProofError err = ZKEmailUtils.isValidZKEmail(emailAuthMsg, _dkimRegistry, _verifier);
@@ -139,9 +144,14 @@ contract ZKEmailUtilsTest is Test {
         bytes32 emailNullifier,
         bytes32 accountSalt,
         bool isCodeExist,
-        bytes memory proof,
+        uint256[2] memory pA,
+        uint256[2][2] memory pB,
+        uint256[2] memory pC,
         string memory commandPrefix
     ) public {
+        (pA, pB, pC) = _boundPoints(pA, pB, pC);
+        bytes memory proof = abi.encode(pA, pB, pC);
+
         bytes[] memory commandParams = new bytes[](1);
         commandParams[0] = abi.encode(hash);
 
@@ -162,7 +172,7 @@ contract ZKEmailUtilsTest is Test {
         template[0] = commandPrefix;
         template[1] = CommandUtils.UINT_MATCHER;
 
-        _mockVerifyEmailProof(emailAuthMsg.proof);
+        _mockVerifyEmailProof();
 
         ZKEmailUtils.EmailProofError err = ZKEmailUtils.isValidZKEmail(
             emailAuthMsg,
@@ -180,9 +190,14 @@ contract ZKEmailUtilsTest is Test {
         bytes32 emailNullifier,
         bytes32 accountSalt,
         bool isCodeExist,
-        bytes memory proof,
+        uint256[2] memory pA,
+        uint256[2][2] memory pB,
+        uint256[2] memory pC,
         string memory commandPrefix
     ) public {
+        (pA, pB, pC) = _boundPoints(pA, pB, pC);
+        bytes memory proof = abi.encode(pA, pB, pC);
+
         bytes[] memory commandParams = new bytes[](1);
         commandParams[0] = abi.encode(addr);
 
@@ -201,7 +216,7 @@ contract ZKEmailUtilsTest is Test {
             emailAuthMsg.proof.isCodeExist = isCodeExist;
             emailAuthMsg.proof.proof = proof;
 
-            _mockVerifyEmailProof(emailAuthMsg.proof);
+            _mockVerifyEmailProof();
 
             string[] memory template = new string[](2);
             template[0] = commandPrefix;
@@ -216,6 +231,53 @@ contract ZKEmailUtilsTest is Test {
             );
             assertEq(uint256(err), uint256(ZKEmailUtils.EmailProofError.NoError));
         }
+    }
+
+    function testCommandMatchWithAnyCase(
+        address addr,
+        uint256 timestamp,
+        bytes32 emailNullifier,
+        bytes32 accountSalt,
+        bool isCodeExist,
+        uint256[2] memory pA,
+        uint256[2][2] memory pB,
+        uint256[2] memory pC,
+        string memory commandPrefix
+    ) public {
+        (pA, pB, pC) = _boundPoints(pA, pB, pC);
+        bytes memory proof = abi.encode(pA, pB, pC);
+
+        bytes[] memory commandParams = new bytes[](1);
+        commandParams[0] = abi.encode(addr);
+
+        EmailAuthMsg memory emailAuthMsg = _buildEmailAuthMsgMock(
+            string.concat(commandPrefix, " ", addr.toHexString()),
+            commandParams,
+            0
+        );
+
+        // Override with fuzzed values
+        emailAuthMsg.proof.timestamp = timestamp;
+        emailAuthMsg.proof.emailNullifier = emailNullifier;
+        emailAuthMsg.proof.accountSalt = accountSalt;
+        emailAuthMsg.proof.isCodeExist = isCodeExist;
+        emailAuthMsg.proof.proof = proof;
+
+        string[] memory template = new string[](2);
+        template[0] = commandPrefix;
+        template[1] = CommandUtils.ETH_ADDR_MATCHER;
+
+        _mockVerifyEmailProof();
+
+        ZKEmailUtils.EmailProofError err = ZKEmailUtils.isValidZKEmail(
+            emailAuthMsg,
+            IDKIMRegistry(_dkimRegistry),
+            _verifier,
+            template,
+            ZKEmailUtils.Case.ANY
+        );
+
+        assertEq(uint256(err), uint256(ZKEmailUtils.EmailProofError.NoError));
     }
 
     function testInvalidDKIMPublicKeyHash(bytes32 hash, string memory domainName, bytes32 publicKeyHash) public view {
@@ -250,7 +312,7 @@ contract ZKEmailUtilsTest is Test {
     }
 
     function testSkippedCommandPrefix(bytes32 hash, uint256 skippedPrefix) public view {
-        uint256 verifierCommandBytes = _verifier.commandBytes();
+        uint256 verifierCommandBytes = ZKEmailUtils.COMMAND_BYTES;
         skippedPrefix = bound(skippedPrefix, verifierCommandBytes, verifierCommandBytes + 1000);
 
         bytes[] memory commandParams = new bytes[](1);
@@ -284,14 +346,7 @@ contract ZKEmailUtilsTest is Test {
         uint256[2][2] memory pB,
         uint256[2] memory pC
     ) public view {
-        pA[0] = bound(pA[0], 1, Q - 1);
-        pA[1] = bound(pA[1], 1, Q - 1);
-        pB[0][0] = bound(pB[0][0], 1, Q - 1);
-        pB[0][1] = bound(pB[0][1], 1, Q - 1);
-        pB[1][0] = bound(pB[1][0], 1, Q - 1);
-        pB[1][1] = bound(pB[1][1], 1, Q - 1);
-        pC[0] = bound(pC[0], 1, Q - 1);
-        pC[1] = bound(pC[1], 1, Q - 1);
+        (pA, pB, pC) = _boundPoints(pA, pB, pC);
 
         bytes[] memory commandParams = new bytes[](1);
         commandParams[0] = abi.encode(hash);
@@ -309,13 +364,6 @@ contract ZKEmailUtilsTest is Test {
         assertEq(uint256(err), uint256(ZKEmailUtils.EmailProofError.EmailProof));
     }
 
-    function _createVerifier() private returns (IVerifier) {
-        Verifier verifier = new Verifier();
-        Groth16Verifier groth16Verifier = new Groth16Verifier();
-        verifier.initialize(msg.sender, address(groth16Verifier));
-        return verifier;
-    }
-
     function _createECDSAOwnedDKIMRegistry() private returns (IDKIMRegistry) {
         ECDSAOwnedDKIMRegistry ecdsaDkim = new ECDSAOwnedDKIMRegistry();
         (address alice, uint256 alicePk) = makeAddrAndKey("alice");
@@ -327,8 +375,12 @@ contract ZKEmailUtilsTest is Test {
         return ecdsaDkim;
     }
 
-    function _mockVerifyEmailProof(EmailProof memory emailProof) private {
-        vm.mockCall(address(_verifier), abi.encodeCall(IVerifier.verifyEmailProof, (emailProof)), abi.encode(true));
+    function _mockVerifyEmailProof() private {
+        vm.mockCall(
+            address(_verifier),
+            abi.encodeWithSelector(IGroth16Verifier.verifyProof.selector),
+            abi.encode(true)
+        );
     }
 
     function _buildEmailAuthMsgMock(
@@ -372,5 +424,21 @@ contract ZKEmailUtilsTest is Test {
                 abi.encodePacked(r, s, v)
             );
         }
+    }
+
+    function _boundPoints(
+        uint256[2] memory pA,
+        uint256[2][2] memory pB,
+        uint256[2] memory pC
+    ) private pure returns (uint256[2] memory, uint256[2][2] memory, uint256[2] memory) {
+        pA[0] = bound(pA[0], 1, Q - 1);
+        pA[1] = bound(pA[1], 1, Q - 1);
+        pB[0][0] = bound(pB[0][0], 1, Q - 1);
+        pB[0][1] = bound(pB[0][1], 1, Q - 1);
+        pB[1][0] = bound(pB[1][0], 1, Q - 1);
+        pB[1][1] = bound(pB[1][1], 1, Q - 1);
+        pC[0] = bound(pC[0], 1, Q - 1);
+        pC[1] = bound(pC[1], 1, Q - 1);
+        return (pA, pB, pC);
     }
 }

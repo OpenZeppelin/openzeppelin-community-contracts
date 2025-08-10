@@ -1,4 +1,4 @@
-const { ethers, entrypoint } = require('hardhat');
+const { ethers, predeploy } = require('hardhat');
 const { expect } = require('chai');
 const { loadFixture } = require('@nomicfoundation/hardhat-network-helpers');
 const { anyValue } = require('@nomicfoundation/hardhat-chai-matchers/withArgs');
@@ -32,7 +32,7 @@ async function fixture() {
   await paymaster.$_grantRole(ethers.id('WITHDRAWER_ROLE'), admin);
 
   // Domains
-  const entrypointDomain = await getDomain(entrypoint.v08);
+  const entrypointDomain = await getDomain(predeploy.entrypoint.v08);
   const paymasterDomain = await getDomain(paymaster);
 
   const signUserOp = userOp =>
@@ -153,7 +153,7 @@ describe('PaymasterERC20', function () {
         .then(op => this.signUserOp(op));
 
       // send it to the entrypoint
-      const txPromise = entrypoint.v08.handleOps([signedUserOp.packed], this.receiver);
+      const txPromise = predeploy.entrypoint.v08.handleOps([signedUserOp.packed], this.receiver);
 
       // check main events (target call and sponsoring)
       await expect(txPromise)
@@ -175,7 +175,10 @@ describe('PaymasterERC20', function () {
         this.tokenMovements.map(({ factor = 0n, offset = 0n }) => offset + tokenAmount * factor),
       );
       // check that ether moved as expected
-      await expect(txPromise).to.changeEtherBalances([entrypoint.v08, this.receiver], [-actualGasCost, actualGasCost]);
+      await expect(txPromise).to.changeEtherBalances(
+        [predeploy.entrypoint.v08, this.receiver],
+        [-actualGasCost, actualGasCost],
+      );
 
       // check token cost is within the expected values
       // skip gas consumption tests when running coverage (significantly affects the postOp costs)
@@ -220,12 +223,12 @@ describe('PaymasterERC20', function () {
         )
         .then(op => this.signUserOp(op));
 
-      const txPromise = entrypoint.v08.handleOps([signedUserOp.packed], this.receiver);
+      const txPromise = predeploy.entrypoint.v08.handleOps([signedUserOp.packed], this.receiver);
 
       // Reverted post op does not revert the operation
       const { logs } = await txPromise.then(tx => tx.wait());
       const [, , , postOpRevertReason] = logs.find(v => v.fragment?.name === 'PostOpRevertReason').args;
-      const postOpError = entrypoint.v08.interface.parseError(postOpRevertReason);
+      const postOpError = predeploy.entrypoint.v08.interface.parseError(postOpRevertReason);
       expect(postOpError.name).to.eq('PostOpReverted');
       const [paymasterRevertReason] = postOpError.args;
       const { name, args } = this.paymaster.interface.parseError(paymasterRevertReason);
@@ -247,8 +250,8 @@ describe('PaymasterERC20', function () {
         .then(op => this.signUserOp(op));
 
       // send it to the entrypoint
-      await expect(entrypoint.v08.handleOps([signedUserOp.packed], this.receiver))
-        .to.be.revertedWithCustomError(entrypoint.v08, 'FailedOp')
+      await expect(predeploy.entrypoint.v08.handleOps([signedUserOp.packed], this.receiver))
+        .to.be.revertedWithCustomError(predeploy.entrypoint.v08, 'FailedOp')
         .withArgs(0n, 'AA34 signature error');
     });
 
@@ -263,8 +266,8 @@ describe('PaymasterERC20', function () {
         .then(op => this.signUserOp(op));
 
       // send it to the entrypoint
-      await expect(entrypoint.v08.handleOps([signedUserOp.packed], this.receiver))
-        .to.be.revertedWithCustomError(entrypoint.v08, 'FailedOp')
+      await expect(predeploy.entrypoint.v08.handleOps([signedUserOp.packed], this.receiver))
+        .to.be.revertedWithCustomError(predeploy.entrypoint.v08, 'FailedOp')
         .withArgs(0n, 'AA34 signature error');
     });
 
@@ -279,8 +282,8 @@ describe('PaymasterERC20', function () {
         .then(op => this.signUserOp(op));
 
       // send it to the entrypoint
-      await expect(entrypoint.v08.handleOps([signedUserOp.packed], this.receiver))
-        .to.be.revertedWithCustomError(entrypoint.v08, 'FailedOp')
+      await expect(predeploy.entrypoint.v08.handleOps([signedUserOp.packed], this.receiver))
+        .to.be.revertedWithCustomError(predeploy.entrypoint.v08, 'FailedOp')
         .withArgs(0n, 'AA34 signature error');
     });
   });

@@ -8,6 +8,7 @@ module.exports = {
     'MaskedCommandLength',
     'SkippedCommandPrefixSize',
     'MismatchedCommand',
+    'InvalidFieldPoint',
     'EmailProof',
   ),
   JWTProofError: enums.Enum('NoError', 'JWTPublicKeyHash', 'MaskedCommandLength', 'MismatchedCommand', 'JWTProof'),

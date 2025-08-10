@@ -3,7 +3,7 @@
 pragma solidity ^0.8.24;
 
 import {IDKIMRegistry} from "@zk-email/contracts/DKIMRegistry.sol";
-import {IVerifier} from "@zk-email/email-tx-builder/src/interfaces/IVerifier.sol";
+import {IGroth16Verifier} from "@zk-email/email-tx-builder/src/interfaces/IGroth16Verifier.sol";
 import {EmailAuthMsg} from "@zk-email/email-tx-builder/src/interfaces/IEmailTypes.sol";
 import {AbstractSigner} from "@openzeppelin/contracts/utils/cryptography/signers/AbstractSigner.sol";
 import {ZKEmailUtils} from "../ZKEmailUtils.sol";
@@ -22,7 +22,7 @@ import {ZKEmailUtils} from "../ZKEmailUtils.sol";
  *
  * * {accountSalt} - A unique identifier derived from the user's email address and account code.
  * * {DKIMRegistry} - An instance of the DKIM registry contract for domain verification.
- * * {verifier} - An instance of the Verifier contract for zero-knowledge proof validation.
+ * * {verifier} - An instance of the Groth16Verifier contract for zero-knowledge proof validation.
  * * {templateId} - The template ID of the sign hash command, defining the expected format.
  *
  * Example of usage:
@@ -32,13 +32,13 @@ import {ZKEmailUtils} from "../ZKEmailUtils.sol";
  *   function initialize(
  *       bytes32 accountSalt,
  *       IDKIMRegistry registry,
- *       IVerifier verifier,
+ *       IGroth16Verifier groth16Verifier,
  *       uint256 templateId
  *   ) public initializer {
  *       // Will revert if the signer is already initialized
  *       _setAccountSalt(accountSalt);
  *       _setDKIMRegistry(registry);
- *       _setVerifier(verifier);
+ *       _setGroth16Verifier(groth16Verifier);
  *       _setTemplateId(templateId);
  *   }
  * }
@@ -53,7 +53,7 @@ abstract contract SignerZKEmail is AbstractSigner {
 
     bytes32 private _accountSalt;
     IDKIMRegistry private _registry;
-    IVerifier private _verifier;
+    IGroth16Verifier private _groth16Verifier;
     uint256 private _templateId;
 
     /// @dev Proof verification error.
@@ -87,11 +87,11 @@ abstract contract SignerZKEmail is AbstractSigner {
     }
 
     /**
-     * @dev An instance of the Verifier contract.
+     * @dev An instance of the Groth16Verifier contract.
      * See https://docs.zk.email/architecture/zk-proofs#how-zk-email-uses-zero-knowledge-proofs[ZK Proofs].
      */
-    function verifier() public view virtual returns (IVerifier) {
-        return _verifier;
+    function verifier() public view virtual returns (IGroth16Verifier) {
+        return _groth16Verifier;
     }
 
     /// @dev The command template of the sign hash command.
@@ -110,8 +110,8 @@ abstract contract SignerZKEmail is AbstractSigner {
     }
 
     /// @dev Set the {verifier} contract address.
-    function _setVerifier(IVerifier verifier_) internal virtual {
-        _verifier = verifier_;
+    function _setVerifier(IGroth16Verifier verifier_) internal virtual {
+        _groth16Verifier = verifier_;
     }
 
     /// @dev Set the command's {templateId}.
