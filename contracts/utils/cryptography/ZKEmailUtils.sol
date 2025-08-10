@@ -5,8 +5,13 @@ pragma solidity ^0.8.24;
 import {Bytes} from "@openzeppelin/contracts/utils/Bytes.sol";
 import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 import {IDKIMRegistry} from "@zk-email/contracts/DKIMRegistry.sol";
+<<<<<<< HEAD
 import {IVerifier} from "@zk-email/email-tx-builder/src/interfaces/IVerifier.sol";
 import {EmailAuthMsg} from "@zk-email/email-tx-builder/src/interfaces/IEmailTypes.sol";
+=======
+import {IGroth16Verifier} from "@zk-email/email-tx-builder/src/interfaces/IGroth16Verifier.sol";
+import {EmailAuthMsg, EmailProof} from "@zk-email/email-tx-builder/src/interfaces/IEmailTypes.sol";
+>>>>>>> 8cf25ae (Add missing ZKEmailUtils fixes)
 import {CommandUtils} from "@zk-email/email-tx-builder/src/libraries/CommandUtils.sol";
 
 /**
@@ -30,6 +35,17 @@ library ZKEmailUtils {
     using Bytes for bytes;
     using Strings for string;
 
+<<<<<<< HEAD
+=======
+    uint256 internal constant DOMAIN_FIELDS = 9;
+    uint256 internal constant DOMAIN_BYTES = 255;
+    uint256 internal constant COMMAND_FIELDS = 20;
+    uint256 internal constant COMMAND_BYTES = 605;
+
+    /// @dev The base field size for BN254 elliptic curve used in Groth16 proofs.
+    uint256 internal constant Q = 21888242871839275222246405745257275088696311157297823662689037894645226208583;
+
+>>>>>>> 8cf25ae (Add missing ZKEmailUtils fixes)
     /// @dev Enumeration of possible email proof validation errors.
     enum EmailProofError {
         NoError,
@@ -104,6 +120,30 @@ library ZKEmailUtils {
         } else {
             return verifier.verifyEmailProof(emailAuthMsg.proof) ? EmailProofError.NoError : EmailProofError.EmailProof;
         }
+<<<<<<< HEAD
+=======
+        (uint256[2] memory pA, uint256[2][2] memory pB, uint256[2] memory pC) = abi.decode(
+            emailAuthMsg.proof.proof,
+            (uint256[2], uint256[2][2], uint256[2])
+        );
+
+        uint256 q = Q - 1; // upper bound of the field elements
+        if (
+            pA[0] > q ||
+            pA[1] > q ||
+            pB[0][0] > q ||
+            pB[0][1] > q ||
+            pB[1][0] > q ||
+            pB[1][1] > q ||
+            pC[0] > q ||
+            pC[1] > q
+        ) return EmailProofError.InvalidFieldPoint;
+
+        return
+            groth16Verifier.verifyProof(pA, pB, pC, toPubSignals(emailAuthMsg.proof))
+                ? EmailProofError.NoError
+                : EmailProofError.EmailProof;
+>>>>>>> 8cf25ae (Add missing ZKEmailUtils fixes)
     }
 
     /// @dev Compares the command in the email authentication message with the expected command.
@@ -123,4 +163,72 @@ library ZKEmailUtils {
             commandParams.computeExpectedCommand(template, uint8(Case.UPPERCASE)).equal(command) ||
             commandParams.computeExpectedCommand(template, uint8(Case.CHECKSUM)).equal(command);
     }
+<<<<<<< HEAD
+=======
+
+    /**
+     * @dev Builds the expected public signals array for the Groth16 verifier from the given EmailAuthMsg.
+     *
+     * Packs the domain, public key hash, email nullifier, timestamp, masked command, account salt, and isCodeExist fields
+     * into a uint256 array in the order expected by the verifier circuit.
+     */
+    function toPubSignals(
+        EmailProof memory proof
+    ) internal pure returns (uint256[DOMAIN_FIELDS + COMMAND_FIELDS + 5] memory pubSignals) {
+        uint256[] memory stringFields;
+
+        stringFields = _packBytes2Fields(bytes(proof.domainName), DOMAIN_BYTES);
+        for (uint256 i = 0; i < DOMAIN_FIELDS; i++) {
+            pubSignals[i] = stringFields[i];
+        }
+
+        pubSignals[DOMAIN_FIELDS] = uint256(proof.publicKeyHash);
+        pubSignals[DOMAIN_FIELDS + 1] = uint256(proof.emailNullifier);
+        pubSignals[DOMAIN_FIELDS + 2] = uint256(proof.timestamp);
+
+        stringFields = _packBytes2Fields(bytes(proof.maskedCommand), COMMAND_BYTES);
+        for (uint256 i = 0; i < COMMAND_FIELDS; i++) {
+            pubSignals[DOMAIN_FIELDS + 3 + i] = stringFields[i];
+        }
+
+        pubSignals[DOMAIN_FIELDS + 3 + COMMAND_FIELDS] = uint256(proof.accountSalt);
+        pubSignals[DOMAIN_FIELDS + 3 + COMMAND_FIELDS + 1] = proof.isCodeExist ? 1 : 0;
+
+        return pubSignals;
+    }
+
+    /**
+     * @dev Packs a bytes array into an array of uint256 fields, each field representing up to 31 bytes.
+     * If the input is shorter than the padded size, the remaining bytes are zero-padded.
+     */
+    function _packBytes2Fields(bytes memory _bytes, uint256 _paddedSize) private pure returns (uint256[] memory) {
+        uint256 remain = _paddedSize % 31;
+        uint256 numFields = (_paddedSize - remain) / 31;
+        if (remain > 0) {
+            numFields += 1;
+        }
+        uint256[] memory fields = new uint[](numFields);
+        uint256 idx = 0;
+        uint256 byteVal = 0;
+        for (uint256 i = 0; i < numFields; i++) {
+            for (uint256 j = 0; j < 31; j++) {
+                idx = i * 31 + j;
+                if (idx >= _paddedSize) {
+                    break;
+                }
+                if (idx >= _bytes.length) {
+                    byteVal = 0;
+                } else {
+                    byteVal = uint256(uint8(_bytes[idx]));
+                }
+                if (j == 0) {
+                    fields[i] = byteVal;
+                } else {
+                    fields[i] += (byteVal << (8 * j));
+                }
+            }
+        }
+        return fields;
+    }
+>>>>>>> 8cf25ae (Add missing ZKEmailUtils fixes)
 }

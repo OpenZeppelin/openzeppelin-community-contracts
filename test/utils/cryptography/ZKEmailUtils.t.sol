@@ -17,9 +17,6 @@ contract ZKEmailUtilsTest is Test {
     using Strings for *;
     using ZKEmailUtils for EmailAuthMsg;
 
-    // Base field size
-    uint256 constant Q = 21888242871839275222246405745257275088696311157297823662689037894645226208583;
-
     IDKIMRegistry private _dkimRegistry;
     IVerifier private _verifier;
     bytes32 private _accountSalt;
@@ -125,7 +122,7 @@ contract ZKEmailUtilsTest is Test {
         emailAuthMsg.proof.isCodeExist = isCodeExist;
         emailAuthMsg.proof.proof = proof;
 
-        _mockVerifyEmailProof(emailAuthMsg.proof);
+        _mockVerifyEmailProof();
 
         // Test validation
         ZKEmailUtils.EmailProofError err = ZKEmailUtils.isValidZKEmail(
@@ -166,7 +163,7 @@ contract ZKEmailUtilsTest is Test {
         template[0] = commandPrefix;
         template[1] = CommandUtils.UINT_MATCHER;
 
-        _mockVerifyEmailProof(emailAuthMsg.proof);
+        _mockVerifyEmailProof();
 
         ZKEmailUtils.EmailProofError err = ZKEmailUtils.isValidZKEmail(
             emailAuthMsg,
@@ -205,7 +202,7 @@ contract ZKEmailUtilsTest is Test {
             emailAuthMsg.proof.isCodeExist = isCodeExist;
             emailAuthMsg.proof.proof = proof;
 
-            _mockVerifyEmailProof(emailAuthMsg.proof);
+            _mockVerifyEmailProof();
 
             string[] memory template = new string[](2);
             template[0] = commandPrefix;
@@ -251,7 +248,7 @@ contract ZKEmailUtilsTest is Test {
         template[0] = commandPrefix;
         template[1] = CommandUtils.ETH_ADDR_MATCHER;
 
-        _mockVerifyEmailProof(emailAuthMsg.proof);
+        _mockVerifyEmailProof();
 
         ZKEmailUtils.EmailProofError err = ZKEmailUtils.isValidZKEmail(
             emailAuthMsg,
@@ -394,8 +391,17 @@ contract ZKEmailUtilsTest is Test {
         return ecdsaDkim;
     }
 
+<<<<<<< HEAD
     function _mockVerifyEmailProof(EmailProof memory emailProof) private {
         vm.mockCall(address(_verifier), abi.encodeCall(IVerifier.verifyEmailProof, (emailProof)), abi.encode(true));
+=======
+    function _mockVerifyEmailProof() private {
+        vm.mockCall(
+            address(_verifier),
+            abi.encodeWithSelector(IGroth16Verifier.verifyProof.selector),
+            abi.encode(true)
+        );
+>>>>>>> 8cf25ae (Add missing ZKEmailUtils fixes)
     }
 
     function _buildEmailAuthMsgMock(
@@ -440,4 +446,24 @@ contract ZKEmailUtilsTest is Test {
             );
         }
     }
+<<<<<<< HEAD
+=======
+
+    function _boundPoints(
+        uint256[2] memory pA,
+        uint256[2][2] memory pB,
+        uint256[2] memory pC
+    ) private pure returns (uint256[2] memory, uint256[2][2] memory, uint256[2] memory) {
+        uint256 Q = ZKEmailUtils.Q;
+        pA[0] = bound(pA[0], 1, Q - 1);
+        pA[1] = bound(pA[1], 1, Q - 1);
+        pB[0][0] = bound(pB[0][0], 1, Q - 1);
+        pB[0][1] = bound(pB[0][1], 1, Q - 1);
+        pB[1][0] = bound(pB[1][0], 1, Q - 1);
+        pB[1][1] = bound(pB[1][1], 1, Q - 1);
+        pC[0] = bound(pC[0], 1, Q - 1);
+        pC[1] = bound(pC[1], 1, Q - 1);
+        return (pA, pB, pC);
+    }
+>>>>>>> 8cf25ae (Add missing ZKEmailUtils fixes)
 }
