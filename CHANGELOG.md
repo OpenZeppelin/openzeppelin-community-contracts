@@ -1,3 +1,7 @@
+## XX-XX-XXXX
+
+- Remove `WebAuthn`, `SignerWebAuthn`, `ERC7913WebAuthnVerifier`. These contracts were migrated to `@openzeppelin/contracts>=5.5.0`.
+
 ## 09-08-2025
 
 - `ZKEmailUtils`: Simplify library implementation and remove `Verifier.sol` indirection for cleaner integration with a Groth16Verifier.
