@@ -19,12 +19,11 @@ const selector = '12345';
 const domainName = 'gmail.com';
 const publicKeyHash = '0x0ea9c777dc7110e5a9e89b13f0cfc540e3845ba120b2b6dc24024d61488d4788';
 const emailNullifier = '0x00a83fce3d4b1c9ef0f600644c1ecc6c8115b57b1596e0e3295e2c5105fbfd8a';
-const templateId = ethers.solidityPackedKeccak256(['string', 'uint256'], ['TEST', 0n]);
 
 // Prepare signer in advance
 const signerWebAuthn = new NonNativeSigner(WebAuthnSigningKey.random());
 const signerZKEmail = new NonNativeSigner(
-  new ZKEmailSigningKey(domainName, publicKeyHash, emailNullifier, accountSalt, templateId),
+  new ZKEmailSigningKey(domainName, publicKeyHash, emailNullifier, accountSalt),
 );
 
 // Minimal fixture common to the different signer verifiers
@@ -117,8 +116,8 @@ describe('AccountERC7913', function () {
         ethers.concat([
           this.verifierZKEmail.target,
           ethers.AbiCoder.defaultAbiCoder().encode(
-            ['address', 'bytes32', 'address', 'uint256'],
-            [this.dkim.target, accountSalt, this.zkEmailVerifier.target, templateId],
+            ['address', 'bytes32', 'address'],
+            [this.dkim.target, accountSalt, this.zkEmailVerifier.target],
           ),
         ]),
       );

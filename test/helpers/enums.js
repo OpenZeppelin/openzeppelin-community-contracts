@@ -6,7 +6,6 @@ module.exports = {
     'NoError',
     'DKIMPublicKeyHash',
     'MaskedCommandLength',
-    'SkippedCommandPrefixSize',
     'MismatchedCommand',
     'InvalidFieldPoint',
     'EmailProof',

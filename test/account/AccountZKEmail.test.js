@@ -17,7 +17,6 @@ const selector = '12345';
 const domainName = 'gmail.com';
 const publicKeyHash = '0x0ea9c777dc7110e5a9e89b13f0cfc540e3845ba120b2b6dc24024d61488d4788';
 const emailNullifier = '0x00a83fce3d4b1c9ef0f600644c1ecc6c8115b57b1596e0e3295e2c5105fbfd8a';
-const templateId = ethers.solidityPackedKeccak256(['string', 'uint256'], ['TEST', 0n]);
 
 const SIGN_HASH_COMMAND = 'signHash';
 
@@ -38,13 +37,11 @@ async function fixture() {
   const verifier = await ethers.deployContract('ZKEmailGroth16VerifierMock');
 
   // ERC-4337 signer
-  const signer = new NonNativeSigner(
-    new ZKEmailSigningKey(domainName, publicKeyHash, emailNullifier, accountSalt, templateId),
-  );
+  const signer = new NonNativeSigner(new ZKEmailSigningKey(domainName, publicKeyHash, emailNullifier, accountSalt));
 
   // ERC-4337 account
   const helper = new ERC4337Helper();
-  const mock = await helper.newAccount('$AccountZKEmailMock', [accountSalt, dkim.target, verifier.target, templateId]);
+  const mock = await helper.newAccount('$AccountZKEmailMock', [accountSalt, dkim.target, verifier.target]);
 
   const signUserOp = async userOp => {
     // Create email auth message for the user operation hash
@@ -71,17 +68,10 @@ async function fixture() {
       [pA, pB, pC],
     );
 
-    // Encode the email auth message as the signature
+    // Encode the EmailProof as the signature
     return ethers.AbiCoder.defaultAbiCoder().encode(
-      ['tuple(uint256,bytes[],uint256,tuple(string,bytes32,uint256,string,bytes32,bytes32,bool,bytes))'],
-      [
-        [
-          templateId,
-          [hash],
-          0, // skippedCommandPrefix
-          [domainName, publicKeyHash, timestamp, command, emailNullifier, accountSalt, isCodeExist, invalidProof],
-        ],
-      ],
+      ['string', 'bytes32', 'uint256', 'string', 'bytes32', 'bytes32', 'bool', 'bytes'],
+      [domainName, publicKeyHash, timestamp, command, emailNullifier, accountSalt, isCodeExist, invalidProof],
     );
   };
 
