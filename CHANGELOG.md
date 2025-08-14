@@ -1,4 +1,4 @@
-## 10-08-2025
+## 14-08-2025
 
 - `ZKEmailUtils`: Add `tryDecodeEmailProof` function for safe calldata decoding with comprehensive bounds checking and validation for `EmailProof` struct.
 - `ZKEmailUtils`: Update `isValidZKEmail` to receive `EmailProof` struct directly instead of `EmailAuthMsg` struct.
