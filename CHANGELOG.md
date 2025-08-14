@@ -1,3 +1,10 @@
+## 14-08-2025
+
+- `ZKEmailUtils`: Add `tryDecodeEmailProof` function for safe calldata decoding with comprehensive bounds checking and validation for `EmailProof` struct.
+- `ZKEmailUtils`: Update `isValidZKEmail` to receive `EmailProof` struct directly instead of `EmailAuthMsg` struct.
+- `SignerZKEmail`: Remove `templateId` functionality and switch from `EmailAuthMsg` to direct `EmailProof` validation for streamlined signature verification.
+- `ERC7913ZKEmailVerifier`: Remove `templateId` from signature validation logic and update `_decodeKey` function to directly decode `EmailProof` struct.
+
 ## 09-08-2025
 
 - `ZKEmailUtils`: Simplify library implementation and remove `Verifier.sol` indirection for cleaner integration with a Groth16Verifier.
