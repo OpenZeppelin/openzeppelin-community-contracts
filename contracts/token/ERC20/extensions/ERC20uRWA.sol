@@ -55,12 +55,13 @@ abstract contract ERC20uRWA is ERC20, ERC165, ERC20Freezable, ERC20Restricted, I
     /**
      * @dev See {IERC7943-forceTransfer}.
      *
-     * Allows to bypass the freezing mechanism. However, in cases where the balance after
-     * the transfer is less than the frozen balance, the frozen balance is adjusted to the new balance.
+     * Bypasses the {ERC20Restricted} restrictions for the `from` address and adjusts the frozen balance
+     * to the new balance after the transfer.
      *
-     * NOTE: Calls {ERC20-_update} directly, bypassing the {_update} override and any potential
-     * override down the inheritance chain. Consider overriding this function accordingly if
-     * it is needed to preserve side effects (e.g. transferring voting power).
+     * NOTE: This function uses {_update} to perform the transfer, ensuring all standard ERC20
+     * side effects (such as balance updates and events) are preserved. If you override {_update}
+     * to add additional restrictions or logic, those changes will also apply here.
+     * Consider overriding this function to bypass newer restrictions if needed.
      */
     function forceTransfer(address from, address to, uint256, uint256 amount) public virtual {
         _checkEnforcer(from, to, amount);
@@ -77,16 +78,19 @@ abstract contract ERC20uRWA is ERC20, ERC165, ERC20Freezable, ERC20Restricted, I
             _setFrozen(from, newBalance);
         }
 
-        ERC20._update(from, to, amount); // Explicit raw update to bypass all restrictions
+        // Temporarily bypass restrictions rather than calling ERC20._update directly.
+        // This preserves any side effects from future overrides to _update.
+        // Assuming `forceTransfer` will be used occasionally, the added costs of temporary
+        // restrictions would be justifiable under this path.
+        Restriction restriction = getRestriction(from);
+        bool wasUserAllowed = isUserAllowed(from);
+        if (!wasUserAllowed) _setRestriction(from, Restriction.ALLOWED);
+        _update(from, to, amount); // Explicit raw update to bypass all restrictions
+        if (!wasUserAllowed) _setRestriction(from, restriction);
         emit ForcedTransfer(from, to, 0, amount);
     }
 
-    /**
-     * @dev See {ERC20-_update}.
-     *
-     * CAUTION: Overriding this function will not apply the new checks to the {forceTransfer} function.
-     * Consider overriding {forceTransfer} accordingly if needed.
-     */
+    /// @inheritdoc ERC20
     function _update(
         address from,
         address to,
