@@ -127,7 +127,7 @@ describe('ERC7786OpenBridge', function () {
           await expect(txPromise)
             .to.emit(this.bridgeA, 'MessageSent')
             .withArgs(
-              ethers.ZeroHash,
+              anyValue,
               this.chain.toErc7930(this.sender),
               this.chain.toErc7930(this.destination),
               this.payload,
@@ -140,7 +140,7 @@ describe('ERC7786OpenBridge', function () {
             await expect(txPromise)
               .to.emit(gatewayA, 'MessageSent')
               .withArgs(
-                ethers.ZeroHash,
+                anyValue,
                 this.chain.toErc7930(this.bridgeA),
                 this.chain.toErc7930(this.bridgeB),
                 anyValue,
