@@ -5,6 +5,9 @@
 :ERC20Collateral: pass:normal[xref:token.adoc#ERC20Collateral[`ERC20Collateral`]]
 :ERC20Custodian: pass:normal[xref:token.adoc#ERC20Custodian[`ERC20Custodian`]]
 :ERC4626Fees: pass:normal[xref:token.adoc#ERC4626Fees[`ERC4626Fees`]]
+:ERC20Restricted: pass:normal[xref:token.adoc#ERC20Restricted[`ERC20Restricted`]]
+:ERC20Restricted: pass:normal[xref:token.adoc#ERC20Restricted[`ERC20Restricted`]]
+:ERC20Freezable: pass:normal[xref:token.adoc#ERC20Freezable[`ERC20Freezable`]]
 = Tokens
 
 [.readme-notice]
@@ -82,6 +85,8 @@ able to execute transfers or approvals to other entities to operate
 on its behalf if {_allowUser} was not called with such account as an
 argument. Similarly, the account will be disallowed again if
 {_disallowUser} is called.
+
+IMPORTANT: Deprecated. Use {ERC20Restricted} instead.
 
 [.contract-index]
 .Functions
@@ -243,6 +248,8 @@ able to execute transfers or approvals to other entities to operate
 on its behalf if {_blockUser} was not called with such account as an
 argument. Similarly, the account will be unblocked again if
 {_unblockUser} is called.
+
+IMPORTANT: Deprecated. Use {ERC20Restricted} instead.
 
 [.contract-index]
 .Functions
@@ -575,6 +582,8 @@ of a user.
 The frozen balance is not available for transfers or approvals
 to other entities to operate on its behalf if. The frozen balance
 can be reduced by calling {freeze} again with a lower amount.
+
+IMPORTANT: Deprecated. Use {ERC20Freezable} instead.
 
 [.contract-index]
 .Modifiers
