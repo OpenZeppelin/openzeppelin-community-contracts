@@ -59,7 +59,8 @@ abstract contract ERC20uRWA is ERC20, ERC165, ERC20Freezable, ERC20Restricted, I
      * the transfer is less than the frozen balance, the frozen balance is adjusted to the new balance.
      *
      * NOTE: Calls {ERC20-_update} directly, bypassing the {_update} override and any potential
-     * override down the inheritance chain. Consider overriding this function accordingly if needed.
+     * override down the inheritance chain. Consider overriding this function accordingly if
+     * it is needed to preserve side effects (e.g. transferring voting power).
      */
     function forceTransfer(address from, address to, uint256, uint256 amount) public virtual {
         _checkEnforcer(from, to, amount);
