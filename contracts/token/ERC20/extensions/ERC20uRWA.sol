@@ -55,8 +55,11 @@ abstract contract ERC20uRWA is ERC20, ERC165, ERC20Freezable, ERC20Restricted, I
     /**
      * @dev See {IERC7943-forceTransfer}.
      *
-     * NOTE: Allows to bypass the freezing mechanism. However, in cases where the balance after
+     * Allows to bypass the freezing mechanism. However, in cases where the balance after
      * the transfer is less than the frozen balance, the frozen balance is adjusted to the new balance.
+     *
+     * NOTE: Calls {ERC20-_update} directly, bypassing the {_update} override and any potential
+     * override down the inheritance chain. Consider overriding this function accordingly if needed.
      */
     function forceTransfer(address from, address to, uint256, uint256 amount) public virtual {
         _checkEnforcer(from, to, amount);
@@ -77,7 +80,12 @@ abstract contract ERC20uRWA is ERC20, ERC165, ERC20Freezable, ERC20Restricted, I
         emit ForcedTransfer(from, to, 0, amount);
     }
 
-    /// @inheritdoc ERC20
+    /**
+     * @dev See {ERC20-_update}.
+     *
+     * CAUTION: Overriding this function will not apply the new checks to the {forceTransfer} function.
+     * Consider overriding {forceTransfer} accordingly if needed.
+     */
     function _update(
         address from,
         address to,
