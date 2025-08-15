@@ -3,6 +3,7 @@
 pragma solidity ^0.8.27;
 
 import {IAxelarGateway} from "@axelar-network/axelar-gmp-sdk-solidity/contracts/interfaces/IAxelarGateway.sol";
+import {IAxelarGasService} from "@axelar-network/axelar-gmp-sdk-solidity/contracts/interfaces/IAxelarGasService.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {InteroperableAddress} from "@openzeppelin/contracts/utils/draft-InteroperableAddress.sol";
 
@@ -18,6 +19,7 @@ abstract contract AxelarGatewayBase is Ownable {
 
     /// @dev Axelar's official gateway for the current chain.
     IAxelarGateway internal immutable _axelarGateway;
+    IAxelarGasService internal immutable _axelarGasService;
 
     // Remote gateway.
     // `addr` is the isolated address part of ERC-7930. Its not a full ERC-7930 interoperable address.
@@ -41,8 +43,19 @@ abstract contract AxelarGatewayBase is Ownable {
     error RemoteGatewayAlreadyRegistered(bytes2 chainType, bytes chainReference);
 
     /// @dev Sets the local gateway address (i.e. Axelar's official gateway for the current chain).
-    constructor(IAxelarGateway _gateway) {
+    constructor(IAxelarGateway _gateway, IAxelarGasService _gasService) {
         _axelarGateway = _gateway;
+        _axelarGasService = _gasService;
+    }
+
+    // This is already exposed by AxelarExecutable which AxelarDestinationGateway inherit from. Because its not
+    // virtual, resolution is not possible. Therefore, we should not expose it.
+    // function gateway() public view virtual returns (IAxelarGateway) {
+    //     return _axelarGateway;
+    // }
+
+    function gasService() public view virtual returns (IAxelarGasService) {
+        return _axelarGasService;
     }
 
     /// @dev Returns the equivalent chain given an id that can be either either a binary interoperable address or an Axelar network identifier.
