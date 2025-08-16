@@ -34,6 +34,7 @@
 :ERC7579Multisig-onUninstall: pass:normal[xref:account.adoc#ERC7579Multisig-onUninstall-bytes-[`ERC7579Multisig.onUninstall`]]
 :ERC7579Multisig-_addSigners: pass:normal[xref:account.adoc#ERC7579Multisig-_addSigners-address-bytes---[`ERC7579Multisig._addSigners`]]
 :ERC7579Multisig-_removeSigners: pass:normal[xref:account.adoc#ERC7579Multisig-_removeSigners-address-bytes---[`ERC7579Multisig._removeSigners`]]
+:ERC7579Multisig-_removeSigners: pass:normal[xref:account.adoc#ERC7579Multisig-_removeSigners-address-bytes---[`ERC7579Multisig._removeSigners`]]
 :ERC7579Multisig: pass:normal[xref:account.adoc#ERC7579Multisig[`ERC7579Multisig`]]
 :ERC7579Multisig-_addSigners: pass:normal[xref:account.adoc#ERC7579Multisig-_addSigners-address-bytes---[`ERC7579Multisig._addSigners`]]
 :ERC7579Multisig: pass:normal[xref:account.adoc#ERC7579Multisig[`ERC7579Multisig`]]
@@ -1017,24 +1018,25 @@ Thrown when the signer length is less than 20 bytes.
 
 :ERC7913SignerAdded: pass:normal[xref:#ERC7579Multisig-ERC7913SignerAdded-address-bytes-[`++ERC7913SignerAdded++`]]
 :ERC7913SignerRemoved: pass:normal[xref:#ERC7579Multisig-ERC7913SignerRemoved-address-bytes-[`++ERC7913SignerRemoved++`]]
-:ERC7913ThresholdSet: pass:normal[xref:#ERC7579Multisig-ERC7913ThresholdSet-address-uint256-[`++ERC7913ThresholdSet++`]]
+:ERC7913ThresholdSet: pass:normal[xref:#ERC7579Multisig-ERC7913ThresholdSet-address-uint64-[`++ERC7913ThresholdSet++`]]
 :ERC7579MultisigAlreadyExists: pass:normal[xref:#ERC7579Multisig-ERC7579MultisigAlreadyExists-bytes-[`++ERC7579MultisigAlreadyExists++`]]
 :ERC7579MultisigNonexistentSigner: pass:normal[xref:#ERC7579Multisig-ERC7579MultisigNonexistentSigner-bytes-[`++ERC7579MultisigNonexistentSigner++`]]
 :ERC7579MultisigInvalidSigner: pass:normal[xref:#ERC7579Multisig-ERC7579MultisigInvalidSigner-bytes-[`++ERC7579MultisigInvalidSigner++`]]
-:ERC7579MultisigUnreachableThreshold: pass:normal[xref:#ERC7579Multisig-ERC7579MultisigUnreachableThreshold-uint256-uint256-[`++ERC7579MultisigUnreachableThreshold++`]]
+:ERC7579MultisigZeroThreshold: pass:normal[xref:#ERC7579Multisig-ERC7579MultisigZeroThreshold--[`++ERC7579MultisigZeroThreshold++`]]
+:ERC7579MultisigUnreachableThreshold: pass:normal[xref:#ERC7579Multisig-ERC7579MultisigUnreachableThreshold-uint64-uint64-[`++ERC7579MultisigUnreachableThreshold++`]]
 :onInstall: pass:normal[xref:#ERC7579Multisig-onInstall-bytes-[`++onInstall++`]]
 :onUninstall: pass:normal[xref:#ERC7579Multisig-onUninstall-bytes-[`++onUninstall++`]]
-:signers: pass:normal[xref:#ERC7579Multisig-signers-address-[`++signers++`]]
+:getSigners: pass:normal[xref:#ERC7579Multisig-getSigners-address-uint64-uint64-[`++getSigners++`]]
+:getSignerCount: pass:normal[xref:#ERC7579Multisig-getSignerCount-address-[`++getSignerCount++`]]
 :isSigner: pass:normal[xref:#ERC7579Multisig-isSigner-address-bytes-[`++isSigner++`]]
-:_signers: pass:normal[xref:#ERC7579Multisig-_signers-address-[`++_signers++`]]
 :threshold: pass:normal[xref:#ERC7579Multisig-threshold-address-[`++threshold++`]]
 :addSigners: pass:normal[xref:#ERC7579Multisig-addSigners-bytes---[`++addSigners++`]]
 :removeSigners: pass:normal[xref:#ERC7579Multisig-removeSigners-bytes---[`++removeSigners++`]]
-:setThreshold: pass:normal[xref:#ERC7579Multisig-setThreshold-uint256-[`++setThreshold++`]]
+:setThreshold: pass:normal[xref:#ERC7579Multisig-setThreshold-uint64-[`++setThreshold++`]]
 :_rawERC7579Validation: pass:normal[xref:#ERC7579Multisig-_rawERC7579Validation-address-bytes32-bytes-[`++_rawERC7579Validation++`]]
 :_addSigners: pass:normal[xref:#ERC7579Multisig-_addSigners-address-bytes---[`++_addSigners++`]]
 :_removeSigners: pass:normal[xref:#ERC7579Multisig-_removeSigners-address-bytes---[`++_removeSigners++`]]
-:_setThreshold: pass:normal[xref:#ERC7579Multisig-_setThreshold-address-uint256-[`++_setThreshold++`]]
+:_setThreshold: pass:normal[xref:#ERC7579Multisig-_setThreshold-address-uint64-[`++_setThreshold++`]]
 :_validateReachableThreshold: pass:normal[xref:#ERC7579Multisig-_validateReachableThreshold-address-[`++_validateReachableThreshold++`]]
 :_validateSignatures: pass:normal[xref:#ERC7579Multisig-_validateSignatures-address-bytes32-bytes---bytes---[`++_validateSignatures++`]]
 :_validateThreshold: pass:normal[xref:#ERC7579Multisig-_validateThreshold-address-bytes---[`++_validateThreshold++`]]
@@ -1065,9 +1067,9 @@ a social recovery operation.
 --
 * `++onInstall(initData)++`
 * `++onUninstall()++`
-* `++signers(account)++`
+* `++getSigners(account, start, end)++`
+* `++getSignerCount(account)++`
 * `++isSigner(account, signer)++`
-* `++_signers(account)++`
 * `++threshold(account)++`
 * `++addSigners(newSigners)++`
 * `++removeSigners(oldSigners)++`
@@ -1118,6 +1120,7 @@ a social recovery operation.
 * `++ERC7579MultisigAlreadyExists(signer)++`
 * `++ERC7579MultisigNonexistentSigner(signer)++`
 * `++ERC7579MultisigInvalidSigner(signer)++`
+* `++ERC7579MultisigZeroThreshold()++`
 * `++ERC7579MultisigUnreachableThreshold(signers, threshold)++`
 
 [.contract-subindex-inherited]
@@ -1140,7 +1143,7 @@ See {ERC7579DelayedExecutor-onInstall}. Besides the delay setup, the `initdata` 
 include `signers` and `threshold`.
 
 The initData should be encoded as:
-`abi.encode(bytes[] signers, uint256 threshold)`
+`abi.encode(bytes[] signers, uint64 threshold)`
 
 If no signers or threshold are provided, the multisignature functionality will be
 disabled until they are added later.
@@ -1161,13 +1164,22 @@ WARNING: This function has unbounded gas costs and may become uncallable if the 
 See {EnumerableSet-clear}.
 
 [.contract-item]
-[[ERC7579Multisig-signers-address-]]
-==== `[.contract-item-name]#++signers++#++(address account) → bytes[]++` [.item-kind]#public#
+[[ERC7579Multisig-getSigners-address-uint64-uint64-]]
+==== `[.contract-item-name]#++getSigners++#++(address account, uint64 start, uint64 end) → bytes[]++` [.item-kind]#public#
 
-Returns the set of authorized signers for the specified account.
+Returns a slice of the set of authorized signers for the specified account.
 
-WARNING: This operation copies the entire signers set to memory, which
-can be expensive or may result in unbounded computation.
+Using `start = 0` and `end = type(uint64).max` will return the entire set of signers.
+
+WARNING: Depending on the `start` and `end`, this operation can copy a large amount of data to memory, which
+can be expensive. This is designed for view accessors queried without gas fees. Using it in state-changing
+functions may become uncallable if the slice grows too large.
+
+[.contract-item]
+[[ERC7579Multisig-getSignerCount-address-]]
+==== `[.contract-item-name]#++getSignerCount++#++(address account) → uint256++` [.item-kind]#public#
+
+Returns the number of authorized signers for the specified account.
 
 [.contract-item]
 [[ERC7579Multisig-isSigner-address-bytes-]]
@@ -1176,14 +1188,8 @@ can be expensive or may result in unbounded computation.
 Returns whether the `signer` is an authorized signer for the specified account.
 
 [.contract-item]
-[[ERC7579Multisig-_signers-address-]]
-==== `[.contract-item-name]#++_signers++#++(address account) → struct EnumerableSet.BytesSet++` [.item-kind]#internal#
-
-Returns the set of authorized signers for the specified account.
-
-[.contract-item]
 [[ERC7579Multisig-threshold-address-]]
-==== `[.contract-item-name]#++threshold++#++(address account) → uint256++` [.item-kind]#public#
+==== `[.contract-item-name]#++threshold++#++(address account) → uint64++` [.item-kind]#public#
 
 Returns the minimum number of signers required to approve a multisignature operation
 for the specified account.
@@ -1213,8 +1219,8 @@ Requirements:
 * After removal, the threshold must still be reachable.
 
 [.contract-item]
-[[ERC7579Multisig-setThreshold-uint256-]]
-==== `[.contract-item-name]#++setThreshold++#++(uint256 newThreshold)++` [.item-kind]#public#
+[[ERC7579Multisig-setThreshold-uint64-]]
+==== `[.contract-item-name]#++setThreshold++#++(uint64 newThreshold)++` [.item-kind]#public#
 
 Sets the threshold for the calling account.
 Can only be called by the account itself.
@@ -1259,13 +1265,14 @@ Requirements:
 * The threshold must remain reachable after removal. See {_validateReachableThreshold} for details.
 
 [.contract-item]
-[[ERC7579Multisig-_setThreshold-address-uint256-]]
-==== `[.contract-item-name]#++_setThreshold++#++(address account, uint256 newThreshold)++` [.item-kind]#internal#
+[[ERC7579Multisig-_setThreshold-address-uint64-]]
+==== `[.contract-item-name]#++_setThreshold++#++(address account, uint64 newThreshold)++` [.item-kind]#internal#
 
 Sets the signatures `threshold` required to approve a multisignature operation.
 
 Requirements:
 
+* The threshold must be greater than 0. Reverts with {ERC7579MultisigZeroThreshold} if not.
 * The threshold must be reachable with the current number of signers. See {_validateReachableThreshold} for details.
 
 [.contract-item]
@@ -1313,8 +1320,8 @@ Emitted when signers are added.
 Emitted when signers are removed.
 
 [.contract-item]
-[[ERC7579Multisig-ERC7913ThresholdSet-address-uint256-]]
-==== `[.contract-item-name]#++ERC7913ThresholdSet++#++(address indexed account, uint256 threshold)++` [.item-kind]#event#
+[[ERC7579Multisig-ERC7913ThresholdSet-address-uint64-]]
+==== `[.contract-item-name]#++ERC7913ThresholdSet++#++(address indexed account, uint64 threshold)++` [.item-kind]#event#
 
 Emitted when the threshold is updated.
 
@@ -1337,26 +1344,30 @@ The `signer` does not exist.
 The `signer` is less than 20 bytes long.
 
 [.contract-item]
-[[ERC7579Multisig-ERC7579MultisigUnreachableThreshold-uint256-uint256-]]
-==== `[.contract-item-name]#++ERC7579MultisigUnreachableThreshold++#++(uint256 signers, uint256 threshold)++` [.item-kind]#error#
+[[ERC7579Multisig-ERC7579MultisigZeroThreshold--]]
+==== `[.contract-item-name]#++ERC7579MultisigZeroThreshold++#++()++` [.item-kind]#error#
+
+The `threshold` is zero.
+
+[.contract-item]
+[[ERC7579Multisig-ERC7579MultisigUnreachableThreshold-uint64-uint64-]]
+==== `[.contract-item-name]#++ERC7579MultisigUnreachableThreshold++#++(uint64 signers, uint64 threshold)++` [.item-kind]#error#
 
 The `threshold` is unreachable given the number of `signers`.
 
-:ERC7579MultisigWeightChanged: pass:normal[xref:#ERC7579MultisigWeighted-ERC7579MultisigWeightChanged-address-bytes-uint256-[`++ERC7579MultisigWeightChanged++`]]
-:ERC7579MultisigInvalidWeight: pass:normal[xref:#ERC7579MultisigWeighted-ERC7579MultisigInvalidWeight-bytes-uint256-[`++ERC7579MultisigInvalidWeight++`]]
+:ERC7579MultisigWeightChanged: pass:normal[xref:#ERC7579MultisigWeighted-ERC7579MultisigWeightChanged-address-bytes-uint64-[`++ERC7579MultisigWeightChanged++`]]
+:ERC7579MultisigInvalidWeight: pass:normal[xref:#ERC7579MultisigWeighted-ERC7579MultisigInvalidWeight-bytes-uint64-[`++ERC7579MultisigInvalidWeight++`]]
 :ERC7579MultisigMismatchedLength: pass:normal[xref:#ERC7579MultisigWeighted-ERC7579MultisigMismatchedLength--[`++ERC7579MultisigMismatchedLength++`]]
 :onInstall: pass:normal[xref:#ERC7579MultisigWeighted-onInstall-bytes-[`++onInstall++`]]
 :onUninstall: pass:normal[xref:#ERC7579MultisigWeighted-onUninstall-bytes-[`++onUninstall++`]]
 :signerWeight: pass:normal[xref:#ERC7579MultisigWeighted-signerWeight-address-bytes-[`++signerWeight++`]]
 :totalWeight: pass:normal[xref:#ERC7579MultisigWeighted-totalWeight-address-[`++totalWeight++`]]
-:setSignerWeights: pass:normal[xref:#ERC7579MultisigWeighted-setSignerWeights-bytes---uint256---[`++setSignerWeights++`]]
-:_signerWeight: pass:normal[xref:#ERC7579MultisigWeighted-_signerWeight-address-bytes-[`++_signerWeight++`]]
-:_setSignerWeights: pass:normal[xref:#ERC7579MultisigWeighted-_setSignerWeights-address-bytes---uint256---[`++_setSignerWeights++`]]
+:setSignerWeights: pass:normal[xref:#ERC7579MultisigWeighted-setSignerWeights-bytes---uint64---[`++setSignerWeights++`]]
+:_setSignerWeights: pass:normal[xref:#ERC7579MultisigWeighted-_setSignerWeights-address-bytes---uint64---[`++_setSignerWeights++`]]
 :_addSigners: pass:normal[xref:#ERC7579MultisigWeighted-_addSigners-address-bytes---[`++_addSigners++`]]
 :_removeSigners: pass:normal[xref:#ERC7579MultisigWeighted-_removeSigners-address-bytes---[`++_removeSigners++`]]
 :_validateReachableThreshold: pass:normal[xref:#ERC7579MultisigWeighted-_validateReachableThreshold-address-[`++_validateReachableThreshold++`]]
 :_validateThreshold: pass:normal[xref:#ERC7579MultisigWeighted-_validateThreshold-address-bytes---[`++_validateThreshold++`]]
-:_weightSigners: pass:normal[xref:#ERC7579MultisigWeighted-_weightSigners-address-bytes---[`++_weightSigners++`]]
 
 [.contract]
 [[ERC7579MultisigWeighted]]
@@ -1392,19 +1403,17 @@ signatures with a total weight of at least 4 (e.g., one with weight 1 and one wi
 * `++signerWeight(account, signer)++`
 * `++totalWeight(account)++`
 * `++setSignerWeights(signers, weights)++`
-* `++_signerWeight(account, signer)++`
-* `++_setSignerWeights(account, signers, newWeights)++`
+* `++_setSignerWeights(account, signers, weights)++`
 * `++_addSigners(account, newSigners)++`
 * `++_removeSigners(account, oldSigners)++`
 * `++_validateReachableThreshold(account)++`
 * `++_validateThreshold(account, validatingSigners)++`
-* `++_weightSigners(account, signers)++`
 
 [.contract-subindex-inherited]
 .ERC7579Multisig
-* `++signers(account)++`
+* `++getSigners(account, start, end)++`
+* `++getSignerCount(account)++`
 * `++isSigner(account, signer)++`
-* `++_signers(account)++`
 * `++threshold(account)++`
 * `++addSigners(newSigners)++`
 * `++removeSigners(oldSigners)++`
@@ -1460,6 +1469,7 @@ signatures with a total weight of at least 4 (e.g., one with weight 1 and one wi
 * `++ERC7579MultisigAlreadyExists(signer)++`
 * `++ERC7579MultisigNonexistentSigner(signer)++`
 * `++ERC7579MultisigInvalidSigner(signer)++`
+* `++ERC7579MultisigZeroThreshold()++`
 * `++ERC7579MultisigUnreachableThreshold(signers, threshold)++`
 
 [.contract-subindex-inherited]
@@ -1482,7 +1492,7 @@ Besides the standard delay and signer configuration, this can also include
 signer weights.
 
 The initData should be encoded as:
-`abi.encode(bytes[] signers, uint256 threshold, uint256[] weights)`
+`abi.encode(bytes[] signers, uint64 threshold, uint64[] weights)`
 
 If weights are not provided but signers are, all signers default to weight 1.
 
@@ -1500,33 +1510,26 @@ See {ERC7579Multisig-onUninstall}.
 
 [.contract-item]
 [[ERC7579MultisigWeighted-signerWeight-address-bytes-]]
-==== `[.contract-item-name]#++signerWeight++#++(address account, bytes signer) → uint256++` [.item-kind]#public#
+==== `[.contract-item-name]#++signerWeight++#++(address account, bytes signer) → uint64++` [.item-kind]#public#
 
 Gets the weight of a signer for a specific account. Returns 0 if the signer is not authorized.
 
 [.contract-item]
 [[ERC7579MultisigWeighted-totalWeight-address-]]
-==== `[.contract-item-name]#++totalWeight++#++(address account) → uint256++` [.item-kind]#public#
+==== `[.contract-item-name]#++totalWeight++#++(address account) → uint64++` [.item-kind]#public#
 
 Gets the total weight of all signers for a specific account.
 
 [.contract-item]
-[[ERC7579MultisigWeighted-setSignerWeights-bytes---uint256---]]
-==== `[.contract-item-name]#++setSignerWeights++#++(bytes[] signers, uint256[] weights)++` [.item-kind]#public#
+[[ERC7579MultisigWeighted-setSignerWeights-bytes---uint64---]]
+==== `[.contract-item-name]#++setSignerWeights++#++(bytes[] signers, uint64[] weights)++` [.item-kind]#public#
 
 Sets weights for signers for the calling account.
 Can only be called by the account itself.
 
 [.contract-item]
-[[ERC7579MultisigWeighted-_signerWeight-address-bytes-]]
-==== `[.contract-item-name]#++_signerWeight++#++(address account, bytes signer) → uint256++` [.item-kind]#internal#
-
-Gets the weight of the current signer. Returns 1 if not explicitly set.
-This internal function doesn't check if the signer is authorized.
-
-[.contract-item]
-[[ERC7579MultisigWeighted-_setSignerWeights-address-bytes---uint256---]]
-==== `[.contract-item-name]#++_setSignerWeights++#++(address account, bytes[] signers, uint256[] newWeights)++` [.item-kind]#internal#
+[[ERC7579MultisigWeighted-_setSignerWeights-address-bytes---uint64---]]
+==== `[.contract-item-name]#++_setSignerWeights++#++(address account, bytes[] signers, uint64[] weights)++` [.item-kind]#internal#
 
 Sets weights for multiple signers at once. Internal version without access control.
 
@@ -1546,11 +1549,18 @@ Emits {ERC7579MultisigWeightChanged} for each signer.
 Override to add weight tracking. See {ERC7579Multisig-_addSigners}.
 Each new signer has a default weight of 1.
 
+In cases where {totalWeight} is almost `type(uint64).max` (due to a large `_totalExtraWeight`), adding new
+signers could cause the {totalWeight} computation to overflow. Adding a {totalWeight} call after the new
+signers are added ensures no such overflow happens.
+
 [.contract-item]
 [[ERC7579MultisigWeighted-_removeSigners-address-bytes---]]
 ==== `[.contract-item-name]#++_removeSigners++#++(address account, bytes[] oldSigners)++` [.item-kind]#internal#
 
 Override to handle weight tracking during removal. See {ERC7579Multisig-_removeSigners}.
+
+Just like {_addSigners}, this function does not emit {ERC7579MultisigWeightChanged} events. The
+{ERC7913SignerRemoved} event emitted by {ERC7579Multisig-_removeSigners} is enough to track weights here.
 
 [.contract-item]
 [[ERC7579MultisigWeighted-_validateReachableThreshold-address-]]
@@ -1574,20 +1584,17 @@ NOTE: This function intentionally does not call `super._validateThreshold` becau
 assumes each signer has a weight of 1, which is incompatible with this weighted implementation.
 
 [.contract-item]
-[[ERC7579MultisigWeighted-_weightSigners-address-bytes---]]
-==== `[.contract-item-name]#++_weightSigners++#++(address account, bytes[] signers) → uint256++` [.item-kind]#internal#
-
-Calculates the total weight of a set of signers.
-
-[.contract-item]
-[[ERC7579MultisigWeighted-ERC7579MultisigWeightChanged-address-bytes-uint256-]]
-==== `[.contract-item-name]#++ERC7579MultisigWeightChanged++#++(address indexed account, bytes indexed signer, uint256 weight)++` [.item-kind]#event#
+[[ERC7579MultisigWeighted-ERC7579MultisigWeightChanged-address-bytes-uint64-]]
+==== `[.contract-item-name]#++ERC7579MultisigWeightChanged++#++(address indexed account, bytes indexed signer, uint64 weight)++` [.item-kind]#event#
 
 Emitted when a signer's weight is changed.
 
+NOTE: Not emitted in {_addSigners} or {_removeSigners}. Indexers must rely on {ERC7913SignerAdded}
+and {ERC7913SignerRemoved} to index a default weight of 1. See {signerWeight}.
+
 [.contract-item]
-[[ERC7579MultisigWeighted-ERC7579MultisigInvalidWeight-bytes-uint256-]]
-==== `[.contract-item-name]#++ERC7579MultisigInvalidWeight++#++(bytes signer, uint256 weight)++` [.item-kind]#error#
+[[ERC7579MultisigWeighted-ERC7579MultisigInvalidWeight-bytes-uint64-]]
+==== `[.contract-item-name]#++ERC7579MultisigInvalidWeight++#++(bytes signer, uint64 weight)++` [.item-kind]#error#
 
 Thrown when a signer's weight is invalid.
 
@@ -1642,9 +1649,9 @@ explicitly agreed to their roles.
 .ERC7579Multisig
 * `++onInstall(initData)++`
 * `++onUninstall()++`
-* `++signers(account)++`
+* `++getSigners(account, start, end)++`
+* `++getSignerCount(account)++`
 * `++isSigner(account, signer)++`
-* `++_signers(account)++`
 * `++threshold(account)++`
 * `++addSigners(newSigners)++`
 * `++removeSigners(oldSigners)++`
@@ -1715,6 +1722,7 @@ explicitly agreed to their roles.
 * `++ERC7579MultisigAlreadyExists(signer)++`
 * `++ERC7579MultisigNonexistentSigner(signer)++`
 * `++ERC7579MultisigInvalidSigner(signer)++`
+* `++ERC7579MultisigZeroThreshold()++`
 * `++ERC7579MultisigUnreachableThreshold(signers, threshold)++`
 
 [.contract-subindex-inherited]
@@ -1798,9 +1806,9 @@ and the validation will check the storage mapping instead of cryptographic verif
 .ERC7579Multisig
 * `++onInstall(initData)++`
 * `++onUninstall()++`
-* `++signers(account)++`
+* `++getSigners(account, start, end)++`
+* `++getSignerCount(account)++`
 * `++isSigner(account, signer)++`
-* `++_signers(account)++`
 * `++threshold(account)++`
 * `++addSigners(newSigners)++`
 * `++removeSigners(oldSigners)++`
@@ -1857,6 +1865,7 @@ and the validation will check the storage mapping instead of cryptographic verif
 * `++ERC7579MultisigAlreadyExists(signer)++`
 * `++ERC7579MultisigNonexistentSigner(signer)++`
 * `++ERC7579MultisigInvalidSigner(signer)++`
+* `++ERC7579MultisigZeroThreshold()++`
 * `++ERC7579MultisigUnreachableThreshold(signers, threshold)++`
 
 [.contract-subindex-inherited]
