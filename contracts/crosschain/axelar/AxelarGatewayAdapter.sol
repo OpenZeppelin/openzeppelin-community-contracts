@@ -51,23 +51,25 @@ contract AxelarGatewayAdapter is IERC7786GatewaySource, Ownable, AxelarExecutabl
         address initialOwner
     ) Ownable(initialOwner) AxelarExecutable(address(gateway)) {}
 
-    /// @dev Returns the equivalent chain given an id that can be either either a binary interoperable address or an Axelar network identifier.
+    /// @dev Returns the Axelar chain identifier for a given binary interoperable chain id.
     function getAxelarChain(bytes memory input) public view virtual returns (string memory output) {
         output = _erc7930ToAxelar[input];
         require(bytes(output).length > 0, UnsupportedERC7930Chain(input));
     }
 
+    /// @dev Returns the binary interoperable chain id for a given Axelar chain identifier.
     function getErc7930Chain(string memory input) public view virtual returns (bytes memory output) {
         output = _axelarToErc7930[input];
         require(output.length > 0, UnsupportedAxelarChain(input));
     }
 
-    /// @dev Returns the address of the remote gateway for a given chainType and chainReference.
+    /// @dev Returns the address of the remote gateway for a given binary interoperable chain id.
     function getRemoteGateway(bytes memory chain) public view virtual returns (bytes memory) {
         (bytes2 chainType, bytes memory chainReference, ) = chain.parseV1();
         return getRemoteGateway(chainType, chainReference);
     }
 
+    /// @dev Returns the address of the remote gateway for a given chainType and chainReference.
     function getRemoteGateway(
         bytes2 chainType,
         bytes memory chainReference
@@ -78,7 +80,7 @@ contract AxelarGatewayAdapter is IERC7786GatewaySource, Ownable, AxelarExecutabl
         return addr;
     }
 
-    /// @dev Registers a chain equivalence between a binary interoperable address an Axelar network identifier.
+    /// @dev Registers a chain equivalence between a binary interoperable chain id and an Axelar chain identifier.
     function registerChainEquivalence(bytes calldata chain, string calldata axelar) public virtual onlyOwner {
         (, , bytes calldata addr) = chain.parseV1Calldata();
         require(addr.length == 0, InvalidChainIdentifier(chain));
