@@ -16,6 +16,7 @@ import {IERC7786Receiver} from "../../interfaces/IERC7786.sol";
  * The contract implements AxelarExecutable's {_execute} function to execute the message, converting Axelar's native
  * workflow into the standard ERC-7786.
  */
+// slither-disable-next-line locked-ether
 contract AxelarGatewayAdapter is IERC7786GatewaySource, Ownable, AxelarExecutable {
     using InteroperableAddress for bytes;
     using Strings for *;
