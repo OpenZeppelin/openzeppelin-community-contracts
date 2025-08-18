@@ -4,13 +4,9 @@ const { getLocalChain } = require('@openzeppelin/contracts/test/helpers/chains')
 async function deploy(owner) {
   const chain = await getLocalChain();
 
-  const axelar = await Promise.all([
-    ethers.deployContract('AxelarGatewayMock'),
-    ethers.deployContract('AxelarGasServiceMock'),
-  ]).then(([gateway, gasService]) => ({ gateway, gasService }));
-
-  const gatewayA = await ethers.deployContract('AxelarGatewayAdaptor', [axelar.gateway, axelar.gasService, owner]);
-  const gatewayB = await ethers.deployContract('AxelarGatewayAdaptor', [axelar.gateway, axelar.gasService, owner]);
+  const axelar = await ethers.deployContract('AxelarGatewayMock');
+  const gatewayA = await ethers.deployContract('AxelarGatewayAdapter', [axelar, owner]);
+  const gatewayB = await ethers.deployContract('AxelarGatewayAdapter', [axelar, owner]);
 
   await Promise.all([
     gatewayA.connect(owner).registerChainEquivalence(chain.erc7930, 'local'),
