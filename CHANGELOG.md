@@ -1,3 +1,42 @@
+## 17-08-2025
+
+- `ERC20Freezable`: Add extension of ERC-20 that allows freezing specific amounts of tokens per account, preventing transfers until unfrozen while maintaining full visibility of balances.
+- `ERC20Restricted`: Add extension of ERC-20 that implements user account transfer restrictions through allowlist/blocklist functionality based on ERC-7943.
+- `ERC20uRWA`: Add comprehensive ERC-20 extension implementing ERC-7943 specification for unified Real World Assets (uRWAs) with freezing, restrictions, and forced transfer capabilities.
+- `ERC20Custodian`: Deprecate in favor of `ERC20Freezable`.
+- `ERC20Allowlist`, `ERC20Blocklist`: Deprecate in favor of `ERC20Restricted`.
+
+## 14-08-2025
+
+- `ZKEmailUtils`: Add `tryDecodeEmailProof` function for safe calldata decoding with comprehensive bounds checking and validation for `EmailProof` struct.
+- `ZKEmailUtils`: Update `isValidZKEmail` to receive `EmailProof` struct directly instead of `EmailAuthMsg` struct.
+- `SignerZKEmail`: Remove `templateId` functionality and switch from `EmailAuthMsg` to direct `EmailProof` validation for streamlined signature verification.
+- `ERC7913ZKEmailVerifier`: Remove `templateId` from signature validation logic and update `_decodeKey` function to directly decode `EmailProof` struct.
+
+## 09-08-2025
+
+- `ZKEmailUtils`: Simplify library implementation and remove `Verifier.sol` indirection for cleaner integration with a Groth16Verifier.
+
+## 24-07-2025
+
+- `ERC7786Receiver`: Rename `executeMessage` to `receiveMessage` to align with ERC-7786 specification, remove `attributes` parameter for simplified message handling.
+
+## 22-07-2025
+
+- `WebAuthn`: Replace `verifyMinimal` with `verify` as the standard method, add `verify(challenge, auth, qx, qy, requireUV)` variant for UV flag control, improve backup eligibility/state validation, and make authenticator data flags constants internal for better accessibility.
+
+## 21-07-2025
+
+- Remove `ERC20Bridgeable`. Migrated to `@openzeppelin/contracts>=5.4.0`.
+
+## 19-07-2025
+
+- Remove `Account`, `AccountERC7579`, `AccountERC7579Hooked`, `ERC7812`, `ERC7739Utils`, `ERC7913Utils`, `AbstractSigner`, `SignerECDSA`, `SignerP256`, `SignerRSA`, `SignerERC7702`, `SignerERC7913`, `MultiSignerERC7913`, `MultiSignerERC7913Weighted`, `ERC7913P256Verifier`, `ERC7913PRSAVerifier`. These contracts were migrated to `@openzeppelin/contracts>=5.4.0`.
+
+## 11-07-2025
+
+- `IERC7943`: Add interface for uRWAs (ERC-7943) supporting frozen tokens, forced transfers, and compliance features.
+
 ## 16-07-2025
 
 - `ERC7913WebAuthnVerifier`: Add an ERC-7913 signature verifier that supports WebAuthn authentication assertions using P256 keys.
@@ -131,7 +170,7 @@
 
 - `ERC20Allowlist`: Extension of ERC-20 that implements an allow list to enable token transfers, disabled by default.
 - `ERC20Blocklist`: Extension of ERC-20 that implements a block list to restrict token transfers, enabled by default.
-- `ERC20Custodian`: Extension of ERC-20 that allows a custodian to freeze user's tokens by a certain amount.
+- : Deprecate in favor of `ERC20Freezable`.: Extension of ERC-20 that allows a custodian to freeze user's tokens by a certain amount.
 
 ## 03-10-2024
 

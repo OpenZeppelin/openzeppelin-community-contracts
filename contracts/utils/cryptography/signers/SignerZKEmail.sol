@@ -3,8 +3,8 @@
 pragma solidity ^0.8.24;
 
 import {IDKIMRegistry} from "@zk-email/contracts/DKIMRegistry.sol";
-import {IVerifier} from "@zk-email/email-tx-builder/src/interfaces/IVerifier.sol";
-import {EmailAuthMsg} from "@zk-email/email-tx-builder/src/interfaces/IEmailTypes.sol";
+import {IGroth16Verifier} from "@zk-email/email-tx-builder/src/interfaces/IGroth16Verifier.sol";
+import {EmailProof} from "@zk-email/email-tx-builder/src/interfaces/IVerifier.sol";
 import {AbstractSigner} from "@openzeppelin/contracts/utils/cryptography/signers/AbstractSigner.sol";
 import {ZKEmailUtils} from "../ZKEmailUtils.sol";
 
@@ -22,8 +22,7 @@ import {ZKEmailUtils} from "../ZKEmailUtils.sol";
  *
  * * {accountSalt} - A unique identifier derived from the user's email address and account code.
  * * {DKIMRegistry} - An instance of the DKIM registry contract for domain verification.
- * * {verifier} - An instance of the Verifier contract for zero-knowledge proof validation.
- * * {templateId} - The template ID of the sign hash command, defining the expected format.
+ * * {verifier} - An instance of the Groth16Verifier contract for zero-knowledge proof validation.
  *
  * Example of usage:
  *
@@ -32,29 +31,26 @@ import {ZKEmailUtils} from "../ZKEmailUtils.sol";
  *   function initialize(
  *       bytes32 accountSalt,
  *       IDKIMRegistry registry,
- *       IVerifier verifier,
- *       uint256 templateId
+ *       IGroth16Verifier groth16Verifier
  *   ) public initializer {
  *       // Will revert if the signer is already initialized
  *       _setAccountSalt(accountSalt);
  *       _setDKIMRegistry(registry);
- *       _setVerifier(verifier);
- *       _setTemplateId(templateId);
+ *       _setVerifier(groth16Verifier);
  *   }
  * }
  * ```
  *
- * IMPORTANT: Avoiding to call {_setAccountSalt}, {_setDKIMRegistry}, {_setVerifier} and {_setTemplateId}
+ * IMPORTANT: Failing to call {_setAccountSalt}, {_setDKIMRegistry}, and {_setVerifier}
  * either during construction (if used standalone) or during initialization (if used as a clone) may
  * leave the signer either front-runnable or unusable.
  */
 abstract contract SignerZKEmail is AbstractSigner {
-    using ZKEmailUtils for EmailAuthMsg;
+    using ZKEmailUtils for EmailProof;
 
     bytes32 private _accountSalt;
     IDKIMRegistry private _registry;
-    IVerifier private _verifier;
-    uint256 private _templateId;
+    IGroth16Verifier private _groth16Verifier;
 
     /// @dev Proof verification error.
     error InvalidEmailProof(ZKEmailUtils.EmailProofError err);
@@ -87,16 +83,11 @@ abstract contract SignerZKEmail is AbstractSigner {
     }
 
     /**
-     * @dev An instance of the Verifier contract.
+     * @dev An instance of the Groth16Verifier contract.
      * See https://docs.zk.email/architecture/zk-proofs#how-zk-email-uses-zero-knowledge-proofs[ZK Proofs].
      */
-    function verifier() public view virtual returns (IVerifier) {
-        return _verifier;
-    }
-
-    /// @dev The command template of the sign hash command.
-    function templateId() public view virtual returns (uint256) {
-        return _templateId;
+    function verifier() public view virtual returns (IGroth16Verifier) {
+        return _groth16Verifier;
     }
 
     /// @dev Set the {accountSalt}.
@@ -110,51 +101,26 @@ abstract contract SignerZKEmail is AbstractSigner {
     }
 
     /// @dev Set the {verifier} contract address.
-    function _setVerifier(IVerifier verifier_) internal virtual {
-        _verifier = verifier_;
-    }
-
-    /// @dev Set the command's {templateId}.
-    function _setTemplateId(uint256 templateId_) internal virtual {
-        _templateId = templateId_;
+    function _setVerifier(IGroth16Verifier verifier_) internal virtual {
+        _groth16Verifier = verifier_;
     }
 
     /**
      * @dev See {AbstractSigner-_rawSignatureValidation}. Validates a raw signature by:
      *
-     * 1. Decoding the email authentication message from the signature
-     * 2. Verifying the hash matches the command parameters
-     * 3. Checking the template ID matches
-     * 4. Validating the account salt
-     * 5. Verifying the email proof
+     * 1. Decoding the email proof from the signature
+     * 2. Validating the account salt matches
+     * 3. Verifying the email proof using ZKEmail utilities
      */
     function _rawSignatureValidation(
         bytes32 hash,
         bytes calldata signature
     ) internal view virtual override returns (bool) {
-        // Check if the signature is long enough to contain the EmailAuthMsg
-        // The minimum length is 512 bytes (initial part + pointer offsets)
-        // - `templateId` is a uint256 (32 bytes).
-        // - `commandParams` is a dynamic array of bytes32 (32 bytes offset).
-        // - `skippedCommandPrefixSize` is a uint256 (32 bytes).
-        // - `proof` is a struct with the following fields (32 bytes offset):
-        //   - `domainName` is a dynamic string (32 bytes offset).
-        //   - `publicKeyHash` is a bytes32 (32 bytes).
-        //   - `timestamp` is a uint256 (32 bytes).
-        //   - `maskedCommand` is a dynamic string (32 bytes offset).
-        //   - `emailNullifier` is a bytes32 (32 bytes).
-        //   - `accountSalt` is a bytes32 (32 bytes).
-        //   - `isCodeExist` is a boolean, so its length is 1 byte padded to 32 bytes.
-        //   - `proof` is a dynamic bytes (32 bytes offset).
-        // There are 128 bytes for the EmailAuthMsg type and 256 bytes for the proof.
-        // Considering all dynamic elements are empty (i.e. `commandParams` = [], `domainName` = "", `maskedCommand` = "", `proof` = []),
-        // then we have 128 bytes for the EmailAuthMsg type, 256 bytes for the proof and 4 * 32 for the length of the dynamic elements.
-        // So the minimum length is 128 + 256 + 4 * 32 = 512 bytes.
-        if (signature.length < 512) return false;
-        EmailAuthMsg memory emailAuthMsg = abi.decode(signature, (EmailAuthMsg));
-        return (abi.decode(emailAuthMsg.commandParams[0], (bytes32)) == hash &&
-            emailAuthMsg.templateId == templateId() &&
-            emailAuthMsg.proof.accountSalt == accountSalt() &&
-            emailAuthMsg.isValidZKEmail(DKIMRegistry(), verifier()) == ZKEmailUtils.EmailProofError.NoError);
+        (bool decodeSuccess, EmailProof calldata emailProof) = ZKEmailUtils.tryDecodeEmailProof(signature);
+
+        return
+            decodeSuccess &&
+            emailProof.accountSalt == accountSalt() &&
+            emailProof.isValidZKEmail(DKIMRegistry(), verifier(), hash) == ZKEmailUtils.EmailProofError.NoError;
     }
 }
