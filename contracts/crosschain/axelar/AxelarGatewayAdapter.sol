@@ -18,7 +18,7 @@ import {IERC7786Receiver} from "../../interfaces/IERC7786.sol";
  *
  * NOTE: While both ERC-7786 and Axelar do support non-evm chains, this adaptor does not. This limitation comes from
  * the translation of the ERC-7930 interoperable address (binary objects -- bytes) to strings. This is necessary
- * because Axelar uses string to represend addresses. For EVM network, this adapter uses a checksum hex string
+ * because Axelar uses string to represent addresses. For EVM network, this adapter uses a checksum hex string
  * representation. Other networks would require a different encoding. Ideally we would have a single encoding for all
  * networks (could be base58, base64, ...) but Axelar doesn't support that.
  */
