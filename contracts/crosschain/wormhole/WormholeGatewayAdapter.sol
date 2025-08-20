@@ -45,11 +45,10 @@ contract WormholeGatewayAdapter is IERC7786GatewaySource, IWormholeReceiver, Own
         bytes recipient;
         bytes payload;
     }
-    mapping(bytes32 => PendingMessage) private _pending;
-    uint256 private _lastSendId;
 
-    // Executed message tracking
-    BitMaps.BitMap private _executed;
+    uint256 private _lastSendId;
+    mapping(bytes32 sendId => PendingMessage) private _pending;
+    mapping(uint256 chainId => BitMaps.BitMap) private _executed;
 
     /// @dev A message was relayed to Wormhole (part of the post processing of the outbox ids created by {sendMessage})
     event MessageRelayed(bytes32 sendId);
@@ -69,7 +68,7 @@ contract WormholeGatewayAdapter is IERC7786GatewaySource, IWormholeReceiver, Own
     error RemoteGatewayAlreadyRegistered(uint256 chainId);
     error InvalidSendId(bytes32 sendId);
     error AdditionalMessagesNotSupported();
-    error MessageAlreadyExecuted(bytes32 outboxId);
+    error MessageAlreadyExecuted(uint256 chainId, bytes32 outboxId);
 
     modifier onlyWormholeRelayer() {
         require(msg.sender == address(_wormholeRelayer), UnauthorizedCaller(msg.sender));
@@ -270,13 +269,14 @@ contract WormholeGatewayAdapter is IERC7786GatewaySource, IWormholeReceiver, Own
     ) public payable virtual onlyWormholeRelayer {
         require(additionalMessages.length == 0, AdditionalMessagesNotSupported());
 
-        (bytes32 outboxId, bytes memory sender, bytes memory recipient, bytes memory payload) = abi.decode(
+        (bytes32 sendId, bytes memory sender, bytes memory recipient, bytes memory payload) = abi.decode(
             adapterPayload,
             (bytes32, bytes, bytes, bytes)
         );
 
         // Wormhole to ERC-7930 translation
-        address addr = getRemoteGateway(getChainId(wormholeSourceChain));
+        uint256 chainId = getChainId(wormholeSourceChain);
+        address addr = getRemoteGateway(chainId);
 
         // check message validity
         // - `wormholeSourceAddress` is the remote gateway on the origin chain.
@@ -286,8 +286,8 @@ contract WormholeGatewayAdapter is IERC7786GatewaySource, IWormholeReceiver, Own
         );
 
         // prevent replay - deliveryHash might not be unique if a message is relayed multiple time
-        require(!_executed.get(uint256(outboxId)), MessageAlreadyExecuted(outboxId));
-        _executed.set(uint256(outboxId));
+        require(!_executed[chainId].get(uint256(sendId)), MessageAlreadyExecuted(chainId, sendId));
+        _executed[chainId].set(uint256(sendId));
 
         (, address target) = recipient.parseEvmV1();
         bytes4 result = IERC7786Receiver(target).receiveMessage{value: msg.value}(deliveryHash, sender, payload);
