@@ -13,6 +13,7 @@ import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 import {ERC7786Attributes} from "../utils/ERC7786Attributes.sol";
 import {IERC7786GatewaySource} from "../../interfaces/IERC7786.sol";
 import {IERC7786Receiver} from "../../interfaces/IERC7786.sol";
+import {IERC7786Attributes} from "../../interfaces/IERC7786Attributes.sol";
 
 /**
  * @dev A contract that combines the functionality of both the source and destination gateway
