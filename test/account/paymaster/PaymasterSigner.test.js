@@ -1,4 +1,4 @@
-const { ethers, entrypoint } = require('hardhat');
+const { ethers, predeploy } = require('hardhat');
 const { loadFixture } = require('@nomicfoundation/hardhat-network-helpers');
 
 const { getDomain, PackedUserOperation, UserOperationRequest } = require('@openzeppelin/contracts/test/helpers/eip712');
@@ -33,7 +33,7 @@ for (const [name, opts] of Object.entries({
     ]);
 
     // Domains
-    const entrypointDomain = await getDomain(entrypoint.v08);
+    const entrypointDomain = await getDomain(predeploy.entrypoint.v08);
     const paymasterDomain = await getDomain(paymaster);
 
     const signUserOp = userOp =>

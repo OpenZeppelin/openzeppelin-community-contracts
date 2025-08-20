@@ -30,10 +30,10 @@ require('@nomicfoundation/hardhat-chai-matchers');
 require('@nomicfoundation/hardhat-ethers');
 require('hardhat-exposed');
 require('hardhat-gas-reporter');
+require('hardhat-predeploy');
 require('solidity-coverage');
 require('solidity-docgen');
 require('./hardhat/remappings');
-require('@openzeppelin/contracts/hardhat/common-contracts');
 
 module.exports = {
   solidity: {
