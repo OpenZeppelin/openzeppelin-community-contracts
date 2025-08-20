@@ -3,7 +3,10 @@ const { expect } = require('chai');
 const { loadFixture } = require('@nomicfoundation/hardhat-network-helpers');
 const { anyValue } = require('@nomicfoundation/hardhat-chai-matchers/withArgs');
 
+const ERC7786Attributes = require('../../helpers/erc7786attributes');
 const WormholeHelper = require('./WormholeHelper');
+
+const value = 1_000n;
 
 async function fixture() {
   const [owner, sender, ...accounts] = await ethers.getSigners();
@@ -76,15 +79,32 @@ describe('WormholeGatewayAdapter', function () {
     //   [sendId, getAddress(this.sender), getAddress(this.receiver), payload, attributes],
     // );
 
-    await expect(this.gatewayA.connect(this.sender).sendMessage(erc7930Recipient, payload, attributes))
+    await expect(this.gatewayA.connect(this.sender).sendMessage(erc7930Recipient, payload, attributes, { value }))
       .to.emit(this.gatewayA, 'MessageSent')
-      .withArgs(sendId, erc7930Sender, erc7930Recipient, payload, 0n, attributes);
+      .withArgs(sendId, erc7930Sender, erc7930Recipient, payload, value, attributes);
 
     await expect(this.gatewayA.requestRelay(sendId, 100_000n, ethers.ZeroAddress))
       .to.emit(this.gatewayA, 'MessageRelayed')
       .withArgs(sendId)
       .to.emit(this.receiver, 'MessageReceived')
-      .withArgs(this.gatewayB, anyValue, erc7930Sender, payload);
+      .withArgs(this.gatewayB, anyValue, erc7930Sender, payload, value);
+  });
+
+  it('workflow - requestRelay attribute', async function () {
+    const erc7930Sender = this.chain.toErc7930(this.sender);
+    const erc7930Recipient = this.chain.toErc7930(this.receiver);
+    const payload = ethers.randomBytes(128);
+    const attributes = [ERC7786Attributes.encodeFunctionData('requestRelay', [value, 100_000n, ethers.ZeroAddress])];
+    // const encoded = ethers.AbiCoder.defaultAbiCoder().encode(
+    //   ['bytes32', 'string', 'string', 'bytes', 'bytes[]'],
+    //   [sendId, getAddress(this.sender), getAddress(this.receiver), payload, attributes],
+    // );
+
+    await expect(this.gatewayA.connect(this.sender).sendMessage(erc7930Recipient, payload, attributes, { value }))
+      .to.emit(this.gatewayA, 'MessageSent')
+      .withArgs(0n, erc7930Sender, erc7930Recipient, payload, value, attributes)
+      .to.emit(this.receiver, 'MessageReceived')
+      .withArgs(this.gatewayB, anyValue, erc7930Sender, payload, value);
   });
 
   it('invalid receiver - bad return value', async function () {

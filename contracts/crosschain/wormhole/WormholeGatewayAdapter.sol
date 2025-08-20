@@ -289,7 +289,7 @@ contract WormholeGatewayAdapter is IERC7786GatewaySource, IWormholeReceiver, Own
         _executed.set(uint256(outboxId));
 
         (, address target) = recipient.parseEvmV1();
-        bytes4 result = IERC7786Receiver(target).receiveMessage(deliveryHash, sender, payload);
+        bytes4 result = IERC7786Receiver(target).receiveMessage{value: msg.value}(deliveryHash, sender, payload);
         require(result == IERC7786Receiver.receiveMessage.selector, ReceiverExecutionFailed());
     }
 }
