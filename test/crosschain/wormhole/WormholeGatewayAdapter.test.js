@@ -27,7 +27,7 @@ async function fixture() {
   };
 }
 
-describe('WormholeGateway', function () {
+describe('WormholeGatewayAdapter', function () {
   const sendId = '0x0000000000000000000000000000000000000000000000000000000000000001';
 
   beforeEach(async function () {
