@@ -166,8 +166,8 @@ contract WormholeGatewayAdapter is IERC7786GatewaySource, IWormholeReceiver, Own
     }
 
     /// @inheritdoc IERC7786GatewaySource
-    function supportsAttribute(bytes4 /*selector*/) public pure returns (bool) {
-        return false;
+    function supportsAttribute(bytes4 selector) public pure returns (bool) {
+        return selector == IERC7786Attributes.requestRelay.selector;
     }
 
     /// @inheritdoc IERC7786GatewaySource
