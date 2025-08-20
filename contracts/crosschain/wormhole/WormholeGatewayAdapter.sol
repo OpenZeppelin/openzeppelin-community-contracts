@@ -10,6 +10,7 @@ import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {BitMaps} from "@openzeppelin/contracts/utils/structs/BitMaps.sol";
 import {InteroperableAddress} from "@openzeppelin/contracts/utils/draft-InteroperableAddress.sol";
 import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
+import {ERC7786Attributes} from "../utils/ERC7786Attributes.sol";
 import {IERC7786GatewaySource} from "../../interfaces/IERC7786.sol";
 import {IERC7786Receiver} from "../../interfaces/IERC7786.sol";
 
@@ -175,23 +176,46 @@ contract WormholeGatewayAdapter is IERC7786GatewaySource, IWormholeReceiver, Own
         bytes calldata payload,
         bytes[] calldata attributes
     ) external payable returns (bytes32 sendId) {
-        // Use of `if () revert` syntax to avoid accessing attributes[0] if it's empty
-        if (attributes.length > 0)
-            revert UnsupportedAttribute(attributes[0].length < 0x04 ? bytes4(0) : bytes4(attributes[0][0:4]));
+        bool relay = false;
+        uint256 value = msg.value;
+        uint256 gasLimit = 0;
 
-        // Note: this reverts with UnsupportedChainId if the recipient is not on a supported chain.
-        // No real need to check the return value.
-        getRemoteGateway(recipient);
+        for (uint256 i = 0; i < attributes.length; ++i) {
+            (relay, value, gasLimit, ) = ERC7786Attributes.tryDecodeRequestRelayCalldata(attributes[i]);
+            require(relay, UnsupportedAttribute(attributes[i].length < 0x04 ? bytes4(0) : bytes4(attributes[i])));
+        }
 
-        sendId = bytes32(++_lastSendId);
-        _pending[sendId] = PendingMessage(true, msg.sender, msg.value, recipient, payload);
+        if (relay) {
+            // TODO: Do we care about the returned "sequence"?
+            bytes memory encoded = abi.encode(
+                sendId,
+                InteroperableAddress.formatEvmV1(block.chainid, msg.sender),
+                recipient,
+                payload
+            );
+            _wormholeRelayer.sendPayloadToEvm{value: msg.value}(
+                getWormholeChain(recipient),
+                getRemoteGateway(recipient),
+                encoded,
+                value,
+                gasLimit
+            );
+        } else {
+            sendId = bytes32(++_lastSendId);
+
+            // Note: this reverts with UnsupportedChainId if the recipient is not on a supported chain.
+            // No real need to check the return value.
+            getRemoteGateway(recipient);
+
+            _pending[sendId] = PendingMessage(true, msg.sender, value, recipient, payload);
+        }
 
         emit MessageSent(
             sendId,
             InteroperableAddress.formatEvmV1(block.chainid, msg.sender),
             recipient,
             payload,
-            0,
+            value,
             attributes
         );
     }
@@ -211,8 +235,6 @@ contract WormholeGatewayAdapter is IERC7786GatewaySource, IWormholeReceiver, Own
 
     /// @dev Relay a message that was initiated by {sendMessage}.
     function requestRelay(bytes32 sendId, uint256 gasLimit, address /*refundRecipient*/) external payable {
-        // TODO: revert if refundRecipient is not address(0)?
-
         PendingMessage memory pmsg = _pending[sendId];
         require(pmsg.pending, InvalidSendId(sendId));
 
@@ -220,15 +242,16 @@ contract WormholeGatewayAdapter is IERC7786GatewaySource, IWormholeReceiver, Own
         delete _pending[sendId];
 
         // TODO: Do we care about the returned "sequence"?
+        bytes memory encoded = abi.encode(
+            sendId,
+            InteroperableAddress.formatEvmV1(block.chainid, pmsg.sender),
+            pmsg.recipient,
+            pmsg.payload
+        );
         _wormholeRelayer.sendPayloadToEvm{value: pmsg.value + msg.value}(
             getWormholeChain(pmsg.recipient),
             getRemoteGateway(pmsg.recipient),
-            abi.encode(
-                sendId,
-                InteroperableAddress.formatEvmV1(block.chainid, pmsg.sender),
-                pmsg.recipient,
-                pmsg.payload
-            ),
+            encoded,
             pmsg.value,
             gasLimit
         );
