@@ -16,7 +16,7 @@ async function fixture() {
   return { owner, sender, accounts, chain, axelar, gatewayA, gatewayB, receiver, invalidReceiver };
 }
 
-describe('AxelarGateway', function () {
+describe('AxelarGatewayAdapter', function () {
   beforeEach(async function () {
     Object.assign(this, await loadFixture(fixture));
   });
