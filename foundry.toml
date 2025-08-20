@@ -10,6 +10,9 @@ test = 'test'
 cache_path = 'cache_forge'
 fs_permissions = [{ access = "read", path = "lib/@openzeppelin-contracts/test/bin/EntryPoint080.bytecode"}]
 
+[lint]
+lint_on_build = false
+
 [fuzz]
 runs = 5000
 max_test_rejects = 150000
