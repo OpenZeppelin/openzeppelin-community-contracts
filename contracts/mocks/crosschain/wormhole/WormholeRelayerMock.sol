@@ -29,7 +29,7 @@ contract WormholeRelayerMock {
             new bytes[](0),
             toUniversalAddress(msg.sender),
             _localChainId,
-            keccak256(abi.encode(seq))
+            keccak256(abi.encode(seq)) // Unrealistic value but sufficient for current tests
         );
 
         return seq;

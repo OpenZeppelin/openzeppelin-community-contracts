@@ -16,8 +16,7 @@ import {IERC7786Receiver} from "../../interfaces/IERC7786.sol";
 import {IERC7786Attributes} from "../../interfaces/IERC7786Attributes.sol";
 
 /**
- * @dev A contract that combines the functionality of both the source and destination gateway
- * adapters for the Wormhole Network. Allowing to either send or receive messages across chains.
+ * @dev An ERC-7786 compliant adapter to send and receive messages via Wormhole.
  *
  * Note: only EVM chains are currently supported
  */
