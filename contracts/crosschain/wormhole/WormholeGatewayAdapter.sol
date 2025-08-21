@@ -27,7 +27,7 @@ contract WormholeGatewayAdapter is IERC7786GatewaySource, IWormholeReceiver, Own
 
     IWormholeRelayer internal immutable _wormholeRelayer;
     uint16 internal immutable _wormholeChainId;
-    uint24 private constant MASK = 1 << 16;
+    uint24 private constant EVM_ID_MASK = 1 << 16;
 
     // Remote gateway.
     mapping(uint256 chainId => address) private _remoteGateways;
@@ -95,7 +95,7 @@ contract WormholeGatewayAdapter is IERC7786GatewaySource, IWormholeReceiver, Own
 
     /// @dev Returns whether an EVM chain id is supported.
     function supportedChain(uint256 chainId) public view virtual returns (bool) {
-        return _chainIdToWormhole[chainId] & MASK == MASK;
+        return _chainIdToWormhole[chainId] & EVM_ID_MASK == EVM_ID_MASK;
     }
 
     /// @dev Returns the Wormhole chain id that correspond to a given binary interoperable chain id.
@@ -107,7 +107,7 @@ contract WormholeGatewayAdapter is IERC7786GatewaySource, IWormholeReceiver, Own
     /// @dev Returns the Wormhole chain id that correspond to a given EVM chain id.
     function getWormholeChain(uint256 chainId) public view virtual returns (uint16) {
         uint24 wormholeId = _chainIdToWormhole[chainId];
-        require(wormholeId & MASK == MASK, UnsupportedChainId(chainId));
+        require(wormholeId & EVM_ID_MASK == EVM_ID_MASK, UnsupportedChainId(chainId));
         return uint16(wormholeId);
     }
 
@@ -147,7 +147,7 @@ contract WormholeGatewayAdapter is IERC7786GatewaySource, IWormholeReceiver, Own
             ChainEquivalenceAlreadyRegistered(chainId, wormholeId)
         );
 
-        _chainIdToWormhole[chainId] = wormholeId | MASK;
+        _chainIdToWormhole[chainId] = wormholeId | EVM_ID_MASK;
         _wormholeToChainId[wormholeId] = chainId;
         emit RegisteredChainEquivalence(chainId, wormholeId);
     }
@@ -177,46 +177,59 @@ contract WormholeGatewayAdapter is IERC7786GatewaySource, IWormholeReceiver, Own
         bytes calldata payload,
         bytes[] calldata attributes
     ) external payable returns (bytes32 sendId) {
-        bytes32 msgId = bytes32(++_lastMsgId);
-
         for (uint256 i = 0; i < attributes.length; ++i) {
             bytes4 selector = attributes[i].length < 0x04 ? bytes4(0) : bytes4(attributes[i]);
             require(supportsAttribute(selector), UnsupportedAttribute(selector));
         }
 
-        if (attributes.length == 0) {
-            sendId = msgId;
+        // We need a unique message identifier.
+        bytes32 msgId = bytes32(++_lastMsgId);
 
+        // Case 1. We don't have a requestRelay attribute. The message is saved, waiting for a call to requestRelay.
+        if (attributes.length == 0) {
             // Note: this reverts with UnsupportedChainId if the recipient is not on a supported chain.
             // No real need to check the return value.
             getRemoteGateway(recipient);
 
-            _pending[sendId] = PendingMessage(true, msg.sender, msg.value, recipient, payload);
+            // Store the message for future execution in {requestRelay}
+            _pending[msgId] = PendingMessage(true, msg.sender, msg.value, recipient, payload);
 
             emit MessageSent(
-                sendId,
+                msgId,
                 InteroperableAddress.formatEvmV1(block.chainid, msg.sender),
                 recipient,
                 payload,
                 msg.value,
                 attributes
             );
-        } else if (attributes.length == 1) {
+
+            return msgId;
+        }
+
+        // Case 2. We have a requestRelay attribute.
+        if (attributes.length == 1) {
+            // Parse the attribute details
             (bool success, uint256 receiverValue, uint256 gasLimit, address refundRecipient) = ERC7786Attributes
                 .tryDecodeRequestRelay(attributes[0]);
             require(success, InvalidAttributeEncoding(attributes[0]));
 
+            // Send the message
             _sendMessage(msgId, recipient, payload, msg.sender, msg.value, receiverValue, gasLimit, refundRecipient);
 
             emit MessageSent(
-                sendId,
+                0,
                 InteroperableAddress.formatEvmV1(block.chainid, msg.sender),
                 recipient,
                 payload,
                 receiverValue,
                 attributes
             );
-        } else revert DuplicatedAttribute();
+
+            return 0;
+        }
+
+        // Case 3. We have multiple duplicated instances of the requestRelay attribute.
+        revert DuplicatedAttribute();
     }
 
     /// @dev Returns a quote for the value that must be passed to {requestRelay}
@@ -236,8 +249,6 @@ contract WormholeGatewayAdapter is IERC7786GatewaySource, IWormholeReceiver, Own
     function requestRelay(bytes32 sendId, uint256 gasLimit, address refundRecipient) external payable {
         PendingMessage memory pmsg = _pending[sendId];
         require(pmsg.pending, InvalidSendId(sendId));
-
-        // Do we want to do that to get a gas refund? Would it be valuable to keep that information stored?
         delete _pending[sendId];
 
         _sendMessage(
