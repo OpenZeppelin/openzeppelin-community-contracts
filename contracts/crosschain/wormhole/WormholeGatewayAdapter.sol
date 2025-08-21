@@ -45,7 +45,7 @@ contract WormholeGatewayAdapter is IERC7786GatewaySource, IWormholeReceiver, Own
         bytes payload;
     }
 
-    uint256 private _lastSendId;
+    uint256 private _lastMsgId;
     mapping(bytes32 sendId => PendingMessage) private _pending;
     mapping(uint256 chainId => BitMaps.BitMap) private _executed;
 
@@ -58,6 +58,8 @@ contract WormholeGatewayAdapter is IERC7786GatewaySource, IWormholeReceiver, Own
     /// @dev A chain equivalence has been registered.
     event RegisteredChainEquivalence(uint256 chainId, uint16 wormholeId);
 
+    error InvalidAttributeEncoding(bytes attribute);
+    error DuplicatedAttribute();
     error UnauthorizedCaller(address);
     error InvalidOriginGateway(uint16 wormholeSourceChain, bytes32 wormholeSourceAddress);
     error ReceiverExecutionFailed();
@@ -175,48 +177,46 @@ contract WormholeGatewayAdapter is IERC7786GatewaySource, IWormholeReceiver, Own
         bytes calldata payload,
         bytes[] calldata attributes
     ) external payable returns (bytes32 sendId) {
-        bool relay = false;
-        uint256 value = msg.value;
-        uint256 gasLimit = 0;
+        bytes32 msgId = bytes32(++_lastMsgId);
 
         for (uint256 i = 0; i < attributes.length; ++i) {
-            (relay, value, gasLimit, ) = ERC7786Attributes.tryDecodeRequestRelay(attributes[i]);
-            require(relay, UnsupportedAttribute(attributes[i].length < 0x04 ? bytes4(0) : bytes4(attributes[i])));
+            bytes4 selector = attributes[i].length < 0x04 ? bytes4(0) : bytes4(attributes[i]);
+            require(supportsAttribute(selector), UnsupportedAttribute(selector));
         }
 
-        if (relay) {
-            // TODO: Do we care about the returned "sequence"?
-            bytes memory encoded = abi.encode(
-                sendId,
-                InteroperableAddress.formatEvmV1(block.chainid, msg.sender),
-                recipient,
-                payload
-            );
-            _wormholeRelayer.sendPayloadToEvm{value: msg.value}(
-                getWormholeChain(recipient),
-                getRemoteGateway(recipient),
-                encoded,
-                value,
-                gasLimit
-            );
-        } else {
-            sendId = bytes32(++_lastSendId);
+        if (attributes.length == 0) {
+            sendId = msgId;
 
             // Note: this reverts with UnsupportedChainId if the recipient is not on a supported chain.
             // No real need to check the return value.
             getRemoteGateway(recipient);
 
-            _pending[sendId] = PendingMessage(true, msg.sender, value, recipient, payload);
-        }
+            _pending[sendId] = PendingMessage(true, msg.sender, msg.value, recipient, payload);
 
-        emit MessageSent(
-            sendId,
-            InteroperableAddress.formatEvmV1(block.chainid, msg.sender),
-            recipient,
-            payload,
-            value,
-            attributes
-        );
+            emit MessageSent(
+                sendId,
+                InteroperableAddress.formatEvmV1(block.chainid, msg.sender),
+                recipient,
+                payload,
+                msg.value,
+                attributes
+            );
+        } else if (attributes.length == 1) {
+            (bool success, uint256 receiverValue, uint256 gasLimit, address refundRecipient) = ERC7786Attributes
+                .tryDecodeRequestRelay(attributes[0]);
+            require(success, InvalidAttributeEncoding(attributes[0]));
+
+            _sendMessage(msgId, recipient, payload, msg.sender, msg.value, receiverValue, gasLimit, refundRecipient);
+
+            emit MessageSent(
+                sendId,
+                InteroperableAddress.formatEvmV1(block.chainid, msg.sender),
+                recipient,
+                payload,
+                receiverValue,
+                attributes
+            );
+        } else revert DuplicatedAttribute();
     }
 
     /// @dev Returns a quote for the value that must be passed to {requestRelay}
@@ -233,26 +233,22 @@ contract WormholeGatewayAdapter is IERC7786GatewaySource, IWormholeReceiver, Own
     }
 
     /// @dev Relay a message that was initiated by {sendMessage}.
-    function requestRelay(bytes32 sendId, uint256 gasLimit, address /*refundRecipient*/) external payable {
+    function requestRelay(bytes32 sendId, uint256 gasLimit, address refundRecipient) external payable {
         PendingMessage memory pmsg = _pending[sendId];
         require(pmsg.pending, InvalidSendId(sendId));
 
         // Do we want to do that to get a gas refund? Would it be valuable to keep that information stored?
         delete _pending[sendId];
 
-        // TODO: Do we care about the returned "sequence"?
-        bytes memory encoded = abi.encode(
+        _sendMessage(
             sendId,
-            InteroperableAddress.formatEvmV1(block.chainid, pmsg.sender),
             pmsg.recipient,
-            pmsg.payload
-        );
-        _wormholeRelayer.sendPayloadToEvm{value: pmsg.value + msg.value}(
-            getWormholeChain(pmsg.recipient),
-            getRemoteGateway(pmsg.recipient),
-            encoded,
+            pmsg.payload,
+            pmsg.sender,
+            msg.value + pmsg.value,
             pmsg.value,
-            gasLimit
+            gasLimit,
+            refundRecipient
         );
 
         emit MessageRelayed(sendId);
@@ -291,5 +287,28 @@ contract WormholeGatewayAdapter is IERC7786GatewaySource, IWormholeReceiver, Own
         (, address target) = recipient.parseEvmV1();
         bytes4 result = IERC7786Receiver(target).receiveMessage{value: msg.value}(deliveryHash, sender, payload);
         require(result == IERC7786Receiver.receiveMessage.selector, ReceiverExecutionFailed());
+    }
+
+    function _sendMessage(
+        bytes32 msgId,
+        bytes memory recipient,
+        bytes memory payload,
+        address sender,
+        uint256 totalValue,
+        uint256 receiverValue,
+        uint256 gasLimit,
+        address refundRecipient
+    ) private {
+        uint16 targetChain = getWormholeChain(recipient);
+        address targetAddress = getRemoteGateway(recipient);
+        _wormholeRelayer.sendPayloadToEvm{value: totalValue}(
+            targetChain,
+            targetAddress,
+            abi.encode(msgId, InteroperableAddress.formatEvmV1(block.chainid, sender), recipient, payload),
+            receiverValue,
+            gasLimit,
+            targetChain,
+            refundRecipient
+        );
     }
 }
