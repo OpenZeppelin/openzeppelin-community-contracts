@@ -24,10 +24,4 @@ Developers can access interoperability protocols through gateway adapters. The l
 
 === Axelar
 
-{{AxelarGatewayBase}}
-
-{{AxelarGatewaySource}}
-
-{{AxelarGatewayDestination}}
-
-{{AxelarGatewayDuplex}}
+{{AxelarGatewayAdapter}}
