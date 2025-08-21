@@ -1,6 +1,7 @@
 :github-icon: pass:[<svg class="icon"><use href="#github-icon"/></svg>]
 :ERC7786Receiver: pass:normal[xref:crosschain.adoc#ERC7786Receiver[`ERC7786Receiver`]]
 :ERC7786OpenBridge: pass:normal[xref:crosschain.adoc#ERC7786OpenBridge[`ERC7786OpenBridge`]]
+:AxelarGatewayAdapter: pass:normal[xref:crosschain.adoc#AxelarGatewayAdapter[`AxelarGatewayAdapter`]]
 :IERC7786Receiver: pass:normal[xref:interfaces.adoc#IERC7786Receiver[`IERC7786Receiver`]]
 :IERC7786Receiver: pass:normal[xref:interfaces.adoc#IERC7786Receiver[`IERC7786Receiver`]]
 = Crosschain
@@ -15,10 +16,7 @@ Gateways are contracts that enable cross-chain communication. These can either b
 
 Developers can access interoperability protocols through gateway adapters. The library includes the following gateway adapters:
 
- * {AxelarGatewayBase}: Core gateway logic for the https://www.axelar.network/[Axelar] adapter.
- * {AxelarGatewaySource}: ERC-7786 source gateway adapter (sending side) for Axelar.
- * {AxelarGatewayDestination}: ERC-7786 destination gateway adapter (receiving side) for Axelar.
- * {AxelarGatewayDuplex}: ERC-7786 gateway adapter that operates in both directions (i.e. send and receive messages) using the Axelar network.
+ * {AxelarGatewayAdapter}: ERC-7786 gateway adapter for Axelar.
 
 == Gateways
 
@@ -453,4 +451,266 @@ Virtual function that should contain the logic to execute when a cross-chain mes
 == Adapters
 
 === Axelar
+
+:RegisteredRemoteGateway: pass:normal[xref:#AxelarGatewayAdapter-RegisteredRemoteGateway-bytes-[`++RegisteredRemoteGateway++`]]
+:RegisteredChainEquivalence: pass:normal[xref:#AxelarGatewayAdapter-RegisteredChainEquivalence-bytes-string-[`++RegisteredChainEquivalence++`]]
+:UnsupportedNativeTransfer: pass:normal[xref:#AxelarGatewayAdapter-UnsupportedNativeTransfer--[`++UnsupportedNativeTransfer++`]]
+:InvalidOriginGateway: pass:normal[xref:#AxelarGatewayAdapter-InvalidOriginGateway-string-string-[`++InvalidOriginGateway++`]]
+:ReceiverExecutionFailed: pass:normal[xref:#AxelarGatewayAdapter-ReceiverExecutionFailed--[`++ReceiverExecutionFailed++`]]
+:UnsupportedChainType: pass:normal[xref:#AxelarGatewayAdapter-UnsupportedChainType-bytes2-[`++UnsupportedChainType++`]]
+:UnsupportedERC7930Chain: pass:normal[xref:#AxelarGatewayAdapter-UnsupportedERC7930Chain-bytes-[`++UnsupportedERC7930Chain++`]]
+:UnsupportedAxelarChain: pass:normal[xref:#AxelarGatewayAdapter-UnsupportedAxelarChain-string-[`++UnsupportedAxelarChain++`]]
+:InvalidChainIdentifier: pass:normal[xref:#AxelarGatewayAdapter-InvalidChainIdentifier-bytes-[`++InvalidChainIdentifier++`]]
+:ChainEquivalenceAlreadyRegistered: pass:normal[xref:#AxelarGatewayAdapter-ChainEquivalenceAlreadyRegistered-bytes-string-[`++ChainEquivalenceAlreadyRegistered++`]]
+:RemoteGatewayAlreadyRegistered: pass:normal[xref:#AxelarGatewayAdapter-RemoteGatewayAlreadyRegistered-bytes2-bytes-[`++RemoteGatewayAlreadyRegistered++`]]
+:constructor: pass:normal[xref:#AxelarGatewayAdapter-constructor-contract-IAxelarGateway-address-[`++constructor++`]]
+:getAxelarChain: pass:normal[xref:#AxelarGatewayAdapter-getAxelarChain-bytes-[`++getAxelarChain++`]]
+:getErc7930Chain: pass:normal[xref:#AxelarGatewayAdapter-getErc7930Chain-string-[`++getErc7930Chain++`]]
+:getRemoteGateway: pass:normal[xref:#AxelarGatewayAdapter-getRemoteGateway-bytes-[`++getRemoteGateway++`]]
+:getRemoteGateway: pass:normal[xref:#AxelarGatewayAdapter-getRemoteGateway-bytes2-bytes-[`++getRemoteGateway++`]]
+:registerChainEquivalence: pass:normal[xref:#AxelarGatewayAdapter-registerChainEquivalence-bytes-string-[`++registerChainEquivalence++`]]
+:registerRemoteGateway: pass:normal[xref:#AxelarGatewayAdapter-registerRemoteGateway-bytes-[`++registerRemoteGateway++`]]
+:supportsAttribute: pass:normal[xref:#AxelarGatewayAdapter-supportsAttribute-bytes4-[`++supportsAttribute++`]]
+:sendMessage: pass:normal[xref:#AxelarGatewayAdapter-sendMessage-bytes-bytes-bytes---[`++sendMessage++`]]
+:_execute: pass:normal[xref:#AxelarGatewayAdapter-_execute-bytes32-string-string-bytes-[`++_execute++`]]
+:_stringifyAddress: pass:normal[xref:#AxelarGatewayAdapter-_stringifyAddress-bytes2-bytes-[`++_stringifyAddress++`]]
+
+[.contract]
+[[AxelarGatewayAdapter]]
+=== `++AxelarGatewayAdapter++` link:https://github.com/OpenZeppelin/openzeppelin-community-contracts/blob/master/contracts/crosschain/axelar/AxelarGatewayAdapter.sol[{github-icon},role=heading-link]
+
+[.hljs-theme-light.nopadding]
+```solidity
+import "@openzeppelin/community-contracts/crosschain/axelar/AxelarGatewayAdapter.sol";
+```
+
+Implementation of an ERC-7786 gateway destination adapter for the Axelar Network in dual mode.
+
+The contract implements AxelarExecutable's {_execute} function to execute the message, converting Axelar's native
+workflow into the standard ERC-7786.
+
+NOTE: While both ERC-7786 and Axelar do support non-evm chains, this adaptor does not. This limitation comes from
+the translation of the ERC-7930 interoperable address (binary objects -- bytes) to strings. This is necessary
+because Axelar uses string to represent addresses. For EVM network, this adapter uses a checksum hex string
+representation. Other networks would require a different encoding. Ideally we would have a single encoding for all
+networks (could be base58, base64, ...) but Axelar doesn't support that.
+
+[.contract-index]
+.Functions
+--
+* `++constructor(gateway, initialOwner)++`
+* `++getAxelarChain(input)++`
+* `++getErc7930Chain(input)++`
+* `++getRemoteGateway(chain)++`
+* `++getRemoteGateway(chainType, chainReference)++`
+* `++registerChainEquivalence(chain, axelar)++`
+* `++registerRemoteGateway(remote)++`
+* `++supportsAttribute()++`
+* `++sendMessage(recipient, payload, attributes)++`
+* `++_execute(commandId, axelarSourceChain, axelarSourceAddress, adapterPayload)++`
+* `++_stringifyAddress(chainType, addr)++`
+
+[.contract-subindex-inherited]
+.AxelarExecutable
+* `++execute(commandId, sourceChain, sourceAddress, payload)++`
+* `++gateway()++`
+
+[.contract-subindex-inherited]
+.IAxelarExecutable
+
+[.contract-subindex-inherited]
+.Ownable
+* `++owner()++`
+* `++_checkOwner()++`
+* `++renounceOwnership()++`
+* `++transferOwnership(newOwner)++`
+* `++_transferOwnership(newOwner)++`
+
+[.contract-subindex-inherited]
+.IERC7786GatewaySource
+
+--
+
+[.contract-index]
+.Events
+--
+* `++RegisteredRemoteGateway(remote)++`
+* `++RegisteredChainEquivalence(erc7930binary, axelar)++`
+
+[.contract-subindex-inherited]
+.AxelarExecutable
+
+[.contract-subindex-inherited]
+.IAxelarExecutable
+
+[.contract-subindex-inherited]
+.Ownable
+* `++OwnershipTransferred(previousOwner, newOwner)++`
+
+[.contract-subindex-inherited]
+.IERC7786GatewaySource
+* `++MessageSent(sendId, sender, receiver, payload, value, attributes)++`
+
+--
+
+[.contract-index]
+.Errors
+--
+* `++UnsupportedNativeTransfer()++`
+* `++InvalidOriginGateway(axelarSourceChain, axelarSourceAddress)++`
+* `++ReceiverExecutionFailed()++`
+* `++UnsupportedChainType(chainType)++`
+* `++UnsupportedERC7930Chain(erc7930binary)++`
+* `++UnsupportedAxelarChain(axelar)++`
+* `++InvalidChainIdentifier(erc7930binary)++`
+* `++ChainEquivalenceAlreadyRegistered(erc7930binary, axelar)++`
+* `++RemoteGatewayAlreadyRegistered(chainType, chainReference)++`
+
+[.contract-subindex-inherited]
+.AxelarExecutable
+
+[.contract-subindex-inherited]
+.IAxelarExecutable
+* `++InvalidAddress()++`
+* `++NotApprovedByGateway()++`
+
+[.contract-subindex-inherited]
+.Ownable
+* `++OwnableUnauthorizedAccount(account)++`
+* `++OwnableInvalidOwner(owner)++`
+
+[.contract-subindex-inherited]
+.IERC7786GatewaySource
+* `++UnsupportedAttribute(selector)++`
+
+--
+
+[.contract-item]
+[[AxelarGatewayAdapter-constructor-contract-IAxelarGateway-address-]]
+==== `[.contract-item-name]#++constructor++#++(contract IAxelarGateway gateway, address initialOwner)++` [.item-kind]#public#
+
+Initializes the contract with the Axelar gateway and the initial owner.
+
+[.contract-item]
+[[AxelarGatewayAdapter-getAxelarChain-bytes-]]
+==== `[.contract-item-name]#++getAxelarChain++#++(bytes input) → string output++` [.item-kind]#public#
+
+Returns the Axelar chain identifier for a given binary interoperable chain id.
+
+[.contract-item]
+[[AxelarGatewayAdapter-getErc7930Chain-string-]]
+==== `[.contract-item-name]#++getErc7930Chain++#++(string input) → bytes output++` [.item-kind]#public#
+
+Returns the binary interoperable chain id for a given Axelar chain identifier.
+
+[.contract-item]
+[[AxelarGatewayAdapter-getRemoteGateway-bytes-]]
+==== `[.contract-item-name]#++getRemoteGateway++#++(bytes chain) → bytes++` [.item-kind]#public#
+
+Returns the address of the remote gateway for a given binary interoperable chain id.
+
+[.contract-item]
+[[AxelarGatewayAdapter-getRemoteGateway-bytes2-bytes-]]
+==== `[.contract-item-name]#++getRemoteGateway++#++(bytes2 chainType, bytes chainReference) → bytes++` [.item-kind]#public#
+
+Returns the address of the remote gateway for a given chainType and chainReference.
+
+[.contract-item]
+[[AxelarGatewayAdapter-registerChainEquivalence-bytes-string-]]
+==== `[.contract-item-name]#++registerChainEquivalence++#++(bytes chain, string axelar)++` [.item-kind]#public#
+
+Registers a chain equivalence between a binary interoperable chain id and an Axelar chain identifier.
+
+[.contract-item]
+[[AxelarGatewayAdapter-registerRemoteGateway-bytes-]]
+==== `[.contract-item-name]#++registerRemoteGateway++#++(bytes remote)++` [.item-kind]#public#
+
+Registers the address of a remote gateway.
+
+[.contract-item]
+[[AxelarGatewayAdapter-supportsAttribute-bytes4-]]
+==== `[.contract-item-name]#++supportsAttribute++#++(bytes4) → bool++` [.item-kind]#public#
+
+Getter to check whether an attribute is supported or not.
+
+[.contract-item]
+[[AxelarGatewayAdapter-sendMessage-bytes-bytes-bytes---]]
+==== `[.contract-item-name]#++sendMessage++#++(bytes recipient, bytes payload, bytes[] attributes) → bytes32++` [.item-kind]#external#
+
+Endpoint for creating a new message. If the message requires further (gateway specific) processing before
+it can be sent to the destination chain, then a non-zero `outboxId` must be returned. Otherwise, the
+message MUST be sent and this function must return 0.
+
+* MUST emit a {MessageSent} event.
+
+If any of the `attributes` is not supported, this function SHOULD revert with an {UnsupportedAttribute} error.
+Other errors SHOULD revert with errors not specified in ERC-7786.
+
+[.contract-item]
+[[AxelarGatewayAdapter-_execute-bytes32-string-string-bytes-]]
+==== `[.contract-item-name]#++_execute++#++(bytes32 commandId, string axelarSourceChain, string axelarSourceAddress, bytes adapterPayload)++` [.item-kind]#internal#
+
+Execution of a cross-chain message.
+
+In this function:
+
+- `axelarSourceChain` is in the Axelar format. It should not be expected to be a proper ERC-7930 format
+- `axelarSourceAddress` is the sender of the Axelar message. That should be the remote gateway on the chain
+  which the message originates from. It is NOT the sender of the ERC-7786 crosschain message.
+
+Proper ERC-7930 encoding of the crosschain message sender can be found in the message
+
+[.contract-item]
+[[AxelarGatewayAdapter-_stringifyAddress-bytes2-bytes-]]
+==== `[.contract-item-name]#++_stringifyAddress++#++(bytes2 chainType, bytes addr) → string++` [.item-kind]#internal#
+
+ERC-7930 to Axelar address translation. Currently only supports EVM chains.
+
+[.contract-item]
+[[AxelarGatewayAdapter-RegisteredRemoteGateway-bytes-]]
+==== `[.contract-item-name]#++RegisteredRemoteGateway++#++(bytes remote)++` [.item-kind]#event#
+
+A remote gateway has been registered for a chain.
+
+[.contract-item]
+[[AxelarGatewayAdapter-RegisteredChainEquivalence-bytes-string-]]
+==== `[.contract-item-name]#++RegisteredChainEquivalence++#++(bytes erc7930binary, string axelar)++` [.item-kind]#event#
+
+A chain equivalence has been registered.
+
+[.contract-item]
+[[AxelarGatewayAdapter-UnsupportedNativeTransfer--]]
+==== `[.contract-item-name]#++UnsupportedNativeTransfer++#++()++` [.item-kind]#error#
+
+[.contract-item]
+[[AxelarGatewayAdapter-InvalidOriginGateway-string-string-]]
+==== `[.contract-item-name]#++InvalidOriginGateway++#++(string axelarSourceChain, string axelarSourceAddress)++` [.item-kind]#error#
+
+[.contract-item]
+[[AxelarGatewayAdapter-ReceiverExecutionFailed--]]
+==== `[.contract-item-name]#++ReceiverExecutionFailed++#++()++` [.item-kind]#error#
+
+[.contract-item]
+[[AxelarGatewayAdapter-UnsupportedChainType-bytes2-]]
+==== `[.contract-item-name]#++UnsupportedChainType++#++(bytes2 chainType)++` [.item-kind]#error#
+
+[.contract-item]
+[[AxelarGatewayAdapter-UnsupportedERC7930Chain-bytes-]]
+==== `[.contract-item-name]#++UnsupportedERC7930Chain++#++(bytes erc7930binary)++` [.item-kind]#error#
+
+[.contract-item]
+[[AxelarGatewayAdapter-UnsupportedAxelarChain-string-]]
+==== `[.contract-item-name]#++UnsupportedAxelarChain++#++(string axelar)++` [.item-kind]#error#
+
+[.contract-item]
+[[AxelarGatewayAdapter-InvalidChainIdentifier-bytes-]]
+==== `[.contract-item-name]#++InvalidChainIdentifier++#++(bytes erc7930binary)++` [.item-kind]#error#
+
+[.contract-item]
+[[AxelarGatewayAdapter-ChainEquivalenceAlreadyRegistered-bytes-string-]]
+==== `[.contract-item-name]#++ChainEquivalenceAlreadyRegistered++#++(bytes erc7930binary, string axelar)++` [.item-kind]#error#
+
+[.contract-item]
+[[AxelarGatewayAdapter-RemoteGatewayAlreadyRegistered-bytes2-bytes-]]
+==== `[.contract-item-name]#++RemoteGatewayAlreadyRegistered++#++(bytes2 chainType, bytes chainReference)++` [.item-kind]#error#
 

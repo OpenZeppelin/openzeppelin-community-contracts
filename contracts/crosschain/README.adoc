@@ -10,10 +10,7 @@ Gateways are contracts that enable cross-chain communication. These can either b
 
 Developers can access interoperability protocols through gateway adapters. The library includes the following gateway adapters:
 
- * {AxelarGatewayBase}: Core gateway logic for the https://www.axelar.network/[Axelar] adapter.
- * {AxelarGatewaySource}: ERC-7786 source gateway adapter (sending side) for Axelar.
- * {AxelarGatewayDestination}: ERC-7786 destination gateway adapter (receiving side) for Axelar.
- * {AxelarGatewayDuplex}: ERC-7786 gateway adapter that operates in both directions (i.e. send and receive messages) using the Axelar network.
+ * {AxelarGatewayAdapter}: ERC-7786 gateway adapter for Axelar.
 
 == Gateways
 
@@ -27,10 +24,4 @@ Developers can access interoperability protocols through gateway adapters. The l
 
 === Axelar
 
-{{AxelarGatewayBase}}
-
-{{AxelarGatewaySource}}
-
-{{AxelarGatewayDestination}}
-
-{{AxelarGatewayDuplex}}
+{{AxelarGatewayAdapter}}
