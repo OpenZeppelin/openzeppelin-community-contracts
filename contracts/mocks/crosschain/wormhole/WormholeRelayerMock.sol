@@ -7,7 +7,12 @@ import {IWormholeReceiver} from "wormhole-solidity-sdk/interfaces/IWormholeRecei
 import {toUniversalAddress} from "wormhole-solidity-sdk/utils/UniversalAddress.sol";
 
 contract WormholeRelayerMock {
+    uint16 internal immutable _localChainId;
     uint64 private _seq;
+
+    constructor(uint16 localChainId) {
+        _localChainId = localChainId;
+    }
 
     function sendPayloadToEvm(
         uint16 targetChain,
@@ -16,14 +21,14 @@ contract WormholeRelayerMock {
         uint256 receiverValue,
         uint256 gasLimit
     ) external payable returns (uint64) {
-        // TODO: check that destination chain is local
+        require(targetChain == _localChainId, "This mock only support same-chain message passing");
 
         uint64 seq = _seq++;
         IWormholeReceiver(targetAddress).receiveWormholeMessages{value: receiverValue, gas: gasLimit}(
             payload,
             new bytes[](0),
             toUniversalAddress(msg.sender),
-            targetChain,
+            _localChainId,
             keccak256(abi.encode(seq))
         );
 

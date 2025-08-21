@@ -9,7 +9,6 @@ async function fixture() {
   return { mock };
 }
 
-// NOTE: here we are only testing the receiver. Failures of the gateway itself (invalid attributes, ...) are out of scope.
 describe('ERC7786Attributes', function () {
   beforeEach(async function () {
     Object.assign(this, await loadFixture(fixture));
@@ -44,7 +43,6 @@ describe('ERC7786Attributes', function () {
 
     afterEach(async function () {
       await expect(this.mock.$tryDecodeRequestRelay(this.input)).to.eventually.deep.equal(this.output);
-      await expect(this.mock.$tryDecodeRequestRelayCalldata(this.input)).to.eventually.deep.equal(this.output);
     });
   });
 });

@@ -181,7 +181,7 @@ contract WormholeGatewayAdapter is IERC7786GatewaySource, IWormholeReceiver, Own
         uint256 gasLimit = 0;
 
         for (uint256 i = 0; i < attributes.length; ++i) {
-            (relay, value, gasLimit, ) = ERC7786Attributes.tryDecodeRequestRelayCalldata(attributes[i]);
+            (relay, value, gasLimit, ) = ERC7786Attributes.tryDecodeRequestRelay(attributes[i]);
             require(relay, UnsupportedAttribute(attributes[i].length < 0x04 ? bytes4(0) : bytes4(attributes[i])));
         }
 
