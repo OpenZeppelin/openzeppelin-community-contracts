@@ -1,0 +1,10 @@
+= Governance
+
+[.readme-notice]
+NOTE: This document is better viewed at https://docs.openzeppelin.com/community-contracts/api/governance
+
+  * {TimelockControllerEnumerable}: Extension of xref:contracts::governance.adoc[TimelockController] to allow for enumerability of operations.
+
+== Timelock
+
+{{TimelockControllerEnumerable}}
