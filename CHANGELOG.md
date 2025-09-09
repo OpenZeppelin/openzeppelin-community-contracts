@@ -1,6 +1,6 @@
 ## 09-09-2025
 
-- `DKIMRegistry`: Add implementation of ERC-7969 to enable on-chain verification of DomainKeys Identified Mail (DKIM) signatures.
+- `DKIMRegistry`: Add implementation of ERC-7969 to enable onchain verification of DomainKeys Identified Mail (DKIM) signatures.
 
 ## 17-08-2025
 
