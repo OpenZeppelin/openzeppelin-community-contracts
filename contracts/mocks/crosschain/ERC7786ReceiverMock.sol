@@ -7,7 +7,7 @@ import {ERC7786Receiver} from "../../crosschain/utils/ERC7786Receiver.sol";
 contract ERC7786ReceiverMock is ERC7786Receiver {
     address private immutable _gateway;
 
-    event MessageReceived(address gateway, bytes32 receiveId, bytes sender, bytes payload);
+    event MessageReceived(address gateway, bytes32 receiveId, bytes sender, bytes payload, uint256 value);
 
     constructor(address gateway_) {
         _gateway = gateway_;
@@ -23,6 +23,6 @@ contract ERC7786ReceiverMock is ERC7786Receiver {
         bytes calldata sender,
         bytes calldata payload
     ) internal virtual override {
-        emit MessageReceived(gateway, receiveId, sender, payload);
+        emit MessageReceived(gateway, receiveId, sender, payload, msg.value);
     }
 }

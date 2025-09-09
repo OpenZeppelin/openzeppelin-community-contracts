@@ -55,7 +55,7 @@ describe('AxelarGatewayAdapter', function () {
       .to.emit(this.axelar, 'MessageExecuted')
       .withArgs(anyValue)
       .to.emit(this.receiver, 'MessageReceived')
-      .withArgs(this.gatewayB, anyValue, erc7930Sender, payload);
+      .withArgs(this.gatewayB, anyValue, erc7930Sender, payload, 0n);
   });
 
   it('invalid receiver - bad return value', async function () {
