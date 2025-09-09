@@ -5,7 +5,11 @@
 :SignerWebAuthn: pass:normal[xref:utils/cryptography.adoc#SignerWebAuthn[`SignerWebAuthn`]]
 :ERC7913ZKEmailVerifier: pass:normal[xref:utils/cryptography.adoc#ERC7913ZKEmailVerifier[`ERC7913ZKEmailVerifier`]]
 :ERC7913WebAuthnVerifier: pass:normal[xref:utils/cryptography.adoc#ERC7913WebAuthnVerifier[`ERC7913WebAuthnVerifier`]]
+:DKIMRegistry: pass:normal[xref:utils/cryptography.adoc#DKIMRegistry[`DKIMRegistry`]]
+:DKIMRegistry: pass:normal[xref:utils/cryptography.adoc#DKIMRegistry[`DKIMRegistry`]]
+:DKIMRegistry: pass:normal[xref:utils/cryptography.adoc#DKIMRegistry[`DKIMRegistry`]]
 :WebAuthn-WebAuthnAuth: pass:normal[xref:utils/cryptography.adoc#WebAuthn-WebAuthnAuth[`WebAuthn.WebAuthnAuth`]]
+:DKIMRegistry: pass:normal[xref:utils/cryptography.adoc#DKIMRegistry[`DKIMRegistry`]]
 :WebAuthn-WebAuthnAuth: pass:normal[xref:utils/cryptography.adoc#WebAuthn-WebAuthnAuth[`WebAuthn.WebAuthnAuth`]]
 = Cryptography
 
