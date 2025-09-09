@@ -1,3 +1,7 @@
+## 09-09-2025
+
+- `DKIMRegistry`: Add implementation of ERC-7969 to enable onchain verification of DomainKeys Identified Mail (DKIM) signatures.
+
 ## 17-08-2025
 
 - `ERC20Freezable`: Add extension of ERC-20 that allows freezing specific amounts of tokens per account, preventing transfers until unfrozen while maintaining full visibility of balances.
