@@ -30,6 +30,6 @@ describe('ERC7786Receiver', function () {
       .to.emit(this.gateway, 'MessageSent')
       .withArgs(ethers.ZeroHash, this.toErc7930(this.sender), this.toErc7930(this.receiver), payload, 0n, attributes)
       .to.emit(this.receiver, 'MessageReceived')
-      .withArgs(this.gateway, anyValue, this.toErc7930(this.sender), payload); // ERC7786GatewayMock uses empty messageId
+      .withArgs(this.gateway, anyValue, this.toErc7930(this.sender), payload, 0n); // ERC7786GatewayMock uses empty messageId
   });
 });
