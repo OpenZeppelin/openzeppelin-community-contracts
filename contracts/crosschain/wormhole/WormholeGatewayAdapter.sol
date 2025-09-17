@@ -27,7 +27,7 @@ contract WormholeGatewayAdapter is IERC7786GatewaySource, IWormholeReceiver, Own
 
     IWormholeRelayer internal immutable _wormholeRelayer;
     uint16 internal immutable _wormholeChainId;
-    uint24 private constant EVM_ID_MASK = 1 << 16;
+    uint24 private constant EVM_ID_FLAG = 1 << 16;
 
     // Remote gateway.
     mapping(uint256 chainId => address) private _remoteGateways;
@@ -95,7 +95,7 @@ contract WormholeGatewayAdapter is IERC7786GatewaySource, IWormholeReceiver, Own
 
     /// @dev Returns whether an EVM chain id is supported.
     function supportedChain(uint256 chainId) public view virtual returns (bool) {
-        return _chainIdToWormhole[chainId] & EVM_ID_MASK == EVM_ID_MASK;
+        return _chainIdToWormhole[chainId] & EVM_ID_FLAG == EVM_ID_FLAG;
     }
 
     /// @dev Returns the Wormhole chain id that correspond to a given binary interoperable chain id.
@@ -107,7 +107,7 @@ contract WormholeGatewayAdapter is IERC7786GatewaySource, IWormholeReceiver, Own
     /// @dev Returns the Wormhole chain id that correspond to a given EVM chain id.
     function getWormholeChain(uint256 chainId) public view virtual returns (uint16) {
         uint24 wormholeId = _chainIdToWormhole[chainId];
-        require(wormholeId & EVM_ID_MASK == EVM_ID_MASK, UnsupportedChainId(chainId));
+        require(wormholeId & EVM_ID_FLAG == EVM_ID_FLAG, UnsupportedChainId(chainId));
         return uint16(wormholeId);
     }
 
@@ -147,7 +147,7 @@ contract WormholeGatewayAdapter is IERC7786GatewaySource, IWormholeReceiver, Own
             ChainEquivalenceAlreadyRegistered(chainId, wormholeId)
         );
 
-        _chainIdToWormhole[chainId] = wormholeId | EVM_ID_MASK;
+        _chainIdToWormhole[chainId] = wormholeId | EVM_ID_FLAG;
         _wormholeToChainId[wormholeId] = chainId;
         emit RegisteredChainEquivalence(chainId, wormholeId);
     }
@@ -280,7 +280,7 @@ contract WormholeGatewayAdapter is IERC7786GatewaySource, IWormholeReceiver, Own
             (bytes32, bytes, bytes, bytes)
         );
 
-        // Wormhole to ERC-7930 translation
+        // Wormhole to EVM translation
         uint256 chainId = getChainId(wormholeSourceChain);
         address addr = getRemoteGateway(chainId);
 
