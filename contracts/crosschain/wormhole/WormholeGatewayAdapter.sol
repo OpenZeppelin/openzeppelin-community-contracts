@@ -185,51 +185,56 @@ contract WormholeGatewayAdapter is IERC7786GatewaySource, IWormholeReceiver, Own
         // We need a unique message identifier.
         bytes32 msgId = bytes32(++_lastMsgId);
 
-        // Case 1. We don't have a requestRelay attribute. The message is saved, waiting for a call to requestRelay.
+        // Case 1. We don't have a requestRelay attribute.
+        // - The message is saved, waiting for a call to requestRelay.
+        //
+        // Case 2. We have a requestRelay attribute.
+        // - The message is sent directly
+        //
+        // Case 3. We have multiple duplicated instances of the requestRelay attribute.
+        // - revert
         if (attributes.length == 0) {
+            sendId = msgId;
+
             // Note: this reverts with UnsupportedChainId if the recipient is not on a supported chain.
             // No real need to check the return value.
             getRemoteGateway(recipient);
 
             // Store the message for future execution in {requestRelay}
-            _pending[msgId] = PendingMessage(true, msg.sender, msg.value, recipient, payload);
+            _pending[sendId] = PendingMessage(true, msg.sender, msg.value, recipient, payload);
 
             emit MessageSent(
-                msgId,
+                sendId,
                 InteroperableAddress.formatEvmV1(block.chainid, msg.sender),
                 recipient,
                 payload,
                 msg.value,
                 attributes
             );
+        } else if (attributes.length == 1) {
+            sendId = 0;
 
-            return msgId;
-        }
-
-        // Case 2. We have a requestRelay attribute.
-        if (attributes.length == 1) {
             // Parse the attribute details
             (bool success, uint256 receiverValue, uint256 gasLimit, address refundRecipient) = ERC7786Attributes
                 .tryDecodeRequestRelay(attributes[0]);
             require(success, InvalidAttributeEncoding(attributes[0]));
 
-            // Send the message
+            // Send the message.
+            // msgId is used for uniqueness and replay protection, even if its not an actual sendId (not part of the
+            // `MessageSent` event and not used for relaying)
             _sendMessage(msgId, recipient, payload, msg.sender, msg.value, receiverValue, gasLimit, refundRecipient);
 
             emit MessageSent(
-                0,
+                sendId,
                 InteroperableAddress.formatEvmV1(block.chainid, msg.sender),
                 recipient,
                 payload,
                 receiverValue,
                 attributes
             );
-
-            return 0;
+        } else {
+            revert DuplicatedAttribute();
         }
-
-        // Case 3. We have multiple duplicated instances of the requestRelay attribute.
-        revert DuplicatedAttribute();
     }
 
     /// @dev Returns a quote for the value that must be passed to {requestRelay}
@@ -301,7 +306,7 @@ contract WormholeGatewayAdapter is IERC7786GatewaySource, IWormholeReceiver, Own
     }
 
     function _sendMessage(
-        bytes32 msgId,
+        bytes32 id,
         bytes memory recipient,
         bytes memory payload,
         address sender,
@@ -315,7 +320,7 @@ contract WormholeGatewayAdapter is IERC7786GatewaySource, IWormholeReceiver, Own
         _wormholeRelayer.sendPayloadToEvm{value: totalValue}(
             targetChain,
             targetAddress,
-            abi.encode(msgId, InteroperableAddress.formatEvmV1(block.chainid, sender), recipient, payload),
+            abi.encode(id, InteroperableAddress.formatEvmV1(block.chainid, sender), recipient, payload),
             receiverValue,
             gasLimit,
             targetChain,
