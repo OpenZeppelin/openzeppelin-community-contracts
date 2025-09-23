@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.26;
 
-import {IERC7943} from "../../../interfaces/IERC7943.sol";
+import {IERC7943Fungible} from "../../../interfaces/IERC7943.sol";
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import {ERC165, IERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
@@ -14,46 +14,48 @@ import {ERC20Restricted} from "./ERC20Restricted.sol";
  * Combines standard ERC-20 functionality with RWA-specific features like user restrictions,
  * asset freezing, and forced asset transfers.
  */
-abstract contract ERC20uRWA is ERC20, ERC165, ERC20Freezable, ERC20Restricted, IERC7943 {
+abstract contract ERC20uRWA is ERC20, ERC165, ERC20Freezable, ERC20Restricted, IERC7943Fungible {
     /// @inheritdoc ERC20Restricted
-    function isUserAllowed(address user) public view virtual override(IERC7943, ERC20Restricted) returns (bool) {
+    function isUserAllowed(
+        address user
+    ) public view virtual override(IERC7943Fungible, ERC20Restricted) returns (bool) {
         return super.isUserAllowed(user);
     }
 
     /// @inheritdoc ERC165
     function supportsInterface(bytes4 interfaceId) public view virtual override(ERC165, IERC165) returns (bool) {
-        return interfaceId == type(IERC7943).interfaceId || super.supportsInterface(interfaceId);
+        return interfaceId == type(IERC7943Fungible).interfaceId || super.supportsInterface(interfaceId);
     }
 
     /**
-     * @dev See {IERC7943-isTransferAllowed}.
+     * @dev See {IERC7943Fungible-canTransfer}.
      *
      * CAUTION: This function is only meant for external use. Overriding it will not apply the new checks to
      * the internal {_update} function. Consider overriding {_update} accordingly to keep both functions in sync.
      */
-    function isTransferAllowed(address from, address to, uint256, uint256 amount) external view virtual returns (bool) {
+    function canTransfer(address from, address to, uint256 amount) external view virtual returns (bool) {
         return (amount <= available(from) && isUserAllowed(from) && isUserAllowed(to));
     }
 
-    /// @inheritdoc IERC7943
-    function getFrozen(address user, uint256) public view virtual returns (uint256 amount) {
+    /// @inheritdoc IERC7943Fungible
+    function getFrozenTokens(address user) public view virtual returns (uint256 amount) {
         return frozen(user);
     }
 
     /**
-     * @dev See {IERC7943-setFrozen}.
+     * @dev See {IERC7943Fungible-setFrozenTokens}.
      *
-     * NOTE: The `amount` is capped to the balance of the `user` to ensure the {IERC7943-Frozen} event
+     * NOTE: The `amount` is capped to the balance of the `user` to ensure the {IERC7943Fungible-Frozen} event
      * emits values that consistently reflect the actual amount of tokens that are frozen.
      */
-    function setFrozen(address user, uint256, uint256 amount) public virtual {
+    function setFrozenTokens(address user, uint256 amount) public virtual {
         uint256 actualAmount = Math.min(amount, balanceOf(user));
         _checkFreezer(user, actualAmount);
         _setFrozen(user, actualAmount);
     }
 
     /**
-     * @dev See {IERC7943-forceTransfer}.
+     * @dev See {IERC7943Fungible-forcedTransfer}.
      *
      * Bypasses the {ERC20Restricted} restrictions for the `from` address and adjusts the frozen balance
      * to the new balance after the transfer.
@@ -63,7 +65,7 @@ abstract contract ERC20uRWA is ERC20, ERC165, ERC20Freezable, ERC20Restricted, I
      * to add additional restrictions or logic, those changes will also apply here.
      * Consider overriding this function to bypass newer restrictions if needed.
      */
-    function forceTransfer(address from, address to, uint256, uint256 amount) public virtual {
+    function forcedTransfer(address from, address to, uint256 amount) public virtual {
         _checkEnforcer(from, to, amount);
         require(isUserAllowed(to), ERC7943NotAllowedUser(to));
 
@@ -80,14 +82,14 @@ abstract contract ERC20uRWA is ERC20, ERC165, ERC20Freezable, ERC20Restricted, I
 
         // Temporarily bypass restrictions rather than calling ERC20._update directly.
         // This preserves any side effects from future overrides to _update.
-        // Assuming `forceTransfer` will be used occasionally, the added costs of temporary
+        // Assuming `forcedTransfer` will be used occasionally, the added costs of temporary
         // restrictions would be justifiable under this path.
         Restriction restriction = getRestriction(from);
         bool wasUserAllowed = isUserAllowed(from);
         if (!wasUserAllowed) _setRestriction(from, Restriction.ALLOWED);
         _update(from, to, amount); // Explicit raw update to bypass all restrictions
         if (!wasUserAllowed) _setRestriction(from, restriction);
-        emit ForcedTransfer(from, to, 0, amount);
+        emit ForcedTransfer(from, to, amount);
     }
 
     /// @inheritdoc ERC20
