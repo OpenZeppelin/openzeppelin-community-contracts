@@ -187,7 +187,3 @@ interface IERC7943MultiToken is IERC165 {
         uint256 amount
     ) external view returns (bool allowed);
 }
-
-/// @notice General interface for ERC-7943 implementations. For ERC-20 implementations, use IERC7943Fungible.
-/// For backward compatibility with older implementations.
-interface IERC7943 is IERC7943MultiToken {}
