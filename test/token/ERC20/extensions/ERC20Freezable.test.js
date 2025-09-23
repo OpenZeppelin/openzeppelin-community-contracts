@@ -62,7 +62,7 @@ describe('ERC20Freezable', function () {
       const frozenAmount = 40n;
       await expect(this.token.$_setFrozen(this.holder, frozenAmount))
         .to.emit(this.token, 'Frozen')
-        .withArgs(this.holder, 0, frozenAmount);
+        .withArgs(this.holder, frozenAmount);
     });
   });
 
