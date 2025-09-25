@@ -4,7 +4,7 @@ pragma solidity ^0.8.26;
 
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
-import {IERC7943} from "../../../interfaces/IERC7943.sol";
+import {IERC7943Fungible} from "../../../interfaces/IERC7943.sol";
 
 /**
  * @dev Extension of {ERC20} that allows to implement a freezing
@@ -37,7 +37,7 @@ abstract contract ERC20Freezable is ERC20 {
     /// @dev Internal function to set the frozen token amount for a user.
     function _setFrozen(address user, uint256 amount) internal virtual {
         _frozenBalances[user] = amount;
-        emit IERC7943.Frozen(user, 0, amount);
+        emit IERC7943Fungible.Frozen(user, amount);
     }
 
     /**

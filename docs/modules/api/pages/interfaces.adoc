@@ -3,7 +3,6 @@
 :IERC7786Receiver: pass:normal[xref:interfaces.adoc#IERC7786Receiver[`IERC7786Receiver`]]
 :IERC7802: pass:normal[xref:interfaces.adoc#IERC7802[`IERC7802`]]
 :IERC7821: pass:normal[xref:interfaces.adoc#IERC7821[`IERC7821`]]
-:IERC7943: pass:normal[xref:interfaces.adoc#IERC7943[`IERC7943`]]
 = Interfaces
 
 [.readme-notice]
@@ -235,110 +234,4 @@ Only returns true for:
 
 * `bytes32(0x01000000000000000000...)`: does not support optional `opData`.
 * `bytes32(0x01000000000078210001...)`: supports optional `opData`.
-
-:ForcedTransfer: pass:normal[xref:#IERC7943-ForcedTransfer-address-address-uint256-uint256-[`++ForcedTransfer++`]]
-:Frozen: pass:normal[xref:#IERC7943-Frozen-address-uint256-uint256-[`++Frozen++`]]
-:ERC7943NotAllowedUser: pass:normal[xref:#IERC7943-ERC7943NotAllowedUser-address-[`++ERC7943NotAllowedUser++`]]
-:ERC7943NotAllowedTransfer: pass:normal[xref:#IERC7943-ERC7943NotAllowedTransfer-address-address-uint256-uint256-[`++ERC7943NotAllowedTransfer++`]]
-:ERC7943InsufficientUnfrozenBalance: pass:normal[xref:#IERC7943-ERC7943InsufficientUnfrozenBalance-address-uint256-uint256-uint256-[`++ERC7943InsufficientUnfrozenBalance++`]]
-:forceTransfer: pass:normal[xref:#IERC7943-forceTransfer-address-address-uint256-uint256-[`++forceTransfer++`]]
-:setFrozen: pass:normal[xref:#IERC7943-setFrozen-address-uint256-uint256-[`++setFrozen++`]]
-:getFrozen: pass:normal[xref:#IERC7943-getFrozen-address-uint256-[`++getFrozen++`]]
-:isTransferAllowed: pass:normal[xref:#IERC7943-isTransferAllowed-address-address-uint256-uint256-[`++isTransferAllowed++`]]
-:isUserAllowed: pass:normal[xref:#IERC7943-isUserAllowed-address-[`++isUserAllowed++`]]
-
-[.contract]
-[[IERC7943]]
-=== `++IERC7943++` link:https://github.com/OpenZeppelin/openzeppelin-community-contracts/blob/master/contracts/interfaces/IERC7943.sol[{github-icon},role=heading-link]
-
-[.hljs-theme-light.nopadding]
-```solidity
-import "@openzeppelin/community-contracts/interfaces/IERC7943.sol";
-```
-
-[.contract-index]
-.Functions
---
-* `++forceTransfer(from, to, tokenId, amount)++`
-* `++setFrozen(user, tokenId, amount)++`
-* `++getFrozen(user, tokenId)++`
-* `++isTransferAllowed(from, to, tokenId, amount)++`
-* `++isUserAllowed(user)++`
-
-[.contract-subindex-inherited]
-.IERC165
-* `++supportsInterface(interfaceId)++`
-
---
-
-[.contract-index]
-.Events
---
-* `++ForcedTransfer(from, to, tokenId, amount)++`
-* `++Frozen(user, tokenId, amount)++`
-
-[.contract-subindex-inherited]
-.IERC165
-
---
-
-[.contract-index]
-.Errors
---
-* `++ERC7943NotAllowedUser(account)++`
-* `++ERC7943NotAllowedTransfer(from, to, tokenId, amount)++`
-* `++ERC7943InsufficientUnfrozenBalance(user, tokenId, amount, unfrozen)++`
-
-[.contract-subindex-inherited]
-.IERC165
-
---
-
-[.contract-item]
-[[IERC7943-forceTransfer-address-address-uint256-uint256-]]
-==== `[.contract-item-name]#++forceTransfer++#++(address from, address to, uint256 tokenId, uint256 amount)++` [.item-kind]#external#
-
-Requires specific authorization. Used for regulatory compliance or recovery scenarios.
-
-[.contract-item]
-[[IERC7943-setFrozen-address-uint256-uint256-]]
-==== `[.contract-item-name]#++setFrozen++#++(address user, uint256 tokenId, uint256 amount)++` [.item-kind]#external#
-
-Requires specific authorization. Frozen tokens cannot be transferred by the user.
-
-[.contract-item]
-[[IERC7943-getFrozen-address-uint256-]]
-==== `[.contract-item-name]#++getFrozen++#++(address user, uint256 tokenId) → uint256 amount++` [.item-kind]#external#
-
-[.contract-item]
-[[IERC7943-isTransferAllowed-address-address-uint256-uint256-]]
-==== `[.contract-item-name]#++isTransferAllowed++#++(address from, address to, uint256 tokenId, uint256 amount) → bool allowed++` [.item-kind]#external#
-
-This may involve checks like allowlists, blocklists, transfer limits and other policy-defined restrictions.
-
-[.contract-item]
-[[IERC7943-isUserAllowed-address-]]
-==== `[.contract-item-name]#++isUserAllowed++#++(address user) → bool allowed++` [.item-kind]#external#
-
-This is often used for allowlist/KYC/KYB/AML checks.
-
-[.contract-item]
-[[IERC7943-ForcedTransfer-address-address-uint256-uint256-]]
-==== `[.contract-item-name]#++ForcedTransfer++#++(address indexed from, address indexed to, uint256 tokenId, uint256 amount)++` [.item-kind]#event#
-
-[.contract-item]
-[[IERC7943-Frozen-address-uint256-uint256-]]
-==== `[.contract-item-name]#++Frozen++#++(address indexed user, uint256 indexed tokenId, uint256 amount)++` [.item-kind]#event#
-
-[.contract-item]
-[[IERC7943-ERC7943NotAllowedUser-address-]]
-==== `[.contract-item-name]#++ERC7943NotAllowedUser++#++(address account)++` [.item-kind]#error#
-
-[.contract-item]
-[[IERC7943-ERC7943NotAllowedTransfer-address-address-uint256-uint256-]]
-==== `[.contract-item-name]#++ERC7943NotAllowedTransfer++#++(address from, address to, uint256 tokenId, uint256 amount)++` [.item-kind]#error#
-
-[.contract-item]
-[[IERC7943-ERC7943InsufficientUnfrozenBalance-address-uint256-uint256-uint256-]]
-==== `[.contract-item-name]#++ERC7943InsufficientUnfrozenBalance++#++(address user, uint256 tokenId, uint256 amount, uint256 unfrozen)++` [.item-kind]#error#
 

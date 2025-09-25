@@ -25,11 +25,11 @@ describe('ERC20uRWA', function () {
 
   describe('ERC165', function () {
     shouldSupportInterfaces({
-      ERC7943: [
-        'isTransferAllowed(address,address,uint256,uint256)',
-        'getFrozen(address,uint256)',
-        'setFrozen(address,uint256,uint256)',
-        'forceTransfer(address,address,uint256,uint256)',
+      ERC7943Fungible: [
+        'canTransfer(address,address,uint256)',
+        'getFrozenTokens(address)',
+        'setFrozenTokens(address,uint256)',
+        'forcedTransfer(address,address,uint256)',
         'isUserAllowed(address)',
       ],
     });
@@ -66,7 +66,7 @@ describe('ERC20uRWA', function () {
       const frozenAmount = 80n;
       const transferAmount = 30n; // Available: 100 - 80 = 20, trying to transfer 30
 
-      await this.token.connect(this.freezer).setFrozen(this.holder, 0, frozenAmount);
+      await this.token.connect(this.freezer).setFrozenTokens(this.holder, frozenAmount);
 
       await expect(this.token.connect(this.holder).transfer(this.recipient, transferAmount))
         .to.be.revertedWithCustomError(this.token, 'ERC20InsufficientUnfrozenBalance')
@@ -77,7 +77,7 @@ describe('ERC20uRWA', function () {
       const frozenAmount = 20n;
       const transferAmount = 30n; // Available: 100 - 20 = 80, transferring 30
 
-      await this.token.connect(this.freezer).setFrozen(this.holder, 0, frozenAmount);
+      await this.token.connect(this.freezer).setFrozenTokens(this.holder, frozenAmount);
       await this.token.$_allowUser(this.holder); // Sets to ALLOWED
       await this.token.$_allowUser(this.recipient); // Sets to ALLOWED
 
@@ -89,63 +89,61 @@ describe('ERC20uRWA', function () {
     });
   });
 
-  describe('isTransferAllowed', function () {
+  describe('canTransfer', function () {
     it('returns true when all conditions are met', async function () {
       const amount = 30n;
-      await expect(this.token.isTransferAllowed(this.holder, this.recipient, 0, amount)).to.eventually.equal(true);
+      await expect(this.token.canTransfer(this.holder, this.recipient, amount)).to.eventually.equal(true);
     });
 
     it('returns false when sender is restricted', async function () {
       await this.token.$_blockUser(this.holder); // Sets to BLOCKED
 
-      await expect(this.token.isTransferAllowed(this.holder, this.recipient, 0, 30n)).to.eventually.equal(false);
+      await expect(this.token.canTransfer(this.holder, this.recipient, 30n)).to.eventually.equal(false);
     });
 
     it('returns false when recipient is restricted', async function () {
       await this.token.$_blockUser(this.recipient); // Sets to BLOCKED
 
-      await expect(this.token.isTransferAllowed(this.holder, this.recipient, 0, 30n)).to.eventually.equal(false);
+      await expect(this.token.canTransfer(this.holder, this.recipient, 30n)).to.eventually.equal(false);
     });
 
     it('returns false when amount exceeds available balance', async function () {
       const frozenAmount = 80n;
       const transferAmount = 30n; // Available: 100 - 80 = 20
 
-      await this.token.connect(this.freezer).setFrozen(this.holder, 0, frozenAmount);
+      await this.token.connect(this.freezer).setFrozenTokens(this.holder, frozenAmount);
 
-      await expect(this.token.isTransferAllowed(this.holder, this.recipient, 0, transferAmount)).to.eventually.equal(
-        false,
-      );
+      await expect(this.token.canTransfer(this.holder, this.recipient, transferAmount)).to.eventually.equal(false);
     });
   });
 
   describe('freezing functionality', function () {
-    describe('getFrozen', function () {
+    describe('getFrozenTokens', function () {
       it('returns zero for users with no frozen tokens', async function () {
-        await expect(this.token.getFrozen(this.holder, 0)).to.eventually.equal(0);
+        await expect(this.token.getFrozenTokens(this.holder)).to.eventually.equal(0);
       });
 
       it('returns correct frozen amount', async function () {
         const frozenAmount = 40n;
-        await this.token.connect(this.freezer).setFrozen(this.holder, 0, frozenAmount);
+        await this.token.connect(this.freezer).setFrozenTokens(this.holder, frozenAmount);
 
-        await expect(this.token.getFrozen(this.holder, 0)).to.eventually.equal(frozenAmount);
+        await expect(this.token.getFrozenTokens(this.holder)).to.eventually.equal(frozenAmount);
       });
     });
 
-    describe('setFrozen', function () {
+    describe('setFrozenTokens', function () {
       it('allows freezer to set frozen amount', async function () {
         const frozenAmount = 50n;
 
-        await expect(this.token.connect(this.freezer).setFrozen(this.holder, 0, frozenAmount))
+        await expect(this.token.connect(this.freezer).setFrozenTokens(this.holder, frozenAmount))
           .to.emit(this.token, 'Frozen')
-          .withArgs(this.holder, 0, frozenAmount);
+          .withArgs(this.holder, frozenAmount);
 
         await expect(this.token.frozen(this.holder)).to.eventually.equal(frozenAmount);
       });
 
       it('reverts when non-freezer tries to set frozen amount', async function () {
-        await expect(this.token.connect(this.other).setFrozen(this.holder, 0, 50n)).to.be.revertedWithCustomError(
+        await expect(this.token.connect(this.other).setFrozenTokens(this.holder, 50n)).to.be.revertedWithCustomError(
           this.token,
           'AccessControlUnauthorizedAccount',
         );
@@ -155,23 +153,23 @@ describe('ERC20uRWA', function () {
         const requestedFrozenAmount = initialSupply + 10n;
         const expectedFrozenAmount = initialSupply; // Should be capped to balance
 
-        await expect(this.token.connect(this.freezer).setFrozen(this.holder, 0, requestedFrozenAmount))
+        await expect(this.token.connect(this.freezer).setFrozenTokens(this.holder, requestedFrozenAmount))
           .to.emit(this.token, 'Frozen')
-          .withArgs(this.holder, 0, expectedFrozenAmount);
+          .withArgs(this.holder, expectedFrozenAmount);
 
         await expect(this.token.frozen(this.holder)).to.eventually.equal(expectedFrozenAmount);
       });
 
       it('allows freezer to update frozen amount', async function () {
-        await this.token.connect(this.freezer).setFrozen(this.holder, 0, 30n);
-        await this.token.connect(this.freezer).setFrozen(this.holder, 0, 70n);
+        await this.token.connect(this.freezer).setFrozenTokens(this.holder, 30n);
+        await this.token.connect(this.freezer).setFrozenTokens(this.holder, 70n);
 
         await expect(this.token.frozen(this.holder)).to.eventually.equal(70n);
       });
 
       it('allows freezer to unfreeze tokens', async function () {
-        await this.token.connect(this.freezer).setFrozen(this.holder, 0, 60n);
-        await this.token.connect(this.freezer).setFrozen(this.holder, 0, 0n);
+        await this.token.connect(this.freezer).setFrozenTokens(this.holder, 60n);
+        await this.token.connect(this.freezer).setFrozenTokens(this.holder, 0n);
 
         await expect(this.token.frozen(this.holder)).to.eventually.equal(0);
       });
@@ -179,12 +177,12 @@ describe('ERC20uRWA', function () {
   });
 
   describe('force transfer functionality', function () {
-    describe('forceTransfer', function () {
+    describe('forcedTransfer', function () {
       it('allows enforcer to force transfer', async function () {
         const transferAmount = 40n;
 
-        const tx = this.token.connect(this.enforcer).forceTransfer(this.holder, this.recipient, 0, transferAmount);
-        await expect(tx).to.emit(this.token, 'ForcedTransfer').withArgs(this.holder, this.recipient, 0, transferAmount);
+        const tx = this.token.connect(this.enforcer).forcedTransfer(this.holder, this.recipient, transferAmount);
+        await expect(tx).to.emit(this.token, 'ForcedTransfer').withArgs(this.holder, this.recipient, transferAmount);
         await expect(tx).to.changeTokenBalances(
           this.token,
           [this.holder, this.recipient],
@@ -194,14 +192,14 @@ describe('ERC20uRWA', function () {
 
       it('reverts when non-enforcer tries to force transfer', async function () {
         await expect(
-          this.token.connect(this.other).forceTransfer(this.holder, this.recipient, 0, 40n),
+          this.token.connect(this.other).forcedTransfer(this.holder, this.recipient, 40n),
         ).to.be.revertedWithCustomError(this.token, 'AccessControlUnauthorizedAccount');
       });
 
       it('reverts when forcing transfer to restricted recipient', async function () {
         await this.token.$_blockUser(this.recipient); // Sets to BLOCKED
 
-        await expect(this.token.connect(this.enforcer).forceTransfer(this.holder, this.recipient, 0, 40n))
+        await expect(this.token.connect(this.enforcer).forcedTransfer(this.holder, this.recipient, 40n))
           .to.be.revertedWithCustomError(this.token, 'ERC7943NotAllowedUser')
           .withArgs(this.recipient);
       });
@@ -210,8 +208,8 @@ describe('ERC20uRWA', function () {
         const transferAmount = 40n;
         await this.token.$_blockUser(this.holder); // Sets to BLOCKED
 
-        const tx = this.token.connect(this.enforcer).forceTransfer(this.holder, this.recipient, 0, transferAmount);
-        await expect(tx).to.emit(this.token, 'ForcedTransfer').withArgs(this.holder, this.recipient, 0, transferAmount);
+        const tx = this.token.connect(this.enforcer).forcedTransfer(this.holder, this.recipient, transferAmount);
+        await expect(tx).to.emit(this.token, 'ForcedTransfer').withArgs(this.holder, this.recipient, transferAmount);
         await expect(tx).to.changeTokenBalances(
           this.token,
           [this.holder, this.recipient],
@@ -223,10 +221,10 @@ describe('ERC20uRWA', function () {
         const frozenAmount = 60n;
         const transferAmount = 80n; // More than available (40), but should work with force transfer
 
-        await this.token.connect(this.freezer).setFrozen(this.holder, 0, frozenAmount);
+        await this.token.connect(this.freezer).setFrozenTokens(this.holder, frozenAmount);
 
-        const tx = this.token.connect(this.enforcer).forceTransfer(this.holder, this.recipient, 0, transferAmount);
-        await expect(tx).to.emit(this.token, 'ForcedTransfer').withArgs(this.holder, this.recipient, 0, transferAmount);
+        const tx = this.token.connect(this.enforcer).forcedTransfer(this.holder, this.recipient, transferAmount);
+        await expect(tx).to.emit(this.token, 'ForcedTransfer').withArgs(this.holder, this.recipient, transferAmount);
         await expect(tx).to.changeTokenBalances(
           this.token,
           [this.holder, this.recipient],
@@ -239,8 +237,8 @@ describe('ERC20uRWA', function () {
         const transferAmount = 70n;
         const expectedRemainingFrozen = initialSupply - transferAmount; // 100 - 70 = 30
 
-        await this.token.connect(this.freezer).setFrozen(this.holder, 0, frozenAmount);
-        await this.token.connect(this.enforcer).forceTransfer(this.holder, this.recipient, 0, transferAmount);
+        await this.token.connect(this.freezer).setFrozenTokens(this.holder, frozenAmount);
+        await this.token.connect(this.enforcer).forcedTransfer(this.holder, this.recipient, transferAmount);
 
         await expect(this.token.frozen(this.holder)).to.eventually.equal(expectedRemainingFrozen);
       });
@@ -249,8 +247,8 @@ describe('ERC20uRWA', function () {
         const frozenAmount = 30n;
         const transferAmount = 20n; // Less than available (70)
 
-        await this.token.connect(this.freezer).setFrozen(this.holder, 0, frozenAmount);
-        await this.token.connect(this.enforcer).forceTransfer(this.holder, this.recipient, 0, transferAmount);
+        await this.token.connect(this.freezer).setFrozenTokens(this.holder, frozenAmount);
+        await this.token.connect(this.enforcer).forcedTransfer(this.holder, this.recipient, transferAmount);
 
         await expect(this.token.frozen(this.holder)).to.eventually.equal(frozenAmount);
       });
@@ -276,7 +274,7 @@ describe('ERC20uRWA', function () {
 
       it('allows minting to user with frozen tokens', async function () {
         await this.token.$_mint(this.recipient, 20n);
-        await this.token.connect(this.freezer).setFrozen(this.recipient, 0, 20n);
+        await this.token.connect(this.freezer).setFrozenTokens(this.recipient, 20n);
 
         await expect(this.token.$_mint(this.recipient, value)).to.changeTokenBalance(this.token, this.recipient, value);
       });
@@ -299,7 +297,7 @@ describe('ERC20uRWA', function () {
 
       it('reverts when burning more than unfrozen balance', async function () {
         const frozenAmount = 70n;
-        await this.token.connect(this.freezer).setFrozen(this.holder, 0, frozenAmount);
+        await this.token.connect(this.freezer).setFrozenTokens(this.holder, frozenAmount);
 
         await expect(this.token.$_burn(this.holder, value))
           .to.be.revertedWithCustomError(this.token, 'ERC20InsufficientUnfrozenBalance')
@@ -313,7 +311,7 @@ describe('ERC20uRWA', function () {
 
     it('allows approval regardless of frozen or restricted status', async function () {
       await this.token.$_blockUser(this.holder); // Sets to BLOCKED
-      await this.token.connect(this.freezer).setFrozen(this.holder, 0, 80n);
+      await this.token.connect(this.freezer).setFrozenTokens(this.holder, 80n);
 
       await this.token.connect(this.holder).approve(this.approved, allowance);
       await expect(this.token.allowance(this.holder, this.approved)).to.eventually.equal(allowance);
@@ -348,7 +346,7 @@ describe('ERC20uRWA', function () {
 
       it('reverts transferFrom when insufficient unfrozen balance', async function () {
         const frozenAmount = 70n; // Available: 100 - 70 = 30, trying to transfer 40
-        await this.token.connect(this.freezer).setFrozen(this.holder, 0, frozenAmount);
+        await this.token.connect(this.freezer).setFrozenTokens(this.holder, frozenAmount);
 
         await expect(this.token.connect(this.approved).transferFrom(this.holder, this.recipient, allowance))
           .to.be.revertedWithCustomError(this.token, 'ERC20InsufficientUnfrozenBalance')
