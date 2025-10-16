@@ -1,0 +1,338 @@
+:github-icon: pass:[<svg class="icon"><use href="#github-icon"/></svg>]
+:TimelockControllerEnumerable: pass:normal[xref:governance.adoc#TimelockControllerEnumerable[`TimelockControllerEnumerable`]]
+= Governance
+
+[.readme-notice]
+NOTE: This document is better viewed at https://docs.openzeppelin.com/contracts/api/governance
+
+This directory includes extensions and utilities for on-chain governance.
+
+* {TimelockControllerEnumerable}: Extension of OpenZeppelin's TimelockController with enumerable operations support.
+
+== Timelock
+
+:Operation: pass:normal[xref:#TimelockControllerEnumerable-Operation[`++Operation++`]]
+:OperationBatch: pass:normal[xref:#TimelockControllerEnumerable-OperationBatch[`++OperationBatch++`]]
+:OperationIndexNotFound: pass:normal[xref:#TimelockControllerEnumerable-OperationIndexNotFound-uint256-[`++OperationIndexNotFound++`]]
+:OperationIdNotFound: pass:normal[xref:#TimelockControllerEnumerable-OperationIdNotFound-bytes32-[`++OperationIdNotFound++`]]
+:OperationBatchIndexNotFound: pass:normal[xref:#TimelockControllerEnumerable-OperationBatchIndexNotFound-uint256-[`++OperationBatchIndexNotFound++`]]
+:OperationBatchIdNotFound: pass:normal[xref:#TimelockControllerEnumerable-OperationBatchIdNotFound-bytes32-[`++OperationBatchIdNotFound++`]]
+:InvalidIndexRange: pass:normal[xref:#TimelockControllerEnumerable-InvalidIndexRange-uint256-uint256-[`++InvalidIndexRange++`]]
+:schedule: pass:normal[xref:#TimelockControllerEnumerable-schedule-address-uint256-bytes-bytes32-bytes32-uint256-[`++schedule++`]]
+:scheduleBatch: pass:normal[xref:#TimelockControllerEnumerable-scheduleBatch-address---uint256---bytes---bytes32-bytes32-uint256-[`++scheduleBatch++`]]
+:cancel: pass:normal[xref:#TimelockControllerEnumerable-cancel-bytes32-[`++cancel++`]]
+:operations: pass:normal[xref:#TimelockControllerEnumerable-operations--[`++operations++`]]
+:operations: pass:normal[xref:#TimelockControllerEnumerable-operations-uint256-uint256-[`++operations++`]]
+:operationsCount: pass:normal[xref:#TimelockControllerEnumerable-operationsCount--[`++operationsCount++`]]
+:operation: pass:normal[xref:#TimelockControllerEnumerable-operation-uint256-[`++operation++`]]
+:operation: pass:normal[xref:#TimelockControllerEnumerable-operation-bytes32-[`++operation++`]]
+:operationsBatch: pass:normal[xref:#TimelockControllerEnumerable-operationsBatch--[`++operationsBatch++`]]
+:operationsBatch: pass:normal[xref:#TimelockControllerEnumerable-operationsBatch-uint256-uint256-[`++operationsBatch++`]]
+:operationsBatchCount: pass:normal[xref:#TimelockControllerEnumerable-operationsBatchCount--[`++operationsBatchCount++`]]
+:operationBatch: pass:normal[xref:#TimelockControllerEnumerable-operationBatch-uint256-[`++operationBatch++`]]
+:operationBatch: pass:normal[xref:#TimelockControllerEnumerable-operationBatch-bytes32-[`++operationBatch++`]]
+
+[.contract]
+[[TimelockControllerEnumerable]]
+=== `++TimelockControllerEnumerable++` link:https://github.com/OpenZeppelin/openzeppelin-community-contracts/blob/master/contracts/governance/TimelockControllerEnumerable.sol[{github-icon},role=heading-link]
+
+[.hljs-theme-light.nopadding]
+```solidity
+import "@openzeppelin/community-contracts/governance/TimelockControllerEnumerable.sol";
+```
+
+Extends the TimelockController to allow for enumerable operations
+
+[.contract-index]
+.Functions
+--
+* `++schedule(target, value, data, predecessor, salt, delay)++`
+* `++scheduleBatch(targets, values, payloads, predecessor, salt, delay)++`
+* `++cancel(id)++`
+* `++operations()++`
+* `++operations(start, end)++`
+* `++operationsCount()++`
+* `++operation(index)++`
+* `++operation(id)++`
+* `++operationsBatch()++`
+* `++operationsBatch(start, end)++`
+* `++operationsBatchCount()++`
+* `++operationBatch(index)++`
+* `++operationBatch(id)++`
+
+[.contract-subindex-inherited]
+.TimelockController
+* `++receive()++`
+* `++supportsInterface(interfaceId)++`
+* `++isOperation(id)++`
+* `++isOperationPending(id)++`
+* `++isOperationReady(id)++`
+* `++isOperationDone(id)++`
+* `++getTimestamp(id)++`
+* `++getOperationState(id)++`
+* `++getMinDelay()++`
+* `++hashOperation(target, value, data, predecessor, salt)++`
+* `++hashOperationBatch(targets, values, payloads, predecessor, salt)++`
+* `++execute(target, value, payload, predecessor, salt)++`
+* `++executeBatch(targets, values, payloads, predecessor, salt)++`
+* `++_execute(target, value, data)++`
+* `++updateDelay(newDelay)++`
+* `++_encodeStateBitmap(operationState)++`
+* `++PROPOSER_ROLE()++`
+* `++EXECUTOR_ROLE()++`
+* `++CANCELLER_ROLE()++`
+
+[.contract-subindex-inherited]
+.ERC1155Holder
+* `++onERC1155Received(, , , , )++`
+* `++onERC1155BatchReceived(, , , , )++`
+
+[.contract-subindex-inherited]
+.IERC1155Receiver
+
+[.contract-subindex-inherited]
+.ERC721Holder
+* `++onERC721Received(, , , )++`
+
+[.contract-subindex-inherited]
+.IERC721Receiver
+
+[.contract-subindex-inherited]
+.AccessControl
+* `++hasRole(role, account)++`
+* `++_checkRole(role)++`
+* `++_checkRole(role, account)++`
+* `++getRoleAdmin(role)++`
+* `++grantRole(role, account)++`
+* `++revokeRole(role, account)++`
+* `++renounceRole(role, callerConfirmation)++`
+* `++_setRoleAdmin(role, adminRole)++`
+* `++_grantRole(role, account)++`
+* `++_revokeRole(role, account)++`
+* `++DEFAULT_ADMIN_ROLE()++`
+
+[.contract-subindex-inherited]
+.ERC165
+
+[.contract-subindex-inherited]
+.IERC165
+
+[.contract-subindex-inherited]
+.IAccessControl
+
+--
+
+[.contract-index]
+.Events
+--
+
+[.contract-subindex-inherited]
+.TimelockController
+* `++CallScheduled(id, index, target, value, data, predecessor, delay)++`
+* `++CallExecuted(id, index, target, value, data)++`
+* `++CallSalt(id, salt)++`
+* `++Cancelled(id)++`
+* `++MinDelayChange(oldDuration, newDuration)++`
+
+[.contract-subindex-inherited]
+.ERC1155Holder
+
+[.contract-subindex-inherited]
+.IERC1155Receiver
+
+[.contract-subindex-inherited]
+.ERC721Holder
+
+[.contract-subindex-inherited]
+.IERC721Receiver
+
+[.contract-subindex-inherited]
+.AccessControl
+
+[.contract-subindex-inherited]
+.ERC165
+
+[.contract-subindex-inherited]
+.IERC165
+
+[.contract-subindex-inherited]
+.IAccessControl
+* `++RoleAdminChanged(role, previousAdminRole, newAdminRole)++`
+* `++RoleGranted(role, account, sender)++`
+* `++RoleRevoked(role, account, sender)++`
+
+--
+
+[.contract-index]
+.Errors
+--
+* `++OperationIndexNotFound(index)++`
+* `++OperationIdNotFound(id)++`
+* `++OperationBatchIndexNotFound(index)++`
+* `++OperationBatchIdNotFound(id)++`
+* `++InvalidIndexRange(start, end)++`
+
+[.contract-subindex-inherited]
+.TimelockController
+* `++TimelockInvalidOperationLength(targets, payloads, values)++`
+* `++TimelockInsufficientDelay(delay, minDelay)++`
+* `++TimelockUnexpectedOperationState(operationId, expectedStates)++`
+* `++TimelockUnexecutedPredecessor(predecessorId)++`
+* `++TimelockUnauthorizedCaller(caller)++`
+
+[.contract-subindex-inherited]
+.ERC1155Holder
+
+[.contract-subindex-inherited]
+.IERC1155Receiver
+
+[.contract-subindex-inherited]
+.ERC721Holder
+
+[.contract-subindex-inherited]
+.IERC721Receiver
+
+[.contract-subindex-inherited]
+.AccessControl
+
+[.contract-subindex-inherited]
+.ERC165
+
+[.contract-subindex-inherited]
+.IERC165
+
+[.contract-subindex-inherited]
+.IAccessControl
+* `++AccessControlUnauthorizedAccount(account, neededRole)++`
+* `++AccessControlBadConfirmation()++`
+
+--
+
+[.contract-item]
+[[TimelockControllerEnumerable-schedule-address-uint256-bytes-bytes32-bytes32-uint256-]]
+==== `[.contract-item-name]#++schedule++#++(address target, uint256 value, bytes data, bytes32 predecessor, bytes32 salt, uint256 delay)++` [.item-kind]#public#
+
+Schedule an operation containing a single transaction.
+
+Emits {CallSalt} if salt is nonzero, and {CallScheduled}.
+
+Requirements:
+
+- the caller must have the 'proposer' role.
+
+[.contract-item]
+[[TimelockControllerEnumerable-scheduleBatch-address---uint256---bytes---bytes32-bytes32-uint256-]]
+==== `[.contract-item-name]#++scheduleBatch++#++(address[] targets, uint256[] values, bytes[] payloads, bytes32 predecessor, bytes32 salt, uint256 delay)++` [.item-kind]#public#
+
+Schedule an operation containing a batch of transactions.
+
+Emits {CallSalt} if salt is nonzero, and one {CallScheduled} event per transaction in the batch.
+
+Requirements:
+
+- the caller must have the 'proposer' role.
+
+[.contract-item]
+[[TimelockControllerEnumerable-cancel-bytes32-]]
+==== `[.contract-item-name]#++cancel++#++(bytes32 id)++` [.item-kind]#public#
+
+Cancel an operation.
+
+Requirements:
+
+- the caller must have the 'canceller' role.
+
+[.contract-item]
+[[TimelockControllerEnumerable-operations--]]
+==== `[.contract-item-name]#++operations++#++() → struct TimelockControllerEnumerable.Operation[] operations_++` [.item-kind]#public#
+
+Return all scheduled operations
+WARNING: This is designed for view accessors queried without gas fees. Using it in state-changing
+functions may become uncallable if the list grows too large.
+
+[.contract-item]
+[[TimelockControllerEnumerable-operations-uint256-uint256-]]
+==== `[.contract-item-name]#++operations++#++(uint256 start, uint256 end) → struct TimelockControllerEnumerable.Operation[] operations_++` [.item-kind]#public#
+
+Return the operations in the given index range
+
+[.contract-item]
+[[TimelockControllerEnumerable-operationsCount--]]
+==== `[.contract-item-name]#++operationsCount++#++() → uint256 operationsCount_++` [.item-kind]#public#
+
+Return the number of operations from the set
+
+[.contract-item]
+[[TimelockControllerEnumerable-operation-uint256-]]
+==== `[.contract-item-name]#++operation++#++(uint256 index) → struct TimelockControllerEnumerable.Operation operation_++` [.item-kind]#public#
+
+Return the operation at the given index
+
+[.contract-item]
+[[TimelockControllerEnumerable-operation-bytes32-]]
+==== `[.contract-item-name]#++operation++#++(bytes32 id) → struct TimelockControllerEnumerable.Operation operation_++` [.item-kind]#public#
+
+Return the operation with the given id
+
+[.contract-item]
+[[TimelockControllerEnumerable-operationsBatch--]]
+==== `[.contract-item-name]#++operationsBatch++#++() → struct TimelockControllerEnumerable.OperationBatch[] operationsBatch_++` [.item-kind]#public#
+
+Return all scheduled operation batches
+WARNING: This is designed for view accessors queried without gas fees. Using it in state-changing
+functions may become uncallable if the list grows too large.
+
+[.contract-item]
+[[TimelockControllerEnumerable-operationsBatch-uint256-uint256-]]
+==== `[.contract-item-name]#++operationsBatch++#++(uint256 start, uint256 end) → struct TimelockControllerEnumerable.OperationBatch[] operationsBatch_++` [.item-kind]#public#
+
+Return the operationsBatch in the given index range
+
+[.contract-item]
+[[TimelockControllerEnumerable-operationsBatchCount--]]
+==== `[.contract-item-name]#++operationsBatchCount++#++() → uint256 operationsBatchCount_++` [.item-kind]#public#
+
+Return the number of operationsBatch from the set
+
+[.contract-item]
+[[TimelockControllerEnumerable-operationBatch-uint256-]]
+==== `[.contract-item-name]#++operationBatch++#++(uint256 index) → struct TimelockControllerEnumerable.OperationBatch operationBatch_++` [.item-kind]#public#
+
+Return the operationsBatch at the given index
+
+[.contract-item]
+[[TimelockControllerEnumerable-operationBatch-bytes32-]]
+==== `[.contract-item-name]#++operationBatch++#++(bytes32 id) → struct TimelockControllerEnumerable.OperationBatch operationBatch_++` [.item-kind]#public#
+
+Return the operationsBatch with the given id
+
+[.contract-item]
+[[TimelockControllerEnumerable-OperationIndexNotFound-uint256-]]
+==== `[.contract-item-name]#++OperationIndexNotFound++#++(uint256 index)++` [.item-kind]#error#
+
+The error when the operation index is not found
+
+[.contract-item]
+[[TimelockControllerEnumerable-OperationIdNotFound-bytes32-]]
+==== `[.contract-item-name]#++OperationIdNotFound++#++(bytes32 id)++` [.item-kind]#error#
+
+The error when the operation id is not found
+
+[.contract-item]
+[[TimelockControllerEnumerable-OperationBatchIndexNotFound-uint256-]]
+==== `[.contract-item-name]#++OperationBatchIndexNotFound++#++(uint256 index)++` [.item-kind]#error#
+
+The error when the operation batch index is not found
+
+[.contract-item]
+[[TimelockControllerEnumerable-OperationBatchIdNotFound-bytes32-]]
+==== `[.contract-item-name]#++OperationBatchIdNotFound++#++(bytes32 id)++` [.item-kind]#error#
+
+The error when the operation batch id is not found
+
+[.contract-item]
+[[TimelockControllerEnumerable-InvalidIndexRange-uint256-uint256-]]
+==== `[.contract-item-name]#++InvalidIndexRange++#++(uint256 start, uint256 end)++` [.item-kind]#error#
+
+The error when the index range is invalid
+
