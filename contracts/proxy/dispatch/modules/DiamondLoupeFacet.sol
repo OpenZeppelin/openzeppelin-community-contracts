@@ -10,23 +10,19 @@ import {Dispatch} from "../utils/Dispatch.sol";
 contract DiamondLoupeFacet is Context, IDiamondLoupe {
     using Dispatch for Dispatch.VMT;
 
-    function facets() public view override returns (Facet[] memory) {
-        this;
+    function facets() public view virtual override returns (Facet[] memory) {
         revert("This implementation doesnt keep an index, use an offchain index instead");
     }
 
-    function facetFunctionSelectors(address _facet) public view override returns (bytes4[] memory) {
-        this;
-        _facet;
+    function facetFunctionSelectors(address /*_facet*/) public view virtual override returns (bytes4[] memory) {
         revert("This implementation doesnt keep an index, use an offchain index instead");
     }
 
-    function facetAddresses() public view override returns (address[] memory) {
-        this;
+    function facetAddresses() public view virtual override returns (address[] memory) {
         revert("This implementation doesnt keep an index, use an offchain index instead");
     }
 
-    function facetAddress(bytes4 _functionSelector) public view override returns (address) {
+    function facetAddress(bytes4 _functionSelector) public view virtual override returns (address) {
         return Dispatch.instance().getFunction(_functionSelector);
     }
 }
