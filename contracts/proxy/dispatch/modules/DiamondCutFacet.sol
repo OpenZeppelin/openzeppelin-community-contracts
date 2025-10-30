@@ -37,6 +37,8 @@ contract DiamondCutFacet is Context, IDiamondCut {
 
         emit DiamondCut(_diamondCut, _init, _calldata);
 
-        Address.functionCall(_init, _calldata);
+        if (_calldata.length > 0) {
+            Address.functionDelegateCall(_init, _calldata);
+	    }
     }
 }
