@@ -13,7 +13,7 @@ contract DiamondCutFacet is Context, IDiamondCut {
 
     error DiamondCutFacetAlreadyExist(bytes4 selector);
     error DiamondCutFacetAlreadySet(bytes4 selector);
-    error DiamondCutFacetAlreadyDoesNotExit(bytes4 selector);
+    error DiamondCutFacetDoesNotExist(bytes4 selector);
 
     function diamondCut(FacetCut[] calldata _diamondCut, address _init, bytes calldata _calldata) public override {
         Dispatch.VMT storage store = Dispatch.instance();
@@ -29,7 +29,7 @@ contract DiamondCutFacet is Context, IDiamondCut {
                 } else if (facetcut.action == FacetCutAction.Replace && currentFacet != facetcut.facetAddress) {
                     revert DiamondCutFacetAlreadySet(selector);
                 } else if (facetcut.action == FacetCutAction.Remove && currentFacet == address(0)) {
-                    revert DiamondCutFacetAlreadyDoesNotExit(selector);
+                    revert DiamondCutFacetDoesNotExist(selector);
                 }
                 store.setFunction(selector, facetcut.facetAddress);
             }
