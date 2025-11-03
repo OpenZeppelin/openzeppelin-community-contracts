@@ -1,16 +1,4 @@
-const { P256SigningKey } = require('@openzeppelin/contracts/test/helpers/signers');
-const {
-  AbiCoder,
-  ZeroHash,
-  assertArgument,
-  concat,
-  dataLength,
-  sha256,
-  solidityPacked,
-  toBigInt,
-  encodeBase64,
-  toUtf8Bytes,
-} = require('ethers');
+const { assertArgument, dataLength, toBigInt, AbiCoder } = require('ethers');
 
 class ZKEmailSigningKey {
   #domainName;
@@ -77,38 +65,6 @@ class ZKEmailSigningKey {
   }
 }
 
-class WebAuthnSigningKey extends P256SigningKey {
-  sign(digest /*: BytesLike*/) /*: { serialized: string } */ {
-    assertArgument(dataLength(digest) === 32, 'invalid digest length', 'digest', digest);
-
-    const clientDataJSON = JSON.stringify({
-      type: 'webauthn.get',
-      challenge: encodeBase64(digest).replaceAll('+', '-').replaceAll('/', '_').replaceAll('=', ''),
-    });
-
-    // Flags 0x05 = AUTH_DATA_FLAGS_UP | AUTH_DATA_FLAGS_UV
-    const authenticatorData = solidityPacked(['bytes32', 'bytes1', 'bytes4'], [ZeroHash, '0x05', '0x00000000']);
-
-    // Regular P256 signature
-    const { r, s } = super.sign(sha256(concat([authenticatorData, sha256(toUtf8Bytes(clientDataJSON))])));
-
-    const serialized = AbiCoder.defaultAbiCoder().encode(
-      ['bytes32', 'bytes32', 'uint256', 'uint256', 'bytes', 'string'],
-      [
-        r,
-        s,
-        clientDataJSON.indexOf('"challenge"'),
-        clientDataJSON.indexOf('"type"'),
-        authenticatorData,
-        clientDataJSON,
-      ],
-    );
-
-    return { serialized };
-  }
-}
-
 module.exports = {
   ZKEmailSigningKey,
-  WebAuthnSigningKey,
 };

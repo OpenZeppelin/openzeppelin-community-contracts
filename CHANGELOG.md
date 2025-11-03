@@ -1,3 +1,7 @@
+## 02-11-2025
+
+- Remove `WebAuthn`, `SignerWebAuthn`, `ERC7913WebAuthnVerifier`. These contracts were migrated to `@openzeppelin/contracts>=5.5.0`.
+
 ## 17-10-2025
 
 - `TimelockControllerEnumerable`: Add enumerable extension of `TimelockController` allowing easy listing/enumeration of scheduled operations and operation batches, with view accessors for indexed/ranged queries and more informative revert errors.
