@@ -16,7 +16,7 @@ async function fixture() {
   return { owner, sender, accounts, chain, axelar, gatewayA, gatewayB, receiver, invalidReceiver };
 }
 
-describe('AxelarGateway', function () {
+describe('AxelarGatewayAdapter', function () {
   beforeEach(async function () {
     Object.assign(this, await loadFixture(fixture));
   });
@@ -55,7 +55,7 @@ describe('AxelarGateway', function () {
       .to.emit(this.axelar, 'MessageExecuted')
       .withArgs(anyValue)
       .to.emit(this.receiver, 'MessageReceived')
-      .withArgs(this.gatewayB, anyValue, erc7930Sender, payload);
+      .withArgs(this.gatewayB, anyValue, erc7930Sender, payload, 0n);
   });
 
   it('invalid receiver - bad return value', async function () {
