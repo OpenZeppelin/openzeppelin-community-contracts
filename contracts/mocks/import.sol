@@ -14,5 +14,6 @@ import {
 } from "@openzeppelin/contracts/mocks/account/AccountMock.sol";
 import {ERC1271WalletMock} from "@openzeppelin/contracts/mocks/ERC1271WalletMock.sol";
 import {CallReceiverMock} from "@openzeppelin/contracts/mocks/CallReceiverMock.sol";
+import {EtherReceiverMock} from "@openzeppelin/contracts/mocks/EtherReceiverMock.sol";
 import {ERC7913P256Verifier} from "@openzeppelin/contracts/utils/cryptography/verifiers/ERC7913P256Verifier.sol";
 import {ERC7913RSAVerifier} from "@openzeppelin/contracts/utils/cryptography/verifiers/ERC7913RSAVerifier.sol";
