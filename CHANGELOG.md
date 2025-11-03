@@ -1,3 +1,16 @@
+## 17-10-2025
+
+- `TimelockControllerEnumerable`: Add enumerable extension of `TimelockController` allowing easy listing/enumeration of scheduled operations and operation batches, with view accessors for indexed/ranged queries and more informative revert errors.
+
+## 25-09-2025
+
+- Split `IERC7943` into `IERC7943Fungible`, `IERC7943NonFungible`, and `IERC7943MultiToken` interfaces for fungible, non-fungible, and multi-token support, respectively.
+
+## 17-09-2025
+
+- `ERC7786Attributes`: Add utility library for parsing and processing ERC-7786 attributes, including safe decoding of `requestRelay(uint256,uint256,address)` attributes from calldata.
+- `WormholeGatewayAdapter`: Add ERC-7786 compliant crosschain gateway for sending and receiving messages via Wormhole, supporting request relays and atomic or deferred delivery flows.
+
 ## 09-09-2025
 
 - `DKIMRegistry`: Add implementation of ERC-7969 to enable onchain verification of DomainKeys Identified Mail (DKIM) signatures.
