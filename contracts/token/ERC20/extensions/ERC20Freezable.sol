@@ -13,8 +13,8 @@ import {IERC7943Fungible} from "../../../interfaces/IERC7943.sol";
  *
  * The freezing mechanism provides the guarantee to the contract owner
  * (e.g. a DAO or a well-configured multisig) that a specific amount
- * of tokens held by an account won't be transferable until those
- * tokens are unfrozen using {_setFrozen}.
+ * of tokens held by an account won't be transferable until the frozen amount
+ * is reduced using {_setFrozen}.
  */
 abstract contract ERC20Freezable is ERC20 {
     /// @dev Frozen amount of tokens per address.
