@@ -9,7 +9,7 @@ import {ERC20Freezable} from "./ERC20Freezable.sol";
 import {ERC20Restricted} from "./ERC20Restricted.sol";
 
 /**
- * @dev Extension of {ERC20} according to https://eips.ethereum.org/EIPS/eip-7943[EIP-7943].
+ * @dev Extension of {ERC20} according to [EIP-7943](https://eips.ethereum.org/EIPS/eip-7943).
  *
  * Combines standard ERC-20 functionality with RWA-specific features like user restrictions,
  * asset freezing, and forced asset transfers.
@@ -30,8 +30,10 @@ abstract contract ERC20uRWA is ERC20, ERC165, ERC20Freezable, ERC20Restricted, I
     /**
      * @dev See {IERC7943Fungible-canTransfer}.
      *
-     * CAUTION: This function is only meant for external use. Overriding it will not apply the new checks to
+     * <Callout type="warn">
+     * This function is only meant for external use. Overriding it will not apply the new checks to
      * the internal {_update} function. Consider overriding {_update} accordingly to keep both functions in sync.
+     * </Callout>
      */
     function canTransfer(address from, address to, uint256 amount) external view virtual returns (bool) {
         return (amount <= available(from) && isUserAllowed(from) && isUserAllowed(to));
@@ -45,8 +47,10 @@ abstract contract ERC20uRWA is ERC20, ERC165, ERC20Freezable, ERC20Restricted, I
     /**
      * @dev See {IERC7943Fungible-setFrozenTokens}.
      *
-     * NOTE: The `amount` is capped to the balance of the `user` to ensure the {IERC7943Fungible-Frozen} event
+     * <Callout>
+     * The `amount` is capped to the balance of the `user` to ensure the {IERC7943Fungible-Frozen} event
      * emits values that consistently reflect the actual amount of tokens that are frozen.
+     * </Callout>
      */
     function setFrozenTokens(address user, uint256 amount) public virtual {
         uint256 actualAmount = Math.min(amount, balanceOf(user));
@@ -60,10 +64,12 @@ abstract contract ERC20uRWA is ERC20, ERC165, ERC20Freezable, ERC20Restricted, I
      * Bypasses the {ERC20Restricted} restrictions for the `from` address and adjusts the frozen balance
      * to the new balance after the transfer.
      *
-     * NOTE: This function uses {_update} to perform the transfer, ensuring all standard ERC20
+     * <Callout>
+     * This function uses {_update} to perform the transfer, ensuring all standard ERC20
      * side effects (such as balance updates and events) are preserved. If you override {_update}
      * to add additional restrictions or logic, those changes will also apply here.
      * Consider overriding this function to bypass newer restrictions if needed.
+     * </Callout>
      */
     function forcedTransfer(address from, address to, uint256 amount) public virtual {
         _checkEnforcer(from, to, amount);

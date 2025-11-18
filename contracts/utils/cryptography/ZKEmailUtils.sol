@@ -10,7 +10,7 @@ import {EmailProof} from "@zk-email/email-tx-builder/src/interfaces/IEmailTypes.
 import {CommandUtils} from "@zk-email/email-tx-builder/src/libraries/CommandUtils.sol";
 
 /**
- * @dev Library for https://docs.zk.email[ZKEmail] Groth16 proof validation utilities.
+ * @dev Library for [ZKEmail](https://docs.zk.email) Groth16 proof validation utilities.
  *
  * ZKEmail is a protocol that enables email-based authentication and authorization for smart contracts
  * using zero-knowledge proofs. It allows users to prove ownership of an email address without revealing
@@ -18,11 +18,11 @@ import {CommandUtils} from "@zk-email/email-tx-builder/src/libraries/CommandUtil
  *
  * The validation process involves several key components:
  *
- * * A https://docs.zk.email/architecture/dkim-verification[DKIMRegistry] (DomainKeys Identified Mail) verification
+ * * A [DKIMRegistry](https://docs.zk.email/architecture/dkim-verification) (DomainKeys Identified Mail) verification
  * mechanism to ensure the email was sent from a valid domain. Defined by an `IDKIMRegistry` interface.
- * * A https://docs.zk.email/email-tx-builder/architecture/command-templates[command template] validation
+ * * A [command template](https://docs.zk.email/email-tx-builder/architecture/command-templates) validation
  * mechanism to ensure the email command matches the expected format and parameters.
- * * A https://docs.zk.email/architecture/zk-proofs#how-zk-email-uses-zero-knowledge-proofs[zero-knowledge proof] verification
+ * * A [zero-knowledge proof](https://docs.zk.email/architecture/zk-proofs#how-zk-email-uses-zero-knowledge-proofs) verification
  * mechanism to ensure the email was actually sent and received without revealing its contents. Defined by an `IGroth16Verifier` interface.
  */
 library ZKEmailUtils {
@@ -80,7 +80,9 @@ library ZKEmailUtils {
      * Returns {EmailProofError.NoError} if all validations pass, or a specific {EmailProofError} indicating
      * which validation check failed.
      *
-     * NOTE: Attempts to validate the command for all possible string {Case} values.
+     * <Callout>
+     * Attempts to validate the command for all possible string {Case} values.
+     * </Callout>
      */
     function isValidZKEmail(
         EmailProof memory emailProof,
@@ -131,8 +133,10 @@ library ZKEmailUtils {
      * @dev Verifies that calldata bytes (`input`) represents a valid `EmailProof` object. If encoding is valid,
      * returns true and the calldata view at the object. Otherwise, returns false and an invalid calldata object.
      *
-     * NOTE: The returned `emailProof` object should not be accessed if `success` is false. Trying to access the data may
+     * <Callout>
+     * The returned `emailProof` object should not be accessed if `success` is false. Trying to access the data may
      * cause revert/panic.
+     * </Callout>
      */
     function tryDecodeEmailProof(
         bytes calldata input

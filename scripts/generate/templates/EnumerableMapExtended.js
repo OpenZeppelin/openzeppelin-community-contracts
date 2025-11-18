@@ -9,7 +9,7 @@ import {EnumerableSetExtended} from "./EnumerableSetExtended.sol";
 
 /**
  * @dev Library for managing an enumerable variant of Solidity's
- * https://solidity.readthedocs.io/en/latest/types.html#mapping-types[\`mapping\`]
+ * [\`mapping\`](https://solidity.readthedocs.io/en/latest/types.html#mapping-types)
  * type for non-value types as keys.
  *
  * Maps have the following properties:
@@ -34,17 +34,18 @@ import {EnumerableSetExtended} from "./EnumerableSetExtended.sol";
  * - \`bytes -> uint256\` (\`BytesToUintMap\`)
  * - \`string -> string\` (\`StringToStringMap\`)
  *
- * [WARNING]
- * ====
+ * <Callout type="warn">
  * Trying to delete such a structure from storage will likely result in data corruption, rendering the structure
  * unusable.
- * See https://github.com/ethereum/solidity/pull/11843[ethereum/solidity#11843] for more info.
+ * See [ethereum/solidity#11843](https://github.com/ethereum/solidity/pull/11843) for more info.
  *
  * In order to clean an EnumerableMap, you can either remove all elements one by one or create a fresh instance using an
  * array of EnumerableMap.
- * ====
+ * </Callout>
  *
- * NOTE: Extensions of openzeppelin/contracts/utils/struct/EnumerableMap.sol.
+ * <Callout>
+ * Extensions of openzeppelin/contracts/utils/struct/EnumerableMap.sol.
+ * </Callout>
  */
 `;
 
@@ -85,8 +86,10 @@ function remove(${name} storage map, ${key.typeLoc} key) internal returns (bool)
 /**
  * @dev Removes all the entries from a map. O(n).
  *
- * WARNING: Developers should keep in mind that this function has an unbounded cost and using it may render the
+ * <Callout type="warn">
+ * Developers should keep in mind that this function has an unbounded cost and using it may render the
  * function uncallable if the map grows to the point where clearing it consumes too much gas to fit in a block.
+ * </Callout>
  */
 function clear(${name} storage map) internal {
     uint256 len = length(map);
@@ -158,10 +161,12 @@ function get(${name} storage map, ${key.typeLoc} key) internal view returns (${v
 /**
  * @dev Returns an array containing all the keys
  *
- * WARNING: This operation will copy the entire storage to memory, which can be quite expensive. This is designed
+ * <Callout type="warn">
+ * This operation will copy the entire storage to memory, which can be quite expensive. This is designed
  * to mostly be used by view accessors that are queried without any gas fees. Developers should keep in mind that
  * this function has an unbounded cost, and using it as part of a state-changing function may render the function
  * uncallable if the map grows to a point where copying to memory consumes too much gas to fit in a block.
+ * </Callout>
  */
 function keys(${name} storage map) internal view returns (${key.type}[] memory) {
     return map._keys.values();
@@ -170,10 +175,12 @@ function keys(${name} storage map) internal view returns (${key.type}[] memory) 
 /**
  * @dev Returns an array containing a slice of the keys
  *
- * WARNING: This operation will copy the entire storage to memory, which can be quite expensive. This is designed
+ * <Callout type="warn">
+ * This operation will copy the entire storage to memory, which can be quite expensive. This is designed
  * to mostly be used by view accessors that are queried without any gas fees. Developers should keep in mind that
  * this function has an unbounded cost, and using it as part of a state-changing function may render the function
  * uncallable if the map grows to a point where copying to memory consumes too much gas to fit in a block.
+ * </Callout>
  */
 function keys(${name} storage map, uint256 start, uint256 end) internal view returns (${key.type}[] memory) {
     return map._keys.values(start, end);

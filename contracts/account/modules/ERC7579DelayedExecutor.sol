@@ -9,7 +9,7 @@ import {ERC7579Executor} from "./ERC7579Executor.sol";
  * @dev Extension of {ERC7579Executor} that allows scheduling and executing delayed operations
  * with expiration. This module enables time-delayed execution patterns for smart accounts.
  *
- * ==== Operation Lifecycle
+ * #### Operation Lifecycle
  *
  * 1. Scheduling: Operations are scheduled via {schedule} with a specified delay period.
  * The delay period is set during {onInstall} and can be customized via {setDelay}. Each
@@ -24,7 +24,7 @@ import {ERC7579Executor} from "./ERC7579Executor.sol";
  * executable. If an operation is not executed within the expiration period, it becomes `Expired`
  * and can't be executed. Expired operations must be rescheduled with a different salt.
  *
- * ==== Delay Management
+ * #### Delay Management
  *
  * Accounts can set their own delay periods during installation or via {setDelay}.
  * The delay period is enforced even between installas and uninstalls to prevent
@@ -32,14 +32,16 @@ import {ERC7579Executor} from "./ERC7579Executor.sol";
  * after a transition period defined by the current delay or {minSetback}, whichever
  * is longer.
  *
- * ==== Authorization
+ * #### Authorization
  *
  * Authorization for scheduling and canceling operations is controlled through the {_validateSchedule}
  * and {_validateCancel} functions. These functions can be overridden to implement custom
  * authorization logic, such as requiring specific signers or roles.
  *
- * TIP: Use {_scheduleAt} to schedule operations at a specific points in time. This is
+ * <Callout>
+ * Use {_scheduleAt} to schedule operations at a specific points in time. This is
  * useful to pre-schedule operations for non-deployed accounts (e.g. subscriptions).
+ * </Callout>
  */
 abstract contract ERC7579DelayedExecutor is ERC7579Executor {
     using Time for *;
@@ -92,7 +94,9 @@ abstract contract ERC7579DelayedExecutor is ERC7579Executor {
      * @dev The current state of a operation is not the expected. The `expectedStates` is a bitmap with the
      * bits enabled for each OperationState enum position counting from right to left. See {_encodeStateBitmap}.
      *
-     * NOTE: If `expectedState` is `bytes32(0)`, the operation is expected to not be in any state (i.e. not exist).
+     * <Callout>
+     * If `expectedState` is `bytes32(0)`, the operation is expected to not be in any state (i.e. not exist).
+     * </Callout>
      */
     error ERC7579ExecutorUnexpectedOperationState(
         bytes32 operationId,
@@ -250,14 +254,18 @@ abstract contract ERC7579DelayedExecutor is ERC7579Executor {
      * @dev Cleans up the {getDelay} and {getExpiration} values by scheduling them to `0`
      * and respecting the previous delay and expiration values.
      *
-     * IMPORTANT: This function does not clean up scheduled operations. This means operations
+     * <Callout type="warn">
+     * This function does not clean up scheduled operations. This means operations
      * could potentially be re-executed if the module is reinstalled later. This is a deliberate
      * design choice for efficiency, but module implementations may want to override this behavior
      * to clear scheduled operations during uninstallation for their specific use cases.
+     * </Callout>
      *
-     * NOTE: Calling this function directly will remove the expiration ({getExpiration}) value and
+     * <Callout>
+     * Calling this function directly will remove the expiration ({getExpiration}) value and
      * will schedule a reset of the delay ({getDelay}) to `0` for the account. Reinstalling the
      * module will not immediately reset the delay if the delay reset hasn't taken effect yet.
+     * </Callout>
      */
     function onUninstall(bytes calldata) public virtual {
         _config[msg.sender].installed = false;
@@ -268,9 +276,11 @@ abstract contract ERC7579DelayedExecutor is ERC7579Executor {
     /**
      * @dev Returns `data` as the execution calldata. See {ERC7579Executor-_execute}.
      *
-     * NOTE: This function relies on the operation state validation in {_execute} for
+     * <Callout>
+     * This function relies on the operation state validation in {_execute} for
      * authorization. Extensions of this module should override this function to implement
      * additional validation logic if needed.
+     * </Callout>
      */
     function _validateExecution(
         address /* account */,

@@ -168,9 +168,11 @@ contract ERC7786OpenBridge is IERC7786GatewaySource, IERC7786Receiver, Ownable, 
      * * {ExecutionSuccess} when a message is successfully delivered to the receiver.
      * * {ExecutionFailed} when a message delivery to the receiver reverted (for example because of OOG error).
      *
-     * NOTE: interface requires this function to be payable. Even if we don't expect any value, a gateway may pass
+     * <Callout>
+     * interface requires this function to be payable. Even if we don't expect any value, a gateway may pass
      * some value for unknown reason. In that case we want to register this gateway having delivered the message and
      * not revert. Any value accrued that way can be recovered by the admin using the {sweep} function.
+     * </Callout>
      */
     // slither-disable-next-line reentrancy-no-eth
     function receiveMessage(

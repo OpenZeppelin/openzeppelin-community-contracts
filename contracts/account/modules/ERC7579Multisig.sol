@@ -62,8 +62,10 @@ abstract contract ERC7579Multisig is ERC7579Validator {
      * If no signers or threshold are provided, the multisignature functionality will be
      * disabled until they are added later.
      *
-     * NOTE: An account can only call onInstall once. If called directly by the account,
+     * <Callout>
+     * An account can only call onInstall once. If called directly by the account,
      * the signer will be set to the provided data. Future installations will behave as a no-op.
+     * </Callout>
      */
     function onInstall(bytes calldata initData) public virtual {
         if (initData.length > 32 && getSignerCount(msg.sender) == 0) {
@@ -80,8 +82,10 @@ abstract contract ERC7579Multisig is ERC7579Validator {
      *
      * See {ERC7579DelayedExecutor-onUninstall}.
      *
-     * WARNING: This function has unbounded gas costs and may become uncallable if the set grows too large.
+     * <Callout type="warn">
+     * This function has unbounded gas costs and may become uncallable if the set grows too large.
      * See {EnumerableSet-clear}.
+     * </Callout>
      */
     function onUninstall(bytes calldata /* data */) public virtual {
         _signersSetByAccount[msg.sender].clear();
@@ -93,9 +97,11 @@ abstract contract ERC7579Multisig is ERC7579Validator {
      *
      * Using `start = 0` and `end = type(uint64).max` will return the entire set of signers.
      *
-     * WARNING: Depending on the `start` and `end`, this operation can copy a large amount of data to memory, which
+     * <Callout type="warn">
+     * Depending on the `start` and `end`, this operation can copy a large amount of data to memory, which
      * can be expensive. This is designed for view accessors queried without gas fees. Using it in state-changing
      * functions may become uncallable if the slice grows too large.
+     * </Callout>
      */
     function getSigners(address account, uint64 start, uint64 end) public view virtual returns (bytes[] memory) {
         return _signersSetByAccount[account].values(start, end);

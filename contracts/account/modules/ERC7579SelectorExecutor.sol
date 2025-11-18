@@ -37,8 +37,10 @@ abstract contract ERC7579SelectorExecutor is ERC7579Executor {
     /**
      * @dev Returns the set of authorized selectors for the specified account.
      *
-     * WARNING: This operation copies the entire selectors set to memory, which
+     * <Callout type="warn">
+     * This operation copies the entire selectors set to memory, which
      * can be expensive or may result in unbounded computation.
+     * </Callout>
      */
     function selectors(address account) public view virtual returns (bytes4[] memory) {
         bytes32[] memory bytes32Selectors = _authorizedSelectors[account].values();
@@ -64,8 +66,10 @@ abstract contract ERC7579SelectorExecutor is ERC7579Executor {
      * @dev Cleans up module's configuration when uninstalled from an account.
      * Clears all selectors.
      *
-     * WARNING: This function has unbounded gas costs and may become uncallable if the set grows too large.
+     * <Callout type="warn">
+     * This function has unbounded gas costs and may become uncallable if the set grows too large.
      * See {EnumerableSetExtended-clear}.
+     * </Callout>
      */
     function onUninstall(bytes calldata /* data */) public virtual override {
         _authorizedSelectors[msg.sender].clear();

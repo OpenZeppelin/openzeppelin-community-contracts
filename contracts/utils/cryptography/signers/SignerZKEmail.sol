@@ -9,7 +9,7 @@ import {AbstractSigner} from "@openzeppelin/contracts/utils/cryptography/signers
 import {ZKEmailUtils} from "../ZKEmailUtils.sol";
 
 /**
- * @dev Implementation of {AbstractSigner} using https://docs.zk.email[ZKEmail] signatures.
+ * @dev Implementation of {AbstractSigner} using [ZKEmail](https://docs.zk.email) signatures.
  *
  * ZKEmail enables secure authentication and authorization through email messages, leveraging
  * DKIM signatures from a {DKIMRegistry} and zero-knowledge proofs enabled by a {verifier}
@@ -41,9 +41,11 @@ import {ZKEmailUtils} from "../ZKEmailUtils.sol";
  * }
  * ```
  *
- * IMPORTANT: Failing to call {_setAccountSalt}, {_setDKIMRegistry}, and {_setVerifier}
+ * <Callout type="warn">
+ * Failing to call {_setAccountSalt}, {_setDKIMRegistry}, and {_setVerifier}
  * either during construction (if used standalone) or during initialization (if used as a clone) may
  * leave the signer either front-runnable or unusable.
+ * </Callout>
  */
 abstract contract SignerZKEmail is AbstractSigner {
     using ZKEmailUtils for EmailProof;
@@ -58,7 +60,7 @@ abstract contract SignerZKEmail is AbstractSigner {
     /**
      * @dev Unique identifier for owner of this contract defined as a hash of an email address and an account code.
      *
-     * An account code is a random integer in a finite scalar field of https://neuromancer.sk/std/bn/bn254[BN254] curve.
+     * An account code is a random integer in a finite scalar field of [BN254](https://neuromancer.sk/std/bn/bn254) curve.
      * It is a private randomness to derive a CREATE2 salt of the user's Ethereum address
      * from the email address, i.e., userEtherAddr := CREATE2(hash(userEmailAddr, accountCode)).
      *
@@ -76,7 +78,7 @@ abstract contract SignerZKEmail is AbstractSigner {
     }
 
     /// @dev An instance of the DKIM registry contract.
-    /// See https://docs.zk.email/architecture/dkim-verification[DKIM Verification].
+    /// See [DKIM Verification](https://docs.zk.email/architecture/dkim-verification).
     // solhint-disable-next-line func-name-mixedcase
     function DKIMRegistry() public view virtual returns (IDKIMRegistry) {
         return _registry;
@@ -84,7 +86,7 @@ abstract contract SignerZKEmail is AbstractSigner {
 
     /**
      * @dev An instance of the Groth16Verifier contract.
-     * See https://docs.zk.email/architecture/zk-proofs#how-zk-email-uses-zero-knowledge-proofs[ZK Proofs].
+     * See [ZK Proofs](https://docs.zk.email/architecture/zk-proofs#how-zk-email-uses-zero-knowledge-proofs).
      */
     function verifier() public view virtual returns (IGroth16Verifier) {
         return _groth16Verifier;

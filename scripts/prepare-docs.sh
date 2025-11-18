@@ -23,4 +23,4 @@ for f in "$examples_source_dir"/**/*.sol; do
   sed -Ee '/^import/s|"(\.\./)+|"@openzeppelin/community-contracts/|' "$f" > "$examples_target_dir/$name"
 done
 
-node scripts/gen-nav.js "$OUTDIR" > "$OUTDIR/../nav.adoc"
+# node scripts/gen-nav.js "$OUTDIR" > "$OUTDIR/../nav.adoc"

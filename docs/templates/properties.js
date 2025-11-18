@@ -17,9 +17,26 @@ module.exports.anchor = function anchor({ item, contract }) {
   return res;
 };
 
+module.exports.fullname = function fullname({ item }) {
+  let res = '';
+  res += item.name;
+  if ('parameters' in item) {
+    const signature = item.parameters.parameters.map(v => v.typeName.typeDescriptions.typeString).join(',');
+    res += slug('(' + signature + ')');
+  }
+  if (isNodeType('VariableDeclaration', item)) {
+    res += '-' + slug(item.typeName.typeDescriptions.typeString);
+  }
+  if (res.charAt(res.length - 1) === '-') {
+    return res.slice(0, -1);
+  }
+  return res;
+};
+
 module.exports.inheritance = function ({ item, build }) {
   if (!isNodeType('ContractDefinition', item)) {
-    throw new Error('used inherited-items on non-contract');
+    // Return empty array for non-contracts (interfaces, libraries)
+    return [];
   }
 
   return item.linearizedBaseContracts
@@ -28,19 +45,19 @@ module.exports.inheritance = function ({ item, build }) {
 };
 
 module.exports['has-functions'] = function ({ item }) {
-  return item.inheritance.some(c => c.functions.length > 0);
+  return item.inheritance && item.inheritance.some(c => c.functions.length > 0);
 };
 
 module.exports['has-events'] = function ({ item }) {
-  return item.inheritance.some(c => c.events.length > 0);
+  return item.inheritance && item.inheritance.some(c => c.events.length > 0);
 };
 
 module.exports['has-errors'] = function ({ item }) {
-  return item.inheritance.some(c => c.errors.length > 0);
+  return item.inheritance && item.inheritance.some(c => c.errors.length > 0);
 };
 
 module.exports['internal-variables'] = function ({ item }) {
-  return item.variables.filter(({ visibility }) => visibility === 'internal');
+  return item.variables ? item.variables.filter(({ visibility }) => visibility === 'internal') : [];
 };
 
 module.exports['has-internal-variables'] = function ({ item }) {
@@ -64,6 +81,8 @@ module.exports.returns2 = function ({ item }) {
 
 module.exports['inherited-functions'] = function ({ item }) {
   const { inheritance } = item;
+  if (!inheritance) return [];
+
   const baseFunctions = new Set(inheritance.flatMap(c => c.functions.flatMap(f => f.baseFunctions ?? [])));
   return inheritance.map((contract, i) => ({
     contract,

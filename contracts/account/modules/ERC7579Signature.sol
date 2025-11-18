@@ -35,8 +35,10 @@ contract ERC7579Signature is ERC7579Validator {
     /**
      * @dev See {IERC7579Module-onInstall}.
      *
-     * NOTE: An account can only call onInstall once. If called directly by the account,
+     * <Callout>
+     * An account can only call onInstall once. If called directly by the account,
      * the signer will be set to the provided data. Future installations will behave as a no-op.
+     * </Callout>
      */
     function onInstall(bytes calldata data) public virtual {
         if (signer(msg.sender).length == 0) {
@@ -47,9 +49,11 @@ contract ERC7579Signature is ERC7579Validator {
     /**
      * @dev See {IERC7579Module-onUninstall}.
      *
-     * WARNING: The signer's key will be removed if the account calls this function, potentially
+     * <Callout type="warn">
+     * The signer's key will be removed if the account calls this function, potentially
      * making the account unusable. As an account operator, make sure to uninstall to a predefined path
      * in your account that properly handles side effects of uninstallation.  See {AccountERC7579-uninstallModule}.
+     * </Callout>
      */
     function onUninstall(bytes calldata) public virtual {
         _setSigner(msg.sender, "");

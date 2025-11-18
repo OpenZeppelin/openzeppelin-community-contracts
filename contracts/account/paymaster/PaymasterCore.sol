@@ -18,8 +18,10 @@ import {IEntryPoint, IPaymaster, PackedUserOperation} from "@openzeppelin/contra
  * * Deposits are used to pay for user operations.
  * * Stakes are used to guarantee the paymaster's reputation and obtain more flexibility in accessing storage.
  *
- * NOTE: See [Paymaster's unstaked reputation rules](https://eips.ethereum.org/EIPS/eip-7562#unstaked-paymasters-reputation-rules)
+ * <Callout>
+ * See [Paymaster's unstaked reputation rules](https://eips.ethereum.org/EIPS/eip-7562#unstaked-paymasters-reputation-rules)
  * for more details on the paymaster's storage access limitations.
+ * </Callout>
  */
 abstract contract PaymasterCore is IPaymaster {
     /// @dev Unauthorized call to the paymaster.
@@ -80,8 +82,10 @@ abstract contract PaymasterCore is IPaymaster {
      * It receives the `context` returned by `_validatePaymasterUserOp`. Function is not called if no context
      * is returned by {validatePaymasterUserOp}.
      *
-     * NOTE: The `actualUserOpFeePerGas` is not `tx.gasprice`. A user operation can be bundled with other transactions
+     * <Callout>
+     * The `actualUserOpFeePerGas` is not `tx.gasprice`. A user operation can be bundled with other transactions
      * making the gas price of the user operation to differ.
+     * </Callout>
      */
     function _postOp(
         PostOpMode /* mode */,
@@ -126,7 +130,7 @@ abstract contract PaymasterCore is IPaymaster {
     /**
      * @dev Checks whether `msg.sender` withdraw funds stake or deposit from the entrypoint on paymaster's behalf.
      *
-     * Use of an https://docs.openzeppelin.com/contracts/5.x/access-control[access control]
+     * Use of an [access control](https://docs.openzeppelin.com/contracts/5.x/access-control)
      * modifier such as {Ownable-onlyOwner} is recommended.
      *
      * ```solidity

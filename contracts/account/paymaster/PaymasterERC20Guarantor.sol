@@ -73,8 +73,10 @@ abstract contract PaymasterERC20Guarantor is PaymasterERC20 {
      * If the operation was guaranteed, it attempts to get repayment from the user first and then refunds the guarantor.
      * Otherwise, fallback to {PaymasterERC20-_refund}.
      *
-     * NOTE: For guaranteed user operations where the user paid the `actualGasCost` back, this function
+     * <Callout>
+     * For guaranteed user operations where the user paid the `actualGasCost` back, this function
      * doesn't call `super._refund`. Consider whether there are side effects in the parent contract that need to be executed.
+     * </Callout>
      */
     function _refund(
         IERC20 token,
@@ -109,8 +111,10 @@ abstract contract PaymasterERC20Guarantor is PaymasterERC20 {
     /**
      * @dev Fetches the guarantor address and validation data from the user operation.
      *
-     * NOTE: Return `address(0)` to disable the guarantor feature. If supported, ensure
+     * <Callout>
+     * Return `address(0)` to disable the guarantor feature. If supported, ensure
      * explicit consent (e.g., signature verification) to prevent unauthorized use.
+     * </Callout>
      */
     function _fetchGuarantor(PackedUserOperation calldata userOp) internal view virtual returns (address guarantor);
 

@@ -10,7 +10,8 @@ import {PaymasterERC20, IERC20} from "../../../account/paymaster/PaymasterERC20.
 import {PaymasterERC20Guarantor} from "../../../account/paymaster/PaymasterERC20Guarantor.sol";
 
 /**
- * NOTE: struct or the expected paymaster data is:
+ * <Callout>
+ * struct or the expected paymaster data is:
  * * [0x00:0x14                      ] token                 (IERC20)
  * * [0x14:0x1a                      ] validAfter            (uint48)
  * * [0x1a:0x20                      ] validUntil            (uint48)
@@ -18,6 +19,7 @@ import {PaymasterERC20Guarantor} from "../../../account/paymaster/PaymasterERC20
  * * [0x40:0x54                      ] oracle                (address)
  * * [0x54:0x56                      ] oracleSignatureLength (uint16)
  * * [0x56:0x56+oracleSignatureLength] oracleSignature       (bytes)
+ * </Callout>
  */
 abstract contract PaymasterERC20Mock is EIP712, PaymasterERC20, AccessControl {
     using ERC4337Utils for *;
@@ -61,10 +63,12 @@ abstract contract PaymasterERC20Mock is EIP712, PaymasterERC20, AccessControl {
 }
 
 /**
- * NOTE: struct or the expected guarantor data is (starts at 0x56+oracleSignatureLength):
+ * <Callout>
+ * struct or the expected guarantor data is (starts at 0x56+oracleSignatureLength):
  * * [0x00:0x14                      ] guarantor                (address) (optional: 0 if no guarantor)
  * * [0x14:0x16                      ] guarantorSignatureLength (uint16)
  * * [0x16+guarantorSignatureLength  ] guarantorSignature       (bytes)
+ * </Callout>
  */
 abstract contract PaymasterERC20GuarantorMock is PaymasterERC20Mock, PaymasterERC20Guarantor {
     using ERC4337Utils for *;

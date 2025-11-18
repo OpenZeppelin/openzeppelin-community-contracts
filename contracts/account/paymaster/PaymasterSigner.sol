@@ -61,8 +61,10 @@ abstract contract PaymasterSigner is AbstractSigner, EIP712, PaymasterCore {
      * @dev Internal validation of whether the paymaster is willing to pay for the user operation.
      * Returns the context to be passed to postOp and the validation data.
      *
-     * NOTE: The `context` returned is `bytes(0)`. Developers overriding this function MUST
+     * <Callout>
+     * The `context` returned is `bytes(0)`. Developers overriding this function MUST
      * override {_postOp} to process the context passed along.
+     * </Callout>
      */
     function _validatePaymasterUserOp(
         PackedUserOperation calldata userOp,

@@ -4,7 +4,7 @@ pragma solidity ^0.8.26;
 import {IDKIMRegistry} from "../../interfaces/IERC7969.sol";
 
 /**
- * @dev Implementation of the https://eips.ethereum.org/EIPS/eip-7969[ERC-7969] interface for registering
+ * @dev Implementation of the [ERC-7969](https://eips.ethereum.org/EIPS/eip-7969) interface for registering
  * and validating DomainKeys Identified Mail (DKIM) public key hashes onchain.
  *
  * This contract provides a standard way to register and validate DKIM public key hashes, enabling
@@ -48,8 +48,10 @@ abstract contract DKIMRegistry is IDKIMRegistry {
      *
      * Emits a {KeyHashRegistered} event.
      *
-     * NOTE: This function does not validate that keyHash is non-zero. Consider adding
+     * <Callout>
+     * This function does not validate that keyHash is non-zero. Consider adding
      * validation in derived contracts if needed.
+     * </Callout>
      */
     function _setKeyHash(bytes32 domainHash, bytes32 keyHash) internal {
         _keyHashes[domainHash][keyHash] = true;
@@ -62,8 +64,10 @@ abstract contract DKIMRegistry is IDKIMRegistry {
      *
      * Emits a {KeyHashRegistered} event for each key hash.
      *
-     * NOTE: This function does not validate that the keyHashes array is non-empty.
+     * <Callout>
+     * This function does not validate that the keyHashes array is non-empty.
      * Consider adding validation in derived contracts if needed.
+     * </Callout>
      */
     function _setKeyHashes(bytes32 domainHash, bytes32[] memory keyHashes) internal {
         for (uint256 i = 0; i < keyHashes.length; ++i) {

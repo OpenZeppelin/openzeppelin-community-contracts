@@ -89,9 +89,11 @@ abstract contract PaymasterERC20 is PaymasterCore {
      *
      * Returns a `prefundContext` that's passed to the {_postOp} function through its `context` return value.
      *
-     * NOTE: Consider not reverting if the prefund fails when overriding this function. This is to avoid reverting
+     * <Callout>
+     * Consider not reverting if the prefund fails when overriding this function. This is to avoid reverting
      * during the validation phase of the user operation, which may penalize the paymaster's reputation according
      * to ERC-7562 validation rules.
+     * </Callout>
      */
     function _prefund(
         PackedUserOperation calldata userOp,
@@ -111,9 +113,11 @@ abstract contract PaymasterERC20 is PaymasterCore {
      *
      * Reverts with {PaymasterERC20FailedRefund} if the refund fails.
      *
-     * IMPORTANT: This function may revert after the user operation has been executed without
+     * <Callout type="warn">
+     * This function may revert after the user operation has been executed without
      * reverting the user operation itself. Consider implementing a mechanism to handle
      * this case gracefully.
+     * </Callout>
      */
     function _postOp(
         PostOpMode /* mode */,
@@ -172,7 +176,7 @@ abstract contract PaymasterERC20 is PaymasterCore {
      * * `token`: Address of the ERC-20 token used for payment to the paymaster.
      * * `tokenPrice`: Price of the token in native currency, scaled by `_tokenPriceDenominator()`.
      *
-     * ==== Calculating the token price
+     * #### Calculating the token price
      *
      * Given gas fees are paid in native currency, developers can use the `ERC20 price unit / native price unit` ratio to
      * calculate the price of an ERC20 token price in native currency. However, the token may have a different number of decimals

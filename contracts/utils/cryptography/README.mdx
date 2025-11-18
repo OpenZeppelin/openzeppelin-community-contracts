@@ -1,0 +1,32 @@
+---
+title: Cryptography
+---
+
+<Callout>
+This document is better viewed at https://docs.openzeppelin.com/community-contracts/utils/cryptography
+</Callout>
+
+A collection of contracts and libraries that implement various signature validation schemes and cryptographic primitives. These utilities enable secure authentication, multisignature operations, and advanced cryptographic operations in smart contracts.
+
+* ZKEmailUtils: Library for ZKEmail signature validation utilities, enabling email-based authentication through zero-knowledge proofs.
+* DKIMRegistry: Implementation of [ERC-7969](https://eips.ethereum.org/EIPS/eip-7969) to enable onchain verification of DomainKeys Identified Mail (DKIM) signatures.
+* SignerZKEmail: Implementation of an [AbstractSigner](https://docs.openzeppelin.com/contracts/5.x/api/utils/cryptography#AbstractSigner) that enables email-based authentication through zero-knowledge proofs.
+* ERC7913ZKEmailVerifier, ERC7913WebAuthnVerifier: Ready to use ERC-7913 signature verifiers for ZKEmail and WebAuthn.
+
+## Utils
+
+ZKEmailUtils
+
+WebAuthn
+
+DKIMRegistry
+
+## Abstract Signers
+
+SignerZKEmail
+
+## Verifiers
+
+ERC7913ZKEmailVerifier
+
+ERC7913WebAuthnVerifier

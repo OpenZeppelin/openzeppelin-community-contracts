@@ -35,8 +35,10 @@ abstract contract ERC7579MultisigStorage is ERC7579Multisig {
      * Emits {ERC7579MultisigStoragePresigned} if the signature is valid and the hash is not already
      * signed, otherwise acts as a no-op.
      *
-     * NOTE: Does not check if the signer is authorized for the account. Valid signatures from
+     * <Callout>
+     * Does not check if the signer is authorized for the account. Valid signatures from
      * invalid signers won't be executable. See {_validateSignatures} for more details.
+     * </Callout>
      */
     function presign(address account, bytes calldata signer, bytes32 hash, bytes calldata signature) public virtual {
         if (!presigned(account, signer, hash) && signer.isValidSignatureNow(hash, signature)) {

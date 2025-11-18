@@ -16,7 +16,9 @@ import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
  * argument. Similarly, the account will be unblocked again if
  * {_unblockUser} is called.
  *
- * IMPORTANT: Deprecated. Use {ERC20Restricted} instead.
+ * <Callout type="warn">
+ * Deprecated. Use {ERC20Restricted} instead.
+ * </Callout>
  */
 abstract contract ERC20Blocklist is ERC20 {
     /**
