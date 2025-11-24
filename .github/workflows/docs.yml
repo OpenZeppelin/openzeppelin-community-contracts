@@ -15,6 +15,7 @@ jobs:
           GH_TOKEN: ${{ secrets.DOCS_REPO_TOKEN }}
         run: |
           gh workflow run generate-api-docs-community-contracts.yml \
+            --ref chore/generate-doc \
             --repo OpenZeppelin/docs \
             --field tag_name="${{ github.sha }}" \
             --field trigger_type="commit"
