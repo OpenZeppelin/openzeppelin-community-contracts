@@ -1,6 +1,8 @@
 const { version } = require('../../package.json');
 const fs = require('fs');
 
+const PATH_PREFIX = '/community-contracts/api/';
+
 module.exports['oz-version'] = () => version;
 
 module.exports['readme-path'] = opts => {
@@ -126,16 +128,16 @@ function generateLinkPath(pagePath, currentPagePath, anchor) {
     const downPath = targetParts.slice(i);
 
     if (upLevels === 0 && downPath.length === 1) {
-      return `${downPath[0]}#${anchor}`;
+      return `${PATH_PREFIX}${downPath[0]}#${anchor}`;
     } else if (upLevels === 0) {
-      return `${downPath.join('/')}#${anchor}`;
+      return `${PATH_PREFIX}${downPath.join('/')}#${anchor}`;
     } else {
-      const relativePath = '../'.repeat(upLevels) + downPath.join('/');
-      return `${relativePath}#${anchor}`;
+      const relativePath = downPath.join('/');
+      return `${PATH_PREFIX}${relativePath}#${anchor}`;
     }
   }
 
-  return `${pagePath}#${anchor}`;
+  return `${PATH_PREFIX}${pagePath}#${anchor}`;
 }
 
 // Process {REF} and other references
