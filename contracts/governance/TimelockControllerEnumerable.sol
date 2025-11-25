@@ -159,7 +159,7 @@ abstract contract TimelockControllerEnumerable is TimelockController {
     }
 
     /// @dev Return all scheduled operation batches
-    /// <Callout type="warn"
+    /// <Callout type="warn">
     /// This is designed for view accessors queried without gas fees. Using it in state-changing
     /// functions may become uncallable if the list grows too large.
     /// </Callout>

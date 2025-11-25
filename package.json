@@ -11,10 +11,11 @@
   "scripts": {
     "compile": "hardhat compile",
     "clean": "hardhat clean && rimraf build contracts/build",
-    "docs": "npm run prepare-docs && oz-docs",
+    "docs": "npm run prepare-docs && npm run preview-docs",
     "docs:watch": "oz-docs watch contracts docs/templates docs/config.js",
     "prepare": "husky",
     "prepare-docs": "scripts/prepare-docs.sh",
+    "preview-docs": "scripts/preview-docs.sh",
     "lint": "npm run lint:js && npm run lint:sol",
     "lint:fix": "npm run lint:js:fix && npm run lint:sol:fix",
     "lint:js": "prettier --log-level warn '**/*.{js,ts}' --check && eslint . --ignore-pattern lib/",
