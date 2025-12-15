@@ -117,7 +117,7 @@ const signedUserOp = await signUserOp(entrypoint, userOp);
 
 // Submit to the EntryPoint contract
 const userOpReceipt = await eoaClient.writeContract({
-  abi: EntrypointV08Abi,
+  abi: EntrypointV09Abi,
   address: entrypoint.address,
   functionName: "handleOps",
   args: [[signedUserOp], beneficiary.address],
@@ -305,7 +305,7 @@ const signedUserOp = await signUserOp(entrypoint, userOp);
 
 // Submit to the EntryPoint contract
 const userOpReceipt = await eoaClient.writeContract({
-  abi: EntrypointV08Abi,
+  abi: EntrypointV09Abi,
   address: entrypoint.address,
   functionName: "handleOps",
   args: [[signedUserOp], beneficiary.address],
