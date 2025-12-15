@@ -2,7 +2,7 @@ const format = require('@openzeppelin/contracts/scripts/generate/format-lines');
 const { SET_TYPES, MAP_TYPES } = require('./Enumerable.opts');
 
 const header = `\
-pragma solidity ^0.8.20;
+pragma solidity ^0.8.24;
 
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import {EnumerableSetExtended} from "./EnumerableSetExtended.sol";
