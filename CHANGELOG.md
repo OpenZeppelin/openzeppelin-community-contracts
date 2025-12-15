@@ -3,6 +3,7 @@
 - Remove `IERC7802`, `IERC7821` and `IERC7786`. These interfaces were migrated to `@openzeppelin/contracts>=5.5.0`.
 - Remove `ERC7786Receiver`. This contract was migrated to `@openzeppelin/contracts>=5.5.0`.
 - Updated crosschain bridge contracts terminology from "Recipient" to "Receiver" to align with ERC-7786 specification.
+- `PaymasterCore`: Update default version of the ERC-4337 entrypoint to v0.9.
 
 ## 02-11-2025
 
