@@ -2,8 +2,8 @@
 
 pragma solidity ^0.8.24;
 
+import {IERC7786GatewaySource, IERC7786Recipient} from "@openzeppelin/contracts/interfaces/draft-IERC7786.sol";
 import {BitMaps} from "@openzeppelin/contracts/utils/structs/BitMaps.sol";
-import {IERC7786GatewaySource, IERC7786Receiver} from "../../interfaces/IERC7786.sol";
 import {InteroperableAddress} from "@openzeppelin/contracts/utils/draft-InteroperableAddress.sol";
 
 contract ERC7786GatewayMock is IERC7786GatewaySource {
@@ -28,8 +28,8 @@ contract ERC7786GatewayMock is IERC7786GatewaySource {
 
         bytes memory sender = InteroperableAddress.formatEvmV1(block.chainid, msg.sender);
         require(
-            IERC7786Receiver(target).receiveMessage(bytes32(0), sender, payload) ==
-                IERC7786Receiver.receiveMessage.selector,
+            IERC7786Recipient(target).receiveMessage(bytes32(0), sender, payload) ==
+                IERC7786Recipient.receiveMessage.selector,
             "Receiver error"
         );
 

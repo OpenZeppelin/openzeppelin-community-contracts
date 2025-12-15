@@ -7,12 +7,11 @@ import {IWormholeReceiver} from "wormhole-solidity-sdk/interfaces/IWormholeRecei
 import {VaaKey} from "wormhole-solidity-sdk/interfaces/IWormholeRelayer.sol";
 import {fromUniversalAddress, toUniversalAddress} from "wormhole-solidity-sdk/utils/UniversalAddress.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import {IERC7786GatewaySource, IERC7786Recipient} from "@openzeppelin/contracts/interfaces/draft-IERC7786.sol";
 import {BitMaps} from "@openzeppelin/contracts/utils/structs/BitMaps.sol";
 import {InteroperableAddress} from "@openzeppelin/contracts/utils/draft-InteroperableAddress.sol";
 import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 import {ERC7786Attributes} from "../utils/ERC7786Attributes.sol";
-import {IERC7786GatewaySource} from "../../interfaces/IERC7786.sol";
-import {IERC7786Receiver} from "../../interfaces/IERC7786.sol";
 import {IERC7786Attributes} from "../../interfaces/IERC7786Attributes.sol";
 
 /**
@@ -62,7 +61,7 @@ contract WormholeGatewayAdapter is IERC7786GatewaySource, IWormholeReceiver, Own
     error DuplicatedAttribute();
     error UnauthorizedCaller(address);
     error InvalidOriginGateway(uint16 wormholeSourceChain, bytes32 wormholeSourceAddress);
-    error ReceiverExecutionFailed();
+    error RecipientExecutionFailed();
     error UnsupportedChainId(uint256 chainId);
     error UnsupportedWormholeChain(uint16 wormholeId);
     error ChainEquivalenceAlreadyRegistered(uint256 chainId, uint16 wormhole);
@@ -215,21 +214,21 @@ contract WormholeGatewayAdapter is IERC7786GatewaySource, IWormholeReceiver, Own
             sendId = 0;
 
             // Parse the attribute details
-            (bool success, uint256 receiverValue, uint256 gasLimit, address refundRecipient) = ERC7786Attributes
+            (bool success, uint256 recipientValue, uint256 gasLimit, address refundRecipient) = ERC7786Attributes
                 .tryDecodeRequestRelay(attributes[0]);
             require(success, InvalidAttributeEncoding(attributes[0]));
 
             // Send the message.
             // msgId is used for uniqueness and replay protection, even if its not an actual sendId (not part of the
             // `MessageSent` event and not used for relaying)
-            _sendMessage(msgId, recipient, payload, msg.sender, msg.value, receiverValue, gasLimit, refundRecipient);
+            _sendMessage(msgId, recipient, payload, msg.sender, msg.value, recipientValue, gasLimit, refundRecipient);
 
             emit MessageSent(
                 sendId,
                 InteroperableAddress.formatEvmV1(block.chainid, msg.sender),
                 recipient,
                 payload,
-                receiverValue,
+                recipientValue,
                 attributes
             );
         } else {
@@ -301,8 +300,8 @@ contract WormholeGatewayAdapter is IERC7786GatewaySource, IWormholeReceiver, Own
         _executed[chainId].set(uint256(sendId));
 
         (, address target) = recipient.parseEvmV1();
-        bytes4 result = IERC7786Receiver(target).receiveMessage{value: msg.value}(deliveryHash, sender, payload);
-        require(result == IERC7786Receiver.receiveMessage.selector, ReceiverExecutionFailed());
+        bytes4 result = IERC7786Recipient(target).receiveMessage{value: msg.value}(deliveryHash, sender, payload);
+        require(result == IERC7786Recipient.receiveMessage.selector, RecipientExecutionFailed());
     }
 
     function _sendMessage(
@@ -311,7 +310,7 @@ contract WormholeGatewayAdapter is IERC7786GatewaySource, IWormholeReceiver, Own
         bytes memory payload,
         address sender,
         uint256 totalValue,
-        uint256 receiverValue,
+        uint256 recipientValue,
         uint256 gasLimit,
         address refundRecipient
     ) private {
@@ -321,7 +320,7 @@ contract WormholeGatewayAdapter is IERC7786GatewaySource, IWormholeReceiver, Own
             targetChain,
             targetAddress,
             abi.encode(id, InteroperableAddress.formatEvmV1(block.chainid, sender), recipient, payload),
-            receiverValue,
+            recipientValue,
             gasLimit,
             targetChain,
             refundRecipient
