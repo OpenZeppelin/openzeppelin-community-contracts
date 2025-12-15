@@ -15,11 +15,9 @@ import {Address} from "@openzeppelin/contracts/utils/Address.sol";
  * upgrade mechanism that writes to the ERC-1967 implementation slot. Note that UUPSUpgradable includes security
  * checks that are not compatible with this proxy design.
  *
- * <Callout type="warn">
- * The fallback mechanism relies on the implementation not to define the {IBeacon-implementation} function.
+ * WARNING: The fallback mechanism relies on the implementation not to define the {IBeacon-implementation} function.
  * Consider that if your implementation has this function, it'll be assumed as the beacon address, meaning that
  * the returned address will be used as this proxy's implementation.
- * </Callout>
  */
 contract HybridProxy is Proxy {
     /**
@@ -36,11 +34,9 @@ contract HybridProxy is Proxy {
     /**
      * @dev Returns the current implementation address according to ERC-1967's implementation slot.
      *
-     * <Callout type="warn">
-     * The way this function identifies whether the implementation is a beacon, is by checking
+     * IMPORTANT: The way this function identifies whether the implementation is a beacon, is by checking
      * if it implements the {IBeacon-implementation} function. Consider that an actual implementation could
      * define this function, mistakenly identifying it as a beacon.
-     * </Callout>
      */
     function _implementation() internal view override returns (address) {
         address implementation = ERC1967Utils.getImplementation();

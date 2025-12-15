@@ -107,10 +107,8 @@ abstract contract TimelockControllerEnumerable is TimelockController {
     }
 
     /// @dev Return all scheduled operations
-    /// <Callout type="warn">
-    /// This is designed for view accessors queried without gas fees. Using it in state-changing
+    /// WARNING: This is designed for view accessors queried without gas fees. Using it in state-changing
     /// functions may become uncallable if the list grows too large.
-    /// </Callout>
     function operations() public view returns (Operation[] memory operations_) {
         return operations(0, _operationsIdSet.length());
     }
@@ -119,10 +117,8 @@ abstract contract TimelockControllerEnumerable is TimelockController {
     /// @param start The start index
     /// @param end The end index
     /// @return operations_ The operations
-    /// <Callout type="warn">
-    /// This is designed for view accessors queried without gas fees. Using it in state-changing
+    /// WARNING: This is designed for view accessors queried without gas fees. Using it in state-changing
     /// functions may become uncallable if the list grows too large.
-    /// </Callout>
     function operations(uint256 start, uint256 end) public view returns (Operation[] memory operations_) {
         if (start > end || start >= _operationsIdSet.length()) {
             revert InvalidIndexRange(start, end);
@@ -159,10 +155,8 @@ abstract contract TimelockControllerEnumerable is TimelockController {
     }
 
     /// @dev Return all scheduled operation batches
-    /// <Callout type="warn">
-    /// This is designed for view accessors queried without gas fees. Using it in state-changing
+    /// WARNING: This is designed for view accessors queried without gas fees. Using it in state-changing
     /// functions may become uncallable if the list grows too large.
-    /// </Callout>
     function operationsBatch() public view returns (OperationBatch[] memory operationsBatch_) {
         return operationsBatch(0, _operationsBatchIdSet.length());
     }
@@ -171,10 +165,8 @@ abstract contract TimelockControllerEnumerable is TimelockController {
     /// @param start The start index
     /// @param end The end index
     /// @return operationsBatch_ The operationsBatch
-    /// <Callout type="warn">
-    /// This is designed for view accessors queried without gas fees. Using it in state-changing
+    /// WARNING: This is designed for view accessors queried without gas fees. Using it in state-changing
     /// functions may become uncallable if the list grows too large.
-    /// </Callout>
     function operationsBatch(
         uint256 start,
         uint256 end

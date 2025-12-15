@@ -80,9 +80,7 @@ library ZKEmailUtils {
      * Returns {EmailProofError.NoError} if all validations pass, or a specific {EmailProofError} indicating
      * which validation check failed.
      *
-     * <Callout>
-     * Attempts to validate the command for all possible string {Case} values.
-     * </Callout>
+     * NOTE: Attempts to validate the command for all possible string {Case} values.
      */
     function isValidZKEmail(
         EmailProof memory emailProof,
@@ -133,10 +131,8 @@ library ZKEmailUtils {
      * @dev Verifies that calldata bytes (`input`) represents a valid `EmailProof` object. If encoding is valid,
      * returns true and the calldata view at the object. Otherwise, returns false and an invalid calldata object.
      *
-     * <Callout>
-     * The returned `emailProof` object should not be accessed if `success` is false. Trying to access the data may
+     * NOTE: The returned `emailProof` object should not be accessed if `success` is false. Trying to access the data may
      * cause revert/panic.
-     * </Callout>
      */
     function tryDecodeEmailProof(
         bytes calldata input

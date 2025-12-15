@@ -41,11 +41,9 @@ import {ZKEmailUtils} from "../ZKEmailUtils.sol";
  * }
  * ```
  *
- * <Callout type="warn">
- * Failing to call {_setAccountSalt}, {_setDKIMRegistry}, and {_setVerifier}
+ * IMPORTANT: Failing to call {_setAccountSalt}, {_setDKIMRegistry}, and {_setVerifier}
  * either during construction (if used standalone) or during initialization (if used as a clone) may
  * leave the signer either front-runnable or unusable.
- * </Callout>
  */
 abstract contract SignerZKEmail is AbstractSigner {
     using ZKEmailUtils for EmailProof;

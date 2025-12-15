@@ -37,10 +37,8 @@ abstract contract PaymasterERC721Owner is PaymasterCore {
      * @dev Internal validation of whether the paymaster is willing to pay for the user operation.
      * Returns the context to be passed to postOp and the validation data.
      *
-     * <Callout>
-     * The default `context` is `bytes(0)`. Developers that add a context when overriding this function MUST
+     * NOTE: The default `context` is `bytes(0)`. Developers that add a context when overriding this function MUST
      * also override {_postOp} to process the context passed along.
-     * </Callout>
      */
     function _validatePaymasterUserOp(
         PackedUserOperation calldata userOp,

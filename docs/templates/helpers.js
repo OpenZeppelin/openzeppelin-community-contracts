@@ -53,7 +53,8 @@ module.exports['process-natspec'] = function (natspec, opts) {
   const currentPage = opts.data.root.__item_context?.page || opts.data.root.id;
   const links = getAllLinks(opts.data.site.items, currentPage);
 
-  return processReferences(natspec, links);
+  const processed = processReferences(natspec, links);
+  return processCallouts(processed); // Add callout processing at the end
 };
 
 module.exports['typed-params'] = params => {
@@ -257,6 +258,66 @@ function processMdxContent(content) {
   }
 }
 
+function processCallouts(content) {
+  // First, normalize whitespace around block delimiters to make patterns more consistent
+  let result = content.replace(/\s*\n====\s*\n/g, '\n====\n').replace(/\n====\s*\n/g, '\n====\n');
+
+  // Handle AsciiDoc block admonitions (with ====)
+  result = result.replace(/^\[(NOTE|TIP)\]\s*\n====\s*\n([\s\S]*?)\n====$/gm, '<Callout>\n$2\n</Callout>');
+  result = result.replace(
+    /^\[(IMPORTANT|WARNING|CAUTION)\]\s*\n====\s*\n([\s\S]*?)\n====$/gm,
+    '<Callout type="warn">\n$2\n</Callout>',
+  );
+
+  // Handle simple single-line admonitions
+  result = result.replace(/^(NOTE|TIP):\s*(.+)$/gm, '<Callout>\n$2\n</Callout>');
+  result = result.replace(/^(IMPORTANT|WARNING):\s*(.+)$/gm, '<Callout type="warn">\n$2\n</Callout>');
+
+  // Handle markdown-style bold admonitions (the ones you're seeing)
+  result = result.replace(
+    /^\*\*⚠️ WARNING\*\*\\\s*\n([\s\S]*?)(?=\n\n|\n\*\*|$)/gm,
+    '<Callout type="warn">\n$1\n</Callout>',
+  );
+  result = result.replace(
+    /^\*\*❗ IMPORTANT\*\*\\\s*\n([\s\S]*?)(?=\n\n|\n\*\*|$)/gm,
+    '<Callout type="warn">\n$1\n</Callout>',
+  );
+  result = result.replace(/^\*\*📌 NOTE\*\*\\\s*\n([\s\S]*?)(?=\n\n|\n\*\*|$)/gm, '<Callout>\n$1\n</Callout>');
+  result = result.replace(/^\*\*💡 TIP\*\*\\\s*\n([\s\S]*?)(?=\n\n|\n\*\*|$)/gm, '<Callout>\n$1\n</Callout>');
+
+  // Handle any remaining HTML-style admonitions from downdoc conversion
+  result = result.replace(
+    /<dl><dt><strong>(?:💡|📌|ℹ️)?\s*(TIP|NOTE|INFO)<\/strong><\/dt><dd>\s*([\s\S]*?)\s*<\/dd><\/dl>/g,
+    '<Callout>\n$2\n</Callout>',
+  );
+  result = result.replace(
+    /<dl><dt><strong>(?:⚠️|❗)?\s*(WARNING|IMPORTANT)<\/strong><\/dt><dd>\s*([\s\S]*?)\s*<\/dd><\/dl>/g,
+    '<Callout type="warn">\n$2\n</Callout>',
+  );
+
+  // Fix prematurely closed callouts - move </Callout> to after all paragraph text
+  // This handles cases where </Callout> was inserted after the first line but there's more text
+  result = result.replace(/(<Callout[^>]*>\n[^<]+)\n<\/Callout>\n([^<\n]+(?:\n[^<\n]+)*)/g, '$1\n$2\n</Callout>');
+
+  // Clean up "better viewed at" notices (keep these at the end)
+  result = result.replace(/^\*\*📌 NOTE\*\*\\\s*\nThis document is better viewed at [^\n]*\n*/gm, '');
+  result = result.replace(/^\*\*⚠️ WARNING\*\*\\\s*\nThis document is better viewed at [^\n]*\n*/gm, '');
+  result = result.replace(/^\*\*❗ IMPORTANT\*\*\\\s*\nThis document is better viewed at [^\n]*\n*/gm, '');
+  result = result.replace(/^\*\*💡 TIP\*\*\\\s*\nThis document is better viewed at [^\n]*\n*/gm, '');
+
+  // More generic cleanup for "better viewed at" notices
+  result = result.replace(/This document is better viewed at https:\/\/docs\.openzeppelin\.com[^\n]*\n*/g, '');
+
+  // Remove any resulting callouts that only contain the "better viewed at" message
+  result = result.replace(/<Callout[^>]*>\s*This document is better viewed at [^\n]*\s*<\/Callout>\s*/g, '');
+  result = result.replace(/<Callout[^>]*>\s*<\/Callout>/g, '');
+
+  // Remove callouts that only contain whitespace/newlines
+  result = result.replace(/<Callout[^>]*>\s*\n\s*<\/Callout>/g, '');
+
+  return result;
+}
+
 module.exports.title = opts => {
   const pageId = opts.data.root.id;
   const basePath = pageId.replace(/\.(adoc|mdx)$/, '');
@@ -282,5 +343,5 @@ module.exports['with-prelude'] = opts => {
   const contents = opts.fn();
 
   const processed = processReferences(contents, links);
-  return processed;
+  return processCallouts(processed); // Add callout processing here too
 };

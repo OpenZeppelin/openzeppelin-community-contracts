@@ -48,10 +48,8 @@ abstract contract DKIMRegistry is IDKIMRegistry {
      *
      * Emits a {KeyHashRegistered} event.
      *
-     * <Callout>
-     * This function does not validate that keyHash is non-zero. Consider adding
+     * NOTE: This function does not validate that keyHash is non-zero. Consider adding
      * validation in derived contracts if needed.
-     * </Callout>
      */
     function _setKeyHash(bytes32 domainHash, bytes32 keyHash) internal {
         _keyHashes[domainHash][keyHash] = true;
@@ -64,10 +62,8 @@ abstract contract DKIMRegistry is IDKIMRegistry {
      *
      * Emits a {KeyHashRegistered} event for each key hash.
      *
-     * <Callout>
-     * This function does not validate that the keyHashes array is non-empty.
+     * NOTE: This function does not validate that the keyHashes array is non-empty.
      * Consider adding validation in derived contracts if needed.
-     * </Callout>
      */
     function _setKeyHashes(bytes32 domainHash, bytes32[] memory keyHashes) internal {
         for (uint256 i = 0; i < keyHashes.length; ++i) {

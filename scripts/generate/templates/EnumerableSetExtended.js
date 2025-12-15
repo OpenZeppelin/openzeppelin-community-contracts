@@ -33,18 +33,17 @@ import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
  * Sets of type \`string\` (\`StringSet\`), \`bytes\` (\`BytesSet\`) and
  * \`bytes32[2]\` (\`Bytes32x2Set\`) are supported.
  *
- * <Callout type="warn">
+ * [WARNING]
+ * ====
  * Trying to delete such a structure from storage will likely result in data corruption, rendering the structure
  * unusable.
  * See [ethereum/solidity#11843](https://github.com/ethereum/solidity/pull/11843) for more info.
  *
  * In order to clean an EnumerableSet, you can either remove all elements one by one or create a fresh instance using an
  * array of EnumerableSet.
- * </Callout>
+ * ====
  *
- * <Callout>
- * This is an extension of openzeppelin/contracts/utils/struct/EnumerableSet.sol.
- * </Callout>
+ * NOTE: This is an extension of openzeppelin/contracts/utils/struct/EnumerableSet.sol.
  */
 `;
 
@@ -118,10 +117,8 @@ function remove(${name} storage self, ${value.type} memory value) internal retur
 /**
  * @dev Removes all the values from a set. O(n).
  *
- * <Callout type="warn">
- * Developers should keep in mind that this function has an unbounded cost and using it may render the
+ * WARNING: Developers should keep in mind that this function has an unbounded cost and using it may render the
  * function uncallable if the set grows to the point where clearing it consumes too much gas to fit in a block.
- * </Callout>
  */
 function clear(${name} storage set) internal {
     uint256 len = length(set);
@@ -166,12 +163,10 @@ function at(${name} storage self, uint256 index) internal view returns (${value.
 /**
  * @dev Return the entire set in an array
  *
- * <Callout type="warn">
- * This operation will copy the entire storage to memory, which can be quite expensive. This is designed
+ * WARNING: This operation will copy the entire storage to memory, which can be quite expensive. This is designed
  * to mostly be used by view accessors that are queried without any gas fees. Developers should keep in mind that
  * this function has an unbounded cost, and using it as part of a state-changing function may render the function
  * uncallable if the set grows to a point where copying to memory consumes too much gas to fit in a block.
- * </Callout>
  */
 function values(${name} storage self) internal view returns (${value.type}[] memory) {
     return self._values;
@@ -180,12 +175,10 @@ function values(${name} storage self) internal view returns (${value.type}[] mem
 /**
  * @dev Return a slice of the set in an array
  *
- * <Callout type="warn">
- * This operation will copy the entire storage to memory, which can be quite expensive. This is designed
+ * WARNING: This operation will copy the entire storage to memory, which can be quite expensive. This is designed
  * to mostly be used by view accessors that are queried without any gas fees. Developers should keep in mind that
  * this function has an unbounded cost, and using it as part of a state-changing function may render the function
  * uncallable if the set grows to a point where copying to memory consumes too much gas to fit in a block.
- * </Callout>
  */
 function values(${name} storage set, uint256 start, uint256 end) internal view returns (${value.type}[] memory) {
     unchecked {
@@ -273,10 +266,8 @@ function remove(${name} storage self, ${value.type} memory value) internal retur
 /**
  * @dev Removes all the values from a set. O(n).
  *
- * <Callout type="warn">
- * Developers should keep in mind that this function has an unbounded cost and using it may render the
+ * WARNING: Developers should keep in mind that this function has an unbounded cost and using it may render the
  * function uncallable if the set grows to the point where clearing it consumes too much gas to fit in a block.
- * </Callout>
  */
 function clear(${name} storage self) internal {
     ${value.type}[] storage v = self._values;
@@ -321,12 +312,10 @@ function at(${name} storage self, uint256 index) internal view returns (${value.
 /**
  * @dev Return the entire set in an array
  *
- * <Callout type="warn">
- * This operation will copy the entire storage to memory, which can be quite expensive. This is designed
+ * WARNING: This operation will copy the entire storage to memory, which can be quite expensive. This is designed
  * to mostly be used by view accessors that are queried without any gas fees. Developers should keep in mind that
  * this function has an unbounded cost, and using it as part of a state-changing function may render the function
  * uncallable if the set grows to a point where copying to memory consumes too much gas to fit in a block.
- * </Callout>
  */
 function values(${name} storage self) internal view returns (${value.type}[] memory) {
     return self._values;
@@ -335,12 +324,10 @@ function values(${name} storage self) internal view returns (${value.type}[] mem
 /**
  * @dev Return a slice of the set in an array
  *
- * <Callout type="warn">
- * This operation will copy the entire storage to memory, which can be quite expensive. This is designed
+ * WARNING: This operation will copy the entire storage to memory, which can be quite expensive. This is designed
  * to mostly be used by view accessors that are queried without any gas fees. Developers should keep in mind that
  * this function has an unbounded cost, and using it as part of a state-changing function may render the function
  * uncallable if the set grows to a point where copying to memory consumes too much gas to fit in a block.
- * </Callout>
  */
 function values(${name} storage set, uint256 start, uint256 end) internal view returns (${value.type}[] memory) {
     unchecked {

@@ -30,10 +30,8 @@ abstract contract ERC20uRWA is ERC20, ERC165, ERC20Freezable, ERC20Restricted, I
     /**
      * @dev See {IERC7943Fungible-canTransfer}.
      *
-     * <Callout type="warn">
-     * This function is only meant for external use. Overriding it will not apply the new checks to
+     * CAUTION: This function is only meant for external use. Overriding it will not apply the new checks to
      * the internal {_update} function. Consider overriding {_update} accordingly to keep both functions in sync.
-     * </Callout>
      */
     function canTransfer(address from, address to, uint256 amount) external view virtual returns (bool) {
         return (amount <= available(from) && isUserAllowed(from) && isUserAllowed(to));
@@ -47,10 +45,8 @@ abstract contract ERC20uRWA is ERC20, ERC165, ERC20Freezable, ERC20Restricted, I
     /**
      * @dev See {IERC7943Fungible-setFrozenTokens}.
      *
-     * <Callout>
-     * The `amount` is capped to the balance of the `user` to ensure the {IERC7943Fungible-Frozen} event
+     * NOTE: The `amount` is capped to the balance of the `user` to ensure the {IERC7943Fungible-Frozen} event
      * emits values that consistently reflect the actual amount of tokens that are frozen.
-     * </Callout>
      */
     function setFrozenTokens(address user, uint256 amount) public virtual {
         uint256 actualAmount = Math.min(amount, balanceOf(user));
@@ -64,12 +60,10 @@ abstract contract ERC20uRWA is ERC20, ERC165, ERC20Freezable, ERC20Restricted, I
      * Bypasses the {ERC20Restricted} restrictions for the `from` address and adjusts the frozen balance
      * to the new balance after the transfer.
      *
-     * <Callout>
-     * This function uses {_update} to perform the transfer, ensuring all standard ERC20
+     * NOTE: This function uses {_update} to perform the transfer, ensuring all standard ERC20
      * side effects (such as balance updates and events) are preserved. If you override {_update}
      * to add additional restrictions or logic, those changes will also apply here.
      * Consider overriding this function to bypass newer restrictions if needed.
-     * </Callout>
      */
     function forcedTransfer(address from, address to, uint256 amount) public virtual {
         _checkEnforcer(from, to, amount);

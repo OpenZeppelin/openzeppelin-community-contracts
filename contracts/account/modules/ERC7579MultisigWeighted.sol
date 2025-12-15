@@ -19,11 +19,9 @@ import {ERC7579Multisig} from "./ERC7579Multisig.sol";
  * a total weight of 10, with 3 guardians weighted as 5, 3, and 2), and then execute them
  * after the time delay has passed.
  *
- * <Callout type="warn">
- * When setting a threshold value, ensure it matches the scale used for signer weights.
+ * IMPORTANT: When setting a threshold value, ensure it matches the scale used for signer weights.
  * For example, if signers have weights like 1, 2, or 3, then a threshold of 4 would require
  * signatures with a total weight of at least 4 (e.g., one with weight 1 and one with weight 3).
- * </Callout>
  */
 abstract contract ERC7579MultisigWeighted is ERC7579Multisig {
     using EnumerableSet for EnumerableSet.BytesSet;
@@ -38,10 +36,8 @@ abstract contract ERC7579MultisigWeighted is ERC7579Multisig {
     /**
      * @dev Emitted when a signer's weight is changed.
      *
-     * <Callout>
-     * Not emitted in {_addSigners} or {_removeSigners}. Indexers must rely on {ERC7913SignerAdded}
+     * NOTE: Not emitted in {_addSigners} or {_removeSigners}. Indexers must rely on {ERC7913SignerAdded}
      * and {ERC7913SignerRemoved} to index a default weight of 1. See {signerWeight}.
-     * </Callout>
      */
     event ERC7579MultisigWeightChanged(address indexed account, bytes indexed signer, uint64 weight);
 
@@ -61,10 +57,8 @@ abstract contract ERC7579MultisigWeighted is ERC7579Multisig {
      *
      * If weights are not provided but signers are, all signers default to weight 1.
      *
-     * <Callout>
-     * An account can only call onInstall once. If called directly by the account,
+     * NOTE: An account can only call onInstall once. If called directly by the account,
      * the signer will be set to the provided data. Future installations will behave as a no-op.
-     * </Callout>
      */
     function onInstall(bytes calldata initData) public virtual override {
         bool installed = getSignerCount(msg.sender) > 0;
@@ -204,12 +198,10 @@ abstract contract ERC7579MultisigWeighted is ERC7579Multisig {
     /**
      * @dev Override to validate threshold against total weight instead of signer count.
      *
-     * <Callout>
-     * This function intentionally does not call `super._validateReachableThreshold` because the base implementation
+     * NOTE: This function intentionally does not call `super._validateReachableThreshold` because the base implementation
      * assumes each signer has a weight of 1, which is a subset of this weighted implementation. Consider that multiple
      * implementations of this function may exist in the contract, so important side effects may be missed
      * depending on the linearization order.
-     * </Callout>
      */
     function _validateReachableThreshold(address account) internal view virtual override {
         uint64 weight = totalWeight(account);
@@ -221,10 +213,8 @@ abstract contract ERC7579MultisigWeighted is ERC7579Multisig {
      * @dev Validates that the total weight of signers meets the {threshold} requirement.
      * Overrides the base implementation to use weights instead of count.
      *
-     * <Callout>
-     * This function intentionally does not call `super._validateThreshold` because the base implementation
+     * NOTE: This function intentionally does not call `super._validateThreshold` because the base implementation
      * assumes each signer has a weight of 1, which is incompatible with this weighted implementation.
-     * </Callout>
      */
     function _validateThreshold(
         address account,

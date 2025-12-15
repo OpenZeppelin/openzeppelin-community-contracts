@@ -17,9 +17,7 @@ import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
  * to other entities to operate on its behalf if. The frozen balance
  * can be reduced by calling {freeze} again with a lower amount.
  *
- * <Callout type="warn">
- * Deprecated. Use {ERC20Freezable} instead.
- * </Callout>
+ * IMPORTANT: Deprecated. Use {ERC20Freezable} instead.
  */
 abstract contract ERC20Custodian is ERC20 {
     /**

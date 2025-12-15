@@ -89,11 +89,9 @@ abstract contract PaymasterERC20 is PaymasterCore {
      *
      * Returns a `prefundContext` that's passed to the {_postOp} function through its `context` return value.
      *
-     * <Callout>
-     * Consider not reverting if the prefund fails when overriding this function. This is to avoid reverting
+     * NOTE: Consider not reverting if the prefund fails when overriding this function. This is to avoid reverting
      * during the validation phase of the user operation, which may penalize the paymaster's reputation according
      * to ERC-7562 validation rules.
-     * </Callout>
      */
     function _prefund(
         PackedUserOperation calldata userOp,
@@ -113,11 +111,9 @@ abstract contract PaymasterERC20 is PaymasterCore {
      *
      * Reverts with {PaymasterERC20FailedRefund} if the refund fails.
      *
-     * <Callout type="warn">
-     * This function may revert after the user operation has been executed without
+     * IMPORTANT: This function may revert after the user operation has been executed without
      * reverting the user operation itself. Consider implementing a mechanism to handle
      * this case gracefully.
-     * </Callout>
      */
     function _postOp(
         PostOpMode /* mode */,

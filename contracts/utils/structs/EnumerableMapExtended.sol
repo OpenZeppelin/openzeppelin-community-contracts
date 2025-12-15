@@ -33,18 +33,17 @@ import {EnumerableSetExtended} from "./EnumerableSetExtended.sol";
  * - `bytes -> uint256` (`BytesToUintMap`)
  * - `string -> string` (`StringToStringMap`)
  *
- * <Callout type="warn">
+ * [WARNING]
+ * ====
  * Trying to delete such a structure from storage will likely result in data corruption, rendering the structure
  * unusable.
  * See [ethereum/solidity#11843](https://github.com/ethereum/solidity/pull/11843) for more info.
  *
  * In order to clean an EnumerableMap, you can either remove all elements one by one or create a fresh instance using an
  * array of EnumerableMap.
- * </Callout>
+ * ====
  *
- * <Callout>
- * Extensions of openzeppelin/contracts/utils/struct/EnumerableMap.sol.
- * </Callout>
+ * NOTE: Extensions of openzeppelin/contracts/utils/struct/EnumerableMap.sol.
  */
 library EnumerableMapExtended {
     using EnumerableSet for *;
@@ -86,10 +85,8 @@ library EnumerableMapExtended {
     /**
      * @dev Removes all the entries from a map. O(n).
      *
-     * <Callout type="warn">
-     * Developers should keep in mind that this function has an unbounded cost and using it may render the
+     * WARNING: Developers should keep in mind that this function has an unbounded cost and using it may render the
      * function uncallable if the map grows to the point where clearing it consumes too much gas to fit in a block.
-     * </Callout>
      */
     function clear(BytesToUintMap storage map) internal {
         uint256 len = length(map);
@@ -155,12 +152,10 @@ library EnumerableMapExtended {
     /**
      * @dev Returns an array containing all the keys
      *
-     * <Callout type="warn">
-     * This operation will copy the entire storage to memory, which can be quite expensive. This is designed
+     * WARNING: This operation will copy the entire storage to memory, which can be quite expensive. This is designed
      * to mostly be used by view accessors that are queried without any gas fees. Developers should keep in mind that
      * this function has an unbounded cost, and using it as part of a state-changing function may render the function
      * uncallable if the map grows to a point where copying to memory consumes too much gas to fit in a block.
-     * </Callout>
      */
     function keys(BytesToUintMap storage map) internal view returns (bytes[] memory) {
         return map._keys.values();
@@ -169,12 +164,10 @@ library EnumerableMapExtended {
     /**
      * @dev Returns an array containing a slice of the keys
      *
-     * <Callout type="warn">
-     * This operation will copy the entire storage to memory, which can be quite expensive. This is designed
+     * WARNING: This operation will copy the entire storage to memory, which can be quite expensive. This is designed
      * to mostly be used by view accessors that are queried without any gas fees. Developers should keep in mind that
      * this function has an unbounded cost, and using it as part of a state-changing function may render the function
      * uncallable if the map grows to a point where copying to memory consumes too much gas to fit in a block.
-     * </Callout>
      */
     function keys(BytesToUintMap storage map, uint256 start, uint256 end) internal view returns (bytes[] memory) {
         return map._keys.values(start, end);
@@ -216,10 +209,8 @@ library EnumerableMapExtended {
     /**
      * @dev Removes all the entries from a map. O(n).
      *
-     * <Callout type="warn">
-     * Developers should keep in mind that this function has an unbounded cost and using it may render the
+     * WARNING: Developers should keep in mind that this function has an unbounded cost and using it may render the
      * function uncallable if the map grows to the point where clearing it consumes too much gas to fit in a block.
-     * </Callout>
      */
     function clear(StringToStringMap storage map) internal {
         uint256 len = length(map);
@@ -291,12 +282,10 @@ library EnumerableMapExtended {
     /**
      * @dev Returns an array containing all the keys
      *
-     * <Callout type="warn">
-     * This operation will copy the entire storage to memory, which can be quite expensive. This is designed
+     * WARNING: This operation will copy the entire storage to memory, which can be quite expensive. This is designed
      * to mostly be used by view accessors that are queried without any gas fees. Developers should keep in mind that
      * this function has an unbounded cost, and using it as part of a state-changing function may render the function
      * uncallable if the map grows to a point where copying to memory consumes too much gas to fit in a block.
-     * </Callout>
      */
     function keys(StringToStringMap storage map) internal view returns (string[] memory) {
         return map._keys.values();
@@ -305,12 +294,10 @@ library EnumerableMapExtended {
     /**
      * @dev Returns an array containing a slice of the keys
      *
-     * <Callout type="warn">
-     * This operation will copy the entire storage to memory, which can be quite expensive. This is designed
+     * WARNING: This operation will copy the entire storage to memory, which can be quite expensive. This is designed
      * to mostly be used by view accessors that are queried without any gas fees. Developers should keep in mind that
      * this function has an unbounded cost, and using it as part of a state-changing function may render the function
      * uncallable if the map grows to a point where copying to memory consumes too much gas to fit in a block.
-     * </Callout>
      */
     function keys(StringToStringMap storage map, uint256 start, uint256 end) internal view returns (string[] memory) {
         return map._keys.values(start, end);
