@@ -10,10 +10,10 @@ async function fixture() {
 
   const { chain, axelar, gatewayA, gatewayB } = await AxelarHelper.deploy(owner);
 
-  const receiver = await ethers.deployContract('$ERC7786ReceiverMock', [gatewayB]);
-  const invalidReceiver = await ethers.deployContract('$ERC7786ReceiverInvalidMock');
+  const recipient = await ethers.deployContract('$ERC7786RecipientMock', [gatewayB]);
+  const invalidRecipient = await ethers.deployContract('$ERC7786RecipientInvalidMock');
 
-  return { owner, sender, accounts, chain, axelar, gatewayA, gatewayB, receiver, invalidReceiver };
+  return { owner, sender, accounts, chain, axelar, gatewayA, gatewayB, recipient, invalidRecipient };
 }
 
 describe('AxelarGatewayAdapter', function () {
@@ -39,7 +39,7 @@ describe('AxelarGatewayAdapter', function () {
 
   it('workflow', async function () {
     const erc7930Sender = this.chain.toErc7930(this.sender);
-    const erc7930Recipient = this.chain.toErc7930(this.receiver);
+    const erc7930Recipient = this.chain.toErc7930(this.recipient);
     const payload = ethers.randomBytes(128);
     const attributes = [];
     const encoded = ethers.AbiCoder.defaultAbiCoder().encode(
@@ -54,19 +54,19 @@ describe('AxelarGatewayAdapter', function () {
       .withArgs(this.gatewayA, 'local', this.gatewayB, ethers.keccak256(encoded), encoded)
       .to.emit(this.axelar, 'MessageExecuted')
       .withArgs(anyValue)
-      .to.emit(this.receiver, 'MessageReceived')
+      .to.emit(this.recipient, 'MessageReceived')
       .withArgs(this.gatewayB, anyValue, erc7930Sender, payload, 0n);
   });
 
-  it('invalid receiver - bad return value', async function () {
+  it('invalid recipient - bad return value', async function () {
     await expect(
       this.gatewayA
         .connect(this.sender)
-        .sendMessage(this.chain.toErc7930(this.invalidReceiver), ethers.randomBytes(128), []),
-    ).to.be.revertedWithCustomError(this.gatewayB, 'ReceiverExecutionFailed');
+        .sendMessage(this.chain.toErc7930(this.invalidRecipient), ethers.randomBytes(128), []),
+    ).to.be.revertedWithCustomError(this.gatewayB, 'RecipientExecutionFailed');
   });
 
-  it('invalid receiver - EOA', async function () {
+  it('invalid recipient - EOA', async function () {
     await expect(
       this.gatewayA
         .connect(this.sender)

@@ -13,8 +13,8 @@ async function fixture() {
 
   const { chain, wormholeChainId, wormhole, gatewayA, gatewayB } = await WormholeHelper.deploy(owner);
 
-  const receiver = await ethers.deployContract('$ERC7786ReceiverMock', [gatewayB]);
-  const invalidReceiver = await ethers.deployContract('$ERC7786ReceiverInvalidMock');
+  const recipient = await ethers.deployContract('$ERC7786RecipientMock', [gatewayB]);
+  const invalidRecipient = await ethers.deployContract('$ERC7786RecipientInvalidMock');
 
   return {
     owner,
@@ -25,8 +25,8 @@ async function fixture() {
     wormhole,
     gatewayA,
     gatewayB,
-    receiver,
-    invalidReceiver,
+    recipient,
+    invalidRecipient,
   };
 }
 
@@ -71,12 +71,12 @@ describe('WormholeGatewayAdapter', function () {
 
   it('workflow', async function () {
     const erc7930Sender = this.chain.toErc7930(this.sender);
-    const erc7930Recipient = this.chain.toErc7930(this.receiver);
+    const erc7930Recipient = this.chain.toErc7930(this.recipient);
     const payload = ethers.randomBytes(128);
     const attributes = [];
     // const encoded = ethers.AbiCoder.defaultAbiCoder().encode(
     //   ['bytes32', 'string', 'string', 'bytes', 'bytes[]'],
-    //   [sendId, getAddress(this.sender), getAddress(this.receiver), payload, attributes],
+    //   [sendId, getAddress(this.sender), getAddress(this.recipient), payload, attributes],
     // );
 
     await expect(this.gatewayA.connect(this.sender).sendMessage(erc7930Recipient, payload, attributes, { value }))
@@ -86,39 +86,39 @@ describe('WormholeGatewayAdapter', function () {
     await expect(this.gatewayA.requestRelay(sendId, 100_000n, ethers.ZeroAddress))
       .to.emit(this.gatewayA, 'MessageRelayed')
       .withArgs(sendId)
-      .to.emit(this.receiver, 'MessageReceived')
+      .to.emit(this.recipient, 'MessageReceived')
       .withArgs(this.gatewayB, anyValue, erc7930Sender, payload, value);
   });
 
   it('workflow - requestRelay attribute', async function () {
     const erc7930Sender = this.chain.toErc7930(this.sender);
-    const erc7930Recipient = this.chain.toErc7930(this.receiver);
+    const erc7930Recipient = this.chain.toErc7930(this.recipient);
     const payload = ethers.randomBytes(128);
     const attributes = [ERC7786Attributes.encodeFunctionData('requestRelay', [value, 100_000n, ethers.ZeroAddress])];
     // const encoded = ethers.AbiCoder.defaultAbiCoder().encode(
     //   ['bytes32', 'string', 'string', 'bytes', 'bytes[]'],
-    //   [sendId, getAddress(this.sender), getAddress(this.receiver), payload, attributes],
+    //   [sendId, getAddress(this.sender), getAddress(this.recipient), payload, attributes],
     // );
 
     await expect(this.gatewayA.connect(this.sender).sendMessage(erc7930Recipient, payload, attributes, { value }))
       .to.emit(this.gatewayA, 'MessageSent')
       .withArgs(0n, erc7930Sender, erc7930Recipient, payload, value, attributes)
-      .to.emit(this.receiver, 'MessageReceived')
+      .to.emit(this.recipient, 'MessageReceived')
       .withArgs(this.gatewayB, anyValue, erc7930Sender, payload, value);
   });
 
-  it('invalid receiver - bad return value', async function () {
+  it('invalid recipient - bad return value', async function () {
     await this.gatewayA
       .connect(this.sender)
-      .sendMessage(this.chain.toErc7930(this.invalidReceiver), ethers.randomBytes(128), []);
+      .sendMessage(this.chain.toErc7930(this.invalidRecipient), ethers.randomBytes(128), []);
 
     await expect(this.gatewayA.requestRelay(sendId, 100_000n, ethers.ZeroAddress)).to.be.revertedWithCustomError(
       this.gatewayB,
-      'ReceiverExecutionFailed',
+      'RecipientExecutionFailed',
     );
   });
 
-  it('invalid receiver - EOA', async function () {
+  it('invalid recipient - EOA', async function () {
     await this.gatewayA
       .connect(this.sender)
       .sendMessage(this.chain.toErc7930(this.accounts[0]), ethers.randomBytes(128), []);

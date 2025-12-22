@@ -33,7 +33,7 @@ for (const [name, opts] of Object.entries({
     ]);
 
     // Domains
-    const entrypointDomain = await getDomain(predeploy.entrypoint.v08);
+    const entrypointDomain = await getDomain(predeploy.entrypoint.v09);
     const paymasterDomain = await getDomain(paymaster);
 
     const signUserOp = userOp =>

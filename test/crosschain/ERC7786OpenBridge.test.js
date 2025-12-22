@@ -61,8 +61,8 @@ describe('ERC7786OpenBridge', function () {
   });
 
   describe('cross chain call', function () {
-    it('valid receiver', async function () {
-      this.destination = await ethers.deployContract('$ERC7786ReceiverMock', [this.bridgeB]);
+    it('valid recipient', async function () {
+      this.destination = await ethers.deployContract('$ERC7786RecipientMock', [this.bridgeB]);
       this.payload = ethers.randomBytes(128);
       this.attributes = [];
       this.opts = {};
@@ -85,23 +85,23 @@ describe('ERC7786OpenBridge', function () {
       this.outcome = 'UnsupportedNativeTransfer';
     });
 
-    it('invalid receiver - receiver revert', async function () {
-      this.destination = await ethers.deployContract('$ERC7786ReceiverRevertMock');
+    it('invalid recipient - recipient revert', async function () {
+      this.destination = await ethers.deployContract('$ERC7786RecipientRevertMock');
       this.payload = ethers.randomBytes(128);
       this.attributes = [];
       this.opts = {};
       this.outcome = false; // execution failed
     });
 
-    it('invalid receiver - bad return value', async function () {
-      this.destination = await ethers.deployContract('$ERC7786ReceiverInvalidMock');
+    it('invalid recipient - bad return value', async function () {
+      this.destination = await ethers.deployContract('$ERC7786RecipientInvalidMock');
       this.payload = ethers.randomBytes(128);
       this.attributes = [];
       this.opts = {};
       this.outcome = 'ERC7786OpenBridgeInvalidExecutionReturnValue'; // revert with custom error
     });
 
-    it('invalid receiver - EOA', async function () {
+    it('invalid recipient - EOA', async function () {
       this.destination = this.accounts[0];
       this.payload = ethers.randomBytes(128);
       this.attributes = [];

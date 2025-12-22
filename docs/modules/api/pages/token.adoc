@@ -801,6 +801,8 @@ ERC-4626 vault with entry/exit fees expressed in https://en.wikipedia.org/wiki/B
 * `++redeem(shares, receiver, owner)++`
 * `++_convertToShares(assets, rounding)++`
 * `++_convertToAssets(shares, rounding)++`
+* `++_transferIn(from, assets)++`
+* `++_transferOut(to, assets)++`
 * `++_decimalsOffset()++`
 
 [.contract-subindex-inherited]
