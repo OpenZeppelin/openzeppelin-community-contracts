@@ -46,7 +46,7 @@ module.exports['reset-function-counts'] = function () {
 module.exports.eq = (a, b) => a === b;
 module.exports['starts-with'] = (str, prefix) => str && str.startsWith(prefix);
 
-// Process natspec content with {REF} and link replacement
+// Process natspec content with link replacement
 module.exports['process-natspec'] = function (natspec, opts) {
   if (!natspec) return '';
 
@@ -141,15 +141,8 @@ function generateLinkPath(pagePath, currentPagePath, anchor) {
   return `${PATH_PREFIX}${pagePath}#${anchor}`;
 }
 
-// Process {REF} and other references
 function processReferences(content, links) {
   let result = content;
-
-  // Handle {REF:Contract.method} patterns
-  result = result.replace(/\{REF:([^}]+)\}/g, (match, refId) => {
-    const resolvedRef = resolveReference(refId, links);
-    return resolvedRef || match;
-  });
 
   // Replace {link-key} placeholders with markdown links
   result = result.replace(/\{([-._a-z0-9]+)\}/gi, (match, key) => {
@@ -169,24 +162,6 @@ function processReferences(content, links) {
   Object.keys(links).map(key => (result = result.replace(new RegExp(`\\{${key}\\}`, 'g'), links[key])));
 
   return cleanupContent(result);
-}
-
-function resolveReference(refId, links) {
-  // Try fuzzy matching for fullName keys
-  const matchingKeys = Object.keys(links).filter(key => {
-    const normalizedKey = key.toLowerCase();
-    const normalizedRef = refId.replace(/\./g, '-').toLowerCase();
-    return normalizedKey.includes(normalizedRef) || normalizedRef.includes(normalizedKey);
-  });
-
-  if (matchingKeys.length > 0) {
-    const bestMatch = matchingKeys[0];
-    const parts = refId.split('.');
-    const displayText = parts.length > 1 ? `${parts[0]}.${parts[1]}` : refId;
-    return `[\`${displayText}\`](${links[bestMatch]})`;
-  }
-
-  return null;
 }
 
 function findBestMatch(key, links) {
