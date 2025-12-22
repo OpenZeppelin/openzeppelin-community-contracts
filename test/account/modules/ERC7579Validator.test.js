@@ -17,7 +17,7 @@ async function fixture() {
   // ERC-4337 env
   const helper = new ERC4337Helper();
   await helper.wait();
-  const entrypointDomain = await getDomain(predeploy.entrypoint.v08);
+  const entrypointDomain = await getDomain(predeploy.entrypoint.v09);
 
   // Prepare signer
   const signer = ethers.Wallet.createRandom();

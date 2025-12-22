@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // This file was procedurally generated from scripts/generate/templates/EnumerableSetExtended.js.
 
-pragma solidity ^0.8.20;
+pragma solidity ^0.8.24;
 
 import {Arrays} from "@openzeppelin/contracts/utils/Arrays.sol";
 import {Hashes} from "@openzeppelin/contracts/utils/cryptography/Hashes.sol";

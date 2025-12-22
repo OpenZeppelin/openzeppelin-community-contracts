@@ -33,7 +33,7 @@ async function fixture() {
   const moduleType = MODULE_TYPE_EXECUTOR;
 
   await mockAccount.deploy();
-  await impersonate(predeploy.entrypoint.v08.target).then(asEntrypoint =>
+  await impersonate(predeploy.entrypoint.v09.target).then(asEntrypoint =>
     mockAccount.connect(asEntrypoint).installModule(moduleType, mock.target, installData),
   );
 
