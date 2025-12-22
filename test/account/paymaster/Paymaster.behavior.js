@@ -95,7 +95,7 @@ function shouldBehaveLikePaymaster({ postOp, timeRange }) {
             .then(op =>
               this.paymasterSignUserOp(op, {
                 // validAfter MAX_UINT48 is in the future
-                // shr by 1 to remove the most significant bit, indicating block ranges
+                // shr by 1 to remove the most significant bit, indicating timestamp ranges
                 validAfter: MAX_UINT48 >> 1n,
               }),
             )
