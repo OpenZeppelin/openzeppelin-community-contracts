@@ -172,7 +172,7 @@ abstract contract PaymasterERC20 is PaymasterCore {
      * * `token`: Address of the ERC-20 token used for payment to the paymaster.
      * * `tokenPrice`: Price of the token in native currency, scaled by `_tokenPriceDenominator()`.
      *
-     * ==== Calculating the token price
+     * #### Calculating the token price
      *
      * Given gas fees are paid in native currency, developers can use the `ERC20 price unit / native price unit` ratio to
      * calculate the price of an ERC20 token price in native currency. However, the token may have a different number of decimals

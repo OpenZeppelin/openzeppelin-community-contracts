@@ -1,7 +1,0 @@
-* xref:index.adoc[Overview]
-* xref:contracts::account-abstraction.adoc[Account Abstraction]
-** xref:contracts::accounts.adoc[Accounts]
-*** xref:account-modules.adoc[Modules]
-** xref:paymasters.adoc[Paymasters]
-* xref:crosschain.adoc[Crosschain]
-* xref:utilities.adoc[Utilities]

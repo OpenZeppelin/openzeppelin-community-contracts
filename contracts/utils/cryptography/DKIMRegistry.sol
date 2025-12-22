@@ -4,7 +4,7 @@ pragma solidity ^0.8.26;
 import {IDKIMRegistry} from "../../interfaces/IERC7969.sol";
 
 /**
- * @dev Implementation of the https://eips.ethereum.org/EIPS/eip-7969[ERC-7969] interface for registering
+ * @dev Implementation of the [ERC-7969](https://eips.ethereum.org/EIPS/eip-7969) interface for registering
  * and validating DomainKeys Identified Mail (DKIM) public key hashes onchain.
  *
  * This contract provides a standard way to register and validate DKIM public key hashes, enabling

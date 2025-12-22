@@ -9,7 +9,7 @@ import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 
 /**
  * @dev Library for managing
- * https://en.wikipedia.org/wiki/Set_(abstract_data_type)[sets] of non-value
+ * [sets](https://en.wikipedia.org/wiki/Set_(abstract_data_type)) of non-value
  * types.
  *
  * Sets have the following properties:
@@ -36,7 +36,7 @@ import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
  * ====
  * Trying to delete such a structure from storage will likely result in data corruption, rendering the structure
  * unusable.
- * See https://github.com/ethereum/solidity/pull/11843[ethereum/solidity#11843] for more info.
+ * See [ethereum/solidity#11843](https://github.com/ethereum/solidity/pull/11843) for more info.
  *
  * In order to clean an EnumerableSet, you can either remove all elements one by one or create a fresh instance using an
  * array of EnumerableSet.

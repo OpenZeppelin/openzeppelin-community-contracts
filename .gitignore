@@ -37,6 +37,7 @@ npm-debug.log
 
 # docs artifacts
 docs/modules/api
+docs/oz-docs
 build/
 
 # only used to package @openzeppelin/contracts

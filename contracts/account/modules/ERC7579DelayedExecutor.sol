@@ -9,7 +9,7 @@ import {ERC7579Executor} from "./ERC7579Executor.sol";
  * @dev Extension of {ERC7579Executor} that allows scheduling and executing delayed operations
  * with expiration. This module enables time-delayed execution patterns for smart accounts.
  *
- * ==== Operation Lifecycle
+ * #### Operation Lifecycle
  *
  * 1. Scheduling: Operations are scheduled via {schedule} with a specified delay period.
  * The delay period is set during {onInstall} and can be customized via {setDelay}. Each
@@ -24,7 +24,7 @@ import {ERC7579Executor} from "./ERC7579Executor.sol";
  * executable. If an operation is not executed within the expiration period, it becomes `Expired`
  * and can't be executed. Expired operations must be rescheduled with a different salt.
  *
- * ==== Delay Management
+ * #### Delay Management
  *
  * Accounts can set their own delay periods during installation or via {setDelay}.
  * The delay period is enforced even between installas and uninstalls to prevent
@@ -32,7 +32,7 @@ import {ERC7579Executor} from "./ERC7579Executor.sol";
  * after a transition period defined by the current delay or {minSetback}, whichever
  * is longer.
  *
- * ==== Authorization
+ * #### Authorization
  *
  * Authorization for scheduling and canceling operations is controlled through the {_validateSchedule}
  * and {_validateCancel} functions. These functions can be overridden to implement custom

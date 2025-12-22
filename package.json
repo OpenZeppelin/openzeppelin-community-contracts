@@ -11,10 +11,11 @@
   "scripts": {
     "compile": "hardhat compile",
     "clean": "hardhat clean && rimraf build contracts/build",
-    "docs": "npm run prepare-docs && oz-docs",
-    "docs:watch": "oz-docs watch contracts docs/templates docs/config.js",
+    "docs": "npm run oz-docs",
+    "docs:watch": "WATCH=true npm run docs",
     "prepare": "husky",
     "prepare-docs": "scripts/prepare-docs.sh",
+    "oz-docs": "scripts/oz-docs.sh",
     "lint": "npm run lint:js && npm run lint:sol",
     "lint:fix": "npm run lint:js:fix && npm run lint:sol:fix",
     "lint:js": "prettier --log-level warn '**/*.{js,ts}' --check && eslint . --ignore-pattern lib/",
@@ -47,6 +48,7 @@
   ],
   "devDependencies": {
     "@openzeppelin/contracts": "file:lib/@openzeppelin-contracts",
+    "chokidar-cli": "^3.0.0",
     "husky": "^9.1.7"
   },
   "lint-staged": {
