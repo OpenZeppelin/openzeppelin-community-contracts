@@ -3,17 +3,17 @@
 pragma solidity ^0.8.27;
 
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import {IERC7786GatewaySource, IERC7786Recipient} from "@openzeppelin/contracts/interfaces/draft-IERC7786.sol";
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import {Address} from "@openzeppelin/contracts/utils/Address.sol";
 import {Pausable} from "@openzeppelin/contracts/utils/Pausable.sol";
-import {IERC7786GatewaySource, IERC7786Receiver} from "../interfaces/IERC7786.sol";
 import {InteroperableAddress} from "@openzeppelin/contracts/utils/draft-InteroperableAddress.sol";
 
 /**
- * @dev N of M gateway: Sends your message through M independent gateways. It will be delivered to the receiver by an
+ * @dev N of M gateway: Sends your message through M independent gateways. It will be delivered to the recipient by an
  * equivalent bridge on the destination chain if N of the M gateways agree.
  */
-contract ERC7786OpenBridge is IERC7786GatewaySource, IERC7786Receiver, Ownable, Pausable {
+contract ERC7786OpenBridge is IERC7786GatewaySource, IERC7786Recipient, Ownable, Pausable {
     using EnumerableSet for EnumerableSet.AddressSet;
     using InteroperableAddress for bytes;
 
@@ -128,10 +128,10 @@ contract ERC7786OpenBridge is IERC7786GatewaySource, IERC7786Receiver, Ownable, 
         emit MessageSent(sendId, sender, recipient, payload, 0, attributes);
     }
 
-    // ============================================== IERC7786Receiver ===============================================
+    // ============================================== IERC7786Recipient ==============================================
 
     /**
-     * @inheritdoc IERC7786Receiver
+     * @inheritdoc IERC7786Recipient
      *
      * @dev This function serves a dual purpose:
      *
@@ -152,21 +152,21 @@ contract ERC7786OpenBridge is IERC7786GatewaySource, IERC7786Receiver, Ownable, 
      *   chain.
      * * someone tries re-execute a message that was already successfully delivered. This includes gateways that call
      *   this function a second time with a message that was already executed.
-     * * the execution of the message (on the {IERC7786Receiver} receiver) is successful but fails to return the
+     * * the execution of the message (on the {IERC7786Recipient} recipient) is successful but fails to return the
      *   executed value.
      *
      * This function does not revert if:
      *
      * * A known gateway delivers a message for the first time, and that message was already executed. In that case
      *   the message is NOT re-executed, and the correct "magic value" is returned.
-     * * The execution of the message (on the {IERC7786Receiver} receiver) reverts. In that case a {ExecutionFailed}
+     * * The execution of the message (on the {IERC7786Recipient} recipient) reverts. In that case a {ExecutionFailed}
      *   event is emitted.
      *
      * This function emits:
      *
      * * {Received} when a known ERC-7786 gateway delivers a message for the first time.
-     * * {ExecutionSuccess} when a message is successfully delivered to the receiver.
-     * * {ExecutionFailed} when a message delivery to the receiver reverted (for example because of OOG error).
+     * * {ExecutionSuccess} when a message is successfully delivered to the recipient.
+     * * {ExecutionFailed} when a message delivery to the recipient reverted (for example because of OOG error).
      *
      * NOTE: interface requires this function to be payable. Even if we don't expect any value, a gateway may pass
      * some value for unknown reason. In that case we want to register this gateway having delivered the message and
@@ -193,7 +193,7 @@ contract ERC7786OpenBridge is IERC7786GatewaySource, IERC7786Receiver, Ownable, 
             emit Received(id, msg.sender);
 
             // if already executed, leave gracefully
-            if (tracker.executed) return IERC7786Receiver.receiveMessage.selector;
+            if (tracker.executed) return IERC7786Recipient.receiveMessage.selector;
         } else if (tracker.executed) {
             revert ERC7786OpenBridgeAlreadyExecuted();
         }
@@ -209,7 +209,10 @@ contract ERC7786OpenBridge is IERC7786GatewaySource, IERC7786Receiver, Ownable, 
             // prevent re-entry
             tracker.executed = true;
 
-            bytes memory call = abi.encodeCall(IERC7786Receiver.receiveMessage, (id, originalSender, unwrappedPayload));
+            bytes memory call = abi.encodeCall(
+                IERC7786Recipient.receiveMessage,
+                (id, originalSender, unwrappedPayload)
+            );
             // slither-disable-next-line reentrancy-no-eth
             (, address target) = recipient.parseEvmV1();
             (bool success, bytes memory returndata) = target.call(call);
@@ -218,7 +221,7 @@ contract ERC7786OpenBridge is IERC7786GatewaySource, IERC7786Receiver, Ownable, 
                 // rollback to enable retry
                 tracker.executed = false;
                 emit ExecutionFailed(id);
-            } else if (bytes32(returndata) == bytes32(IERC7786Receiver.receiveMessage.selector)) {
+            } else if (bytes32(returndata) == bytes32(IERC7786Recipient.receiveMessage.selector)) {
                 // call successful and correct value returned
                 emit ExecutionSuccess(id);
             } else {
@@ -227,7 +230,7 @@ contract ERC7786OpenBridge is IERC7786GatewaySource, IERC7786Receiver, Ownable, 
             }
         }
 
-        return IERC7786Receiver.receiveMessage.selector;
+        return IERC7786Recipient.receiveMessage.selector;
     }
 
     // =================================================== Getters ===================================================

@@ -2,13 +2,13 @@
   "lib/@openzeppelin-contracts": {
     "branch": {
       "name": "master",
-      "rev": "c3961a45380831135b37e55bc3ed441f678a4f5e"
+      "rev": "dd965b40d264ba7347942b0af00a2e7757feaee0"
     }
   },
   "lib/@openzeppelin-contracts-upgradeable": {
     "branch": {
       "name": "master",
-      "rev": "87e32858518950ff89c5492b6c81bb3d87cba9e3"
+      "rev": "6139c67f1853cfc0fc6ce8cba9de0223b6f6e63a"
     }
   },
   "lib/axelar-gmp-sdk-solidity": {

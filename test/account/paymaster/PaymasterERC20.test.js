@@ -32,7 +32,7 @@ async function fixture() {
   await paymaster.$_grantRole(ethers.id('WITHDRAWER_ROLE'), admin);
 
   // Domains
-  const entrypointDomain = await getDomain(predeploy.entrypoint.v08);
+  const entrypointDomain = await getDomain(predeploy.entrypoint.v09);
   const paymasterDomain = await getDomain(paymaster);
 
   const signUserOp = userOp =>
@@ -153,7 +153,7 @@ describe('PaymasterERC20', function () {
         .then(op => this.signUserOp(op));
 
       // send it to the entrypoint
-      const txPromise = predeploy.entrypoint.v08.handleOps([signedUserOp.packed], this.receiver);
+      const txPromise = predeploy.entrypoint.v09.handleOps([signedUserOp.packed], this.receiver);
 
       // check main events (target call and sponsoring)
       await expect(txPromise)
@@ -176,7 +176,7 @@ describe('PaymasterERC20', function () {
       );
       // check that ether moved as expected
       await expect(txPromise).to.changeEtherBalances(
-        [predeploy.entrypoint.v08, this.receiver],
+        [predeploy.entrypoint.v09, this.receiver],
         [-actualGasCost, actualGasCost],
       );
 
@@ -223,12 +223,12 @@ describe('PaymasterERC20', function () {
         )
         .then(op => this.signUserOp(op));
 
-      const txPromise = predeploy.entrypoint.v08.handleOps([signedUserOp.packed], this.receiver);
+      const txPromise = predeploy.entrypoint.v09.handleOps([signedUserOp.packed], this.receiver);
 
       // Reverted post op does not revert the operation
       const { logs } = await txPromise.then(tx => tx.wait());
       const [, , , postOpRevertReason] = logs.find(v => v.fragment?.name === 'PostOpRevertReason').args;
-      const postOpError = predeploy.entrypoint.v08.interface.parseError(postOpRevertReason);
+      const postOpError = predeploy.entrypoint.v09.interface.parseError(postOpRevertReason);
       expect(postOpError.name).to.eq('PostOpReverted');
       const [paymasterRevertReason] = postOpError.args;
       const { name, args } = this.paymaster.interface.parseError(paymasterRevertReason);
@@ -250,8 +250,8 @@ describe('PaymasterERC20', function () {
         .then(op => this.signUserOp(op));
 
       // send it to the entrypoint
-      await expect(predeploy.entrypoint.v08.handleOps([signedUserOp.packed], this.receiver))
-        .to.be.revertedWithCustomError(predeploy.entrypoint.v08, 'FailedOp')
+      await expect(predeploy.entrypoint.v09.handleOps([signedUserOp.packed], this.receiver))
+        .to.be.revertedWithCustomError(predeploy.entrypoint.v09, 'FailedOp')
         .withArgs(0n, 'AA34 signature error');
     });
 
@@ -266,8 +266,8 @@ describe('PaymasterERC20', function () {
         .then(op => this.signUserOp(op));
 
       // send it to the entrypoint
-      await expect(predeploy.entrypoint.v08.handleOps([signedUserOp.packed], this.receiver))
-        .to.be.revertedWithCustomError(predeploy.entrypoint.v08, 'FailedOp')
+      await expect(predeploy.entrypoint.v09.handleOps([signedUserOp.packed], this.receiver))
+        .to.be.revertedWithCustomError(predeploy.entrypoint.v09, 'FailedOp')
         .withArgs(0n, 'AA34 signature error');
     });
 
@@ -282,8 +282,8 @@ describe('PaymasterERC20', function () {
         .then(op => this.signUserOp(op));
 
       // send it to the entrypoint
-      await expect(predeploy.entrypoint.v08.handleOps([signedUserOp.packed], this.receiver))
-        .to.be.revertedWithCustomError(predeploy.entrypoint.v08, 'FailedOp')
+      await expect(predeploy.entrypoint.v09.handleOps([signedUserOp.packed], this.receiver))
+        .to.be.revertedWithCustomError(predeploy.entrypoint.v09, 'FailedOp')
         .withArgs(0n, 'AA34 signature error');
     });
   });

@@ -2,9 +2,9 @@
 
 pragma solidity ^0.8.27;
 
-import {ERC7786Receiver} from "../../crosschain/utils/ERC7786Receiver.sol";
+import {ERC7786Recipient} from "@openzeppelin/contracts/crosschain/ERC7786Recipient.sol";
 
-contract ERC7786ReceiverMock is ERC7786Receiver {
+contract ERC7786RecipientMock is ERC7786Recipient {
     address private immutable _gateway;
 
     event MessageReceived(address gateway, bytes32 receiveId, bytes sender, bytes payload, uint256 value);
@@ -13,7 +13,7 @@ contract ERC7786ReceiverMock is ERC7786Receiver {
         _gateway = gateway_;
     }
 
-    function _isKnownGateway(address instance) internal view virtual override returns (bool) {
+    function _isAuthorizedGateway(address instance, bytes calldata) internal view virtual override returns (bool) {
         return instance == _gateway;
     }
 

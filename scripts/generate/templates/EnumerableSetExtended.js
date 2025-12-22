@@ -2,7 +2,7 @@ const format = require('@openzeppelin/contracts/scripts/generate/format-lines');
 const { SET_TYPES } = require('./Enumerable.opts');
 
 const header = `\
-pragma solidity ^0.8.20;
+pragma solidity ^0.8.24;
 
 import {Arrays} from "@openzeppelin/contracts/utils/Arrays.sol";
 import {Hashes} from "@openzeppelin/contracts/utils/cryptography/Hashes.sol";

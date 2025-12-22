@@ -5,10 +5,9 @@ pragma solidity ^0.8.27;
 import {IAxelarGateway} from "@axelar-network/axelar-gmp-sdk-solidity/contracts/interfaces/IAxelarGateway.sol";
 import {AxelarExecutable} from "@axelar-network/axelar-gmp-sdk-solidity/contracts/executable/AxelarExecutable.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import {IERC7786GatewaySource, IERC7786Recipient} from "@openzeppelin/contracts/interfaces/draft-IERC7786.sol";
 import {InteroperableAddress} from "@openzeppelin/contracts/utils/draft-InteroperableAddress.sol";
 import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
-import {IERC7786GatewaySource} from "../../interfaces/IERC7786.sol";
-import {IERC7786Receiver} from "../../interfaces/IERC7786.sol";
 
 /**
  * @dev Implementation of an ERC-7786 gateway destination adapter for the Axelar Network in dual mode.
@@ -43,7 +42,7 @@ contract AxelarGatewayAdapter is IERC7786GatewaySource, Ownable, AxelarExecutabl
 
     error UnsupportedNativeTransfer();
     error InvalidOriginGateway(string axelarSourceChain, string axelarSourceAddress);
-    error ReceiverExecutionFailed();
+    error RecipientExecutionFailed();
     error UnsupportedChainType(bytes2 chainType);
     error UnsupportedERC7930Chain(bytes erc7930binary);
     error UnsupportedAxelarChain(string axelar);
@@ -184,8 +183,8 @@ contract AxelarGatewayAdapter is IERC7786GatewaySource, Ownable, AxelarExecutabl
         }
 
         (, address target) = recipient.parseEvmV1();
-        bytes4 result = IERC7786Receiver(target).receiveMessage(commandId, sender, payload);
-        require(result == IERC7786Receiver.receiveMessage.selector, ReceiverExecutionFailed());
+        bytes4 result = IERC7786Recipient(target).receiveMessage(commandId, sender, payload);
+        require(result == IERC7786Recipient.receiveMessage.selector, RecipientExecutionFailed());
     }
 
     /// @dev ERC-7930 to Axelar address translation. Currently only supports EVM chains.
