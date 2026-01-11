@@ -9,7 +9,7 @@ import {ERC20Freezable} from "./ERC20Freezable.sol";
 import {ERC20Restricted} from "./ERC20Restricted.sol";
 
 /**
- * @dev Extension of {ERC20} according to https://eips.ethereum.org/EIPS/eip-7943[EIP-7943].
+ * @dev Extension of {ERC20} according to [EIP-7943](https://eips.ethereum.org/EIPS/eip-7943).
  *
  * Combines standard ERC-20 functionality with RWA-specific features like user restrictions,
  * asset freezing, and forced asset transfers.

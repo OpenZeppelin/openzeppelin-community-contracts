@@ -6,7 +6,7 @@ import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 /**
  * @dev Extension of {ERC20} that allows to implement user account transfer restrictions
- * through the {isUserAllowed} function. Inspired by https://eips.ethereum.org/EIPS/eip-7943[EIP-7943].
+ * through the {isUserAllowed} function. Inspired by [EIP-7943](https://eips.ethereum.org/EIPS/eip-7943).
  *
  * By default, each account has no explicit restriction. The {isUserAllowed} function acts as
  * a blocklist. Developers can override {isUserAllowed} to check that `restriction == ALLOWED`

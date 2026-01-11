@@ -126,7 +126,7 @@ abstract contract PaymasterCore is IPaymaster {
     /**
      * @dev Checks whether `msg.sender` withdraw funds stake or deposit from the entrypoint on paymaster's behalf.
      *
-     * Use of an https://docs.openzeppelin.com/contracts/5.x/access-control[access control]
+     * Use of an [access control](https://docs.openzeppelin.com/contracts/5.x/access-control)
      * modifier such as {Ownable-onlyOwner} is recommended.
      *
      * ```solidity

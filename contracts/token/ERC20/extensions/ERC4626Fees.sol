@@ -7,7 +7,7 @@ import {ERC4626} from "@openzeppelin/contracts/token/ERC20/extensions/ERC4626.so
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 
-/// @dev ERC-4626 vault with entry/exit fees expressed in https://en.wikipedia.org/wiki/Basis_point[basis point (bp)].
+/// @dev ERC-4626 vault with entry/exit fees expressed in [basis point (bp)](https://en.wikipedia.org/wiki/Basis_point).
 abstract contract ERC4626Fees is ERC4626 {
     using Math for uint256;
 
