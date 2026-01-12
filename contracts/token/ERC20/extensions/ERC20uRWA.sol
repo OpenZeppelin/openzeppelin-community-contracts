@@ -17,7 +17,6 @@ import {ERC20Restricted} from "./ERC20Restricted.sol";
  * logic.
  */
 abstract contract ERC20uRWA is ERC20, ERC165, ERC20Freezable, ERC20Restricted, IERC7943Fungible {
-    
     /// @inheritdoc IERC7943Fungible
     function canTransact(address account) public view virtual returns (bool allowed) {
         return isUserAllowed(account);
@@ -44,7 +43,7 @@ abstract contract ERC20uRWA is ERC20, ERC165, ERC20Freezable, ERC20Restricted, I
     }
 
     /**
-     * @dev See {IERC7943Fungible-setFrozenTokens}.
+     * @dev See {IERC7943Fungible-setFrozenTokens}. Always returns true if successful. Reverts otherwise.
      *
      * NOTE: The `amount` is capped to the balance of the `user` to ensure the {IERC7943Fungible-Frozen} event
      * emits values that consistently reflect the actual amount of tokens that are frozen.
@@ -57,7 +56,7 @@ abstract contract ERC20uRWA is ERC20, ERC165, ERC20Freezable, ERC20Restricted, I
     }
 
     /**
-     * @dev See {IERC7943Fungible-forcedTransfer}.
+     * @dev See {IERC7943Fungible-forcedTransfer}. Always returns true if successful. Reverts otherwise.
      *
      * Bypasses the {ERC20Restricted} restrictions for the `from` address and adjusts the frozen balance
      * to the new balance after the transfer.
