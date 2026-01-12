@@ -12,14 +12,15 @@ import {ERC20Restricted} from "./ERC20Restricted.sol";
  * @dev Extension of {ERC20} according to https://eips.ethereum.org/EIPS/eip-7943[EIP-7943].
  *
  * Combines standard ERC-20 functionality with RWA-specific features like user restrictions,
- * asset freezing, and forced asset transfers.
+ * asset freezing, and forced asset transfers. This contract doesn't expose minting or burning
+ * capabilities; if implemented in derived contracts as needed, they must include 7943-specific
+ * logic.
  */
 abstract contract ERC20uRWA is ERC20, ERC165, ERC20Freezable, ERC20Restricted, IERC7943Fungible {
-    /// @inheritdoc ERC20Restricted
-    function isUserAllowed(
-        address user
-    ) public view virtual override(IERC7943Fungible, ERC20Restricted) returns (bool) {
-        return super.isUserAllowed(user);
+    
+    /// @inheritdoc IERC7943Fungible
+    function canTransact(address account) public view virtual returns (bool allowed) {
+        return isUserAllowed(account);
     }
 
     /// @inheritdoc ERC165
@@ -34,7 +35,7 @@ abstract contract ERC20uRWA is ERC20, ERC165, ERC20Freezable, ERC20Restricted, I
      * the internal {_update} function. Consider overriding {_update} accordingly to keep both functions in sync.
      */
     function canTransfer(address from, address to, uint256 amount) external view virtual returns (bool) {
-        return (amount <= available(from) && isUserAllowed(from) && isUserAllowed(to));
+        return (amount <= available(from) && canTransact(from) && canTransact(to));
     }
 
     /// @inheritdoc IERC7943Fungible
@@ -48,10 +49,11 @@ abstract contract ERC20uRWA is ERC20, ERC165, ERC20Freezable, ERC20Restricted, I
      * NOTE: The `amount` is capped to the balance of the `user` to ensure the {IERC7943Fungible-Frozen} event
      * emits values that consistently reflect the actual amount of tokens that are frozen.
      */
-    function setFrozenTokens(address user, uint256 amount) public virtual {
+    function setFrozenTokens(address user, uint256 amount) public virtual returns (bool result) {
         uint256 actualAmount = Math.min(amount, balanceOf(user));
         _checkFreezer(user, actualAmount);
         _setFrozen(user, actualAmount);
+        return true;
     }
 
     /**
@@ -65,9 +67,9 @@ abstract contract ERC20uRWA is ERC20, ERC165, ERC20Freezable, ERC20Restricted, I
      * to add additional restrictions or logic, those changes will also apply here.
      * Consider overriding this function to bypass newer restrictions if needed.
      */
-    function forcedTransfer(address from, address to, uint256 amount) public virtual {
+    function forcedTransfer(address from, address to, uint256 amount) public virtual returns (bool result) {
         _checkEnforcer(from, to, amount);
-        require(isUserAllowed(to), ERC7943NotAllowedUser(to));
+        require(canTransact(to), ERC7943CannotTransact(to));
 
         // Update frozen balance if needed. ERC-7943 requires that balance is unfrozen first and then send the tokens.
         uint256 currentFrozen = frozen(from);
@@ -85,11 +87,12 @@ abstract contract ERC20uRWA is ERC20, ERC165, ERC20Freezable, ERC20Restricted, I
         // Assuming `forcedTransfer` will be used occasionally, the added costs of temporary
         // restrictions would be justifiable under this path.
         Restriction restriction = getRestriction(from);
-        bool wasUserAllowed = isUserAllowed(from);
+        bool wasUserAllowed = canTransact(from);
         if (!wasUserAllowed) _setRestriction(from, Restriction.ALLOWED);
         _update(from, to, amount); // Explicit raw update to bypass all restrictions
         if (!wasUserAllowed) _setRestriction(from, restriction);
         emit ForcedTransfer(from, to, amount);
+        return true;
     }
 
     /// @inheritdoc ERC20
@@ -99,7 +102,7 @@ abstract contract ERC20uRWA is ERC20, ERC165, ERC20Freezable, ERC20Restricted, I
         uint256 amount
     ) internal virtual override(ERC20, ERC20Freezable, ERC20Restricted) {
         // Note: We rely on the inherited _update chain (ERC20Freezable + ERC20Restricted) to enforce
-        // the same restrictions that isTransferAllowed would check. This avoids duplicate validation
+        // the same restrictions that canTransfer would check. This avoids duplicate validation
         // while maintaining consistency between external queries and internal transfer logic.
         super._update(from, to, amount);
     }

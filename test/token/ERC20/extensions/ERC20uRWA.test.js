@@ -30,7 +30,7 @@ describe('ERC20uRWA', function () {
         'getFrozenTokens(address)',
         'setFrozenTokens(address,uint256)',
         'forcedTransfer(address,address,uint256)',
-        'isUserAllowed(address)',
+        'canTransact(address)',
       ],
     });
   });
