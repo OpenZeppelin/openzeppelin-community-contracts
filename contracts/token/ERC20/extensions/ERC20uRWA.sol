@@ -11,15 +11,17 @@ import {ERC20Restricted} from "./ERC20Restricted.sol";
 /**
  * @dev Extension of {ERC20} according to https://eips.ethereum.org/EIPS/eip-7943[EIP-7943].
  *
- * Combines standard ERC-20 functionality with RWA-specific features like user restrictions,
+ * Combines standard ERC-20 functionality with RWA-specific features like account restrictions,
  * asset freezing, and forced asset transfers. This contract doesn't expose minting or burning
  * capabilities; if implemented in derived contracts as needed, they must include 7943-specific
  * logic.
  */
 abstract contract ERC20uRWA is ERC20, ERC165, ERC20Freezable, ERC20Restricted, IERC7943Fungible {
-    /// @inheritdoc IERC7943Fungible
-    function canTransact(address account) public view virtual returns (bool allowed) {
-        return isUserAllowed(account);
+    /// @inheritdoc ERC20Restricted
+    function canTransact(
+        address account
+    ) public view virtual override(IERC7943Fungible, ERC20Restricted) returns (bool) {
+        return super.canTransact(account);
     }
 
     /// @inheritdoc ERC165
@@ -38,20 +40,20 @@ abstract contract ERC20uRWA is ERC20, ERC165, ERC20Freezable, ERC20Restricted, I
     }
 
     /// @inheritdoc IERC7943Fungible
-    function getFrozenTokens(address user) public view virtual returns (uint256 amount) {
-        return frozen(user);
+    function getFrozenTokens(address account) public view virtual returns (uint256 amount) {
+        return frozen(account);
     }
 
     /**
      * @dev See {IERC7943Fungible-setFrozenTokens}. Always returns true if successful. Reverts otherwise.
      *
-     * NOTE: The `amount` is capped to the balance of the `user` to ensure the {IERC7943Fungible-Frozen} event
+     * NOTE: The `amount` is capped to the balance of the `account` to ensure the {IERC7943Fungible-Frozen} event
      * emits values that consistently reflect the actual amount of tokens that are frozen.
      */
-    function setFrozenTokens(address user, uint256 amount) public virtual returns (bool result) {
-        uint256 actualAmount = Math.min(amount, balanceOf(user));
-        _checkFreezer(user, actualAmount);
-        _setFrozen(user, actualAmount);
+    function setFrozenTokens(address account, uint256 amount) public virtual returns (bool result) {
+        uint256 actualAmount = Math.min(amount, balanceOf(account));
+        _checkFreezer(account, actualAmount);
+        _setFrozen(account, actualAmount);
         return true;
     }
 
@@ -86,10 +88,10 @@ abstract contract ERC20uRWA is ERC20, ERC165, ERC20Freezable, ERC20Restricted, I
         // Assuming `forcedTransfer` will be used occasionally, the added costs of temporary
         // restrictions would be justifiable under this path.
         Restriction restriction = getRestriction(from);
-        bool wasUserAllowed = canTransact(from);
-        if (!wasUserAllowed) _setRestriction(from, Restriction.ALLOWED);
+        bool wasAccountAllowed = canTransact(from);
+        if (!wasAccountAllowed) _setRestriction(from, Restriction.ALLOWED);
         _update(from, to, amount); // Explicit raw update to bypass all restrictions
-        if (!wasUserAllowed) _setRestriction(from, restriction);
+        if (!wasAccountAllowed) _setRestriction(from, restriction);
         emit ForcedTransfer(from, to, amount);
         return true;
     }
@@ -123,8 +125,8 @@ abstract contract ERC20uRWA is ERC20, ERC165, ERC20Freezable, ERC20Restricted, I
      * Example usage with {AccessControl-onlyRole}:
      *
      * ```solidity
-     * function _checkFreezer(address user, uint256 amount) internal view override onlyRole(FREEZER_ROLE) {}
+     * function _checkFreezer(address account, uint256 amount) internal view override onlyRole(FREEZER_ROLE) {}
      * ```
      */
-    function _checkFreezer(address user, uint256 amount) internal view virtual;
+    function _checkFreezer(address account, uint256 amount) internal view virtual;
 }
