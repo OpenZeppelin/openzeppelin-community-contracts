@@ -30,7 +30,7 @@ describe('ERC20uRWA', function () {
         'getFrozenTokens(address)',
         'setFrozenTokens(address,uint256)',
         'forcedTransfer(address,address,uint256)',
-        'isUserAllowed(address)',
+        'canTransact(address)',
       ],
     });
   });
@@ -200,7 +200,7 @@ describe('ERC20uRWA', function () {
         await this.token.$_blockUser(this.recipient); // Sets to BLOCKED
 
         await expect(this.token.connect(this.enforcer).forcedTransfer(this.holder, this.recipient, 40n))
-          .to.be.revertedWithCustomError(this.token, 'ERC7943NotAllowedUser')
+          .to.be.revertedWithCustomError(this.token, 'ERC7943CannotTransact')
           .withArgs(this.recipient);
       });
 
@@ -267,7 +267,7 @@ describe('ERC20uRWA', function () {
         await this.token.$_blockUser(this.recipient); // Sets to BLOCKED
 
         await expect(this.token.$_mint(this.recipient, value))
-          // ERC7943NotAllowedUser is not required by ERC-7943
+          // ERC7943CannotTransact is not required by ERC-7943
           .to.be.revertedWithCustomError(this.token, 'ERC20UserRestricted')
           .withArgs(this.recipient);
       });
