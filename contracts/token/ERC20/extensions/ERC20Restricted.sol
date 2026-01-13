@@ -6,10 +6,10 @@ import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 /**
  * @dev Extension of {ERC20} that allows to implement user account transfer restrictions
- * through the {isUserAllowed} function. Inspired by https://eips.ethereum.org/EIPS/eip-7943[EIP-7943].
+ * through the {canTransact} function. Inspired by https://eips.ethereum.org/EIPS/eip-7943[EIP-7943].
  *
- * By default, each account has no explicit restriction. The {isUserAllowed} function acts as
- * a blocklist. Developers can override {isUserAllowed} to check that `restriction == ALLOWED`
+ * By default, each account has no explicit restriction. The {canTransact} function acts as
+ * a blocklist. Developers can override {canTransact} to check that `restriction == ALLOWED`
  * to implement an allowlist.
  */
 abstract contract ERC20Restricted is ERC20 {
@@ -40,12 +40,12 @@ abstract contract ERC20Restricted is ERC20 {
      * To convert into an allowlist, override as:
      *
      * ```solidity
-     * function isUserAllowed(address account) public view virtual override returns (bool) {
+     * function canTransact(address account) public view virtual override returns (bool) {
      *     return getRestriction(account) == Restriction.ALLOWED;
      * }
      * ```
      */
-    function isUserAllowed(address account) public view virtual returns (bool) {
+    function canTransact(address account) public view virtual returns (bool) {
         return getRestriction(account) != Restriction.BLOCKED; // i.e. DEFAULT && ALLOWED
     }
 
@@ -54,8 +54,8 @@ abstract contract ERC20Restricted is ERC20 {
      *
      * Requirements:
      *
-     * * `from` must be allowed to transfer tokens (see {isUserAllowed}).
-     * * `to` must be allowed to receive tokens (see {isUserAllowed}).
+     * * `from` must be allowed to transfer tokens (see {canTransact}).
+     * * `to` must be allowed to receive tokens (see {canTransact}).
      */
     function _update(address from, address to, uint256 value) internal virtual override {
         if (from != address(0)) _checkRestriction(from); // Not minting
@@ -91,6 +91,6 @@ abstract contract ERC20Restricted is ERC20 {
 
     /// @dev Checks if a user account is restricted. Reverts with {ERC20Restricted} if so.
     function _checkRestriction(address account) internal view virtual {
-        require(isUserAllowed(account), ERC20UserRestricted(account));
+        require(canTransact(account), ERC20UserRestricted(account));
     }
 }

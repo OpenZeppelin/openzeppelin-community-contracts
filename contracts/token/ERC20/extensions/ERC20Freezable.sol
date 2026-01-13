@@ -20,8 +20,8 @@ abstract contract ERC20Freezable is ERC20 {
     /// @dev Frozen amount of tokens per address.
     mapping(address account => uint256) private _frozenBalances;
 
-    /// @dev The operation failed because the user has insufficient unfrozen balance.
-    error ERC20InsufficientUnfrozenBalance(address user, uint256 needed, uint256 available);
+    /// @dev The operation failed because the account has insufficient unfrozen balance.
+    error ERC20InsufficientUnfrozenBalance(address account, uint256 needed, uint256 available);
 
     /// @dev Returns the frozen balance of an account.
     function frozen(address account) public view virtual returns (uint256) {
@@ -34,10 +34,10 @@ abstract contract ERC20Freezable is ERC20 {
         return success ? unfrozen : 0;
     }
 
-    /// @dev Internal function to set the frozen token amount for a user.
-    function _setFrozen(address user, uint256 amount) internal virtual {
-        _frozenBalances[user] = amount;
-        emit IERC7943Fungible.Frozen(user, amount);
+    /// @dev Internal function to set the frozen token amount for a account.
+    function _setFrozen(address account, uint256 amount) internal virtual {
+        _frozenBalances[account] = amount;
+        emit IERC7943Fungible.Frozen(account, amount);
     }
 
     /**
