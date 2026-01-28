@@ -59,3 +59,139 @@ The verification process works as follows:
 * Otherwise: verification is done using an ERC-7913 verifier.
 
 This allows for backward compatibility with EOAs and ERC-1271 contracts while supporting new types of keys.
+
+=== Private Ledger & Notes
+
+_For background on UTXO concepts, see the https://en.bitcoin.it/wiki/UTXO[Bitcoin UTXO model]_
+
+Private ledger entries represent discrete units of value with flexible representation, providing transaction graph privacy by breaking linkability between transfers. OpenZeppelin provides a **layered architecture** for implementing UTXO-like systems:
+
+* **xref:api:utils.adoc#PrivateLedger[`PrivateLedger`]** - Foundational library with basic entry primitives
+* **xref:api:utils.adoc#PrivateNote[`PrivateNote`]** - Opinionated layer with spending functionality and privacy options
+
+==== Private Ledger
+
+The foundation layer uses `bytes32` for values to support multiple representations: plaintext amounts, encrypted values (FHE), zero-knowledge commitments, or other privacy-preserving formats:
+
+[source,solidity]
+----
+import {PrivateLedger} from "@openzeppelin/contracts/utils/PrivateLedger.sol";
+
+contract BasicLedgerToken {
+    using PrivateLedger for PrivateLedger.Entry;
+    
+    mapping(bytes32 => PrivateLedger.Entry) private _entries;
+    mapping(address => bytes32[]) private _ownerToEntries;  // Separate indexing
+    
+    function mint(address to, uint256 amount) external {
+        bytes32 entryId = keccak256(abi.encode(block.timestamp, to, amount));
+        bytes32 value = bytes32(amount);  // Convert uint256 to bytes32
+        
+        _entries[entryId].create(to, value);
+        _ownerToEntries[to].push(entryId);
+    }
+    
+    function transfer(bytes32 fromEntryId, address to, uint256 amount) external {
+        PrivateLedger.Entry storage fromEntry = _entries[fromEntryId];
+        require(fromEntry.owner == msg.sender, "Not owner");
+        
+        uint256 currentValue = uint256(fromEntry.value);
+        require(currentValue >= amount, "Insufficient value");
+        
+        // Remove spent entry
+        _removeFromIndex(msg.sender, fromEntryId);
+        fromEntry.remove();
+        
+        // Create new entries
+        bytes32 toEntryId = keccak256(abi.encode(block.timestamp, to, "recipient"));
+        _entries[toEntryId].create(to, bytes32(amount));
+        _ownerToEntries[to].push(toEntryId);
+        
+        // Create change entry if needed
+        if (currentValue > amount) {
+            bytes32 changeEntryId = keccak256(abi.encode(block.timestamp, msg.sender, "change"));
+            _entries[changeEntryId].create(msg.sender, bytes32(currentValue - amount));
+            _ownerToEntries[msg.sender].push(changeEntryId);
+        }
+    }
+}
+----
+
+==== Spendable Notes with Privacy Options
+
+The opinionated layer adds spending semantics with **two privacy models**:
+
+[source,solidity]
+----
+import {PrivateNote} from "@openzeppelin/contracts/utils/PrivateNote.sol";
+
+contract PrivacyToken {
+    using PrivateNote for PrivateNote.SpendableBytes32;
+    using PrivateNote for PrivateNote.TrackableSpendableBytes32;
+    
+    // Privacy-preserving notes (no lineage tracking)
+    mapping(bytes32 => PrivateNote.SpendableBytes32) private _privateNotes;
+    
+    // Auditable notes (with lineage tracking)  
+    mapping(bytes32 => PrivateNote.TrackableSpendableBytes32) private _auditableNotes;
+    
+    function mintPrivate(address to, uint256 amount) external {
+        bytes32 noteId = keccak256(abi.encode(block.timestamp, to, amount));
+        _privateNotes[noteId].create(to, bytes32(amount), noteId);
+    }
+    
+    function mintAuditable(address to, uint256 amount, bytes32 parentId) external {
+        bytes32 noteId = keccak256(abi.encode(block.timestamp, to, amount));
+        _auditableNotes[noteId].create(to, bytes32(amount), noteId, parentId);
+    }
+    
+    function spendPrivate(
+        bytes32 noteId,
+        address to,
+        uint256 amount
+    ) external {
+        require(_privateNotes[noteId].entry.owner == msg.sender, "Not owner");
+        
+        // Spend note (maintains privacy - no lineage)
+        bytes32 recipientId = keccak256(abi.encode(block.timestamp, to, "recipient"));
+        bytes32 changeId = keccak256(abi.encode(block.timestamp, msg.sender, "change"));
+        
+        _privateNotes[noteId].spend(
+            noteId, to, bytes32(amount), msg.sender, bytes32(0), recipientId, changeId
+        );
+        
+        // Create new private notes
+        _privateNotes[recipientId].create(to, bytes32(amount), recipientId);
+    }
+    
+    function spendAuditable(
+        bytes32 noteId,
+        address to, 
+        uint256 amount
+    ) external {
+        require(_auditableNotes[noteId].entry.owner == msg.sender, "Not owner");
+        
+        // Spend note (preserves lineage for auditing)
+        bytes32 recipientId = keccak256(abi.encode(block.timestamp, to, "recipient"));
+        bytes32 changeId = keccak256(abi.encode(block.timestamp, msg.sender, "change"));
+        
+        _auditableNotes[noteId].spend(
+            noteId, to, bytes32(amount), msg.sender, bytes32(0), recipientId, changeId
+        );
+        
+        // Create new trackable notes with lineage
+        _auditableNotes[recipientId].create(to, bytes32(amount), recipientId, noteId);
+    }
+}
+----
+
+==== Use Cases
+
+* **Privacy Tokens**: Combine with FHE for maximum privacy (encrypted amounts + untraceable transaction graphs)
+* **Mixer Protocols**: Break transaction links while maintaining verifiable balances  
+* **Compliance Systems**: Use trackable notes for audit trails while maintaining confidentiality
+* **Layer-2 Solutions**: Efficient fraud proofs and state transitions
+* **DeFi Privacy**: Anonymous lending, trading, and yield farming
+* **Cross-Chain Bridges**: Interoperability with UTXO-based blockchains like Bitcoin
+
+The layered architecture provides flexibility: use `PrivateLedger` for custom logic or `PrivateNote` for battle-tested spending semantics. The `bytes32` value design makes this a universal primitive for any privacy-preserving system on Ethereum.
