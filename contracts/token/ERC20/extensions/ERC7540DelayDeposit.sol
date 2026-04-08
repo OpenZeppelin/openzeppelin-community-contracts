@@ -43,8 +43,8 @@ abstract contract ERC7540DelayDeposit is ERC7540 {
     }
 
     function _deposit(address caller, address receiver, uint256 assets, uint256 shares) internal virtual override {
-        super._deposit(caller, receiver, assets, shares);
         _claimedDeposits[receiver] += assets;
+        super._deposit(caller, receiver, assets, shares);
     }
 
     function _pendingDepositRequest(

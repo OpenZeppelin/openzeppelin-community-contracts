@@ -48,8 +48,8 @@ abstract contract ERC7540DelayRedeem is ERC7540 {
         uint256 assets,
         uint256 shares
     ) internal virtual override {
-        super._withdraw(caller, receiver, owner, assets, shares);
         _claimedRedeems[owner] += shares;
+        super._withdraw(caller, receiver, owner, assets, shares);
     }
 
     function _pendingRedeemRequest(
