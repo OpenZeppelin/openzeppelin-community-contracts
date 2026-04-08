@@ -2,6 +2,7 @@
 
 pragma solidity ^0.8.27;
 
+import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 import {ERC7540} from "./ERC7540.sol";
 
 abstract contract ERC7540AdminFulfillRedeem is ERC7540 {
@@ -40,6 +41,18 @@ abstract contract ERC7540AdminFulfillRedeem is ERC7540 {
         _redeems[controller].claimableAssets += assets;
 
         emit RedeemClaimable(controller, 0, assets, shares);
+    }
+
+    function _withdraw(
+        address caller,
+        address receiver,
+        address owner,
+        uint256 assets,
+        uint256 shares
+    ) internal virtual override {
+        _redeems[receiver].claimableAssets = Math.saturatingSub(_redeems[receiver].claimableAssets, assets);
+        _redeems[receiver].claimableShares = Math.saturatingSub(_redeems[receiver].claimableShares, shares);
+        super._withdraw(caller, receiver, owner, assets, shares);
     }
 
     function _pendingRedeemRequest(

@@ -2,6 +2,7 @@
 
 pragma solidity ^0.8.27;
 
+import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 import {ERC7540} from "./ERC7540.sol";
 
 abstract contract ERC7540AdminFulfillDeposit is ERC7540 {
@@ -41,6 +42,12 @@ abstract contract ERC7540AdminFulfillDeposit is ERC7540 {
         _deposits[controller].claimableShares += shares;
 
         emit DepositClaimable(controller, 0, assets, shares);
+    }
+
+    function _deposit(address caller, address receiver, uint256 assets, uint256 shares) internal virtual override {
+        _deposits[receiver].claimableAssets = Math.saturatingSub(_deposits[receiver].claimableAssets, assets);
+        _deposits[receiver].claimableShares = Math.saturatingSub(_deposits[receiver].claimableShares, shares);
+        super._deposit(caller, receiver, assets, shares);
     }
 
     function _pendingDepositRequest(
