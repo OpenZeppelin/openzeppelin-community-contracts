@@ -78,7 +78,7 @@ abstract contract ERC7540DelayRedeem is ERC7540 {
     }
 
     function _asyncMaxWithdraw(address owner) internal view virtual override returns (uint256) {
-        return _redeems[owner].latest() - _claimedRedeems[owner];
+        return _convertToAssets(_redeems[owner].latest() - _claimedRedeems[owner], Math.Rounding.Floor);
     }
 
     function _asyncMaxRedeem(address owner) internal view virtual override returns (uint256) {

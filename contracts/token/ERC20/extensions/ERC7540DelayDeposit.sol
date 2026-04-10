@@ -77,6 +77,6 @@ abstract contract ERC7540DelayDeposit is ERC7540 {
     }
 
     function _asyncMaxMint(address owner) internal view virtual override returns (uint256) {
-        return _deposits[owner].latest() - _claimedDeposits[owner];
+        return _convertToShares(_deposits[owner].latest() - _claimedDeposits[owner], Math.Rounding.Floor);
     }
 }
