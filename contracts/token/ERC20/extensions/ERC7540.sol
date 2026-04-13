@@ -274,16 +274,13 @@ abstract contract ERC7540 is ERC165, ERC20, IERC4626, IERC7540 {
             revert ERC4626ExceededMaxDeposit(_isDepositAsync() ? controller : receiver, assets, maxAssets);
         }
 
-        uint256 shares = _computeDeposit(assets, controller);
+        uint256 shares = _isDepositAsync() ? _computeAsyncDeposit(assets, controller) : previewDeposit(assets);
         _deposit(_msgSender(), receiver, assets, shares);
         return shares;
     }
 
-    function _computeDeposit(uint256 assets, address controller) internal virtual returns (uint256) {
-        return
-            _isDepositAsync()
-                ? Math.mulDiv(assets, maxMint(controller), maxDeposit(controller), Math.Rounding.Floor)
-                : previewDeposit(assets);
+    function _computeAsyncDeposit(uint256 assets, address controller) internal virtual returns (uint256) {
+        return Math.mulDiv(assets, maxMint(controller), maxDeposit(controller), Math.Rounding.Floor);
     }
 
     /// @inheritdoc IERC4626
@@ -303,16 +300,13 @@ abstract contract ERC7540 is ERC165, ERC20, IERC4626, IERC7540 {
             revert ERC4626ExceededMaxMint(_isDepositAsync() ? _msgSender() : receiver, shares, maxShares);
         }
 
-        uint256 assets = _computeMint(shares, controller);
+        uint256 assets = _isDepositAsync() ? _computeAsyncMint(shares, controller) : previewMint(shares);
         _deposit(_msgSender(), receiver, assets, shares);
         return assets;
     }
 
-    function _computeMint(uint256 shares, address controller) internal virtual returns (uint256) {
-        return
-            _isDepositAsync()
-                ? Math.mulDiv(shares, maxDeposit(controller), maxMint(controller), Math.Rounding.Ceil)
-                : previewMint(shares);
+    function _computeAsyncMint(uint256 shares, address controller) internal virtual returns (uint256) {
+        return Math.mulDiv(shares, maxDeposit(controller), maxMint(controller), Math.Rounding.Ceil);
     }
 
     function requestRedeem(uint256 shares, address controller, address owner) public virtual returns (uint256) {
@@ -341,16 +335,13 @@ abstract contract ERC7540 is ERC165, ERC20, IERC4626, IERC7540 {
             revert ERC4626ExceededMaxWithdraw(ownerOrController, assets, maxAssets);
         }
 
-        uint256 shares = _computeWithdraw(assets, ownerOrController);
+        uint256 shares = _isRedeemAsync() ? _computeAsyncWithdraw(assets, ownerOrController) : previewWithdraw(assets);
         _withdraw(_msgSender(), receiver, ownerOrController, assets, shares);
         return shares;
     }
 
-    function _computeWithdraw(uint256 assets, address controller) internal virtual returns (uint256) {
-        return
-            _isRedeemAsync()
-                ? Math.mulDiv(assets, maxRedeem(controller), maxWithdraw(controller), Math.Rounding.Ceil)
-                : previewWithdraw(assets);
+    function _computeAsyncWithdraw(uint256 assets, address controller) internal virtual returns (uint256) {
+        return Math.mulDiv(assets, maxRedeem(controller), maxWithdraw(controller), Math.Rounding.Ceil);
     }
 
     /// @inheritdoc IERC4626
@@ -364,16 +355,13 @@ abstract contract ERC7540 is ERC165, ERC20, IERC4626, IERC7540 {
             revert ERC4626ExceededMaxRedeem(ownerOrController, shares, maxShares);
         }
 
-        uint256 assets = _computeRedeem(shares, ownerOrController);
+        uint256 assets = _isRedeemAsync() ? _computeAsyncRedeem(shares, ownerOrController) : previewRedeem(shares);
         _withdraw(_msgSender(), receiver, ownerOrController, assets, shares);
         return assets;
     }
 
-    function _computeRedeem(uint256 shares, address controller) internal virtual returns (uint256) {
-        return
-            _isRedeemAsync()
-                ? Math.mulDiv(shares, maxWithdraw(controller), maxRedeem(controller), Math.Rounding.Floor)
-                : previewRedeem(shares);
+    function _computeAsyncRedeem(uint256 shares, address controller) internal virtual returns (uint256) {
+        return Math.mulDiv(shares, maxWithdraw(controller), maxRedeem(controller), Math.Rounding.Floor);
     }
 
     /**
