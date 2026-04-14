@@ -83,7 +83,13 @@ abstract contract ERC7540EpocRedeem is ERC7540 {
         _epochs[epochId].requests[controller] += shares;
 
         (bool success, bytes32 lastEpochId) = _memberOf[controller].tryBack();
-        if (!success || lastEpochId != bytes32(epochId)) _memberOf[controller].pushBack(bytes32(epochId));
+        if (!success || lastEpochId != bytes32(epochId)) {
+            _memberOf[controller].pushBack(bytes32(epochId));
+
+            // Limit the number of pending epochs per account to 32 to avoid O(n) loop in _asyncMaxWithdraw and _asyncMaxRedeem being a concern.
+            // User that have reached the limit should execute pending (fulfilled) request to cleanup the queue.
+            require(_memberOf[controller].length() < _requestQueueLimit());
+        }
 
         return epochId;
     }
@@ -149,5 +155,9 @@ abstract contract ERC7540EpocRedeem is ERC7540 {
         }
 
         return assets;
+    }
+
+    function _requestQueueLimit() internal view virtual returns (uint256) {
+        return 32;
     }
 }
