@@ -120,9 +120,9 @@ abstract contract ERC7540EpocRedeem is ERC7540 {
 
             uint256 batchAssets = requested.min(assets);
             uint256 batchShares = batchAssets.mulDiv(details.totalShares, details.totalAssets, Math.Rounding.Floor);
-            details.totalAssets -= batchAssets;
-            details.totalShares -= batchShares;
-            assets -= batchAssets;
+            details.totalAssets -= batchAssets; // May need saturatingSub for rounding handling
+            details.totalShares -= batchShares; // May need saturatingSub for rounding handling
+            assets -= batchAssets; // May need saturatingSub for rounding handling
             shares += batchShares;
         }
 
@@ -142,9 +142,9 @@ abstract contract ERC7540EpocRedeem is ERC7540 {
 
             uint256 batchShares = requested.min(shares);
             uint256 batchAssets = batchShares.mulDiv(details.totalAssets, details.totalShares, Math.Rounding.Floor);
-            details.totalShares -= batchShares;
-            details.totalAssets -= batchAssets;
-            shares -= batchShares;
+            details.totalShares -= batchShares; // May need saturatingSub for rounding handling
+            details.totalAssets -= batchAssets; // May need saturatingSub for rounding handling
+            shares -= batchShares; // May need saturatingSub for rounding handling
             assets += batchAssets;
         }
 
