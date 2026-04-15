@@ -7,77 +7,77 @@ import {SafeCast} from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import {DoubleEndedQueue} from "@openzeppelin/contracts/utils/structs/DoubleEndedQueue.sol";
 import {ERC7540} from "./ERC7540.sol";
 
-abstract contract ERC7540EpochRedeem is ERC7540 {
+abstract contract ERC7540EpochDeposit is ERC7540 {
     using Math for uint256;
     using SafeCast for uint256;
     using DoubleEndedQueue for DoubleEndedQueue.Bytes32Deque;
 
     struct EpochMetadata {
-        uint256 totalShares;
         uint256 totalAssets;
+        uint256 totalShares;
         mapping(address account => uint256) requests;
     }
 
     mapping(uint256 epochId => EpochMetadata) private _epochs;
     mapping(address account => DoubleEndedQueue.Bytes32Deque) private _memberOf;
 
-    function _isRedeemAsync() internal pure virtual override returns (bool) {
+    function _isDepositAsync() internal pure virtual override returns (bool) {
         return true;
     }
 
     /// @dev Returns the current epoch.
-    function currentRedeemEpoch() public view virtual returns (uint256) {
+    function currentDepositEpoch() public view virtual returns (uint256) {
         return block.timestamp / 1 weeks;
     }
 
-    function _pendingRedeemRequest(
+    function _pendingDepositRequest(
         uint256 requestId,
         address controller
     ) internal view virtual override returns (uint256) {
         EpochMetadata storage details = _epochs[requestId];
-        return details.totalAssets == 0 ? details.requests[controller] : 0;
+        return details.totalShares == 0 ? details.requests[controller] : 0;
     }
 
-    function _claimableRedeemRequest(
+    function _claimableDepositRequest(
         uint256 requestId,
         address controller
     ) internal view virtual override returns (uint256) {
         EpochMetadata storage details = _epochs[requestId];
-        return details.totalAssets == 0 ? 0 : details.requests[controller];
+        return details.totalShares == 0 ? 0 : details.requests[controller];
     }
 
-    function _asyncMaxWithdraw(address owner) internal view virtual override returns (uint256 assets) {
+    function _asyncMaxDeposit(address owner) internal view virtual override returns (uint256 assets) {
+        uint256 result = 0;
+        for (uint256 i = 0; i < _memberOf[owner].length(); ++i) {
+            uint256 epochId = uint256(_memberOf[owner].at(i));
+            result += _claimableDepositRequest(epochId, owner);
+        }
+        return result;
+    }
+
+    function _asyncMaxMint(address owner) internal view virtual override returns (uint256 shares) {
         uint256 result = 0;
         for (uint256 i = 0; i < _memberOf[owner].length(); ++i) {
             uint256 epochId = uint256(_memberOf[owner].at(i));
             result += Math.mulDiv(
-                _claimableRedeemRequest(epochId, owner),
-                _epochs[epochId].totalAssets,
+                _claimableDepositRequest(epochId, owner),
                 _epochs[epochId].totalShares,
+                _epochs[epochId].totalAssets,
                 Math.Rounding.Floor
             );
         }
         return result;
     }
 
-    function _asyncMaxRedeem(address owner) internal view virtual override returns (uint256 shares) {
-        uint256 result = 0;
-        for (uint256 i = 0; i < _memberOf[owner].length(); ++i) {
-            uint256 epochId = uint256(_memberOf[owner].at(i));
-            result += _claimableRedeemRequest(epochId, owner);
-        }
-        return result;
-    }
-
-    function _requestRedeem(
-        uint256 shares,
+    function _requestDeposit(
+        uint256 assets,
         address controller,
         address owner,
         uint256 /* requestId */ // discarded and replaced by timepoint based ids
     ) internal virtual override returns (uint256) {
-        uint256 epochId = currentRedeemEpoch();
-        _epochs[epochId].totalShares += shares;
-        _epochs[epochId].requests[controller] += shares;
+        uint256 epochId = currentDepositEpoch();
+        _epochs[epochId].totalAssets += assets;
+        _epochs[epochId].requests[controller] += assets;
 
         (bool success, bytes32 lastEpochId) = _memberOf[controller].tryBack();
         if (!success || lastEpochId != bytes32(epochId)) {
@@ -88,21 +88,21 @@ abstract contract ERC7540EpochRedeem is ERC7540 {
             require(_memberOf[controller].length() < _requestQueueLimit());
         }
 
-        return super._requestRedeem(shares, controller, owner, epochId);
+        return super._requestDeposit(assets, controller, owner, epochId);
     }
 
-    function _sharesToFullfillReedem(uint256 epochId) internal view virtual returns (uint256) {
-        return epochId < currentRedeemEpoch() && _epochs[epochId].totalAssets == 0 ? _epochs[epochId].totalShares : 0;
+    function _assetsToFullfillDeposit(uint256 epochId) internal view virtual returns (uint256) {
+        return epochId < currentDepositEpoch() && _epochs[epochId].totalShares == 0 ? _epochs[epochId].totalAssets : 0;
     }
 
     /// Note: when epoch transition is manual, caller should bump the epoch before calling _fulfill
-    function _fulfillRedeem(uint256 epochId, uint256 totalAssets) internal virtual {
-        require(epochId < currentRedeemEpoch()); // TODO: too early
+    function _fulfillDeposit(uint256 epochId, uint256 totalShares) internal virtual {
+        require(epochId < currentDepositEpoch()); // TODO: too early
 
         EpochMetadata storage details = _epochs[epochId];
-        require(details.totalShares > 0 && details.totalAssets == 0); // TODO: invalid resolve
+        require(details.totalAssets > 0 && details.totalShares == 0); // TODO: invalid resolve
 
-        details.totalAssets = totalAssets;
+        details.totalShares = totalShares;
         // TODO: emit event
     }
 
