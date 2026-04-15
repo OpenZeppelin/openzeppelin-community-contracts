@@ -248,6 +248,8 @@ abstract contract ERC7540 is ERC165, ERC20, IERC4626, IERC7540 {
     ) public virtual onlyOperatorOrController(_isDepositAsync(), owner, _msgSender()) returns (uint256) {
         require(_isDepositAsync(), ERC7540DepositIsSync());
 
+        _totalPendingDepositAssets += assets;
+
         uint256 requestId = _requestDeposit(assets, controller, owner);
 
         // Must revert with ERC20InsufficientBalance or equivalent error if there's not enough balance.
@@ -316,7 +318,12 @@ abstract contract ERC7540 is ERC165, ERC20, IERC4626, IERC7540 {
         if (owner != sender && !isOperator(owner, sender)) {
             _spendAllowance(owner, sender, shares);
         }
-        _burn(owner, shares);
+        if (_redeemRedeemShareDestination() == address(0)) {
+            _totalPendingRedeemShares += shares;
+            _burn(owner, shares);
+        } else {
+            _transfer(owner, _redeemRedeemShareDestination(), shares);
+        }
 
         uint256 requestId = _requestRedeem(shares, controller, owner);
 
@@ -379,12 +386,17 @@ abstract contract ERC7540 is ERC165, ERC20, IERC4626, IERC7540 {
     }
 
     function _requestDeposit(
-        uint256 assets,
+        uint256 /*assets*/,
         address /*controller*/,
         address /*owner*/
     ) internal virtual returns (uint256) {
-        _totalPendingDepositAssets += assets;
         return 0;
+    }
+
+    function _mintSharesOnDepositFulfill(uint256 assets, uint256 shares) internal virtual {
+        require(_depositShareOrigin() != address(0), "TODO: shares minted on claim");
+        _totalPendingDepositAssets -= assets;
+        _mint(_depositShareOrigin(), shares);
     }
 
     /**
@@ -400,21 +412,29 @@ abstract contract ERC7540 is ERC165, ERC20, IERC4626, IERC7540 {
         if (!_isDepositAsync()) {
             // slither-disable-next-line reentrancy-no-eth
             _transferIn(caller, assets);
-        } else {
+            _mint(receiver, shares);
+        } else if (_depositShareOrigin() == address(0)) {
             _totalPendingDepositAssets -= assets;
+            _mint(receiver, shares);
+        } else {
+            _transfer(_depositShareOrigin(), receiver, shares);
         }
-        _mint(receiver, shares);
 
         emit Deposit(caller, receiver, assets, shares);
     }
 
     function _requestRedeem(
-        uint256 shares,
+        uint256 /*shares*/,
         address /*controller*/,
         address /*owner*/
     ) internal virtual returns (uint256) {
-        _totalPendingRedeemShares += shares;
         return 0;
+    }
+
+    function _burnSharesOnRedeemFulfill(uint256 /*assets*/, uint256 shares) internal virtual {
+        require(_redeemRedeemShareDestination() != address(0), "TODO: shares minted on claim");
+        _totalPendingRedeemShares += shares;
+        _burn(_redeemRedeemShareDestination(), shares);
     }
 
     /**
@@ -461,39 +481,54 @@ abstract contract ERC7540 is ERC165, ERC20, IERC4626, IERC7540 {
         return 0;
     }
 
+    function _depositShareOrigin() internal view virtual returns (address) {
+        return address(0);
+    }
+
+    function _redeemRedeemShareDestination() internal view virtual returns (address) {
+        return address(0);
+    }
+
     function _pendingDepositRequest(
         uint256 /*requestId*/,
         address /*controller*/
     ) internal view virtual returns (uint256) {
         revert NotImplemented();
     }
+
     function _claimableDepositRequest(
         uint256 /*requestId*/,
         address /*controller*/
     ) internal view virtual returns (uint256) {
         revert NotImplemented();
     }
+
     function _pendingRedeemRequest(
         uint256 /*requestId*/,
         address /*controller*/
     ) internal view virtual returns (uint256) {
         revert NotImplemented();
     }
+
     function _claimableRedeemRequest(
         uint256 /*requestId*/,
         address /*controller*/
     ) internal view virtual returns (uint256) {
         revert NotImplemented();
     }
+
     function _asyncMaxDeposit(address /*owner*/) internal view virtual returns (uint256) {
         revert NotImplemented();
     }
+
     function _asyncMaxMint(address /*owner*/) internal view virtual returns (uint256) {
         revert NotImplemented();
     }
+
     function _asyncMaxWithdraw(address /*owner*/) internal view virtual returns (uint256) {
         revert NotImplemented();
     }
+
     function _asyncMaxRedeem(address /*owner*/) internal view virtual returns (uint256) {
         revert NotImplemented();
     }
