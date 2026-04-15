@@ -27,10 +27,11 @@ abstract contract ERC7540AdminFulfillDeposit is ERC7540 {
     function _requestDeposit(
         uint256 assets,
         address controller,
-        address owner
+        address owner,
+        uint256 requestId
     ) internal virtual override returns (uint256) {
         _deposits[controller].pendingAssets += assets;
-        return super._requestDeposit(assets, controller, owner);
+        return super._requestDeposit(assets, controller, owner, requestId);
     }
 
     function _fulfillDeposit(uint256 assets, uint256 shares, address controller) internal virtual {

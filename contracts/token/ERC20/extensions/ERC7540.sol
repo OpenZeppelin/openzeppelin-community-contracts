@@ -246,17 +246,7 @@ abstract contract ERC7540 is ERC165, ERC20, IERC4626, IERC7540 {
         address controller,
         address owner
     ) public virtual onlyOperatorOrController(_isDepositAsync(), owner, _msgSender()) returns (uint256) {
-        require(_isDepositAsync(), ERC7540DepositIsSync());
-
-        _totalPendingDepositAssets += assets;
-
-        uint256 requestId = _requestDeposit(assets, controller, owner);
-
-        // Must revert with ERC20InsufficientBalance or equivalent error if there's not enough balance.
-        _transferIn(owner, assets);
-
-        emit DepositRequest(controller, owner, requestId, _msgSender(), assets);
-        return requestId;
+        return _requestDeposit(assets, controller, owner, 0); // 0 is the default requestId
     }
 
     /// @inheritdoc IERC4626
@@ -312,23 +302,7 @@ abstract contract ERC7540 is ERC165, ERC20, IERC4626, IERC7540 {
     }
 
     function requestRedeem(uint256 shares, address controller, address owner) public virtual returns (uint256) {
-        require(_isRedeemAsync(), ERC7540RedeemIsSync());
-
-        address sender = _msgSender();
-        if (owner != sender && !isOperator(owner, sender)) {
-            _spendAllowance(owner, sender, shares);
-        }
-        if (_redeemRedeemShareDestination() == address(0)) {
-            _totalPendingRedeemShares += shares;
-            _burn(owner, shares);
-        } else {
-            _transfer(owner, _redeemRedeemShareDestination(), shares);
-        }
-
-        uint256 requestId = _requestRedeem(shares, controller, owner);
-
-        emit RedeemRequest(controller, owner, requestId, _msgSender(), shares);
-        return requestId;
+        return _requestRedeem(shares, controller, owner, 0); // 0 is default requestId
     }
 
     /// @inheritdoc IERC4626
@@ -386,11 +360,20 @@ abstract contract ERC7540 is ERC165, ERC20, IERC4626, IERC7540 {
     }
 
     function _requestDeposit(
-        uint256 /*assets*/,
-        address /*controller*/,
-        address /*owner*/
+        uint256 assets,
+        address controller,
+        address owner,
+        uint256 requestId
     ) internal virtual returns (uint256) {
-        return 0;
+        require(_isDepositAsync(), ERC7540DepositIsSync());
+
+        _totalPendingDepositAssets += assets;
+
+        // Must revert with ERC20InsufficientBalance or equivalent error if there's not enough balance.
+        _transferIn(owner, assets);
+
+        emit DepositRequest(controller, owner, requestId, _msgSender(), assets);
+        return requestId;
     }
 
     function _mintSharesOnDepositFulfill(uint256 assets, uint256 shares) internal virtual {
@@ -424,11 +407,26 @@ abstract contract ERC7540 is ERC165, ERC20, IERC4626, IERC7540 {
     }
 
     function _requestRedeem(
-        uint256 /*shares*/,
-        address /*controller*/,
-        address /*owner*/
+        uint256 shares,
+        address controller,
+        address owner,
+        uint256 requestId
     ) internal virtual returns (uint256) {
-        return 0;
+        require(_isRedeemAsync(), ERC7540RedeemIsSync());
+
+        address sender = _msgSender();
+        if (owner != sender && !isOperator(owner, sender)) {
+            _spendAllowance(owner, sender, shares);
+        }
+        if (_redeemRedeemShareDestination() == address(0)) {
+            _totalPendingRedeemShares += shares;
+            _burn(owner, shares);
+        } else {
+            _transfer(owner, _redeemRedeemShareDestination(), shares);
+        }
+
+        emit RedeemRequest(controller, owner, requestId, _msgSender(), shares);
+        return requestId;
     }
 
     function _burnSharesOnRedeemFulfill(uint256 /*assets*/, uint256 shares) internal virtual {

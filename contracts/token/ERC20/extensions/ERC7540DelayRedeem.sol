@@ -29,16 +29,14 @@ abstract contract ERC7540DelayRedeem is ERC7540 {
     function _requestRedeem(
         uint256 shares,
         address controller,
-        address owner
+        address owner,
+        uint256 /* requestId */ // discarded and replaced by timepoint based ids
     ) internal virtual override returns (uint256) {
-        // perform super call and ignore requestId
-        super._requestRedeem(shares, controller, owner);
-
         uint48 timepoint = clock() + delay(controller);
         uint256 latest = _redeems[controller].latest();
         _redeems[controller].push(timepoint, (shares + latest).toUint208());
 
-        return timepoint;
+        return super._requestRedeem(shares, controller, owner, timepoint);
     }
 
     function _withdraw(

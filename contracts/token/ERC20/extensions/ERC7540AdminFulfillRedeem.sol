@@ -26,10 +26,11 @@ abstract contract ERC7540AdminFulfillRedeem is ERC7540 {
     function _requestRedeem(
         uint256 shares,
         address controller,
-        address owner
+        address owner,
+        uint256 requestId
     ) internal virtual override returns (uint256) {
         _redeems[controller].pendingShares += shares;
-        return super._requestRedeem(shares, controller, owner);
+        return super._requestRedeem(shares, controller, owner, requestId);
     }
 
     function _fulfillRedeem(uint256 shares, uint256 assets, address controller) internal virtual {

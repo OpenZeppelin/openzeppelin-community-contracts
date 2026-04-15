@@ -73,11 +73,9 @@ abstract contract ERC7540EpocRedeem is ERC7540 {
     function _requestRedeem(
         uint256 shares,
         address controller,
-        address owner
+        address owner,
+        uint256 /* requestId */ // discarded and replaced by timepoint based ids
     ) internal virtual override returns (uint256) {
-        // perform super call and ignore requestId
-        super._requestRedeem(shares, controller, owner);
-
         uint256 epochId = currentEpoch();
         _epochs[epochId].totalShares += shares;
         _epochs[epochId].requests[controller] += shares;
@@ -91,7 +89,7 @@ abstract contract ERC7540EpocRedeem is ERC7540 {
             require(_memberOf[controller].length() < _requestQueueLimit());
         }
 
-        return epochId;
+        return super._requestRedeem(shares, controller, owner, epochId);
     }
 
     function _sharesToFullfill(uint256 epochId) internal view virtual returns (uint256) {

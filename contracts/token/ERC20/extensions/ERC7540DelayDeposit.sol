@@ -29,17 +29,15 @@ abstract contract ERC7540DelayDeposit is ERC7540 {
     function _requestDeposit(
         uint256 assets,
         address controller,
-        address owner
+        address owner,
+        uint256 /* requestId */ // discarded and replaced by timepoint based ids
     ) internal virtual override returns (uint256) {
-        // perform super call and ignore requestId
-        super._requestDeposit(assets, controller, owner);
-
         uint48 timepoint = clock() + delay(controller);
         uint256 latest = _deposits[controller].latest();
 
         _deposits[controller].push(timepoint, (assets + latest).toUint208());
 
-        return timepoint;
+        return super._requestDeposit(assets, controller, owner, timepoint);
     }
 
     function _deposit(address caller, address receiver, uint256 assets, uint256 shares) internal virtual override {
