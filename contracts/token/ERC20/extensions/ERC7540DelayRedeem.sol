@@ -14,15 +14,15 @@ abstract contract ERC7540DelayRedeem is ERC7540 {
     mapping(address controller => Checkpoints.Trace208) private _redeems;
     mapping(address controller => uint256) private _claimedRedeems;
 
-    function clock() internal view virtual returns (uint48) {
+    function clock() public view virtual returns (uint48) {
         return uint48(block.timestamp);
     }
 
-    function delay(address /*controller*/) internal view virtual returns (uint48) {
+    function redeemDelay(address /*controller*/) public view virtual returns (uint48) {
         return 1 hours;
     }
 
-    function _isDepositAsync() internal pure virtual override returns (bool) {
+    function _isRedeemAsync() internal pure virtual override returns (bool) {
         return true;
     }
 
@@ -32,7 +32,7 @@ abstract contract ERC7540DelayRedeem is ERC7540 {
         address owner,
         uint256 /* requestId */ // discarded and replaced by timepoint based ids
     ) internal virtual override returns (uint256) {
-        uint48 timepoint = clock() + delay(controller);
+        uint48 timepoint = clock() + redeemDelay(controller);
         uint256 latest = _redeems[controller].latest();
         _redeems[controller].push(timepoint, (shares + latest).toUint208());
 

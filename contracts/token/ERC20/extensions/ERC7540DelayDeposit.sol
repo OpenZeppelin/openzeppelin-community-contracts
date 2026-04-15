@@ -14,11 +14,11 @@ abstract contract ERC7540DelayDeposit is ERC7540 {
     mapping(address controller => Checkpoints.Trace208 trace) private _deposits;
     mapping(address controller => uint256) private _claimedDeposits;
 
-    function clock() internal view virtual returns (uint48) {
+    function clock() public view virtual returns (uint48) {
         return uint48(block.timestamp);
     }
 
-    function delay(address /*controller*/) internal view virtual returns (uint48) {
+    function depositDelay(address /*controller*/) public view virtual returns (uint48) {
         return 1 hours;
     }
 
@@ -32,7 +32,7 @@ abstract contract ERC7540DelayDeposit is ERC7540 {
         address owner,
         uint256 /* requestId */ // discarded and replaced by timepoint based ids
     ) internal virtual override returns (uint256) {
-        uint48 timepoint = clock() + delay(controller);
+        uint48 timepoint = clock() + depositDelay(controller);
         uint256 latest = _deposits[controller].latest();
 
         _deposits[controller].push(timepoint, (assets + latest).toUint208());

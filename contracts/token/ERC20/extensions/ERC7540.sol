@@ -64,6 +64,7 @@ abstract contract ERC7540 is ERC165, ERC20, IERC4626, IERC7540 {
     function _isDepositAsync() internal pure virtual returns (bool) {
         return false;
     }
+
     function _isRedeemAsync() internal pure virtual returns (bool) {
         return false;
     }

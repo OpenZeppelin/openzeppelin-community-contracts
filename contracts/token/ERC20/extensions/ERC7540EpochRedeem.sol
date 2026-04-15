@@ -12,13 +12,13 @@ abstract contract ERC7540EpochRedeem is ERC7540 {
     using SafeCast for uint256;
     using DoubleEndedQueue for DoubleEndedQueue.Bytes32Deque;
 
-    struct EpochMetadata {
+    struct EpochRedeemMetadata {
         uint256 totalShares;
         uint256 totalAssets;
         mapping(address account => uint256) requests;
     }
 
-    mapping(uint256 epochId => EpochMetadata) private _epochs;
+    mapping(uint256 epochId => EpochRedeemMetadata) private _epochs;
     mapping(address account => DoubleEndedQueue.Bytes32Deque) private _memberOf;
 
     function _isRedeemAsync() internal pure virtual override returns (bool) {
@@ -34,7 +34,7 @@ abstract contract ERC7540EpochRedeem is ERC7540 {
         uint256 requestId,
         address controller
     ) internal view virtual override returns (uint256) {
-        EpochMetadata storage details = _epochs[requestId];
+        EpochRedeemMetadata storage details = _epochs[requestId];
         return details.totalAssets == 0 ? details.requests[controller] : 0;
     }
 
@@ -42,7 +42,7 @@ abstract contract ERC7540EpochRedeem is ERC7540 {
         uint256 requestId,
         address controller
     ) internal view virtual override returns (uint256) {
-        EpochMetadata storage details = _epochs[requestId];
+        EpochRedeemMetadata storage details = _epochs[requestId];
         return details.totalAssets == 0 ? 0 : details.requests[controller];
     }
 
@@ -99,7 +99,7 @@ abstract contract ERC7540EpochRedeem is ERC7540 {
     function _fulfillRedeem(uint256 epochId, uint256 totalAssets) internal virtual {
         require(epochId < currentRedeemEpoch()); // TODO: too early
 
-        EpochMetadata storage details = _epochs[epochId];
+        EpochRedeemMetadata storage details = _epochs[epochId];
         require(details.totalShares > 0 && details.totalAssets == 0); // TODO: invalid resolve
 
         details.totalAssets = totalAssets;
@@ -112,7 +112,7 @@ abstract contract ERC7540EpochRedeem is ERC7540 {
         while (assets > 0) {
             uint256 epochId = uint256(_memberOf[controller].front());
 
-            EpochMetadata storage details = _epochs[epochId];
+            EpochRedeemMetadata storage details = _epochs[epochId];
 
             uint256 requested = details.requests[controller].mulDiv(
                 details.totalAssets,
@@ -138,7 +138,7 @@ abstract contract ERC7540EpochRedeem is ERC7540 {
         while (shares > 0) {
             uint256 epochId = uint256(_memberOf[controller].front());
 
-            EpochMetadata storage details = _epochs[epochId];
+            EpochRedeemMetadata storage details = _epochs[epochId];
 
             uint256 requested = details.requests[controller];
             if (requested >= shares) _memberOf[controller].popFront();

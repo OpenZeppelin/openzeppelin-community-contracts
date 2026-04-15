@@ -12,13 +12,13 @@ abstract contract ERC7540EpochDeposit is ERC7540 {
     using SafeCast for uint256;
     using DoubleEndedQueue for DoubleEndedQueue.Bytes32Deque;
 
-    struct EpochMetadata {
+    struct EpochDepositMetadata {
         uint256 totalAssets;
         uint256 totalShares;
         mapping(address account => uint256) requests;
     }
 
-    mapping(uint256 epochId => EpochMetadata) private _epochs;
+    mapping(uint256 epochId => EpochDepositMetadata) private _epochs;
     mapping(address account => DoubleEndedQueue.Bytes32Deque) private _memberOf;
 
     function _isDepositAsync() internal pure virtual override returns (bool) {
@@ -34,7 +34,7 @@ abstract contract ERC7540EpochDeposit is ERC7540 {
         uint256 requestId,
         address controller
     ) internal view virtual override returns (uint256) {
-        EpochMetadata storage details = _epochs[requestId];
+        EpochDepositMetadata storage details = _epochs[requestId];
         return details.totalShares == 0 ? details.requests[controller] : 0;
     }
 
@@ -42,7 +42,7 @@ abstract contract ERC7540EpochDeposit is ERC7540 {
         uint256 requestId,
         address controller
     ) internal view virtual override returns (uint256) {
-        EpochMetadata storage details = _epochs[requestId];
+        EpochDepositMetadata storage details = _epochs[requestId];
         return details.totalShares == 0 ? 0 : details.requests[controller];
     }
 
@@ -99,26 +99,22 @@ abstract contract ERC7540EpochDeposit is ERC7540 {
     function _fulfillDeposit(uint256 epochId, uint256 totalShares) internal virtual {
         require(epochId < currentDepositEpoch()); // TODO: too early
 
-        EpochMetadata storage details = _epochs[epochId];
+        EpochDepositMetadata storage details = _epochs[epochId];
         require(details.totalAssets > 0 && details.totalShares == 0); // TODO: invalid resolve
 
         details.totalShares = totalShares;
         // TODO: emit event
     }
 
-    function _computeAsyncWithdraw(uint256 assets, address controller) internal virtual override returns (uint256) {
+    function _computeAsyncDeposit(uint256 assets, address controller) internal virtual override returns (uint256) {
         uint256 shares = 0;
 
         while (assets > 0) {
             uint256 epochId = uint256(_memberOf[controller].front());
 
-            EpochMetadata storage details = _epochs[epochId];
+            EpochDepositMetadata storage details = _epochs[epochId];
 
-            uint256 requested = details.requests[controller].mulDiv(
-                details.totalAssets,
-                details.totalShares,
-                Math.Rounding.Ceil
-            );
+            uint256 requested = details.requests[controller];
             if (requested >= assets) _memberOf[controller].popFront();
 
             uint256 batchAssets = requested.min(assets);
@@ -132,15 +128,19 @@ abstract contract ERC7540EpochDeposit is ERC7540 {
         return assets;
     }
 
-    function _computeAsyncRedeem(uint256 shares, address controller) internal virtual override returns (uint256) {
+    function _computeAsyncMint(uint256 shares, address controller) internal virtual override returns (uint256) {
         uint256 assets = 0;
 
         while (shares > 0) {
             uint256 epochId = uint256(_memberOf[controller].front());
 
-            EpochMetadata storage details = _epochs[epochId];
+            EpochDepositMetadata storage details = _epochs[epochId];
 
-            uint256 requested = details.requests[controller];
+            uint256 requested = details.requests[controller].mulDiv(
+                details.totalShares,
+                details.totalAssets,
+                Math.Rounding.Ceil
+            );
             if (requested >= shares) _memberOf[controller].popFront();
 
             uint256 batchShares = requested.min(shares);
