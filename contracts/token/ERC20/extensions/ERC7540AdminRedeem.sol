@@ -44,16 +44,18 @@ abstract contract ERC7540AdminRedeem is ERC7540 {
         emit RedeemClaimable(controller, 0, assets, shares);
     }
 
-    function _withdraw(
-        address caller,
-        address receiver,
-        address owner,
-        uint256 assets,
-        uint256 shares
-    ) internal virtual override {
-        _redeems[receiver].claimableAssets = Math.saturatingSub(_redeems[receiver].claimableAssets, assets);
-        _redeems[receiver].claimableShares = Math.saturatingSub(_redeems[receiver].claimableShares, shares);
-        super._withdraw(caller, receiver, owner, assets, shares);
+    function _consumeClaimableWithdraw(uint256 assets, address controller) internal virtual override returns (uint256) {
+        uint256 shares = Math.mulDiv(assets, maxRedeem(controller), maxWithdraw(controller), Math.Rounding.Ceil);
+        _redeems[controller].claimableAssets = Math.saturatingSub(_redeems[controller].claimableAssets, assets);
+        _redeems[controller].claimableShares = Math.saturatingSub(_redeems[controller].claimableShares, shares);
+        return shares;
+    }
+
+    function _consumeClaimableRedeem(uint256 shares, address controller) internal virtual override returns (uint256) {
+        uint256 assets = Math.mulDiv(shares, maxWithdraw(controller), maxRedeem(controller), Math.Rounding.Floor);
+        _redeems[controller].claimableAssets = Math.saturatingSub(_redeems[controller].claimableAssets, assets);
+        _redeems[controller].claimableShares = Math.saturatingSub(_redeems[controller].claimableShares, shares);
+        return assets;
     }
 
     function _pendingRedeemRequest(

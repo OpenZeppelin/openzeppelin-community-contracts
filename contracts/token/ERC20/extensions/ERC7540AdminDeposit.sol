@@ -45,10 +45,18 @@ abstract contract ERC7540AdminDeposit is ERC7540 {
         emit DepositClaimable(controller, 0, assets, shares);
     }
 
-    function _deposit(address caller, address receiver, uint256 assets, uint256 shares) internal virtual override {
-        _deposits[receiver].claimableAssets = Math.saturatingSub(_deposits[receiver].claimableAssets, assets);
-        _deposits[receiver].claimableShares = Math.saturatingSub(_deposits[receiver].claimableShares, shares);
-        super._deposit(caller, receiver, assets, shares);
+    function _consumeClaimableDeposit(uint256 assets, address controller) internal virtual override returns (uint256) {
+        uint256 shares = Math.mulDiv(assets, maxMint(controller), maxDeposit(controller), Math.Rounding.Floor);
+        _deposits[controller].claimableAssets = Math.saturatingSub(_deposits[controller].claimableAssets, assets);
+        _deposits[controller].claimableShares = Math.saturatingSub(_deposits[controller].claimableShares, shares);
+        return shares;
+    }
+
+    function _consumeClaimableMint(uint256 shares, address controller) internal virtual override returns (uint256) {
+        uint256 assets = Math.mulDiv(shares, maxDeposit(controller), maxMint(controller), Math.Rounding.Ceil);
+        _deposits[controller].claimableAssets = Math.saturatingSub(_deposits[controller].claimableAssets, assets);
+        _deposits[controller].claimableShares = Math.saturatingSub(_deposits[controller].claimableShares, shares);
+        return assets;
     }
 
     function _pendingDepositRequest(

@@ -272,10 +272,6 @@ abstract contract ERC7540 is ERC165, ERC20, IERC4626, IERC7540 {
         return shares;
     }
 
-    function _consumeClaimableDeposit(uint256 assets, address controller) internal virtual returns (uint256) {
-        return Math.mulDiv(assets, maxMint(controller), maxDeposit(controller), Math.Rounding.Floor);
-    }
-
     /// @inheritdoc IERC4626
     function mint(uint256 shares, address receiver) public virtual override returns (uint256 assets) {
         return mint(shares, receiver, _msgSender());
@@ -296,10 +292,6 @@ abstract contract ERC7540 is ERC165, ERC20, IERC4626, IERC7540 {
         uint256 assets = _isDepositAsync() ? _consumeClaimableMint(shares, controller) : previewMint(shares);
         _deposit(_msgSender(), receiver, assets, shares);
         return assets;
-    }
-
-    function _consumeClaimableMint(uint256 shares, address controller) internal virtual returns (uint256) {
-        return Math.mulDiv(shares, maxDeposit(controller), maxMint(controller), Math.Rounding.Ceil);
     }
 
     function requestRedeem(uint256 shares, address controller, address owner) public virtual returns (uint256) {
@@ -324,10 +316,6 @@ abstract contract ERC7540 is ERC165, ERC20, IERC4626, IERC7540 {
         return shares;
     }
 
-    function _consumeClaimableWithdraw(uint256 assets, address controller) internal virtual returns (uint256) {
-        return Math.mulDiv(assets, maxRedeem(controller), maxWithdraw(controller), Math.Rounding.Ceil);
-    }
-
     /// @inheritdoc IERC4626
     function redeem(
         uint256 shares,
@@ -342,10 +330,6 @@ abstract contract ERC7540 is ERC165, ERC20, IERC4626, IERC7540 {
         uint256 assets = _isRedeemAsync() ? _consumeClaimableRedeem(shares, ownerOrController) : previewRedeem(shares);
         _withdraw(_msgSender(), receiver, ownerOrController, assets, shares);
         return assets;
-    }
-
-    function _consumeClaimableRedeem(uint256 shares, address controller) internal virtual returns (uint256) {
-        return Math.mulDiv(shares, maxWithdraw(controller), maxRedeem(controller), Math.Rounding.Floor);
     }
 
     /**
@@ -515,6 +499,22 @@ abstract contract ERC7540 is ERC165, ERC20, IERC4626, IERC7540 {
         uint256 /*requestId*/,
         address /*controller*/
     ) internal view virtual returns (uint256) {
+        revert NotImplemented();
+    }
+
+    function _consumeClaimableDeposit(uint256 /*assets*/, address /*controller*/) internal virtual returns (uint256) {
+        revert NotImplemented();
+    }
+
+    function _consumeClaimableMint(uint256 /*shares*/, address /*controller*/) internal virtual returns (uint256) {
+        revert NotImplemented();
+    }
+
+    function _consumeClaimableWithdraw(uint256 /*assets*/, address /*controller*/) internal virtual returns (uint256) {
+        revert NotImplemented();
+    }
+
+    function _consumeClaimableRedeem(uint256 /*shares*/, address /*controller*/) internal virtual returns (uint256) {
         revert NotImplemented();
     }
 

@@ -15,6 +15,52 @@ abstract contract ERC7540EpochMock is ERC7540EpochDeposit, ERC7540EpochRedeem {
         return super._isRedeemAsync();
     }
 
+    function _requestDeposit(
+        uint256 assets,
+        address controller,
+        address owner,
+        uint256 requestId
+    ) internal virtual override(ERC7540, ERC7540EpochDeposit) returns (uint256) {
+        return super._requestDeposit(assets, controller, owner, requestId);
+    }
+
+    function _requestRedeem(
+        uint256 shares,
+        address controller,
+        address owner,
+        uint256 requestId
+    ) internal virtual override(ERC7540, ERC7540EpochRedeem) returns (uint256) {
+        return super._requestRedeem(shares, controller, owner, requestId);
+    }
+
+    function _pendingDepositRequest(
+        uint256 requestId,
+        address controller
+    ) internal view virtual override(ERC7540, ERC7540EpochDeposit) returns (uint256) {
+        return super._pendingDepositRequest(requestId, controller);
+    }
+
+    function _pendingRedeemRequest(
+        uint256 requestId,
+        address controller
+    ) internal view virtual override(ERC7540, ERC7540EpochRedeem) returns (uint256) {
+        return super._pendingRedeemRequest(requestId, controller);
+    }
+
+    function _claimableDepositRequest(
+        uint256 requestId,
+        address controller
+    ) internal view virtual override(ERC7540, ERC7540EpochDeposit) returns (uint256) {
+        return super._claimableDepositRequest(requestId, controller);
+    }
+
+    function _claimableRedeemRequest(
+        uint256 requestId,
+        address controller
+    ) internal view virtual override(ERC7540, ERC7540EpochRedeem) returns (uint256) {
+        return super._claimableRedeemRequest(requestId, controller);
+    }
+
     function _consumeClaimableDeposit(
         uint256 assets,
         address controller
@@ -41,52 +87,6 @@ abstract contract ERC7540EpochMock is ERC7540EpochDeposit, ERC7540EpochRedeem {
         address controller
     ) internal virtual override(ERC7540, ERC7540EpochRedeem) returns (uint256) {
         return super._consumeClaimableWithdraw(assets, controller);
-    }
-
-    function _requestDeposit(
-        uint256 assets,
-        address controller,
-        address owner,
-        uint256 requestId
-    ) internal virtual override(ERC7540, ERC7540EpochDeposit) returns (uint256) {
-        return super._requestDeposit(assets, controller, owner, requestId);
-    }
-
-    function _requestRedeem(
-        uint256 shares,
-        address controller,
-        address owner,
-        uint256 requestId
-    ) internal virtual override(ERC7540, ERC7540EpochRedeem) returns (uint256) {
-        return super._requestRedeem(shares, controller, owner, requestId);
-    }
-
-    function _pendingDepositRequest(
-        uint256 requestId,
-        address controller
-    ) internal view virtual override(ERC7540, ERC7540EpochDeposit) returns (uint256) {
-        return super._pendingDepositRequest(requestId, controller);
-    }
-
-    function _claimableDepositRequest(
-        uint256 requestId,
-        address controller
-    ) internal view virtual override(ERC7540, ERC7540EpochDeposit) returns (uint256) {
-        return super._claimableDepositRequest(requestId, controller);
-    }
-
-    function _pendingRedeemRequest(
-        uint256 requestId,
-        address controller
-    ) internal view virtual override(ERC7540, ERC7540EpochRedeem) returns (uint256) {
-        return super._pendingRedeemRequest(requestId, controller);
-    }
-
-    function _claimableRedeemRequest(
-        uint256 requestId,
-        address controller
-    ) internal view virtual override(ERC7540, ERC7540EpochRedeem) returns (uint256) {
-        return super._claimableRedeemRequest(requestId, controller);
     }
 
     function _asyncMaxDeposit(

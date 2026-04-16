@@ -39,15 +39,16 @@ abstract contract ERC7540DelayRedeem is ERC7540 {
         return super._requestRedeem(shares, controller, owner, timepoint);
     }
 
-    function _withdraw(
-        address caller,
-        address receiver,
-        address owner,
-        uint256 assets,
-        uint256 shares
-    ) internal virtual override {
-        _claimedRedeems[owner] += shares;
-        super._withdraw(caller, receiver, owner, assets, shares);
+    function _consumeClaimableWithdraw(uint256 assets, address controller) internal virtual override returns (uint256) {
+        uint256 shares = Math.mulDiv(assets, maxRedeem(controller), maxWithdraw(controller), Math.Rounding.Ceil);
+        _claimedRedeems[controller] += shares;
+        return shares;
+    }
+
+    function _consumeClaimableRedeem(uint256 shares, address controller) internal virtual override returns (uint256) {
+        uint256 assets = Math.mulDiv(shares, maxWithdraw(controller), maxRedeem(controller), Math.Rounding.Floor);
+        _claimedRedeems[controller] += shares;
+        return assets;
     }
 
     function _pendingRedeemRequest(

@@ -40,9 +40,16 @@ abstract contract ERC7540DelayDeposit is ERC7540 {
         return super._requestDeposit(assets, controller, owner, timepoint);
     }
 
-    function _deposit(address caller, address receiver, uint256 assets, uint256 shares) internal virtual override {
-        _claimedDeposits[receiver] += assets;
-        super._deposit(caller, receiver, assets, shares);
+    function _consumeClaimableDeposit(uint256 assets, address controller) internal virtual override returns (uint256) {
+        uint256 shares = Math.mulDiv(assets, maxMint(controller), maxDeposit(controller), Math.Rounding.Floor);
+        _claimedDeposits[controller] += assets;
+        return shares;
+    }
+
+    function _consumeClaimableMint(uint256 shares, address controller) internal virtual override returns (uint256) {
+        uint256 assets = Math.mulDiv(shares, maxDeposit(controller), maxMint(controller), Math.Rounding.Ceil);
+        _claimedDeposits[controller] += assets;
+        return assets;
     }
 
     function _pendingDepositRequest(
