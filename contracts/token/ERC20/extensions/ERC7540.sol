@@ -267,12 +267,12 @@ abstract contract ERC7540 is ERC165, ERC20, IERC4626, IERC7540 {
             revert ERC4626ExceededMaxDeposit(_isDepositAsync() ? controller : receiver, assets, maxAssets);
         }
 
-        uint256 shares = _isDepositAsync() ? _computeAsyncDeposit(assets, controller) : previewDeposit(assets);
+        uint256 shares = _isDepositAsync() ? _consumeAsyncDeposit(assets, controller) : previewDeposit(assets);
         _deposit(_msgSender(), receiver, assets, shares);
         return shares;
     }
 
-    function _computeAsyncDeposit(uint256 assets, address controller) internal virtual returns (uint256) {
+    function _consumeAsyncDeposit(uint256 assets, address controller) internal virtual returns (uint256) {
         return Math.mulDiv(assets, maxMint(controller), maxDeposit(controller), Math.Rounding.Floor);
     }
 
@@ -293,12 +293,12 @@ abstract contract ERC7540 is ERC165, ERC20, IERC4626, IERC7540 {
             revert ERC4626ExceededMaxMint(_isDepositAsync() ? controller : receiver, shares, maxShares);
         }
 
-        uint256 assets = _isDepositAsync() ? _computeAsyncMint(shares, controller) : previewMint(shares);
+        uint256 assets = _isDepositAsync() ? _consumeAsyncMint(shares, controller) : previewMint(shares);
         _deposit(_msgSender(), receiver, assets, shares);
         return assets;
     }
 
-    function _computeAsyncMint(uint256 shares, address controller) internal virtual returns (uint256) {
+    function _consumeAsyncMint(uint256 shares, address controller) internal virtual returns (uint256) {
         return Math.mulDiv(shares, maxDeposit(controller), maxMint(controller), Math.Rounding.Ceil);
     }
 
@@ -317,12 +317,12 @@ abstract contract ERC7540 is ERC165, ERC20, IERC4626, IERC7540 {
             revert ERC4626ExceededMaxWithdraw(ownerOrController, assets, maxAssets);
         }
 
-        uint256 shares = _isRedeemAsync() ? _computeAsyncWithdraw(assets, ownerOrController) : previewWithdraw(assets);
+        uint256 shares = _isRedeemAsync() ? _consumeAsyncWithdraw(assets, ownerOrController) : previewWithdraw(assets);
         _withdraw(_msgSender(), receiver, ownerOrController, assets, shares);
         return shares;
     }
 
-    function _computeAsyncWithdraw(uint256 assets, address controller) internal virtual returns (uint256) {
+    function _consumeAsyncWithdraw(uint256 assets, address controller) internal virtual returns (uint256) {
         return Math.mulDiv(assets, maxRedeem(controller), maxWithdraw(controller), Math.Rounding.Ceil);
     }
 
@@ -337,12 +337,12 @@ abstract contract ERC7540 is ERC165, ERC20, IERC4626, IERC7540 {
             revert ERC4626ExceededMaxRedeem(ownerOrController, shares, maxShares);
         }
 
-        uint256 assets = _isRedeemAsync() ? _computeAsyncRedeem(shares, ownerOrController) : previewRedeem(shares);
+        uint256 assets = _isRedeemAsync() ? _consumeAsyncRedeem(shares, ownerOrController) : previewRedeem(shares);
         _withdraw(_msgSender(), receiver, ownerOrController, assets, shares);
         return assets;
     }
 
-    function _computeAsyncRedeem(uint256 shares, address controller) internal virtual returns (uint256) {
+    function _consumeAsyncRedeem(uint256 shares, address controller) internal virtual returns (uint256) {
         return Math.mulDiv(shares, maxWithdraw(controller), maxRedeem(controller), Math.Rounding.Floor);
     }
 
