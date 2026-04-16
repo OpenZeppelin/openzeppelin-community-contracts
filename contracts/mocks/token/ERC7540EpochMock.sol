@@ -15,32 +15,32 @@ abstract contract ERC7540EpochMock is ERC7540EpochDeposit, ERC7540EpochRedeem {
         return super._isRedeemAsync();
     }
 
-    function _consumeAsyncDeposit(
+    function _consumeClaimableDeposit(
         uint256 assets,
         address controller
     ) internal virtual override(ERC7540, ERC7540EpochDeposit) returns (uint256) {
-        return super._consumeAsyncDeposit(assets, controller);
+        return super._consumeClaimableDeposit(assets, controller);
     }
 
-    function _consumeAsyncMint(
+    function _consumeClaimableMint(
         uint256 shares,
         address controller
     ) internal virtual override(ERC7540, ERC7540EpochDeposit) returns (uint256) {
-        return super._consumeAsyncMint(shares, controller);
+        return super._consumeClaimableMint(shares, controller);
     }
 
-    function _consumeAsyncRedeem(
+    function _consumeClaimableRedeem(
         uint256 shares,
         address controller
     ) internal virtual override(ERC7540, ERC7540EpochRedeem) returns (uint256) {
-        return super._consumeAsyncRedeem(shares, controller);
+        return super._consumeClaimableRedeem(shares, controller);
     }
 
-    function _consumeAsyncWithdraw(
+    function _consumeClaimableWithdraw(
         uint256 assets,
         address controller
     ) internal virtual override(ERC7540, ERC7540EpochRedeem) returns (uint256) {
-        return super._consumeAsyncWithdraw(assets, controller);
+        return super._consumeClaimableWithdraw(assets, controller);
     }
 
     function _requestDeposit(

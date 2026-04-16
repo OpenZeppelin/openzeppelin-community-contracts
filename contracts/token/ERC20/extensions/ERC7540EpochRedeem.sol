@@ -106,7 +106,7 @@ abstract contract ERC7540EpochRedeem is ERC7540 {
         // TODO: emit event
     }
 
-    function _consumeAsyncWithdraw(uint256 assets, address controller) internal virtual override returns (uint256) {
+    function _consumeClaimableWithdraw(uint256 assets, address controller) internal virtual override returns (uint256) {
         uint256 shares = 0;
 
         while (assets > 0) {
@@ -134,7 +134,7 @@ abstract contract ERC7540EpochRedeem is ERC7540 {
         return shares;
     }
 
-    function _consumeAsyncRedeem(uint256 shares, address controller) internal virtual override returns (uint256) {
+    function _consumeClaimableRedeem(uint256 shares, address controller) internal virtual override returns (uint256) {
         uint256 assets = 0;
 
         while (shares > 0) {
