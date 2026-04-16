@@ -91,7 +91,7 @@ abstract contract ERC7540EpochDeposit is ERC7540 {
         return super._requestDeposit(assets, controller, owner, epochId);
     }
 
-    function _assetsToFullfillDeposit(uint256 epochId) internal view virtual returns (uint256) {
+    function _assetsToFulfillDeposit(uint256 epochId) internal view virtual returns (uint256) {
         return epochId < currentDepositEpoch() && _epochs[epochId].totalShares == 0 ? _epochs[epochId].totalAssets : 0;
     }
 

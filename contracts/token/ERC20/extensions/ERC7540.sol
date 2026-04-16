@@ -419,11 +419,11 @@ abstract contract ERC7540 is ERC165, ERC20, IERC4626, IERC7540 {
         if (owner != sender && !isOperator(owner, sender)) {
             _spendAllowance(owner, sender, shares);
         }
-        if (_redeemRedeemShareDestination() == address(0)) {
+        if (_redeemShareDestination() == address(0)) {
             _totalPendingRedeemShares += shares;
             _burn(owner, shares);
         } else {
-            _transfer(owner, _redeemRedeemShareDestination(), shares);
+            _transfer(owner, _redeemShareDestination(), shares);
         }
 
         emit RedeemRequest(controller, owner, requestId, _msgSender(), shares);
@@ -431,9 +431,9 @@ abstract contract ERC7540 is ERC165, ERC20, IERC4626, IERC7540 {
     }
 
     function _burnSharesOnRedeemFulfill(uint256 /*assets*/, uint256 shares) internal virtual {
-        require(_redeemRedeemShareDestination() != address(0), "TODO: shares minted on claim");
+        require(_redeemShareDestination() != address(0), "TODO: shares minted on claim");
         _totalPendingRedeemShares += shares;
-        _burn(_redeemRedeemShareDestination(), shares);
+        _burn(_redeemShareDestination(), shares);
     }
 
     /**
@@ -484,7 +484,7 @@ abstract contract ERC7540 is ERC165, ERC20, IERC4626, IERC7540 {
         return address(0);
     }
 
-    function _redeemRedeemShareDestination() internal view virtual returns (address) {
+    function _redeemShareDestination() internal view virtual returns (address) {
         return address(0);
     }
 

@@ -91,7 +91,7 @@ abstract contract ERC7540EpochRedeem is ERC7540 {
         return super._requestRedeem(shares, controller, owner, epochId);
     }
 
-    function _sharesToFullfillReedem(uint256 epochId) internal view virtual returns (uint256) {
+    function _sharesToFulfillRedeem(uint256 epochId) internal view virtual returns (uint256) {
         return epochId < currentRedeemEpoch() && _epochs[epochId].totalAssets == 0 ? _epochs[epochId].totalShares : 0;
     }
 
