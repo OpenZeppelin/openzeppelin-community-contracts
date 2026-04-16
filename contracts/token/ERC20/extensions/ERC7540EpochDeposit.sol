@@ -146,11 +146,11 @@ abstract contract ERC7540EpochDeposit is ERC7540 {
             if (requested <= shares) _memberOf[controller].popFront();
 
             uint256 batchShares = requested.min(shares);
-            details.requests[controller] -= batchShares; // May need saturatingSub for rounding handling
             details.totalShares -= batchShares; // May need saturatingSub for rounding handling
             shares -= batchShares; // May need saturatingSub for rounding handling
 
             uint256 batchAssets = batchShares.mulDiv(details.totalAssets, details.totalShares, Math.Rounding.Floor);
+            details.requests[controller] -= batchAssets; // May need saturatingSub for rounding handling
             details.totalAssets -= batchAssets; // May need saturatingSub for rounding handling
             assets += batchAssets;
         }

@@ -122,11 +122,11 @@ abstract contract ERC7540EpochRedeem is ERC7540 {
             if (requested <= assets) _memberOf[controller].popFront();
 
             uint256 batchAssets = requested.min(assets);
-            details.requests[controller] -= batchAssets; // May need saturatingSub for rounding handling
             details.totalAssets -= batchAssets; // May need saturatingSub for rounding handling
             assets -= batchAssets; // May need saturatingSub for rounding handling
 
             uint256 batchShares = batchAssets.mulDiv(details.totalShares, details.totalAssets, Math.Rounding.Floor);
+            details.requests[controller] -= batchShares; // May need saturatingSub for rounding handling
             details.totalShares -= batchShares; // May need saturatingSub for rounding handling
             shares += batchShares;
         }
