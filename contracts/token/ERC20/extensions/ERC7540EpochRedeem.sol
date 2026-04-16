@@ -119,17 +119,19 @@ abstract contract ERC7540EpochRedeem is ERC7540 {
                 details.totalShares,
                 Math.Rounding.Ceil
             );
-            if (requested >= assets) _memberOf[controller].popFront();
+            if (requested <= assets) _memberOf[controller].popFront();
 
             uint256 batchAssets = requested.min(assets);
-            uint256 batchShares = batchAssets.mulDiv(details.totalShares, details.totalAssets, Math.Rounding.Floor);
+            details.requests[controller] -= batchAssets; // May need saturatingSub for rounding handling
             details.totalAssets -= batchAssets; // May need saturatingSub for rounding handling
-            details.totalShares -= batchShares; // May need saturatingSub for rounding handling
             assets -= batchAssets; // May need saturatingSub for rounding handling
+
+            uint256 batchShares = batchAssets.mulDiv(details.totalShares, details.totalAssets, Math.Rounding.Floor);
+            details.totalShares -= batchShares; // May need saturatingSub for rounding handling
             shares += batchShares;
         }
 
-        return assets;
+        return shares;
     }
 
     function _computeAsyncRedeem(uint256 shares, address controller) internal virtual override returns (uint256) {
@@ -141,13 +143,15 @@ abstract contract ERC7540EpochRedeem is ERC7540 {
             EpochRedeemMetadata storage details = _epochs[epochId];
 
             uint256 requested = details.requests[controller];
-            if (requested >= shares) _memberOf[controller].popFront();
+            if (requested <= shares) _memberOf[controller].popFront();
 
             uint256 batchShares = requested.min(shares);
-            uint256 batchAssets = batchShares.mulDiv(details.totalAssets, details.totalShares, Math.Rounding.Floor);
+            details.requests[controller] -= batchShares; // May need saturatingSub for rounding handling
             details.totalShares -= batchShares; // May need saturatingSub for rounding handling
-            details.totalAssets -= batchAssets; // May need saturatingSub for rounding handling
             shares -= batchShares; // May need saturatingSub for rounding handling
+
+            uint256 batchAssets = batchShares.mulDiv(details.totalAssets, details.totalShares, Math.Rounding.Floor);
+            details.totalAssets -= batchAssets; // May need saturatingSub for rounding handling
             assets += batchAssets;
         }
 

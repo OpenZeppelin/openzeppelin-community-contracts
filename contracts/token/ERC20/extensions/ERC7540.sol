@@ -288,9 +288,9 @@ abstract contract ERC7540 is ERC165, ERC20, IERC4626, IERC7540 {
         address controller
     ) public virtual onlyOperatorOrController(_isDepositAsync(), controller, _msgSender()) returns (uint256) {
         // Note: if _isDepositAsync is false, controller is ignored.
-        uint256 maxShares = maxMint(_isDepositAsync() ? _msgSender() : receiver);
+        uint256 maxShares = maxMint(_isDepositAsync() ? controller : receiver);
         if (shares > maxShares) {
-            revert ERC4626ExceededMaxMint(_isDepositAsync() ? _msgSender() : receiver, shares, maxShares);
+            revert ERC4626ExceededMaxMint(_isDepositAsync() ? controller : receiver, shares, maxShares);
         }
 
         uint256 assets = _isDepositAsync() ? _computeAsyncMint(shares, controller) : previewMint(shares);
