@@ -5,7 +5,7 @@ pragma solidity ^0.8.27;
 import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 import {ERC7540} from "./ERC7540.sol";
 
-abstract contract ERC7540AdminFulfillDeposit is ERC7540 {
+abstract contract ERC7540AdminDeposit is ERC7540 {
     struct PendingDeposit {
         uint256 pendingAssets;
         uint256 claimableAssets;
