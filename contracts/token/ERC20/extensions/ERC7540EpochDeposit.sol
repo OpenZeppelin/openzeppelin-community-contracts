@@ -81,11 +81,11 @@ abstract contract ERC7540EpochDeposit is ERC7540 {
 
         (bool success, bytes32 lastEpochId) = _memberOf[controller].tryBack();
         if (!success || lastEpochId != bytes32(epochId)) {
-            _memberOf[controller].pushBack(bytes32(epochId));
-
             // Limit the number of pending epochs per account to 32 to avoid O(n) loop in _asyncMaxWithdraw and _asyncMaxRedeem being a concern.
             // User that have reached the limit should execute pending (fulfilled) request to cleanup the queue.
             require(_memberOf[controller].length() < _requestQueueLimit());
+
+            _memberOf[controller].pushBack(bytes32(epochId));
         }
 
         return super._requestDeposit(assets, controller, owner, epochId);
