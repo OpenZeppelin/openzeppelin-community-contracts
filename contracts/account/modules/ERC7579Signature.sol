@@ -27,7 +27,7 @@ contract ERC7579Signature is ERC7579Validator {
     /// @dev Thrown when the signer length is less than 20 bytes.
     error ERC7579SignatureInvalidSignerLength();
 
-    /// @notice Thrown when attempting to install a signer while a different signer is already set
+    /// @dev Thrown when attempting to install a signer while a different signer is already set
     error ERC7579SignatureAlreadyInstalled();
 
     /// @dev Return the ERC-7913 signer (i.e. `verifier || key`).
@@ -38,17 +38,19 @@ contract ERC7579Signature is ERC7579Validator {
     /**
      * @dev See {IERC7579Module-onInstall}.
      *
-     * NOTE: An account can only call onInstall once. If called directly by the account,
-     * the signer will be set to the provided data. Future installations will behave as a no-op.
+     * NOTE: On first install, the signer is set to the provided `data`. Subsequent calls are
+     * idempotent only when `data` matches the currently installed signer; otherwise they
+     * revert with {ERC7579SignatureAlreadyInstalled}.
      */
     function onInstall(bytes calldata data) public virtual {
         bytes memory currentSigner = signer(msg.sender);
-        require(
-            currentSigner.length == 0 || keccak256(currentSigner) == keccak256(data),
-            ERC7579SignatureAlreadyInstalled()
-        );
-        require(data.length >= 20, ERC7579SignatureInvalidSignerLength());
-        _setSigner(msg.sender, data);
+        if (currentSigner.length == 0) {
+            require(data.length >= 20, ERC7579SignatureInvalidSignerLength());
+            _setSigner(msg.sender, data);
+        } else {
+            require(keccak256(currentSigner) == keccak256(data), ERC7579SignatureAlreadyInstalled());
+            // idempotent: no-op for identical data
+        }
     }
 
     /**
