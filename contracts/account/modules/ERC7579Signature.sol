@@ -27,6 +27,9 @@ contract ERC7579Signature is ERC7579Validator {
     /// @dev Thrown when the signer length is less than 20 bytes.
     error ERC7579SignatureInvalidSignerLength();
 
+    /// @notice Thrown when attempting to install a signer while a different signer is already set
+    error ERC7579SignatureAlreadyInstalled();
+
     /// @dev Return the ERC-7913 signer (i.e. `verifier || key`).
     function signer(address account) public view virtual returns (bytes memory) {
         return _signers[account];
@@ -39,9 +42,13 @@ contract ERC7579Signature is ERC7579Validator {
      * the signer will be set to the provided data. Future installations will behave as a no-op.
      */
     function onInstall(bytes calldata data) public virtual {
-        if (signer(msg.sender).length == 0) {
-            setSigner(data);
-        }
+        bytes memory currentSigner = signer(msg.sender);
+        require(
+            currentSigner.length == 0 || keccak256(currentSigner) == keccak256(data),
+            ERC7579SignatureAlreadyInstalled()
+        );
+        require(data.length >= 20, ERC7579SignatureInvalidSignerLength());
+        _setSigner(msg.sender, data);
     }
 
     /**
