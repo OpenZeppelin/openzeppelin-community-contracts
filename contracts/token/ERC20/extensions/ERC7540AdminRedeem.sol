@@ -16,6 +16,12 @@ import {ERC7540} from "./ERC7540.sol";
  * Asset sourcing (unwinding positions, bridging cross-chain, etc.) is application-specific and is
  * not part of this contract.
  *
+ * Production equivalents include
+ * https://github.com/usdai-foundation/usdai-contracts/blob/main/src/StakedUSDai.sol[USDai],
+ * https://github.com/plumenetwork/nest-protocol/blob/main/contracts/NestVaultCore.sol[Nest (Plume)],
+ * https://github.com/turingcapitalgroup/metaVault/blob/main/src/MetaVault.sol[MetaVault], and
+ * https://github.com/centrifuge/protocol/blob/main/src/vaults/AsyncVault.sol[Centrifuge].
+ *
  * All requests share `requestId = 0` (per-controller accounting only).
  */
 abstract contract ERC7540AdminRedeem is ERC7540 {

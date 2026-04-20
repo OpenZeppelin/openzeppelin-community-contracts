@@ -13,8 +13,13 @@ import {ERC7540} from "./ERC7540.sol";
  * amount and the corresponding `shares`, giving the fulfiller explicit control over the exchange rate.
  *
  * This is the most flexible fulfillment model. Epoch-based batch settlement, FIFO queues, and
- * cross-chain oracle-gated settlement can all be composed on top. Production equivalents include
- * USDai, Nest (Plume), MetaVault, SukukFi, and Centrifuge.
+ * cross-chain oracle-gated settlement can all be composed on top.
+ *
+ * Production equivalents include
+ * https://github.com/usdai-foundation/usdai-contracts/blob/main/src/StakedUSDai.sol[USDai],
+ * https://github.com/plumenetwork/nest-protocol/blob/main/contracts/NestVaultCore.sol[Nest (Plume)],
+ * https://github.com/turingcapitalgroup/metaVault/blob/main/src/MetaVault.sol[MetaVault], and
+ * https://github.com/centrifuge/protocol/blob/main/src/vaults/AsyncVault.sol[Centrifuge].
  *
  * All requests share `requestId = 0` (per-controller accounting only).
  */

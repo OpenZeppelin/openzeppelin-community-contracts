@@ -15,7 +15,10 @@ import {ERC7540} from "./ERC7540.sol";
  * controller (or any keeper) can claim. The exchange rate is computed at claim time using the vault's
  * live {convertToShares}.
  *
- * Production equivalents (redeem side): BeefySonic, MagmaV2, Tangle.
+ * Production equivalents (redeem side):
+ * https://github.com/beefyfinance/beefy-sonic/blob/main/contracts/BeefySonic.sol[BeefySonic],
+ * https://github.com/MagmaStaking/contracts-public/blob/live/src/MagmaV2.sol[MagmaV2],
+ * https://github.com/tangle-network/tnt-core/blob/main/src/staking/LiquidDelegationVault.sol[Tangle].
  *
  * Requests are tracked using {Checkpoints-Trace208}, storing cumulative deposit amounts keyed by
  * their maturity timepoint. The `requestId` returned by {requestDeposit} equals the absolute

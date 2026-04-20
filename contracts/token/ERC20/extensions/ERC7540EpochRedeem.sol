@@ -14,7 +14,11 @@ import {ERC7540} from "./ERC7540.sol";
  * together and settled at a single exchange rate when the admin closes the epoch via {_fulfillRedeem}.
  * All controllers within a fulfilled epoch receive the same pro-rata conversion from shares to assets.
  *
- * Production equivalents: Cove, Nashpoint, Amphor, Lagoon (epoch-based settlement).
+ * Production equivalents:
+ * https://github.com/Storm-Labs-Inc/cove-contracts-core/blob/master/src/BasketToken.sol[Cove],
+ * https://github.com/nashpoint/nashpoint-smart-contracts/blob/main/src/Node.sol[Nashpoint],
+ * https://github.com/AmphorProtocol/asynchronous-vault/tree/main[Amphor],
+ * https://github.com/hopperlabsxyz/lagoon-v0/blob/main/src/v0.5.0/ERC7540.sol[Lagoon].
  *
  * The `requestId` returned by {requestRedeem} is the epoch ID. By default, epochs are weekly
  * (`block.timestamp / 1 weeks`); override {currentRedeemEpoch} to change the cadence or use
