@@ -7,11 +7,32 @@ import {SafeCast} from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import {DoubleEndedQueue} from "@openzeppelin/contracts/utils/structs/DoubleEndedQueue.sol";
 import {ERC7540} from "./ERC7540.sol";
 
+/**
+ * @dev Epoch-based batch fulfillment strategy for asynchronous redemptions.
+ *
+ * Extends {ERC7540} with a redeem flow where requests submitted during the same epoch are batched
+ * together and settled at a single exchange rate when the admin closes the epoch via {_fulfillRedeem}.
+ * All controllers within a fulfilled epoch receive the same pro-rata conversion from shares to assets.
+ *
+ * Production equivalents: Cove, Nashpoint, Amphor, Lagoon (epoch-based settlement).
+ *
+ * The `requestId` returned by {requestRedeem} is the epoch ID. By default, epochs are weekly
+ * (`block.timestamp / 1 weeks`); override {currentRedeemEpoch} to change the cadence or use
+ * manually-bumped epoch counters.
+ *
+ * Each account tracks its epoch memberships via a {DoubleEndedQueue} capped at
+ * {_requestQueueLimit} entries (default: 32) to bound the O(n) loops in {_asyncMaxWithdraw}
+ * and {_asyncMaxRedeem}. Users that hit the limit should claim fulfilled epochs to free up space.
+ */
 abstract contract ERC7540EpochRedeem is ERC7540 {
     using Math for uint256;
     using SafeCast for uint256;
     using DoubleEndedQueue for DoubleEndedQueue.Bytes32Deque;
 
+    /**
+     * @dev Per-epoch redeem metadata. `totalAssets` is zero while the epoch is Pending and
+     * set to the distributed asset total when the admin calls {_fulfillRedeem}.
+     */
     struct EpochRedeemMetadata {
         uint256 totalShares;
         uint256 totalAssets;
@@ -21,15 +42,17 @@ abstract contract ERC7540EpochRedeem is ERC7540 {
     mapping(uint256 epochId => EpochRedeemMetadata) private _epochs;
     mapping(address account => DoubleEndedQueue.Bytes32Deque) private _memberOf;
 
+    /// @inheritdoc ERC7540
     function _isRedeemAsync() internal pure virtual override returns (bool) {
         return true;
     }
 
-    /// @dev Returns the current epoch.
+    /// @dev Returns the current epoch ID. Defaults to `block.timestamp / 1 weeks`.
     function currentRedeemEpoch() public view virtual returns (uint256) {
         return block.timestamp / 1 weeks;
     }
 
+    /// @dev A request is pending if its epoch has not yet been fulfilled (`totalAssets == 0`).
     function _pendingRedeemRequest(
         uint256 requestId,
         address controller
@@ -38,6 +61,7 @@ abstract contract ERC7540EpochRedeem is ERC7540 {
         return details.totalAssets == 0 ? details.requests[controller] : 0;
     }
 
+    /// @dev A request is claimable if its epoch has been fulfilled (`totalAssets > 0`).
     function _claimableRedeemRequest(
         uint256 requestId,
         address controller
@@ -46,6 +70,7 @@ abstract contract ERC7540EpochRedeem is ERC7540 {
         return details.totalAssets == 0 ? 0 : details.requests[controller];
     }
 
+    /// @dev Sums claimable assets across all fulfilled epochs the `owner` participates in.
     function _asyncMaxWithdraw(address owner) internal view virtual override returns (uint256 assets) {
         uint256 result = 0;
         for (uint256 i = 0; i < _memberOf[owner].length(); ++i) {
@@ -60,6 +85,7 @@ abstract contract ERC7540EpochRedeem is ERC7540 {
         return result;
     }
 
+    /// @dev Sums claimable shares across all fulfilled epochs the `owner` participates in.
     function _asyncMaxRedeem(address owner) internal view virtual override returns (uint256 shares) {
         uint256 result = 0;
         for (uint256 i = 0; i < _memberOf[owner].length(); ++i) {
@@ -69,11 +95,19 @@ abstract contract ERC7540EpochRedeem is ERC7540 {
         return result;
     }
 
+    /**
+     * @dev Records the request in the current epoch and enqueues the epoch ID for `controller`
+     * if not already present.
+     *
+     * Requirements:
+     *
+     * * The controller's epoch queue must not exceed {_requestQueueLimit}.
+     */
     function _requestRedeem(
         uint256 shares,
         address controller,
         address owner,
-        uint256 /* requestId */ // discarded and replaced by timepoint based ids
+        uint256 /* requestId */
     ) internal virtual override returns (uint256) {
         uint256 epochId = currentRedeemEpoch();
         _epochs[epochId].totalShares += shares;
@@ -81,8 +115,9 @@ abstract contract ERC7540EpochRedeem is ERC7540 {
 
         (bool success, bytes32 lastEpochId) = _memberOf[controller].tryBack();
         if (!success || lastEpochId != bytes32(epochId)) {
-            // Limit the number of pending epochs per account to 32 to avoid O(n) loop in _asyncMaxWithdraw and _asyncMaxRedeem being a concern.
-            // User that have reached the limit should execute pending (fulfilled) request to cleanup the queue.
+            // Limit the number of pending epochs per account to avoid O(n) loop in
+            // _asyncMaxWithdraw and _asyncMaxRedeem being a concern. Users that have reached
+            // the limit should claim fulfilled requests to clean up the queue.
             require(_memberOf[controller].length() < _requestQueueLimit());
 
             _memberOf[controller].pushBack(bytes32(epochId));
@@ -91,11 +126,22 @@ abstract contract ERC7540EpochRedeem is ERC7540 {
         return super._requestRedeem(shares, controller, owner, epochId);
     }
 
+    /// @dev Returns the total shares available to fulfill for `epochId`, or 0 if already fulfilled or still current.
     function _sharesToFulfillRedeem(uint256 epochId) internal view virtual returns (uint256) {
         return epochId < currentRedeemEpoch() && _epochs[epochId].totalAssets == 0 ? _epochs[epochId].totalShares : 0;
     }
 
-    /// Note: when epoch transition is manual, caller should bump the epoch before calling _fulfill
+    /**
+     * @dev Fulfills a past epoch by setting its `totalAssets`. All requests within the epoch
+     * become claimable at the rate `totalAssets / totalShares`.
+     *
+     * NOTE: When epoch transition is manual, the caller should bump the epoch before calling this.
+     *
+     * Requirements:
+     *
+     * * `epochId` must be a past epoch (less than {currentRedeemEpoch}).
+     * * The epoch must have pending shares and must not have been fulfilled already.
+     */
     function _fulfillRedeem(uint256 epochId, uint256 totalAssets) internal virtual {
         require(epochId < currentRedeemEpoch()); // TODO: too early
 
@@ -106,6 +152,11 @@ abstract contract ERC7540EpochRedeem is ERC7540 {
         // TODO: emit event
     }
 
+    /**
+     * @dev Iterates through the controller's epoch queue front-to-back, consuming assets
+     * and converting them to shares at each epoch's locked rate. Fully consumed epochs
+     * are dequeued.
+     */
     function _consumeClaimableWithdraw(uint256 assets, address controller) internal virtual override returns (uint256) {
         uint256 shares = 0;
 
@@ -134,6 +185,7 @@ abstract contract ERC7540EpochRedeem is ERC7540 {
         return shares;
     }
 
+    /// @dev Same as {_consumeClaimableWithdraw} but iterates by shares instead of assets.
     function _consumeClaimableRedeem(uint256 shares, address controller) internal virtual override returns (uint256) {
         uint256 assets = 0;
 
@@ -158,6 +210,10 @@ abstract contract ERC7540EpochRedeem is ERC7540 {
         return assets;
     }
 
+    /**
+     * @dev Maximum number of epoch entries in a controller's queue. Defaults to 32.
+     * Prevents unbounded iteration in {_asyncMaxWithdraw} and {_asyncMaxRedeem}.
+     */
     function _requestQueueLimit() internal view virtual returns (uint256) {
         return 32;
     }

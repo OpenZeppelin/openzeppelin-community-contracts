@@ -7,6 +7,24 @@ import {SafeCast} from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import {Checkpoints} from "@openzeppelin/contracts/utils/structs/Checkpoints.sol";
 import {ERC7540} from "./ERC7540.sol";
 
+/**
+ * @dev Time-delay fulfillment strategy for asynchronous redemptions.
+ *
+ * Extends {ERC7540} with a redeem flow where requests become **permissionlessly claimable** after a
+ * configurable waiting period. No privileged fulfiller is needed — once the delay elapses, the
+ * controller (or any keeper) can claim. The exchange rate is computed at claim time using the vault's
+ * live {convertToAssets}.
+ *
+ * Production equivalents: BeefySonic (protocol-dictated SFC unbonding), MagmaV2
+ * (admin-configurable delay), Tangle (protocol-dictated).
+ *
+ * Requests are tracked using {Checkpoints-Trace208}, storing cumulative redeem amounts keyed by
+ * their maturity timepoint. The `requestId` returned by {requestRedeem} equals the absolute
+ * timestamp at which the request becomes claimable (`clock() + redeemDelay(controller)`).
+ *
+ * Override {redeemDelay} to customize the waiting period (default: 1 hour) and {clock} to
+ * change the time source (default: `block.timestamp`).
+ */
 abstract contract ERC7540DelayRedeem is ERC7540 {
     using SafeCast for uint256;
     using Checkpoints for Checkpoints.Trace208;
@@ -14,23 +32,30 @@ abstract contract ERC7540DelayRedeem is ERC7540 {
     mapping(address controller => Checkpoints.Trace208) private _redeems;
     mapping(address controller => uint256) private _claimedRedeems;
 
+    /// @dev Returns the current clock value. Defaults to `block.timestamp`.
     function clock() public view virtual returns (uint48) {
         return uint48(block.timestamp);
     }
 
+    /// @dev Returns the delay duration before a redeem request becomes claimable. Defaults to 1 hour.
     function redeemDelay(address /*controller*/) public view virtual returns (uint48) {
         return 1 hours;
     }
 
+    /// @inheritdoc ERC7540
     function _isRedeemAsync() internal pure virtual override returns (bool) {
         return true;
     }
 
+    /**
+     * @dev Pushes a new cumulative checkpoint at the maturity timepoint and delegates to
+     * {ERC7540-_requestRedeem} with the timepoint as `requestId`.
+     */
     function _requestRedeem(
         uint256 shares,
         address controller,
         address owner,
-        uint256 /* requestId */ // discarded and replaced by timepoint based ids
+        uint256 /* requestId */
     ) internal virtual override returns (uint256) {
         uint48 timepoint = clock() + redeemDelay(controller);
         uint256 latest = _redeems[controller].latest();
@@ -39,18 +64,24 @@ abstract contract ERC7540DelayRedeem is ERC7540 {
         return super._requestRedeem(shares, controller, owner, timepoint);
     }
 
+    /// @dev Consumes `assets` from claimable redeems, returns proportional shares (rounded up).
     function _consumeClaimableWithdraw(uint256 assets, address controller) internal virtual override returns (uint256) {
         uint256 shares = Math.mulDiv(assets, maxRedeem(controller), maxWithdraw(controller), Math.Rounding.Ceil);
         _claimedRedeems[controller] += shares;
         return shares;
     }
 
+    /// @dev Consumes `shares` from claimable redeems, returns proportional assets (rounded down).
     function _consumeClaimableRedeem(uint256 shares, address controller) internal virtual override returns (uint256) {
         uint256 assets = Math.mulDiv(shares, maxWithdraw(controller), maxRedeem(controller), Math.Rounding.Floor);
         _claimedRedeems[controller] += shares;
         return assets;
     }
 
+    /**
+     * @dev Returns the shares in Pending state for a specific `requestId` (timepoint).
+     * A request is pending only if its timepoint is strictly in the future.
+     */
     function _pendingRedeemRequest(
         uint256 requestId,
         address controller
@@ -62,6 +93,10 @@ abstract contract ERC7540DelayRedeem is ERC7540 {
                 : 0;
     }
 
+    /**
+     * @dev Returns the shares in Claimable state for a specific `requestId` (timepoint).
+     * A request is claimable once its timepoint has elapsed and the shares haven't been claimed yet.
+     */
     function _claimableRedeemRequest(
         uint256 requestId,
         address controller
@@ -76,10 +111,12 @@ abstract contract ERC7540DelayRedeem is ERC7540 {
                 );
     }
 
+    /// @dev Returns the asset-equivalent of {_asyncMaxRedeem} (rounded down).
     function _asyncMaxWithdraw(address owner) internal view virtual override returns (uint256) {
         return _convertToAssets(_asyncMaxRedeem(owner), Math.Rounding.Floor);
     }
 
+    /// @dev Returns the total claimable shares across all matured timepoints for `owner`.
     function _asyncMaxRedeem(address owner) internal view virtual override returns (uint256) {
         return _redeems[owner].latest() - _claimedRedeems[owner];
     }

@@ -5,7 +5,25 @@ pragma solidity ^0.8.27;
 import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 import {ERC7540} from "./ERC7540.sol";
 
+/**
+ * @dev Admin-controlled (operator-triggered) fulfillment strategy for asynchronous deposits.
+ *
+ * Extends {ERC7540} with a deposit flow where a privileged caller explicitly transitions requests
+ * from Pending to Claimable by calling {_fulfillDeposit}. The caller provides both the `assets`
+ * amount and the corresponding `shares`, giving the fulfiller explicit control over the exchange rate.
+ *
+ * This is the most flexible fulfillment model. Epoch-based batch settlement, FIFO queues, and
+ * cross-chain oracle-gated settlement can all be composed on top. Production equivalents include
+ * USDai, Nest (Plume), MetaVault, SukukFi, and Centrifuge.
+ *
+ * All requests share `requestId = 0` (per-controller accounting only).
+ */
 abstract contract ERC7540AdminDeposit is ERC7540 {
+    /**
+     * @dev Struct containing the per-controller state for a deposit request.
+     * When a request becomes claimable via {_fulfillDeposit}, the exchange rate is locked
+     * in the `claimableAssets` / `claimableShares` pair.
+     */
     struct PendingDeposit {
         uint256 pendingAssets;
         uint256 claimableAssets;
@@ -17,13 +35,15 @@ abstract contract ERC7540AdminDeposit is ERC7540 {
     /// @dev Emitted when a deposit request transitions from Pending to Claimable.
     event DepositClaimable(address indexed controller, uint256 indexed requestId, uint256 assets, uint256 shares);
 
-    /// @dev The amount of assets requested is greater than the amount of assets pending.
+    /// @dev The `assets` to fulfill exceeds the `pendingAssets` for the controller.
     error ERC7540DepositInsufficientPendingAssets(uint256 assets, uint256 pendingAssets);
 
+    /// @inheritdoc ERC7540
     function _isDepositAsync() internal pure virtual override returns (bool) {
         return true;
     }
 
+    /// @dev Records per-controller pending state before delegating to {ERC7540-_requestDeposit}.
     function _requestDeposit(
         uint256 assets,
         address controller,
@@ -34,6 +54,19 @@ abstract contract ERC7540AdminDeposit is ERC7540 {
         return super._requestDeposit(assets, controller, owner, requestId);
     }
 
+    /**
+     * @dev Fulfills a pending deposit request by transitioning it from Pending to Claimable state.
+     *
+     * The caller provides both `assets` and `shares`, locking the exchange rate at fulfillment time.
+     * The fulfiller should ensure the vault's `totalAssets()` already reflects the deposited assets
+     * (e.g. after deploying them to a yield source) to avoid diluting existing holders.
+     *
+     * Emits a {DepositClaimable} event.
+     *
+     * Requirements:
+     *
+     * * `assets` must not exceed the pending deposit amount for the `controller`.
+     */
     function _fulfillDeposit(uint256 assets, uint256 shares, address controller) internal virtual {
         uint256 pendingAssets = pendingDepositRequest(0, controller);
         require(assets <= pendingAssets, ERC7540DepositInsufficientPendingAssets(assets, pendingAssets));
@@ -45,6 +78,7 @@ abstract contract ERC7540AdminDeposit is ERC7540 {
         emit DepositClaimable(controller, 0, assets, shares);
     }
 
+    /// @dev Consumes `assets` from the claimable deposit and returns the proportional shares (rounded down).
     function _consumeClaimableDeposit(uint256 assets, address controller) internal virtual override returns (uint256) {
         uint256 shares = Math.mulDiv(assets, maxMint(controller), maxDeposit(controller), Math.Rounding.Floor);
         _deposits[controller].claimableAssets = Math.saturatingSub(_deposits[controller].claimableAssets, assets);
@@ -52,6 +86,7 @@ abstract contract ERC7540AdminDeposit is ERC7540 {
         return shares;
     }
 
+    /// @dev Consumes `shares` from the claimable deposit and returns the proportional assets (rounded up).
     function _consumeClaimableMint(uint256 shares, address controller) internal virtual override returns (uint256) {
         uint256 assets = Math.mulDiv(shares, maxDeposit(controller), maxMint(controller), Math.Rounding.Ceil);
         _deposits[controller].claimableAssets = Math.saturatingSub(_deposits[controller].claimableAssets, assets);
@@ -59,6 +94,7 @@ abstract contract ERC7540AdminDeposit is ERC7540 {
         return assets;
     }
 
+    /// @inheritdoc ERC7540
     function _pendingDepositRequest(
         uint256 /*requestId*/,
         address controller
@@ -66,6 +102,7 @@ abstract contract ERC7540AdminDeposit is ERC7540 {
         return _deposits[controller].pendingAssets;
     }
 
+    /// @inheritdoc ERC7540
     function _claimableDepositRequest(
         uint256 /*requestId*/,
         address controller
@@ -73,10 +110,12 @@ abstract contract ERC7540AdminDeposit is ERC7540 {
         return _deposits[controller].claimableAssets;
     }
 
+    /// @inheritdoc ERC7540
     function _asyncMaxDeposit(address owner) internal view virtual override returns (uint256) {
         return _deposits[owner].claimableAssets;
     }
 
+    /// @inheritdoc ERC7540
     function _asyncMaxMint(address owner) internal view virtual override returns (uint256) {
         return _deposits[owner].claimableShares;
     }

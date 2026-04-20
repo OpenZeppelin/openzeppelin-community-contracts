@@ -7,6 +7,23 @@ import {SafeCast} from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import {Checkpoints} from "@openzeppelin/contracts/utils/structs/Checkpoints.sol";
 import {ERC7540} from "./ERC7540.sol";
 
+/**
+ * @dev Time-delay fulfillment strategy for asynchronous deposits.
+ *
+ * Extends {ERC7540} with a deposit flow where requests become **permissionlessly claimable** after a
+ * configurable waiting period. No privileged fulfiller is needed — once the delay elapses, the
+ * controller (or any keeper) can claim. The exchange rate is computed at claim time using the vault's
+ * live {convertToShares}.
+ *
+ * Production equivalents (redeem side): BeefySonic, MagmaV2, Tangle.
+ *
+ * Requests are tracked using {Checkpoints-Trace208}, storing cumulative deposit amounts keyed by
+ * their maturity timepoint. The `requestId` returned by {requestDeposit} equals the absolute
+ * timestamp at which the request becomes claimable (`clock() + depositDelay(controller)`).
+ *
+ * Override {depositDelay} to customize the waiting period (default: 1 hour) and {clock} to
+ * change the time source (default: `block.timestamp`).
+ */
 abstract contract ERC7540DelayDeposit is ERC7540 {
     using SafeCast for uint256;
     using Checkpoints for Checkpoints.Trace208;
@@ -14,23 +31,30 @@ abstract contract ERC7540DelayDeposit is ERC7540 {
     mapping(address controller => Checkpoints.Trace208 trace) private _deposits;
     mapping(address controller => uint256) private _claimedDeposits;
 
+    /// @dev Returns the current clock value. Defaults to `block.timestamp`.
     function clock() public view virtual returns (uint48) {
         return uint48(block.timestamp);
     }
 
+    /// @dev Returns the delay duration before a deposit request becomes claimable. Defaults to 1 hour.
     function depositDelay(address /*controller*/) public view virtual returns (uint48) {
         return 1 hours;
     }
 
+    /// @inheritdoc ERC7540
     function _isDepositAsync() internal pure virtual override returns (bool) {
         return true;
     }
 
+    /**
+     * @dev Pushes a new cumulative checkpoint at the maturity timepoint and delegates to
+     * {ERC7540-_requestDeposit} with the timepoint as `requestId`.
+     */
     function _requestDeposit(
         uint256 assets,
         address controller,
         address owner,
-        uint256 /* requestId */ // discarded and replaced by timepoint based ids
+        uint256 /* requestId */
     ) internal virtual override returns (uint256) {
         uint48 timepoint = clock() + depositDelay(controller);
         uint256 latest = _deposits[controller].latest();
@@ -40,18 +64,24 @@ abstract contract ERC7540DelayDeposit is ERC7540 {
         return super._requestDeposit(assets, controller, owner, timepoint);
     }
 
+    /// @dev Consumes `assets` from claimable deposits, returns proportional shares (rounded down).
     function _consumeClaimableDeposit(uint256 assets, address controller) internal virtual override returns (uint256) {
         uint256 shares = Math.mulDiv(assets, maxMint(controller), maxDeposit(controller), Math.Rounding.Floor);
         _claimedDeposits[controller] += assets;
         return shares;
     }
 
+    /// @dev Consumes `shares` from claimable deposits, returns proportional assets (rounded up).
     function _consumeClaimableMint(uint256 shares, address controller) internal virtual override returns (uint256) {
         uint256 assets = Math.mulDiv(shares, maxDeposit(controller), maxMint(controller), Math.Rounding.Ceil);
         _claimedDeposits[controller] += assets;
         return assets;
     }
 
+    /**
+     * @dev Returns the assets in Pending state for a specific `requestId` (timepoint).
+     * A request is pending only if its timepoint is strictly in the future.
+     */
     function _pendingDepositRequest(
         uint256 requestId,
         address controller
@@ -63,6 +93,10 @@ abstract contract ERC7540DelayDeposit is ERC7540 {
                 : 0;
     }
 
+    /**
+     * @dev Returns the assets in Claimable state for a specific `requestId` (timepoint).
+     * A request is claimable once its timepoint has elapsed and the assets haven't been claimed yet.
+     */
     function _claimableDepositRequest(
         uint256 requestId,
         address controller
@@ -77,10 +111,12 @@ abstract contract ERC7540DelayDeposit is ERC7540 {
                 );
     }
 
+    /// @dev Returns the total claimable assets across all matured timepoints for `owner`.
     function _asyncMaxDeposit(address owner) internal view virtual override returns (uint256) {
         return _deposits[owner].latest() - _claimedDeposits[owner];
     }
 
+    /// @dev Returns the share-equivalent of {_asyncMaxDeposit} (rounded down).
     function _asyncMaxMint(address owner) internal view virtual override returns (uint256) {
         return _convertToShares(_asyncMaxDeposit(owner), Math.Rounding.Floor);
     }
