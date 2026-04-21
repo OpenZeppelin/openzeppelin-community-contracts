@@ -96,9 +96,6 @@ abstract contract ERC7540 is ERC165, ERC20, IERC4626, IERC7540 {
     /// @dev Neither {_isDepositAsync} nor {_isRedeemAsync} returns `true`.
     error ERC7540MissingAsync();
 
-    /// @dev A virtual hook was called that must be implemented by a fulfillment strategy extension.
-    error ERC7540NotImplemented();
-
     /**
      * @dev Sets the underlying asset contract. This must be an ERC-20-compatible contract.
      *
@@ -116,26 +113,6 @@ abstract contract ERC7540 is ERC165, ERC20, IERC4626, IERC7540 {
         (bool success, uint8 assetDecimals) = _tryGetAssetDecimals(asset_);
         _underlyingDecimals = success ? assetDecimals : 18;
         _asset = asset_;
-    }
-
-    /**
-     * @dev Returns `true` if the deposit flow is asynchronous (Request-based). When `false`, {deposit} and
-     * {mint} behave as standard synchronous ERC-4626 operations.
-     *
-     * Override to return `true` in extensions that provide an async deposit fulfillment strategy.
-     */
-    function _isDepositAsync() internal pure virtual returns (bool) {
-        return false;
-    }
-
-    /**
-     * @dev Returns `true` if the redeem flow is asynchronous (Request-based). When `false`, {withdraw} and
-     * {redeem} behave as standard synchronous ERC-4626 operations.
-     *
-     * Override to return `true` in extensions that provide an async redeem fulfillment strategy.
-     */
-    function _isRedeemAsync() internal pure virtual returns (bool) {
-        return false;
     }
 
     /**
@@ -826,87 +803,79 @@ abstract contract ERC7540 is ERC165, ERC20, IERC4626, IERC7540 {
     //              VIRTUAL HOOKS FOR STRATEGY EXTENSIONS
     // ==============================================================
 
+    /**
+     * @dev Returns `true` if the deposit flow is asynchronous (Request-based). When `false`, {deposit} and
+     * {mint} behave as standard synchronous ERC-4626 operations.
+     *
+     * Override to return `true` in extensions that provide an async deposit fulfillment strategy.
+     */
+    function _isDepositAsync() internal pure virtual returns (bool);
+
+    /**
+     * @dev Returns `true` if the redeem flow is asynchronous (Request-based). When `false`, {withdraw} and
+     * {redeem} behave as standard synchronous ERC-4626 operations.
+     *
+     * Override to return `true` in extensions that provide an async redeem fulfillment strategy.
+     */
+    function _isRedeemAsync() internal pure virtual returns (bool);
+
     /// @dev Returns the amount of assets in Pending state for `controller` with the given `requestId`.
     function _pendingDepositRequest(
         uint256 /*requestId*/,
         address /*controller*/
-    ) internal view virtual returns (uint256) {
-        revert ERC7540NotImplemented();
-    }
+    ) internal view virtual returns (uint256);
 
     /// @dev Returns the amount of assets in Claimable state for `controller` with the given `requestId`.
     function _claimableDepositRequest(
         uint256 /*requestId*/,
         address /*controller*/
-    ) internal view virtual returns (uint256) {
-        revert ERC7540NotImplemented();
-    }
+    ) internal view virtual returns (uint256);
 
     /// @dev Returns the amount of shares in Pending state for `controller` with the given `requestId`.
     function _pendingRedeemRequest(
         uint256 /*requestId*/,
         address /*controller*/
-    ) internal view virtual returns (uint256) {
-        revert ERC7540NotImplemented();
-    }
+    ) internal view virtual returns (uint256);
 
     /// @dev Returns the amount of shares in Claimable state for `controller` with the given `requestId`.
     function _claimableRedeemRequest(
         uint256 /*requestId*/,
         address /*controller*/
-    ) internal view virtual returns (uint256) {
-        revert ERC7540NotImplemented();
-    }
+    ) internal view virtual returns (uint256);
 
     /**
      * @dev Consumes `assets` worth of a Claimable deposit for `controller` and returns the corresponding
      * number of shares. Called by {deposit} (three-argument overload) in async mode.
      */
-    function _consumeClaimableDeposit(uint256 /*assets*/, address /*controller*/) internal virtual returns (uint256) {
-        revert ERC7540NotImplemented();
-    }
+    function _consumeClaimableDeposit(uint256 /*assets*/, address /*controller*/) internal virtual returns (uint256);
 
     /**
      * @dev Consumes `shares` worth of a Claimable deposit for `controller` and returns the corresponding
      * number of assets. Called by {mint} (three-argument overload) in async mode.
      */
-    function _consumeClaimableMint(uint256 /*shares*/, address /*controller*/) internal virtual returns (uint256) {
-        revert ERC7540NotImplemented();
-    }
+    function _consumeClaimableMint(uint256 /*shares*/, address /*controller*/) internal virtual returns (uint256);
 
     /**
      * @dev Consumes `assets` worth of a Claimable redeem for `controller` and returns the corresponding
      * number of shares. Called by {withdraw} in async mode.
      */
-    function _consumeClaimableWithdraw(uint256 /*assets*/, address /*controller*/) internal virtual returns (uint256) {
-        revert ERC7540NotImplemented();
-    }
+    function _consumeClaimableWithdraw(uint256 /*assets*/, address /*controller*/) internal virtual returns (uint256);
 
     /**
      * @dev Consumes `shares` worth of a Claimable redeem for `controller` and returns the corresponding
      * number of assets. Called by {redeem} in async mode.
      */
-    function _consumeClaimableRedeem(uint256 /*shares*/, address /*controller*/) internal virtual returns (uint256) {
-        revert ERC7540NotImplemented();
-    }
+    function _consumeClaimableRedeem(uint256 /*shares*/, address /*controller*/) internal virtual returns (uint256);
 
     /// @dev Returns the maximum assets that can be claimed via {deposit} for an async `owner`.
-    function _asyncMaxDeposit(address /*owner*/) internal view virtual returns (uint256) {
-        revert ERC7540NotImplemented();
-    }
+    function _asyncMaxDeposit(address /*owner*/) internal view virtual returns (uint256);
 
     /// @dev Returns the maximum shares that can be claimed via {mint} for an async `owner`.
-    function _asyncMaxMint(address /*owner*/) internal view virtual returns (uint256) {
-        revert ERC7540NotImplemented();
-    }
+    function _asyncMaxMint(address /*owner*/) internal view virtual returns (uint256);
 
     /// @dev Returns the maximum assets that can be claimed via {withdraw} for an async `owner`.
-    function _asyncMaxWithdraw(address /*owner*/) internal view virtual returns (uint256) {
-        revert ERC7540NotImplemented();
-    }
+    function _asyncMaxWithdraw(address /*owner*/) internal view virtual returns (uint256);
 
     /// @dev Returns the maximum shares that can be claimed via {redeem} for an async `owner`.
-    function _asyncMaxRedeem(address /*owner*/) internal view virtual returns (uint256) {
-        revert ERC7540NotImplemented();
-    }
+    function _asyncMaxRedeem(address /*owner*/) internal view virtual returns (uint256);
 }
