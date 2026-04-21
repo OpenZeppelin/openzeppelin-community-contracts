@@ -31,7 +31,7 @@ abstract contract ERC7540DelayDeposit is ERC7540 {
     using SafeCast for uint256;
     using Checkpoints for Checkpoints.Trace208;
 
-    mapping(address controller => Checkpoints.Trace208 trace) private _deposits;
+    mapping(address controller => Checkpoints.Trace208) private _deposits;
     mapping(address controller => uint256) private _claimedDeposits;
 
     /// @dev Returns the current clock value. Defaults to `block.timestamp`.
