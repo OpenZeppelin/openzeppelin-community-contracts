@@ -2,9 +2,11 @@
 
 pragma solidity ^0.8.27;
 
+import {IERC6372} from "@openzeppelin/contracts/interfaces/IERC6372.sol";
 import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 import {SafeCast} from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import {Checkpoints} from "@openzeppelin/contracts/utils/structs/Checkpoints.sol";
+import {Time} from "@openzeppelin/contracts/utils/types/Time.sol";
 import {ERC7540} from "./ERC7540.sol";
 
 /**
@@ -27,16 +29,29 @@ import {ERC7540} from "./ERC7540.sol";
  * Override {redeemDelay} to customize the waiting period (default: 1 hour) and {clock} to
  * change the time source (default: `block.timestamp`).
  */
-abstract contract ERC7540DelayRedeem is ERC7540 {
+abstract contract ERC7540DelayRedeem is ERC7540, IERC6372 {
     using SafeCast for uint256;
     using Checkpoints for Checkpoints.Trace208;
 
     mapping(address controller => Checkpoints.Trace208) private _redeems;
     mapping(address controller => uint256) private _claimedRedeems;
 
-    /// @dev Returns the current clock value. Defaults to `block.timestamp`.
+    /// @dev The clock was incorrectly modified.
+    error ERC6372InconsistentClock();
+
+    /// @inheritdoc IERC6372
     function clock() public view virtual returns (uint48) {
-        return uint48(block.timestamp);
+        return Time.timestamp();
+    }
+
+    /// @inheritdoc IERC6372
+    // solhint-disable-next-line func-name-mixedcase
+    function CLOCK_MODE() public view virtual returns (string memory) {
+        // Check that the clock was not modified
+        if (clock() != Time.timestamp()) {
+            revert ERC6372InconsistentClock();
+        }
+        return "mode=timestamp";
     }
 
     /// @dev Returns the delay duration before a redeem request becomes claimable. Defaults to 1 hour.
