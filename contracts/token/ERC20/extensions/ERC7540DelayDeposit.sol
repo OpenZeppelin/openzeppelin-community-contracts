@@ -116,7 +116,7 @@ abstract contract ERC7540DelayDeposit is ERC7540 {
 
     /// @dev Returns the total claimable assets across all matured timepoints for `owner`.
     function _asyncMaxDeposit(address owner) internal view virtual override returns (uint256) {
-        return _deposits[owner].latest() - _claimedDeposits[owner];
+        return _deposits[owner].upperLookup(clock()) - _claimedDeposits[owner];
     }
 
     /// @dev Returns the share-equivalent of {_asyncMaxDeposit} (rounded down).

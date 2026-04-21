@@ -41,7 +41,7 @@ describe('ERC7540Delay', function () {
 
   describe('metadata', function () {
     it('token', async function () {
-      await expect(this.mock.asset()).to.eventually.equal(this.token.target);
+      await expect(this.mock.asset()).to.eventually.equal(this.token);
     });
 
     it('name, symbol, decimals', async function () {
@@ -96,6 +96,8 @@ describe('ERC7540Delay', function () {
         // check pending deposit is registered
         await expect(this.mock.pendingDepositRequest(requestId, this.controller)).to.eventually.equal(assets);
         await expect(this.mock.claimableDepositRequest(requestId, this.controller)).to.eventually.equal(0n);
+        await expect(this.mock.maxDeposit(this.controller)).to.eventually.equal(0n);
+        await expect(this.mock.maxMint(this.controller)).to.eventually.equal(0n);
 
         // move forward
         await time.increaseTo.timestamp(requestId);
@@ -103,6 +105,8 @@ describe('ERC7540Delay', function () {
         // check deposit becomes claimable automatically
         await expect(this.mock.pendingDepositRequest(requestId, this.controller)).to.eventually.equal(0n);
         await expect(this.mock.claimableDepositRequest(requestId, this.controller)).to.eventually.equal(assets);
+        await expect(this.mock.maxDeposit(this.controller)).to.eventually.equal(assets);
+        await expect(this.mock.maxMint(this.controller)).to.eventually.equal(shares);
       });
 
       it('operator can trigger request deposit on behalf of owner', async function () {
@@ -246,7 +250,7 @@ describe('ERC7540Delay', function () {
     const assets = (shares * initialAssets) / initialShares;
 
     describe('requestRedeem', function () {
-      it('burns shares, emits RedeemRequest, keeps totalSupply stable via pending counter', async function () {
+      it('burns shares and emits RedeemRequest with timepoint-based requestId', async function () {
         const assetsBefore = await this.mock.totalAssets();
         const supplyBefore = await this.mock.totalSupply();
 
@@ -268,6 +272,8 @@ describe('ERC7540Delay', function () {
         // check pending redeem is registered
         await expect(this.mock.pendingRedeemRequest(requestId, this.controller)).to.eventually.equal(shares);
         await expect(this.mock.claimableRedeemRequest(requestId, this.controller)).to.eventually.equal(0n);
+        await expect(this.mock.maxRedeem(this.controller)).to.eventually.equal(0n);
+        await expect(this.mock.maxWithdraw(this.controller)).to.eventually.equal(0n);
 
         // move forward
         await time.increaseTo.timestamp(requestId);
@@ -275,6 +281,8 @@ describe('ERC7540Delay', function () {
         // check redeem becomes claimable automatically
         await expect(this.mock.pendingRedeemRequest(requestId, this.controller)).to.eventually.equal(0n);
         await expect(this.mock.claimableRedeemRequest(requestId, this.controller)).to.eventually.equal(shares);
+        await expect(this.mock.maxRedeem(this.controller)).to.eventually.equal(shares);
+        await expect(this.mock.maxWithdraw(this.controller)).to.eventually.equal(assets);
       });
 
       it('operator can trigger request deposit on behalf of owner', async function () {
