@@ -73,7 +73,15 @@ abstract contract ERC7540EpochDeposit is ERC7540 {
         return details.totalShares == 0 ? 0 : details.requests[controller];
     }
 
-    /// @dev Sums claimable assets across all fulfilled epochs the `owner` participates in.
+    /**
+     * @dev Sums claimable assets across all fulfilled epochs the `owner` participates in.
+     *
+     * NOTE: This function iterates over the `owner`'s epoch queue, which is O(n) in the number of
+     * epochs the owner participates in. This is bounded by {_requestQueueLimit} (default 32) and is
+     * per-account; an attacker creating many small requests can only inflate their own queue, not
+     * other users'. Cross-controller DoS is not possible because epoch fulfillment via {_fulfillDeposit}
+     * is O(1) (it sets `totalShares` for the entire epoch in a single write).
+     */
     function _asyncMaxDeposit(address owner) internal view virtual override returns (uint256 assets) {
         uint256 result = 0;
         for (uint256 i = 0; i < _memberOf[owner].length(); ++i) {
