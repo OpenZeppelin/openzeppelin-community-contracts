@@ -11,6 +11,16 @@ abstract contract ERC7540DelayMock is ERC7540DelayDeposit, ERC7540DelayRedeem {
         return super.clock();
     }
 
+    function CLOCK_MODE()
+        public
+        view
+        virtual
+        override(ERC7540DelayDeposit, ERC7540DelayRedeem)
+        returns (string memory)
+    {
+        return super.CLOCK_MODE();
+    }
+
     function _requestDeposit(
         uint256 assets,
         address controller,
