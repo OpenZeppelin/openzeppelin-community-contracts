@@ -102,7 +102,7 @@ abstract contract ERC7540DelayDeposit is ERC7540, IERC6372 {
             uint48 timepoint = requestId.toUint48();
             return
                 requestId > clock()
-                    ? _totalClaimableAt(controller, timepoint) - _totalClaimableAt(controller, timepoint - 1)
+                    ? _readyDepositAt(controller, timepoint) - _readyDepositAt(controller, timepoint - 1)
                     : 0;
         }
     }
@@ -120,25 +120,25 @@ abstract contract ERC7540DelayDeposit is ERC7540, IERC6372 {
             return
                 requestId > clock()
                     ? 0
-                    : _totalClaimableAt(controller, timepoint) - _totalClaimableAt(controller, timepoint - 1);
+                    : _readyDepositAt(controller, timepoint) - _readyDepositAt(controller, timepoint - 1);
         }
     }
 
     /// @dev Returns the total claimable assets across all matured timepoints for `owner`.
     function _asyncMaxDeposit(address owner) internal view virtual override returns (uint256) {
-        return _totalClaimableAt(owner, clock());
+        return _readyDepositAt(owner, clock());
     }
 
     /// @dev Returns the share-equivalent of {_asyncMaxDeposit} (rounded down).
     function _asyncMaxMint(address owner) internal view virtual override returns (uint256) {
-        return _convertToShares(_totalClaimableAt(owner, clock()), Math.Rounding.Floor);
+        return _convertToShares(_readyDepositAt(owner, clock()), Math.Rounding.Floor);
     }
 
     /**
      * @dev Internal helper: fetch the amount that is expected to be claimable at a given timepoint, if any.
      * Any amount that has already been claimed is taken into consideration.
      */
-    function _totalClaimableAt(address owner, uint48 timepoint) internal view virtual returns (uint256) {
+    function _readyDepositAt(address owner, uint48 timepoint) internal view virtual returns (uint256) {
         return Math.saturatingSub(_deposits[owner].upperLookupRecent(timepoint), _claimedDeposits[owner]);
     }
 }
