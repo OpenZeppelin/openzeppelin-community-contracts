@@ -7,6 +7,7 @@ import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 import {SafeCast} from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import {Checkpoints} from "@openzeppelin/contracts/utils/structs/Checkpoints.sol";
 import {Time} from "@openzeppelin/contracts/utils/types/Time.sol";
+import {ERC6372Utils} from "@openzeppelin/contracts/utils/ERC6372Utils.sol";
 import {ERC7540} from "./ERC7540.sol";
 
 /**
@@ -36,9 +37,6 @@ abstract contract ERC7540DelayRedeem is ERC7540, IERC6372 {
     mapping(address controller => Checkpoints.Trace208) private _redeems;
     mapping(address controller => uint256) private _claimedRedeems;
 
-    /// @dev The clock was incorrectly modified.
-    error ERC6372InconsistentClock();
-
     /// @inheritdoc IERC6372
     function clock() public view virtual returns (uint48) {
         return Time.timestamp();
@@ -47,11 +45,7 @@ abstract contract ERC7540DelayRedeem is ERC7540, IERC6372 {
     /// @inheritdoc IERC6372
     // solhint-disable-next-line func-name-mixedcase
     function CLOCK_MODE() public view virtual returns (string memory) {
-        // Check that the clock was not modified
-        if (clock() != Time.timestamp()) {
-            revert ERC6372InconsistentClock();
-        }
-        return "mode=timestamp";
+        return ERC6372Utils.timestampClockMode(clock);
     }
 
     /// @dev Returns the delay duration before a redeem request becomes claimable. Defaults to 1 hour.
