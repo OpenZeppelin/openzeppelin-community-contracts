@@ -101,8 +101,7 @@ abstract contract ERC7540DelayRedeem is ERC7540, IERC6372 {
             uint48 timepoint = requestId.toUint48();
             return
                 requestId > clock()
-                    ? _totalClaimableRedeemAt(controller, timepoint) -
-                        _totalClaimableRedeemAt(controller, timepoint - 1)
+                    ? _readyRedeemAt(controller, timepoint) - _readyRedeemAt(controller, timepoint - 1)
                     : 0;
         }
     }
@@ -120,26 +119,25 @@ abstract contract ERC7540DelayRedeem is ERC7540, IERC6372 {
             return
                 requestId > clock()
                     ? 0
-                    : _totalClaimableRedeemAt(controller, timepoint) -
-                        _totalClaimableRedeemAt(controller, timepoint - 1);
+                    : _readyRedeemAt(controller, timepoint) - _readyRedeemAt(controller, timepoint - 1);
         }
     }
 
     /// @dev Returns the asset-equivalent of {_asyncMaxRedeem} (rounded down).
     function _asyncMaxWithdraw(address owner) internal view virtual override returns (uint256) {
-        return _convertToAssets(_totalClaimableRedeemAt(owner, clock()), Math.Rounding.Floor);
+        return _convertToAssets(_readyRedeemAt(owner, clock()), Math.Rounding.Floor);
     }
 
     /// @dev Returns the total claimable shares across all matured timepoints for `owner`.
     function _asyncMaxRedeem(address owner) internal view virtual override returns (uint256) {
-        return _totalClaimableRedeemAt(owner, clock());
+        return _readyRedeemAt(owner, clock());
     }
 
     /**
      * @dev Internal helper: fetch the amount that is expected to be claimable at a given timepoint, if any.
      * Any amount that has already been claimed is taken into consideration.
      */
-    function _totalClaimableRedeemAt(address owner, uint48 timepoint) internal view virtual returns (uint256) {
+    function _readyRedeemAt(address owner, uint48 timepoint) internal view virtual returns (uint256) {
         return Math.saturatingSub(_redeems[owner].upperLookupRecent(timepoint), _claimedRedeems[owner]);
     }
 }
