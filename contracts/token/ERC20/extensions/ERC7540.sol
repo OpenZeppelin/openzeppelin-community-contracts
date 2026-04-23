@@ -110,7 +110,7 @@ abstract contract ERC7540 is ERC165, ERC20, IERC4626, IERC7540 {
      */
     constructor(IERC20 asset_) {
         require(_isDepositAsync() || _isRedeemAsync(), ERC7540MissingAsync());
-        (bool success, uint8 assetDecimals) = SafeERC20.tryGetDecimals(address(asset_));
+        (bool success, uint8 assetDecimals) = SafeERC20.tryGetDecimals(asset_);
         _underlyingDecimals = success ? assetDecimals : 18;
         _asset = asset_;
     }
