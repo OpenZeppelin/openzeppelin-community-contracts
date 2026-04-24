@@ -85,7 +85,7 @@ abstract contract ERC7540 is ERC165, ERC20, IERC4626, IERC7540 {
     error ERC7540SyncDeposit();
 
     /// @dev A synchronous deposit preview was attempted but {_isDepositAsync} returns `true`.
-    error ERC7540DepositIsAsync();
+    error ERC7540AsyncDeposit();
 
     /// @dev A redeem Request was attempted but {_isRedeemAsync} returns `false`.
     error ERC7540SyncRedeem();
@@ -331,7 +331,7 @@ abstract contract ERC7540 is ERC165, ERC20, IERC4626, IERC7540 {
      * mandates that preview functions revert for async flows.
      */
     function previewDeposit(uint256 assets) public view virtual returns (uint256) {
-        require(!_isDepositAsync(), ERC7540DepositIsAsync());
+        require(!_isDepositAsync(), ERC7540AsyncDeposit());
         return _convertToShares(assets, Math.Rounding.Floor);
     }
 
@@ -341,7 +341,7 @@ abstract contract ERC7540 is ERC165, ERC20, IERC4626, IERC7540 {
      * MUST revert when {_isDepositAsync} returns `true`.
      */
     function previewMint(uint256 shares) public view virtual returns (uint256) {
-        require(!_isDepositAsync(), ERC7540DepositIsAsync());
+        require(!_isDepositAsync(), ERC7540AsyncDeposit());
         return _convertToAssets(shares, Math.Rounding.Ceil);
     }
 

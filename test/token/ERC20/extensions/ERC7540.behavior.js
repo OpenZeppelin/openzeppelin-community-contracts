@@ -52,6 +52,16 @@ function shouldBehaveLikeERC7540Deposit({ initialAssets, initialShares, balance,
     shouldSupportInterfaces(['ERC7540Deposit']);
   });
 
+  describe('Disabled ERC4626 functions', function () {
+    it('previewDeposit', async function () {
+      await expect(this.mock.previewDeposit(0n)).to.be.revertedWithCustomError(this.mock, 'ERC7540AsyncDeposit');
+    });
+
+    it('previewMint', async function () {
+      await expect(this.mock.previewMint(0n)).to.be.revertedWithCustomError(this.mock, 'ERC7540AsyncDeposit');
+    });
+  });
+
   describe('Should behave like ERC7540Deposit', function () {
     const assets = ethers.parseEther('100');
     const shares = (assets * initialShares) / initialAssets;
@@ -294,6 +304,16 @@ function shouldBehaveLikeERC7540Redeem({ initialAssets, initialShares, balance, 
   describe('supports ERC-7540 operator interface', function () {
     expect(INTERFACE_IDS.ERC7540Redeem).to.equal('0x620ee8e4');
     shouldSupportInterfaces(['ERC7540Redeem']);
+  });
+
+  describe('Disabled ERC4626 functions', function () {
+    it('previewWithdraw', async function () {
+      await expect(this.mock.previewWithdraw(0n)).to.be.revertedWithCustomError(this.mock, 'ERC7540AsyncRedeem');
+    });
+
+    it('previewRedeem', async function () {
+      await expect(this.mock.previewRedeem(0n)).to.be.revertedWithCustomError(this.mock, 'ERC7540AsyncRedeem');
+    });
   });
 
   describe('Should behave like ERC7540Redeem', function () {
