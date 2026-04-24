@@ -96,6 +96,12 @@ abstract contract ERC7540 is ERC165, ERC20, IERC4626, IERC7540 {
     /// @dev Neither {_isDepositAsync} nor {_isRedeemAsync} returns `true`.
     error ERC7540MissingAsync();
 
+    /// @dev Invalid attempt at minting shares on a deposit fulfill when configuration mints them during claim.
+    error ERC7540UnauthorizedMintSharesOnDepositFulfill();
+
+    /// @dev Invalid attempt at burning shares on a redeem fulfill when configuration burns them during request.
+    error ERC7540UnauthorizedBurnSharesOnRedeemFulfill();
+
     /**
      * @dev Sets the underlying asset contract. This must be an ERC-20-compatible contract.
      *
@@ -593,8 +599,7 @@ abstract contract ERC7540 is ERC165, ERC20, IERC4626, IERC7540 {
      * inside {_deposit} and this function must not be called.
      */
     function _mintSharesOnDepositFulfill(uint256 assets, uint256 shares) internal virtual {
-        // TODO: support the mint-on-claim model (shares minted at claim time when _depositShareOrigin is address(0))
-        require(_depositShareOrigin() != address(0), "ERC7540: not yet supported");
+        require(_depositShareOrigin() != address(0), ERC7540UnauthorizedMintSharesOnDepositFulfill());
         _totalPendingDepositAssets -= assets;
         _mint(_depositShareOrigin(), shares);
     }
@@ -685,8 +690,7 @@ abstract contract ERC7540 is ERC165, ERC20, IERC4626, IERC7540 {
      * time inside {_requestRedeem} and this function must not be called.
      */
     function _burnSharesOnRedeemFulfill(uint256 /*assets*/, uint256 shares) internal virtual {
-        // TODO: support the burn-on-request model (shares already burned when _redeemShareDestination is address(0))
-        require(_redeemShareDestination() != address(0), "ERC7540: not yet supported");
+        require(_redeemShareDestination() != address(0), ERC7540UnauthorizedBurnSharesOnRedeemFulfill());
         _totalPendingRedeemShares += shares;
         _burn(_redeemShareDestination(), shares);
     }
