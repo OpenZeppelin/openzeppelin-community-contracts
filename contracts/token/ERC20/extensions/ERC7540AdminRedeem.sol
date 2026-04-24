@@ -81,6 +81,10 @@ abstract contract ERC7540AdminRedeem is ERC7540 {
         _redeems[controller].claimableShares += shares;
         _redeems[controller].claimableAssets += assets;
 
+        if (_redeemShareDestination() != address(0)) {
+            _burnSharesOnRedeemFulfill(assets, shares);
+        }
+
         emit RedeemClaimable(controller, 0, assets, shares);
     }
 

@@ -32,13 +32,9 @@ describe('ERC7540Admin', function () {
 
         this.getRequestId = () => 0n;
         this.fulfillDeposit = (requestId, assets, shares, controller) =>
-          this.mock
-            .$_fulfillDeposit(assets, shares, controller)
-            .then(tx => (withTmpHolder ? this.mock.$_mintSharesOnDepositFulfill(assets, shares).then(() => tx) : tx));
+          this.mock.$_fulfillDeposit(assets, shares, controller);
         this.fulfillRedeem = (requestId, assets, shares, controller) =>
-          this.mock
-            .$_fulfillRedeem(shares, assets, controller)
-            .then(tx => (withTmpHolder ? this.mock.$_burnSharesOnRedeemFulfill(assets, shares).then(() => tx) : tx));
+          this.mock.$_fulfillRedeem(shares, assets, controller);
       });
 
       describe('metadata', function () {

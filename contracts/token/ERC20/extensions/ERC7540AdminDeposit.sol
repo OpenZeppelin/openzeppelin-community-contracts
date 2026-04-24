@@ -80,6 +80,10 @@ abstract contract ERC7540AdminDeposit is ERC7540 {
         _deposits[controller].claimableAssets += assets;
         _deposits[controller].claimableShares += shares;
 
+        if (_depositShareOrigin() != address(0)) {
+            _mintSharesOnDepositFulfill(assets, shares);
+        }
+
         emit DepositClaimable(controller, 0, assets, shares);
     }
 
