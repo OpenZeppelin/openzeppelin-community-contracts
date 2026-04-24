@@ -769,6 +769,10 @@ abstract contract ERC7540 is ERC165, ERC20, IERC4626, IERC7540 {
      *   deposit assets are tracked via {totalPendingDepositAssets} and decremented in {_deposit}.
      * * Non-zero address: shares are pre-minted to this address during fulfillment (via
      *   {_mintSharesOnDepositFulfill}) and transferred to the receiver on claim.
+     *
+     * NOTE: before using a non-zero address used here, it is essential to check that that address
+     * will not be able to transfer shares. We recommand using addresses such as address(1) or
+     * address(0xdead).
      */
     function _depositShareOrigin() internal view virtual returns (address) {
         return address(0);
@@ -781,6 +785,10 @@ abstract contract ERC7540 is ERC165, ERC20, IERC4626, IERC7540 {
      *   are tracked via {totalPendingRedeemShares} so that {totalSupply} remains accurate.
      * * Non-zero address: shares are transferred to this address on request and burned during
      *   fulfillment (via {_burnSharesOnRedeemFulfill}).
+     *
+     * NOTE: before using a non-zero address used here, it is essential to check that that address
+     * will not be able to transfer shares. We recommand using addresses such as address(1) or
+     * address(0xdead).
      */
     function _redeemShareDestination() internal view virtual returns (address) {
         return address(0);

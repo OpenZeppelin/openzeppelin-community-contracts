@@ -27,7 +27,13 @@ function shouldBehaveLikeERC7540Operator() {
   });
 }
 
-function shouldBehaveLikeERC7540Deposit({ initialAssets, initialShares, balance, supportCustomFulfill } = {}) {
+function shouldBehaveLikeERC7540Deposit({
+  initialAssets,
+  initialShares,
+  balance,
+  supportCustomFulfill,
+  withTmpHolder,
+} = {}) {
   initialAssets ??= ethers.parseEther('17000000');
   initialShares ??= ethers.parseEther('42000000');
   balance ??= ethers.parseEther('1000');
@@ -144,8 +150,12 @@ function shouldBehaveLikeERC7540Deposit({ initialAssets, initialShares, balance,
 
           await this.fulfillDeposit(this.requestId, assets, shares, this.controller);
 
-          await expect(this.mock.totalAssets()).to.eventually.equal(assetsBefore);
-          await expect(this.mock.totalSupply()).to.eventually.equal(supplyBefore);
+          await expect(this.mock.totalAssets()).to.eventually.equal(
+            withTmpHolder ? assetsBefore + assets : assetsBefore,
+          );
+          await expect(this.mock.totalSupply()).to.eventually.equal(
+            withTmpHolder ? supplyBefore + shares : supplyBefore,
+          );
 
           await expect(this.mock.pendingDepositRequest(this.requestId, this.controller)).to.eventually.equal(0n);
           await expect(this.mock.claimableDepositRequest(this.requestId, this.controller)).to.eventually.equal(assets);
@@ -216,8 +226,12 @@ function shouldBehaveLikeERC7540Deposit({ initialAssets, initialShares, balance,
           await expect(this.mock.pendingDepositRequest(this.requestId, this.controller)).to.eventually.equal(0n);
           await expect(this.mock.claimableDepositRequest(this.requestId, this.controller)).to.eventually.equal(0n);
           await expect(this.mock.maxDeposit(this.controller)).to.eventually.equal(0n);
-          await expect(this.mock.totalAssets()).to.eventually.equal(assetsBefore + assets);
-          await expect(this.mock.totalSupply()).to.eventually.equal(supplyBefore + shares);
+          await expect(this.mock.totalAssets()).to.eventually.equal(
+            withTmpHolder ? assetsBefore : assetsBefore + assets,
+          );
+          await expect(this.mock.totalSupply()).to.eventually.equal(
+            withTmpHolder ? supplyBefore : supplyBefore + shares,
+          );
         });
 
         it('operator can trigger deposit on behalf of controller', async function () {
@@ -268,8 +282,12 @@ function shouldBehaveLikeERC7540Deposit({ initialAssets, initialShares, balance,
           await expect(this.mock.pendingDepositRequest(this.requestId, this.controller)).to.eventually.equal(0n);
           await expect(this.mock.claimableDepositRequest(this.requestId, this.controller)).to.eventually.equal(0n);
           await expect(this.mock.maxMint(this.controller)).to.eventually.equal(0n);
-          await expect(this.mock.totalAssets()).to.eventually.equal(assetsBefore + assets);
-          await expect(this.mock.totalSupply()).to.eventually.equal(supplyBefore + shares);
+          await expect(this.mock.totalAssets()).to.eventually.equal(
+            withTmpHolder ? assetsBefore : assetsBefore + assets,
+          );
+          await expect(this.mock.totalSupply()).to.eventually.equal(
+            withTmpHolder ? supplyBefore : supplyBefore + shares,
+          );
         });
 
         it('operator can trigger mint on behalf of controller', async function () {
