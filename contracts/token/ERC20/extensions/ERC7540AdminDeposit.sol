@@ -86,16 +86,16 @@ abstract contract ERC7540AdminDeposit is ERC7540 {
     /// @dev Consumes `assets` from the claimable deposit and returns the proportional shares (rounded down).
     function _consumeClaimableDeposit(uint256 assets, address controller) internal virtual override returns (uint256) {
         uint256 shares = Math.mulDiv(assets, maxMint(controller), maxDeposit(controller), Math.Rounding.Floor);
-        _deposits[controller].claimableAssets = Math.saturatingSub(_deposits[controller].claimableAssets, assets);
-        _deposits[controller].claimableShares = Math.saturatingSub(_deposits[controller].claimableShares, shares);
+        _deposits[controller].claimableAssets -= assets;
+        _deposits[controller].claimableShares -= shares;
         return shares;
     }
 
     /// @dev Consumes `shares` from the claimable deposit and returns the proportional assets (rounded up).
     function _consumeClaimableMint(uint256 shares, address controller) internal virtual override returns (uint256) {
         uint256 assets = Math.mulDiv(shares, maxDeposit(controller), maxMint(controller), Math.Rounding.Ceil);
-        _deposits[controller].claimableAssets = Math.saturatingSub(_deposits[controller].claimableAssets, assets);
-        _deposits[controller].claimableShares = Math.saturatingSub(_deposits[controller].claimableShares, shares);
+        _deposits[controller].claimableAssets -= assets;
+        _deposits[controller].claimableShares -= shares;
         return assets;
     }
 

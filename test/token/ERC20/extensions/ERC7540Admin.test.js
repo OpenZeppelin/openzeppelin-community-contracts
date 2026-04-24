@@ -50,4 +50,214 @@ describe('ERC7540Admin', function () {
   shouldBehaveLikeERC7540Operator();
   shouldBehaveLikeERC7540Deposit({ supportCustomFulfill: true });
   shouldBehaveLikeERC7540Redeem({ supportCustomFulfill: true });
+
+  describe('multiple partial claims', function () {
+    it('deposit flow - finish with a deposit', async function () {
+      const [, user] = await ethers.getSigners();
+      await this.token.$_mint(user, 1000n);
+      await this.token.connect(user).approve(this.mock, ethers.MaxUint256);
+
+      await expect(this.mock.pendingDepositRequest(0n, user)).to.eventually.equal(0n);
+      await expect(this.mock.claimableDepositRequest(0n, user)).to.eventually.equal(0n);
+      await expect(this.mock.maxDeposit(user)).to.eventually.equal(0n);
+      await expect(this.mock.maxMint(user)).to.eventually.equal(0n);
+      await expect(this.mock.balanceOf(user)).to.eventually.equal(0n);
+
+      await this.mock.connect(user).requestDeposit(100n, user, user);
+
+      await expect(this.mock.pendingDepositRequest(0n, user)).to.eventually.equal(100n);
+      await expect(this.mock.claimableDepositRequest(0n, user)).to.eventually.equal(0n);
+      await expect(this.mock.maxDeposit(user)).to.eventually.equal(0n);
+      await expect(this.mock.maxMint(user)).to.eventually.equal(0n);
+      await expect(this.mock.balanceOf(user)).to.eventually.equal(0n);
+
+      await this.mock.$_fulfillDeposit(17n, 42n, user);
+
+      await expect(this.mock.pendingDepositRequest(0n, user)).to.eventually.equal(83n);
+      await expect(this.mock.claimableDepositRequest(0n, user)).to.eventually.equal(17n);
+      await expect(this.mock.maxDeposit(user)).to.eventually.equal(17n);
+      await expect(this.mock.maxMint(user)).to.eventually.equal(42n);
+      await expect(this.mock.balanceOf(user)).to.eventually.equal(0n);
+
+      await this.mock.connect(user).deposit(5n, user); // 5 assets => 12 shares
+
+      await expect(this.mock.pendingDepositRequest(0n, user)).to.eventually.equal(83n);
+      await expect(this.mock.claimableDepositRequest(0n, user)).to.eventually.equal(12n); // 17 - 5
+      await expect(this.mock.maxDeposit(user)).to.eventually.equal(12n); // 17 - 5
+      await expect(this.mock.maxMint(user)).to.eventually.equal(30n); // 42 - 12
+      await expect(this.mock.balanceOf(user)).to.eventually.equal(12n);
+
+      await this.mock.connect(user).mint(8n, user); // 8 shares => 4 assets
+
+      await expect(this.mock.pendingDepositRequest(0n, user)).to.eventually.equal(83n);
+      await expect(this.mock.claimableDepositRequest(0n, user)).to.eventually.equal(8n); // 17 - 5 - 4
+      await expect(this.mock.maxDeposit(user)).to.eventually.equal(8n); // 17 - 5 - 4
+      await expect(this.mock.maxMint(user)).to.eventually.equal(22n); // 42 - 12 - 8
+      await expect(this.mock.balanceOf(user)).to.eventually.equal(20n);
+
+      await this.mock.connect(user).deposit(this.mock.maxDeposit(user), user); // should mint all the rest
+
+      await expect(this.mock.pendingDepositRequest(0n, user)).to.eventually.equal(83n);
+      await expect(this.mock.claimableDepositRequest(0n, user)).to.eventually.equal(0n);
+      await expect(this.mock.maxDeposit(user)).to.eventually.equal(0n);
+      await expect(this.mock.maxMint(user)).to.eventually.equal(0n);
+      await expect(this.mock.balanceOf(user)).to.eventually.equal(42n);
+    });
+
+    it('deposit flow - finish with a mint', async function () {
+      const [, user] = await ethers.getSigners();
+      await this.token.$_mint(user, 1000n);
+      await this.token.connect(user).approve(this.mock, ethers.MaxUint256);
+
+      await expect(this.mock.pendingDepositRequest(0n, user)).to.eventually.equal(0n);
+      await expect(this.mock.claimableDepositRequest(0n, user)).to.eventually.equal(0n);
+      await expect(this.mock.maxDeposit(user)).to.eventually.equal(0n);
+      await expect(this.mock.maxMint(user)).to.eventually.equal(0n);
+      await expect(this.mock.balanceOf(user)).to.eventually.equal(0n);
+
+      await this.mock.connect(user).requestDeposit(100n, user, user);
+
+      await expect(this.mock.pendingDepositRequest(0n, user)).to.eventually.equal(100n);
+      await expect(this.mock.claimableDepositRequest(0n, user)).to.eventually.equal(0n);
+      await expect(this.mock.maxDeposit(user)).to.eventually.equal(0n);
+      await expect(this.mock.maxMint(user)).to.eventually.equal(0n);
+      await expect(this.mock.balanceOf(user)).to.eventually.equal(0n);
+
+      await this.mock.$_fulfillDeposit(17n, 42n, user);
+
+      await expect(this.mock.pendingDepositRequest(0n, user)).to.eventually.equal(83n);
+      await expect(this.mock.claimableDepositRequest(0n, user)).to.eventually.equal(17n);
+      await expect(this.mock.maxDeposit(user)).to.eventually.equal(17n);
+      await expect(this.mock.maxMint(user)).to.eventually.equal(42n);
+      await expect(this.mock.balanceOf(user)).to.eventually.equal(0n);
+
+      await this.mock.connect(user).mint(8n, user); // 8 shares => 4 assets
+
+      await expect(this.mock.pendingDepositRequest(0n, user)).to.eventually.equal(83n);
+      await expect(this.mock.claimableDepositRequest(0n, user)).to.eventually.equal(13n); // 17 - 4
+      await expect(this.mock.maxDeposit(user)).to.eventually.equal(13n); // 17 - 4
+      await expect(this.mock.maxMint(user)).to.eventually.equal(34n); // 42 - 8
+      await expect(this.mock.balanceOf(user)).to.eventually.equal(8n);
+
+      await this.mock.connect(user).deposit(5n, user); // 5 assets => 13 shares
+
+      await expect(this.mock.pendingDepositRequest(0n, user)).to.eventually.equal(83n);
+      await expect(this.mock.claimableDepositRequest(0n, user)).to.eventually.equal(8n); // 17 - 4 - 5
+      await expect(this.mock.maxDeposit(user)).to.eventually.equal(8n); // 17 - 4 - 5
+      await expect(this.mock.maxMint(user)).to.eventually.equal(21n); // 42 - 8 - 13
+      await expect(this.mock.balanceOf(user)).to.eventually.equal(21n);
+
+      await this.mock.connect(user).mint(this.mock.maxMint(user), user); // should mint all the rest
+
+      await expect(this.mock.pendingDepositRequest(0n, user)).to.eventually.equal(83n);
+      await expect(this.mock.claimableDepositRequest(0n, user)).to.eventually.equal(0n);
+      await expect(this.mock.maxDeposit(user)).to.eventually.equal(0n);
+      await expect(this.mock.maxMint(user)).to.eventually.equal(0n);
+      await expect(this.mock.balanceOf(user)).to.eventually.equal(42n);
+    });
+
+    it('redeem flow - finish with a redeem', async function () {
+      const [, user] = await ethers.getSigners();
+      await this.token.$_mint(this.mock, 1000n);
+      await this.mock.$_mint(user, 1000n);
+
+      await expect(this.mock.pendingRedeemRequest(0n, user)).to.eventually.equal(0n);
+      await expect(this.mock.claimableRedeemRequest(0n, user)).to.eventually.equal(0n);
+      await expect(this.mock.maxRedeem(user)).to.eventually.equal(0n);
+      await expect(this.mock.maxWithdraw(user)).to.eventually.equal(0n);
+      await expect(this.token.balanceOf(user)).to.eventually.equal(0n);
+
+      await this.mock.connect(user).requestRedeem(100n, user, user);
+
+      await expect(this.mock.pendingRedeemRequest(0n, user)).to.eventually.equal(100n);
+      await expect(this.mock.claimableRedeemRequest(0n, user)).to.eventually.equal(0n);
+      await expect(this.mock.maxRedeem(user)).to.eventually.equal(0n);
+      await expect(this.mock.maxWithdraw(user)).to.eventually.equal(0n);
+      await expect(this.token.balanceOf(user)).to.eventually.equal(0n);
+
+      await this.mock.$_fulfillRedeem(17n, 42n, user);
+
+      await expect(this.mock.pendingRedeemRequest(0n, user)).to.eventually.equal(83n);
+      await expect(this.mock.claimableRedeemRequest(0n, user)).to.eventually.equal(17n);
+      await expect(this.mock.maxRedeem(user)).to.eventually.equal(17n);
+      await expect(this.mock.maxWithdraw(user)).to.eventually.equal(42n);
+      await expect(this.token.balanceOf(user)).to.eventually.equal(0n);
+
+      await this.mock.connect(user).redeem(5n, user, user); // 5 shares => 12 assets
+
+      await expect(this.mock.pendingRedeemRequest(0n, user)).to.eventually.equal(83n);
+      await expect(this.mock.claimableRedeemRequest(0n, user)).to.eventually.equal(12n); // 17 - 5
+      await expect(this.mock.maxRedeem(user)).to.eventually.equal(12n); // 17 - 5
+      await expect(this.mock.maxWithdraw(user)).to.eventually.equal(30n); // 42 - 12
+      await expect(this.token.balanceOf(user)).to.eventually.equal(12n);
+
+      await this.mock.connect(user).withdraw(8n, user, user); // 8 assets => 4 shares
+
+      await expect(this.mock.pendingRedeemRequest(0n, user)).to.eventually.equal(83n);
+      await expect(this.mock.claimableRedeemRequest(0n, user)).to.eventually.equal(8n); // 17 - 5 - 4
+      await expect(this.mock.maxRedeem(user)).to.eventually.equal(8n); // 17 - 5 - 4
+      await expect(this.mock.maxWithdraw(user)).to.eventually.equal(22n); // 42 - 12 - 8
+      await expect(this.token.balanceOf(user)).to.eventually.equal(20n);
+
+      await this.mock.connect(user).redeem(this.mock.maxRedeem(user), user, user); // should mint all the rest
+
+      await expect(this.mock.pendingRedeemRequest(0n, user)).to.eventually.equal(83n);
+      await expect(this.mock.claimableRedeemRequest(0n, user)).to.eventually.equal(0n);
+      await expect(this.mock.maxRedeem(user)).to.eventually.equal(0n);
+      await expect(this.mock.maxWithdraw(user)).to.eventually.equal(0n);
+      await expect(this.token.balanceOf(user)).to.eventually.equal(42n);
+    });
+
+    it('redeem flow - finish with a withdraw', async function () {
+      const [, user] = await ethers.getSigners();
+      await this.token.$_mint(this.mock, 1000n);
+      await this.mock.$_mint(user, 1000n);
+
+      await expect(this.mock.pendingRedeemRequest(0n, user)).to.eventually.equal(0n);
+      await expect(this.mock.claimableRedeemRequest(0n, user)).to.eventually.equal(0n);
+      await expect(this.mock.maxRedeem(user)).to.eventually.equal(0n);
+      await expect(this.mock.maxWithdraw(user)).to.eventually.equal(0n);
+      await expect(this.token.balanceOf(user)).to.eventually.equal(0n);
+
+      await this.mock.connect(user).requestRedeem(100n, user, user);
+
+      await expect(this.mock.pendingRedeemRequest(0n, user)).to.eventually.equal(100n);
+      await expect(this.mock.claimableRedeemRequest(0n, user)).to.eventually.equal(0n);
+      await expect(this.mock.maxRedeem(user)).to.eventually.equal(0n);
+      await expect(this.mock.maxWithdraw(user)).to.eventually.equal(0n);
+      await expect(this.token.balanceOf(user)).to.eventually.equal(0n);
+
+      await this.mock.$_fulfillRedeem(17n, 42n, user);
+
+      await expect(this.mock.pendingRedeemRequest(0n, user)).to.eventually.equal(83n);
+      await expect(this.mock.claimableRedeemRequest(0n, user)).to.eventually.equal(17n);
+      await expect(this.mock.maxRedeem(user)).to.eventually.equal(17n);
+      await expect(this.mock.maxWithdraw(user)).to.eventually.equal(42n);
+      await expect(this.token.balanceOf(user)).to.eventually.equal(0n);
+
+      await this.mock.connect(user).withdraw(8n, user, user); // 8 assets => 4 shares
+
+      await expect(this.mock.pendingRedeemRequest(0n, user)).to.eventually.equal(83n);
+      await expect(this.mock.claimableRedeemRequest(0n, user)).to.eventually.equal(13n); // 17 - 4
+      await expect(this.mock.maxRedeem(user)).to.eventually.equal(13n); // 17 - 4
+      await expect(this.mock.maxWithdraw(user)).to.eventually.equal(34n); // 42 - 8
+      await expect(this.token.balanceOf(user)).to.eventually.equal(8n);
+
+      await this.mock.connect(user).redeem(5n, user, user); // 5 shares => 13 assets
+
+      await expect(this.mock.pendingRedeemRequest(0n, user)).to.eventually.equal(83n);
+      await expect(this.mock.claimableRedeemRequest(0n, user)).to.eventually.equal(8n); // 17 - 4 - 5
+      await expect(this.mock.maxRedeem(user)).to.eventually.equal(8n); // 17 - 4 - 5
+      await expect(this.mock.maxWithdraw(user)).to.eventually.equal(21n); // 42 - 8 - 13
+      await expect(this.token.balanceOf(user)).to.eventually.equal(21n);
+
+      await this.mock.connect(user).withdraw(this.mock.maxWithdraw(user), user, user); // should mint all the rest
+
+      await expect(this.mock.pendingRedeemRequest(0n, user)).to.eventually.equal(83n);
+      await expect(this.mock.claimableRedeemRequest(0n, user)).to.eventually.equal(0n);
+      await expect(this.mock.maxRedeem(user)).to.eventually.equal(0n);
+      await expect(this.mock.maxWithdraw(user)).to.eventually.equal(0n);
+      await expect(this.token.balanceOf(user)).to.eventually.equal(42n);
+    });
+  });
 });
