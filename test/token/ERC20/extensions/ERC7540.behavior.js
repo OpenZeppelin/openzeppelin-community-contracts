@@ -229,6 +229,16 @@ function shouldBehaveLikeERC7540Deposit({ initialAssets, initialShares, balance,
           await expect(tx).to.changeTokenBalance(this.mock, this.receiver, shares);
         });
 
+        it('reverts when trying to deposit more than what is claimable', async function () {
+          await expect(
+            this.mock
+              .connect(this.controller)
+              .deposit(assets + 1n, this.receiver, ethers.Typed.address(this.controller)),
+          )
+            .to.be.revertedWithCustomError(this.mock, 'ERC4626ExceededMaxDeposit')
+            .withArgs(this.controller, assets + 1n, assets);
+        });
+
         it('reverts when caller is neither owner nor operator of owner', async function () {
           await expect(
             this.mock.connect(this.other).deposit(assets, this.receiver, ethers.Typed.address(this.controller)),
@@ -269,6 +279,14 @@ function shouldBehaveLikeERC7540Deposit({ initialAssets, initialShares, balance,
 
           await expect(tx).to.emit(this.mock, 'Deposit').withArgs(this.operator, this.receiver, assets, shares);
           await expect(tx).to.changeTokenBalance(this.mock, this.receiver, shares);
+        });
+
+        it('reverts when trying to mint more than what is claimable', async function () {
+          await expect(
+            this.mock.connect(this.controller).mint(shares + 1n, this.receiver, ethers.Typed.address(this.controller)),
+          )
+            .to.be.revertedWithCustomError(this.mock, 'ERC4626ExceededMaxMint')
+            .withArgs(this.controller, shares + 1n, shares);
         });
 
         it('reverts when caller is neither owner nor operator of owner', async function () {
@@ -502,6 +520,12 @@ function shouldBehaveLikeERC7540Redeem({ initialAssets, initialShares, balance, 
           await expect(tx).to.changeTokenBalances(this.token, [this.mock, this.receiver], [-assets, assets]);
         });
 
+        it('reverts when trying to redeem more than what is claimable', async function () {
+          await expect(this.mock.connect(this.controller).redeem(shares + 1n, this.receiver, this.controller))
+            .to.be.revertedWithCustomError(this.mock, 'ERC4626ExceededMaxRedeem')
+            .withArgs(this.controller, shares + 1n, shares);
+        });
+
         it('reverts when caller is neither owner nor operator of owner', async function () {
           await expect(this.mock.connect(this.other).redeem(shares, this.receiver, this.controller))
             .to.be.revertedWithCustomError(this.mock, 'ERC7540InvalidOperator')
@@ -539,6 +563,12 @@ function shouldBehaveLikeERC7540Redeem({ initialAssets, initialShares, balance, 
             .to.emit(this.mock, 'Withdraw')
             .withArgs(this.operator, this.receiver, this.controller, assets, shares);
           await expect(tx).to.changeTokenBalances(this.token, [this.mock, this.receiver], [-assets, assets]);
+        });
+
+        it('reverts when trying to withdraw more than what is claimable', async function () {
+          await expect(this.mock.connect(this.controller).withdraw(assets + 1n, this.receiver, this.controller))
+            .to.be.revertedWithCustomError(this.mock, 'ERC4626ExceededMaxWithdraw')
+            .withArgs(this.controller, assets + 1n, assets);
         });
 
         it('reverts when caller is neither owner nor operator of owner', async function () {
