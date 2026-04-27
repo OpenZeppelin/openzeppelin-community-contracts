@@ -770,9 +770,10 @@ abstract contract ERC7540 is ERC165, ERC20, IERC4626, IERC7540 {
      * * Non-zero address: shares are pre-minted to this address during fulfillment (via
      *   {_mintSharesOnDepositFulfill}) and transferred to the receiver on claim.
      *
-     * NOTE: before using a non-zero address used here, it is essential to check that that address
-     * will not be able to transfer shares. We recommand using addresses such as address(1) or
-     * address(0xdead).
+     * NOTE: If overridden to return a non-zero address, that address must not be able to transfer
+     * shares (otherwise pre-minted shares could be moved before they are claimed). Use an unowned
+     * address such as `address(0xdead)`. Avoid low addresses (e.g. `address(1)` through
+     * `address(9)`) as they correspond to EVM precompiles.
      */
     function _depositShareOrigin() internal view virtual returns (address) {
         return address(0);
@@ -786,9 +787,10 @@ abstract contract ERC7540 is ERC165, ERC20, IERC4626, IERC7540 {
      * * Non-zero address: shares are transferred to this address on request and burned during
      *   fulfillment (via {_burnSharesOnRedeemFulfill}).
      *
-     * NOTE: before using a non-zero address used here, it is essential to check that that address
-     * will not be able to transfer shares. We recommand using addresses such as address(1) or
-     * address(0xdead).
+     * NOTE: If overridden to return a non-zero address, that address must not be able to transfer
+     * shares (otherwise escrowed shares could be moved before they are burned). Use an unowned
+     * address such as `address(0xdead)`. Avoid low addresses (e.g. `address(1)` through
+     * `address(9)`) as they correspond to EVM precompiles.
      */
     function _redeemShareDestination() internal view virtual returns (address) {
         return address(0);
