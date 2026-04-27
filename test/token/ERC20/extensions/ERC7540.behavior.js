@@ -202,6 +202,18 @@ function shouldBehaveLikeERC7540Deposit({
             .to.be.revertedWithCustomError(this.mock, 'ERC7540DepositInsufficientPendingAssets')
             .withArgs(assets + 1n, assets);
         });
+
+        it('_mintSharesOnDepositFulfill is blocked when _depositShareOrigin() is address(0)', async function () {
+          const depositShareOrigin = await this.mock.$_depositShareOrigin();
+          if (depositShareOrigin == ethers.ZeroAddress) {
+            await expect(this.mock.$_mintSharesOnDepositFulfill(0n, 0n)).to.be.revertedWithCustomError(
+              this.mock,
+              'ERC7540UnauthorizedMintSharesOnDepositFulfill',
+            );
+          } else {
+            this.skip();
+          }
+        });
       });
 
     describe('claim', function () {
@@ -506,6 +518,18 @@ function shouldBehaveLikeERC7540Redeem({ initialAssets, initialShares, balance, 
           await expect(this.fulfillRedeem(this.requestId, assets, shares + 1n, this.controller))
             .to.be.revertedWithCustomError(this.mock, 'ERC7540RedeemInsufficientPendingShares')
             .withArgs(shares + 1n, shares);
+        });
+
+        it('_burnSharesOnRedeemFulfill is blocked when _redeemShareDestination() is address(0)', async function () {
+          const redeemShareDestination = await this.mock.$_redeemShareDestination();
+          if (redeemShareDestination == ethers.ZeroAddress) {
+            await expect(this.mock.$_burnSharesOnRedeemFulfill(0n, 0n)).to.be.revertedWithCustomError(
+              this.mock,
+              'ERC7540UnauthorizedBurnSharesOnRedeemFulfill',
+            );
+          } else {
+            this.skip();
+          }
         });
       });
 
