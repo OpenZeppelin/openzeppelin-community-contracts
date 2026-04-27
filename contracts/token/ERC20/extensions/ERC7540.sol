@@ -772,8 +772,8 @@ abstract contract ERC7540 is ERC165, ERC20, IERC4626, IERC7540 {
      *
      * NOTE: If overridden to return a non-zero address, that address must not be able to transfer
      * shares (otherwise pre-minted shares could be moved before they are claimed). Use an unowned
-     * address such as `address(0xdead)`. While some may be safe, wee recommand avoiding any
-     * value that falls in the reserved precompile address range (address(1) to address(0x1ff)).
+     * address such as `address(0xdead)`. Avoid addresses in the precompile reserved range
+     * (`address(1)` through `address(0x1ff)`, see EIP-7587).
      */
     function _depositShareOrigin() internal view virtual returns (address) {
         return address(0);
@@ -789,8 +789,8 @@ abstract contract ERC7540 is ERC165, ERC20, IERC4626, IERC7540 {
      *
      * NOTE: If overridden to return a non-zero address, that address must not be able to transfer
      * shares (otherwise escrowed shares could be moved before they are burned). Use an unowned
-     * address such as `address(0xdead)`. While some may be safe, wee recommand avoiding any
-     * value that falls in the reserved precompile address range (address(1) to address(0x1ff)).
+     * address such as `address(0xdead)`. Avoid addresses in the precompile reserved range
+     * (`address(1)` through `address(0x1ff)`, see EIP-7587).
      */
     function _redeemShareDestination() internal view virtual returns (address) {
         return address(0);
