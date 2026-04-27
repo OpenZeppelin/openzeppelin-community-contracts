@@ -3,5 +3,7 @@
 ** xref:contracts::accounts.adoc[Accounts]
 *** xref:account-modules.adoc[Modules]
 ** xref:paymasters.adoc[Paymasters]
+* xref:contracts::tokens.adoc[Tokens]
+** xref:erc7540.adoc[ERC-7540]
 * xref:crosschain.adoc[Crosschain]
 * xref:utilities.adoc[Utilities]
