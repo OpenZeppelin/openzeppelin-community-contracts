@@ -117,7 +117,7 @@ abstract contract ERC7540DelayRedeem is ERC7540, IERC6372 {
         unchecked {
             uint48 timepoint = requestId.toUint48();
             return
-                timepoint > clock()
+                (timepoint == 0 || timepoint > clock())
                     ? 0
                     : _readyRedeemAt(controller, timepoint) - _readyRedeemAt(controller, timepoint - 1);
         }

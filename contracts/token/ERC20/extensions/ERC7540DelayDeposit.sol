@@ -124,7 +124,7 @@ abstract contract ERC7540DelayDeposit is ERC7540, IERC6372 {
         unchecked {
             uint48 timepoint = requestId.toUint48();
             return
-                timepoint > clock()
+                (timepoint == 0 || timepoint > clock())
                     ? 0
                     : _readyDepositAt(controller, timepoint) - _readyDepositAt(controller, timepoint - 1);
         }

@@ -1,12 +1,8 @@
 const { ethers } = require('hardhat');
 const { expect } = require('chai');
 const { loadFixture } = require('@nomicfoundation/hardhat-network-helpers');
-
-const {
-  shouldBehaveLikeERC7540Operator,
-  shouldBehaveLikeERC7540Deposit,
-  shouldBehaveLikeERC4626Redeem,
-} = require('./ERC7540.behavior');
+const { shouldBehaveLikeERC4626Redeem } = require('./ERC4626.behavior');
+const { shouldBehaveLikeERC7540Operator, shouldBehaveLikeERC7540Deposit } = require('./ERC7540.behavior');
 
 const name = 'Vault Shares';
 const symbol = 'vSHR';
