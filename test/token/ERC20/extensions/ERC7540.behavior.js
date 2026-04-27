@@ -366,6 +366,32 @@ function shouldBehaveLikeERC4626Deposit({ initialAssets, initialShares, balance 
     });
   });
 
+  describe('Internal async deposit hooks revert', function () {
+    it('_pendingDepositRequest', async function () {
+      await expect(this.mock.$_pendingDepositRequest(0n, this.owner)).to.be.reverted;
+    });
+
+    it('_claimableDepositRequest', async function () {
+      await expect(this.mock.$_claimableDepositRequest(0n, this.owner)).to.be.reverted;
+    });
+
+    it('_consumeClaimableDeposit', async function () {
+      await expect(this.mock.$_consumeClaimableDeposit(0n, this.owner)).to.be.reverted;
+    });
+
+    it('_consumeClaimableMint', async function () {
+      await expect(this.mock.$_consumeClaimableMint(0n, this.owner)).to.be.reverted;
+    });
+
+    it('_asyncMaxDeposit', async function () {
+      await expect(this.mock.$_asyncMaxDeposit(this.owner)).to.be.reverted;
+    });
+
+    it('_asyncMaxMint', async function () {
+      await expect(this.mock.$_asyncMaxMint(this.owner)).to.be.reverted;
+    });
+  });
+
   describe('Should behave like ERC4626 deposit', function () {
     const assets = ethers.parseEther('100');
 
@@ -450,6 +476,32 @@ function shouldBehaveLikeERC4626Redeem({ initialAssets, initialShares, balance }
         this.mock,
         'ERC7540SyncRedeem',
       );
+    });
+  });
+
+  describe('Internal async redeem hooks revert', function () {
+    it('_pendingRedeemRequest', async function () {
+      await expect(this.mock.$_pendingRedeemRequest(0n, this.owner)).to.be.reverted;
+    });
+
+    it('_claimableRedeemRequest', async function () {
+      await expect(this.mock.$_claimableRedeemRequest(0n, this.owner)).to.be.reverted;
+    });
+
+    it('_consumeClaimableWithdraw', async function () {
+      await expect(this.mock.$_consumeClaimableWithdraw(0n, this.owner)).to.be.reverted;
+    });
+
+    it('_consumeClaimableRedeem', async function () {
+      await expect(this.mock.$_consumeClaimableRedeem(0n, this.owner)).to.be.reverted;
+    });
+
+    it('_asyncMaxWithdraw', async function () {
+      await expect(this.mock.$_asyncMaxWithdraw(this.owner)).to.be.reverted;
+    });
+
+    it('_asyncMaxRedeem', async function () {
+      await expect(this.mock.$_asyncMaxRedeem(this.owner)).to.be.reverted;
     });
   });
 
