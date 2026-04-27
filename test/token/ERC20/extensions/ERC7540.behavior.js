@@ -76,6 +76,8 @@ function shouldBehaveLikeERC7540Deposit({
       it('transfers tokens, marks as pending, emits DepositRequest with requestId 0', async function () {
         const assetsBefore = await this.mock.totalAssets();
         const supplyBefore = await this.mock.totalSupply();
+        const convertToAssetsBefore = await this.mock.convertToAssets(shares);
+        const convertToSharesBefore = await this.mock.convertToShares(assets);
 
         const tx = this.mock.connect(this.owner).requestDeposit(assets, this.controller, this.owner);
         const requestId = await this.getRequestId(tx);
@@ -88,6 +90,8 @@ function shouldBehaveLikeERC7540Deposit({
 
         await expect(this.mock.totalAssets()).to.eventually.equal(assetsBefore);
         await expect(this.mock.totalSupply()).to.eventually.equal(supplyBefore);
+        await expect(this.mock.convertToAssets(shares)).to.eventually.equal(convertToAssetsBefore);
+        await expect(this.mock.convertToShares(assets)).to.eventually.equal(convertToSharesBefore);
 
         await expect(this.mock.pendingDepositRequest(requestId, this.controller)).to.eventually.equal(assets);
         await expect(this.mock.claimableDepositRequest(requestId, this.controller)).to.eventually.equal(0n);
@@ -378,6 +382,8 @@ function shouldBehaveLikeERC7540Redeem({ initialAssets, initialShares, balance, 
       it('burns shares, marks as pending, emits RedeemRequest with requestId 0', async function () {
         const assetsBefore = await this.mock.totalAssets();
         const supplyBefore = await this.mock.totalSupply();
+        const convertToAssetsBefore = await this.mock.convertToAssets(shares);
+        const convertToSharesBefore = await this.mock.convertToShares(assets);
 
         // perform request redeem, and extract requestId from timing
         const tx = this.mock.connect(this.owner).requestRedeem(shares, this.controller, this.owner);
@@ -393,6 +399,8 @@ function shouldBehaveLikeERC7540Redeem({ initialAssets, initialShares, balance, 
         // totalSupply includes shares for in-flight redeem
         await expect(this.mock.totalAssets()).to.eventually.equal(assetsBefore);
         await expect(this.mock.totalSupply()).to.eventually.equal(supplyBefore);
+        await expect(this.mock.convertToAssets(shares)).to.eventually.equal(convertToAssetsBefore);
+        await expect(this.mock.convertToShares(assets)).to.eventually.equal(convertToSharesBefore);
 
         // check pending redeem is registered
         await expect(this.mock.pendingRedeemRequest(requestId, this.controller)).to.eventually.equal(shares);
