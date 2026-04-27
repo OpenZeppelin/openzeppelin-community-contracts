@@ -420,7 +420,7 @@ abstract contract ERC7540 is ERC165, ERC20, IERC4626, IERC7540 {
         }
 
         uint256 shares = _isDepositAsync() ? _consumeClaimableDeposit(assets, controller) : previewDeposit(assets);
-        _deposit(_msgSender(), receiver, assets, shares);
+        _deposit(_isDepositAsync() ? controller : _msgSender(), receiver, assets, shares);
         return shares;
     }
 
@@ -456,7 +456,7 @@ abstract contract ERC7540 is ERC165, ERC20, IERC4626, IERC7540 {
         }
 
         uint256 assets = _isDepositAsync() ? _consumeClaimableMint(shares, controller) : previewMint(shares);
-        _deposit(_msgSender(), receiver, assets, shares);
+        _deposit(_isDepositAsync() ? controller : _msgSender(), receiver, assets, shares);
         return assets;
     }
 
@@ -610,7 +610,7 @@ abstract contract ERC7540 is ERC165, ERC20, IERC4626, IERC7540 {
      *
      * Handles three cases depending on the vault configuration:
      *
-     * 1. **Synchronous** ({_isDepositAsync} returns `false`): transfers assets from `caller` into the vault
+     * 1. **Synchronous** ({_isDepositAsync} returns `false`): transfers assets from `callerOrController` into the vault
      *    and mints new shares to `receiver`. Standard ERC-4626 behavior.
      * 2. **Async, mint-on-claim** ({_depositShareOrigin} returns `address(0)`): decrements
      *    `_totalPendingDepositAssets` and mints new shares to `receiver`. No asset transfer occurs
@@ -618,9 +618,10 @@ abstract contract ERC7540 is ERC165, ERC20, IERC4626, IERC7540 {
      * 3. **Async, pre-minted** ({_depositShareOrigin} returns non-zero): transfers pre-minted shares
      *    from the share origin address to `receiver`.
      *
-     * Emits {IERC4626-Deposit}.
+     * Emits {IERC4626-Deposit}. Per ERC-7540, the first event parameter is the `controller` in async
+     * mode and `msg.sender` in sync mode.
      */
-    function _deposit(address caller, address receiver, uint256 assets, uint256 shares) internal virtual {
+    function _deposit(address callerOrController, address receiver, uint256 assets, uint256 shares) internal virtual {
         // If asset() is ERC-777, `transferFrom` can trigger a reentrancy BEFORE the transfer happens through the
         // `tokensToSend` hook. On the other hand, the `tokenReceived` hook, that is triggered after the transfer,
         // calls the vault, which is assumed not malicious.
@@ -629,7 +630,7 @@ abstract contract ERC7540 is ERC165, ERC20, IERC4626, IERC7540 {
         // assets are transferred and before the shares are minted, which is a valid state.
         if (!_isDepositAsync()) {
             // slither-disable-next-line reentrancy-no-eth
-            _transferIn(caller, assets);
+            _transferIn(callerOrController, assets);
             _mint(receiver, shares);
         } else if (_depositShareOrigin() == address(0)) {
             _totalPendingDepositAssets -= assets;
@@ -638,7 +639,7 @@ abstract contract ERC7540 is ERC165, ERC20, IERC4626, IERC7540 {
             _transfer(_depositShareOrigin(), receiver, shares);
         }
 
-        emit Deposit(caller, receiver, assets, shares);
+        emit Deposit(callerOrController, receiver, assets, shares);
     }
 
     /**

@@ -261,7 +261,7 @@ function shouldBehaveLikeERC7540Deposit({
             .connect(this.operator)
             .deposit(assets, this.receiver, ethers.Typed.address(this.controller));
 
-          await expect(tx).to.emit(this.mock, 'Deposit').withArgs(this.operator, this.receiver, assets, shares);
+          await expect(tx).to.emit(this.mock, 'Deposit').withArgs(this.controller, this.receiver, assets, shares);
           await expect(tx).to.changeTokenBalance(this.mock, this.receiver, shares);
         });
 
@@ -317,7 +317,7 @@ function shouldBehaveLikeERC7540Deposit({
             .connect(this.operator)
             .mint(shares, this.receiver, ethers.Typed.address(this.controller));
 
-          await expect(tx).to.emit(this.mock, 'Deposit').withArgs(this.operator, this.receiver, assets, shares);
+          await expect(tx).to.emit(this.mock, 'Deposit').withArgs(this.controller, this.receiver, assets, shares);
           await expect(tx).to.changeTokenBalance(this.mock, this.receiver, shares);
         });
 
