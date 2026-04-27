@@ -76,7 +76,13 @@ abstract contract ERC7540DelayDeposit is ERC7540, IERC6372 {
         return super._requestDeposit(assets, controller, owner, timepoint);
     }
 
-    /// @dev Consumes `assets` from claimable deposits, returns proportional shares (rounded down).
+    /**
+     * @dev Consumes `assets` from claimable deposits, returns proportional shares (rounded down).
+     *
+     * Requirements:
+     *
+     * * {maxMint} must not be 0 for `controller`. Panics with division by zero otherwise.
+     */
     function _consumeClaimableDeposit(uint256 assets, address controller) internal virtual override returns (uint256) {
         uint256 shares = Math.mulDiv(assets, maxMint(controller), maxDeposit(controller), Math.Rounding.Floor);
         _claimedDeposits[controller] += assets;
@@ -101,7 +107,7 @@ abstract contract ERC7540DelayDeposit is ERC7540, IERC6372 {
         unchecked {
             uint48 timepoint = requestId.toUint48();
             return
-                requestId > clock()
+                timepoint > clock()
                     ? _readyDepositAt(controller, timepoint) - _readyDepositAt(controller, timepoint - 1)
                     : 0;
         }
@@ -118,7 +124,7 @@ abstract contract ERC7540DelayDeposit is ERC7540, IERC6372 {
         unchecked {
             uint48 timepoint = requestId.toUint48();
             return
-                requestId > clock()
+                timepoint > clock()
                     ? 0
                     : _readyDepositAt(controller, timepoint) - _readyDepositAt(controller, timepoint - 1);
         }

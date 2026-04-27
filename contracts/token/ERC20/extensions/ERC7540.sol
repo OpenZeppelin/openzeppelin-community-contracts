@@ -406,6 +406,7 @@ abstract contract ERC7540 is ERC165, ERC20, IERC4626, IERC7540 {
      *
      * * `assets` must not exceed {maxDeposit} for the relevant account.
      * * When async, `msg.sender` must be `controller` or an approved operator of `controller`.
+     * * `assets` must not be 0 if {maxDeposit} is 0 for `controller` or `receiver`. Panics with division by zero otherwise.
      */
     function deposit(
         uint256 assets,
@@ -843,6 +844,11 @@ abstract contract ERC7540 is ERC165, ERC20, IERC4626, IERC7540 {
     /**
      * @dev Consumes `assets` worth of a Claimable deposit for `controller` and returns the corresponding
      * number of shares. Called by {deposit} (three-argument overload) in async mode.
+     *
+     * NOTE: In async mode, this function may be susceptible to the inflation attack vector described in
+     * https://docs.openzeppelin.com/contracts/5.x/erc4626#inflation-attack[ERC-4626 security considerations]
+     * if the shares are freed automatically (e.g. after a certain time period). Consider using {_decimalsOffset}
+     * to mitigate this risk.
      */
     function _consumeClaimableDeposit(uint256 /*assets*/, address /*controller*/) internal virtual returns (uint256);
 

@@ -71,6 +71,12 @@ abstract contract ERC7540AdminDeposit is ERC7540 {
      * Requirements:
      *
      * * `assets` must not exceed the pending deposit amount for the `controller`.
+     *
+     * NOTE: Multiple fulfillments with different exchange rates will blend into a weighted average.
+     * For example, fulfilling 50 assets → 100 shares (2:1) then 50 assets → 25 shares (0.5:1) produces
+     * claimableAssets=100 and claimableShares=125. A partial claim of 50 assets yields
+     * `mulDiv(50, 125, 100) = 62` shares: the weighted average rate, not either original rate.
+     * Integrators expecting per-fulfillment rate isolation should use a different strategy (e.g. epochs).
      */
     function _fulfillDeposit(uint256 assets, uint256 shares, address controller) internal virtual {
         uint256 pendingAssets = pendingDepositRequest(0, controller);
@@ -87,7 +93,13 @@ abstract contract ERC7540AdminDeposit is ERC7540 {
         emit DepositClaimable(controller, 0, assets, shares);
     }
 
-    /// @dev Consumes `assets` from the claimable deposit and returns the proportional shares (rounded down).
+    /**
+     * @dev Consumes `assets` from the claimable deposit and returns the proportional shares (rounded down).
+     *
+     * Requirements:
+     *
+     * * {maxMint} must not be 0 for `controller`. Panics with division by zero otherwise.
+     */
     function _consumeClaimableDeposit(uint256 assets, address controller) internal virtual override returns (uint256) {
         uint256 shares = Math.mulDiv(assets, maxMint(controller), maxDeposit(controller), Math.Rounding.Floor);
         _deposits[controller].claimableAssets -= assets;
