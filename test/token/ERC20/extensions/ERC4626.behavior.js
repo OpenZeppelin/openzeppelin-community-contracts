@@ -1,10 +1,11 @@
 const { ethers } = require('hardhat');
 const { expect } = require('chai');
 
-function shouldBehaveLikeERC4626Deposit({ initialAssets, initialShares, balance } = {}) {
+function shouldBehaveLikeERC4626Deposit({ initialAssets, initialShares, balance, isERC7540 } = {}) {
   initialAssets ??= ethers.parseEther('17000000');
   initialShares ??= ethers.parseEther('42000000');
   balance ??= ethers.parseEther('1000');
+  isERC7540 ??= false;
 
   before(async function () {
     [this.owner, this.controller, this.receiver, this.operator, this.other] = await ethers.getSigners();
@@ -18,7 +19,58 @@ function shouldBehaveLikeERC4626Deposit({ initialAssets, initialShares, balance 
     await this.token.connect(this.owner).approve(this.mock, ethers.MaxUint256);
   });
 
-  describe('Enabled ERC4626 deposit functions', function () {
+  isERC7540 &&
+    describe('Disabled ERC7540 deposit functions', function () {
+      it('requestDeposit', async function () {
+        await expect(
+          this.mock.connect(this.owner).requestDeposit(0n, this.owner, this.owner),
+        ).to.be.revertedWithCustomError(this.mock, 'ERC7540SyncDeposit');
+      });
+
+      it('pendingDepositRequest', async function () {
+        await expect(this.mock.pendingDepositRequest(0n, this.owner)).to.be.revertedWithCustomError(
+          this.mock,
+          'ERC7540SyncDeposit',
+        );
+      });
+
+      it('claimableDepositRequest', async function () {
+        await expect(this.mock.claimableDepositRequest(0n, this.owner)).to.be.revertedWithCustomError(
+          this.mock,
+          'ERC7540SyncDeposit',
+        );
+      });
+
+      describe('Internal async deposit hooks revert', function () {
+        it('_pendingDepositRequest', async function () {
+          await expect(this.mock.$_pendingDepositRequest(0n, this.owner)).to.be.reverted;
+        });
+
+        it('_claimableDepositRequest', async function () {
+          await expect(this.mock.$_claimableDepositRequest(0n, this.owner)).to.be.reverted;
+        });
+
+        it('_consumeClaimableDeposit', async function () {
+          await expect(this.mock.$_consumeClaimableDeposit(0n, this.owner)).to.be.reverted;
+        });
+
+        it('_consumeClaimableMint', async function () {
+          await expect(this.mock.$_consumeClaimableMint(0n, this.owner)).to.be.reverted;
+        });
+
+        it('_asyncMaxDeposit', async function () {
+          await expect(this.mock.$_asyncMaxDeposit(this.owner)).to.be.reverted;
+        });
+
+        it('_asyncMaxMint', async function () {
+          await expect(this.mock.$_asyncMaxMint(this.owner)).to.be.reverted;
+        });
+      });
+    });
+
+  describe('Should behave like ERC4626 deposit', function () {
+    const assets = ethers.parseEther('100');
+
     it('previewDeposit', async function () {
       await expect(this.mock.previewDeposit(0n)).to.not.be.reverted;
     });
@@ -26,58 +78,6 @@ function shouldBehaveLikeERC4626Deposit({ initialAssets, initialShares, balance 
     it('previewMint', async function () {
       await expect(this.mock.previewMint(0n)).to.not.be.reverted;
     });
-  });
-
-  describe('Disabled ERC7540 deposit functions', function () {
-    it('requestDeposit', async function () {
-      await expect(
-        this.mock.connect(this.owner).requestDeposit(0n, this.owner, this.owner),
-      ).to.be.revertedWithCustomError(this.mock, 'ERC7540SyncDeposit');
-    });
-
-    it('pendingDepositRequest', async function () {
-      await expect(this.mock.pendingDepositRequest(0n, this.owner)).to.be.revertedWithCustomError(
-        this.mock,
-        'ERC7540SyncDeposit',
-      );
-    });
-
-    it('claimableDepositRequest', async function () {
-      await expect(this.mock.claimableDepositRequest(0n, this.owner)).to.be.revertedWithCustomError(
-        this.mock,
-        'ERC7540SyncDeposit',
-      );
-    });
-  });
-
-  describe('Internal async deposit hooks revert', function () {
-    it('_pendingDepositRequest', async function () {
-      await expect(this.mock.$_pendingDepositRequest(0n, this.owner)).to.be.reverted;
-    });
-
-    it('_claimableDepositRequest', async function () {
-      await expect(this.mock.$_claimableDepositRequest(0n, this.owner)).to.be.reverted;
-    });
-
-    it('_consumeClaimableDeposit', async function () {
-      await expect(this.mock.$_consumeClaimableDeposit(0n, this.owner)).to.be.reverted;
-    });
-
-    it('_consumeClaimableMint', async function () {
-      await expect(this.mock.$_consumeClaimableMint(0n, this.owner)).to.be.reverted;
-    });
-
-    it('_asyncMaxDeposit', async function () {
-      await expect(this.mock.$_asyncMaxDeposit(this.owner)).to.be.reverted;
-    });
-
-    it('_asyncMaxMint', async function () {
-      await expect(this.mock.$_asyncMaxMint(this.owner)).to.be.reverted;
-    });
-  });
-
-  describe('Should behave like ERC4626 deposit', function () {
-    const assets = ethers.parseEther('100');
 
     describe('deposit', function () {
       it('deposits assets and mints shares to receiver', async function () {
@@ -114,10 +114,11 @@ function shouldBehaveLikeERC4626Deposit({ initialAssets, initialShares, balance 
   });
 }
 
-function shouldBehaveLikeERC4626Redeem({ initialAssets, initialShares, balance } = {}) {
+function shouldBehaveLikeERC4626Redeem({ initialAssets, initialShares, balance, isERC7540 } = {}) {
   initialAssets ??= ethers.parseEther('17000000');
   initialShares ??= ethers.parseEther('42000000');
   balance ??= ethers.parseEther('1000');
+  isERC7540 ??= false;
 
   before(async function () {
     [this.owner, this.controller, this.receiver, this.operator, this.other] = await ethers.getSigners();
@@ -131,7 +132,58 @@ function shouldBehaveLikeERC4626Redeem({ initialAssets, initialShares, balance }
     await this.token.connect(this.owner).approve(this.mock, ethers.MaxUint256);
   });
 
-  describe('Enabled ERC4626 redeem functions', function () {
+  isERC7540 &&
+    describe('Disabled ERC7540 redeem functions', function () {
+      it('requestRedeem', async function () {
+        await expect(
+          this.mock.connect(this.owner).requestRedeem(0n, this.owner, this.owner),
+        ).to.be.revertedWithCustomError(this.mock, 'ERC7540SyncRedeem');
+      });
+
+      it('pendingRedeemRequest', async function () {
+        await expect(this.mock.pendingRedeemRequest(0n, this.owner)).to.be.revertedWithCustomError(
+          this.mock,
+          'ERC7540SyncRedeem',
+        );
+      });
+
+      it('claimableRedeemRequest', async function () {
+        await expect(this.mock.claimableRedeemRequest(0n, this.owner)).to.be.revertedWithCustomError(
+          this.mock,
+          'ERC7540SyncRedeem',
+        );
+      });
+
+      describe('Internal async redeem hooks revert', function () {
+        it('_pendingRedeemRequest', async function () {
+          await expect(this.mock.$_pendingRedeemRequest(0n, this.owner)).to.be.reverted;
+        });
+
+        it('_claimableRedeemRequest', async function () {
+          await expect(this.mock.$_claimableRedeemRequest(0n, this.owner)).to.be.reverted;
+        });
+
+        it('_consumeClaimableWithdraw', async function () {
+          await expect(this.mock.$_consumeClaimableWithdraw(0n, this.owner)).to.be.reverted;
+        });
+
+        it('_consumeClaimableRedeem', async function () {
+          await expect(this.mock.$_consumeClaimableRedeem(0n, this.owner)).to.be.reverted;
+        });
+
+        it('_asyncMaxWithdraw', async function () {
+          await expect(this.mock.$_asyncMaxWithdraw(this.owner)).to.be.reverted;
+        });
+
+        it('_asyncMaxRedeem', async function () {
+          await expect(this.mock.$_asyncMaxRedeem(this.owner)).to.be.reverted;
+        });
+      });
+    });
+
+  describe('Should behave like ERC4626 redeem', function () {
+    const shares = ethers.parseEther('100');
+
     it('previewWithdraw', async function () {
       await expect(this.mock.previewWithdraw(0n)).to.not.be.reverted;
     });
@@ -139,58 +191,6 @@ function shouldBehaveLikeERC4626Redeem({ initialAssets, initialShares, balance }
     it('previewRedeem', async function () {
       await expect(this.mock.previewRedeem(0n)).to.not.be.reverted;
     });
-  });
-
-  describe('Disabled ERC7540 redeem functions', function () {
-    it('requestRedeem', async function () {
-      await expect(
-        this.mock.connect(this.owner).requestRedeem(0n, this.owner, this.owner),
-      ).to.be.revertedWithCustomError(this.mock, 'ERC7540SyncRedeem');
-    });
-
-    it('pendingRedeemRequest', async function () {
-      await expect(this.mock.pendingRedeemRequest(0n, this.owner)).to.be.revertedWithCustomError(
-        this.mock,
-        'ERC7540SyncRedeem',
-      );
-    });
-
-    it('claimableRedeemRequest', async function () {
-      await expect(this.mock.claimableRedeemRequest(0n, this.owner)).to.be.revertedWithCustomError(
-        this.mock,
-        'ERC7540SyncRedeem',
-      );
-    });
-  });
-
-  describe('Internal async redeem hooks revert', function () {
-    it('_pendingRedeemRequest', async function () {
-      await expect(this.mock.$_pendingRedeemRequest(0n, this.owner)).to.be.reverted;
-    });
-
-    it('_claimableRedeemRequest', async function () {
-      await expect(this.mock.$_claimableRedeemRequest(0n, this.owner)).to.be.reverted;
-    });
-
-    it('_consumeClaimableWithdraw', async function () {
-      await expect(this.mock.$_consumeClaimableWithdraw(0n, this.owner)).to.be.reverted;
-    });
-
-    it('_consumeClaimableRedeem', async function () {
-      await expect(this.mock.$_consumeClaimableRedeem(0n, this.owner)).to.be.reverted;
-    });
-
-    it('_asyncMaxWithdraw', async function () {
-      await expect(this.mock.$_asyncMaxWithdraw(this.owner)).to.be.reverted;
-    });
-
-    it('_asyncMaxRedeem', async function () {
-      await expect(this.mock.$_asyncMaxRedeem(this.owner)).to.be.reverted;
-    });
-  });
-
-  describe('Should behave like ERC4626 redeem', function () {
-    const shares = ethers.parseEther('100');
 
     describe('redeem', function () {
       it('redeems shares for assets', async function () {

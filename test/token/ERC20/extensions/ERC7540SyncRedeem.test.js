@@ -46,5 +46,5 @@ describe('ERC7540SyncRedeem', function () {
 
   shouldBehaveLikeERC7540Operator();
   shouldBehaveLikeERC7540Deposit({ supportCustomFulfill: true });
-  shouldBehaveLikeERC4626Redeem();
+  shouldBehaveLikeERC4626Redeem({ isERC7540: true });
 });
