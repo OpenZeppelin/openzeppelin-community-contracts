@@ -48,7 +48,13 @@ abstract contract ERC7540DelayRedeem is ERC7540, IERC6372 {
         return ERC6372Utils.timestampClockMode(clock);
     }
 
-    /// @dev Returns the delay duration before a redeem request becomes claimable. Defaults to 1 hour.
+    /**
+     * @dev Returns the delay duration before a redeem request becomes claimable. Defaults to 1 hour.
+     *
+     * NOTE: For any given `controller`, the maturity timepoint `clock() + redeemDelay(controller)` MUST
+     * be non-decreasing across successive {requestRedeem} calls. Overrides that shrink the delay faster
+     * than `clock()` advances will cause new requests to revert until the previous maturity is reached.
+     */
     function redeemDelay(address /*controller*/) public view virtual returns (uint48) {
         return 1 hours;
     }
