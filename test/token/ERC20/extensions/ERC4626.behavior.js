@@ -29,17 +29,11 @@ function shouldBehaveLikeERC4626Deposit({ initialAssets, initialShares, balance,
         });
 
         it('pendingDepositRequest', async function () {
-          await expect(this.mock.pendingDepositRequest(0n, this.owner)).to.be.revertedWithCustomError(
-            this.mock,
-            'ERC7540SyncDeposit',
-          );
+          await expect(this.mock.pendingDepositRequest(0n, this.owner)).to.eventually.equal(0n);
         });
 
         it('claimableDepositRequest', async function () {
-          await expect(this.mock.claimableDepositRequest(0n, this.owner)).to.be.revertedWithCustomError(
-            this.mock,
-            'ERC7540SyncDeposit',
-          );
+          await expect(this.mock.claimableDepositRequest(0n, this.owner)).to.eventually.equal(0n);
         });
 
         describe('Internal async deposit hooks revert', function () {
@@ -148,17 +142,11 @@ function shouldBehaveLikeERC4626Redeem({ initialAssets, initialShares, balance, 
         });
 
         it('pendingRedeemRequest', async function () {
-          await expect(this.mock.pendingRedeemRequest(0n, this.owner)).to.be.revertedWithCustomError(
-            this.mock,
-            'ERC7540SyncRedeem',
-          );
+          await expect(this.mock.pendingRedeemRequest(0n, this.owner)).to.eventually.equal(0n);
         });
 
         it('claimableRedeemRequest', async function () {
-          await expect(this.mock.claimableRedeemRequest(0n, this.owner)).to.be.revertedWithCustomError(
-            this.mock,
-            'ERC7540SyncRedeem',
-          );
+          await expect(this.mock.claimableRedeemRequest(0n, this.owner)).to.eventually.equal(0n);
         });
 
         describe('Internal async redeem hooks revert', function () {

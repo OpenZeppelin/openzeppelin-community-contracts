@@ -231,8 +231,7 @@ abstract contract ERC7540 is ERC165, ERC20, IERC4626, IERC7540 {
      * * {_isDepositAsync} must return `true`.
      */
     function pendingDepositRequest(uint256 requestId, address controller) public view returns (uint256) {
-        require(_isDepositAsync(), ERC7540SyncDeposit());
-        return _pendingDepositRequest(requestId, controller);
+        return _isDepositAsync() ? _pendingDepositRequest(requestId, controller) : 0;
     }
 
     /**
@@ -243,8 +242,7 @@ abstract contract ERC7540 is ERC165, ERC20, IERC4626, IERC7540 {
      * * {_isDepositAsync} must return `true`.
      */
     function claimableDepositRequest(uint256 requestId, address controller) public view returns (uint256) {
-        require(_isDepositAsync(), ERC7540SyncDeposit());
-        return _claimableDepositRequest(requestId, controller);
+        return _isDepositAsync() ? _claimableDepositRequest(requestId, controller) : 0;
     }
 
     /**
@@ -255,8 +253,7 @@ abstract contract ERC7540 is ERC165, ERC20, IERC4626, IERC7540 {
      * * {_isRedeemAsync} must return `true`.
      */
     function pendingRedeemRequest(uint256 requestId, address controller) public view returns (uint256) {
-        require(_isRedeemAsync(), ERC7540SyncRedeem());
-        return _pendingRedeemRequest(requestId, controller);
+        return _isRedeemAsync() ? _pendingRedeemRequest(requestId, controller) : 0;
     }
 
     /**
@@ -267,8 +264,7 @@ abstract contract ERC7540 is ERC165, ERC20, IERC4626, IERC7540 {
      * * {_isRedeemAsync} must return `true`.
      */
     function claimableRedeemRequest(uint256 requestId, address controller) public view returns (uint256) {
-        require(_isRedeemAsync(), ERC7540SyncRedeem());
-        return _claimableRedeemRequest(requestId, controller);
+        return _isRedeemAsync() ? _claimableRedeemRequest(requestId, controller) : 0;
     }
 
     /// @dev Returns the total amount of underlying assets currently pending in deposit Requests.
