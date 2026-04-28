@@ -31,7 +31,7 @@ The key insight of ERC-7540 is that it *reuses* ERC-4626's existing functions fo
 | *Claims* by specifying shares
 |===
 
-ERC-7540 adds only two new entry points: `requestDeposit` and `requestRedeem`. Everything else builds on top of the existing ERC-4626 interface.
+ERC-7540 adds two new entry points — `requestDeposit` and `requestRedeem` — and four view functions to observe a request's lifecycle: `pendingDepositRequest`, `claimableDepositRequest`, `pendingRedeemRequest`, and `claimableRedeemRequest`. Everything else builds on top of the existing ERC-4626 interface.
 
 NOTE: An ERC-7540 vault must have at least one async side (deposit or redeem). If both are synchronous, use a standard `ERC4626` vault instead.
 
@@ -45,13 +45,13 @@ Every async request transitions through three states:
    ┌─────────┐                 ┌─────────┐             ┌───────────┐                  ┌─────────┐
    │  (none) │ ──────────────► │ Pending │ ──────────► │ Claimable │ ───────────────► │ Claimed │
    └─────────┘                 └─────────┘             └───────────┘                  └─────────┘
-                                Assets/shares           Exchange rate                  Shares/assets
-                                locked in vault         is locked                      delivered to
+                                Assets/shares           Ready to claim                 Shares/assets
+                                locked in vault                                        delivered to
                                                                                        receiver
 ....
 
-* **Pending**: Assets (for deposits) or shares (for redeems) are locked in the vault. The exchange rate is not yet known.
-* **Claimable**: The request has been fulfilled. The exchange rate is now locked. The controller can claim at any time.
+* **Pending**: Assets (for deposits) or shares (for redeems) are locked in the vault. The request is not yet ready to be claimed.
+* **Claimable**: The request has been fulfilled and the controller can claim at any time. The exchange rate is strategy-dependent: it may be fixed at fulfillment time (e.g. admin strategy) or determined at claim time from the live vault conversion (e.g. delay strategy).
 * **Claimed**: The controller has called `deposit`/`mint` or `withdraw`/`redeem` to collect their shares or assets.
 
 CAUTION: Requests must NOT skip the Claimable state, even if fulfillment happens in the same block as the request. The ERC-7540 spec requires integrators to be able to observe the Pending and Claimable states separately.
@@ -94,7 +94,7 @@ Each strategy comes in a deposit and redeem variant. You combine exactly one dep
 
 | `ERC7540AdminDeposit`
 | `ERC7540SyncRedeem`
-| KYC-gated deposits, instant redemptions
+| Gated deposits, instant redemptions
 
 | `ERC7540SyncDeposit`
 | `ERC7540AdminRedeem`
