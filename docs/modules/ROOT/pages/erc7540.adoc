@@ -1,0 +1,477 @@
+= ERC-7540: Asynchronous Tokenized Vaults
+
+https://eips.ethereum.org/EIPS/eip-7540[ERC-7540] extends https://eips.ethereum.org/EIPS/eip-4626[ERC-4626] with asynchronous deposit and redeem flows. Where a standard ERC-4626 vault settles deposits and redemptions atomically in a single transaction, ERC-7540 introduces a *request lifecycle* that allows settlement to happen over time — whether gated by an admin, a time delay, or any other custom mechanism.
+
+This is useful for vaults that cannot settle instantly: real-world asset (RWA) funds, cross-chain yield strategies, staking protocols with unbonding periods, or any system where assets need time to be deployed or unwound.
+
+The OpenZeppelin implementation provides a modular base (`ERC7540`) plus composable *strategy extensions* that control how requests move through their lifecycle. Developers pick one deposit strategy and one redeem strategy, and the base contract handles the rest.
+
+== How it relates to ERC-4626
+
+The key insight of ERC-7540 is that it *reuses* ERC-4626's existing functions for claiming:
+
+[%header,cols="1,2,2"]
+|===
+| Function | ERC-4626 (synchronous) | ERC-7540 (asynchronous)
+
+| `deposit(assets, receiver)`
+| Transfers assets in, mints shares immediately
+| *Claims* a previously fulfilled deposit request
+
+| `mint(shares, receiver)`
+| Same as deposit, but specifying shares
+| *Claims* by specifying shares
+
+| `withdraw(assets, receiver, owner)`
+| Burns shares, transfers assets out immediately
+| *Claims* a previously fulfilled redeem request
+
+| `redeem(shares, receiver, owner)`
+| Same as withdraw, but specifying shares
+| *Claims* by specifying shares
+|===
+
+ERC-7540 adds two new entry points — `requestDeposit` and `requestRedeem` — and four view functions to observe a request's lifecycle: `pendingDepositRequest`, `claimableDepositRequest`, `pendingRedeemRequest`, and `claimableRedeemRequest`. Everything else builds on top of the existing ERC-4626 interface.
+
+NOTE: An ERC-7540 vault must have at least one async side (deposit or redeem). If both are synchronous, use a standard `ERC4626` vault instead.
+
+== The request lifecycle
+
+Every async request transitions through three states:
+
+....
+                 requestDeposit()           Fulfillment           deposit() / mint()
+                 requestRedeem()                                  withdraw() / redeem()
+   ┌─────────┐                 ┌─────────┐             ┌───────────┐                  ┌─────────┐
+   │  (none) │ ──────────────► │ Pending │ ──────────► │ Claimable │ ───────────────► │ Claimed │
+   └─────────┘                 └─────────┘             └───────────┘                  └─────────┘
+                                Assets/shares           Ready to claim                 Shares/assets
+                                locked in vault                                        delivered to
+                                                                                       receiver
+....
+
+* **Pending**: Assets (for deposits) or shares (for redeems) are locked in the vault. The request is not yet ready to be claimed.
+* **Claimable**: The request has been fulfilled and the controller can claim at any time. The exchange rate is strategy-dependent: it may be fixed at fulfillment time (e.g. admin strategy) or determined at claim time from the live vault conversion (e.g. delay strategy).
+* **Claimed**: The controller has called `deposit`/`mint` or `withdraw`/`redeem` to collect their shares or assets.
+
+CAUTION: Requests must NOT skip the Claimable state, even if fulfillment happens in the same block as the request. The ERC-7540 spec requires integrators to be able to observe the Pending and Claimable states separately.
+
+== Architecture overview
+
+The implementation is split into a base contract and strategy extensions:
+
+....
+                    ┌──────────────────────────────────────────────────────────┐
+                    │                      ERC7540 (base)                      │
+                    │                                                          │
+                    │  Routing logic (sync vs async)                           │
+                    │  Operator management                                     │
+                    │  ERC-4626 interface                                      │
+                    │  totalAssets / totalSupply adjustments                   │
+                    │  14 virtual hooks for strategies to implement            │
+                    └────────────────────────┬─────────────────────────────────┘
+                                             │
+                    ┌────────────────────────┼─────────────────────────────────┐
+                    │                        │                                 │
+          ┌─────────▼──────────┐  ┌──────────▼──────────┐  ┌──────────────────▼───┐
+          │   Admin strategy   │  │   Delay strategy    │  │    Sync strategy     │
+          │                    │  │                      │  │                      │
+          │  Privileged caller │  │  Time-based, no      │  │  Standard ERC-4626   │
+          │  fulfills with     │  │  privileged caller   │  │  (no async lifecycle)│
+          │  explicit rate     │  │  needed              │  │                      │
+          └────────────────────┘  └─────────────────────┘  └──────────────────────┘
+....
+
+Each strategy comes in a deposit and redeem variant. You combine exactly one deposit strategy with one redeem strategy:
+
+[%header,cols="1,1,2"]
+|===
+| Deposit Strategy | Redeem Strategy | Use Case
+
+| `ERC7540AdminDeposit`
+| `ERC7540AdminRedeem`
+| RWA vault with manual settlement on both sides
+
+| `ERC7540AdminDeposit`
+| `ERC7540SyncRedeem`
+| Gated deposits, instant redemptions
+
+| `ERC7540SyncDeposit`
+| `ERC7540AdminRedeem`
+| Instant deposits, admin-controlled withdrawals
+
+| `ERC7540SyncDeposit`
+| `ERC7540DelayRedeem`
+| Liquid staking (instant stake, delayed unstake)
+
+| `ERC7540DelayDeposit`
+| `ERC7540DelayRedeem`
+| Fully permissionless time-locked vault
+
+| `ERC7540AdminDeposit`
+| `ERC7540DelayRedeem`
+| Admin deposit review, time-locked unstaking
+|===
+
+WARNING: Combining `ERC7540SyncDeposit` + `ERC7540SyncRedeem` will revert at construction with `ERC7540MissingAsync`. At least one side must be async.
+
+[[admin-strategy]]
+== Admin strategy
+
+The admin strategy is the most flexible model. A privileged caller (admin, keeper, oracle relayer) explicitly transitions requests from Pending to Claimable by calling `_fulfillDeposit` or `_fulfillRedeem`, providing both the amount and the exchange rate.
+
+This suits use cases where settlement depends on external actions: deploying assets to a yield source, unwinding positions, bridging across chains, or completing off-chain compliance checks.
+
+=== Admin deposit flow
+
+[source,solidity]
+----
+// 1. User requests a deposit
+vault.requestDeposit(1000e6, controller, owner); // locks 1000 USDC
+
+// 2. Admin fulfills (off-chain: assets deployed to yield source)
+vault._fulfillDeposit(1000e6, 950e18, controller); // 950 shares at the determined rate
+
+// 3. User claims their shares
+vault.deposit(1000e6, receiver, controller); // receiver gets 950 shares
+----
+
+The exchange rate is locked at fulfillment time in the `claimableAssets` / `claimableShares` pair. This means the user knows exactly how many shares they will receive before claiming.
+
+=== Admin redeem flow
+
+[source,solidity]
+----
+// 1. User requests a redeem
+vault.requestRedeem(950e18, controller, owner); // locks 950 shares
+
+// 2. Admin fulfills (off-chain: positions unwound, assets bridged back)
+vault._fulfillRedeem(950e18, 1010e6, controller); // 1010 USDC at the determined rate
+
+// 3. User claims their assets
+vault.redeem(950e18, receiver, controller); // receiver gets 1010 USDC
+----
+
+=== Building an admin vault
+
+Here is a complete example combining admin-controlled deposits and redemptions. The contract exposes `fulfillDeposit` and `fulfillRedeem` behind access control:
+
+[source,solidity]
+----
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.27;
+
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import {ERC7540} from "@openzeppelin/community-contracts/token/ERC20/extensions/ERC7540.sol";
+import {ERC7540AdminDeposit} from "@openzeppelin/community-contracts/token/ERC20/extensions/ERC7540AdminDeposit.sol";
+import {ERC7540AdminRedeem} from "@openzeppelin/community-contracts/token/ERC20/extensions/ERC7540AdminRedeem.sol";
+
+contract RWAVault is ERC7540AdminDeposit, ERC7540AdminRedeem, Ownable {
+    constructor(
+        IERC20 asset_
+    ) ERC7540(asset_) Ownable(msg.sender) {}
+
+    /// @dev Admin fulfills a deposit request with the determined exchange rate.
+    function fulfillDeposit(uint256 assets, uint256 shares, address controller) external onlyOwner {
+        _fulfillDeposit(assets, shares, controller);
+    }
+
+    /// @dev Admin fulfills a redeem request with the determined exchange rate.
+    function fulfillRedeem(uint256 shares, uint256 assets, address controller) external onlyOwner {
+        _fulfillRedeem(shares, assets, controller);
+    }
+
+    // Resolve multiple inheritance for _requestDeposit and _requestRedeem
+    function _requestDeposit(
+        uint256 assets, address controller, address owner, uint256 requestId
+    ) internal override(ERC7540, ERC7540AdminDeposit) returns (uint256) {
+        return super._requestDeposit(assets, controller, owner, requestId);
+    }
+
+    function _requestRedeem(
+        uint256 shares, address controller, address owner, uint256 requestId
+    ) internal override(ERC7540, ERC7540AdminRedeem) returns (uint256) {
+        return super._requestRedeem(shares, controller, owner, requestId);
+    }
+}
+----
+
+NOTE: The admin strategy uses `requestId = 0` for all requests since accounting is per-controller only. The `pendingDepositRequest(0, controller)` and `claimableDepositRequest(0, controller)` functions reflect the controller's current state.
+
+[[delay-strategy]]
+== Delay strategy
+
+The delay strategy makes requests claimable automatically after a configurable time period. No privileged caller is needed — anyone can claim once the delay elapses. The exchange rate is computed at claim time using the vault's live `convertToShares` / `convertToAssets`.
+
+This suits use cases with protocol-dictated waiting periods: staking unbonding, time-locked deposits, or cooldown mechanisms.
+
+=== Delay deposit flow
+
+[source,solidity]
+----
+// 1. User requests a deposit (delay = 1 hour by default)
+uint256 requestId = vault.requestDeposit(1000e6, controller, owner);
+// requestId = block.timestamp + 1 hours (the maturity timestamp)
+
+// 2. Time passes... no transaction needed
+
+// 3. After the delay, user claims (exchange rate computed now)
+vault.deposit(1000e6, receiver, controller);
+----
+
+The `requestId` returned by the delay strategy is the absolute timestamp at which the request becomes claimable. This makes it self-describing — you can tell when a request will mature just from its ID.
+
+=== How checkpoints work
+
+The delay strategy uses `Checkpoints.Trace208` to track cumulative deposit/redeem amounts keyed by their maturity timepoint. Multiple requests accumulate and mature independently:
+
+....
+  Time ──────────────────────────────────────────────────────►
+
+  t=100              t=120              t=160              t=180
+  request 500        request 300        500 claimable      800 claimable
+  maturity=160       maturity=180       300 still pending   (all matured)
+
+  Checkpoints:
+    key=160 → value=500  (cumulative)
+    key=180 → value=800  (cumulative)
+....
+
+The total claimable amount at any time `T` is:
+
+....
+claimable = checkpoint.upperLookup(T) - claimedAmount
+....
+
+=== Building a delay vault
+
+[source,solidity]
+----
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.27;
+
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {ERC7540} from "@openzeppelin/community-contracts/token/ERC20/extensions/ERC7540.sol";
+import {ERC7540DelayDeposit} from "@openzeppelin/community-contracts/token/ERC20/extensions/ERC7540DelayDeposit.sol";
+import {ERC7540DelayRedeem} from "@openzeppelin/community-contracts/token/ERC20/extensions/ERC7540DelayRedeem.sol";
+
+contract TimeLockVault is ERC7540DelayDeposit, ERC7540DelayRedeem {
+    constructor(IERC20 asset_) ERC7540(asset_) {}
+
+    /// @dev Custom deposit delay: 1 day.
+    function depositDelay(address /*controller*/) public view override returns (uint48) {
+        return 1 days;
+    }
+
+    /// @dev Custom redeem delay: 7 days (e.g. unbonding period).
+    function redeemDelay(address /*controller*/) public view override returns (uint48) {
+        return 7 days;
+    }
+
+    // Resolve multiple inheritance
+    function clock() public view override(ERC7540DelayDeposit, ERC7540DelayRedeem) returns (uint48) {
+        return super.clock();
+    }
+
+    function CLOCK_MODE() public view override(ERC7540DelayDeposit, ERC7540DelayRedeem) returns (string memory) {
+        return super.CLOCK_MODE();
+    }
+
+    function _requestDeposit(
+        uint256 assets, address controller, address owner, uint256 requestId
+    ) internal override(ERC7540, ERC7540DelayDeposit) returns (uint256) {
+        return super._requestDeposit(assets, controller, owner, requestId);
+    }
+
+    function _requestRedeem(
+        uint256 shares, address controller, address owner, uint256 requestId
+    ) internal override(ERC7540, ERC7540DelayRedeem) returns (uint256) {
+        return super._requestRedeem(shares, controller, owner, requestId);
+    }
+}
+----
+
+TIP: The delay can be customized per controller by overriding `depositDelay(address)` or `redeemDelay(address)`. This enables tiered access — e.g. whitelisted addresses with shorter delays.
+
+[[mixed-strategy]]
+== Mixing strategies
+
+A common pattern is to keep one side synchronous while making the other async. For example, a liquid staking vault might allow instant deposits but require a 7-day unbonding period for redemptions:
+
+[source,solidity]
+----
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.27;
+
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {ERC7540} from "@openzeppelin/community-contracts/token/ERC20/extensions/ERC7540.sol";
+import {ERC7540SyncDeposit} from "@openzeppelin/community-contracts/token/ERC20/extensions/ERC7540SyncDeposit.sol";
+import {ERC7540DelayRedeem} from "@openzeppelin/community-contracts/token/ERC20/extensions/ERC7540DelayRedeem.sol";
+
+contract LiquidStakingVault is ERC7540SyncDeposit, ERC7540DelayRedeem {
+    constructor(IERC20 asset_) ERC7540(asset_) {}
+
+    function redeemDelay(address /*controller*/) public view override returns (uint48) {
+        return 7 days;
+    }
+
+    function _requestRedeem(
+        uint256 shares, address controller, address owner, uint256 requestId
+    ) internal override(ERC7540, ERC7540DelayRedeem) returns (uint256) {
+        return super._requestRedeem(shares, controller, owner, requestId);
+    }
+}
+----
+
+In this vault:
+
+* `deposit(assets, receiver)` works synchronously, just like ERC-4626
+* `requestDeposit(...)` reverts with `ERC7540SyncDeposit`
+* `requestRedeem(shares, controller, owner)` starts the async flow
+* After the delay, `redeem(shares, receiver, controller)` claims the assets
+
+[[authorization]]
+== Authorization model
+
+ERC-7540 extends ERC-4626's two-party model (`caller` + `owner`) with a *controller/operator* system:
+
+* **Owner**: The account whose assets or shares are being used
+* **Controller**: The account that controls the request lifecycle and can claim
+* **Operator**: An account approved by a controller to act on their behalf
+
+[source,solidity]
+----
+// Grant operator permissions
+vault.setOperator(operatorAddress, true);
+
+// Now the operator can manage requests for msg.sender
+vault.requestDeposit(1000e6, controller, owner);  // operator acting for owner
+vault.deposit(1000e6, receiver, controller);       // operator claiming for controller
+----
+
+The authorization rules differ by function:
+
+[%header,cols="2,3"]
+|===
+| Function | Who can call
+
+| `requestDeposit(assets, controller, owner)`
+| `msg.sender == owner` OR `isOperator(owner, msg.sender)`
+
+| `requestRedeem(shares, controller, owner)`
+| `msg.sender == owner` OR `isOperator(owner, msg.sender)` OR ERC-20 allowance over shares
+
+| `deposit(assets, receiver, controller)` (async claim)
+| `msg.sender == controller` OR `isOperator(controller, msg.sender)`
+
+| `redeem(shares, receiver, controller)` (async claim)
+| `msg.sender == controller` OR `isOperator(controller, msg.sender)`
+|===
+
+NOTE: For `requestRedeem`, authorization can come from *either* the operator system or standard ERC-20 approval. This dual authorization is consistent with https://eips.ethereum.org/EIPS/eip-6909[ERC-6909]. Operators are not subject to allowance restrictions, while non-infinite ERC-20 approvals are consumed.
+
+[[share-custody]]
+== Share custody models
+
+During the async lifecycle, shares and assets must be held somewhere between request and claim. The base contract provides two configurable hooks that control this behavior:
+
+=== Deposit side: `_depositShareOrigin()`
+
+[%header,cols="1,3"]
+|===
+| Return value | Behavior
+
+| `address(0)` (default)
+| **Mint on claim.** Shares are minted to the receiver when they call `deposit`/`mint` to claim. The pending assets are tracked via `_totalPendingDepositAssets` to keep the exchange rate accurate.
+
+| Non-zero address
+| **Pre-mint on fulfill.** Shares are minted to the specified address (e.g. `address(0xdead)`) when the admin calls `_fulfillDeposit`. On claim, shares are transferred from that address to the receiver.
+|===
+
+=== Redeem side: `_redeemShareDestination()`
+
+[%header,cols="1,3"]
+|===
+| Return value | Behavior
+
+| `address(0)` (default)
+| **Burn on request.** Shares are burned immediately when the user calls `requestRedeem`. The burned shares are tracked via `_totalPendingRedeemShares` to keep the exchange rate accurate.
+
+| Non-zero address
+| **Escrow on request.** Shares are transferred to the specified address when the user calls `requestRedeem`. They are burned later when the admin fulfills the request.
+|===
+
+=== Why `totalAssets` and `totalSupply` are adjusted
+
+The base `ERC7540` contract overrides both to keep the share price accurate during the async lifecycle:
+
+....
+totalAssets() = asset.balanceOf(vault) - _totalPendingDepositAssets
+                │                        │
+                │                        └─ Assets received but not yet converted to shares.
+                │                           Must not inflate the perceived yield.
+                └─ All assets in the vault, including pending ones.
+
+totalSupply() = ERC20.totalSupply() + _totalPendingRedeemShares
+                │                     │
+                │                     └─ Shares already burned/escrowed but logically still
+                │                        outstanding (request not yet settled).
+                └─ The on-chain ERC-20 supply.
+....
+
+This ensures `convertToShares` / `convertToAssets` reflect the real exchange rate at all times, even while requests are in flight.
+
+[[custom-strategy]]
+== Building a custom strategy
+
+If neither the admin nor delay strategies fit your use case, you can build a custom fulfillment strategy by extending `ERC7540` directly and implementing the 14 virtual hooks.
+
+Each async side (deposit or redeem) requires 7 hooks:
+
+[%header,cols="1,3"]
+|===
+| Hook | Purpose
+
+| `_isDepositAsync()` / `_isRedeemAsync()`
+| Return `true` to enable the async path for that side
+
+| `_pendingDepositRequest()` / `_pendingRedeemRequest()`
+| Return the amount in Pending state for a given `requestId` and `controller`
+
+| `_claimableDepositRequest()` / `_claimableRedeemRequest()`
+| Return the amount in Claimable state for a given `requestId` and `controller`
+
+| `_consumeClaimableDeposit()` / `_consumeClaimableWithdraw()`
+| Consume claimable state when claiming via `deposit()` / `withdraw()` (asset-denominated)
+
+| `_consumeClaimableMint()` / `_consumeClaimableRedeem()`
+| Consume claimable state when claiming via `mint()` / `redeem()` (share-denominated)
+
+| `_asyncMaxDeposit()` / `_asyncMaxWithdraw()`
+| Return the maximum claimable amount (in assets) for `deposit()` / `withdraw()`
+
+| `_asyncMaxMint()` / `_asyncMaxRedeem()`
+| Return the maximum claimable amount (in shares) for `mint()` / `redeem()`
+|===
+
+For example, an epoch-based strategy could batch all requests within an epoch and fulfill them together at the epoch boundary.
+
+[[security]]
+== Security considerations
+
+=== Preview functions revert for async flows
+
+Per the ERC-7540 spec, `previewDeposit`, `previewMint`, `previewWithdraw`, and `previewRedeem` *revert* when the corresponding side is async. This is because the exchange rate is unknown until fulfillment, so no reliable preview can be given.
+
+Integrators should check `supportsInterface` for `IERC7540Deposit` / `IERC7540Redeem` to determine whether the vault is async, and avoid calling preview functions for async sides.
+
+=== Operator trust
+
+An operator approved via `setOperator` has broad permissions: they can request deposits using the controller's assets, request redemptions using the controller's shares, and claim on behalf of the controller. Users should only approve operators they fully trust.
+
+=== Exchange rate manipulation
+
+In the *admin strategy*, the admin has full control over the exchange rate at fulfillment time. The admin must ensure `totalAssets()` accurately reflects the vault's holdings after deploying assets, to avoid diluting existing shareholders.
+
+In the *delay strategy*, the exchange rate is computed at claim time using the live vault conversion. This means the rate can change between request and claim. If the vault's underlying yield fluctuates significantly, claimers may receive more or fewer shares/assets than expected at request time.
