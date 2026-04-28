@@ -115,6 +115,26 @@ const SIGNATURES = {
     'pendingRedeemRequest(uint256,address)',
     'claimableRedeemRequest(uint256,address)',
   ],
+  ERC7575: [
+    'asset()',
+    'share()',
+    'totalAssets()',
+    'convertToShares(uint256)',
+    'convertToAssets(uint256)',
+    'maxDeposit(address)',
+    'maxMint(address)',
+    'maxRedeem(address)',
+    'maxWithdraw(address)',
+    'previewDeposit(uint256)',
+    'previewMint(uint256)',
+    'previewRedeem(uint256)',
+    'previewWithdraw(uint256)',
+    'deposit(uint256,address)',
+    'mint(uint256,address)',
+    'redeem(uint256,address,address)',
+    'withdraw(uint256,address,address)',
+  ],
+  ERC7575Share: ['vault(address)'],
 };
 
 const INTERFACE_IDS = mapValues(SIGNATURES, interfaceId);

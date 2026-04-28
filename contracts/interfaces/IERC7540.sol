@@ -2,6 +2,8 @@
 
 pragma solidity >=0.8.4;
 
+import {IERC7575} from "./IERC7575.sol";
+
 /**
  * @dev Interface for operator management in https://eips.ethereum.org/EIPS/eip-7540[ERC-7540]
  * asynchronous vaults. Operators can manage deposit and redeem requests on behalf of a controller.
@@ -155,4 +157,4 @@ interface IERC7540Redeem {
  * @dev Interface of the fully asynchronous Vault interface of ERC7540, as defined in
  * https://eips.ethereum.org/EIPS/eip-7540
  */
-interface IERC7540 is IERC7540Operator, IERC7540Deposit, IERC7540Redeem {}
+interface IERC7540 is IERC7540Operator, IERC7540Deposit, IERC7540Redeem, IERC7575 {}

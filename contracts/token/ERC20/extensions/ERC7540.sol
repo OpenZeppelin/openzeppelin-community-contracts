@@ -10,6 +10,7 @@ import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 import {LowLevelCall} from "@openzeppelin/contracts/utils/LowLevelCall.sol";
 import {Memory} from "@openzeppelin/contracts/utils/Memory.sol";
 import {IERC7540, IERC7540Operator, IERC7540Deposit, IERC7540Redeem} from "../../../interfaces/IERC7540.sol";
+import {IERC7575} from "../../../interfaces/IERC7575.sol";
 
 /**
  * @dev Implementation of the ERC-7540 "Asynchronous ERC-4626 Tokenized Vaults" as defined in
@@ -127,8 +128,9 @@ abstract contract ERC7540 is ERC165, ERC20, IERC4626, IERC7540 {
      * Reports support for {IERC7540Operator} unconditionally. Support for {IERC7540Deposit} and
      * {IERC7540Redeem} is conditional on the corresponding async selector returning `true`.
      */
-    function supportsInterface(bytes4 interfaceId) public view virtual override returns (bool) {
+    function supportsInterface(bytes4 interfaceId) public view virtual override(IERC165, ERC165) returns (bool) {
         return
+            interfaceId == (type(IERC4626).interfaceId ^ type(IERC7575).interfaceId) ||
             interfaceId == type(IERC7540Operator).interfaceId ||
             (interfaceId == type(IERC7540Deposit).interfaceId && _isDepositAsync()) ||
             (interfaceId == type(IERC7540Redeem).interfaceId && _isRedeemAsync()) ||
@@ -193,6 +195,11 @@ abstract contract ERC7540 is ERC165, ERC20, IERC4626, IERC7540 {
     /// @inheritdoc IERC4626
     function asset() public view virtual returns (address) {
         return address(_asset);
+    }
+
+    /// @inheritdoc IERC7575
+    function share() public view virtual returns (address) {
+        return address(this);
     }
 
     /**

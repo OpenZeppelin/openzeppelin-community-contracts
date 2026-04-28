@@ -7,6 +7,7 @@ const {
   shouldBehaveLikeERC7540Deposit,
   shouldBehaveLikeERC7540Redeem,
 } = require('./ERC7540.behavior');
+const { shouldBehaveLikeERC7575 } = require('./ERC7575.behavior');
 
 const name = 'Vault Shares';
 const symbol = 'vSHR';
@@ -57,6 +58,7 @@ describe('ERC7540Admin', function () {
       shouldBehaveLikeERC7540Operator();
       shouldBehaveLikeERC7540Deposit({ supportCustomFulfill: true, withTmpHolder });
       shouldBehaveLikeERC7540Redeem({ supportCustomFulfill: true, withTmpHolder });
+      shouldBehaveLikeERC7575();
 
       describe('multiple partial claims', function () {
         it('deposit flow - finish with a deposit', async function () {

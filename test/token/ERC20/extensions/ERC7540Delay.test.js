@@ -8,6 +8,7 @@ const {
   shouldBehaveLikeERC7540Deposit,
   shouldBehaveLikeERC7540Redeem,
 } = require('./ERC7540.behavior');
+const { shouldBehaveLikeERC7575 } = require('./ERC7575.behavior');
 
 const name = 'Vault Shares';
 const symbol = 'vSHR';
@@ -42,8 +43,8 @@ describe('ERC7540Delay', function () {
     });
 
     it('reports default delay', async function () {
-      await expect(this.mock.depositDelay(this.owner)).to.eventually.equal(delay);
-      await expect(this.mock.redeemDelay(this.owner)).to.eventually.equal(delay);
+      await expect(this.mock.depositDelay(ethers.ZeroAddress)).to.eventually.equal(delay);
+      await expect(this.mock.redeemDelay(ethers.ZeroAddress)).to.eventually.equal(delay);
     });
 
     it('reports async deposit and redeem', async function () {
@@ -55,6 +56,7 @@ describe('ERC7540Delay', function () {
   shouldBehaveLikeERC7540Operator();
   shouldBehaveLikeERC7540Deposit({ supportCustomFulfill: false });
   shouldBehaveLikeERC7540Redeem({ supportCustomFulfill: false });
+  shouldBehaveLikeERC7575();
 
   describe('multiple requests and partial claims', function () {
     it('deposit flow', async function () {

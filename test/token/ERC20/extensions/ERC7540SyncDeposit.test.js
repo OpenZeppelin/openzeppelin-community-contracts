@@ -4,6 +4,7 @@ const { loadFixture } = require('@nomicfoundation/hardhat-network-helpers');
 
 const { shouldBehaveLikeERC4626Deposit } = require('./ERC4626.behavior');
 const { shouldBehaveLikeERC7540Operator, shouldBehaveLikeERC7540Redeem } = require('./ERC7540.behavior');
+const { shouldBehaveLikeERC7575 } = require('./ERC7575.behavior');
 
 const name = 'Vault Shares';
 const symbol = 'vSHR';
@@ -48,4 +49,5 @@ describe('ERC7540SyncDeposit', function () {
   shouldBehaveLikeERC7540Operator();
   shouldBehaveLikeERC4626Deposit({ isERC7540: true });
   shouldBehaveLikeERC7540Redeem({ supportCustomFulfill: true });
+  shouldBehaveLikeERC7575();
 });
