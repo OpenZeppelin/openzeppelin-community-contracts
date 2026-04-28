@@ -1,14 +1,38 @@
 const { expect } = require('chai');
-const { shouldSupportInterfaces, INTERFACE_IDS } = require('../../../utils/introspection/SupportsInterface.behavior');
+const { interfaceId } = require('@openzeppelin/contracts/test/helpers/methods');
+const {
+  shouldSupportInterfaces,
+} = require('@openzeppelin/contracts/test/utils/introspection/SupportsInterface.behavior');
+
+const ERC7575 = [
+  'asset()',
+  'share()',
+  'totalAssets()',
+  'convertToShares(uint256)',
+  'convertToAssets(uint256)',
+  'maxDeposit(address)',
+  'maxMint(address)',
+  'maxRedeem(address)',
+  'maxWithdraw(address)',
+  'previewDeposit(uint256)',
+  'previewMint(uint256)',
+  'previewRedeem(uint256)',
+  'previewWithdraw(uint256)',
+  'deposit(uint256,address)',
+  'mint(uint256,address)',
+  'redeem(uint256,address,address)',
+  'withdraw(uint256,address,address)',
+];
+const ERC7575Share = ['vault(address)'];
 
 function shouldBehaveLikeERC7575({ selfAsset } = {}) {
   selfAsset ??= true;
 
   describe('Should behave like ERC7575', function () {
     describe('supports ERC-7575 operator interface', function () {
-      expect(INTERFACE_IDS.ERC7575).to.equal('0x2f0a18c5');
-      expect(INTERFACE_IDS.ERC7575Share).to.equal('0xf815c03d');
-      shouldSupportInterfaces(['ERC7575']);
+      expect(interfaceId(ERC7575)).to.equal('0x2f0a18c5');
+      expect(interfaceId(ERC7575Share)).to.equal('0xf815c03d');
+      shouldSupportInterfaces({ ERC7575 });
     });
 
     it('get share address', async function () {

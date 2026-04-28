@@ -2,7 +2,24 @@ const { ethers } = require('hardhat');
 const { expect } = require('chai');
 
 const { batchInBlock } = require('@openzeppelin/contracts/test/helpers/txpool');
-const { shouldSupportInterfaces, INTERFACE_IDS } = require('../../../utils/introspection/SupportsInterface.behavior');
+const { interfaceId } = require('@openzeppelin/contracts/test/helpers/methods');
+const {
+  shouldSupportInterfaces,
+} = require('@openzeppelin/contracts/test/utils/introspection/SupportsInterface.behavior');
+
+const ERC7540Operator = ['setOperator(address,bool)', 'isOperator(address,address)'];
+const ERC7540Deposit = [
+  'requestDeposit(uint256,address,address)',
+  'pendingDepositRequest(uint256,address)',
+  'claimableDepositRequest(uint256,address)',
+  'deposit(uint256,address,address)',
+  'mint(uint256,address,address)',
+];
+const ERC7540Redeem = [
+  'requestRedeem(uint256,address,address)',
+  'pendingRedeemRequest(uint256,address)',
+  'claimableRedeemRequest(uint256,address)',
+];
 
 function shouldBehaveLikeERC7540Operator() {
   describe('Should behave like ERC7540Operator', function () {
@@ -11,8 +28,8 @@ function shouldBehaveLikeERC7540Operator() {
     });
 
     describe('supports ERC-7540 operator interface', function () {
-      expect(INTERFACE_IDS.ERC7540Operator).to.equal('0xe3bc4e65');
-      shouldSupportInterfaces(['ERC7540Operator']);
+      expect(interfaceId(ERC7540Operator)).to.equal('0xe3bc4e65');
+      shouldSupportInterfaces({ ERC7540Operator });
     });
 
     for (const status of [true, false]) {
@@ -55,8 +72,8 @@ function shouldBehaveLikeERC7540Deposit({
     });
 
     describe('supports ERC-7540 operator interface', function () {
-      expect(INTERFACE_IDS.ERC7540Deposit).to.equal('0xce3bbe50');
-      shouldSupportInterfaces(['ERC7540Deposit']);
+      expect(interfaceId(ERC7540Deposit)).to.equal('0xce3bbe50');
+      shouldSupportInterfaces({ ERC7540Deposit });
     });
 
     describe('Disabled ERC4626 functions', function () {
@@ -375,8 +392,8 @@ function shouldBehaveLikeERC7540Redeem({ initialAssets, initialShares, balance, 
     });
 
     describe('supports ERC-7540 operator interface', function () {
-      expect(INTERFACE_IDS.ERC7540Redeem).to.equal('0x620ee8e4');
-      shouldSupportInterfaces(['ERC7540Redeem']);
+      expect(interfaceId(ERC7540Redeem)).to.equal('0x620ee8e4');
+      shouldSupportInterfaces({ ERC7540Redeem });
     });
 
     describe('Disabled ERC4626 functions', function () {
