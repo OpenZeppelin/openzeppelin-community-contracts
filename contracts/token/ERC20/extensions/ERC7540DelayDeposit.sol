@@ -95,22 +95,34 @@ abstract contract ERC7540DelayDeposit is ERC7540, IERC6372 {
         return super._requestDeposit(assets, controller, owner, timepoint);
     }
 
-    /**
-     * @dev Consumes `assets` from claimable deposits, returns proportional shares (rounded down).
-     *
-     * Requirements:
-     *
-     * * {maxMint} must not be 0 for `controller`. Panics with division by zero otherwise.
-     */
+    /// @dev Consumes `assets` from claimable deposits, returns proportional shares (rounded down).
     function _consumeClaimableDeposit(uint256 assets, address controller) internal virtual override returns (uint256) {
-        uint256 shares = Math.mulDiv(assets, maxMint(controller), maxDeposit(controller), Math.Rounding.Floor);
+        // Pro-rata is computed against {_asyncMaxDeposit} / {_asyncMaxMint} (strategy state) rather than the
+        // public {maxDeposit} / {maxMint}, so cap/pause overrides on the public surface cannot desynchronize
+        // the rate used for consumption. When `assets` equals the controller's full claimable balance
+        // (including the case where both sides are 0), the entire remaining {_asyncMaxMint} is returned
+        // directly to avoid division by zero.
+        uint256 maxAssets = _asyncMaxDeposit(controller);
+        uint256 maxShares = _asyncMaxMint(controller);
+        uint256 shares = assets == maxAssets
+            ? maxShares
+            : Math.mulDiv(assets, maxShares, maxAssets, Math.Rounding.Floor);
         _claimedDeposits[controller] += assets;
         return shares;
     }
 
     /// @dev Consumes `shares` from claimable deposits, returns proportional assets (rounded up).
     function _consumeClaimableMint(uint256 shares, address controller) internal virtual override returns (uint256) {
-        uint256 assets = Math.mulDiv(shares, maxDeposit(controller), maxMint(controller), Math.Rounding.Ceil);
+        // Pro-rata is computed against {_asyncMaxDeposit} / {_asyncMaxMint} (strategy state) rather than the
+        // public {maxDeposit} / {maxMint}, so cap/pause overrides on the public surface cannot desynchronize
+        // the rate used for consumption. When `shares` equals the controller's full claimable balance
+        // (including the case where both sides are 0), the entire remaining {_asyncMaxDeposit} is returned
+        // directly to avoid division by zero.
+        uint256 maxAssets = _asyncMaxDeposit(controller);
+        uint256 maxShares = _asyncMaxMint(controller);
+        uint256 assets = shares == maxShares
+            ? maxAssets
+            : Math.mulDiv(shares, maxAssets, maxShares, Math.Rounding.Ceil);
         _claimedDeposits[controller] += assets;
         return assets;
     }

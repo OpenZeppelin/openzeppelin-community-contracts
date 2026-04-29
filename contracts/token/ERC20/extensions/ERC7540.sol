@@ -887,15 +887,24 @@ abstract contract ERC7540 is ERC165, ERC20, IERC4626, IERC7540 {
      */
     function _consumeClaimableRedeem(uint256 /*shares*/, address /*controller*/) internal virtual returns (uint256);
 
-    /// @dev Returns the maximum assets that can be claimed via {deposit} for an async `owner`.
+    /**
+     * @dev Returns the maximum assets that can be claimed via {deposit} for an async `owner`.
+     *
+     * NOTE: This hook MUST reflect the strategy's internal claimable totals. It is also read by
+     * {_consumeClaimableDeposit} / {_consumeClaimableMint} to compute the locked exchange rate of a claim,
+     * so any deviation from internal state (e.g., per-tx caps, pauses, allowlists) will desynchronize
+     * pro-rata accounting and can permanently strand or brick claims. To enforce caps, pauses, or other
+     * policy, override the public {maxDeposit} / {maxMint} instead, those are read only by the
+     * entrypoint bound checks and do not affect rate math.
+     */
     function _asyncMaxDeposit(address /*owner*/) internal view virtual returns (uint256);
 
-    /// @dev Returns the maximum shares that can be claimed via {mint} for an async `owner`.
+    /// @dev Returns the maximum shares that can be claimed via {mint} for an async `owner`. See {_asyncMaxDeposit}.
     function _asyncMaxMint(address /*owner*/) internal view virtual returns (uint256);
 
-    /// @dev Returns the maximum assets that can be claimed via {withdraw} for an async `owner`.
+    /// @dev Returns the maximum assets that can be claimed via {withdraw} for an async `owner`. See {_asyncMaxDeposit}.
     function _asyncMaxWithdraw(address /*owner*/) internal view virtual returns (uint256);
 
-    /// @dev Returns the maximum shares that can be claimed via {redeem} for an async `owner`.
+    /// @dev Returns the maximum shares that can be claimed via {redeem} for an async `owner`. See {_asyncMaxDeposit}.
     function _asyncMaxRedeem(address /*owner*/) internal view virtual returns (uint256);
 }
