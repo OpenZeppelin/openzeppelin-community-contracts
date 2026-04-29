@@ -75,9 +75,11 @@ abstract contract ERC7540DelayDeposit is ERC7540, IERC6372 {
         uint256 /* requestId */
     ) internal virtual override returns (uint256) {
         uint48 timepoint = clock() + depositDelay(controller);
-        uint256 latest = _deposits[controller].latest();
 
-        _deposits[controller].push(timepoint, (assets + latest).toUint208());
+        if (assets > 0) {
+            uint256 latest = _deposits[controller].latest();
+            _deposits[controller].push(timepoint, (assets + latest).toUint208());
+        }
 
         return super._requestDeposit(assets, controller, owner, timepoint);
     }
