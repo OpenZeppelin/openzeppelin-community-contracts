@@ -56,6 +56,14 @@ import {IERC7575} from "../../../interfaces/IERC7575.sol";
  * using the controller's shares, and claim assets or shares on behalf of the controller. Users should only
  * approve operators they fully trust with both their assets and shares.
  * ====
+ *
+ * [CAUTION]
+ * ====
+ * This contract assumes the underlying `asset` is a well-behaved ERC-20: transfers move exactly the requested
+ * amount, balances do not change without explicit transfers, and `balanceOf` reports faithfully. Fee-on-transfer,
+ * rebasing, and similar non-standard asset behaviors are out of scope. When the asset misbehaves, internal
+ * accounting (notably {totalAssets}) can revert and freeze claim paths that depend on live conversions.
+ * ====
  */
 abstract contract ERC7540 is ERC165, ERC20, IERC4626, IERC7540 {
     using Math for uint256;
@@ -207,6 +215,12 @@ abstract contract ERC7540 is ERC165, ERC20, IERC4626, IERC7540 {
      *
      * Pending deposit assets are subtracted from the vault's token balance, since they have not yet been
      * converted into shares and must not be treated as yield for outstanding shareholders.
+     *
+     * NOTE: Internal flows preserve the invariant `balanceOf(asset, vault) >= totalPendingDepositAssets()` for
+     * any well-behaved ERC-20. Assets with transfer fees, negative rebases, or externally-mutable balances can
+     * violate it and cause this function to revert with an underflow. Strategies that read {totalAssets} on the
+     * claim path become uncallable in that state. Strategies that lock the rate at fulfillment time
+     * are unaffected.
      */
     function totalAssets() public view virtual override returns (uint256) {
         return IERC20(asset()).balanceOf(address(this)) - totalPendingDepositAssets();
