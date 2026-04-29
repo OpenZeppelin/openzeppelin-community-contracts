@@ -31,6 +31,22 @@ describe('ERC7540Delay', function () {
     this.fulfillRedeem = requestId => time.increaseTo.timestamp(requestId);
   });
 
+  describe('sanity', function () {
+    it('construction revert if share origin is not address(0)', async function () {
+      const factory = await ethers.getContractFactory('$ERC7540DelayShareOriginMock');
+      await expect(
+        ethers.deployContract('$ERC7540DelayShareOriginMock', [name, symbol, this.token]),
+      ).to.be.revertedWithCustomError(factory, 'ERC7540DelayInvalidDepositShareOrigin');
+    });
+
+    it('construction revert if share destination is not address(0)', async function () {
+      const factory = await ethers.getContractFactory('$ERC7540DelayShareDestinationMock');
+      await expect(
+        ethers.deployContract('$ERC7540DelayShareDestinationMock', [name, symbol, this.token]),
+      ).to.be.revertedWithCustomError(factory, 'ERC7540DelayInvalidRedeemShareDestination');
+    });
+  });
+
   describe('metadata', function () {
     it('token', async function () {
       await expect(this.mock.asset()).to.eventually.equal(this.token);
