@@ -131,7 +131,7 @@ abstract contract ERC7540 is ERC165, ERC20, IERC4626, IERC7540, IERC7575Share {
     function supportsInterface(bytes4 interfaceId) public view virtual override(IERC165, ERC165) returns (bool) {
         return
             interfaceId == (type(IERC4626).interfaceId ^ type(IERC7575).interfaceId) ||
-            interfaceId == type(IERC7575Share).interfaceId ||
+            (interfaceId == type(IERC7575Share).interfaceId && share() == address(this)) ||
             interfaceId == type(IERC7540Operator).interfaceId ||
             (interfaceId == type(IERC7540Deposit).interfaceId && _isDepositAsync()) ||
             (interfaceId == type(IERC7540Redeem).interfaceId && _isRedeemAsync()) ||
@@ -205,7 +205,7 @@ abstract contract ERC7540 is ERC165, ERC20, IERC4626, IERC7540, IERC7575Share {
 
     /// @inheritdoc IERC7575Share
     function vault(address asset_) public view virtual returns (address) {
-        return asset_ == asset() ? address(this) : address(0);
+        return share() == address(this) && asset_ == asset() ? address(this) : address(0);
     }
 
     /**
