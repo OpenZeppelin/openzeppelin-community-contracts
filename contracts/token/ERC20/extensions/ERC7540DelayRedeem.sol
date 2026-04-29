@@ -30,9 +30,9 @@ import {ERC7540} from "./ERC7540.sol";
  * Override {redeemDelay} to customize the waiting period (default: 1 hour) and {clock} to
  * change the time source (default: `block.timestamp`).
  *
- * NOTE: This module does not support temporary share custody through {_redeemShareDestination}. the constructor
- * will try enforce that property, but this check may not be enough if {_redeemShareDestination} is implemented
- * using a view mechanism that is not yet initialize during the parent's construction.
+ * NOTE: This module does not support temporary share custody through {_redeemShareDestination}. The constructor
+ * tries to enforce that property, but the check may be insufficient if {_redeemShareDestination} reads from
+ * storage that is not yet initialized when the parent's constructor runs.
  */
 abstract contract ERC7540DelayRedeem is ERC7540, IERC6372 {
     using SafeCast for uint256;
@@ -41,7 +41,7 @@ abstract contract ERC7540DelayRedeem is ERC7540, IERC6372 {
     mapping(address controller => Checkpoints.Trace208) private _redeems;
     mapping(address controller => uint256) private _claimedRedeems;
 
-    /// @dev Triggered if _redeemShareDestination() is not address(0), as this is not supported by this module.
+    /// @dev Triggered if {_redeemShareDestination} is not address(0), as this is not supported by this module.
     error ERC7540DelayInvalidRedeemShareDestination();
 
     constructor() {
