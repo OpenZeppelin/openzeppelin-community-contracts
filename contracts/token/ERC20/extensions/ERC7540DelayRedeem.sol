@@ -75,8 +75,11 @@ abstract contract ERC7540DelayRedeem is ERC7540, IERC6372 {
         uint256 /* requestId */
     ) internal virtual override returns (uint256) {
         uint48 timepoint = clock() + redeemDelay(controller);
-        uint256 latest = _redeems[controller].latest();
-        _redeems[controller].push(timepoint, (shares + latest).toUint208());
+
+        if (shares > 0) {
+            uint256 latest = _redeems[controller].latest();
+            _redeems[controller].push(timepoint, (shares + latest).toUint208());
+        }
 
         return super._requestRedeem(shares, controller, owner, timepoint);
     }
