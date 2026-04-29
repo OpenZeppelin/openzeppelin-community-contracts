@@ -232,6 +232,12 @@ abstract contract ERC7540 is ERC165, ERC20, IERC4626, IERC7540 {
      * Adds {totalPendingRedeemShares} to the ERC-20 supply. When shares are burned at request time
      * (i.e. {_redeemShareDestination} returns `address(0)`), pending redeem shares are removed from
      * the on-chain supply but still logically outstanding until claimed; this override compensates.
+     *
+     * NOTE: As a consequence, two standard ERC-20 assumptions do not hold: (a) `totalSupply()` may
+     * exceed the sum of all `balanceOf()` (pending shares are virtual and unowned); (b) `totalSupply()`
+     * can change without a matching `Transfer` event when {totalPendingRedeemShares} changes. Integrators
+     * that snapshot supply for governance or reward weighting, or reconstruct supply from event logs
+     * (indexers, bridges), must account for this.
      */
     function totalSupply() public view virtual override(IERC20, ERC20) returns (uint256) {
         return super.totalSupply() + totalPendingRedeemShares();
