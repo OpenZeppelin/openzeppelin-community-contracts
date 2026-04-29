@@ -15,8 +15,7 @@ const tokenName = 'Asset Token';
 const tokenSymbol = 'AST';
 
 describe('ERC7540Admin', function () {
-  // for (const withTmpHolder of [false, true]) {
-  for (const withTmpHolder of [false]) {
+  for (const withTmpHolder of [false, true]) {
     describe(withTmpHolder ? 'With a temporary share holder' : 'With direct share operations', function () {
       async function fixture() {
         const token = await ethers.deployContract('$ERC20', [tokenName, tokenSymbol]);
