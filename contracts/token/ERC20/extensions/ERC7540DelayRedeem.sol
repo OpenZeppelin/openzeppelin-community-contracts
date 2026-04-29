@@ -99,14 +99,13 @@ abstract contract ERC7540DelayRedeem is ERC7540, IERC6372 {
     function _consumeClaimableWithdraw(uint256 assets, address controller) internal virtual override returns (uint256) {
         // Pro-rata is computed against {_asyncMaxWithdraw} / {_asyncMaxRedeem} (strategy state) rather than the
         // public {maxWithdraw} / {maxRedeem}, so cap/pause overrides on the public surface cannot desynchronize
-        // the rate used for consumption. When `assets` equals the controller's full claimable balance
-        // (including the case where both sides are 0), the entire remaining {_asyncMaxRedeem} is returned
-        // directly to avoid division by zero.
-        uint256 maxAssets = _asyncMaxWithdraw(controller);
-        uint256 maxShares = _asyncMaxRedeem(controller);
-        uint256 shares = assets == maxAssets
-            ? maxShares
-            : Math.mulDiv(assets, maxShares, maxAssets, Math.Rounding.Ceil);
+        // the rate used for consumption.
+        uint256 shares = Math.mulDiv(
+            assets,
+            _asyncMaxRedeem(controller),
+            _asyncMaxWithdraw(controller),
+            Math.Rounding.Ceil
+        );
         _claimedRedeems[controller] += shares;
         return shares;
     }
@@ -115,14 +114,13 @@ abstract contract ERC7540DelayRedeem is ERC7540, IERC6372 {
     function _consumeClaimableRedeem(uint256 shares, address controller) internal virtual override returns (uint256) {
         // Pro-rata is computed against {_asyncMaxWithdraw} / {_asyncMaxRedeem} (strategy state) rather than the
         // public {maxWithdraw} / {maxRedeem}, so cap/pause overrides on the public surface cannot desynchronize
-        // the rate used for consumption. When `shares` equals the controller's full claimable balance
-        // (including the case where both sides are 0), the entire remaining {_asyncMaxWithdraw} is returned
-        // directly to avoid division by zero.
-        uint256 maxAssets = _asyncMaxWithdraw(controller);
-        uint256 maxShares = _asyncMaxRedeem(controller);
-        uint256 assets = shares == maxShares
-            ? maxAssets
-            : Math.mulDiv(shares, maxAssets, maxShares, Math.Rounding.Floor);
+        // the rate used for consumption.
+        uint256 assets = Math.mulDiv(
+            shares,
+            _asyncMaxWithdraw(controller),
+            _asyncMaxRedeem(controller),
+            Math.Rounding.Floor
+        );
         _claimedRedeems[controller] += shares;
         return assets;
     }

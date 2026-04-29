@@ -99,14 +99,13 @@ abstract contract ERC7540DelayDeposit is ERC7540, IERC6372 {
     function _consumeClaimableDeposit(uint256 assets, address controller) internal virtual override returns (uint256) {
         // Pro-rata is computed against {_asyncMaxDeposit} / {_asyncMaxMint} (strategy state) rather than the
         // public {maxDeposit} / {maxMint}, so cap/pause overrides on the public surface cannot desynchronize
-        // the rate used for consumption. When `assets` equals the controller's full claimable balance
-        // (including the case where both sides are 0), the entire remaining {_asyncMaxMint} is returned
-        // directly to avoid division by zero.
-        uint256 maxAssets = _asyncMaxDeposit(controller);
-        uint256 maxShares = _asyncMaxMint(controller);
-        uint256 shares = assets == maxAssets
-            ? maxShares
-            : Math.mulDiv(assets, maxShares, maxAssets, Math.Rounding.Floor);
+        // the rate used for consumption.
+        uint256 shares = Math.mulDiv(
+            assets,
+            _asyncMaxMint(controller),
+            _asyncMaxDeposit(controller),
+            Math.Rounding.Floor
+        );
         _claimedDeposits[controller] += assets;
         return shares;
     }
@@ -115,14 +114,13 @@ abstract contract ERC7540DelayDeposit is ERC7540, IERC6372 {
     function _consumeClaimableMint(uint256 shares, address controller) internal virtual override returns (uint256) {
         // Pro-rata is computed against {_asyncMaxDeposit} / {_asyncMaxMint} (strategy state) rather than the
         // public {maxDeposit} / {maxMint}, so cap/pause overrides on the public surface cannot desynchronize
-        // the rate used for consumption. When `shares` equals the controller's full claimable balance
-        // (including the case where both sides are 0), the entire remaining {_asyncMaxDeposit} is returned
-        // directly to avoid division by zero.
-        uint256 maxAssets = _asyncMaxDeposit(controller);
-        uint256 maxShares = _asyncMaxMint(controller);
-        uint256 assets = shares == maxShares
-            ? maxAssets
-            : Math.mulDiv(shares, maxAssets, maxShares, Math.Rounding.Ceil);
+        // the rate used for consumption.
+        uint256 assets = Math.mulDiv(
+            shares,
+            _asyncMaxDeposit(controller),
+            _asyncMaxMint(controller),
+            Math.Rounding.Ceil
+        );
         _claimedDeposits[controller] += assets;
         return assets;
     }
