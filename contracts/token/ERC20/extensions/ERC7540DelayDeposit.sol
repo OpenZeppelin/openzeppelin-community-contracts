@@ -7,6 +7,7 @@ import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 import {SafeCast} from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import {Checkpoints} from "@openzeppelin/contracts/utils/structs/Checkpoints.sol";
 import {Time} from "@openzeppelin/contracts/utils/types/Time.sol";
+import {ERC6372Utils} from "@openzeppelin/contracts/utils/ERC6372Utils.sol";
 import {ERC7540} from "./ERC7540.sol";
 
 /**
@@ -36,9 +37,6 @@ abstract contract ERC7540DelayDeposit is ERC7540, IERC6372 {
     mapping(address controller => Checkpoints.Trace208) private _deposits;
     mapping(address controller => uint256) private _claimedDeposits;
 
-    /// @dev The clock was incorrectly modified.
-    error ERC6372InconsistentClock();
-
     /// @inheritdoc IERC6372
     function clock() public view virtual returns (uint48) {
         return Time.timestamp();
@@ -47,14 +45,16 @@ abstract contract ERC7540DelayDeposit is ERC7540, IERC6372 {
     /// @inheritdoc IERC6372
     // solhint-disable-next-line func-name-mixedcase
     function CLOCK_MODE() public view virtual returns (string memory) {
-        // Check that the clock was not modified
-        if (clock() != Time.timestamp()) {
-            revert ERC6372InconsistentClock();
-        }
-        return "mode=timestamp";
+        return ERC6372Utils.timestampClockMode(clock);
     }
 
-    /// @dev Returns the delay duration before a deposit request becomes claimable. Defaults to 1 hour.
+    /**
+     * @dev Returns the delay duration before a deposit request becomes claimable. Defaults to 1 hour.
+     *
+     * NOTE: For any given `controller`, the maturity timepoint `clock() + depositDelay(controller)` MUST
+     * be non-decreasing across successive {requestDeposit} calls. Overrides that shrink the delay faster
+     * than `clock()` advances will cause new requests to revert until the previous maturity is reached.
+     */
     function depositDelay(address /*controller*/) public view virtual returns (uint48) {
         return 1 hours;
     }
@@ -82,7 +82,13 @@ abstract contract ERC7540DelayDeposit is ERC7540, IERC6372 {
         return super._requestDeposit(assets, controller, owner, timepoint);
     }
 
-    /// @dev Consumes `assets` from claimable deposits, returns proportional shares (rounded down).
+    /**
+     * @dev Consumes `assets` from claimable deposits, returns proportional shares (rounded down).
+     *
+     * Requirements:
+     *
+     * * {maxMint} must not be 0 for `controller`. Panics with division by zero otherwise.
+     */
     function _consumeClaimableDeposit(uint256 assets, address controller) internal virtual override returns (uint256) {
         uint256 shares = Math.mulDiv(assets, maxMint(controller), maxDeposit(controller), Math.Rounding.Floor);
         _claimedDeposits[controller] += assets;
@@ -104,11 +110,13 @@ abstract contract ERC7540DelayDeposit is ERC7540, IERC6372 {
         uint256 requestId,
         address controller
     ) internal view virtual override returns (uint256) {
-        uint48 timepoint = requestId.toUint48();
-        return
-            requestId > clock()
-                ? _deposits[controller].upperLookup(timepoint) - _deposits[controller].upperLookup(timepoint - 1)
-                : 0;
+        unchecked {
+            uint48 timepoint = requestId.toUint48();
+            return
+                timepoint > clock()
+                    ? _readyDepositAt(controller, timepoint) - _readyDepositAt(controller, timepoint - 1)
+                    : 0;
+        }
     }
 
     /**
@@ -119,23 +127,30 @@ abstract contract ERC7540DelayDeposit is ERC7540, IERC6372 {
         uint256 requestId,
         address controller
     ) internal view virtual override returns (uint256) {
-        uint48 timepoint = requestId.toUint48();
-        return
-            requestId > clock()
-                ? 0
-                : Math.saturatingSub(
-                    _deposits[controller].upperLookup(timepoint),
-                    Math.max(_deposits[controller].upperLookup(timepoint - 1), _claimedDeposits[controller])
-                );
+        unchecked {
+            uint48 timepoint = requestId.toUint48();
+            return
+                (timepoint == 0 || timepoint > clock())
+                    ? 0
+                    : _readyDepositAt(controller, timepoint) - _readyDepositAt(controller, timepoint - 1);
+        }
     }
 
     /// @dev Returns the total claimable assets across all matured timepoints for `owner`.
     function _asyncMaxDeposit(address owner) internal view virtual override returns (uint256) {
-        return _deposits[owner].upperLookup(clock()) - _claimedDeposits[owner];
+        return _readyDepositAt(owner, clock());
     }
 
     /// @dev Returns the share-equivalent of {_asyncMaxDeposit} (rounded down).
     function _asyncMaxMint(address owner) internal view virtual override returns (uint256) {
-        return _convertToShares(_asyncMaxDeposit(owner), Math.Rounding.Floor);
+        return _convertToShares(_readyDepositAt(owner, clock()), Math.Rounding.Floor);
+    }
+
+    /**
+     * @dev Internal helper: fetch the amount that is expected to be claimable at a given timepoint, if any.
+     * Any amount that has already been claimed is taken into consideration.
+     */
+    function _readyDepositAt(address owner, uint48 timepoint) internal view virtual returns (uint256) {
+        return Math.saturatingSub(_deposits[owner].upperLookupRecent(timepoint), _claimedDeposits[owner]);
     }
 }

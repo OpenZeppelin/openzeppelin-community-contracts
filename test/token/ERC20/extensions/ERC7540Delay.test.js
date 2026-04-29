@@ -8,6 +8,7 @@ const {
   shouldBehaveLikeERC7540Deposit,
   shouldBehaveLikeERC7540Redeem,
 } = require('./ERC7540.behavior');
+const { shouldBehaveLikeERC7575 } = require('./ERC7575.behavior');
 
 const name = 'Vault Shares';
 const symbol = 'vSHR';
@@ -42,8 +43,8 @@ describe('ERC7540Delay', function () {
     });
 
     it('reports default delay', async function () {
-      await expect(this.mock.depositDelay(this.owner)).to.eventually.equal(delay);
-      await expect(this.mock.redeemDelay(this.owner)).to.eventually.equal(delay);
+      await expect(this.mock.depositDelay(ethers.ZeroAddress)).to.eventually.equal(delay);
+      await expect(this.mock.redeemDelay(ethers.ZeroAddress)).to.eventually.equal(delay);
     });
 
     it('reports async deposit and redeem', async function () {
@@ -55,4 +56,119 @@ describe('ERC7540Delay', function () {
   shouldBehaveLikeERC7540Operator();
   shouldBehaveLikeERC7540Deposit({ supportCustomFulfill: false });
   shouldBehaveLikeERC7540Redeem({ supportCustomFulfill: false });
+  shouldBehaveLikeERC7575();
+
+  describe('multiple requests and partial claims', function () {
+    it('deposit flow', async function () {
+      const expectPendingClaimable = (requestId, account, pending, claimable) =>
+        Promise.all([
+          expect(this.mock.pendingDepositRequest(requestId, user)).to.eventually.equal(pending),
+          expect(this.mock.claimableDepositRequest(requestId, user)).to.eventually.equal(claimable),
+        ]);
+
+      const [user] = await ethers.getSigners();
+      await this.token.$_mint(user, 1000n);
+      await this.token.connect(user).approve(this.mock, ethers.MaxUint256);
+
+      const timepoint = (await time.clock.timestamp()) + 100n;
+
+      await expectPendingClaimable(timepoint + delay, user, 0n, 0n);
+      await expectPendingClaimable(timepoint + delay + 10n, user, 0n, 0n);
+      await expect(this.mock.maxDeposit(user)).to.eventually.equal(0n);
+
+      await time.increaseTo.timestamp(timepoint, false);
+      await this.mock.connect(user).requestDeposit(100n, user, user);
+
+      await expectPendingClaimable(timepoint + delay, user, 100n, 0n);
+      await expectPendingClaimable(timepoint + delay + 10n, user, 0n, 0n);
+      await expect(this.mock.maxDeposit(user)).to.eventually.equal(0n);
+
+      await time.increaseTo.timestamp(timepoint + 10n, false);
+      await this.mock.connect(user).requestDeposit(200n, user, user);
+
+      await expectPendingClaimable(timepoint + delay, user, 100n, 0n);
+      await expectPendingClaimable(timepoint + delay + 10n, user, 200n, 0n);
+      await expect(this.mock.maxDeposit(user)).to.eventually.equal(0n);
+
+      await time.increaseTo.timestamp(timepoint + delay);
+
+      await expectPendingClaimable(timepoint + delay, user, 0n, 100n);
+      await expectPendingClaimable(timepoint + delay + 10n, user, 200n, 0n);
+      await expect(this.mock.maxDeposit(user)).to.eventually.equal(100n);
+
+      await this.mock.deposit(50n, user);
+
+      await expectPendingClaimable(timepoint + delay, user, 0n, 50n);
+      await expectPendingClaimable(timepoint + delay + 10n, user, 200n, 0n);
+      await expect(this.mock.maxDeposit(user)).to.eventually.equal(50n);
+
+      await time.increaseTo.timestamp(timepoint + delay + 10n);
+
+      await expectPendingClaimable(timepoint + delay, user, 0n, 50n);
+      await expectPendingClaimable(timepoint + delay + 10n, user, 0n, 200n);
+      await expect(this.mock.maxDeposit(user)).to.eventually.equal(250n);
+
+      await this.mock.deposit(100n, user);
+
+      await expectPendingClaimable(timepoint + delay, user, 0n, 0n);
+      await expectPendingClaimable(timepoint + delay + 10n, user, 0n, 150n);
+      await expect(this.mock.maxDeposit(user)).to.eventually.equal(150n);
+    });
+
+    it('redeem flow', async function () {
+      const expectPendingClaimable = (requestId, account, pending, claimable) =>
+        Promise.all([
+          expect(this.mock.pendingRedeemRequest(requestId, user)).to.eventually.equal(pending),
+          expect(this.mock.claimableRedeemRequest(requestId, user)).to.eventually.equal(claimable),
+        ]);
+
+      const [user] = await ethers.getSigners();
+      await this.token.$_mint(this.mock, 1000n);
+      await this.mock.$_mint(user, 1000n);
+
+      const timepoint = (await time.clock.timestamp()) + 100n;
+
+      await expectPendingClaimable(timepoint + delay, user, 0n, 0n);
+      await expectPendingClaimable(timepoint + delay + 10n, user, 0n, 0n);
+      await expect(this.mock.maxRedeem(user)).to.eventually.equal(0n);
+
+      await time.increaseTo.timestamp(timepoint, false);
+      await this.mock.connect(user).requestRedeem(100n, user, user);
+
+      await expectPendingClaimable(timepoint + delay, user, 100n, 0n);
+      await expectPendingClaimable(timepoint + delay + 10n, user, 0n, 0n);
+      await expect(this.mock.maxRedeem(user)).to.eventually.equal(0n);
+
+      await time.increaseTo.timestamp(timepoint + 10n, false);
+      await this.mock.connect(user).requestRedeem(200n, user, user);
+
+      await expectPendingClaimable(timepoint + delay, user, 100n, 0n);
+      await expectPendingClaimable(timepoint + delay + 10n, user, 200n, 0n);
+      await expect(this.mock.maxRedeem(user)).to.eventually.equal(0n);
+
+      await time.increaseTo.timestamp(timepoint + delay);
+
+      await expectPendingClaimable(timepoint + delay, user, 0n, 100n);
+      await expectPendingClaimable(timepoint + delay + 10n, user, 200n, 0n);
+      await expect(this.mock.maxRedeem(user)).to.eventually.equal(100n);
+
+      await this.mock.redeem(50n, user, user);
+
+      await expectPendingClaimable(timepoint + delay, user, 0n, 50n);
+      await expectPendingClaimable(timepoint + delay + 10n, user, 200n, 0n);
+      await expect(this.mock.maxRedeem(user)).to.eventually.equal(50n);
+
+      await time.increaseTo.timestamp(timepoint + delay + 10n);
+
+      await expectPendingClaimable(timepoint + delay, user, 0n, 50n);
+      await expectPendingClaimable(timepoint + delay + 10n, user, 0n, 200n);
+      await expect(this.mock.maxRedeem(user)).to.eventually.equal(250n);
+
+      await this.mock.redeem(100n, user, user);
+
+      await expectPendingClaimable(timepoint + delay, user, 0n, 0n);
+      await expectPendingClaimable(timepoint + delay + 10n, user, 0n, 150n);
+      await expect(this.mock.maxRedeem(user)).to.eventually.equal(150n);
+    });
+  });
 });

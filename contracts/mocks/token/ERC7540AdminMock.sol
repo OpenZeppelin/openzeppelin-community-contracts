@@ -7,6 +7,12 @@ import {ERC7540AdminDeposit} from "../../token/ERC20/extensions/ERC7540AdminDepo
 import {ERC7540AdminRedeem} from "../../token/ERC20/extensions/ERC7540AdminRedeem.sol";
 
 abstract contract ERC7540AdminMock is ERC7540AdminDeposit, ERC7540AdminRedeem {
+    address private immutable _tmpShareHolder;
+
+    constructor(address tmpShareHolder) {
+        _tmpShareHolder = tmpShareHolder;
+    }
+
     function _requestDeposit(
         uint256 assets,
         address controller,
@@ -23,5 +29,13 @@ abstract contract ERC7540AdminMock is ERC7540AdminDeposit, ERC7540AdminRedeem {
         uint256 requestId
     ) internal virtual override(ERC7540, ERC7540AdminRedeem) returns (uint256) {
         return super._requestRedeem(shares, controller, owner, requestId);
+    }
+
+    function _depositShareOrigin() internal view virtual override returns (address) {
+        return _tmpShareHolder;
+    }
+
+    function _redeemShareDestination() internal view virtual override returns (address) {
+        return _tmpShareHolder;
     }
 }

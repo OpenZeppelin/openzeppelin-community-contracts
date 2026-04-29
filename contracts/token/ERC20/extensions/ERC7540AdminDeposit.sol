@@ -71,6 +71,12 @@ abstract contract ERC7540AdminDeposit is ERC7540 {
      * Requirements:
      *
      * * `assets` must not exceed the pending deposit amount for the `controller`.
+     *
+     * NOTE: Multiple fulfillments with different exchange rates will blend into a weighted average.
+     * For example, fulfilling 50 assets → 100 shares (2:1) then 50 assets → 25 shares (0.5:1) produces
+     * claimableAssets=100 and claimableShares=125. A partial claim of 50 assets yields
+     * `mulDiv(50, 125, 100) = 62` shares: the weighted average rate, not either original rate.
+     * Integrators expecting per-fulfillment rate isolation should use a different strategy (e.g. epochs).
      */
     function _fulfillDeposit(uint256 assets, uint256 shares, address controller) internal virtual {
         uint256 pendingAssets = pendingDepositRequest(0, controller);
@@ -80,22 +86,42 @@ abstract contract ERC7540AdminDeposit is ERC7540 {
         _deposits[controller].claimableAssets += assets;
         _deposits[controller].claimableShares += shares;
 
+        if (_depositShareOrigin() != address(0)) {
+            _mintSharesOnDepositFulfill(assets, shares);
+        }
+
         emit DepositClaimable(controller, 0, assets, shares);
     }
 
     /// @dev Consumes `assets` from the claimable deposit and returns the proportional shares (rounded down).
     function _consumeClaimableDeposit(uint256 assets, address controller) internal virtual override returns (uint256) {
-        uint256 shares = Math.mulDiv(assets, maxMint(controller), maxDeposit(controller), Math.Rounding.Floor);
-        _deposits[controller].claimableAssets = Math.saturatingSub(_deposits[controller].claimableAssets, assets);
-        _deposits[controller].claimableShares = Math.saturatingSub(_deposits[controller].claimableShares, shares);
+        // When `assets` equals the controller's full claimable balance (including the case where both
+        // sides are 0), the entire remaining `claimableShares` is returned and consumed. This drains any
+        // residue left after a partial claim was rounded against the share side.
+        uint256 maxAssets = maxDeposit(controller);
+        uint256 maxShares = maxMint(controller);
+        uint256 shares = assets == maxAssets
+            ? maxShares
+            : Math.mulDiv(assets, maxShares, maxAssets, Math.Rounding.Floor);
+
+        _deposits[controller].claimableAssets -= assets;
+        _deposits[controller].claimableShares -= shares;
         return shares;
     }
 
     /// @dev Consumes `shares` from the claimable deposit and returns the proportional assets (rounded up).
     function _consumeClaimableMint(uint256 shares, address controller) internal virtual override returns (uint256) {
-        uint256 assets = Math.mulDiv(shares, maxDeposit(controller), maxMint(controller), Math.Rounding.Ceil);
-        _deposits[controller].claimableAssets = Math.saturatingSub(_deposits[controller].claimableAssets, assets);
-        _deposits[controller].claimableShares = Math.saturatingSub(_deposits[controller].claimableShares, shares);
+        // When `shares` equals the controller's full claimable balance (including the case where both
+        // sides are 0), the entire remaining `claimableAssets` is returned and consumed. This drains any
+        // residue left after a partial claim was rounded against the asset side.
+        uint256 maxAssets = maxDeposit(controller);
+        uint256 maxShares = maxMint(controller);
+        uint256 assets = shares == maxShares
+            ? maxAssets
+            : Math.mulDiv(shares, maxAssets, maxShares, Math.Rounding.Ceil);
+
+        _deposits[controller].claimableAssets -= assets;
+        _deposits[controller].claimableShares -= shares;
         return assets;
     }
 

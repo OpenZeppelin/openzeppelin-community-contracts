@@ -1,3 +1,12 @@
+## 28-04-2026
+
+- `IERC7540`: Add interface for ERC-7540 asynchronous tokenized vaults, extending ERC-4626 with request-based deposit and redeem flows.
+- `IERC7575`: Add interface for ERC-7575 multi-asset vaults.
+- `ERC7540`: Add base implementation of ERC-7540 with operator management, configurable share custody, `totalAssets`/`totalSupply` adjustments to keep the share price accurate during the async lifecycle, and virtual hooks for strategy extensions.
+- `ERC7540AdminDeposit`, `ERC7540AdminRedeem`: Add admin-controlled fulfillment strategies where a privileged caller transitions requests from Pending to Claimable with an explicit exchange rate.
+- `ERC7540DelayDeposit`, `ERC7540DelayRedeem`: Add time-based fulfillment strategies that make requests claimable after a configurable delay, using `Checkpoints.Trace208` to accumulate maturing amounts.
+- `ERC7540SyncDeposit`, `ERC7540SyncRedeem`: Add synchronous strategies that preserve standard ERC-4626 behavior on one side of the vault.
+
 ## 15-12-2025
 
 - Remove `IERC7802`, `IERC7821` and `IERC7786`. These interfaces were migrated to `@openzeppelin/contracts>=5.5.0`.

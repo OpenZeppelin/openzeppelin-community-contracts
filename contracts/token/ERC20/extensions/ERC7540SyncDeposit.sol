@@ -7,8 +7,8 @@ import {ERC7540} from "./ERC7540.sol";
 /**
  * @dev Module for enabling synchronous behavior (ERC-4626) for the deposit flow of an ERC-7540 vault.
  *
- * Note that an ERC-7540 vault is required to have at least on flow operating in asynchronous mode, so this module
- * cannot combined with {ERC7540SyncRedeem}.
+ * Note that an ERC-7540 vault is required to have at least one flow operating in asynchronous mode, so this module
+ * cannot be combined with {ERC7540SyncRedeem}.
  */
 abstract contract ERC7540SyncDeposit is ERC7540 {
     /// @inheritdoc ERC7540

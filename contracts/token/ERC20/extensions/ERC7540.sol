@@ -10,6 +10,7 @@ import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 import {LowLevelCall} from "@openzeppelin/contracts/utils/LowLevelCall.sol";
 import {Memory} from "@openzeppelin/contracts/utils/Memory.sol";
 import {IERC7540, IERC7540Operator, IERC7540Deposit, IERC7540Redeem} from "../../../interfaces/IERC7540.sol";
+import {IERC7575} from "../../../interfaces/IERC7575.sol";
 
 /**
  * @dev Implementation of the ERC-7540 "Asynchronous ERC-4626 Tokenized Vaults" as defined in
@@ -85,7 +86,7 @@ abstract contract ERC7540 is ERC165, ERC20, IERC4626, IERC7540 {
     error ERC7540SyncDeposit();
 
     /// @dev A synchronous deposit preview was attempted but {_isDepositAsync} returns `true`.
-    error ERC7540DepositIsAsync();
+    error ERC7540AsyncDeposit();
 
     /// @dev A redeem Request was attempted but {_isRedeemAsync} returns `false`.
     error ERC7540SyncRedeem();
@@ -95,6 +96,12 @@ abstract contract ERC7540 is ERC165, ERC20, IERC4626, IERC7540 {
 
     /// @dev Neither {_isDepositAsync} nor {_isRedeemAsync} returns `true`.
     error ERC7540MissingAsync();
+
+    /// @dev Invalid attempt at minting shares on a deposit fulfill when configuration mints them during claim.
+    error ERC7540UnauthorizedMintSharesOnDepositFulfill();
+
+    /// @dev Invalid attempt at burning shares on a redeem fulfill when configuration burns them during request.
+    error ERC7540UnauthorizedBurnSharesOnRedeemFulfill();
 
     /**
      * @dev Sets the underlying asset contract. This must be an ERC-20-compatible contract.
@@ -110,26 +117,9 @@ abstract contract ERC7540 is ERC165, ERC20, IERC4626, IERC7540 {
      */
     constructor(IERC20 asset_) {
         require(_isDepositAsync() || _isRedeemAsync(), ERC7540MissingAsync());
-        (bool success, uint8 assetDecimals) = _tryGetAssetDecimals(asset_);
+        (bool success, uint8 assetDecimals) = SafeERC20.tryGetDecimals(asset_);
         _underlyingDecimals = success ? assetDecimals : 18;
         _asset = asset_;
-    }
-
-    /**
-     * @dev Attempts to fetch the asset decimals. A return value of false indicates that the attempt failed in some way.
-     */
-    function _tryGetAssetDecimals(IERC20 asset_) private view returns (bool ok, uint8 assetDecimals) {
-        Memory.Pointer ptr = Memory.getFreeMemoryPointer();
-        (bool success, bytes32 returnedDecimals, ) = LowLevelCall.staticcallReturn64Bytes(
-            address(asset_),
-            abi.encodeCall(IERC20Metadata.decimals, ())
-        );
-        Memory.unsafeSetFreeMemoryPointer(ptr);
-
-        return
-            (success && LowLevelCall.returnDataSize() >= 32 && uint256(returnedDecimals) <= type(uint8).max)
-                ? (true, uint8(uint256(returnedDecimals)))
-                : (false, 0);
     }
 
     /**
@@ -138,8 +128,9 @@ abstract contract ERC7540 is ERC165, ERC20, IERC4626, IERC7540 {
      * Reports support for {IERC7540Operator} unconditionally. Support for {IERC7540Deposit} and
      * {IERC7540Redeem} is conditional on the corresponding async selector returning `true`.
      */
-    function supportsInterface(bytes4 interfaceId) public view virtual override returns (bool) {
+    function supportsInterface(bytes4 interfaceId) public view virtual override(IERC165, ERC165) returns (bool) {
         return
+            interfaceId == (type(IERC4626).interfaceId ^ type(IERC7575).interfaceId) ||
             interfaceId == type(IERC7540Operator).interfaceId ||
             (interfaceId == type(IERC7540Deposit).interfaceId && _isDepositAsync()) ||
             (interfaceId == type(IERC7540Redeem).interfaceId && _isRedeemAsync()) ||
@@ -206,6 +197,11 @@ abstract contract ERC7540 is ERC165, ERC20, IERC4626, IERC7540 {
         return address(_asset);
     }
 
+    /// @inheritdoc IERC7575
+    function share() public view virtual returns (address) {
+        return address(this);
+    }
+
     /**
      * @dev See {IERC4626-totalAssets}.
      *
@@ -235,8 +231,7 @@ abstract contract ERC7540 is ERC165, ERC20, IERC4626, IERC7540 {
      * * {_isDepositAsync} must return `true`.
      */
     function pendingDepositRequest(uint256 requestId, address controller) public view returns (uint256) {
-        require(_isDepositAsync(), ERC7540SyncDeposit());
-        return _pendingDepositRequest(requestId, controller);
+        return _isDepositAsync() ? _pendingDepositRequest(requestId, controller) : 0;
     }
 
     /**
@@ -247,8 +242,7 @@ abstract contract ERC7540 is ERC165, ERC20, IERC4626, IERC7540 {
      * * {_isDepositAsync} must return `true`.
      */
     function claimableDepositRequest(uint256 requestId, address controller) public view returns (uint256) {
-        require(_isDepositAsync(), ERC7540SyncDeposit());
-        return _claimableDepositRequest(requestId, controller);
+        return _isDepositAsync() ? _claimableDepositRequest(requestId, controller) : 0;
     }
 
     /**
@@ -259,8 +253,7 @@ abstract contract ERC7540 is ERC165, ERC20, IERC4626, IERC7540 {
      * * {_isRedeemAsync} must return `true`.
      */
     function pendingRedeemRequest(uint256 requestId, address controller) public view returns (uint256) {
-        require(_isRedeemAsync(), ERC7540SyncRedeem());
-        return _pendingRedeemRequest(requestId, controller);
+        return _isRedeemAsync() ? _pendingRedeemRequest(requestId, controller) : 0;
     }
 
     /**
@@ -271,8 +264,7 @@ abstract contract ERC7540 is ERC165, ERC20, IERC4626, IERC7540 {
      * * {_isRedeemAsync} must return `true`.
      */
     function claimableRedeemRequest(uint256 requestId, address controller) public view returns (uint256) {
-        require(_isRedeemAsync(), ERC7540SyncRedeem());
-        return _claimableRedeemRequest(requestId, controller);
+        return _isRedeemAsync() ? _claimableRedeemRequest(requestId, controller) : 0;
     }
 
     /// @dev Returns the total amount of underlying assets currently pending in deposit Requests.
@@ -342,7 +334,7 @@ abstract contract ERC7540 is ERC165, ERC20, IERC4626, IERC7540 {
      * mandates that preview functions revert for async flows.
      */
     function previewDeposit(uint256 assets) public view virtual returns (uint256) {
-        require(!_isDepositAsync(), ERC7540DepositIsAsync());
+        require(!_isDepositAsync(), ERC7540AsyncDeposit());
         return _convertToShares(assets, Math.Rounding.Floor);
     }
 
@@ -352,7 +344,7 @@ abstract contract ERC7540 is ERC165, ERC20, IERC4626, IERC7540 {
      * MUST revert when {_isDepositAsync} returns `true`.
      */
     function previewMint(uint256 shares) public view virtual returns (uint256) {
-        require(!_isDepositAsync(), ERC7540DepositIsAsync());
+        require(!_isDepositAsync(), ERC7540AsyncDeposit());
         return _convertToAssets(shares, Math.Rounding.Ceil);
     }
 
@@ -430,7 +422,7 @@ abstract contract ERC7540 is ERC165, ERC20, IERC4626, IERC7540 {
         }
 
         uint256 shares = _isDepositAsync() ? _consumeClaimableDeposit(assets, controller) : previewDeposit(assets);
-        _deposit(_msgSender(), receiver, assets, shares);
+        _deposit(_isDepositAsync() ? controller : _msgSender(), receiver, assets, shares);
         return shares;
     }
 
@@ -466,7 +458,7 @@ abstract contract ERC7540 is ERC165, ERC20, IERC4626, IERC7540 {
         }
 
         uint256 assets = _isDepositAsync() ? _consumeClaimableMint(shares, controller) : previewMint(shares);
-        _deposit(_msgSender(), receiver, assets, shares);
+        _deposit(_isDepositAsync() ? controller : _msgSender(), receiver, assets, shares);
         return assets;
     }
 
@@ -610,8 +602,7 @@ abstract contract ERC7540 is ERC165, ERC20, IERC4626, IERC7540 {
      * inside {_deposit} and this function must not be called.
      */
     function _mintSharesOnDepositFulfill(uint256 assets, uint256 shares) internal virtual {
-        // TODO: support the mint-on-claim model (shares minted at claim time when _depositShareOrigin is address(0))
-        require(_depositShareOrigin() != address(0), "ERC7540: not yet supported");
+        require(_depositShareOrigin() != address(0), ERC7540UnauthorizedMintSharesOnDepositFulfill());
         _totalPendingDepositAssets -= assets;
         _mint(_depositShareOrigin(), shares);
     }
@@ -621,7 +612,7 @@ abstract contract ERC7540 is ERC165, ERC20, IERC4626, IERC7540 {
      *
      * Handles three cases depending on the vault configuration:
      *
-     * 1. **Synchronous** ({_isDepositAsync} returns `false`): transfers assets from `caller` into the vault
+     * 1. **Synchronous** ({_isDepositAsync} returns `false`): transfers assets from `callerOrController` into the vault
      *    and mints new shares to `receiver`. Standard ERC-4626 behavior.
      * 2. **Async, mint-on-claim** ({_depositShareOrigin} returns `address(0)`): decrements
      *    `_totalPendingDepositAssets` and mints new shares to `receiver`. No asset transfer occurs
@@ -629,9 +620,10 @@ abstract contract ERC7540 is ERC165, ERC20, IERC4626, IERC7540 {
      * 3. **Async, pre-minted** ({_depositShareOrigin} returns non-zero): transfers pre-minted shares
      *    from the share origin address to `receiver`.
      *
-     * Emits {IERC4626-Deposit}.
+     * Emits {IERC4626-Deposit}. Per ERC-7540, the first event parameter is the `controller` in async
+     * mode and `msg.sender` in sync mode.
      */
-    function _deposit(address caller, address receiver, uint256 assets, uint256 shares) internal virtual {
+    function _deposit(address callerOrController, address receiver, uint256 assets, uint256 shares) internal virtual {
         // If asset() is ERC-777, `transferFrom` can trigger a reentrancy BEFORE the transfer happens through the
         // `tokensToSend` hook. On the other hand, the `tokenReceived` hook, that is triggered after the transfer,
         // calls the vault, which is assumed not malicious.
@@ -640,7 +632,7 @@ abstract contract ERC7540 is ERC165, ERC20, IERC4626, IERC7540 {
         // assets are transferred and before the shares are minted, which is a valid state.
         if (!_isDepositAsync()) {
             // slither-disable-next-line reentrancy-no-eth
-            _transferIn(caller, assets);
+            _transferIn(callerOrController, assets);
             _mint(receiver, shares);
         } else if (_depositShareOrigin() == address(0)) {
             _totalPendingDepositAssets -= assets;
@@ -649,7 +641,7 @@ abstract contract ERC7540 is ERC165, ERC20, IERC4626, IERC7540 {
             _transfer(_depositShareOrigin(), receiver, shares);
         }
 
-        emit Deposit(caller, receiver, assets, shares);
+        emit Deposit(callerOrController, receiver, assets, shares);
     }
 
     /**
@@ -702,8 +694,7 @@ abstract contract ERC7540 is ERC165, ERC20, IERC4626, IERC7540 {
      * time inside {_requestRedeem} and this function must not be called.
      */
     function _burnSharesOnRedeemFulfill(uint256 /*assets*/, uint256 shares) internal virtual {
-        // TODO: support the burn-on-request model (shares already burned when _redeemShareDestination is address(0))
-        require(_redeemShareDestination() != address(0), "ERC7540: not yet supported");
+        require(_redeemShareDestination() != address(0), ERC7540UnauthorizedBurnSharesOnRedeemFulfill());
         _totalPendingRedeemShares += shares;
         _burn(_redeemShareDestination(), shares);
     }
@@ -782,6 +773,11 @@ abstract contract ERC7540 is ERC165, ERC20, IERC4626, IERC7540 {
      *   deposit assets are tracked via {totalPendingDepositAssets} and decremented in {_deposit}.
      * * Non-zero address: shares are pre-minted to this address during fulfillment (via
      *   {_mintSharesOnDepositFulfill}) and transferred to the receiver on claim.
+     *
+     * NOTE: If overridden to return a non-zero address, that address must not be able to transfer
+     * shares (otherwise pre-minted shares could be moved before they are claimed). Use an unowned
+     * address such as `address(0xdead)`. Avoid addresses in the precompile reserved range
+     * (`address(1)` through `address(0x1ff)`, see EIP-7587).
      */
     function _depositShareOrigin() internal view virtual returns (address) {
         return address(0);
@@ -794,6 +790,11 @@ abstract contract ERC7540 is ERC165, ERC20, IERC4626, IERC7540 {
      *   are tracked via {totalPendingRedeemShares} so that {totalSupply} remains accurate.
      * * Non-zero address: shares are transferred to this address on request and burned during
      *   fulfillment (via {_burnSharesOnRedeemFulfill}).
+     *
+     * NOTE: If overridden to return a non-zero address, that address must not be able to transfer
+     * shares (otherwise escrowed shares could be moved before they are burned). Use an unowned
+     * address such as `address(0xdead)`. Avoid addresses in the precompile reserved range
+     * (`address(1)` through `address(0x1ff)`, see EIP-7587).
      */
     function _redeemShareDestination() internal view virtual returns (address) {
         return address(0);
@@ -846,6 +847,11 @@ abstract contract ERC7540 is ERC165, ERC20, IERC4626, IERC7540 {
     /**
      * @dev Consumes `assets` worth of a Claimable deposit for `controller` and returns the corresponding
      * number of shares. Called by {deposit} (three-argument overload) in async mode.
+     *
+     * NOTE: In async mode, this function may be susceptible to the inflation attack vector described in
+     * https://docs.openzeppelin.com/contracts/5.x/erc4626#inflation-attack[ERC-4626 security considerations]
+     * if the shares are freed automatically (e.g. after a certain time period). Consider using {_decimalsOffset}
+     * to mitigate this risk.
      */
     function _consumeClaimableDeposit(uint256 /*assets*/, address /*controller*/) internal virtual returns (uint256);
 
