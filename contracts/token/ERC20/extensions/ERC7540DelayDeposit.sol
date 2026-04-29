@@ -29,6 +29,10 @@ import {ERC7540} from "./ERC7540.sol";
  *
  * Override {depositDelay} to customize the waiting period (default: 1 hour) and {clock} to
  * change the time source (default: `block.timestamp`).
+ *
+ * NOTE: This module does not support temporary share custody through {_depositShareOrigin}. The constructor
+ * tries to enforce that property, but the check may be insufficient if {_depositShareOrigin} reads from
+ * storage that is not yet initialized when the parent's constructor runs
  */
 abstract contract ERC7540DelayDeposit is ERC7540, IERC6372 {
     using SafeCast for uint256;
@@ -36,6 +40,13 @@ abstract contract ERC7540DelayDeposit is ERC7540, IERC6372 {
 
     mapping(address controller => Checkpoints.Trace208) private _deposits;
     mapping(address controller => uint256) private _claimedDeposits;
+
+    /// @dev Triggered if {_depositShareOrigin} is not address(0), as this is not supported by this module.
+    error ERC7540DelayInvalidDepositShareOrigin();
+
+    constructor() {
+        require(_depositShareOrigin() == address(0), ERC7540DelayInvalidDepositShareOrigin());
+    }
 
     /// @inheritdoc IERC6372
     function clock() public view virtual returns (uint48) {

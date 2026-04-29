@@ -39,3 +39,15 @@ abstract contract ERC7540DelayMock is ERC7540DelayDeposit, ERC7540DelayRedeem {
         return super._requestRedeem(shares, controller, owner, requestId);
     }
 }
+
+abstract contract ERC7540DelayShareOriginMock is ERC7540DelayMock {
+    function _depositShareOrigin() internal view virtual override returns (address) {
+        return address(this);
+    }
+}
+
+abstract contract ERC7540DelayShareDestinationMock is ERC7540DelayMock {
+    function _redeemShareDestination() internal view virtual override returns (address) {
+        return address(this);
+    }
+}
