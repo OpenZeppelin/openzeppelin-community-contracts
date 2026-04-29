@@ -409,7 +409,6 @@ abstract contract ERC7540 is ERC165, ERC20, IERC4626, IERC7540 {
      *
      * * `assets` must not exceed {maxDeposit} for the relevant account.
      * * When async, `msg.sender` must be `controller` or an approved operator of `controller`.
-     * * `assets` must not be 0 if {maxDeposit} is 0 for `controller` or `receiver`. Panics with division by zero otherwise.
      */
     function deposit(
         uint256 assets,

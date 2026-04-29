@@ -306,6 +306,14 @@ function shouldBehaveLikeERC7540Deposit({
               .to.be.revertedWithCustomError(this.mock, 'ERC7540InvalidOperator')
               .withArgs(this.controller, this.other);
           });
+
+          it('empty deposit when nothing is claimable', async function () {
+            const tx = this.mock
+              .connect(this.controller)
+              .deposit(0n, this.receiver, ethers.Typed.address(this.controller));
+            await expect(tx).to.emit(this.mock, 'Deposit').withArgs(this.controller, this.receiver, 0n, 0n);
+            await expect(tx).to.changeTokenBalance(this.mock, this.receiver, 0n);
+          });
         });
 
         describe('via mint()', function () {
@@ -363,6 +371,14 @@ function shouldBehaveLikeERC7540Deposit({
             )
               .to.be.revertedWithCustomError(this.mock, 'ERC7540InvalidOperator')
               .withArgs(this.controller, this.other);
+          });
+
+          it('empty mint when nothing is claimable', async function () {
+            const tx = this.mock
+              .connect(this.controller)
+              .mint(0n, this.receiver, ethers.Typed.address(this.controller));
+            await expect(tx).to.emit(this.mock, 'Deposit').withArgs(this.controller, this.receiver, 0n, 0n);
+            await expect(tx).to.changeTokenBalance(this.mock, this.receiver, 0n);
           });
         });
       });
@@ -625,6 +641,14 @@ function shouldBehaveLikeERC7540Redeem({ initialAssets, initialShares, balance, 
               .to.be.revertedWithCustomError(this.mock, 'ERC7540InvalidOperator')
               .withArgs(this.controller, this.other);
           });
+
+          it('empty redeem when nothing is claimable', async function () {
+            const tx = this.mock.connect(this.controller).redeem(0n, this.receiver, this.controller);
+            await expect(tx)
+              .to.emit(this.mock, 'Withdraw')
+              .withArgs(this.controller, this.receiver, this.controller, 0n, 0n);
+            await expect(tx).to.changeTokenBalances(this.token, [this.mock, this.receiver], [0n, 0n]);
+          });
         });
 
         describe('via withdraw()', function () {
@@ -669,6 +693,14 @@ function shouldBehaveLikeERC7540Redeem({ initialAssets, initialShares, balance, 
             await expect(this.mock.connect(this.other).withdraw(assets, this.receiver, this.controller))
               .to.be.revertedWithCustomError(this.mock, 'ERC7540InvalidOperator')
               .withArgs(this.controller, this.other);
+          });
+
+          it('empty withdraw when nothing is claimable', async function () {
+            const tx = this.mock.connect(this.controller).withdraw(0n, this.receiver, this.controller);
+            await expect(tx)
+              .to.emit(this.mock, 'Withdraw')
+              .withArgs(this.controller, this.receiver, this.controller, 0n, 0n);
+            await expect(tx).to.changeTokenBalances(this.token, [this.mock, this.receiver], [0n, 0n]);
           });
         });
       });
