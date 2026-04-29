@@ -10,7 +10,7 @@ import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 import {LowLevelCall} from "@openzeppelin/contracts/utils/LowLevelCall.sol";
 import {Memory} from "@openzeppelin/contracts/utils/Memory.sol";
 import {IERC7540, IERC7540Operator, IERC7540Deposit, IERC7540Redeem} from "../../../interfaces/IERC7540.sol";
-import {IERC7575} from "../../../interfaces/IERC7575.sol";
+import {IERC7575, IERC7575Share} from "../../../interfaces/IERC7575.sol";
 
 /**
  * @dev Implementation of the ERC-7540 "Asynchronous ERC-4626 Tokenized Vaults" as defined in
@@ -65,7 +65,7 @@ import {IERC7575} from "../../../interfaces/IERC7575.sol";
  * accounting (notably {totalAssets}) can revert and freeze claim paths that depend on live conversions.
  * ====
  */
-abstract contract ERC7540 is ERC165, ERC20, IERC4626, IERC7540 {
+abstract contract ERC7540 is ERC165, ERC20, IERC4626, IERC7540, IERC7575Share {
     using Math for uint256;
 
     IERC20 private immutable _asset;
@@ -138,10 +138,11 @@ abstract contract ERC7540 is ERC165, ERC20, IERC4626, IERC7540 {
      */
     function supportsInterface(bytes4 interfaceId) public view virtual override(IERC165, ERC165) returns (bool) {
         return
-            interfaceId == (type(IERC4626).interfaceId ^ type(IERC7575).interfaceId) ||
+            interfaceId == (type(IERC4626).interfaceId ^ type(IERC7575).interfaceId) || // ERC7575
             interfaceId == type(IERC7540Operator).interfaceId ||
             (interfaceId == type(IERC7540Deposit).interfaceId && _isDepositAsync()) ||
             (interfaceId == type(IERC7540Redeem).interfaceId && _isRedeemAsync()) ||
+            (interfaceId == type(IERC7575Share).interfaceId && share() == address(this)) ||
             super.supportsInterface(interfaceId);
     }
 
@@ -208,6 +209,11 @@ abstract contract ERC7540 is ERC165, ERC20, IERC4626, IERC7540 {
     /// @inheritdoc IERC7575
     function share() public view virtual returns (address) {
         return address(this);
+    }
+
+    /// @inheritdoc IERC7575Share
+    function vault(address asset_) public view virtual returns (address) {
+        return share() == address(this) && asset_ == asset() ? address(this) : address(0);
     }
 
     /**

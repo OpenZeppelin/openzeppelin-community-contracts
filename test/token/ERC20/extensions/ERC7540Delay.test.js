@@ -50,6 +50,8 @@ describe('ERC7540Delay', function () {
   describe('metadata', function () {
     it('token', async function () {
       await expect(this.mock.asset()).to.eventually.equal(this.token);
+      await expect(this.mock.vault(this.token)).to.eventually.equal(this.mock);
+      await expect(this.mock.vault(this.mock)).to.eventually.equal(ethers.ZeroAddress);
     });
 
     it('name, symbol, decimals', async function () {
