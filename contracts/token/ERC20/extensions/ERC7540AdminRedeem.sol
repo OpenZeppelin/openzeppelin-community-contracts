@@ -90,6 +90,9 @@ abstract contract ERC7540AdminRedeem is ERC7540 {
 
     /// @dev Consumes `assets` from the claimable redeem and returns the proportional shares (rounded up).
     function _consumeClaimableWithdraw(uint256 assets, address controller) internal virtual override returns (uint256) {
+        // When `assets` equals the controller's full claimable balance (including the case where both
+        // sides are 0), the entire remaining `claimableShares` is returned and consumed. This drains any
+        // residue left after a partial claim was rounded against the share side.
         uint256 maxAssets = maxWithdraw(controller);
         uint256 maxShares = maxRedeem(controller);
         uint256 shares = assets == maxAssets
@@ -103,6 +106,9 @@ abstract contract ERC7540AdminRedeem is ERC7540 {
 
     /// @dev Consumes `shares` from the claimable redeem and returns the proportional assets (rounded down).
     function _consumeClaimableRedeem(uint256 shares, address controller) internal virtual override returns (uint256) {
+        // When `shares` equals the controller's full claimable balance (including the case where both
+        // sides are 0), the entire remaining `claimableAssets` is returned and consumed. This drains any
+        // residue left after a partial claim was rounded against the asset side.
         uint256 maxShares = maxRedeem(controller);
         uint256 maxAssets = maxWithdraw(controller);
         uint256 assets = shares == maxShares
