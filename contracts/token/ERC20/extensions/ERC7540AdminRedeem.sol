@@ -90,7 +90,12 @@ abstract contract ERC7540AdminRedeem is ERC7540 {
 
     /// @dev Consumes `assets` from the claimable redeem and returns the proportional shares (rounded up).
     function _consumeClaimableWithdraw(uint256 assets, address controller) internal virtual override returns (uint256) {
-        uint256 shares = Math.mulDiv(assets, maxRedeem(controller), maxWithdraw(controller), Math.Rounding.Ceil);
+        uint256 maxAssets = maxWithdraw(controller);
+        uint256 maxShares = maxRedeem(controller);
+        uint256 shares = assets == maxAssets
+            ? maxShares
+            : Math.mulDiv(assets, maxShares, maxAssets, Math.Rounding.Ceil);
+
         _redeems[controller].claimableAssets -= assets;
         _redeems[controller].claimableShares -= shares;
         return shares;
@@ -98,7 +103,12 @@ abstract contract ERC7540AdminRedeem is ERC7540 {
 
     /// @dev Consumes `shares` from the claimable redeem and returns the proportional assets (rounded down).
     function _consumeClaimableRedeem(uint256 shares, address controller) internal virtual override returns (uint256) {
-        uint256 assets = Math.mulDiv(shares, maxWithdraw(controller), maxRedeem(controller), Math.Rounding.Floor);
+        uint256 maxShares = maxRedeem(controller);
+        uint256 maxAssets = maxWithdraw(controller);
+        uint256 assets = shares == maxShares
+            ? maxAssets
+            : Math.mulDiv(shares, maxAssets, maxShares, Math.Rounding.Floor);
+
         _redeems[controller].claimableAssets -= assets;
         _redeems[controller].claimableShares -= shares;
         return assets;
