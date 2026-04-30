@@ -406,6 +406,12 @@ abstract contract ERC7540 is ERC165, ERC20, IERC4626, IERC7540, IERC7575Share {
      * * {_isDepositAsync} must return `true`.
      * * `owner` must be `msg.sender` or `msg.sender` must be an approved operator of `owner`.
      * * `owner` must have approved the vault for at least `assets` of the underlying token.
+     *
+     * NOTE: The `controller` is the only address authorized to claim the resulting Request. Passing an address
+     * with no claim authority (e.g. `address(0)`, `0x...dead`) or any contract that cannot itself call
+     * {deposit}/{mint} or designate an operator via {setOperator} will permanently lock the committed
+     * `assets`, since claims are gated by {onlyOperatorOrController} on `controller` and there is no
+     * cancellation path. Callers are responsible for supplying a controller capable of authorizing claims.
      */
     function requestDeposit(
         uint256 assets,
@@ -501,6 +507,12 @@ abstract contract ERC7540 is ERC165, ERC20, IERC4626, IERC7540, IERC7575Share {
      * Requirements:
      *
      * * {_isRedeemAsync} must return `true`.
+     *
+     * NOTE: The `controller` is the only address authorized to claim the resulting Request. Passing an address
+     * with no claim authority (e.g. `address(0)`, `0x...dead`) or any contract that cannot itself call
+     * {withdraw}/{redeem} or designate an operator via {setOperator} will permanently lock the committed
+     * `shares`, since claims are gated by {onlyOperatorOrController} on `controller` and there is no
+     * cancellation path. Callers are responsible for supplying a controller capable of authorizing claims.
      */
     function requestRedeem(uint256 shares, address controller, address owner) public virtual returns (uint256) {
         return _requestRedeem(shares, controller, owner, 0);
