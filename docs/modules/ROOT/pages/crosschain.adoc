@@ -29,7 +29,7 @@ To start sending cross-chain messages, developers can get started with a duplex 
 include::api:example$crosschain/MyCustomAxelarGatewayDuplex.sol[]
 ----
 
-For more details of how the duplex gateway works, see xref:crosschain.adoc#axelar_network[how to send and receive messages with the  Axelar Network] below
+For more details of how the duplex gateway works, see xref:crosschain.adoc#axelar-network[how to send and receive messages with the  Axelar Network] below
 
 NOTE: Developers can register supported chains and destination gateways using the xref:api:crosschain.adoc#AxelarGatewayBase-registerChainEquivalence-string-string-[`registerChainEquivalence`] and xref:api:crosschain.adoc#AxelarGatewayBase-registerRemoteGateway-string-string-[`registerRemoteGateway`] functions
 

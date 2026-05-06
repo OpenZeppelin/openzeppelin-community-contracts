@@ -8,7 +8,7 @@ ERC-7579 defines a standardized interface for modular smart accounts. This stand
 
 === Accounts
 
-OpenZeppelin offers an implementation of an xref:api:account.adoc#AccountERC7579[`AccountERC7579`] contract that allows installing modules compliant with this standard. There's also an xref:api:account.adoc#AccountERC7579Hooked[`AccountERC7579Hooked`] variant that supports installation of hooks. Like xref:accounts.adoc#handling_initialization[most accounts], an instance should define an initializer function where the first module that controls the account will be set:
+OpenZeppelin offers an implementation of an xref:api:account.adoc#AccountERC7579[`AccountERC7579`] contract that allows installing modules compliant with this standard. There's also an xref:api:account.adoc#AccountERC7579Hooked[`AccountERC7579Hooked`] variant that supports installation of hooks. Like xref:contracts::accounts.adoc#handling-initialization[most accounts], an instance should define an initializer function where the first module that controls the account will be set:
 
 [source,solidity]
 ----
@@ -102,7 +102,7 @@ Social recovery is not a single solution but a design space with multiple config
 * Cancellation windows
 * Confirmation requirements
 
-To support _different guardian types_, we can leverage ERC-7913 as discussed in the xref:multisig.adoc#beyond_standard_signature_verification[multisig] section. For ERC-7579 modules, this is implemented through the xref:api:account.adoc#ERC7579Multisig[`ERC7579Multisig`] validator.
+To support _different guardian types_, we can leverage ERC-7913 as discussed in the xref:contracts::multisig.adoc#beyond-standard-signature-verification[multisig] section. For ERC-7579 modules, this is implemented through the xref:api:account.adoc#ERC7579Multisig[`ERC7579Multisig`] validator.
 
 Combined with an xref:api:account.adoc#ERC7579Executor[`ERC7579Executor`], it provides a basic foundation that can be extended with more sophisticated features:
 
