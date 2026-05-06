@@ -1,6 +1,6 @@
 = Community Contracts
 
-*A community-driven extension of our https://docs.openzeppelin.com/contracts[Solidity library]*: the gold-standard of smart contract development. This library includes:
+*A community-driven extension of our xref:contracts::index.adoc[Solidity library]*: the gold-standard of smart contract development. This library includes:
 
 * Extensions and modules compatible with contracts in the original package
 * Alternative implementation of interfaces defined in the original package
