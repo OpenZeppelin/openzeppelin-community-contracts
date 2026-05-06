@@ -55,7 +55,7 @@ function _verify(bytes memory signer, bytes32 hash, bytes memory signature) inte
 The verification process works as follows:
 
 * If `signer.length < 20`: verification fails
-* If `signer.length == 20`: verification is done using xref:contracts::api:utils.adoc#SignatureChecker[SignatureChecker]
+* If `signer.length == 20`: verification is done using xref:contracts::api:utils/cryptography.adoc#SignatureChecker[SignatureChecker]
 * Otherwise: verification is done using an ERC-7913 verifier.
 
 This allows for backward compatibility with EOAs and ERC-1271 contracts while supporting new types of keys.
