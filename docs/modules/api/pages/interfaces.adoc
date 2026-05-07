@@ -1,5 +1,7 @@
 :github-icon: pass:[<svg class="icon"><use href="#github-icon"/></svg>]
-
+:IERC7540: pass:normal[xref:interfaces.adoc#IERC7540[`IERC7540`]]
+:IERC7575: pass:normal[xref:interfaces.adoc#IERC7575[`IERC7575`]]
+:IERC7786Attributes: pass:normal[xref:interfaces.adoc#IERC7786Attributes[`IERC7786Attributes`]]
 = Interfaces
 
 [.readme-notice]
@@ -9,8 +11,238 @@ NOTE: This document is better viewed at https://docs.openzeppelin.com/contracts/
 
 These interfaces are available as `.sol` files. These are useful to interact with third party contracts that implement them.
 
+- {IERC7540} (`IERC7540Operator`, `IERC7540Deposit`, `IERC7540Redeem`): Operator management and asynchronous deposit/redeem request interfaces for ERC-7540 tokenized vaults.
+- {IERC7575} (`IERC7575`, `IERC7575Share`): Multi-asset ERC-4626 vaults and share-to-vault lookup interfaces.
+- {IERC7786Attributes}: Standard attributes for ERC-7786 cross-chain messaging.
 - {IERC7913SignatureVerifier}
-- {IERC7943}
+- {IERC7943}: ERC-20 based interface for RWA tokens with account restrictions, asset freezing, and forced transfers.
+- {IERC7969} (`IDKIMRegistry`): Onchain DKIM public key registry interface for email-based authentication.
 
 == Detailed ABI
+
+[.contract]
+[[IERC7540]]
+=== `++IERC7540++` link:https://github.com/OpenZeppelin/openzeppelin-community-contracts/blob/master/contracts/interfaces/IERC7540.sol[{github-icon},role=heading-link]
+
+[.hljs-theme-light.nopadding]
+```solidity
+import "@openzeppelin/community-contracts/interfaces/IERC7540.sol";
+```
+
+Interface of the fully asynchronous Vault interface of ERC7540, as defined in
+https://eips.ethereum.org/EIPS/eip-7540
+
+[.contract-index]
+.Functions
+--
+
+[.contract-subindex-inherited]
+.IERC7575
+* `++share()++`
+
+[.contract-subindex-inherited]
+.IERC4626
+* `++asset()++`
+* `++totalAssets()++`
+* `++convertToShares(assets)++`
+* `++convertToAssets(shares)++`
+* `++maxDeposit(receiver)++`
+* `++previewDeposit(assets)++`
+* `++deposit(assets, receiver)++`
+* `++maxMint(receiver)++`
+* `++previewMint(shares)++`
+* `++mint(shares, receiver)++`
+* `++maxWithdraw(owner)++`
+* `++previewWithdraw(assets)++`
+* `++withdraw(assets, receiver, owner)++`
+* `++maxRedeem(owner)++`
+* `++previewRedeem(shares)++`
+* `++redeem(shares, receiver, owner)++`
+
+[.contract-subindex-inherited]
+.IERC20Metadata
+* `++name()++`
+* `++symbol()++`
+* `++decimals()++`
+
+[.contract-subindex-inherited]
+.IERC20
+* `++totalSupply()++`
+* `++balanceOf(account)++`
+* `++transfer(to, value)++`
+* `++allowance(owner, spender)++`
+* `++approve(spender, value)++`
+* `++transferFrom(from, to, value)++`
+
+[.contract-subindex-inherited]
+.IERC165
+* `++supportsInterface(interfaceId)++`
+
+[.contract-subindex-inherited]
+.IERC7540Redeem
+* `++requestRedeem(shares, controller, owner)++`
+* `++pendingRedeemRequest(requestId, controller)++`
+* `++claimableRedeemRequest(requestId, controller)++`
+
+[.contract-subindex-inherited]
+.IERC7540Deposit
+* `++requestDeposit(assets, controller, owner)++`
+* `++pendingDepositRequest(requestId, controller)++`
+* `++claimableDepositRequest(requestId, controller)++`
+* `++deposit(assets, receiver, controller)++`
+* `++mint(shares, receiver, controller)++`
+
+[.contract-subindex-inherited]
+.IERC7540Operator
+* `++setOperator(operator, approved)++`
+* `++isOperator(controller, operator)++`
+
+--
+
+[.contract-index]
+.Events
+--
+
+[.contract-subindex-inherited]
+.IERC7575
+
+[.contract-subindex-inherited]
+.IERC4626
+* `++Deposit(sender, owner, assets, shares)++`
+* `++Withdraw(sender, receiver, owner, assets, shares)++`
+
+[.contract-subindex-inherited]
+.IERC20Metadata
+
+[.contract-subindex-inherited]
+.IERC20
+* `++Transfer(from, to, value)++`
+* `++Approval(owner, spender, value)++`
+
+[.contract-subindex-inherited]
+.IERC165
+
+[.contract-subindex-inherited]
+.IERC7540Redeem
+* `++RedeemRequest(controller, owner, requestId, sender, shares)++`
+
+[.contract-subindex-inherited]
+.IERC7540Deposit
+* `++DepositRequest(controller, owner, requestId, sender, assets)++`
+
+[.contract-subindex-inherited]
+.IERC7540Operator
+* `++OperatorSet(controller, operator, approved)++`
+
+--
+
+:share: pass:normal[xref:#IERC7575-share--[`++share++`]]
+
+[.contract]
+[[IERC7575]]
+=== `++IERC7575++` link:https://github.com/OpenZeppelin/openzeppelin-community-contracts/blob/master/contracts/interfaces/IERC7575.sol[{github-icon},role=heading-link]
+
+[.hljs-theme-light.nopadding]
+```solidity
+import "@openzeppelin/community-contracts/interfaces/IERC7575.sol";
+```
+
+Multi-Asset ERC-4626 Vaults, as defined in https://eips.ethereum.org/EIPS/eip-7575
+
+[.contract-index]
+.Functions
+--
+* `++share()++`
+
+[.contract-subindex-inherited]
+.IERC4626
+* `++asset()++`
+* `++totalAssets()++`
+* `++convertToShares(assets)++`
+* `++convertToAssets(shares)++`
+* `++maxDeposit(receiver)++`
+* `++previewDeposit(assets)++`
+* `++deposit(assets, receiver)++`
+* `++maxMint(receiver)++`
+* `++previewMint(shares)++`
+* `++mint(shares, receiver)++`
+* `++maxWithdraw(owner)++`
+* `++previewWithdraw(assets)++`
+* `++withdraw(assets, receiver, owner)++`
+* `++maxRedeem(owner)++`
+* `++previewRedeem(shares)++`
+* `++redeem(shares, receiver, owner)++`
+
+[.contract-subindex-inherited]
+.IERC20Metadata
+* `++name()++`
+* `++symbol()++`
+* `++decimals()++`
+
+[.contract-subindex-inherited]
+.IERC20
+* `++totalSupply()++`
+* `++balanceOf(account)++`
+* `++transfer(to, value)++`
+* `++allowance(owner, spender)++`
+* `++approve(spender, value)++`
+* `++transferFrom(from, to, value)++`
+
+[.contract-subindex-inherited]
+.IERC165
+* `++supportsInterface(interfaceId)++`
+
+--
+
+[.contract-index]
+.Events
+--
+
+[.contract-subindex-inherited]
+.IERC4626
+* `++Deposit(sender, owner, assets, shares)++`
+* `++Withdraw(sender, receiver, owner, assets, shares)++`
+
+[.contract-subindex-inherited]
+.IERC20Metadata
+
+[.contract-subindex-inherited]
+.IERC20
+* `++Transfer(from, to, value)++`
+* `++Approval(owner, spender, value)++`
+
+[.contract-subindex-inherited]
+.IERC165
+
+--
+
+[.contract-item]
+[[IERC7575-share--]]
+==== `[.contract-item-name]#++share++#++() → address shareTokenAddress++` [.item-kind]#external#
+
+The address of the underlying share received on deposit into the vault.
+
+:requestRelay: pass:normal[xref:#IERC7786Attributes-requestRelay-uint256-uint256-address-[`++requestRelay++`]]
+
+[.contract]
+[[IERC7786Attributes]]
+=== `++IERC7786Attributes++` link:https://github.com/OpenZeppelin/openzeppelin-community-contracts/blob/master/contracts/interfaces/IERC7786Attributes.sol[{github-icon},role=heading-link]
+
+[.hljs-theme-light.nopadding]
+```solidity
+import "@openzeppelin/community-contracts/interfaces/IERC7786Attributes.sol";
+```
+
+Standard attributes for ERC-7786. These attributes may be standardized in different ERCs.
+
+[.contract-index]
+.Functions
+--
+* `++requestRelay(value, gasLimit, refundRecipient)++`
+
+--
+
+[.contract-item]
+[[IERC7786Attributes-requestRelay-uint256-uint256-address-]]
+==== `[.contract-item-name]#++requestRelay++#++(uint256 value, uint256 gasLimit, address refundRecipient)++` [.item-kind]#external#
 

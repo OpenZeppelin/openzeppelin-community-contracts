@@ -4,10 +4,55 @@
 :ERC20Blocklist: pass:normal[xref:token.adoc#ERC20Blocklist[`ERC20Blocklist`]]
 :ERC20Collateral: pass:normal[xref:token.adoc#ERC20Collateral[`ERC20Collateral`]]
 :ERC20Custodian: pass:normal[xref:token.adoc#ERC20Custodian[`ERC20Custodian`]]
+:ERC20Freezable: pass:normal[xref:token.adoc#ERC20Freezable[`ERC20Freezable`]]
+:ERC20Restricted: pass:normal[xref:token.adoc#ERC20Restricted[`ERC20Restricted`]]
+:ERC20uRWA: pass:normal[xref:token.adoc#ERC20uRWA[`ERC20uRWA`]]
 :ERC4626Fees: pass:normal[xref:token.adoc#ERC4626Fees[`ERC4626Fees`]]
+:ERC7540: pass:normal[xref:token.adoc#ERC7540[`ERC7540`]]
+:ERC7540AdminDeposit: pass:normal[xref:token.adoc#ERC7540AdminDeposit[`ERC7540AdminDeposit`]]
+:ERC7540AdminRedeem: pass:normal[xref:token.adoc#ERC7540AdminRedeem[`ERC7540AdminRedeem`]]
+:ERC7540DelayDeposit: pass:normal[xref:token.adoc#ERC7540DelayDeposit[`ERC7540DelayDeposit`]]
+:ERC7540DelayRedeem: pass:normal[xref:token.adoc#ERC7540DelayRedeem[`ERC7540DelayRedeem`]]
+:ERC7540SyncDeposit: pass:normal[xref:token.adoc#ERC7540SyncDeposit[`ERC7540SyncDeposit`]]
+:ERC7540SyncRedeem: pass:normal[xref:token.adoc#ERC7540SyncRedeem[`ERC7540SyncRedeem`]]
 :ERC20Restricted: pass:normal[xref:token.adoc#ERC20Restricted[`ERC20Restricted`]]
 :ERC20Restricted: pass:normal[xref:token.adoc#ERC20Restricted[`ERC20Restricted`]]
 :ERC20Freezable: pass:normal[xref:token.adoc#ERC20Freezable[`ERC20Freezable`]]
+:ERC20Restricted: pass:normal[xref:token.adoc#ERC20Restricted[`ERC20Restricted`]]
+:IERC7943Fungible-canTransfer: pass:normal[xref:interfaces.adoc#IERC7943Fungible-canTransfer-address-address-uint256-[`IERC7943Fungible.canTransfer`]]
+:IERC7943Fungible-setFrozenTokens: pass:normal[xref:interfaces.adoc#IERC7943Fungible-setFrozenTokens-address-uint256-[`IERC7943Fungible.setFrozenTokens`]]
+:IERC7943Fungible-Frozen: pass:normal[xref:interfaces.adoc#IERC7943Fungible-Frozen-address-uint256-[`IERC7943Fungible.Frozen`]]
+:IERC7943Fungible-forcedTransfer: pass:normal[xref:interfaces.adoc#IERC7943Fungible-forcedTransfer-address-address-uint256-[`IERC7943Fungible.forcedTransfer`]]
+:ERC20Restricted: pass:normal[xref:token.adoc#ERC20Restricted[`ERC20Restricted`]]
+:IERC7540Operator: pass:normal[xref:interfaces.adoc#IERC7540Operator[`IERC7540Operator`]]
+:IERC7540Operator: pass:normal[xref:interfaces.adoc#IERC7540Operator[`IERC7540Operator`]]
+:IERC7540Deposit: pass:normal[xref:interfaces.adoc#IERC7540Deposit[`IERC7540Deposit`]]
+:IERC7540Redeem: pass:normal[xref:interfaces.adoc#IERC7540Redeem[`IERC7540Redeem`]]
+:IERC7540Operator-OperatorSet: pass:normal[xref:interfaces.adoc#IERC7540Operator-OperatorSet-address-address-bool-[`IERC7540Operator.OperatorSet`]]
+:IERC7540Deposit-pendingDepositRequest: pass:normal[xref:interfaces.adoc#IERC7540Deposit-pendingDepositRequest-uint256-address-[`IERC7540Deposit.pendingDepositRequest`]]
+:IERC7540Deposit-claimableDepositRequest: pass:normal[xref:interfaces.adoc#IERC7540Deposit-claimableDepositRequest-uint256-address-[`IERC7540Deposit.claimableDepositRequest`]]
+:IERC7540Redeem-pendingRedeemRequest: pass:normal[xref:interfaces.adoc#IERC7540Redeem-pendingRedeemRequest-uint256-address-[`IERC7540Redeem.pendingRedeemRequest`]]
+:IERC7540Redeem-claimableRedeemRequest: pass:normal[xref:interfaces.adoc#IERC7540Redeem-claimableRedeemRequest-uint256-address-[`IERC7540Redeem.claimableRedeemRequest`]]
+:IERC7540Deposit-requestDeposit: pass:normal[xref:interfaces.adoc#IERC7540Deposit-requestDeposit-uint256-address-address-[`IERC7540Deposit.requestDeposit`]]
+:IERC7540Deposit-deposit: pass:normal[xref:interfaces.adoc#IERC7540Deposit-deposit-uint256-address-address-[`IERC7540Deposit.deposit`]]
+:IERC7540Deposit-mint: pass:normal[xref:interfaces.adoc#IERC7540Deposit-mint-uint256-address-address-[`IERC7540Deposit.mint`]]
+:IERC7540Redeem-requestRedeem: pass:normal[xref:interfaces.adoc#IERC7540Redeem-requestRedeem-uint256-address-address-[`IERC7540Redeem.requestRedeem`]]
+:IERC7540Operator: pass:normal[xref:interfaces.adoc#IERC7540Operator[`IERC7540Operator`]]
+:IERC7540Deposit-DepositRequest: pass:normal[xref:interfaces.adoc#IERC7540Deposit-DepositRequest-address-address-uint256-address-uint256-[`IERC7540Deposit.DepositRequest`]]
+:ERC7540AdminDeposit: pass:normal[xref:token.adoc#ERC7540AdminDeposit[`ERC7540AdminDeposit`]]
+:ERC7540SyncDeposit: pass:normal[xref:token.adoc#ERC7540SyncDeposit[`ERC7540SyncDeposit`]]
+:IERC7540Redeem-RedeemRequest: pass:normal[xref:interfaces.adoc#IERC7540Redeem-RedeemRequest-address-address-uint256-address-uint256-[`IERC7540Redeem.RedeemRequest`]]
+:ERC7540SyncRedeem: pass:normal[xref:token.adoc#ERC7540SyncRedeem[`ERC7540SyncRedeem`]]
+:ERC7540: pass:normal[xref:token.adoc#ERC7540[`ERC7540`]]
+:ERC7540-_requestDeposit: pass:normal[xref:token.adoc#ERC7540-_requestDeposit-uint256-address-address-uint256-[`ERC7540._requestDeposit`]]
+:ERC7540: pass:normal[xref:token.adoc#ERC7540[`ERC7540`]]
+:ERC7540-_requestRedeem: pass:normal[xref:token.adoc#ERC7540-_requestRedeem-uint256-address-address-uint256-[`ERC7540._requestRedeem`]]
+:ERC7540: pass:normal[xref:token.adoc#ERC7540[`ERC7540`]]
+:ERC7540-_requestDeposit: pass:normal[xref:token.adoc#ERC7540-_requestDeposit-uint256-address-address-uint256-[`ERC7540._requestDeposit`]]
+:ERC7540: pass:normal[xref:token.adoc#ERC7540[`ERC7540`]]
+:ERC7540-_requestRedeem: pass:normal[xref:token.adoc#ERC7540-_requestRedeem-uint256-address-address-uint256-[`ERC7540._requestRedeem`]]
+:ERC7540SyncRedeem: pass:normal[xref:token.adoc#ERC7540SyncRedeem[`ERC7540SyncRedeem`]]
+:ERC7540SyncDeposit: pass:normal[xref:token.adoc#ERC7540SyncDeposit[`ERC7540SyncDeposit`]]
 = Tokens
 
 [.readme-notice]
@@ -20,7 +65,17 @@ Set of extensions and utilities for tokens (e.g ERC-20, ERC-721, ERC-1155) and d
  * {ERC20Blocklist}: Extension of ERC20 with transfers and approvals that can be disabled by adding users into a blocklist.
  * {ERC20Collateral}: Oracle-agnostic extension of ERC20 that limits the total supply based on a collateral amount.
  * {ERC20Custodian}: Extension of ERC20 that implements an access-control agnostic approach to define a custodian that can freeze user's transfers and approvals.
+ * {ERC20Freezable}: Extension of ERC20 that allows an authorized account to freeze a portion of an account's balance, preventing it from being transferred until unfrozen.
+ * {ERC20Restricted}: Extension of ERC20 that allows implementing user account transfer restrictions (blocklist or allowlist) inspired by EIP-7943.
+ * {ERC20uRWA}: Extension of ERC20 according to EIP-7943, combining standard ERC-20 with RWA-specific features like account restrictions, asset freezing, and forced transfers.
  * {ERC4626Fees}: ERC4626 vault with fees on entry (deposit/mint) or exit (withdraw/redeem).
+ * {ERC7540}: Implementation of ERC-7540 "Asynchronous ERC-4626 Tokenized Vaults", providing a base for vaults with asynchronous deposit and/or redemption flows.
+ * {ERC7540AdminDeposit}: Admin-controlled (operator-triggered) fulfillment strategy for asynchronous deposits in ERC-7540 vaults.
+ * {ERC7540AdminRedeem}: Admin-controlled (operator-triggered) fulfillment strategy for asynchronous redemptions in ERC-7540 vaults.
+ * {ERC7540DelayDeposit}: Time-delay fulfillment strategy for asynchronous deposits, becoming permissionlessly claimable after a configurable waiting period.
+ * {ERC7540DelayRedeem}: Time-delay fulfillment strategy for asynchronous redemptions, becoming permissionlessly claimable after a configurable waiting period.
+ * {ERC7540SyncDeposit}: Module for enabling synchronous (ERC-4626) deposit flow in an ERC-7540 vault.
+ * {ERC7540SyncRedeem}: Module for enabling synchronous (ERC-4626) redeem flow in an ERC-7540 vault.
 
 == General
 
@@ -748,6 +803,609 @@ The operation failed because the user has insufficient frozen balance.
 
 Error thrown when a non-custodian account attempts to perform a custodian-only operation.
 
+:ERC20InsufficientUnfrozenBalance: pass:normal[xref:#ERC20Freezable-ERC20InsufficientUnfrozenBalance-address-uint256-uint256-[`++ERC20InsufficientUnfrozenBalance++`]]
+:frozen: pass:normal[xref:#ERC20Freezable-frozen-address-[`++frozen++`]]
+:available: pass:normal[xref:#ERC20Freezable-available-address-[`++available++`]]
+:_setFrozen: pass:normal[xref:#ERC20Freezable-_setFrozen-address-uint256-[`++_setFrozen++`]]
+:_update: pass:normal[xref:#ERC20Freezable-_update-address-address-uint256-[`++_update++`]]
+
+[.contract]
+[[ERC20Freezable]]
+=== `++ERC20Freezable++` link:https://github.com/OpenZeppelin/openzeppelin-community-contracts/blob/master/contracts/token/ERC20/extensions/ERC20Freezable.sol[{github-icon},role=heading-link]
+
+[.hljs-theme-light.nopadding]
+```solidity
+import "@openzeppelin/community-contracts/token/ERC20/extensions/ERC20Freezable.sol";
+```
+
+Extension of {ERC20} that allows to implement a freezing
+mechanism that can be managed by an authorized account with the
+{_setFrozen} function.
+
+The freezing mechanism provides the guarantee to the contract owner
+(e.g. a DAO or a well-configured multisig) that a specific amount
+of tokens held by an account won't be transferable until the frozen amount
+is reduced using {_setFrozen}.
+
+[.contract-index]
+.Functions
+--
+* `++frozen(account)++`
+* `++available(account)++`
+* `++_setFrozen(account, amount)++`
+* `++_update(from, to, value)++`
+
+[.contract-subindex-inherited]
+.ERC20
+* `++name()++`
+* `++symbol()++`
+* `++decimals()++`
+* `++totalSupply()++`
+* `++balanceOf(account)++`
+* `++transfer(to, value)++`
+* `++allowance(owner, spender)++`
+* `++approve(spender, value)++`
+* `++transferFrom(from, to, value)++`
+* `++_transfer(from, to, value)++`
+* `++_mint(account, value)++`
+* `++_burn(account, value)++`
+* `++_approve(owner, spender, value)++`
+* `++_approve(owner, spender, value, emitEvent)++`
+* `++_spendAllowance(owner, spender, value)++`
+
+[.contract-subindex-inherited]
+.IERC20Errors
+
+[.contract-subindex-inherited]
+.IERC20Metadata
+
+[.contract-subindex-inherited]
+.IERC20
+
+--
+
+[.contract-index]
+.Events
+--
+
+[.contract-subindex-inherited]
+.ERC20
+
+[.contract-subindex-inherited]
+.IERC20Errors
+
+[.contract-subindex-inherited]
+.IERC20Metadata
+
+[.contract-subindex-inherited]
+.IERC20
+* `++Transfer(from, to, value)++`
+* `++Approval(owner, spender, value)++`
+
+--
+
+[.contract-index]
+.Errors
+--
+* `++ERC20InsufficientUnfrozenBalance(account, needed, available)++`
+
+[.contract-subindex-inherited]
+.ERC20
+
+[.contract-subindex-inherited]
+.IERC20Errors
+* `++ERC20InsufficientBalance(sender, balance, needed)++`
+* `++ERC20InvalidSender(sender)++`
+* `++ERC20InvalidReceiver(receiver)++`
+* `++ERC20InsufficientAllowance(spender, allowance, needed)++`
+* `++ERC20InvalidApprover(approver)++`
+* `++ERC20InvalidSpender(spender)++`
+
+[.contract-subindex-inherited]
+.IERC20Metadata
+
+[.contract-subindex-inherited]
+.IERC20
+
+--
+
+[.contract-item]
+[[ERC20Freezable-frozen-address-]]
+==== `[.contract-item-name]#++frozen++#++(address account) → uint256++` [.item-kind]#public#
+
+Returns the frozen balance of an account.
+
+[.contract-item]
+[[ERC20Freezable-available-address-]]
+==== `[.contract-item-name]#++available++#++(address account) → uint256++` [.item-kind]#public#
+
+Returns the available (unfrozen) balance of an account. Up to {balanceOf}.
+
+[.contract-item]
+[[ERC20Freezable-_setFrozen-address-uint256-]]
+==== `[.contract-item-name]#++_setFrozen++#++(address account, uint256 amount)++` [.item-kind]#internal#
+
+Internal function to set the frozen token amount for a account.
+
+[.contract-item]
+[[ERC20Freezable-_update-address-address-uint256-]]
+==== `[.contract-item-name]#++_update++#++(address from, address to, uint256 value)++` [.item-kind]#internal#
+
+See {ERC20-_update}.
+
+Requirements:
+
+* `from` must have sufficient unfrozen balance.
+
+[.contract-item]
+[[ERC20Freezable-ERC20InsufficientUnfrozenBalance-address-uint256-uint256-]]
+==== `[.contract-item-name]#++ERC20InsufficientUnfrozenBalance++#++(address account, uint256 needed, uint256 available)++` [.item-kind]#error#
+
+The operation failed because the account has insufficient unfrozen balance.
+
+:Restriction: pass:normal[xref:#ERC20Restricted-Restriction[`++Restriction++`]]
+:UserRestrictionsUpdated: pass:normal[xref:#ERC20Restricted-UserRestrictionsUpdated-address-enum-ERC20Restricted-Restriction-[`++UserRestrictionsUpdated++`]]
+:ERC20UserRestricted: pass:normal[xref:#ERC20Restricted-ERC20UserRestricted-address-[`++ERC20UserRestricted++`]]
+:getRestriction: pass:normal[xref:#ERC20Restricted-getRestriction-address-[`++getRestriction++`]]
+:canTransact: pass:normal[xref:#ERC20Restricted-canTransact-address-[`++canTransact++`]]
+:_update: pass:normal[xref:#ERC20Restricted-_update-address-address-uint256-[`++_update++`]]
+:_setRestriction: pass:normal[xref:#ERC20Restricted-_setRestriction-address-enum-ERC20Restricted-Restriction-[`++_setRestriction++`]]
+:_blockUser: pass:normal[xref:#ERC20Restricted-_blockUser-address-[`++_blockUser++`]]
+:_allowUser: pass:normal[xref:#ERC20Restricted-_allowUser-address-[`++_allowUser++`]]
+:_resetUser: pass:normal[xref:#ERC20Restricted-_resetUser-address-[`++_resetUser++`]]
+:_checkRestriction: pass:normal[xref:#ERC20Restricted-_checkRestriction-address-[`++_checkRestriction++`]]
+
+[.contract]
+[[ERC20Restricted]]
+=== `++ERC20Restricted++` link:https://github.com/OpenZeppelin/openzeppelin-community-contracts/blob/master/contracts/token/ERC20/extensions/ERC20Restricted.sol[{github-icon},role=heading-link]
+
+[.hljs-theme-light.nopadding]
+```solidity
+import "@openzeppelin/community-contracts/token/ERC20/extensions/ERC20Restricted.sol";
+```
+
+Extension of {ERC20} that allows to implement user account transfer restrictions
+through the {canTransact} function. Inspired by https://eips.ethereum.org/EIPS/eip-7943[EIP-7943].
+
+By default, each account has no explicit restriction. The {canTransact} function acts as
+a blocklist. Developers can override {canTransact} to check that `restriction == ALLOWED`
+to implement an allowlist.
+
+[.contract-index]
+.Functions
+--
+* `++getRestriction(account)++`
+* `++canTransact(account)++`
+* `++_update(from, to, value)++`
+* `++_setRestriction(account, restriction)++`
+* `++_blockUser(account)++`
+* `++_allowUser(account)++`
+* `++_resetUser(account)++`
+* `++_checkRestriction(account)++`
+
+[.contract-subindex-inherited]
+.ERC20
+* `++name()++`
+* `++symbol()++`
+* `++decimals()++`
+* `++totalSupply()++`
+* `++balanceOf(account)++`
+* `++transfer(to, value)++`
+* `++allowance(owner, spender)++`
+* `++approve(spender, value)++`
+* `++transferFrom(from, to, value)++`
+* `++_transfer(from, to, value)++`
+* `++_mint(account, value)++`
+* `++_burn(account, value)++`
+* `++_approve(owner, spender, value)++`
+* `++_approve(owner, spender, value, emitEvent)++`
+* `++_spendAllowance(owner, spender, value)++`
+
+[.contract-subindex-inherited]
+.IERC20Errors
+
+[.contract-subindex-inherited]
+.IERC20Metadata
+
+[.contract-subindex-inherited]
+.IERC20
+
+--
+
+[.contract-index]
+.Events
+--
+* `++UserRestrictionsUpdated(account, restriction)++`
+
+[.contract-subindex-inherited]
+.ERC20
+
+[.contract-subindex-inherited]
+.IERC20Errors
+
+[.contract-subindex-inherited]
+.IERC20Metadata
+
+[.contract-subindex-inherited]
+.IERC20
+* `++Transfer(from, to, value)++`
+* `++Approval(owner, spender, value)++`
+
+--
+
+[.contract-index]
+.Errors
+--
+* `++ERC20UserRestricted(account)++`
+
+[.contract-subindex-inherited]
+.ERC20
+
+[.contract-subindex-inherited]
+.IERC20Errors
+* `++ERC20InsufficientBalance(sender, balance, needed)++`
+* `++ERC20InvalidSender(sender)++`
+* `++ERC20InvalidReceiver(receiver)++`
+* `++ERC20InsufficientAllowance(spender, allowance, needed)++`
+* `++ERC20InvalidApprover(approver)++`
+* `++ERC20InvalidSpender(spender)++`
+
+[.contract-subindex-inherited]
+.IERC20Metadata
+
+[.contract-subindex-inherited]
+.IERC20
+
+--
+
+[.contract-item]
+[[ERC20Restricted-getRestriction-address-]]
+==== `[.contract-item-name]#++getRestriction++#++(address account) → enum ERC20Restricted.Restriction++` [.item-kind]#public#
+
+Returns the restriction of a user account.
+
+[.contract-item]
+[[ERC20Restricted-canTransact-address-]]
+==== `[.contract-item-name]#++canTransact++#++(address account) → bool++` [.item-kind]#public#
+
+Returns whether a user account is allowed to interact with the token.
+
+Default implementation only disallows explicitly BLOCKED accounts (i.e. a blocklist).
+
+To convert into an allowlist, override as:
+
+```solidity
+function canTransact(address account) public view virtual override returns (bool) {
+    return getRestriction(account) == Restriction.ALLOWED;
+}
+```
+
+[.contract-item]
+[[ERC20Restricted-_update-address-address-uint256-]]
+==== `[.contract-item-name]#++_update++#++(address from, address to, uint256 value)++` [.item-kind]#internal#
+
+See {ERC20-_update}. Enforces restriction transfers (excluding minting and burning).
+
+Requirements:
+
+* `from` must be allowed to transfer tokens (see {canTransact}).
+* `to` must be allowed to receive tokens (see {canTransact}).
+
+[.contract-item]
+[[ERC20Restricted-_setRestriction-address-enum-ERC20Restricted-Restriction-]]
+==== `[.contract-item-name]#++_setRestriction++#++(address account, enum ERC20Restricted.Restriction restriction)++` [.item-kind]#internal#
+
+Updates the restriction of a user account.
+
+[.contract-item]
+[[ERC20Restricted-_blockUser-address-]]
+==== `[.contract-item-name]#++_blockUser++#++(address account)++` [.item-kind]#internal#
+
+Convenience function to block a user account (set to BLOCKED).
+
+[.contract-item]
+[[ERC20Restricted-_allowUser-address-]]
+==== `[.contract-item-name]#++_allowUser++#++(address account)++` [.item-kind]#internal#
+
+Convenience function to allow a user account (set to ALLOWED).
+
+[.contract-item]
+[[ERC20Restricted-_resetUser-address-]]
+==== `[.contract-item-name]#++_resetUser++#++(address account)++` [.item-kind]#internal#
+
+Convenience function to reset a user account to default restriction.
+
+[.contract-item]
+[[ERC20Restricted-_checkRestriction-address-]]
+==== `[.contract-item-name]#++_checkRestriction++#++(address account)++` [.item-kind]#internal#
+
+Checks if a user account is restricted. Reverts with {ERC20Restricted} if so.
+
+[.contract-item]
+[[ERC20Restricted-UserRestrictionsUpdated-address-enum-ERC20Restricted-Restriction-]]
+==== `[.contract-item-name]#++UserRestrictionsUpdated++#++(address indexed account, enum ERC20Restricted.Restriction restriction)++` [.item-kind]#event#
+
+Emitted when a user account's restriction is updated.
+
+[.contract-item]
+[[ERC20Restricted-ERC20UserRestricted-address-]]
+==== `[.contract-item-name]#++ERC20UserRestricted++#++(address account)++` [.item-kind]#error#
+
+The operation failed because the user account is restricted.
+
+:canTransact: pass:normal[xref:#ERC20uRWA-canTransact-address-[`++canTransact++`]]
+:supportsInterface: pass:normal[xref:#ERC20uRWA-supportsInterface-bytes4-[`++supportsInterface++`]]
+:canTransfer: pass:normal[xref:#ERC20uRWA-canTransfer-address-address-uint256-[`++canTransfer++`]]
+:getFrozenTokens: pass:normal[xref:#ERC20uRWA-getFrozenTokens-address-[`++getFrozenTokens++`]]
+:setFrozenTokens: pass:normal[xref:#ERC20uRWA-setFrozenTokens-address-uint256-[`++setFrozenTokens++`]]
+:forcedTransfer: pass:normal[xref:#ERC20uRWA-forcedTransfer-address-address-uint256-[`++forcedTransfer++`]]
+:_update: pass:normal[xref:#ERC20uRWA-_update-address-address-uint256-[`++_update++`]]
+:_checkEnforcer: pass:normal[xref:#ERC20uRWA-_checkEnforcer-address-address-uint256-[`++_checkEnforcer++`]]
+:_checkFreezer: pass:normal[xref:#ERC20uRWA-_checkFreezer-address-uint256-[`++_checkFreezer++`]]
+
+[.contract]
+[[ERC20uRWA]]
+=== `++ERC20uRWA++` link:https://github.com/OpenZeppelin/openzeppelin-community-contracts/blob/master/contracts/token/ERC20/extensions/ERC20uRWA.sol[{github-icon},role=heading-link]
+
+[.hljs-theme-light.nopadding]
+```solidity
+import "@openzeppelin/community-contracts/token/ERC20/extensions/ERC20uRWA.sol";
+```
+
+Extension of {ERC20} according to https://eips.ethereum.org/EIPS/eip-7943[EIP-7943].
+
+Combines standard ERC-20 functionality with RWA-specific features like account restrictions,
+asset freezing, and forced asset transfers. This contract doesn't expose minting or burning
+capabilities; if implemented in derived contracts as needed, they must include 7943-specific
+logic.
+
+[.contract-index]
+.Functions
+--
+* `++canTransact(account)++`
+* `++supportsInterface(interfaceId)++`
+* `++canTransfer(from, to, amount)++`
+* `++getFrozenTokens(account)++`
+* `++setFrozenTokens(account, amount)++`
+* `++forcedTransfer(from, to, amount)++`
+* `++_update(from, to, amount)++`
+* `++_checkEnforcer(from, to, amount)++`
+* `++_checkFreezer(account, amount)++`
+
+[.contract-subindex-inherited]
+.IERC7943Fungible
+
+[.contract-subindex-inherited]
+.ERC20Restricted
+* `++getRestriction(account)++`
+* `++_setRestriction(account, restriction)++`
+* `++_blockUser(account)++`
+* `++_allowUser(account)++`
+* `++_resetUser(account)++`
+* `++_checkRestriction(account)++`
+
+[.contract-subindex-inherited]
+.ERC20Freezable
+* `++frozen(account)++`
+* `++available(account)++`
+* `++_setFrozen(account, amount)++`
+
+[.contract-subindex-inherited]
+.ERC165
+
+[.contract-subindex-inherited]
+.IERC165
+
+[.contract-subindex-inherited]
+.ERC20
+* `++name()++`
+* `++symbol()++`
+* `++decimals()++`
+* `++totalSupply()++`
+* `++balanceOf(account)++`
+* `++transfer(to, value)++`
+* `++allowance(owner, spender)++`
+* `++approve(spender, value)++`
+* `++transferFrom(from, to, value)++`
+* `++_transfer(from, to, value)++`
+* `++_mint(account, value)++`
+* `++_burn(account, value)++`
+* `++_approve(owner, spender, value)++`
+* `++_approve(owner, spender, value, emitEvent)++`
+* `++_spendAllowance(owner, spender, value)++`
+
+[.contract-subindex-inherited]
+.IERC20Errors
+
+[.contract-subindex-inherited]
+.IERC20Metadata
+
+[.contract-subindex-inherited]
+.IERC20
+
+--
+
+[.contract-index]
+.Events
+--
+
+[.contract-subindex-inherited]
+.IERC7943Fungible
+* `++ForcedTransfer(from, to, amount)++`
+* `++Frozen(account, amount)++`
+
+[.contract-subindex-inherited]
+.ERC20Restricted
+* `++UserRestrictionsUpdated(account, restriction)++`
+
+[.contract-subindex-inherited]
+.ERC20Freezable
+
+[.contract-subindex-inherited]
+.ERC165
+
+[.contract-subindex-inherited]
+.IERC165
+
+[.contract-subindex-inherited]
+.ERC20
+
+[.contract-subindex-inherited]
+.IERC20Errors
+
+[.contract-subindex-inherited]
+.IERC20Metadata
+
+[.contract-subindex-inherited]
+.IERC20
+* `++Transfer(from, to, value)++`
+* `++Approval(owner, spender, value)++`
+
+--
+
+[.contract-index]
+.Errors
+--
+
+[.contract-subindex-inherited]
+.IERC7943Fungible
+* `++ERC7943CannotTransact(account)++`
+* `++ERC7943CannotTransfer(from, to, amount)++`
+* `++ERC7943InsufficientUnfrozenBalance(account, amount, unfrozen)++`
+
+[.contract-subindex-inherited]
+.ERC20Restricted
+* `++ERC20UserRestricted(account)++`
+
+[.contract-subindex-inherited]
+.ERC20Freezable
+* `++ERC20InsufficientUnfrozenBalance(account, needed, available)++`
+
+[.contract-subindex-inherited]
+.ERC165
+
+[.contract-subindex-inherited]
+.IERC165
+
+[.contract-subindex-inherited]
+.ERC20
+
+[.contract-subindex-inherited]
+.IERC20Errors
+* `++ERC20InsufficientBalance(sender, balance, needed)++`
+* `++ERC20InvalidSender(sender)++`
+* `++ERC20InvalidReceiver(receiver)++`
+* `++ERC20InsufficientAllowance(spender, allowance, needed)++`
+* `++ERC20InvalidApprover(approver)++`
+* `++ERC20InvalidSpender(spender)++`
+
+[.contract-subindex-inherited]
+.IERC20Metadata
+
+[.contract-subindex-inherited]
+.IERC20
+
+--
+
+[.contract-item]
+[[ERC20uRWA-canTransact-address-]]
+==== `[.contract-item-name]#++canTransact++#++(address account) → bool++` [.item-kind]#public#
+
+Returns whether a user account is allowed to interact with the token.
+
+Default implementation only disallows explicitly BLOCKED accounts (i.e. a blocklist).
+
+To convert into an allowlist, override as:
+
+```solidity
+function canTransact(address account) public view virtual override returns (bool) {
+    return getRestriction(account) == Restriction.ALLOWED;
+}
+```
+
+[.contract-item]
+[[ERC20uRWA-supportsInterface-bytes4-]]
+==== `[.contract-item-name]#++supportsInterface++#++(bytes4 interfaceId) → bool++` [.item-kind]#public#
+
+Returns true if this contract implements the interface defined by
+`interfaceId`. See the corresponding
+https://eips.ethereum.org/EIPS/eip-165#how-interfaces-are-identified[ERC section]
+to learn more about how these ids are created.
+
+This function call must use less than 30 000 gas.
+
+[.contract-item]
+[[ERC20uRWA-canTransfer-address-address-uint256-]]
+==== `[.contract-item-name]#++canTransfer++#++(address from, address to, uint256 amount) → bool++` [.item-kind]#external#
+
+See {IERC7943Fungible-canTransfer}.
+
+CAUTION: This function is only meant for external use. Overriding it will not apply the new checks to
+the internal {_update} function. Consider overriding {_update} accordingly to keep both functions in sync.
+
+[.contract-item]
+[[ERC20uRWA-getFrozenTokens-address-]]
+==== `[.contract-item-name]#++getFrozenTokens++#++(address account) → uint256 amount++` [.item-kind]#public#
+
+It could return an amount higher than the account's balance.
+
+[.contract-item]
+[[ERC20uRWA-setFrozenTokens-address-uint256-]]
+==== `[.contract-item-name]#++setFrozenTokens++#++(address account, uint256 amount) → bool result++` [.item-kind]#public#
+
+See {IERC7943Fungible-setFrozenTokens}. Always returns true if successful. Reverts otherwise.
+
+NOTE: The `amount` is capped to the balance of the `account` to ensure the {IERC7943Fungible-Frozen} event
+emits values that consistently reflect the actual amount of tokens that are frozen.
+
+[.contract-item]
+[[ERC20uRWA-forcedTransfer-address-address-uint256-]]
+==== `[.contract-item-name]#++forcedTransfer++#++(address from, address to, uint256 amount) → bool result++` [.item-kind]#public#
+
+See {IERC7943Fungible-forcedTransfer}. Always returns true if successful. Reverts otherwise.
+
+Bypasses the {ERC20Restricted} restrictions for the `from` address and adjusts the frozen balance
+to the new balance after the transfer.
+
+NOTE: This function uses {_update} to perform the transfer, ensuring all standard ERC20
+side effects (such as balance updates and events) are preserved. If you override {_update}
+to add additional restrictions or logic, those changes will also apply here.
+Consider overriding this function to bypass newer restrictions if needed.
+
+[.contract-item]
+[[ERC20uRWA-_update-address-address-uint256-]]
+==== `[.contract-item-name]#++_update++#++(address from, address to, uint256 amount)++` [.item-kind]#internal#
+
+Transfers a `value` amount of tokens from `from` to `to`, or alternatively mints (or burns) if `from`
+(or `to`) is the zero address. All customizations to transfers, mints, and burns should be done by overriding
+this function.
+
+Emits a {Transfer} event.
+
+[.contract-item]
+[[ERC20uRWA-_checkEnforcer-address-address-uint256-]]
+==== `[.contract-item-name]#++_checkEnforcer++#++(address from, address to, uint256 amount)++` [.item-kind]#internal#
+
+Internal function to check if the `enforcer` is allowed to forcibly transfer the `amount` of `tokens`.
+
+Example usage with {AccessControl-onlyRole}:
+
+```solidity
+function _checkEnforcer(address from, address to, uint256 amount) internal view override onlyRole(ENFORCER_ROLE) {}
+```
+
+[.contract-item]
+[[ERC20uRWA-_checkFreezer-address-uint256-]]
+==== `[.contract-item-name]#++_checkFreezer++#++(address account, uint256 amount)++` [.item-kind]#internal#
+
+Internal function to check if the `freezer` is allowed to freeze the `amount` of `tokens`.
+
+Example usage with {AccessControl-onlyRole}:
+
+```solidity
+function _checkFreezer(address account, uint256 amount) internal view override onlyRole(FREEZER_ROLE) {}
+```
+
 :previewDeposit: pass:normal[xref:#ERC4626Fees-previewDeposit-uint256-[`++previewDeposit++`]]
 :previewMint: pass:normal[xref:#ERC4626Fees-previewMint-uint256-[`++previewMint++`]]
 :previewWithdraw: pass:normal[xref:#ERC4626Fees-previewWithdraw-uint256-[`++previewWithdraw++`]]
@@ -950,4 +1608,3300 @@ Send exit fee to {_exitFeeRecipient}. See {IERC4626-_deposit}.
 [.contract-item]
 [[ERC4626Fees-_exitFeeRecipient--]]
 ==== `[.contract-item-name]#++_exitFeeRecipient++#++() → address++` [.item-kind]#internal#
+
+== ERC7540
+
+:ERC4626ExceededMaxDeposit: pass:normal[xref:#ERC7540-ERC4626ExceededMaxDeposit-address-uint256-uint256-[`++ERC4626ExceededMaxDeposit++`]]
+:ERC4626ExceededMaxMint: pass:normal[xref:#ERC7540-ERC4626ExceededMaxMint-address-uint256-uint256-[`++ERC4626ExceededMaxMint++`]]
+:ERC4626ExceededMaxWithdraw: pass:normal[xref:#ERC7540-ERC4626ExceededMaxWithdraw-address-uint256-uint256-[`++ERC4626ExceededMaxWithdraw++`]]
+:ERC4626ExceededMaxRedeem: pass:normal[xref:#ERC7540-ERC4626ExceededMaxRedeem-address-uint256-uint256-[`++ERC4626ExceededMaxRedeem++`]]
+:ERC7540InvalidOperator: pass:normal[xref:#ERC7540-ERC7540InvalidOperator-address-address-[`++ERC7540InvalidOperator++`]]
+:ERC7540SyncDeposit: pass:normal[xref:#ERC7540-ERC7540SyncDeposit--[`++ERC7540SyncDeposit++`]]
+:ERC7540AsyncDeposit: pass:normal[xref:#ERC7540-ERC7540AsyncDeposit--[`++ERC7540AsyncDeposit++`]]
+:ERC7540SyncRedeem: pass:normal[xref:#ERC7540-ERC7540SyncRedeem--[`++ERC7540SyncRedeem++`]]
+:ERC7540AsyncRedeem: pass:normal[xref:#ERC7540-ERC7540AsyncRedeem--[`++ERC7540AsyncRedeem++`]]
+:ERC7540MissingAsync: pass:normal[xref:#ERC7540-ERC7540MissingAsync--[`++ERC7540MissingAsync++`]]
+:ERC7540UnauthorizedMintSharesOnDepositFulfill: pass:normal[xref:#ERC7540-ERC7540UnauthorizedMintSharesOnDepositFulfill--[`++ERC7540UnauthorizedMintSharesOnDepositFulfill++`]]
+:ERC7540UnauthorizedBurnSharesOnRedeemFulfill: pass:normal[xref:#ERC7540-ERC7540UnauthorizedBurnSharesOnRedeemFulfill--[`++ERC7540UnauthorizedBurnSharesOnRedeemFulfill++`]]
+:constructor: pass:normal[xref:#ERC7540-constructor-contract-IERC20-[`++constructor++`]]
+:supportsInterface: pass:normal[xref:#ERC7540-supportsInterface-bytes4-[`++supportsInterface++`]]
+:onlyOperatorOrController: pass:normal[xref:#ERC7540-onlyOperatorOrController-bool-address-address-[`++onlyOperatorOrController++`]]
+:isOperator: pass:normal[xref:#ERC7540-isOperator-address-address-[`++isOperator++`]]
+:setOperator: pass:normal[xref:#ERC7540-setOperator-address-bool-[`++setOperator++`]]
+:_setOperator: pass:normal[xref:#ERC7540-_setOperator-address-address-bool-[`++_setOperator++`]]
+:_checkOperatorOrController: pass:normal[xref:#ERC7540-_checkOperatorOrController-bool-address-address-[`++_checkOperatorOrController++`]]
+:decimals: pass:normal[xref:#ERC7540-decimals--[`++decimals++`]]
+:asset: pass:normal[xref:#ERC7540-asset--[`++asset++`]]
+:share: pass:normal[xref:#ERC7540-share--[`++share++`]]
+:vault: pass:normal[xref:#ERC7540-vault-address-[`++vault++`]]
+:totalAssets: pass:normal[xref:#ERC7540-totalAssets--[`++totalAssets++`]]
+:totalSupply: pass:normal[xref:#ERC7540-totalSupply--[`++totalSupply++`]]
+:pendingDepositRequest: pass:normal[xref:#ERC7540-pendingDepositRequest-uint256-address-[`++pendingDepositRequest++`]]
+:claimableDepositRequest: pass:normal[xref:#ERC7540-claimableDepositRequest-uint256-address-[`++claimableDepositRequest++`]]
+:pendingRedeemRequest: pass:normal[xref:#ERC7540-pendingRedeemRequest-uint256-address-[`++pendingRedeemRequest++`]]
+:claimableRedeemRequest: pass:normal[xref:#ERC7540-claimableRedeemRequest-uint256-address-[`++claimableRedeemRequest++`]]
+:totalPendingDepositAssets: pass:normal[xref:#ERC7540-totalPendingDepositAssets--[`++totalPendingDepositAssets++`]]
+:totalPendingRedeemShares: pass:normal[xref:#ERC7540-totalPendingRedeemShares--[`++totalPendingRedeemShares++`]]
+:convertToShares: pass:normal[xref:#ERC7540-convertToShares-uint256-[`++convertToShares++`]]
+:convertToAssets: pass:normal[xref:#ERC7540-convertToAssets-uint256-[`++convertToAssets++`]]
+:maxDeposit: pass:normal[xref:#ERC7540-maxDeposit-address-[`++maxDeposit++`]]
+:maxMint: pass:normal[xref:#ERC7540-maxMint-address-[`++maxMint++`]]
+:maxWithdraw: pass:normal[xref:#ERC7540-maxWithdraw-address-[`++maxWithdraw++`]]
+:maxRedeem: pass:normal[xref:#ERC7540-maxRedeem-address-[`++maxRedeem++`]]
+:previewDeposit: pass:normal[xref:#ERC7540-previewDeposit-uint256-[`++previewDeposit++`]]
+:previewMint: pass:normal[xref:#ERC7540-previewMint-uint256-[`++previewMint++`]]
+:previewWithdraw: pass:normal[xref:#ERC7540-previewWithdraw-uint256-[`++previewWithdraw++`]]
+:previewRedeem: pass:normal[xref:#ERC7540-previewRedeem-uint256-[`++previewRedeem++`]]
+:requestDeposit: pass:normal[xref:#ERC7540-requestDeposit-uint256-address-address-[`++requestDeposit++`]]
+:deposit: pass:normal[xref:#ERC7540-deposit-uint256-address-[`++deposit++`]]
+:deposit: pass:normal[xref:#ERC7540-deposit-uint256-address-address-[`++deposit++`]]
+:mint: pass:normal[xref:#ERC7540-mint-uint256-address-[`++mint++`]]
+:mint: pass:normal[xref:#ERC7540-mint-uint256-address-address-[`++mint++`]]
+:requestRedeem: pass:normal[xref:#ERC7540-requestRedeem-uint256-address-address-[`++requestRedeem++`]]
+:withdraw: pass:normal[xref:#ERC7540-withdraw-uint256-address-address-[`++withdraw++`]]
+:redeem: pass:normal[xref:#ERC7540-redeem-uint256-address-address-[`++redeem++`]]
+:_convertToShares: pass:normal[xref:#ERC7540-_convertToShares-uint256-enum-Math-Rounding-[`++_convertToShares++`]]
+:_convertToAssets: pass:normal[xref:#ERC7540-_convertToAssets-uint256-enum-Math-Rounding-[`++_convertToAssets++`]]
+:_requestDeposit: pass:normal[xref:#ERC7540-_requestDeposit-uint256-address-address-uint256-[`++_requestDeposit++`]]
+:_mintSharesOnDepositFulfill: pass:normal[xref:#ERC7540-_mintSharesOnDepositFulfill-uint256-uint256-[`++_mintSharesOnDepositFulfill++`]]
+:_deposit: pass:normal[xref:#ERC7540-_deposit-address-address-uint256-uint256-[`++_deposit++`]]
+:_requestRedeem: pass:normal[xref:#ERC7540-_requestRedeem-uint256-address-address-uint256-[`++_requestRedeem++`]]
+:_burnSharesOnRedeemFulfill: pass:normal[xref:#ERC7540-_burnSharesOnRedeemFulfill-uint256-uint256-[`++_burnSharesOnRedeemFulfill++`]]
+:_withdraw: pass:normal[xref:#ERC7540-_withdraw-address-address-address-uint256-uint256-[`++_withdraw++`]]
+:_transferIn: pass:normal[xref:#ERC7540-_transferIn-address-uint256-[`++_transferIn++`]]
+:_transferOut: pass:normal[xref:#ERC7540-_transferOut-address-uint256-[`++_transferOut++`]]
+:_decimalsOffset: pass:normal[xref:#ERC7540-_decimalsOffset--[`++_decimalsOffset++`]]
+:_depositShareOrigin: pass:normal[xref:#ERC7540-_depositShareOrigin--[`++_depositShareOrigin++`]]
+:_redeemShareDestination: pass:normal[xref:#ERC7540-_redeemShareDestination--[`++_redeemShareDestination++`]]
+:_isDepositAsync: pass:normal[xref:#ERC7540-_isDepositAsync--[`++_isDepositAsync++`]]
+:_isRedeemAsync: pass:normal[xref:#ERC7540-_isRedeemAsync--[`++_isRedeemAsync++`]]
+:_pendingDepositRequest: pass:normal[xref:#ERC7540-_pendingDepositRequest-uint256-address-[`++_pendingDepositRequest++`]]
+:_claimableDepositRequest: pass:normal[xref:#ERC7540-_claimableDepositRequest-uint256-address-[`++_claimableDepositRequest++`]]
+:_pendingRedeemRequest: pass:normal[xref:#ERC7540-_pendingRedeemRequest-uint256-address-[`++_pendingRedeemRequest++`]]
+:_claimableRedeemRequest: pass:normal[xref:#ERC7540-_claimableRedeemRequest-uint256-address-[`++_claimableRedeemRequest++`]]
+:_consumeClaimableDeposit: pass:normal[xref:#ERC7540-_consumeClaimableDeposit-uint256-address-[`++_consumeClaimableDeposit++`]]
+:_consumeClaimableMint: pass:normal[xref:#ERC7540-_consumeClaimableMint-uint256-address-[`++_consumeClaimableMint++`]]
+:_consumeClaimableWithdraw: pass:normal[xref:#ERC7540-_consumeClaimableWithdraw-uint256-address-[`++_consumeClaimableWithdraw++`]]
+:_consumeClaimableRedeem: pass:normal[xref:#ERC7540-_consumeClaimableRedeem-uint256-address-[`++_consumeClaimableRedeem++`]]
+:_asyncMaxDeposit: pass:normal[xref:#ERC7540-_asyncMaxDeposit-address-[`++_asyncMaxDeposit++`]]
+:_asyncMaxMint: pass:normal[xref:#ERC7540-_asyncMaxMint-address-[`++_asyncMaxMint++`]]
+:_asyncMaxWithdraw: pass:normal[xref:#ERC7540-_asyncMaxWithdraw-address-[`++_asyncMaxWithdraw++`]]
+:_asyncMaxRedeem: pass:normal[xref:#ERC7540-_asyncMaxRedeem-address-[`++_asyncMaxRedeem++`]]
+
+[.contract]
+[[ERC7540]]
+=== `++ERC7540++` link:https://github.com/OpenZeppelin/openzeppelin-community-contracts/blob/master/contracts/token/ERC20/extensions/ERC7540.sol[{github-icon},role=heading-link]
+
+[.hljs-theme-light.nopadding]
+```solidity
+import "@openzeppelin/community-contracts/token/ERC20/extensions/ERC7540.sol";
+```
+
+Implementation of the ERC-7540 "Asynchronous ERC-4626 Tokenized Vaults" as defined in
+https://eips.ethereum.org/EIPS/eip-7540[ERC-7540].
+
+This abstract contract provides a single base for building vaults with asynchronous deposit and/or redemption
+flows on top of ERC-4626. It integrates operator management ({IERC7540Operator}), the full ERC-4626 vault
+interface, and routing logic that delegates to either synchronous (standard ERC-4626) or asynchronous paths
+depending on the return value of {_isDepositAsync} and {_isRedeemAsync}.
+
+Subcontracts choose their async behavior by overriding two `internal pure` boolean selectors:
+
+* {_isDepositAsync}: when `true`, the deposit side uses the Request lifecycle (Pending -> Claimable -> Claimed).
+* {_isRedeemAsync}: when `true`, the redeem side uses the Request lifecycle.
+
+Each async path requires a fulfillment strategy that implements the virtual hooks declared in this contract
+(e.g. {_consumeClaimableDeposit}, {_pendingDepositRequest}, {_asyncMaxDeposit}, etc.).
+
+Deposit and redeem strategies are independent: a vault can combine any deposit strategy with any redeem
+strategy (e.g. delay-based deposits with admin-based redeems).
+
+Share custody during the async lifecycle is configurable via {_depositShareOrigin} and
+{_redeemShareDestination}. When these return `address(0)` (the default), shares are minted/burned
+at claim time. When they return a non-zero address, shares are pre-minted to (or transferred to)
+that address at fulfillment time and then transferred to the receiver on claim.
+
+[NOTE]
+====
+When implementing a custom fulfillment strategy, the following virtual hooks MUST be overridden for each
+async side enabled:
+
+* Async deposits: {_pendingDepositRequest}, {_claimableDepositRequest}, {_consumeClaimableDeposit},
+{_consumeClaimableMint}, {_asyncMaxDeposit}, {_asyncMaxMint}.
+
+* Async redeems: {_pendingRedeemRequest}, {_claimableRedeemRequest}, {_consumeClaimableWithdraw},
+{_consumeClaimableRedeem}, {_asyncMaxWithdraw}, {_asyncMaxRedeem}.
+====
+
+[CAUTION]
+====
+ERC-7540 introduces operator permissions that allow operators to manage requests on behalf of controllers.
+An operator approved by a controller can request deposits using the controller's assets, request redemptions
+using the controller's shares, and claim assets or shares on behalf of the controller. Users should only
+approve operators they fully trust with both their assets and shares.
+====
+
+[CAUTION]
+====
+This contract assumes the underlying `asset` is a well-behaved ERC-20: transfers move exactly the requested
+amount, balances do not change without explicit transfers, and `balanceOf` reports faithfully. Fee-on-transfer,
+rebasing, and similar non-standard asset behaviors are out of scope. When the asset misbehaves, internal
+accounting (notably {totalAssets}) can revert and freeze claim paths that depend on live conversions.
+====
+
+[.contract-index]
+.Modifiers
+--
+* `++onlyOperatorOrController(async, controller, operator)++`
+--
+
+[.contract-index]
+.Functions
+--
+* `++constructor(asset_)++`
+* `++supportsInterface(interfaceId)++`
+* `++isOperator(controller, operator)++`
+* `++setOperator(operator, approved)++`
+* `++_setOperator(controller, operator, approved)++`
+* `++_checkOperatorOrController(async, controller, operator)++`
+* `++decimals()++`
+* `++asset()++`
+* `++share()++`
+* `++vault(asset_)++`
+* `++totalAssets()++`
+* `++totalSupply()++`
+* `++pendingDepositRequest(requestId, controller)++`
+* `++claimableDepositRequest(requestId, controller)++`
+* `++pendingRedeemRequest(requestId, controller)++`
+* `++claimableRedeemRequest(requestId, controller)++`
+* `++totalPendingDepositAssets()++`
+* `++totalPendingRedeemShares()++`
+* `++convertToShares(assets)++`
+* `++convertToAssets(shares)++`
+* `++maxDeposit(owner)++`
+* `++maxMint(owner)++`
+* `++maxWithdraw(owner)++`
+* `++maxRedeem(owner)++`
+* `++previewDeposit(assets)++`
+* `++previewMint(shares)++`
+* `++previewWithdraw(assets)++`
+* `++previewRedeem(shares)++`
+* `++requestDeposit(assets, controller, owner)++`
+* `++deposit(assets, receiver)++`
+* `++deposit(assets, receiver, controller)++`
+* `++mint(shares, receiver)++`
+* `++mint(shares, receiver, controller)++`
+* `++requestRedeem(shares, controller, owner)++`
+* `++withdraw(assets, receiver, ownerOrController)++`
+* `++redeem(shares, receiver, ownerOrController)++`
+* `++_convertToShares(assets, rounding)++`
+* `++_convertToAssets(shares, rounding)++`
+* `++_requestDeposit(assets, controller, owner, requestId)++`
+* `++_mintSharesOnDepositFulfill(assets, shares)++`
+* `++_deposit(callerOrController, receiver, assets, shares)++`
+* `++_requestRedeem(shares, controller, owner, requestId)++`
+* `++_burnSharesOnRedeemFulfill(, shares)++`
+* `++_withdraw(caller, receiver, owner, assets, shares)++`
+* `++_transferIn(from, assets)++`
+* `++_transferOut(to, assets)++`
+* `++_decimalsOffset()++`
+* `++_depositShareOrigin()++`
+* `++_redeemShareDestination()++`
+* `++_isDepositAsync()++`
+* `++_isRedeemAsync()++`
+* `++_pendingDepositRequest(, )++`
+* `++_claimableDepositRequest(, )++`
+* `++_pendingRedeemRequest(, )++`
+* `++_claimableRedeemRequest(, )++`
+* `++_consumeClaimableDeposit(, )++`
+* `++_consumeClaimableMint(, )++`
+* `++_consumeClaimableWithdraw(, )++`
+* `++_consumeClaimableRedeem(, )++`
+* `++_asyncMaxDeposit()++`
+* `++_asyncMaxMint()++`
+* `++_asyncMaxWithdraw()++`
+* `++_asyncMaxRedeem()++`
+
+[.contract-subindex-inherited]
+.IERC7575Share
+
+[.contract-subindex-inherited]
+.IERC7540
+
+[.contract-subindex-inherited]
+.IERC7575
+
+[.contract-subindex-inherited]
+.IERC4626
+
+[.contract-subindex-inherited]
+.ERC20
+* `++name()++`
+* `++symbol()++`
+* `++balanceOf(account)++`
+* `++transfer(to, value)++`
+* `++allowance(owner, spender)++`
+* `++approve(spender, value)++`
+* `++transferFrom(from, to, value)++`
+* `++_transfer(from, to, value)++`
+* `++_update(from, to, value)++`
+* `++_mint(account, value)++`
+* `++_burn(account, value)++`
+* `++_approve(owner, spender, value)++`
+* `++_approve(owner, spender, value, emitEvent)++`
+* `++_spendAllowance(owner, spender, value)++`
+
+[.contract-subindex-inherited]
+.IERC20Errors
+
+[.contract-subindex-inherited]
+.IERC20Metadata
+
+[.contract-subindex-inherited]
+.IERC20
+
+[.contract-subindex-inherited]
+.ERC165
+
+[.contract-subindex-inherited]
+.IERC165
+
+[.contract-subindex-inherited]
+.IERC7540Redeem
+
+[.contract-subindex-inherited]
+.IERC7540Deposit
+
+[.contract-subindex-inherited]
+.IERC7540Operator
+
+--
+
+[.contract-index]
+.Events
+--
+
+[.contract-subindex-inherited]
+.IERC7575Share
+
+[.contract-subindex-inherited]
+.IERC7540
+
+[.contract-subindex-inherited]
+.IERC7575
+
+[.contract-subindex-inherited]
+.IERC4626
+* `++Deposit(sender, owner, assets, shares)++`
+* `++Withdraw(sender, receiver, owner, assets, shares)++`
+
+[.contract-subindex-inherited]
+.ERC20
+
+[.contract-subindex-inherited]
+.IERC20Errors
+
+[.contract-subindex-inherited]
+.IERC20Metadata
+
+[.contract-subindex-inherited]
+.IERC20
+* `++Transfer(from, to, value)++`
+* `++Approval(owner, spender, value)++`
+
+[.contract-subindex-inherited]
+.ERC165
+
+[.contract-subindex-inherited]
+.IERC165
+
+[.contract-subindex-inherited]
+.IERC7540Redeem
+* `++RedeemRequest(controller, owner, requestId, sender, shares)++`
+
+[.contract-subindex-inherited]
+.IERC7540Deposit
+* `++DepositRequest(controller, owner, requestId, sender, assets)++`
+
+[.contract-subindex-inherited]
+.IERC7540Operator
+* `++OperatorSet(controller, operator, approved)++`
+
+--
+
+[.contract-index]
+.Errors
+--
+* `++ERC4626ExceededMaxDeposit(receiver, assets, max)++`
+* `++ERC4626ExceededMaxMint(receiver, shares, max)++`
+* `++ERC4626ExceededMaxWithdraw(owner, assets, max)++`
+* `++ERC4626ExceededMaxRedeem(owner, shares, max)++`
+* `++ERC7540InvalidOperator(controller, operator)++`
+* `++ERC7540SyncDeposit()++`
+* `++ERC7540AsyncDeposit()++`
+* `++ERC7540SyncRedeem()++`
+* `++ERC7540AsyncRedeem()++`
+* `++ERC7540MissingAsync()++`
+* `++ERC7540UnauthorizedMintSharesOnDepositFulfill()++`
+* `++ERC7540UnauthorizedBurnSharesOnRedeemFulfill()++`
+
+[.contract-subindex-inherited]
+.IERC7575Share
+
+[.contract-subindex-inherited]
+.IERC7540
+
+[.contract-subindex-inherited]
+.IERC7575
+
+[.contract-subindex-inherited]
+.IERC4626
+
+[.contract-subindex-inherited]
+.ERC20
+
+[.contract-subindex-inherited]
+.IERC20Errors
+* `++ERC20InsufficientBalance(sender, balance, needed)++`
+* `++ERC20InvalidSender(sender)++`
+* `++ERC20InvalidReceiver(receiver)++`
+* `++ERC20InsufficientAllowance(spender, allowance, needed)++`
+* `++ERC20InvalidApprover(approver)++`
+* `++ERC20InvalidSpender(spender)++`
+
+[.contract-subindex-inherited]
+.IERC20Metadata
+
+[.contract-subindex-inherited]
+.IERC20
+
+[.contract-subindex-inherited]
+.ERC165
+
+[.contract-subindex-inherited]
+.IERC165
+
+[.contract-subindex-inherited]
+.IERC7540Redeem
+
+[.contract-subindex-inherited]
+.IERC7540Deposit
+
+[.contract-subindex-inherited]
+.IERC7540Operator
+
+--
+
+[.contract-item]
+[[ERC7540-onlyOperatorOrController-bool-address-address-]]
+==== `[.contract-item-name]#++onlyOperatorOrController++#++(bool async, address controller, address operator)++` [.item-kind]#modifier#
+
+Modifier that enforces operator-or-controller authorization.
+
+When `async` is `false` the check is skipped, which allows the standard ERC-4626 flow where
+`msg.sender` is the caller and no controller/operator distinction exists.
+
+[.contract-item]
+[[ERC7540-constructor-contract-IERC20-]]
+==== `[.contract-item-name]#++constructor++#++(contract IERC20 asset_)++` [.item-kind]#internal#
+
+Sets the underlying asset contract. This must be an ERC-20-compatible contract.
+
+Caches the asset's `decimals()` value at construction time. If the call fails (e.g. the asset has not
+been created yet), a default of 18 is used.
+
+Requirements:
+
+* At least one of {_isDepositAsync} or {_isRedeemAsync} must return `true`.
+
+NOTE: Either {_isDepositAsync} or {_isRedeemAsync} must return `true`. Use {ERC4626} otherwise.
+
+[.contract-item]
+[[ERC7540-supportsInterface-bytes4-]]
+==== `[.contract-item-name]#++supportsInterface++#++(bytes4 interfaceId) → bool++` [.item-kind]#public#
+
+See {IERC165-supportsInterface}.
+
+Reports support for {IERC7540Operator} unconditionally. Support for {IERC7540Deposit} and
+{IERC7540Redeem} is conditional on the corresponding async selector returning `true`.
+
+[.contract-item]
+[[ERC7540-isOperator-address-address-]]
+==== `[.contract-item-name]#++isOperator++#++(address controller, address operator) → bool status++` [.item-kind]#public#
+
+Returns `true` if the `operator` is approved as an operator for a `controller`.
+
+[.contract-item]
+[[ERC7540-setOperator-address-bool-]]
+==== `[.contract-item-name]#++setOperator++#++(address operator, bool approved) → bool++` [.item-kind]#public#
+
+Grants or revokes permissions for `operator` to manage requests on behalf of the caller.
+
+- MUST set the operator status to the `approved` value.
+- MUST emit the {OperatorSet} event when the operator status is set.
+- MUST return true.
+
+[.contract-item]
+[[ERC7540-_setOperator-address-address-bool-]]
+==== `[.contract-item-name]#++_setOperator++#++(address controller, address operator, bool approved)++` [.item-kind]#internal#
+
+Sets the `operator` approval status for `controller` to `approved`.
+
+Emits an {IERC7540Operator-OperatorSet} event.
+
+[.contract-item]
+[[ERC7540-_checkOperatorOrController-bool-address-address-]]
+==== `[.contract-item-name]#++_checkOperatorOrController++#++(bool async, address controller, address operator)++` [.item-kind]#internal#
+
+Reverts with {ERC7540InvalidOperator} if `operator` is not the `controller` and is not
+approved as an operator for `controller`. When `async` is `false` the check is a no-op,
+preserving standard ERC-4626 authorization semantics.
+
+[.contract-item]
+[[ERC7540-decimals--]]
+==== `[.contract-item-name]#++decimals++#++() → uint8++` [.item-kind]#public#
+
+Decimals are computed by adding the decimal offset on top of the underlying asset's decimals. This
+"original" value is cached during construction of the vault contract. If this read operation fails (e.g., the
+asset has not been created yet), a default of 18 is used to represent the underlying asset's decimals.
+
+See {IERC20Metadata-decimals}.
+
+[.contract-item]
+[[ERC7540-asset--]]
+==== `[.contract-item-name]#++asset++#++() → address++` [.item-kind]#public#
+
+Returns the address of the underlying token used for the Vault for accounting, depositing, and withdrawing.
+
+- MUST be an ERC-20 token contract.
+- MUST NOT revert.
+
+[.contract-item]
+[[ERC7540-share--]]
+==== `[.contract-item-name]#++share++#++() → address++` [.item-kind]#public#
+
+The address of the underlying share received on deposit into the vault.
+
+[.contract-item]
+[[ERC7540-vault-address-]]
+==== `[.contract-item-name]#++vault++#++(address asset_) → address++` [.item-kind]#public#
+
+The address of the vault for a specific asset.
+
+[.contract-item]
+[[ERC7540-totalAssets--]]
+==== `[.contract-item-name]#++totalAssets++#++() → uint256++` [.item-kind]#public#
+
+See {IERC4626-totalAssets}.
+
+Pending deposit assets are subtracted from the vault's token balance, since they have not yet been
+converted into shares and must not be treated as yield for outstanding shareholders.
+
+NOTE: Internal flows preserve the invariant `balanceOf(asset, vault) >= totalPendingDepositAssets()` for
+any well-behaved ERC-20. Assets with transfer fees, negative rebases, or externally-mutable balances can
+violate it and cause this function to revert with an underflow. Strategies that read {totalAssets} on the
+claim path become uncallable in that state. Strategies that lock the rate at fulfillment time
+are unaffected.
+
+[.contract-item]
+[[ERC7540-totalSupply--]]
+==== `[.contract-item-name]#++totalSupply++#++() → uint256++` [.item-kind]#public#
+
+See {IERC20-totalSupply}.
+
+Adds {totalPendingRedeemShares} to the ERC-20 supply. When shares are burned at request time
+(i.e. {_redeemShareDestination} returns `address(0)`), pending redeem shares are removed from
+the on-chain supply but still logically outstanding until claimed; this override compensates.
+
+NOTE: As a consequence, two standard ERC-20 assumptions do not hold: (a) `totalSupply()` may
+exceed the sum of all `balanceOf()` (pending shares are virtual and unowned); (b) `totalSupply()`
+can change without a matching `Transfer` event when {totalPendingRedeemShares} changes. Integrators
+that snapshot supply for governance or reward weighting, or reconstruct supply from event logs
+(indexers, bridges), must account for this.
+
+[.contract-item]
+[[ERC7540-pendingDepositRequest-uint256-address-]]
+==== `[.contract-item-name]#++pendingDepositRequest++#++(uint256 requestId, address controller) → uint256++` [.item-kind]#public#
+
+See {IERC7540Deposit-pendingDepositRequest}.
+
+Requirements:
+
+* {_isDepositAsync} must return `true`.
+
+[.contract-item]
+[[ERC7540-claimableDepositRequest-uint256-address-]]
+==== `[.contract-item-name]#++claimableDepositRequest++#++(uint256 requestId, address controller) → uint256++` [.item-kind]#public#
+
+See {IERC7540Deposit-claimableDepositRequest}.
+
+Requirements:
+
+* {_isDepositAsync} must return `true`.
+
+[.contract-item]
+[[ERC7540-pendingRedeemRequest-uint256-address-]]
+==== `[.contract-item-name]#++pendingRedeemRequest++#++(uint256 requestId, address controller) → uint256++` [.item-kind]#public#
+
+See {IERC7540Redeem-pendingRedeemRequest}.
+
+Requirements:
+
+* {_isRedeemAsync} must return `true`.
+
+[.contract-item]
+[[ERC7540-claimableRedeemRequest-uint256-address-]]
+==== `[.contract-item-name]#++claimableRedeemRequest++#++(uint256 requestId, address controller) → uint256++` [.item-kind]#public#
+
+See {IERC7540Redeem-claimableRedeemRequest}.
+
+Requirements:
+
+* {_isRedeemAsync} must return `true`.
+
+[.contract-item]
+[[ERC7540-totalPendingDepositAssets--]]
+==== `[.contract-item-name]#++totalPendingDepositAssets++#++() → uint256++` [.item-kind]#public#
+
+Returns the total amount of underlying assets currently pending in deposit Requests.
+
+[.contract-item]
+[[ERC7540-totalPendingRedeemShares--]]
+==== `[.contract-item-name]#++totalPendingRedeemShares++#++() → uint256++` [.item-kind]#public#
+
+Returns the total amount of vault shares currently pending in redeem Requests.
+
+[.contract-item]
+[[ERC7540-convertToShares-uint256-]]
+==== `[.contract-item-name]#++convertToShares++#++(uint256 assets) → uint256++` [.item-kind]#public#
+
+Returns the amount of shares that the Vault would exchange for the amount of assets provided, in an ideal
+scenario where all the conditions are met.
+
+- MUST NOT be inclusive of any fees that are charged against assets in the Vault.
+- MUST NOT show any variations depending on the caller.
+- MUST NOT reflect slippage or other on-chain conditions, when performing the actual exchange.
+- MUST NOT revert.
+
+NOTE: This calculation MAY NOT reflect the “per-user” price-per-share, and instead should reflect the
+“average-user’s” price-per-share, meaning what the average user should expect to see when exchanging to and
+from.
+
+[.contract-item]
+[[ERC7540-convertToAssets-uint256-]]
+==== `[.contract-item-name]#++convertToAssets++#++(uint256 shares) → uint256++` [.item-kind]#public#
+
+Returns the amount of assets that the Vault would exchange for the amount of shares provided, in an ideal
+scenario where all the conditions are met.
+
+- MUST NOT be inclusive of any fees that are charged against assets in the Vault.
+- MUST NOT show any variations depending on the caller.
+- MUST NOT reflect slippage or other on-chain conditions, when performing the actual exchange.
+- MUST NOT revert.
+
+NOTE: This calculation MAY NOT reflect the “per-user” price-per-share, and instead should reflect the
+“average-user’s” price-per-share, meaning what the average user should expect to see when exchanging to and
+from.
+
+[.contract-item]
+[[ERC7540-maxDeposit-address-]]
+==== `[.contract-item-name]#++maxDeposit++#++(address owner) → uint256++` [.item-kind]#public#
+
+See {IERC4626-maxDeposit}.
+
+When the deposit flow is synchronous, returns `type(uint256).max` (no vault-imposed limit).
+When async, delegates to {_asyncMaxDeposit} which must be provided by the fulfillment strategy.
+
+[.contract-item]
+[[ERC7540-maxMint-address-]]
+==== `[.contract-item-name]#++maxMint++#++(address owner) → uint256++` [.item-kind]#public#
+
+See {IERC4626-maxMint}.
+
+When the deposit flow is synchronous, returns `type(uint256).max`.
+When async, delegates to {_asyncMaxMint}.
+
+[.contract-item]
+[[ERC7540-maxWithdraw-address-]]
+==== `[.contract-item-name]#++maxWithdraw++#++(address owner) → uint256++` [.item-kind]#public#
+
+See {IERC4626-maxWithdraw}.
+
+When the redeem flow is synchronous, returns the asset-equivalent of the owner's share balance.
+When async, delegates to {_asyncMaxWithdraw}.
+
+[.contract-item]
+[[ERC7540-maxRedeem-address-]]
+==== `[.contract-item-name]#++maxRedeem++#++(address owner) → uint256++` [.item-kind]#public#
+
+See {IERC4626-maxRedeem}.
+
+When the redeem flow is synchronous, returns the owner's share balance.
+When async, delegates to {_asyncMaxRedeem}.
+
+[.contract-item]
+[[ERC7540-previewDeposit-uint256-]]
+==== `[.contract-item-name]#++previewDeposit++#++(uint256 assets) → uint256++` [.item-kind]#public#
+
+See {IERC4626-previewDeposit}.
+
+MUST revert when {_isDepositAsync} returns `true`, per the ERC-7540 specification which
+mandates that preview functions revert for async flows.
+
+[.contract-item]
+[[ERC7540-previewMint-uint256-]]
+==== `[.contract-item-name]#++previewMint++#++(uint256 shares) → uint256++` [.item-kind]#public#
+
+See {IERC4626-previewMint}.
+
+MUST revert when {_isDepositAsync} returns `true`.
+
+[.contract-item]
+[[ERC7540-previewWithdraw-uint256-]]
+==== `[.contract-item-name]#++previewWithdraw++#++(uint256 assets) → uint256++` [.item-kind]#public#
+
+See {IERC4626-previewWithdraw}.
+
+MUST revert when {_isRedeemAsync} returns `true`.
+
+[.contract-item]
+[[ERC7540-previewRedeem-uint256-]]
+==== `[.contract-item-name]#++previewRedeem++#++(uint256 shares) → uint256++` [.item-kind]#public#
+
+See {IERC4626-previewRedeem}.
+
+MUST revert when {_isRedeemAsync} returns `true`.
+
+[.contract-item]
+[[ERC7540-requestDeposit-uint256-address-address-]]
+==== `[.contract-item-name]#++requestDeposit++#++(uint256 assets, address controller, address owner) → uint256++` [.item-kind]#public#
+
+See {IERC7540Deposit-requestDeposit}.
+
+Transfers `assets` from `owner` into the vault and submits a deposit Request for `controller`.
+The Request enters Pending state. Uses `requestId = 0` by default; override {_requestDeposit}
+to use non-zero request IDs.
+
+Requirements:
+
+* {_isDepositAsync} must return `true`.
+* `owner` must be `msg.sender` or `msg.sender` must be an approved operator of `owner`.
+* `owner` must have approved the vault for at least `assets` of the underlying token.
+
+NOTE: The `controller` is the only address authorized to claim the resulting Request. Passing an address
+with no claim authority (e.g. `address(0)`, `0x...dead`) or any contract that cannot itself call
+{deposit}/{mint} or designate an operator via {setOperator} will permanently lock the committed
+`assets`, since claims are gated by {onlyOperatorOrController} on `controller` and there is no
+cancellation path. Callers are responsible for supplying a controller capable of authorizing claims.
+
+[.contract-item]
+[[ERC7540-deposit-uint256-address-]]
+==== `[.contract-item-name]#++deposit++#++(uint256 assets, address receiver) → uint256++` [.item-kind]#public#
+
+See {IERC4626-deposit}. Calls the three-argument overload with `msg.sender` as `controller`.
+
+[.contract-item]
+[[ERC7540-deposit-uint256-address-address-]]
+==== `[.contract-item-name]#++deposit++#++(uint256 assets, address receiver, address controller) → uint256++` [.item-kind]#public#
+
+See {IERC7540Deposit-deposit}.
+
+When async, claims `assets` worth of shares from a Claimable deposit Request controlled by `controller`,
+and transfers the resulting shares to `receiver`. When sync, behaves as standard ERC-4626 deposit.
+
+NOTE: When {_isDepositAsync} is `false`, the `controller` parameter is ignored and `receiver` is used
+for limit checks, matching standard ERC-4626 semantics.
+
+Requirements:
+
+* `assets` must not exceed {maxDeposit} for the relevant account.
+* When async, `msg.sender` must be `controller` or an approved operator of `controller`.
+
+[.contract-item]
+[[ERC7540-mint-uint256-address-]]
+==== `[.contract-item-name]#++mint++#++(uint256 shares, address receiver) → uint256 assets++` [.item-kind]#public#
+
+See {IERC4626-mint}. Calls the three-argument overload with `msg.sender` as `controller`.
+
+[.contract-item]
+[[ERC7540-mint-uint256-address-address-]]
+==== `[.contract-item-name]#++mint++#++(uint256 shares, address receiver, address controller) → uint256++` [.item-kind]#public#
+
+See {IERC7540Deposit-mint}.
+
+When async, claims exactly `shares` from a Claimable deposit Request controlled by `controller`,
+and transfers them to `receiver`. When sync, behaves as standard ERC-4626 mint.
+
+NOTE: When {_isDepositAsync} is `false`, the `controller` parameter is ignored.
+
+Requirements:
+
+* `shares` must not exceed {maxMint} for the relevant account.
+* When async, `msg.sender` must be `controller` or an approved operator of `controller`.
+
+[.contract-item]
+[[ERC7540-requestRedeem-uint256-address-address-]]
+==== `[.contract-item-name]#++requestRedeem++#++(uint256 shares, address controller, address owner) → uint256++` [.item-kind]#public#
+
+See {IERC7540Redeem-requestRedeem}.
+
+Assumes control of `shares` from `owner` and submits a redeem Request for `controller`.
+The Request enters Pending state. Uses `requestId = 0` by default.
+
+Authorization for a `msg.sender` not equal to `owner` may come from either ERC-20 approval
+over the shares of `owner` or from operator approval (see {IERC7540Operator}). This is
+consistent with the approach described in ERC-6909.
+
+Requirements:
+
+* {_isRedeemAsync} must return `true`.
+
+NOTE: The `controller` is the only address authorized to claim the resulting Request. Passing an address
+with no claim authority (e.g. `address(0)`, `0x...dead`) or any contract that cannot itself call
+{withdraw}/{redeem} or designate an operator via {setOperator} will permanently lock the committed
+`shares`, since claims are gated by {onlyOperatorOrController} on `controller` and there is no
+cancellation path. Callers are responsible for supplying a controller capable of authorizing claims.
+
+[.contract-item]
+[[ERC7540-withdraw-uint256-address-address-]]
+==== `[.contract-item-name]#++withdraw++#++(uint256 assets, address receiver, address ownerOrController) → uint256++` [.item-kind]#public#
+
+See {IERC4626-withdraw}.
+
+When async, claims `assets` from a Claimable redeem Request controlled by `ownerOrController`,
+and transfers the underlying assets to `receiver`. When sync, behaves as standard ERC-4626 withdraw.
+
+NOTE: Per ERC-7540, when async the `ownerOrController` parameter acts as the `controller`
+(replacing the traditional ERC-4626 `owner` role).
+
+Requirements:
+
+* `assets` must not exceed {maxWithdraw} for `ownerOrController`.
+* When async, `msg.sender` must be `ownerOrController` or an approved operator.
+* When sync, `msg.sender` must be `ownerOrController` or have sufficient ERC-20 allowance.
+
+[.contract-item]
+[[ERC7540-redeem-uint256-address-address-]]
+==== `[.contract-item-name]#++redeem++#++(uint256 shares, address receiver, address ownerOrController) → uint256++` [.item-kind]#public#
+
+See {IERC4626-redeem}.
+
+When async, claims `shares` from a Claimable redeem Request controlled by `ownerOrController`,
+and transfers the corresponding underlying assets to `receiver`. When sync, behaves as standard
+ERC-4626 redeem.
+
+NOTE: Per ERC-7540, when async the `ownerOrController` parameter acts as the `controller`.
+
+Requirements:
+
+* `shares` must not exceed {maxRedeem} for `ownerOrController`.
+* When async, `msg.sender` must be `ownerOrController` or an approved operator.
+* When sync, `msg.sender` must be `ownerOrController` or have sufficient ERC-20 allowance.
+
+[.contract-item]
+[[ERC7540-_convertToShares-uint256-enum-Math-Rounding-]]
+==== `[.contract-item-name]#++_convertToShares++#++(uint256 assets, enum Math.Rounding rounding) → uint256++` [.item-kind]#internal#
+
+Internal conversion function (from assets to shares) with support for rounding direction.
+
+Uses virtual shares and virtual assets to mitigate the inflation attack vector described in
+https://docs.openzeppelin.com/contracts/5.x/erc4626#inflation-attack[ERC-4626 security considerations].
+The offset is configurable via {_decimalsOffset}.
+
+[.contract-item]
+[[ERC7540-_convertToAssets-uint256-enum-Math-Rounding-]]
+==== `[.contract-item-name]#++_convertToAssets++#++(uint256 shares, enum Math.Rounding rounding) → uint256++` [.item-kind]#internal#
+
+Internal conversion function (from shares to assets) with support for rounding direction.
+
+[.contract-item]
+[[ERC7540-_requestDeposit-uint256-address-address-uint256-]]
+==== `[.contract-item-name]#++_requestDeposit++#++(uint256 assets, address controller, address owner, uint256 requestId) → uint256++` [.item-kind]#internal#
+
+Internal handler for deposit Requests. Increments {totalPendingDepositAssets}, transfers
+assets from `owner` into the vault, and emits {IERC7540Deposit-DepositRequest}.
+
+Strategy extensions (e.g. {ERC7540AdminDeposit}) should override this to record per-controller
+pending state before calling `super._requestDeposit(...)`.
+
+NOTE: Pending accounting is updated before {_transferIn} to follow Checks-Effects-Interactions.
+Assets with transfer hooks (e.g. ERC-777) may observe {totalAssets} temporarily understated
+during the transfer, since `_totalPendingDepositAssets` is already incremented while the
+token balance has not yet increased.
+
+Requirements:
+
+* {_isDepositAsync} must return `true`, otherwise reverts with {ERC7540SyncDeposit}.
+
+[.contract-item]
+[[ERC7540-_mintSharesOnDepositFulfill-uint256-uint256-]]
+==== `[.contract-item-name]#++_mintSharesOnDepositFulfill++#++(uint256 assets, uint256 shares)++` [.item-kind]#internal#
+
+Mints shares to {_depositShareOrigin} as part of deposit fulfillment when using the
+pre-mint share custody model. Decrements {totalPendingDepositAssets} by `assets`.
+
+IMPORTANT: This function requires {_depositShareOrigin} to return a non-zero address.
+When {_depositShareOrigin} returns `address(0)`, shares are minted directly at claim time
+inside {_deposit} and this function must not be called.
+
+[.contract-item]
+[[ERC7540-_deposit-address-address-uint256-uint256-]]
+==== `[.contract-item-name]#++_deposit++#++(address callerOrController, address receiver, uint256 assets, uint256 shares)++` [.item-kind]#internal#
+
+Common workflow for deposit and mint claim operations.
+
+Handles three cases depending on the vault configuration:
+
+1. **Synchronous** ({_isDepositAsync} returns `false`): transfers assets from `callerOrController` into the vault
+   and mints new shares to `receiver`. Standard ERC-4626 behavior.
+2. **Async, mint-on-claim** ({_depositShareOrigin} returns `address(0)`): decrements
+   `_totalPendingDepositAssets` and mints new shares to `receiver`. No asset transfer occurs
+   since assets were already transferred during {requestDeposit}.
+3. **Async, pre-minted** ({_depositShareOrigin} returns non-zero): transfers pre-minted shares
+   from the share origin address to `receiver`.
+
+Emits {IERC4626-Deposit}. Per ERC-7540, the first event parameter is the `controller` in async
+mode and `msg.sender` in sync mode.
+
+[.contract-item]
+[[ERC7540-_requestRedeem-uint256-address-address-uint256-]]
+==== `[.contract-item-name]#++_requestRedeem++#++(uint256 shares, address controller, address owner, uint256 requestId) → uint256++` [.item-kind]#internal#
+
+Internal handler for redeem Requests. Assumes control of `shares` from `owner` and
+emits {IERC7540Redeem-RedeemRequest}.
+
+Share custody depends on {_redeemShareDestination}:
+
+* `address(0)` (default): shares are burned immediately and `_totalPendingRedeemShares` is
+  incremented to keep {totalSupply} accurate.
+* Non-zero address: shares are transferred to that address and held until fulfillment.
+
+Authorization for a `msg.sender` not equal to `owner` is checked via operator status first;
+if that fails, ERC-20 allowance is spent via {ERC20-_spendAllowance}. This dual-authorization
+approach is consistent with ERC-6909 semantics.
+
+Requirements:
+
+* {_isRedeemAsync} must return `true`, otherwise reverts with {ERC7540SyncRedeem}.
+
+[.contract-item]
+[[ERC7540-_burnSharesOnRedeemFulfill-uint256-uint256-]]
+==== `[.contract-item-name]#++_burnSharesOnRedeemFulfill++#++(uint256, uint256 shares)++` [.item-kind]#internal#
+
+Burns shares from {_redeemShareDestination} as part of redeem fulfillment when using
+the escrow share custody model. Increments {totalPendingRedeemShares} by `shares`.
+
+IMPORTANT: This function requires {_redeemShareDestination} to return a non-zero address.
+When {_redeemShareDestination} returns `address(0)`, shares were already burned at request
+time inside {_requestRedeem} and this function must not be called.
+
+[.contract-item]
+[[ERC7540-_withdraw-address-address-address-uint256-uint256-]]
+==== `[.contract-item-name]#++_withdraw++#++(address caller, address receiver, address owner, uint256 assets, uint256 shares)++` [.item-kind]#internal#
+
+Common workflow for withdraw and redeem claim operations.
+
+Handles two cases depending on the vault configuration:
+
+1. **Synchronous** ({_isRedeemAsync} returns `false`): spends ERC-20 allowance if `caller` is not
+   `owner`, burns shares from `owner`, and transfers underlying assets to `receiver`.
+2. **Async**: decrements `_totalPendingRedeemShares` (shares were already burned/escrowed during
+   the Request or fulfillment phase) and transfers underlying assets to `receiver`.
+
+Emits {IERC4626-Withdraw}.
+
+[.contract-item]
+[[ERC7540-_transferIn-address-uint256-]]
+==== `[.contract-item-name]#++_transferIn++#++(address from, uint256 assets)++` [.item-kind]#internal#
+
+Performs a transfer-in of underlying assets from `from` to the vault.
+The default implementation uses {SafeERC20-safeTransferFrom}. Used by {_deposit} (sync) and
+{_requestDeposit} (async).
+
+[.contract-item]
+[[ERC7540-_transferOut-address-uint256-]]
+==== `[.contract-item-name]#++_transferOut++#++(address to, uint256 assets)++` [.item-kind]#internal#
+
+Performs a transfer-out of underlying assets from the vault to `to`.
+The default implementation uses {SafeERC20-safeTransfer}. Used by {_withdraw}.
+
+[.contract-item]
+[[ERC7540-_decimalsOffset--]]
+==== `[.contract-item-name]#++_decimalsOffset++#++() → uint8++` [.item-kind]#internal#
+
+Returns the decimal offset used for virtual shares/assets in {_convertToShares} and
+{_convertToAssets}. Defaults to 0. Increase to strengthen inflation-attack protection
+at the cost of share-price granularity.
+
+See https://docs.openzeppelin.com/contracts/5.x/erc4626#inflation-attack[ERC-4626 security considerations].
+
+[.contract-item]
+[[ERC7540-_depositShareOrigin--]]
+==== `[.contract-item-name]#++_depositShareOrigin++#++() → address++` [.item-kind]#internal#
+
+Returns the address from which shares are transferred to the receiver on deposit claim.
+
+* `address(0)` (default): shares are minted directly to the receiver at claim time. Pending
+  deposit assets are tracked via {totalPendingDepositAssets} and decremented in {_deposit}.
+* Non-zero address: shares are pre-minted to this address during fulfillment (via
+  {_mintSharesOnDepositFulfill}) and transferred to the receiver on claim.
+
+NOTE: If overridden to return a non-zero address, that address must not be able to transfer
+shares (otherwise pre-minted shares could be moved before they are claimed). Use an unowned
+address such as `address(0xdead)`. Avoid addresses in the precompile reserved range
+(`address(1)` through `address(0x1ff)`, see EIP-7587).
+
+[.contract-item]
+[[ERC7540-_redeemShareDestination--]]
+==== `[.contract-item-name]#++_redeemShareDestination++#++() → address++` [.item-kind]#internal#
+
+Returns the address to which shares are transferred (escrowed) on redeem request.
+
+* `address(0)` (default): shares are burned immediately at request time. Pending redeem shares
+  are tracked via {totalPendingRedeemShares} so that {totalSupply} remains accurate.
+* Non-zero address: shares are transferred to this address on request and burned during
+  fulfillment (via {_burnSharesOnRedeemFulfill}).
+
+NOTE: If overridden to return a non-zero address, that address must not be able to transfer
+shares (otherwise escrowed shares could be moved before they are burned). Use an unowned
+address such as `address(0xdead)`. Avoid addresses in the precompile reserved range
+(`address(1)` through `address(0x1ff)`, see EIP-7587).
+
+[.contract-item]
+[[ERC7540-_isDepositAsync--]]
+==== `[.contract-item-name]#++_isDepositAsync++#++() → bool++` [.item-kind]#internal#
+
+Returns `true` if the deposit flow is asynchronous (Request-based). When `false`, {deposit} and
+{mint} behave as standard synchronous ERC-4626 operations.
+
+Override to return `true` in extensions that provide an async deposit fulfillment strategy.
+
+[.contract-item]
+[[ERC7540-_isRedeemAsync--]]
+==== `[.contract-item-name]#++_isRedeemAsync++#++() → bool++` [.item-kind]#internal#
+
+Returns `true` if the redeem flow is asynchronous (Request-based). When `false`, {withdraw} and
+{redeem} behave as standard synchronous ERC-4626 operations.
+
+Override to return `true` in extensions that provide an async redeem fulfillment strategy.
+
+[.contract-item]
+[[ERC7540-_pendingDepositRequest-uint256-address-]]
+==== `[.contract-item-name]#++_pendingDepositRequest++#++(uint256, address) → uint256++` [.item-kind]#internal#
+
+Returns the amount of assets in Pending state for `controller` with the given `requestId`.
+
+[.contract-item]
+[[ERC7540-_claimableDepositRequest-uint256-address-]]
+==== `[.contract-item-name]#++_claimableDepositRequest++#++(uint256, address) → uint256++` [.item-kind]#internal#
+
+Returns the amount of assets in Claimable state for `controller` with the given `requestId`.
+
+[.contract-item]
+[[ERC7540-_pendingRedeemRequest-uint256-address-]]
+==== `[.contract-item-name]#++_pendingRedeemRequest++#++(uint256, address) → uint256++` [.item-kind]#internal#
+
+Returns the amount of shares in Pending state for `controller` with the given `requestId`.
+
+[.contract-item]
+[[ERC7540-_claimableRedeemRequest-uint256-address-]]
+==== `[.contract-item-name]#++_claimableRedeemRequest++#++(uint256, address) → uint256++` [.item-kind]#internal#
+
+Returns the amount of shares in Claimable state for `controller` with the given `requestId`.
+
+[.contract-item]
+[[ERC7540-_consumeClaimableDeposit-uint256-address-]]
+==== `[.contract-item-name]#++_consumeClaimableDeposit++#++(uint256, address) → uint256++` [.item-kind]#internal#
+
+Consumes `assets` worth of a Claimable deposit for `controller` and returns the corresponding
+number of shares. Called by {deposit} (three-argument overload) in async mode.
+
+NOTE: In async mode, this function may be susceptible to the inflation attack vector described in
+https://docs.openzeppelin.com/contracts/5.x/erc4626#inflation-attack[ERC-4626 security considerations]
+if the shares are freed automatically (e.g. after a certain time period). Consider using {_decimalsOffset}
+to mitigate this risk.
+
+[.contract-item]
+[[ERC7540-_consumeClaimableMint-uint256-address-]]
+==== `[.contract-item-name]#++_consumeClaimableMint++#++(uint256, address) → uint256++` [.item-kind]#internal#
+
+Consumes `shares` worth of a Claimable deposit for `controller` and returns the corresponding
+number of assets. Called by {mint} (three-argument overload) in async mode.
+
+[.contract-item]
+[[ERC7540-_consumeClaimableWithdraw-uint256-address-]]
+==== `[.contract-item-name]#++_consumeClaimableWithdraw++#++(uint256, address) → uint256++` [.item-kind]#internal#
+
+Consumes `assets` worth of a Claimable redeem for `controller` and returns the corresponding
+number of shares. Called by {withdraw} in async mode.
+
+[.contract-item]
+[[ERC7540-_consumeClaimableRedeem-uint256-address-]]
+==== `[.contract-item-name]#++_consumeClaimableRedeem++#++(uint256, address) → uint256++` [.item-kind]#internal#
+
+Consumes `shares` worth of a Claimable redeem for `controller` and returns the corresponding
+number of assets. Called by {redeem} in async mode.
+
+[.contract-item]
+[[ERC7540-_asyncMaxDeposit-address-]]
+==== `[.contract-item-name]#++_asyncMaxDeposit++#++(address) → uint256++` [.item-kind]#internal#
+
+Returns the maximum assets that can be claimed via {deposit} for an async `owner`.
+
+[.contract-item]
+[[ERC7540-_asyncMaxMint-address-]]
+==== `[.contract-item-name]#++_asyncMaxMint++#++(address) → uint256++` [.item-kind]#internal#
+
+Returns the maximum shares that can be claimed via {mint} for an async `owner`.
+
+[.contract-item]
+[[ERC7540-_asyncMaxWithdraw-address-]]
+==== `[.contract-item-name]#++_asyncMaxWithdraw++#++(address) → uint256++` [.item-kind]#internal#
+
+Returns the maximum assets that can be claimed via {withdraw} for an async `owner`.
+
+[.contract-item]
+[[ERC7540-_asyncMaxRedeem-address-]]
+==== `[.contract-item-name]#++_asyncMaxRedeem++#++(address) → uint256++` [.item-kind]#internal#
+
+Returns the maximum shares that can be claimed via {redeem} for an async `owner`.
+
+[.contract-item]
+[[ERC7540-ERC4626ExceededMaxDeposit-address-uint256-uint256-]]
+==== `[.contract-item-name]#++ERC4626ExceededMaxDeposit++#++(address receiver, uint256 assets, uint256 max)++` [.item-kind]#error#
+
+Attempted to deposit more assets than the max amount for `receiver`.
+
+[.contract-item]
+[[ERC7540-ERC4626ExceededMaxMint-address-uint256-uint256-]]
+==== `[.contract-item-name]#++ERC4626ExceededMaxMint++#++(address receiver, uint256 shares, uint256 max)++` [.item-kind]#error#
+
+Attempted to mint more shares than the max amount for `receiver`.
+
+[.contract-item]
+[[ERC7540-ERC4626ExceededMaxWithdraw-address-uint256-uint256-]]
+==== `[.contract-item-name]#++ERC4626ExceededMaxWithdraw++#++(address owner, uint256 assets, uint256 max)++` [.item-kind]#error#
+
+Attempted to withdraw more assets than the max amount for `owner`.
+
+[.contract-item]
+[[ERC7540-ERC4626ExceededMaxRedeem-address-uint256-uint256-]]
+==== `[.contract-item-name]#++ERC4626ExceededMaxRedeem++#++(address owner, uint256 shares, uint256 max)++` [.item-kind]#error#
+
+Attempted to redeem more shares than the max amount for `owner`.
+
+[.contract-item]
+[[ERC7540-ERC7540InvalidOperator-address-address-]]
+==== `[.contract-item-name]#++ERC7540InvalidOperator++#++(address controller, address operator)++` [.item-kind]#error#
+
+The `operator` is not the caller or an approved operator of the `controller`.
+
+[.contract-item]
+[[ERC7540-ERC7540SyncDeposit--]]
+==== `[.contract-item-name]#++ERC7540SyncDeposit++#++()++` [.item-kind]#error#
+
+A deposit Request was attempted but {_isDepositAsync} returns `false`.
+
+[.contract-item]
+[[ERC7540-ERC7540AsyncDeposit--]]
+==== `[.contract-item-name]#++ERC7540AsyncDeposit++#++()++` [.item-kind]#error#
+
+A synchronous deposit preview was attempted but {_isDepositAsync} returns `true`.
+
+[.contract-item]
+[[ERC7540-ERC7540SyncRedeem--]]
+==== `[.contract-item-name]#++ERC7540SyncRedeem++#++()++` [.item-kind]#error#
+
+A redeem Request was attempted but {_isRedeemAsync} returns `false`.
+
+[.contract-item]
+[[ERC7540-ERC7540AsyncRedeem--]]
+==== `[.contract-item-name]#++ERC7540AsyncRedeem++#++()++` [.item-kind]#error#
+
+A synchronous redeem preview was attempted but {_isRedeemAsync} returns `true`.
+
+[.contract-item]
+[[ERC7540-ERC7540MissingAsync--]]
+==== `[.contract-item-name]#++ERC7540MissingAsync++#++()++` [.item-kind]#error#
+
+Neither {_isDepositAsync} nor {_isRedeemAsync} returns `true`.
+
+[.contract-item]
+[[ERC7540-ERC7540UnauthorizedMintSharesOnDepositFulfill--]]
+==== `[.contract-item-name]#++ERC7540UnauthorizedMintSharesOnDepositFulfill++#++()++` [.item-kind]#error#
+
+Invalid attempt at minting shares on a deposit fulfill when configuration mints them during claim.
+
+[.contract-item]
+[[ERC7540-ERC7540UnauthorizedBurnSharesOnRedeemFulfill--]]
+==== `[.contract-item-name]#++ERC7540UnauthorizedBurnSharesOnRedeemFulfill++#++()++` [.item-kind]#error#
+
+Invalid attempt at burning shares on a redeem fulfill when configuration burns them during request.
+
+:PendingDeposit: pass:normal[xref:#ERC7540AdminDeposit-PendingDeposit[`++PendingDeposit++`]]
+:DepositClaimable: pass:normal[xref:#ERC7540AdminDeposit-DepositClaimable-address-uint256-uint256-uint256-[`++DepositClaimable++`]]
+:ERC7540DepositInsufficientPendingAssets: pass:normal[xref:#ERC7540AdminDeposit-ERC7540DepositInsufficientPendingAssets-uint256-uint256-[`++ERC7540DepositInsufficientPendingAssets++`]]
+:_isDepositAsync: pass:normal[xref:#ERC7540AdminDeposit-_isDepositAsync--[`++_isDepositAsync++`]]
+:_requestDeposit: pass:normal[xref:#ERC7540AdminDeposit-_requestDeposit-uint256-address-address-uint256-[`++_requestDeposit++`]]
+:_fulfillDeposit: pass:normal[xref:#ERC7540AdminDeposit-_fulfillDeposit-uint256-uint256-address-[`++_fulfillDeposit++`]]
+:_consumeClaimableDeposit: pass:normal[xref:#ERC7540AdminDeposit-_consumeClaimableDeposit-uint256-address-[`++_consumeClaimableDeposit++`]]
+:_consumeClaimableMint: pass:normal[xref:#ERC7540AdminDeposit-_consumeClaimableMint-uint256-address-[`++_consumeClaimableMint++`]]
+:_pendingDepositRequest: pass:normal[xref:#ERC7540AdminDeposit-_pendingDepositRequest-uint256-address-[`++_pendingDepositRequest++`]]
+:_claimableDepositRequest: pass:normal[xref:#ERC7540AdminDeposit-_claimableDepositRequest-uint256-address-[`++_claimableDepositRequest++`]]
+:_asyncMaxDeposit: pass:normal[xref:#ERC7540AdminDeposit-_asyncMaxDeposit-address-[`++_asyncMaxDeposit++`]]
+:_asyncMaxMint: pass:normal[xref:#ERC7540AdminDeposit-_asyncMaxMint-address-[`++_asyncMaxMint++`]]
+
+[.contract]
+[[ERC7540AdminDeposit]]
+=== `++ERC7540AdminDeposit++` link:https://github.com/OpenZeppelin/openzeppelin-community-contracts/blob/master/contracts/token/ERC20/extensions/ERC7540AdminDeposit.sol[{github-icon},role=heading-link]
+
+[.hljs-theme-light.nopadding]
+```solidity
+import "@openzeppelin/community-contracts/token/ERC20/extensions/ERC7540AdminDeposit.sol";
+```
+
+Admin-controlled (operator-triggered) fulfillment strategy for asynchronous deposits.
+
+Extends {ERC7540} with a deposit flow where a privileged caller explicitly transitions requests
+from Pending to Claimable by calling {_fulfillDeposit}. The caller provides both the `assets`
+amount and the corresponding `shares`, giving the fulfiller explicit control over the exchange rate.
+
+This is the most flexible fulfillment model. Epoch-based batch settlement, FIFO queues, and
+cross-chain oracle-gated settlement can all be composed on top.
+
+Production equivalents include
+https://github.com/usdai-foundation/usdai-contracts/blob/main/src/StakedUSDai.sol[USDai],
+https://github.com/plumenetwork/nest-protocol/blob/main/contracts/NestVaultCore.sol[Nest (Plume)],
+https://github.com/turingcapitalgroup/metaVault/blob/main/src/MetaVault.sol[MetaVault], and
+https://github.com/centrifuge/protocol/blob/main/src/vaults/AsyncVault.sol[Centrifuge].
+
+All requests share `requestId = 0` (per-controller accounting only).
+
+[.contract-index]
+.Functions
+--
+* `++_isDepositAsync()++`
+* `++_requestDeposit(assets, controller, owner, requestId)++`
+* `++_fulfillDeposit(assets, shares, controller)++`
+* `++_consumeClaimableDeposit(assets, controller)++`
+* `++_consumeClaimableMint(shares, controller)++`
+* `++_pendingDepositRequest(, controller)++`
+* `++_claimableDepositRequest(, controller)++`
+* `++_asyncMaxDeposit(owner)++`
+* `++_asyncMaxMint(owner)++`
+
+[.contract-subindex-inherited]
+.ERC7540
+* `++supportsInterface(interfaceId)++`
+* `++isOperator(controller, operator)++`
+* `++setOperator(operator, approved)++`
+* `++_setOperator(controller, operator, approved)++`
+* `++_checkOperatorOrController(async, controller, operator)++`
+* `++decimals()++`
+* `++asset()++`
+* `++share()++`
+* `++vault(asset_)++`
+* `++totalAssets()++`
+* `++totalSupply()++`
+* `++pendingDepositRequest(requestId, controller)++`
+* `++claimableDepositRequest(requestId, controller)++`
+* `++pendingRedeemRequest(requestId, controller)++`
+* `++claimableRedeemRequest(requestId, controller)++`
+* `++totalPendingDepositAssets()++`
+* `++totalPendingRedeemShares()++`
+* `++convertToShares(assets)++`
+* `++convertToAssets(shares)++`
+* `++maxDeposit(owner)++`
+* `++maxMint(owner)++`
+* `++maxWithdraw(owner)++`
+* `++maxRedeem(owner)++`
+* `++previewDeposit(assets)++`
+* `++previewMint(shares)++`
+* `++previewWithdraw(assets)++`
+* `++previewRedeem(shares)++`
+* `++requestDeposit(assets, controller, owner)++`
+* `++deposit(assets, receiver)++`
+* `++deposit(assets, receiver, controller)++`
+* `++mint(shares, receiver)++`
+* `++mint(shares, receiver, controller)++`
+* `++requestRedeem(shares, controller, owner)++`
+* `++withdraw(assets, receiver, ownerOrController)++`
+* `++redeem(shares, receiver, ownerOrController)++`
+* `++_convertToShares(assets, rounding)++`
+* `++_convertToAssets(shares, rounding)++`
+* `++_mintSharesOnDepositFulfill(assets, shares)++`
+* `++_deposit(callerOrController, receiver, assets, shares)++`
+* `++_requestRedeem(shares, controller, owner, requestId)++`
+* `++_burnSharesOnRedeemFulfill(, shares)++`
+* `++_withdraw(caller, receiver, owner, assets, shares)++`
+* `++_transferIn(from, assets)++`
+* `++_transferOut(to, assets)++`
+* `++_decimalsOffset()++`
+* `++_depositShareOrigin()++`
+* `++_redeemShareDestination()++`
+* `++_isRedeemAsync()++`
+* `++_pendingRedeemRequest(, )++`
+* `++_claimableRedeemRequest(, )++`
+* `++_consumeClaimableWithdraw(, )++`
+* `++_consumeClaimableRedeem(, )++`
+* `++_asyncMaxWithdraw()++`
+* `++_asyncMaxRedeem()++`
+
+[.contract-subindex-inherited]
+.IERC7575Share
+
+[.contract-subindex-inherited]
+.IERC7540
+
+[.contract-subindex-inherited]
+.IERC7575
+
+[.contract-subindex-inherited]
+.IERC4626
+
+[.contract-subindex-inherited]
+.ERC20
+* `++name()++`
+* `++symbol()++`
+* `++balanceOf(account)++`
+* `++transfer(to, value)++`
+* `++allowance(owner, spender)++`
+* `++approve(spender, value)++`
+* `++transferFrom(from, to, value)++`
+* `++_transfer(from, to, value)++`
+* `++_update(from, to, value)++`
+* `++_mint(account, value)++`
+* `++_burn(account, value)++`
+* `++_approve(owner, spender, value)++`
+* `++_approve(owner, spender, value, emitEvent)++`
+* `++_spendAllowance(owner, spender, value)++`
+
+[.contract-subindex-inherited]
+.IERC20Errors
+
+[.contract-subindex-inherited]
+.IERC20Metadata
+
+[.contract-subindex-inherited]
+.IERC20
+
+[.contract-subindex-inherited]
+.ERC165
+
+[.contract-subindex-inherited]
+.IERC165
+
+[.contract-subindex-inherited]
+.IERC7540Redeem
+
+[.contract-subindex-inherited]
+.IERC7540Deposit
+
+[.contract-subindex-inherited]
+.IERC7540Operator
+
+--
+
+[.contract-index]
+.Events
+--
+* `++DepositClaimable(controller, requestId, assets, shares)++`
+
+[.contract-subindex-inherited]
+.ERC7540
+
+[.contract-subindex-inherited]
+.IERC7575Share
+
+[.contract-subindex-inherited]
+.IERC7540
+
+[.contract-subindex-inherited]
+.IERC7575
+
+[.contract-subindex-inherited]
+.IERC4626
+* `++Deposit(sender, owner, assets, shares)++`
+* `++Withdraw(sender, receiver, owner, assets, shares)++`
+
+[.contract-subindex-inherited]
+.ERC20
+
+[.contract-subindex-inherited]
+.IERC20Errors
+
+[.contract-subindex-inherited]
+.IERC20Metadata
+
+[.contract-subindex-inherited]
+.IERC20
+* `++Transfer(from, to, value)++`
+* `++Approval(owner, spender, value)++`
+
+[.contract-subindex-inherited]
+.ERC165
+
+[.contract-subindex-inherited]
+.IERC165
+
+[.contract-subindex-inherited]
+.IERC7540Redeem
+* `++RedeemRequest(controller, owner, requestId, sender, shares)++`
+
+[.contract-subindex-inherited]
+.IERC7540Deposit
+* `++DepositRequest(controller, owner, requestId, sender, assets)++`
+
+[.contract-subindex-inherited]
+.IERC7540Operator
+* `++OperatorSet(controller, operator, approved)++`
+
+--
+
+[.contract-index]
+.Errors
+--
+* `++ERC7540DepositInsufficientPendingAssets(assets, pendingAssets)++`
+
+[.contract-subindex-inherited]
+.ERC7540
+* `++ERC4626ExceededMaxDeposit(receiver, assets, max)++`
+* `++ERC4626ExceededMaxMint(receiver, shares, max)++`
+* `++ERC4626ExceededMaxWithdraw(owner, assets, max)++`
+* `++ERC4626ExceededMaxRedeem(owner, shares, max)++`
+* `++ERC7540InvalidOperator(controller, operator)++`
+* `++ERC7540SyncDeposit()++`
+* `++ERC7540AsyncDeposit()++`
+* `++ERC7540SyncRedeem()++`
+* `++ERC7540AsyncRedeem()++`
+* `++ERC7540MissingAsync()++`
+* `++ERC7540UnauthorizedMintSharesOnDepositFulfill()++`
+* `++ERC7540UnauthorizedBurnSharesOnRedeemFulfill()++`
+
+[.contract-subindex-inherited]
+.IERC7575Share
+
+[.contract-subindex-inherited]
+.IERC7540
+
+[.contract-subindex-inherited]
+.IERC7575
+
+[.contract-subindex-inherited]
+.IERC4626
+
+[.contract-subindex-inherited]
+.ERC20
+
+[.contract-subindex-inherited]
+.IERC20Errors
+* `++ERC20InsufficientBalance(sender, balance, needed)++`
+* `++ERC20InvalidSender(sender)++`
+* `++ERC20InvalidReceiver(receiver)++`
+* `++ERC20InsufficientAllowance(spender, allowance, needed)++`
+* `++ERC20InvalidApprover(approver)++`
+* `++ERC20InvalidSpender(spender)++`
+
+[.contract-subindex-inherited]
+.IERC20Metadata
+
+[.contract-subindex-inherited]
+.IERC20
+
+[.contract-subindex-inherited]
+.ERC165
+
+[.contract-subindex-inherited]
+.IERC165
+
+[.contract-subindex-inherited]
+.IERC7540Redeem
+
+[.contract-subindex-inherited]
+.IERC7540Deposit
+
+[.contract-subindex-inherited]
+.IERC7540Operator
+
+--
+
+[.contract-item]
+[[ERC7540AdminDeposit-_isDepositAsync--]]
+==== `[.contract-item-name]#++_isDepositAsync++#++() → bool++` [.item-kind]#internal#
+
+Returns `true` if the deposit flow is asynchronous (Request-based). When `false`, {deposit} and
+{mint} behave as standard synchronous ERC-4626 operations.
+
+Override to return `true` in extensions that provide an async deposit fulfillment strategy.
+
+[.contract-item]
+[[ERC7540AdminDeposit-_requestDeposit-uint256-address-address-uint256-]]
+==== `[.contract-item-name]#++_requestDeposit++#++(uint256 assets, address controller, address owner, uint256 requestId) → uint256++` [.item-kind]#internal#
+
+Records per-controller pending state before delegating to {ERC7540-_requestDeposit}.
+
+[.contract-item]
+[[ERC7540AdminDeposit-_fulfillDeposit-uint256-uint256-address-]]
+==== `[.contract-item-name]#++_fulfillDeposit++#++(uint256 assets, uint256 shares, address controller)++` [.item-kind]#internal#
+
+Fulfills a pending deposit request by transitioning it from Pending to Claimable state.
+
+The caller provides both `assets` and `shares`, locking the exchange rate at fulfillment time.
+The fulfiller should ensure the vault's `totalAssets()` already reflects the deposited assets
+(e.g. after deploying them to a yield source) to avoid diluting existing holders.
+
+Emits a {DepositClaimable} event.
+
+Requirements:
+
+* `assets` must not exceed the pending deposit amount for the `controller`.
+
+NOTE: Multiple fulfillments with different exchange rates will blend into a weighted average.
+For example, fulfilling 50 assets → 100 shares (2:1) then 50 assets → 25 shares (0.5:1) produces
+claimableAssets=100 and claimableShares=125. A partial claim of 50 assets yields
+`mulDiv(50, 125, 100) = 62` shares: the weighted average rate, not either original rate.
+Integrators expecting per-fulfillment rate isolation should use a different strategy (e.g. epochs).
+
+[.contract-item]
+[[ERC7540AdminDeposit-_consumeClaimableDeposit-uint256-address-]]
+==== `[.contract-item-name]#++_consumeClaimableDeposit++#++(uint256 assets, address controller) → uint256++` [.item-kind]#internal#
+
+Consumes `assets` from the claimable deposit and returns the proportional shares (rounded down).
+
+[.contract-item]
+[[ERC7540AdminDeposit-_consumeClaimableMint-uint256-address-]]
+==== `[.contract-item-name]#++_consumeClaimableMint++#++(uint256 shares, address controller) → uint256++` [.item-kind]#internal#
+
+Consumes `shares` from the claimable deposit and returns the proportional assets (rounded up).
+
+[.contract-item]
+[[ERC7540AdminDeposit-_pendingDepositRequest-uint256-address-]]
+==== `[.contract-item-name]#++_pendingDepositRequest++#++(uint256, address controller) → uint256++` [.item-kind]#internal#
+
+Returns the amount of assets in Pending state for `controller` with the given `requestId`.
+
+[.contract-item]
+[[ERC7540AdminDeposit-_claimableDepositRequest-uint256-address-]]
+==== `[.contract-item-name]#++_claimableDepositRequest++#++(uint256, address controller) → uint256++` [.item-kind]#internal#
+
+Returns the amount of assets in Claimable state for `controller` with the given `requestId`.
+
+[.contract-item]
+[[ERC7540AdminDeposit-_asyncMaxDeposit-address-]]
+==== `[.contract-item-name]#++_asyncMaxDeposit++#++(address owner) → uint256++` [.item-kind]#internal#
+
+Returns the maximum assets that can be claimed via {deposit} for an async `owner`.
+
+[.contract-item]
+[[ERC7540AdminDeposit-_asyncMaxMint-address-]]
+==== `[.contract-item-name]#++_asyncMaxMint++#++(address owner) → uint256++` [.item-kind]#internal#
+
+Returns the maximum shares that can be claimed via {mint} for an async `owner`.
+
+[.contract-item]
+[[ERC7540AdminDeposit-DepositClaimable-address-uint256-uint256-uint256-]]
+==== `[.contract-item-name]#++DepositClaimable++#++(address indexed controller, uint256 indexed requestId, uint256 assets, uint256 shares)++` [.item-kind]#event#
+
+Emitted when a deposit request transitions from Pending to Claimable.
+
+[.contract-item]
+[[ERC7540AdminDeposit-ERC7540DepositInsufficientPendingAssets-uint256-uint256-]]
+==== `[.contract-item-name]#++ERC7540DepositInsufficientPendingAssets++#++(uint256 assets, uint256 pendingAssets)++` [.item-kind]#error#
+
+The `assets` to fulfill exceeds the `pendingAssets` for the controller.
+
+:PendingRedeem: pass:normal[xref:#ERC7540AdminRedeem-PendingRedeem[`++PendingRedeem++`]]
+:RedeemClaimable: pass:normal[xref:#ERC7540AdminRedeem-RedeemClaimable-address-uint256-uint256-uint256-[`++RedeemClaimable++`]]
+:ERC7540RedeemInsufficientPendingShares: pass:normal[xref:#ERC7540AdminRedeem-ERC7540RedeemInsufficientPendingShares-uint256-uint256-[`++ERC7540RedeemInsufficientPendingShares++`]]
+:_isRedeemAsync: pass:normal[xref:#ERC7540AdminRedeem-_isRedeemAsync--[`++_isRedeemAsync++`]]
+:_requestRedeem: pass:normal[xref:#ERC7540AdminRedeem-_requestRedeem-uint256-address-address-uint256-[`++_requestRedeem++`]]
+:_fulfillRedeem: pass:normal[xref:#ERC7540AdminRedeem-_fulfillRedeem-uint256-uint256-address-[`++_fulfillRedeem++`]]
+:_consumeClaimableWithdraw: pass:normal[xref:#ERC7540AdminRedeem-_consumeClaimableWithdraw-uint256-address-[`++_consumeClaimableWithdraw++`]]
+:_consumeClaimableRedeem: pass:normal[xref:#ERC7540AdminRedeem-_consumeClaimableRedeem-uint256-address-[`++_consumeClaimableRedeem++`]]
+:_pendingRedeemRequest: pass:normal[xref:#ERC7540AdminRedeem-_pendingRedeemRequest-uint256-address-[`++_pendingRedeemRequest++`]]
+:_claimableRedeemRequest: pass:normal[xref:#ERC7540AdminRedeem-_claimableRedeemRequest-uint256-address-[`++_claimableRedeemRequest++`]]
+:_asyncMaxWithdraw: pass:normal[xref:#ERC7540AdminRedeem-_asyncMaxWithdraw-address-[`++_asyncMaxWithdraw++`]]
+:_asyncMaxRedeem: pass:normal[xref:#ERC7540AdminRedeem-_asyncMaxRedeem-address-[`++_asyncMaxRedeem++`]]
+
+[.contract]
+[[ERC7540AdminRedeem]]
+=== `++ERC7540AdminRedeem++` link:https://github.com/OpenZeppelin/openzeppelin-community-contracts/blob/master/contracts/token/ERC20/extensions/ERC7540AdminRedeem.sol[{github-icon},role=heading-link]
+
+[.hljs-theme-light.nopadding]
+```solidity
+import "@openzeppelin/community-contracts/token/ERC20/extensions/ERC7540AdminRedeem.sol";
+```
+
+Admin-controlled (operator-triggered) fulfillment strategy for asynchronous redemptions.
+
+Extends {ERC7540} with a redeem flow where a privileged caller explicitly transitions requests
+from Pending to Claimable by calling {_fulfillRedeem}. The caller provides both the `shares`
+amount and the corresponding `assets`, giving the fulfiller explicit control over the exchange rate.
+
+The fulfiller must ensure the vault holds enough underlying assets before calling {_fulfillRedeem}.
+Asset sourcing (unwinding positions, bridging cross-chain, etc.) is application-specific and is
+not part of this contract.
+
+Production equivalents include
+https://github.com/usdai-foundation/usdai-contracts/blob/main/src/StakedUSDai.sol[USDai],
+https://github.com/plumenetwork/nest-protocol/blob/main/contracts/NestVaultCore.sol[Nest (Plume)],
+https://github.com/turingcapitalgroup/metaVault/blob/main/src/MetaVault.sol[MetaVault], and
+https://github.com/centrifuge/protocol/blob/main/src/vaults/AsyncVault.sol[Centrifuge].
+
+All requests share `requestId = 0` (per-controller accounting only).
+
+[.contract-index]
+.Functions
+--
+* `++_isRedeemAsync()++`
+* `++_requestRedeem(shares, controller, owner, requestId)++`
+* `++_fulfillRedeem(shares, assets, controller)++`
+* `++_consumeClaimableWithdraw(assets, controller)++`
+* `++_consumeClaimableRedeem(shares, controller)++`
+* `++_pendingRedeemRequest(, controller)++`
+* `++_claimableRedeemRequest(, controller)++`
+* `++_asyncMaxWithdraw(owner)++`
+* `++_asyncMaxRedeem(owner)++`
+
+[.contract-subindex-inherited]
+.ERC7540
+* `++supportsInterface(interfaceId)++`
+* `++isOperator(controller, operator)++`
+* `++setOperator(operator, approved)++`
+* `++_setOperator(controller, operator, approved)++`
+* `++_checkOperatorOrController(async, controller, operator)++`
+* `++decimals()++`
+* `++asset()++`
+* `++share()++`
+* `++vault(asset_)++`
+* `++totalAssets()++`
+* `++totalSupply()++`
+* `++pendingDepositRequest(requestId, controller)++`
+* `++claimableDepositRequest(requestId, controller)++`
+* `++pendingRedeemRequest(requestId, controller)++`
+* `++claimableRedeemRequest(requestId, controller)++`
+* `++totalPendingDepositAssets()++`
+* `++totalPendingRedeemShares()++`
+* `++convertToShares(assets)++`
+* `++convertToAssets(shares)++`
+* `++maxDeposit(owner)++`
+* `++maxMint(owner)++`
+* `++maxWithdraw(owner)++`
+* `++maxRedeem(owner)++`
+* `++previewDeposit(assets)++`
+* `++previewMint(shares)++`
+* `++previewWithdraw(assets)++`
+* `++previewRedeem(shares)++`
+* `++requestDeposit(assets, controller, owner)++`
+* `++deposit(assets, receiver)++`
+* `++deposit(assets, receiver, controller)++`
+* `++mint(shares, receiver)++`
+* `++mint(shares, receiver, controller)++`
+* `++requestRedeem(shares, controller, owner)++`
+* `++withdraw(assets, receiver, ownerOrController)++`
+* `++redeem(shares, receiver, ownerOrController)++`
+* `++_convertToShares(assets, rounding)++`
+* `++_convertToAssets(shares, rounding)++`
+* `++_requestDeposit(assets, controller, owner, requestId)++`
+* `++_mintSharesOnDepositFulfill(assets, shares)++`
+* `++_deposit(callerOrController, receiver, assets, shares)++`
+* `++_burnSharesOnRedeemFulfill(, shares)++`
+* `++_withdraw(caller, receiver, owner, assets, shares)++`
+* `++_transferIn(from, assets)++`
+* `++_transferOut(to, assets)++`
+* `++_decimalsOffset()++`
+* `++_depositShareOrigin()++`
+* `++_redeemShareDestination()++`
+* `++_isDepositAsync()++`
+* `++_pendingDepositRequest(, )++`
+* `++_claimableDepositRequest(, )++`
+* `++_consumeClaimableDeposit(, )++`
+* `++_consumeClaimableMint(, )++`
+* `++_asyncMaxDeposit()++`
+* `++_asyncMaxMint()++`
+
+[.contract-subindex-inherited]
+.IERC7575Share
+
+[.contract-subindex-inherited]
+.IERC7540
+
+[.contract-subindex-inherited]
+.IERC7575
+
+[.contract-subindex-inherited]
+.IERC4626
+
+[.contract-subindex-inherited]
+.ERC20
+* `++name()++`
+* `++symbol()++`
+* `++balanceOf(account)++`
+* `++transfer(to, value)++`
+* `++allowance(owner, spender)++`
+* `++approve(spender, value)++`
+* `++transferFrom(from, to, value)++`
+* `++_transfer(from, to, value)++`
+* `++_update(from, to, value)++`
+* `++_mint(account, value)++`
+* `++_burn(account, value)++`
+* `++_approve(owner, spender, value)++`
+* `++_approve(owner, spender, value, emitEvent)++`
+* `++_spendAllowance(owner, spender, value)++`
+
+[.contract-subindex-inherited]
+.IERC20Errors
+
+[.contract-subindex-inherited]
+.IERC20Metadata
+
+[.contract-subindex-inherited]
+.IERC20
+
+[.contract-subindex-inherited]
+.ERC165
+
+[.contract-subindex-inherited]
+.IERC165
+
+[.contract-subindex-inherited]
+.IERC7540Redeem
+
+[.contract-subindex-inherited]
+.IERC7540Deposit
+
+[.contract-subindex-inherited]
+.IERC7540Operator
+
+--
+
+[.contract-index]
+.Events
+--
+* `++RedeemClaimable(controller, requestId, assets, shares)++`
+
+[.contract-subindex-inherited]
+.ERC7540
+
+[.contract-subindex-inherited]
+.IERC7575Share
+
+[.contract-subindex-inherited]
+.IERC7540
+
+[.contract-subindex-inherited]
+.IERC7575
+
+[.contract-subindex-inherited]
+.IERC4626
+* `++Deposit(sender, owner, assets, shares)++`
+* `++Withdraw(sender, receiver, owner, assets, shares)++`
+
+[.contract-subindex-inherited]
+.ERC20
+
+[.contract-subindex-inherited]
+.IERC20Errors
+
+[.contract-subindex-inherited]
+.IERC20Metadata
+
+[.contract-subindex-inherited]
+.IERC20
+* `++Transfer(from, to, value)++`
+* `++Approval(owner, spender, value)++`
+
+[.contract-subindex-inherited]
+.ERC165
+
+[.contract-subindex-inherited]
+.IERC165
+
+[.contract-subindex-inherited]
+.IERC7540Redeem
+* `++RedeemRequest(controller, owner, requestId, sender, shares)++`
+
+[.contract-subindex-inherited]
+.IERC7540Deposit
+* `++DepositRequest(controller, owner, requestId, sender, assets)++`
+
+[.contract-subindex-inherited]
+.IERC7540Operator
+* `++OperatorSet(controller, operator, approved)++`
+
+--
+
+[.contract-index]
+.Errors
+--
+* `++ERC7540RedeemInsufficientPendingShares(shares, pendingShares)++`
+
+[.contract-subindex-inherited]
+.ERC7540
+* `++ERC4626ExceededMaxDeposit(receiver, assets, max)++`
+* `++ERC4626ExceededMaxMint(receiver, shares, max)++`
+* `++ERC4626ExceededMaxWithdraw(owner, assets, max)++`
+* `++ERC4626ExceededMaxRedeem(owner, shares, max)++`
+* `++ERC7540InvalidOperator(controller, operator)++`
+* `++ERC7540SyncDeposit()++`
+* `++ERC7540AsyncDeposit()++`
+* `++ERC7540SyncRedeem()++`
+* `++ERC7540AsyncRedeem()++`
+* `++ERC7540MissingAsync()++`
+* `++ERC7540UnauthorizedMintSharesOnDepositFulfill()++`
+* `++ERC7540UnauthorizedBurnSharesOnRedeemFulfill()++`
+
+[.contract-subindex-inherited]
+.IERC7575Share
+
+[.contract-subindex-inherited]
+.IERC7540
+
+[.contract-subindex-inherited]
+.IERC7575
+
+[.contract-subindex-inherited]
+.IERC4626
+
+[.contract-subindex-inherited]
+.ERC20
+
+[.contract-subindex-inherited]
+.IERC20Errors
+* `++ERC20InsufficientBalance(sender, balance, needed)++`
+* `++ERC20InvalidSender(sender)++`
+* `++ERC20InvalidReceiver(receiver)++`
+* `++ERC20InsufficientAllowance(spender, allowance, needed)++`
+* `++ERC20InvalidApprover(approver)++`
+* `++ERC20InvalidSpender(spender)++`
+
+[.contract-subindex-inherited]
+.IERC20Metadata
+
+[.contract-subindex-inherited]
+.IERC20
+
+[.contract-subindex-inherited]
+.ERC165
+
+[.contract-subindex-inherited]
+.IERC165
+
+[.contract-subindex-inherited]
+.IERC7540Redeem
+
+[.contract-subindex-inherited]
+.IERC7540Deposit
+
+[.contract-subindex-inherited]
+.IERC7540Operator
+
+--
+
+[.contract-item]
+[[ERC7540AdminRedeem-_isRedeemAsync--]]
+==== `[.contract-item-name]#++_isRedeemAsync++#++() → bool++` [.item-kind]#internal#
+
+Returns `true` if the redeem flow is asynchronous (Request-based). When `false`, {withdraw} and
+{redeem} behave as standard synchronous ERC-4626 operations.
+
+Override to return `true` in extensions that provide an async redeem fulfillment strategy.
+
+[.contract-item]
+[[ERC7540AdminRedeem-_requestRedeem-uint256-address-address-uint256-]]
+==== `[.contract-item-name]#++_requestRedeem++#++(uint256 shares, address controller, address owner, uint256 requestId) → uint256++` [.item-kind]#internal#
+
+Records per-controller pending state before delegating to {ERC7540-_requestRedeem}.
+
+[.contract-item]
+[[ERC7540AdminRedeem-_fulfillRedeem-uint256-uint256-address-]]
+==== `[.contract-item-name]#++_fulfillRedeem++#++(uint256 shares, uint256 assets, address controller)++` [.item-kind]#internal#
+
+Fulfills a pending redeem request by transitioning it from Pending to Claimable state.
+
+The caller provides both `shares` and `assets`, locking the exchange rate at fulfillment time.
+The fulfiller must ensure the vault holds enough underlying assets to cover the `assets` amount
+before calling this function.
+
+Emits a {RedeemClaimable} event.
+
+Requirements:
+
+* `shares` must not exceed the pending redeem amount for the `controller`.
+
+[.contract-item]
+[[ERC7540AdminRedeem-_consumeClaimableWithdraw-uint256-address-]]
+==== `[.contract-item-name]#++_consumeClaimableWithdraw++#++(uint256 assets, address controller) → uint256++` [.item-kind]#internal#
+
+Consumes `assets` from the claimable redeem and returns the proportional shares (rounded up).
+
+[.contract-item]
+[[ERC7540AdminRedeem-_consumeClaimableRedeem-uint256-address-]]
+==== `[.contract-item-name]#++_consumeClaimableRedeem++#++(uint256 shares, address controller) → uint256++` [.item-kind]#internal#
+
+Consumes `shares` from the claimable redeem and returns the proportional assets (rounded down).
+
+[.contract-item]
+[[ERC7540AdminRedeem-_pendingRedeemRequest-uint256-address-]]
+==== `[.contract-item-name]#++_pendingRedeemRequest++#++(uint256, address controller) → uint256++` [.item-kind]#internal#
+
+Returns the amount of shares in Pending state for `controller` with the given `requestId`.
+
+[.contract-item]
+[[ERC7540AdminRedeem-_claimableRedeemRequest-uint256-address-]]
+==== `[.contract-item-name]#++_claimableRedeemRequest++#++(uint256, address controller) → uint256++` [.item-kind]#internal#
+
+Returns the amount of shares in Claimable state for `controller` with the given `requestId`.
+
+[.contract-item]
+[[ERC7540AdminRedeem-_asyncMaxWithdraw-address-]]
+==== `[.contract-item-name]#++_asyncMaxWithdraw++#++(address owner) → uint256++` [.item-kind]#internal#
+
+Returns the maximum assets that can be claimed via {withdraw} for an async `owner`.
+
+[.contract-item]
+[[ERC7540AdminRedeem-_asyncMaxRedeem-address-]]
+==== `[.contract-item-name]#++_asyncMaxRedeem++#++(address owner) → uint256++` [.item-kind]#internal#
+
+Returns the maximum shares that can be claimed via {redeem} for an async `owner`.
+
+[.contract-item]
+[[ERC7540AdminRedeem-RedeemClaimable-address-uint256-uint256-uint256-]]
+==== `[.contract-item-name]#++RedeemClaimable++#++(address indexed controller, uint256 indexed requestId, uint256 assets, uint256 shares)++` [.item-kind]#event#
+
+Emitted when a redeem request transitions from Pending to Claimable.
+
+[.contract-item]
+[[ERC7540AdminRedeem-ERC7540RedeemInsufficientPendingShares-uint256-uint256-]]
+==== `[.contract-item-name]#++ERC7540RedeemInsufficientPendingShares++#++(uint256 shares, uint256 pendingShares)++` [.item-kind]#error#
+
+The `shares` to fulfill exceeds the `pendingShares` for the controller.
+
+:ERC7540DelayInvalidDepositShareOrigin: pass:normal[xref:#ERC7540DelayDeposit-ERC7540DelayInvalidDepositShareOrigin--[`++ERC7540DelayInvalidDepositShareOrigin++`]]
+:constructor: pass:normal[xref:#ERC7540DelayDeposit-constructor--[`++constructor++`]]
+:clock: pass:normal[xref:#ERC7540DelayDeposit-clock--[`++clock++`]]
+:CLOCK_MODE: pass:normal[xref:#ERC7540DelayDeposit-CLOCK_MODE--[`++CLOCK_MODE++`]]
+:depositDelay: pass:normal[xref:#ERC7540DelayDeposit-depositDelay-address-[`++depositDelay++`]]
+:_isDepositAsync: pass:normal[xref:#ERC7540DelayDeposit-_isDepositAsync--[`++_isDepositAsync++`]]
+:_requestDeposit: pass:normal[xref:#ERC7540DelayDeposit-_requestDeposit-uint256-address-address-uint256-[`++_requestDeposit++`]]
+:_consumeClaimableDeposit: pass:normal[xref:#ERC7540DelayDeposit-_consumeClaimableDeposit-uint256-address-[`++_consumeClaimableDeposit++`]]
+:_consumeClaimableMint: pass:normal[xref:#ERC7540DelayDeposit-_consumeClaimableMint-uint256-address-[`++_consumeClaimableMint++`]]
+:_pendingDepositRequest: pass:normal[xref:#ERC7540DelayDeposit-_pendingDepositRequest-uint256-address-[`++_pendingDepositRequest++`]]
+:_claimableDepositRequest: pass:normal[xref:#ERC7540DelayDeposit-_claimableDepositRequest-uint256-address-[`++_claimableDepositRequest++`]]
+:_asyncMaxDeposit: pass:normal[xref:#ERC7540DelayDeposit-_asyncMaxDeposit-address-[`++_asyncMaxDeposit++`]]
+:_asyncMaxMint: pass:normal[xref:#ERC7540DelayDeposit-_asyncMaxMint-address-[`++_asyncMaxMint++`]]
+:_readyDepositAt: pass:normal[xref:#ERC7540DelayDeposit-_readyDepositAt-address-uint48-[`++_readyDepositAt++`]]
+
+[.contract]
+[[ERC7540DelayDeposit]]
+=== `++ERC7540DelayDeposit++` link:https://github.com/OpenZeppelin/openzeppelin-community-contracts/blob/master/contracts/token/ERC20/extensions/ERC7540DelayDeposit.sol[{github-icon},role=heading-link]
+
+[.hljs-theme-light.nopadding]
+```solidity
+import "@openzeppelin/community-contracts/token/ERC20/extensions/ERC7540DelayDeposit.sol";
+```
+
+Time-delay fulfillment strategy for asynchronous deposits.
+
+Extends {ERC7540} with a deposit flow where requests become **permissionlessly claimable** after a
+configurable waiting period. No privileged fulfiller is needed — once the delay elapses, the
+controller (or any keeper) can claim. The exchange rate is computed at claim time using the vault's
+live {convertToShares}.
+
+Production equivalents (redeem side):
+https://github.com/beefyfinance/beefy-sonic/blob/main/contracts/BeefySonic.sol[BeefySonic],
+https://github.com/MagmaStaking/contracts-public/blob/live/src/MagmaV2.sol[MagmaV2],
+https://github.com/tangle-network/tnt-core/blob/main/src/staking/LiquidDelegationVault.sol[Tangle].
+
+Requests are tracked using {Checkpoints-Trace208}, storing cumulative deposit amounts keyed by
+their maturity timepoint. The `requestId` returned by {requestDeposit} equals the absolute
+timestamp at which the request becomes claimable (`clock() + depositDelay(controller)`).
+
+Override {depositDelay} to customize the waiting period (default: 1 hour) and {clock} to
+change the time source (default: `block.timestamp`).
+
+NOTE: This module does not support temporary share custody through {_depositShareOrigin}. The constructor
+tries to enforce that property, but the check may be insufficient if {_depositShareOrigin} reads from
+storage that is not yet initialized when the parent's constructor runs
+
+[.contract-index]
+.Functions
+--
+* `++constructor()++`
+* `++clock()++`
+* `++CLOCK_MODE()++`
+* `++depositDelay()++`
+* `++_isDepositAsync()++`
+* `++_requestDeposit(assets, controller, owner, )++`
+* `++_consumeClaimableDeposit(assets, controller)++`
+* `++_consumeClaimableMint(shares, controller)++`
+* `++_pendingDepositRequest(requestId, controller)++`
+* `++_claimableDepositRequest(requestId, controller)++`
+* `++_asyncMaxDeposit(owner)++`
+* `++_asyncMaxMint(owner)++`
+* `++_readyDepositAt(owner, timepoint)++`
+
+[.contract-subindex-inherited]
+.IERC6372
+
+[.contract-subindex-inherited]
+.ERC7540
+* `++supportsInterface(interfaceId)++`
+* `++isOperator(controller, operator)++`
+* `++setOperator(operator, approved)++`
+* `++_setOperator(controller, operator, approved)++`
+* `++_checkOperatorOrController(async, controller, operator)++`
+* `++decimals()++`
+* `++asset()++`
+* `++share()++`
+* `++vault(asset_)++`
+* `++totalAssets()++`
+* `++totalSupply()++`
+* `++pendingDepositRequest(requestId, controller)++`
+* `++claimableDepositRequest(requestId, controller)++`
+* `++pendingRedeemRequest(requestId, controller)++`
+* `++claimableRedeemRequest(requestId, controller)++`
+* `++totalPendingDepositAssets()++`
+* `++totalPendingRedeemShares()++`
+* `++convertToShares(assets)++`
+* `++convertToAssets(shares)++`
+* `++maxDeposit(owner)++`
+* `++maxMint(owner)++`
+* `++maxWithdraw(owner)++`
+* `++maxRedeem(owner)++`
+* `++previewDeposit(assets)++`
+* `++previewMint(shares)++`
+* `++previewWithdraw(assets)++`
+* `++previewRedeem(shares)++`
+* `++requestDeposit(assets, controller, owner)++`
+* `++deposit(assets, receiver)++`
+* `++deposit(assets, receiver, controller)++`
+* `++mint(shares, receiver)++`
+* `++mint(shares, receiver, controller)++`
+* `++requestRedeem(shares, controller, owner)++`
+* `++withdraw(assets, receiver, ownerOrController)++`
+* `++redeem(shares, receiver, ownerOrController)++`
+* `++_convertToShares(assets, rounding)++`
+* `++_convertToAssets(shares, rounding)++`
+* `++_mintSharesOnDepositFulfill(assets, shares)++`
+* `++_deposit(callerOrController, receiver, assets, shares)++`
+* `++_requestRedeem(shares, controller, owner, requestId)++`
+* `++_burnSharesOnRedeemFulfill(, shares)++`
+* `++_withdraw(caller, receiver, owner, assets, shares)++`
+* `++_transferIn(from, assets)++`
+* `++_transferOut(to, assets)++`
+* `++_decimalsOffset()++`
+* `++_depositShareOrigin()++`
+* `++_redeemShareDestination()++`
+* `++_isRedeemAsync()++`
+* `++_pendingRedeemRequest(, )++`
+* `++_claimableRedeemRequest(, )++`
+* `++_consumeClaimableWithdraw(, )++`
+* `++_consumeClaimableRedeem(, )++`
+* `++_asyncMaxWithdraw()++`
+* `++_asyncMaxRedeem()++`
+
+[.contract-subindex-inherited]
+.IERC7575Share
+
+[.contract-subindex-inherited]
+.IERC7540
+
+[.contract-subindex-inherited]
+.IERC7575
+
+[.contract-subindex-inherited]
+.IERC4626
+
+[.contract-subindex-inherited]
+.ERC20
+* `++name()++`
+* `++symbol()++`
+* `++balanceOf(account)++`
+* `++transfer(to, value)++`
+* `++allowance(owner, spender)++`
+* `++approve(spender, value)++`
+* `++transferFrom(from, to, value)++`
+* `++_transfer(from, to, value)++`
+* `++_update(from, to, value)++`
+* `++_mint(account, value)++`
+* `++_burn(account, value)++`
+* `++_approve(owner, spender, value)++`
+* `++_approve(owner, spender, value, emitEvent)++`
+* `++_spendAllowance(owner, spender, value)++`
+
+[.contract-subindex-inherited]
+.IERC20Errors
+
+[.contract-subindex-inherited]
+.IERC20Metadata
+
+[.contract-subindex-inherited]
+.IERC20
+
+[.contract-subindex-inherited]
+.ERC165
+
+[.contract-subindex-inherited]
+.IERC165
+
+[.contract-subindex-inherited]
+.IERC7540Redeem
+
+[.contract-subindex-inherited]
+.IERC7540Deposit
+
+[.contract-subindex-inherited]
+.IERC7540Operator
+
+--
+
+[.contract-index]
+.Events
+--
+
+[.contract-subindex-inherited]
+.IERC6372
+
+[.contract-subindex-inherited]
+.ERC7540
+
+[.contract-subindex-inherited]
+.IERC7575Share
+
+[.contract-subindex-inherited]
+.IERC7540
+
+[.contract-subindex-inherited]
+.IERC7575
+
+[.contract-subindex-inherited]
+.IERC4626
+* `++Deposit(sender, owner, assets, shares)++`
+* `++Withdraw(sender, receiver, owner, assets, shares)++`
+
+[.contract-subindex-inherited]
+.ERC20
+
+[.contract-subindex-inherited]
+.IERC20Errors
+
+[.contract-subindex-inherited]
+.IERC20Metadata
+
+[.contract-subindex-inherited]
+.IERC20
+* `++Transfer(from, to, value)++`
+* `++Approval(owner, spender, value)++`
+
+[.contract-subindex-inherited]
+.ERC165
+
+[.contract-subindex-inherited]
+.IERC165
+
+[.contract-subindex-inherited]
+.IERC7540Redeem
+* `++RedeemRequest(controller, owner, requestId, sender, shares)++`
+
+[.contract-subindex-inherited]
+.IERC7540Deposit
+* `++DepositRequest(controller, owner, requestId, sender, assets)++`
+
+[.contract-subindex-inherited]
+.IERC7540Operator
+* `++OperatorSet(controller, operator, approved)++`
+
+--
+
+[.contract-index]
+.Errors
+--
+* `++ERC7540DelayInvalidDepositShareOrigin()++`
+
+[.contract-subindex-inherited]
+.IERC6372
+
+[.contract-subindex-inherited]
+.ERC7540
+* `++ERC4626ExceededMaxDeposit(receiver, assets, max)++`
+* `++ERC4626ExceededMaxMint(receiver, shares, max)++`
+* `++ERC4626ExceededMaxWithdraw(owner, assets, max)++`
+* `++ERC4626ExceededMaxRedeem(owner, shares, max)++`
+* `++ERC7540InvalidOperator(controller, operator)++`
+* `++ERC7540SyncDeposit()++`
+* `++ERC7540AsyncDeposit()++`
+* `++ERC7540SyncRedeem()++`
+* `++ERC7540AsyncRedeem()++`
+* `++ERC7540MissingAsync()++`
+* `++ERC7540UnauthorizedMintSharesOnDepositFulfill()++`
+* `++ERC7540UnauthorizedBurnSharesOnRedeemFulfill()++`
+
+[.contract-subindex-inherited]
+.IERC7575Share
+
+[.contract-subindex-inherited]
+.IERC7540
+
+[.contract-subindex-inherited]
+.IERC7575
+
+[.contract-subindex-inherited]
+.IERC4626
+
+[.contract-subindex-inherited]
+.ERC20
+
+[.contract-subindex-inherited]
+.IERC20Errors
+* `++ERC20InsufficientBalance(sender, balance, needed)++`
+* `++ERC20InvalidSender(sender)++`
+* `++ERC20InvalidReceiver(receiver)++`
+* `++ERC20InsufficientAllowance(spender, allowance, needed)++`
+* `++ERC20InvalidApprover(approver)++`
+* `++ERC20InvalidSpender(spender)++`
+
+[.contract-subindex-inherited]
+.IERC20Metadata
+
+[.contract-subindex-inherited]
+.IERC20
+
+[.contract-subindex-inherited]
+.ERC165
+
+[.contract-subindex-inherited]
+.IERC165
+
+[.contract-subindex-inherited]
+.IERC7540Redeem
+
+[.contract-subindex-inherited]
+.IERC7540Deposit
+
+[.contract-subindex-inherited]
+.IERC7540Operator
+
+--
+
+[.contract-item]
+[[ERC7540DelayDeposit-constructor--]]
+==== `[.contract-item-name]#++constructor++#++()++` [.item-kind]#internal#
+
+[.contract-item]
+[[ERC7540DelayDeposit-clock--]]
+==== `[.contract-item-name]#++clock++#++() → uint48++` [.item-kind]#public#
+
+Clock used for flagging checkpoints. Can be overridden to implement timestamp based checkpoints (and voting).
+
+[.contract-item]
+[[ERC7540DelayDeposit-CLOCK_MODE--]]
+==== `[.contract-item-name]#++CLOCK_MODE++#++() → string++` [.item-kind]#public#
+
+Description of the clock
+
+[.contract-item]
+[[ERC7540DelayDeposit-depositDelay-address-]]
+==== `[.contract-item-name]#++depositDelay++#++(address) → uint48++` [.item-kind]#public#
+
+Returns the delay duration before a deposit request becomes claimable. Defaults to 1 hour.
+
+NOTE: For any given `controller`, the maturity timepoint `clock() + depositDelay(controller)` MUST
+be non-decreasing across successive {requestDeposit} calls. Overrides that shrink the delay faster
+than `clock()` advances will cause new requests to revert until the previous maturity is reached.
+
+[.contract-item]
+[[ERC7540DelayDeposit-_isDepositAsync--]]
+==== `[.contract-item-name]#++_isDepositAsync++#++() → bool++` [.item-kind]#internal#
+
+Returns `true` if the deposit flow is asynchronous (Request-based). When `false`, {deposit} and
+{mint} behave as standard synchronous ERC-4626 operations.
+
+Override to return `true` in extensions that provide an async deposit fulfillment strategy.
+
+[.contract-item]
+[[ERC7540DelayDeposit-_requestDeposit-uint256-address-address-uint256-]]
+==== `[.contract-item-name]#++_requestDeposit++#++(uint256 assets, address controller, address owner, uint256) → uint256++` [.item-kind]#internal#
+
+Pushes a new cumulative checkpoint at the maturity timepoint and delegates to
+{ERC7540-_requestDeposit} with the timepoint as `requestId`.
+
+[.contract-item]
+[[ERC7540DelayDeposit-_consumeClaimableDeposit-uint256-address-]]
+==== `[.contract-item-name]#++_consumeClaimableDeposit++#++(uint256 assets, address controller) → uint256++` [.item-kind]#internal#
+
+Consumes `assets` from claimable deposits, returns proportional shares (rounded down).
+
+Requirements:
+
+* {maxMint} must not be 0 for `controller`. Panics with division by zero otherwise.
+
+[.contract-item]
+[[ERC7540DelayDeposit-_consumeClaimableMint-uint256-address-]]
+==== `[.contract-item-name]#++_consumeClaimableMint++#++(uint256 shares, address controller) → uint256++` [.item-kind]#internal#
+
+Consumes `shares` from claimable deposits, returns proportional assets (rounded up).
+
+[.contract-item]
+[[ERC7540DelayDeposit-_pendingDepositRequest-uint256-address-]]
+==== `[.contract-item-name]#++_pendingDepositRequest++#++(uint256 requestId, address controller) → uint256++` [.item-kind]#internal#
+
+Returns the assets in Pending state for a specific `requestId` (timepoint).
+A request is pending only if its timepoint is strictly in the future.
+
+[.contract-item]
+[[ERC7540DelayDeposit-_claimableDepositRequest-uint256-address-]]
+==== `[.contract-item-name]#++_claimableDepositRequest++#++(uint256 requestId, address controller) → uint256++` [.item-kind]#internal#
+
+Returns the assets in Claimable state for a specific `requestId` (timepoint).
+A request is claimable once its timepoint has elapsed and the assets haven't been claimed yet.
+
+[.contract-item]
+[[ERC7540DelayDeposit-_asyncMaxDeposit-address-]]
+==== `[.contract-item-name]#++_asyncMaxDeposit++#++(address owner) → uint256++` [.item-kind]#internal#
+
+Returns the total claimable assets across all matured timepoints for `owner`.
+
+[.contract-item]
+[[ERC7540DelayDeposit-_asyncMaxMint-address-]]
+==== `[.contract-item-name]#++_asyncMaxMint++#++(address owner) → uint256++` [.item-kind]#internal#
+
+Returns the share-equivalent of {_asyncMaxDeposit} (rounded down).
+
+[.contract-item]
+[[ERC7540DelayDeposit-_readyDepositAt-address-uint48-]]
+==== `[.contract-item-name]#++_readyDepositAt++#++(address owner, uint48 timepoint) → uint256++` [.item-kind]#internal#
+
+Internal helper: fetch the amount that is expected to be claimable at a given timepoint, if any.
+Any amount that has already been claimed is taken into consideration.
+
+[.contract-item]
+[[ERC7540DelayDeposit-ERC7540DelayInvalidDepositShareOrigin--]]
+==== `[.contract-item-name]#++ERC7540DelayInvalidDepositShareOrigin++#++()++` [.item-kind]#error#
+
+Triggered if {_depositShareOrigin} is not address(0), as this is not supported by this module.
+
+:ERC7540DelayInvalidRedeemShareDestination: pass:normal[xref:#ERC7540DelayRedeem-ERC7540DelayInvalidRedeemShareDestination--[`++ERC7540DelayInvalidRedeemShareDestination++`]]
+:constructor: pass:normal[xref:#ERC7540DelayRedeem-constructor--[`++constructor++`]]
+:clock: pass:normal[xref:#ERC7540DelayRedeem-clock--[`++clock++`]]
+:CLOCK_MODE: pass:normal[xref:#ERC7540DelayRedeem-CLOCK_MODE--[`++CLOCK_MODE++`]]
+:redeemDelay: pass:normal[xref:#ERC7540DelayRedeem-redeemDelay-address-[`++redeemDelay++`]]
+:_isRedeemAsync: pass:normal[xref:#ERC7540DelayRedeem-_isRedeemAsync--[`++_isRedeemAsync++`]]
+:_requestRedeem: pass:normal[xref:#ERC7540DelayRedeem-_requestRedeem-uint256-address-address-uint256-[`++_requestRedeem++`]]
+:_consumeClaimableWithdraw: pass:normal[xref:#ERC7540DelayRedeem-_consumeClaimableWithdraw-uint256-address-[`++_consumeClaimableWithdraw++`]]
+:_consumeClaimableRedeem: pass:normal[xref:#ERC7540DelayRedeem-_consumeClaimableRedeem-uint256-address-[`++_consumeClaimableRedeem++`]]
+:_pendingRedeemRequest: pass:normal[xref:#ERC7540DelayRedeem-_pendingRedeemRequest-uint256-address-[`++_pendingRedeemRequest++`]]
+:_claimableRedeemRequest: pass:normal[xref:#ERC7540DelayRedeem-_claimableRedeemRequest-uint256-address-[`++_claimableRedeemRequest++`]]
+:_asyncMaxWithdraw: pass:normal[xref:#ERC7540DelayRedeem-_asyncMaxWithdraw-address-[`++_asyncMaxWithdraw++`]]
+:_asyncMaxRedeem: pass:normal[xref:#ERC7540DelayRedeem-_asyncMaxRedeem-address-[`++_asyncMaxRedeem++`]]
+:_readyRedeemAt: pass:normal[xref:#ERC7540DelayRedeem-_readyRedeemAt-address-uint48-[`++_readyRedeemAt++`]]
+
+[.contract]
+[[ERC7540DelayRedeem]]
+=== `++ERC7540DelayRedeem++` link:https://github.com/OpenZeppelin/openzeppelin-community-contracts/blob/master/contracts/token/ERC20/extensions/ERC7540DelayRedeem.sol[{github-icon},role=heading-link]
+
+[.hljs-theme-light.nopadding]
+```solidity
+import "@openzeppelin/community-contracts/token/ERC20/extensions/ERC7540DelayRedeem.sol";
+```
+
+Time-delay fulfillment strategy for asynchronous redemptions.
+
+Extends {ERC7540} with a redeem flow where requests become **permissionlessly claimable** after a
+configurable waiting period. No privileged fulfiller is needed — once the delay elapses, the
+controller (or any keeper) can claim. The exchange rate is computed at claim time using the vault's
+live {convertToAssets}.
+
+Production equivalents:
+https://github.com/beefyfinance/beefy-sonic/blob/main/contracts/BeefySonic.sol[BeefySonic] (protocol-dictated SFC unbonding),
+https://github.com/MagmaStaking/contracts-public/blob/live/src/MagmaV2.sol[MagmaV2] (admin-configurable delay),
+https://github.com/tangle-network/tnt-core/blob/main/src/staking/LiquidDelegationVault.sol[Tangle] (protocol-dictated).
+
+Requests are tracked using {Checkpoints-Trace208}, storing cumulative redeem amounts keyed by
+their maturity timepoint. The `requestId` returned by {requestRedeem} equals the absolute
+timestamp at which the request becomes claimable (`clock() + redeemDelay(controller)`).
+
+Override {redeemDelay} to customize the waiting period (default: 1 hour) and {clock} to
+change the time source (default: `block.timestamp`).
+
+NOTE: This module does not support temporary share custody through {_redeemShareDestination}. The constructor
+tries to enforce that property, but the check may be insufficient if {_redeemShareDestination} reads from
+storage that is not yet initialized when the parent's constructor runs.
+
+[.contract-index]
+.Functions
+--
+* `++constructor()++`
+* `++clock()++`
+* `++CLOCK_MODE()++`
+* `++redeemDelay()++`
+* `++_isRedeemAsync()++`
+* `++_requestRedeem(shares, controller, owner, )++`
+* `++_consumeClaimableWithdraw(assets, controller)++`
+* `++_consumeClaimableRedeem(shares, controller)++`
+* `++_pendingRedeemRequest(requestId, controller)++`
+* `++_claimableRedeemRequest(requestId, controller)++`
+* `++_asyncMaxWithdraw(owner)++`
+* `++_asyncMaxRedeem(owner)++`
+* `++_readyRedeemAt(owner, timepoint)++`
+
+[.contract-subindex-inherited]
+.IERC6372
+
+[.contract-subindex-inherited]
+.ERC7540
+* `++supportsInterface(interfaceId)++`
+* `++isOperator(controller, operator)++`
+* `++setOperator(operator, approved)++`
+* `++_setOperator(controller, operator, approved)++`
+* `++_checkOperatorOrController(async, controller, operator)++`
+* `++decimals()++`
+* `++asset()++`
+* `++share()++`
+* `++vault(asset_)++`
+* `++totalAssets()++`
+* `++totalSupply()++`
+* `++pendingDepositRequest(requestId, controller)++`
+* `++claimableDepositRequest(requestId, controller)++`
+* `++pendingRedeemRequest(requestId, controller)++`
+* `++claimableRedeemRequest(requestId, controller)++`
+* `++totalPendingDepositAssets()++`
+* `++totalPendingRedeemShares()++`
+* `++convertToShares(assets)++`
+* `++convertToAssets(shares)++`
+* `++maxDeposit(owner)++`
+* `++maxMint(owner)++`
+* `++maxWithdraw(owner)++`
+* `++maxRedeem(owner)++`
+* `++previewDeposit(assets)++`
+* `++previewMint(shares)++`
+* `++previewWithdraw(assets)++`
+* `++previewRedeem(shares)++`
+* `++requestDeposit(assets, controller, owner)++`
+* `++deposit(assets, receiver)++`
+* `++deposit(assets, receiver, controller)++`
+* `++mint(shares, receiver)++`
+* `++mint(shares, receiver, controller)++`
+* `++requestRedeem(shares, controller, owner)++`
+* `++withdraw(assets, receiver, ownerOrController)++`
+* `++redeem(shares, receiver, ownerOrController)++`
+* `++_convertToShares(assets, rounding)++`
+* `++_convertToAssets(shares, rounding)++`
+* `++_requestDeposit(assets, controller, owner, requestId)++`
+* `++_mintSharesOnDepositFulfill(assets, shares)++`
+* `++_deposit(callerOrController, receiver, assets, shares)++`
+* `++_burnSharesOnRedeemFulfill(, shares)++`
+* `++_withdraw(caller, receiver, owner, assets, shares)++`
+* `++_transferIn(from, assets)++`
+* `++_transferOut(to, assets)++`
+* `++_decimalsOffset()++`
+* `++_depositShareOrigin()++`
+* `++_redeemShareDestination()++`
+* `++_isDepositAsync()++`
+* `++_pendingDepositRequest(, )++`
+* `++_claimableDepositRequest(, )++`
+* `++_consumeClaimableDeposit(, )++`
+* `++_consumeClaimableMint(, )++`
+* `++_asyncMaxDeposit()++`
+* `++_asyncMaxMint()++`
+
+[.contract-subindex-inherited]
+.IERC7575Share
+
+[.contract-subindex-inherited]
+.IERC7540
+
+[.contract-subindex-inherited]
+.IERC7575
+
+[.contract-subindex-inherited]
+.IERC4626
+
+[.contract-subindex-inherited]
+.ERC20
+* `++name()++`
+* `++symbol()++`
+* `++balanceOf(account)++`
+* `++transfer(to, value)++`
+* `++allowance(owner, spender)++`
+* `++approve(spender, value)++`
+* `++transferFrom(from, to, value)++`
+* `++_transfer(from, to, value)++`
+* `++_update(from, to, value)++`
+* `++_mint(account, value)++`
+* `++_burn(account, value)++`
+* `++_approve(owner, spender, value)++`
+* `++_approve(owner, spender, value, emitEvent)++`
+* `++_spendAllowance(owner, spender, value)++`
+
+[.contract-subindex-inherited]
+.IERC20Errors
+
+[.contract-subindex-inherited]
+.IERC20Metadata
+
+[.contract-subindex-inherited]
+.IERC20
+
+[.contract-subindex-inherited]
+.ERC165
+
+[.contract-subindex-inherited]
+.IERC165
+
+[.contract-subindex-inherited]
+.IERC7540Redeem
+
+[.contract-subindex-inherited]
+.IERC7540Deposit
+
+[.contract-subindex-inherited]
+.IERC7540Operator
+
+--
+
+[.contract-index]
+.Events
+--
+
+[.contract-subindex-inherited]
+.IERC6372
+
+[.contract-subindex-inherited]
+.ERC7540
+
+[.contract-subindex-inherited]
+.IERC7575Share
+
+[.contract-subindex-inherited]
+.IERC7540
+
+[.contract-subindex-inherited]
+.IERC7575
+
+[.contract-subindex-inherited]
+.IERC4626
+* `++Deposit(sender, owner, assets, shares)++`
+* `++Withdraw(sender, receiver, owner, assets, shares)++`
+
+[.contract-subindex-inherited]
+.ERC20
+
+[.contract-subindex-inherited]
+.IERC20Errors
+
+[.contract-subindex-inherited]
+.IERC20Metadata
+
+[.contract-subindex-inherited]
+.IERC20
+* `++Transfer(from, to, value)++`
+* `++Approval(owner, spender, value)++`
+
+[.contract-subindex-inherited]
+.ERC165
+
+[.contract-subindex-inherited]
+.IERC165
+
+[.contract-subindex-inherited]
+.IERC7540Redeem
+* `++RedeemRequest(controller, owner, requestId, sender, shares)++`
+
+[.contract-subindex-inherited]
+.IERC7540Deposit
+* `++DepositRequest(controller, owner, requestId, sender, assets)++`
+
+[.contract-subindex-inherited]
+.IERC7540Operator
+* `++OperatorSet(controller, operator, approved)++`
+
+--
+
+[.contract-index]
+.Errors
+--
+* `++ERC7540DelayInvalidRedeemShareDestination()++`
+
+[.contract-subindex-inherited]
+.IERC6372
+
+[.contract-subindex-inherited]
+.ERC7540
+* `++ERC4626ExceededMaxDeposit(receiver, assets, max)++`
+* `++ERC4626ExceededMaxMint(receiver, shares, max)++`
+* `++ERC4626ExceededMaxWithdraw(owner, assets, max)++`
+* `++ERC4626ExceededMaxRedeem(owner, shares, max)++`
+* `++ERC7540InvalidOperator(controller, operator)++`
+* `++ERC7540SyncDeposit()++`
+* `++ERC7540AsyncDeposit()++`
+* `++ERC7540SyncRedeem()++`
+* `++ERC7540AsyncRedeem()++`
+* `++ERC7540MissingAsync()++`
+* `++ERC7540UnauthorizedMintSharesOnDepositFulfill()++`
+* `++ERC7540UnauthorizedBurnSharesOnRedeemFulfill()++`
+
+[.contract-subindex-inherited]
+.IERC7575Share
+
+[.contract-subindex-inherited]
+.IERC7540
+
+[.contract-subindex-inherited]
+.IERC7575
+
+[.contract-subindex-inherited]
+.IERC4626
+
+[.contract-subindex-inherited]
+.ERC20
+
+[.contract-subindex-inherited]
+.IERC20Errors
+* `++ERC20InsufficientBalance(sender, balance, needed)++`
+* `++ERC20InvalidSender(sender)++`
+* `++ERC20InvalidReceiver(receiver)++`
+* `++ERC20InsufficientAllowance(spender, allowance, needed)++`
+* `++ERC20InvalidApprover(approver)++`
+* `++ERC20InvalidSpender(spender)++`
+
+[.contract-subindex-inherited]
+.IERC20Metadata
+
+[.contract-subindex-inherited]
+.IERC20
+
+[.contract-subindex-inherited]
+.ERC165
+
+[.contract-subindex-inherited]
+.IERC165
+
+[.contract-subindex-inherited]
+.IERC7540Redeem
+
+[.contract-subindex-inherited]
+.IERC7540Deposit
+
+[.contract-subindex-inherited]
+.IERC7540Operator
+
+--
+
+[.contract-item]
+[[ERC7540DelayRedeem-constructor--]]
+==== `[.contract-item-name]#++constructor++#++()++` [.item-kind]#internal#
+
+[.contract-item]
+[[ERC7540DelayRedeem-clock--]]
+==== `[.contract-item-name]#++clock++#++() → uint48++` [.item-kind]#public#
+
+Clock used for flagging checkpoints. Can be overridden to implement timestamp based checkpoints (and voting).
+
+[.contract-item]
+[[ERC7540DelayRedeem-CLOCK_MODE--]]
+==== `[.contract-item-name]#++CLOCK_MODE++#++() → string++` [.item-kind]#public#
+
+Description of the clock
+
+[.contract-item]
+[[ERC7540DelayRedeem-redeemDelay-address-]]
+==== `[.contract-item-name]#++redeemDelay++#++(address) → uint48++` [.item-kind]#public#
+
+Returns the delay duration before a redeem request becomes claimable. Defaults to 1 hour.
+
+NOTE: For any given `controller`, the maturity timepoint `clock() + redeemDelay(controller)` MUST
+be non-decreasing across successive {requestRedeem} calls. Overrides that shrink the delay faster
+than `clock()` advances will cause new requests to revert until the previous maturity is reached.
+
+[.contract-item]
+[[ERC7540DelayRedeem-_isRedeemAsync--]]
+==== `[.contract-item-name]#++_isRedeemAsync++#++() → bool++` [.item-kind]#internal#
+
+Returns `true` if the redeem flow is asynchronous (Request-based). When `false`, {withdraw} and
+{redeem} behave as standard synchronous ERC-4626 operations.
+
+Override to return `true` in extensions that provide an async redeem fulfillment strategy.
+
+[.contract-item]
+[[ERC7540DelayRedeem-_requestRedeem-uint256-address-address-uint256-]]
+==== `[.contract-item-name]#++_requestRedeem++#++(uint256 shares, address controller, address owner, uint256) → uint256++` [.item-kind]#internal#
+
+Pushes a new cumulative checkpoint at the maturity timepoint and delegates to
+{ERC7540-_requestRedeem} with the timepoint as `requestId`.
+
+[.contract-item]
+[[ERC7540DelayRedeem-_consumeClaimableWithdraw-uint256-address-]]
+==== `[.contract-item-name]#++_consumeClaimableWithdraw++#++(uint256 assets, address controller) → uint256++` [.item-kind]#internal#
+
+Consumes `assets` from claimable redeems, returns proportional shares (rounded up).
+
+[.contract-item]
+[[ERC7540DelayRedeem-_consumeClaimableRedeem-uint256-address-]]
+==== `[.contract-item-name]#++_consumeClaimableRedeem++#++(uint256 shares, address controller) → uint256++` [.item-kind]#internal#
+
+Consumes `shares` from claimable redeems, returns proportional assets (rounded down).
+
+[.contract-item]
+[[ERC7540DelayRedeem-_pendingRedeemRequest-uint256-address-]]
+==== `[.contract-item-name]#++_pendingRedeemRequest++#++(uint256 requestId, address controller) → uint256++` [.item-kind]#internal#
+
+Returns the shares in Pending state for a specific `requestId` (timepoint).
+A request is pending only if its timepoint is strictly in the future.
+
+[.contract-item]
+[[ERC7540DelayRedeem-_claimableRedeemRequest-uint256-address-]]
+==== `[.contract-item-name]#++_claimableRedeemRequest++#++(uint256 requestId, address controller) → uint256++` [.item-kind]#internal#
+
+Returns the shares in Claimable state for a specific `requestId` (timepoint).
+A request is claimable once its timepoint has elapsed and the shares haven't been claimed yet.
+
+[.contract-item]
+[[ERC7540DelayRedeem-_asyncMaxWithdraw-address-]]
+==== `[.contract-item-name]#++_asyncMaxWithdraw++#++(address owner) → uint256++` [.item-kind]#internal#
+
+Returns the asset-equivalent of {_asyncMaxRedeem} (rounded down).
+
+[.contract-item]
+[[ERC7540DelayRedeem-_asyncMaxRedeem-address-]]
+==== `[.contract-item-name]#++_asyncMaxRedeem++#++(address owner) → uint256++` [.item-kind]#internal#
+
+Returns the total claimable shares across all matured timepoints for `owner`.
+
+[.contract-item]
+[[ERC7540DelayRedeem-_readyRedeemAt-address-uint48-]]
+==== `[.contract-item-name]#++_readyRedeemAt++#++(address owner, uint48 timepoint) → uint256++` [.item-kind]#internal#
+
+Internal helper: fetch the amount that is expected to be claimable at a given timepoint, if any.
+Any amount that has already been claimed is taken into consideration.
+
+[.contract-item]
+[[ERC7540DelayRedeem-ERC7540DelayInvalidRedeemShareDestination--]]
+==== `[.contract-item-name]#++ERC7540DelayInvalidRedeemShareDestination++#++()++` [.item-kind]#error#
+
+Triggered if {_redeemShareDestination} is not address(0), as this is not supported by this module.
+
+:_isDepositAsync: pass:normal[xref:#ERC7540SyncDeposit-_isDepositAsync--[`++_isDepositAsync++`]]
+:_consumeClaimableDeposit: pass:normal[xref:#ERC7540SyncDeposit-_consumeClaimableDeposit-uint256-address-[`++_consumeClaimableDeposit++`]]
+:_consumeClaimableMint: pass:normal[xref:#ERC7540SyncDeposit-_consumeClaimableMint-uint256-address-[`++_consumeClaimableMint++`]]
+:_pendingDepositRequest: pass:normal[xref:#ERC7540SyncDeposit-_pendingDepositRequest-uint256-address-[`++_pendingDepositRequest++`]]
+:_claimableDepositRequest: pass:normal[xref:#ERC7540SyncDeposit-_claimableDepositRequest-uint256-address-[`++_claimableDepositRequest++`]]
+:_asyncMaxDeposit: pass:normal[xref:#ERC7540SyncDeposit-_asyncMaxDeposit-address-[`++_asyncMaxDeposit++`]]
+:_asyncMaxMint: pass:normal[xref:#ERC7540SyncDeposit-_asyncMaxMint-address-[`++_asyncMaxMint++`]]
+
+[.contract]
+[[ERC7540SyncDeposit]]
+=== `++ERC7540SyncDeposit++` link:https://github.com/OpenZeppelin/openzeppelin-community-contracts/blob/master/contracts/token/ERC20/extensions/ERC7540SyncDeposit.sol[{github-icon},role=heading-link]
+
+[.hljs-theme-light.nopadding]
+```solidity
+import "@openzeppelin/community-contracts/token/ERC20/extensions/ERC7540SyncDeposit.sol";
+```
+
+Module for enabling synchronous behavior (ERC-4626) for the deposit flow of an ERC-7540 vault.
+
+Note that an ERC-7540 vault is required to have at least one flow operating in asynchronous mode, so this module
+cannot be combined with {ERC7540SyncRedeem}.
+
+[.contract-index]
+.Functions
+--
+* `++_isDepositAsync()++`
+* `++_consumeClaimableDeposit(, )++`
+* `++_consumeClaimableMint(, )++`
+* `++_pendingDepositRequest(, )++`
+* `++_claimableDepositRequest(, )++`
+* `++_asyncMaxDeposit()++`
+* `++_asyncMaxMint()++`
+
+[.contract-subindex-inherited]
+.ERC7540
+* `++supportsInterface(interfaceId)++`
+* `++isOperator(controller, operator)++`
+* `++setOperator(operator, approved)++`
+* `++_setOperator(controller, operator, approved)++`
+* `++_checkOperatorOrController(async, controller, operator)++`
+* `++decimals()++`
+* `++asset()++`
+* `++share()++`
+* `++vault(asset_)++`
+* `++totalAssets()++`
+* `++totalSupply()++`
+* `++pendingDepositRequest(requestId, controller)++`
+* `++claimableDepositRequest(requestId, controller)++`
+* `++pendingRedeemRequest(requestId, controller)++`
+* `++claimableRedeemRequest(requestId, controller)++`
+* `++totalPendingDepositAssets()++`
+* `++totalPendingRedeemShares()++`
+* `++convertToShares(assets)++`
+* `++convertToAssets(shares)++`
+* `++maxDeposit(owner)++`
+* `++maxMint(owner)++`
+* `++maxWithdraw(owner)++`
+* `++maxRedeem(owner)++`
+* `++previewDeposit(assets)++`
+* `++previewMint(shares)++`
+* `++previewWithdraw(assets)++`
+* `++previewRedeem(shares)++`
+* `++requestDeposit(assets, controller, owner)++`
+* `++deposit(assets, receiver)++`
+* `++deposit(assets, receiver, controller)++`
+* `++mint(shares, receiver)++`
+* `++mint(shares, receiver, controller)++`
+* `++requestRedeem(shares, controller, owner)++`
+* `++withdraw(assets, receiver, ownerOrController)++`
+* `++redeem(shares, receiver, ownerOrController)++`
+* `++_convertToShares(assets, rounding)++`
+* `++_convertToAssets(shares, rounding)++`
+* `++_requestDeposit(assets, controller, owner, requestId)++`
+* `++_mintSharesOnDepositFulfill(assets, shares)++`
+* `++_deposit(callerOrController, receiver, assets, shares)++`
+* `++_requestRedeem(shares, controller, owner, requestId)++`
+* `++_burnSharesOnRedeemFulfill(, shares)++`
+* `++_withdraw(caller, receiver, owner, assets, shares)++`
+* `++_transferIn(from, assets)++`
+* `++_transferOut(to, assets)++`
+* `++_decimalsOffset()++`
+* `++_depositShareOrigin()++`
+* `++_redeemShareDestination()++`
+* `++_isRedeemAsync()++`
+* `++_pendingRedeemRequest(, )++`
+* `++_claimableRedeemRequest(, )++`
+* `++_consumeClaimableWithdraw(, )++`
+* `++_consumeClaimableRedeem(, )++`
+* `++_asyncMaxWithdraw()++`
+* `++_asyncMaxRedeem()++`
+
+[.contract-subindex-inherited]
+.IERC7575Share
+
+[.contract-subindex-inherited]
+.IERC7540
+
+[.contract-subindex-inherited]
+.IERC7575
+
+[.contract-subindex-inherited]
+.IERC4626
+
+[.contract-subindex-inherited]
+.ERC20
+* `++name()++`
+* `++symbol()++`
+* `++balanceOf(account)++`
+* `++transfer(to, value)++`
+* `++allowance(owner, spender)++`
+* `++approve(spender, value)++`
+* `++transferFrom(from, to, value)++`
+* `++_transfer(from, to, value)++`
+* `++_update(from, to, value)++`
+* `++_mint(account, value)++`
+* `++_burn(account, value)++`
+* `++_approve(owner, spender, value)++`
+* `++_approve(owner, spender, value, emitEvent)++`
+* `++_spendAllowance(owner, spender, value)++`
+
+[.contract-subindex-inherited]
+.IERC20Errors
+
+[.contract-subindex-inherited]
+.IERC20Metadata
+
+[.contract-subindex-inherited]
+.IERC20
+
+[.contract-subindex-inherited]
+.ERC165
+
+[.contract-subindex-inherited]
+.IERC165
+
+[.contract-subindex-inherited]
+.IERC7540Redeem
+
+[.contract-subindex-inherited]
+.IERC7540Deposit
+
+[.contract-subindex-inherited]
+.IERC7540Operator
+
+--
+
+[.contract-index]
+.Events
+--
+
+[.contract-subindex-inherited]
+.ERC7540
+
+[.contract-subindex-inherited]
+.IERC7575Share
+
+[.contract-subindex-inherited]
+.IERC7540
+
+[.contract-subindex-inherited]
+.IERC7575
+
+[.contract-subindex-inherited]
+.IERC4626
+* `++Deposit(sender, owner, assets, shares)++`
+* `++Withdraw(sender, receiver, owner, assets, shares)++`
+
+[.contract-subindex-inherited]
+.ERC20
+
+[.contract-subindex-inherited]
+.IERC20Errors
+
+[.contract-subindex-inherited]
+.IERC20Metadata
+
+[.contract-subindex-inherited]
+.IERC20
+* `++Transfer(from, to, value)++`
+* `++Approval(owner, spender, value)++`
+
+[.contract-subindex-inherited]
+.ERC165
+
+[.contract-subindex-inherited]
+.IERC165
+
+[.contract-subindex-inherited]
+.IERC7540Redeem
+* `++RedeemRequest(controller, owner, requestId, sender, shares)++`
+
+[.contract-subindex-inherited]
+.IERC7540Deposit
+* `++DepositRequest(controller, owner, requestId, sender, assets)++`
+
+[.contract-subindex-inherited]
+.IERC7540Operator
+* `++OperatorSet(controller, operator, approved)++`
+
+--
+
+[.contract-index]
+.Errors
+--
+
+[.contract-subindex-inherited]
+.ERC7540
+* `++ERC4626ExceededMaxDeposit(receiver, assets, max)++`
+* `++ERC4626ExceededMaxMint(receiver, shares, max)++`
+* `++ERC4626ExceededMaxWithdraw(owner, assets, max)++`
+* `++ERC4626ExceededMaxRedeem(owner, shares, max)++`
+* `++ERC7540InvalidOperator(controller, operator)++`
+* `++ERC7540SyncDeposit()++`
+* `++ERC7540AsyncDeposit()++`
+* `++ERC7540SyncRedeem()++`
+* `++ERC7540AsyncRedeem()++`
+* `++ERC7540MissingAsync()++`
+* `++ERC7540UnauthorizedMintSharesOnDepositFulfill()++`
+* `++ERC7540UnauthorizedBurnSharesOnRedeemFulfill()++`
+
+[.contract-subindex-inherited]
+.IERC7575Share
+
+[.contract-subindex-inherited]
+.IERC7540
+
+[.contract-subindex-inherited]
+.IERC7575
+
+[.contract-subindex-inherited]
+.IERC4626
+
+[.contract-subindex-inherited]
+.ERC20
+
+[.contract-subindex-inherited]
+.IERC20Errors
+* `++ERC20InsufficientBalance(sender, balance, needed)++`
+* `++ERC20InvalidSender(sender)++`
+* `++ERC20InvalidReceiver(receiver)++`
+* `++ERC20InsufficientAllowance(spender, allowance, needed)++`
+* `++ERC20InvalidApprover(approver)++`
+* `++ERC20InvalidSpender(spender)++`
+
+[.contract-subindex-inherited]
+.IERC20Metadata
+
+[.contract-subindex-inherited]
+.IERC20
+
+[.contract-subindex-inherited]
+.ERC165
+
+[.contract-subindex-inherited]
+.IERC165
+
+[.contract-subindex-inherited]
+.IERC7540Redeem
+
+[.contract-subindex-inherited]
+.IERC7540Deposit
+
+[.contract-subindex-inherited]
+.IERC7540Operator
+
+--
+
+[.contract-item]
+[[ERC7540SyncDeposit-_isDepositAsync--]]
+==== `[.contract-item-name]#++_isDepositAsync++#++() → bool++` [.item-kind]#internal#
+
+Returns `true` if the deposit flow is asynchronous (Request-based). When `false`, {deposit} and
+{mint} behave as standard synchronous ERC-4626 operations.
+
+Override to return `true` in extensions that provide an async deposit fulfillment strategy.
+
+[.contract-item]
+[[ERC7540SyncDeposit-_consumeClaimableDeposit-uint256-address-]]
+==== `[.contract-item-name]#++_consumeClaimableDeposit++#++(uint256, address) → uint256++` [.item-kind]#internal#
+
+Consumes `assets` from the claimable deposit and returns the proportional shares (rounded down).
+
+[.contract-item]
+[[ERC7540SyncDeposit-_consumeClaimableMint-uint256-address-]]
+==== `[.contract-item-name]#++_consumeClaimableMint++#++(uint256, address) → uint256++` [.item-kind]#internal#
+
+Consumes `shares` from the claimable deposit and returns the proportional assets (rounded up).
+
+[.contract-item]
+[[ERC7540SyncDeposit-_pendingDepositRequest-uint256-address-]]
+==== `[.contract-item-name]#++_pendingDepositRequest++#++(uint256, address) → uint256++` [.item-kind]#internal#
+
+Returns the amount of assets in Pending state for `controller` with the given `requestId`.
+
+[.contract-item]
+[[ERC7540SyncDeposit-_claimableDepositRequest-uint256-address-]]
+==== `[.contract-item-name]#++_claimableDepositRequest++#++(uint256, address) → uint256++` [.item-kind]#internal#
+
+Returns the amount of assets in Claimable state for `controller` with the given `requestId`.
+
+[.contract-item]
+[[ERC7540SyncDeposit-_asyncMaxDeposit-address-]]
+==== `[.contract-item-name]#++_asyncMaxDeposit++#++(address) → uint256++` [.item-kind]#internal#
+
+Returns the maximum assets that can be claimed via {deposit} for an async `owner`.
+
+[.contract-item]
+[[ERC7540SyncDeposit-_asyncMaxMint-address-]]
+==== `[.contract-item-name]#++_asyncMaxMint++#++(address) → uint256++` [.item-kind]#internal#
+
+Returns the maximum shares that can be claimed via {mint} for an async `owner`.
+
+:_isRedeemAsync: pass:normal[xref:#ERC7540SyncRedeem-_isRedeemAsync--[`++_isRedeemAsync++`]]
+:_consumeClaimableWithdraw: pass:normal[xref:#ERC7540SyncRedeem-_consumeClaimableWithdraw-uint256-address-[`++_consumeClaimableWithdraw++`]]
+:_consumeClaimableRedeem: pass:normal[xref:#ERC7540SyncRedeem-_consumeClaimableRedeem-uint256-address-[`++_consumeClaimableRedeem++`]]
+:_pendingRedeemRequest: pass:normal[xref:#ERC7540SyncRedeem-_pendingRedeemRequest-uint256-address-[`++_pendingRedeemRequest++`]]
+:_claimableRedeemRequest: pass:normal[xref:#ERC7540SyncRedeem-_claimableRedeemRequest-uint256-address-[`++_claimableRedeemRequest++`]]
+:_asyncMaxWithdraw: pass:normal[xref:#ERC7540SyncRedeem-_asyncMaxWithdraw-address-[`++_asyncMaxWithdraw++`]]
+:_asyncMaxRedeem: pass:normal[xref:#ERC7540SyncRedeem-_asyncMaxRedeem-address-[`++_asyncMaxRedeem++`]]
+
+[.contract]
+[[ERC7540SyncRedeem]]
+=== `++ERC7540SyncRedeem++` link:https://github.com/OpenZeppelin/openzeppelin-community-contracts/blob/master/contracts/token/ERC20/extensions/ERC7540SyncRedeem.sol[{github-icon},role=heading-link]
+
+[.hljs-theme-light.nopadding]
+```solidity
+import "@openzeppelin/community-contracts/token/ERC20/extensions/ERC7540SyncRedeem.sol";
+```
+
+Module for enabling synchronous behavior (ERC-4626) for the redeem flow of an ERC-7540 vault.
+
+Note that an ERC-7540 vault is required to have at least one flow operating in asynchronous mode, so this module
+cannot be combined with {ERC7540SyncDeposit}.
+
+[.contract-index]
+.Functions
+--
+* `++_isRedeemAsync()++`
+* `++_consumeClaimableWithdraw(, )++`
+* `++_consumeClaimableRedeem(, )++`
+* `++_pendingRedeemRequest(, )++`
+* `++_claimableRedeemRequest(, )++`
+* `++_asyncMaxWithdraw()++`
+* `++_asyncMaxRedeem()++`
+
+[.contract-subindex-inherited]
+.ERC7540
+* `++supportsInterface(interfaceId)++`
+* `++isOperator(controller, operator)++`
+* `++setOperator(operator, approved)++`
+* `++_setOperator(controller, operator, approved)++`
+* `++_checkOperatorOrController(async, controller, operator)++`
+* `++decimals()++`
+* `++asset()++`
+* `++share()++`
+* `++vault(asset_)++`
+* `++totalAssets()++`
+* `++totalSupply()++`
+* `++pendingDepositRequest(requestId, controller)++`
+* `++claimableDepositRequest(requestId, controller)++`
+* `++pendingRedeemRequest(requestId, controller)++`
+* `++claimableRedeemRequest(requestId, controller)++`
+* `++totalPendingDepositAssets()++`
+* `++totalPendingRedeemShares()++`
+* `++convertToShares(assets)++`
+* `++convertToAssets(shares)++`
+* `++maxDeposit(owner)++`
+* `++maxMint(owner)++`
+* `++maxWithdraw(owner)++`
+* `++maxRedeem(owner)++`
+* `++previewDeposit(assets)++`
+* `++previewMint(shares)++`
+* `++previewWithdraw(assets)++`
+* `++previewRedeem(shares)++`
+* `++requestDeposit(assets, controller, owner)++`
+* `++deposit(assets, receiver)++`
+* `++deposit(assets, receiver, controller)++`
+* `++mint(shares, receiver)++`
+* `++mint(shares, receiver, controller)++`
+* `++requestRedeem(shares, controller, owner)++`
+* `++withdraw(assets, receiver, ownerOrController)++`
+* `++redeem(shares, receiver, ownerOrController)++`
+* `++_convertToShares(assets, rounding)++`
+* `++_convertToAssets(shares, rounding)++`
+* `++_requestDeposit(assets, controller, owner, requestId)++`
+* `++_mintSharesOnDepositFulfill(assets, shares)++`
+* `++_deposit(callerOrController, receiver, assets, shares)++`
+* `++_requestRedeem(shares, controller, owner, requestId)++`
+* `++_burnSharesOnRedeemFulfill(, shares)++`
+* `++_withdraw(caller, receiver, owner, assets, shares)++`
+* `++_transferIn(from, assets)++`
+* `++_transferOut(to, assets)++`
+* `++_decimalsOffset()++`
+* `++_depositShareOrigin()++`
+* `++_redeemShareDestination()++`
+* `++_isDepositAsync()++`
+* `++_pendingDepositRequest(, )++`
+* `++_claimableDepositRequest(, )++`
+* `++_consumeClaimableDeposit(, )++`
+* `++_consumeClaimableMint(, )++`
+* `++_asyncMaxDeposit()++`
+* `++_asyncMaxMint()++`
+
+[.contract-subindex-inherited]
+.IERC7575Share
+
+[.contract-subindex-inherited]
+.IERC7540
+
+[.contract-subindex-inherited]
+.IERC7575
+
+[.contract-subindex-inherited]
+.IERC4626
+
+[.contract-subindex-inherited]
+.ERC20
+* `++name()++`
+* `++symbol()++`
+* `++balanceOf(account)++`
+* `++transfer(to, value)++`
+* `++allowance(owner, spender)++`
+* `++approve(spender, value)++`
+* `++transferFrom(from, to, value)++`
+* `++_transfer(from, to, value)++`
+* `++_update(from, to, value)++`
+* `++_mint(account, value)++`
+* `++_burn(account, value)++`
+* `++_approve(owner, spender, value)++`
+* `++_approve(owner, spender, value, emitEvent)++`
+* `++_spendAllowance(owner, spender, value)++`
+
+[.contract-subindex-inherited]
+.IERC20Errors
+
+[.contract-subindex-inherited]
+.IERC20Metadata
+
+[.contract-subindex-inherited]
+.IERC20
+
+[.contract-subindex-inherited]
+.ERC165
+
+[.contract-subindex-inherited]
+.IERC165
+
+[.contract-subindex-inherited]
+.IERC7540Redeem
+
+[.contract-subindex-inherited]
+.IERC7540Deposit
+
+[.contract-subindex-inherited]
+.IERC7540Operator
+
+--
+
+[.contract-index]
+.Events
+--
+
+[.contract-subindex-inherited]
+.ERC7540
+
+[.contract-subindex-inherited]
+.IERC7575Share
+
+[.contract-subindex-inherited]
+.IERC7540
+
+[.contract-subindex-inherited]
+.IERC7575
+
+[.contract-subindex-inherited]
+.IERC4626
+* `++Deposit(sender, owner, assets, shares)++`
+* `++Withdraw(sender, receiver, owner, assets, shares)++`
+
+[.contract-subindex-inherited]
+.ERC20
+
+[.contract-subindex-inherited]
+.IERC20Errors
+
+[.contract-subindex-inherited]
+.IERC20Metadata
+
+[.contract-subindex-inherited]
+.IERC20
+* `++Transfer(from, to, value)++`
+* `++Approval(owner, spender, value)++`
+
+[.contract-subindex-inherited]
+.ERC165
+
+[.contract-subindex-inherited]
+.IERC165
+
+[.contract-subindex-inherited]
+.IERC7540Redeem
+* `++RedeemRequest(controller, owner, requestId, sender, shares)++`
+
+[.contract-subindex-inherited]
+.IERC7540Deposit
+* `++DepositRequest(controller, owner, requestId, sender, assets)++`
+
+[.contract-subindex-inherited]
+.IERC7540Operator
+* `++OperatorSet(controller, operator, approved)++`
+
+--
+
+[.contract-index]
+.Errors
+--
+
+[.contract-subindex-inherited]
+.ERC7540
+* `++ERC4626ExceededMaxDeposit(receiver, assets, max)++`
+* `++ERC4626ExceededMaxMint(receiver, shares, max)++`
+* `++ERC4626ExceededMaxWithdraw(owner, assets, max)++`
+* `++ERC4626ExceededMaxRedeem(owner, shares, max)++`
+* `++ERC7540InvalidOperator(controller, operator)++`
+* `++ERC7540SyncDeposit()++`
+* `++ERC7540AsyncDeposit()++`
+* `++ERC7540SyncRedeem()++`
+* `++ERC7540AsyncRedeem()++`
+* `++ERC7540MissingAsync()++`
+* `++ERC7540UnauthorizedMintSharesOnDepositFulfill()++`
+* `++ERC7540UnauthorizedBurnSharesOnRedeemFulfill()++`
+
+[.contract-subindex-inherited]
+.IERC7575Share
+
+[.contract-subindex-inherited]
+.IERC7540
+
+[.contract-subindex-inherited]
+.IERC7575
+
+[.contract-subindex-inherited]
+.IERC4626
+
+[.contract-subindex-inherited]
+.ERC20
+
+[.contract-subindex-inherited]
+.IERC20Errors
+* `++ERC20InsufficientBalance(sender, balance, needed)++`
+* `++ERC20InvalidSender(sender)++`
+* `++ERC20InvalidReceiver(receiver)++`
+* `++ERC20InsufficientAllowance(spender, allowance, needed)++`
+* `++ERC20InvalidApprover(approver)++`
+* `++ERC20InvalidSpender(spender)++`
+
+[.contract-subindex-inherited]
+.IERC20Metadata
+
+[.contract-subindex-inherited]
+.IERC20
+
+[.contract-subindex-inherited]
+.ERC165
+
+[.contract-subindex-inherited]
+.IERC165
+
+[.contract-subindex-inherited]
+.IERC7540Redeem
+
+[.contract-subindex-inherited]
+.IERC7540Deposit
+
+[.contract-subindex-inherited]
+.IERC7540Operator
+
+--
+
+[.contract-item]
+[[ERC7540SyncRedeem-_isRedeemAsync--]]
+==== `[.contract-item-name]#++_isRedeemAsync++#++() → bool++` [.item-kind]#internal#
+
+Returns `true` if the redeem flow is asynchronous (Request-based). When `false`, {withdraw} and
+{redeem} behave as standard synchronous ERC-4626 operations.
+
+Override to return `true` in extensions that provide an async redeem fulfillment strategy.
+
+[.contract-item]
+[[ERC7540SyncRedeem-_consumeClaimableWithdraw-uint256-address-]]
+==== `[.contract-item-name]#++_consumeClaimableWithdraw++#++(uint256, address) → uint256++` [.item-kind]#internal#
+
+Consumes `assets` from the claimable redeem and returns the proportional shares (rounded up).
+
+[.contract-item]
+[[ERC7540SyncRedeem-_consumeClaimableRedeem-uint256-address-]]
+==== `[.contract-item-name]#++_consumeClaimableRedeem++#++(uint256, address) → uint256++` [.item-kind]#internal#
+
+Consumes `shares` from the claimable redeem and returns the proportional assets (rounded down).
+
+[.contract-item]
+[[ERC7540SyncRedeem-_pendingRedeemRequest-uint256-address-]]
+==== `[.contract-item-name]#++_pendingRedeemRequest++#++(uint256, address) → uint256++` [.item-kind]#internal#
+
+Returns the amount of shares in Pending state for `controller` with the given `requestId`.
+
+[.contract-item]
+[[ERC7540SyncRedeem-_claimableRedeemRequest-uint256-address-]]
+==== `[.contract-item-name]#++_claimableRedeemRequest++#++(uint256, address) → uint256++` [.item-kind]#internal#
+
+Returns the amount of shares in Claimable state for `controller` with the given `requestId`.
+
+[.contract-item]
+[[ERC7540SyncRedeem-_asyncMaxWithdraw-address-]]
+==== `[.contract-item-name]#++_asyncMaxWithdraw++#++(address) → uint256++` [.item-kind]#internal#
+
+Returns the maximum assets that can be claimed via {withdraw} for an async `owner`.
+
+[.contract-item]
+[[ERC7540SyncRedeem-_asyncMaxRedeem-address-]]
+==== `[.contract-item-name]#++_asyncMaxRedeem++#++(address) → uint256++` [.item-kind]#internal#
+
+Returns the maximum shares that can be claimed via {redeem} for an async `owner`.
 
