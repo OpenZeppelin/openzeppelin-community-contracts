@@ -207,10 +207,10 @@ abstract contract ERC7540EpochDeposit is ERC7540 {
             uint256 batchAssets = requested.min(assets);
             uint256 batchShares = batchAssets.mulDiv(details.totalShares, details.totalAssets, Math.Rounding.Floor);
 
-            details.requests[controller] -= batchAssets; // May need saturatingSub for rounding handling
-            details.totalAssets -= batchAssets; // May need saturatingSub for rounding handling
-            details.totalShares -= batchShares; // May need saturatingSub for rounding handling
-            assets -= batchAssets; // May need saturatingSub for rounding handling
+            details.requests[controller] -= batchAssets; // batchAssets <= requested == details.requests[controller]
+            details.totalAssets -= batchAssets; // batchAssets <= details.totalAssets (invariant: requests[c] <= totalAssets)
+            details.totalShares -= batchShares; // batchShares = floor(batchAssets * S/A) <= details.totalShares (since batchAssets <= totalAssets)
+            assets -= batchAssets; // batchAssets <= assets (via .min)
             shares += batchShares;
         }
 
@@ -234,12 +234,17 @@ abstract contract ERC7540EpochDeposit is ERC7540 {
             if (requested <= shares) _memberOf[controller].popFront();
 
             uint256 batchShares = requested.min(shares);
-            uint256 batchAssets = batchShares.mulDiv(details.totalAssets, details.totalShares, Math.Rounding.Floor);
+            // When `requested <= shares` we pop the controller's epoch entry and drain their full claim.
+            // Computing batchAssets from batchShares uses floor while `requested` was ceiled, so it can
+            // land up to 1 wei above the stored request. Cap to `details.requests[controller]`.
+            uint256 batchAssets = batchShares.mulDiv(details.totalAssets, details.totalShares, Math.Rounding.Floor).min(
+                details.requests[controller]
+            );
 
-            details.requests[controller] -= batchAssets; // May need saturatingSub for rounding handling
-            details.totalAssets -= batchAssets; // May need saturatingSub for rounding handling
-            details.totalShares -= batchShares; // May need saturatingSub for rounding handling
-            shares -= batchShares; // May need saturatingSub for rounding handling
+            details.requests[controller] -= batchAssets; // batchAssets <= details.requests[controller] (via .min cap above)
+            details.totalAssets -= batchAssets; // batchAssets <= details.totalAssets (invariant: requests[c] <= totalAssets)
+            details.totalShares -= batchShares; // batchShares <= requested <= details.totalShares (since requests[c] <= totalAssets => ceil(r*S/A) <= S)
+            shares -= batchShares; // batchShares <= shares (via .min)
             assets += batchAssets;
         }
 
