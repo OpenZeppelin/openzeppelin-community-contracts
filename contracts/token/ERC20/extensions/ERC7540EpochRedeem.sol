@@ -53,7 +53,7 @@ abstract contract ERC7540EpochRedeem is ERC7540 {
     mapping(address account => DoubleEndedQueue.Bytes32Deque) private _memberOf;
 
     /// @dev Emitted when a redeem epoch transitions from Pending to Claimable via {_fulfillRedeem}.
-    event EpochRedeemFulfilled(uint256 indexed epochId, uint256 totalShares, uint256 totalAssets);
+    event ERC7540EpochRedeemFulfilled(uint256 indexed epochId, uint256 totalShares, uint256 totalAssets);
 
     /// @dev Attempted to fulfill a redeem epoch that has not yet ended.
     error ERC7540EpochRedeemTooEarly(uint256 epochId);
@@ -186,7 +186,7 @@ abstract contract ERC7540EpochRedeem is ERC7540 {
         require(details.totalAssets == 0, ERC7540EpochRedeemAlreadyFulfilled(epochId));
 
         details.totalAssets = totalAssets;
-        emit EpochRedeemFulfilled(epochId, details.totalShares, totalAssets);
+        emit ERC7540EpochRedeemFulfilled(epochId, details.totalShares, totalAssets);
     }
 
     /**

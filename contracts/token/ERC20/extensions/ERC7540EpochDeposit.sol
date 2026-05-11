@@ -52,7 +52,7 @@ abstract contract ERC7540EpochDeposit is ERC7540 {
     mapping(address account => DoubleEndedQueue.Bytes32Deque) private _memberOf;
 
     /// @dev Emitted when a deposit epoch transitions from Pending to Claimable via {_fulfillDeposit}.
-    event EpochDepositFulfilled(uint256 indexed epochId, uint256 totalAssets, uint256 totalShares);
+    event ERC7540EpochDepositFulfilled(uint256 indexed epochId, uint256 totalAssets, uint256 totalShares);
 
     /// @dev Attempted to fulfill a deposit epoch that has not yet ended.
     error ERC7540EpochDepositTooEarly(uint256 epochId);
@@ -185,7 +185,7 @@ abstract contract ERC7540EpochDeposit is ERC7540 {
         require(details.totalShares == 0, ERC7540EpochDepositAlreadyFulfilled(epochId));
 
         details.totalShares = totalShares;
-        emit EpochDepositFulfilled(epochId, details.totalAssets, totalShares);
+        emit ERC7540EpochDepositFulfilled(epochId, details.totalAssets, totalShares);
     }
 
     /**
