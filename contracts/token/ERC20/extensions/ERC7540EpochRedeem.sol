@@ -52,6 +52,18 @@ abstract contract ERC7540EpochRedeem is ERC7540 {
     mapping(uint256 epochId => EpochRedeemMetadata) private _epochs;
     mapping(address account => DoubleEndedQueue.Bytes32Deque) private _memberOf;
 
+    /// @dev Emitted when a redeem epoch transitions from Pending to Claimable via {_fulfillRedeem}.
+    event EpochRedeemFulfilled(uint256 indexed epochId, uint256 totalShares, uint256 totalAssets);
+
+    /// @dev Attempted to fulfill a redeem epoch that has not yet ended.
+    error ERC7540EpochRedeemTooEarly(uint256 epochId);
+
+    /// @dev Attempted to fulfill a redeem epoch with no pending requests.
+    error ERC7540EpochRedeemEmptyEpoch(uint256 epochId);
+
+    /// @dev Attempted to fulfill a redeem epoch that has already been fulfilled.
+    error ERC7540EpochRedeemAlreadyFulfilled(uint256 epochId);
+
     /// @inheritdoc ERC7540
     function _isRedeemAsync() internal pure virtual override returns (bool) {
         return true;
@@ -167,13 +179,14 @@ abstract contract ERC7540EpochRedeem is ERC7540 {
      * * The epoch must have pending shares and must not have been fulfilled already.
      */
     function _fulfillRedeem(uint256 epochId, uint256 totalAssets) internal virtual {
-        require(epochId < currentRedeemEpoch()); // TODO: too early
+        require(epochId < currentRedeemEpoch(), ERC7540EpochRedeemTooEarly(epochId));
 
         EpochRedeemMetadata storage details = _epochs[epochId];
-        require(details.totalShares > 0 && details.totalAssets == 0); // TODO: invalid resolve
+        require(details.totalShares > 0, ERC7540EpochRedeemEmptyEpoch(epochId));
+        require(details.totalAssets == 0, ERC7540EpochRedeemAlreadyFulfilled(epochId));
 
         details.totalAssets = totalAssets;
-        // TODO: emit event
+        emit EpochRedeemFulfilled(epochId, details.totalShares, totalAssets);
     }
 
     /**

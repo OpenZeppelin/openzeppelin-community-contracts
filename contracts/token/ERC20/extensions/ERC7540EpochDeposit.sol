@@ -51,6 +51,18 @@ abstract contract ERC7540EpochDeposit is ERC7540 {
     mapping(uint256 epochId => EpochDepositMetadata) private _epochs;
     mapping(address account => DoubleEndedQueue.Bytes32Deque) private _memberOf;
 
+    /// @dev Emitted when a deposit epoch transitions from Pending to Claimable via {_fulfillDeposit}.
+    event EpochDepositFulfilled(uint256 indexed epochId, uint256 totalAssets, uint256 totalShares);
+
+    /// @dev Attempted to fulfill a deposit epoch that has not yet ended.
+    error ERC7540EpochDepositTooEarly(uint256 epochId);
+
+    /// @dev Attempted to fulfill a deposit epoch with no pending requests.
+    error ERC7540EpochDepositEmptyEpoch(uint256 epochId);
+
+    /// @dev Attempted to fulfill a deposit epoch that has already been fulfilled.
+    error ERC7540EpochDepositAlreadyFulfilled(uint256 epochId);
+
     /// @inheritdoc ERC7540
     function _isDepositAsync() internal pure virtual override returns (bool) {
         return true;
@@ -166,13 +178,14 @@ abstract contract ERC7540EpochDeposit is ERC7540 {
      * * The epoch must have pending assets and must not have been fulfilled already.
      */
     function _fulfillDeposit(uint256 epochId, uint256 totalShares) internal virtual {
-        require(epochId < currentDepositEpoch()); // TODO: too early
+        require(epochId < currentDepositEpoch(), ERC7540EpochDepositTooEarly(epochId));
 
         EpochDepositMetadata storage details = _epochs[epochId];
-        require(details.totalAssets > 0 && details.totalShares == 0); // TODO: invalid resolve
+        require(details.totalAssets > 0, ERC7540EpochDepositEmptyEpoch(epochId));
+        require(details.totalShares == 0, ERC7540EpochDepositAlreadyFulfilled(epochId));
 
         details.totalShares = totalShares;
-        // TODO: emit event
+        emit EpochDepositFulfilled(epochId, details.totalAssets, totalShares);
     }
 
     /**
