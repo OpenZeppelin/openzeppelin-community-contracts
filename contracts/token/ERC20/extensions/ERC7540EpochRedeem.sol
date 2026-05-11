@@ -27,6 +27,12 @@ import {ERC7540} from "./ERC7540.sol";
  * Each account tracks its epoch memberships via a {DoubleEndedQueue} capped at
  * {_requestQueueLimit} entries (default: 32) to bound the O(n) loops in {_asyncMaxWithdraw}
  * and {_asyncMaxRedeem}. Users that hit the limit should claim fulfilled epochs to free up space.
+ *
+ * NOTE: Distribution within an epoch is exact. The sum of assets paid across all calls to
+ * {_consumeClaimableWithdraw} and {_consumeClaimableRedeem} equals the fulfilled `totalAssets`.
+ * Each claim is floor-rounded against the remaining `totalShares` and `totalAssets`, so any
+ * sub-unit residue accumulates and is absorbed by the final claim in the epoch rather than
+ * left stranded in the contract.
  */
 abstract contract ERC7540EpochRedeem is ERC7540 {
     using Math for uint256;
@@ -149,6 +155,12 @@ abstract contract ERC7540EpochRedeem is ERC7540 {
      *
      * NOTE: When epoch transition is manual, the caller should bump the epoch before calling this.
      *
+     * NOTE: Pending vs. fulfilled is distinguished by `totalAssets == 0`. Admins are assumed not
+     * to fulfill at zero (a confiscation event with no economic purpose); if 0 is passed by
+     * accident, the call is a no-op and the admin can re-fulfill. This recovery only holds as
+     * long as derived contracts preserve the no-side-effect semantics of this function — if not,
+     * derived contracts should restrict `totalAssets != 0`.
+     *
      * Requirements:
      *
      * * `epochId` must be a past epoch (less than {currentRedeemEpoch}).
@@ -185,12 +197,12 @@ abstract contract ERC7540EpochRedeem is ERC7540 {
             if (requested <= assets) _memberOf[controller].popFront();
 
             uint256 batchAssets = requested.min(assets);
-            details.totalAssets -= batchAssets; // May need saturatingSub for rounding handling
-            assets -= batchAssets; // May need saturatingSub for rounding handling
-
             uint256 batchShares = batchAssets.mulDiv(details.totalShares, details.totalAssets, Math.Rounding.Floor);
+
             details.requests[controller] -= batchShares; // May need saturatingSub for rounding handling
+            details.totalAssets -= batchAssets; // May need saturatingSub for rounding handling
             details.totalShares -= batchShares; // May need saturatingSub for rounding handling
+            assets -= batchAssets; // May need saturatingSub for rounding handling
             shares += batchShares;
         }
 
@@ -210,12 +222,12 @@ abstract contract ERC7540EpochRedeem is ERC7540 {
             if (requested <= shares) _memberOf[controller].popFront();
 
             uint256 batchShares = requested.min(shares);
+            uint256 batchAssets = batchShares.mulDiv(details.totalAssets, details.totalShares, Math.Rounding.Floor);
+
             details.requests[controller] -= batchShares; // May need saturatingSub for rounding handling
             details.totalShares -= batchShares; // May need saturatingSub for rounding handling
-            shares -= batchShares; // May need saturatingSub for rounding handling
-
-            uint256 batchAssets = batchShares.mulDiv(details.totalAssets, details.totalShares, Math.Rounding.Floor);
             details.totalAssets -= batchAssets; // May need saturatingSub for rounding handling
+            shares -= batchShares; // May need saturatingSub for rounding handling
             assets += batchAssets;
         }
 
