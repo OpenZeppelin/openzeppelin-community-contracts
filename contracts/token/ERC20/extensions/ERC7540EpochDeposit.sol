@@ -27,11 +27,14 @@ import {ERC7540} from "./ERC7540.sol";
  * {_requestQueueLimit} entries (default: 32) to bound the O(n) loops in {_asyncMaxDeposit}
  * and {_asyncMaxMint}. Users that hit the limit should claim fulfilled epochs to free up space.
  *
- * NOTE: Distribution within an epoch is exact. The sum of shares paid across all calls to
- * {_consumeClaimableDeposit} and {_consumeClaimableMint} equals the fulfilled `totalShares`.
- * Each claim is floor-rounded against the remaining `totalAssets` and `totalShares`, so any
- * sub-unit residue accumulates and is absorbed by the final claim in the epoch rather than
- * left stranded in the contract.
+ * NOTE: Claims pay each controller's pro-rata share floor-rounded against the remaining epoch
+ * totals. With very small fulfillment values (e.g. an epoch settling 3 assets for 2 shares
+ * across 3 equal claimants), rounding can leave one controller with up to 1 "wei" of
+ * unclaimable residue. At realistic ERC-20 token decimals this is sub-unit and economically
+ * immaterial. Unlike ERC-4626's inflation-attack surface, the per-epoch `totalAssets` and
+ * `totalShares` cannot be inflated by donation (they only change via {requestDeposit} and
+ * {_fulfillDeposit}); deployers wanting finer per-claim granularity can set {_decimalsOffset}
+ * to scale share precision relative to assets.
  */
 abstract contract ERC7540EpochDeposit is ERC7540 {
     using Math for uint256;
@@ -73,13 +76,18 @@ abstract contract ERC7540EpochDeposit is ERC7540 {
         return block.timestamp / 1 weeks;
     }
 
-    /// @dev A request is pending if its epoch has not yet been fulfilled (`totalShares == 0`).
+    /**
+     * @dev A request is pending if its epoch has not yet been fulfilled (`totalShares == 0`) and
+     * still has assets queued (`totalAssets > 0`)
+     */
     function _pendingDepositRequest(
         uint256 requestId,
         address controller
     ) internal view virtual override returns (uint256) {
         EpochDepositMetadata storage details = _epochs[requestId];
-        return details.totalShares == 0 ? details.requests[controller] : 0;
+        // `details.totalAssets > 0` distinguishes the pending state from a fully-claimed
+        // post-fulfillment state where both totals reach 0.
+        return (details.totalShares == 0 && details.totalAssets > 0) ? details.requests[controller] : 0;
     }
 
     /// @dev A request is claimable if its epoch has been fulfilled (`totalShares > 0`).
@@ -114,10 +122,16 @@ abstract contract ERC7540EpochDeposit is ERC7540 {
         uint256 result = 0;
         for (uint256 i = 0; i < _memberOf[owner].length(); ++i) {
             uint256 epochId = uint256(_memberOf[owner].at(i));
+            uint256 totalAssets = _epochs[epochId].totalAssets;
+            // An epoch's `totalAssets` may be 0 while some `requests[*]` slots are non-zero,
+            // when other controllers' share-driven claims ({_consumeClaimableMint}) round
+            // `requested` up via ceil and the saturating decrement zeroes the shared pool
+            // before all per-controller residues are allocated. Skip such epochs.
+            if (totalAssets == 0) continue;
             result += Math.mulDiv(
                 _claimableDepositRequest(epochId, owner),
                 _epochs[epochId].totalShares,
-                _epochs[epochId].totalAssets,
+                totalAssets,
                 Math.Rounding.Floor
             );
         }
@@ -201,13 +215,22 @@ abstract contract ERC7540EpochDeposit is ERC7540 {
 
             EpochDepositMetadata storage details = _epochs[epochId];
 
-            uint256 requested = details.requests[controller];
+            // `totalAssets == 0` indicates a fully-claimed epoch (over-claimed by other controllers via
+            // the share-driven path). Treating `requested` as 0 lets the loop pop the queue entry
+            // and skip the divide-by-zero without consuming user input.
+            bool isFullyClaimed = details.totalAssets == 0;
+            uint256 requested = isFullyClaimed ? 0 : details.requests[controller];
             if (requested <= assets) _memberOf[controller].popFront();
 
             uint256 batchAssets = requested.min(assets);
-            uint256 batchShares = batchAssets.mulDiv(details.totalShares, details.totalAssets, Math.Rounding.Floor);
+            uint256 batchShares = isFullyClaimed
+                ? 0
+                : batchAssets.mulDiv(details.totalShares, details.totalAssets, Math.Rounding.Floor);
 
-            details.requests[controller] -= batchAssets; // batchAssets <= requested == details.requests[controller]
+            details.requests[controller] = details.requests[controller].saturatingSub(
+                // If fully claimed, subtract the full stored slot to clear stuck dust
+                isFullyClaimed ? details.requests[controller] : batchAssets
+            );
             details.totalAssets -= batchAssets; // batchAssets <= details.totalAssets (invariant: requests[c] <= totalAssets)
             details.totalShares -= batchShares; // batchShares = floor(batchAssets * S/A) <= details.totalShares (since batchAssets <= totalAssets)
             assets -= batchAssets; // batchAssets <= assets (via .min)
@@ -226,24 +249,30 @@ abstract contract ERC7540EpochDeposit is ERC7540 {
 
             EpochDepositMetadata storage details = _epochs[epochId];
 
-            uint256 requested = details.requests[controller].mulDiv(
-                details.totalShares,
-                details.totalAssets,
-                Math.Rounding.Ceil
-            );
+            // `totalAssets == 0` indicates a fully-claimed epoch. Treating `requested` as 0 lets the
+            // iteration pop the queue entry without consuming user input or attempting a
+            // divide-by-zero. See {_consumeClaimableDeposit} for the dust handling rationale.
+            bool isFullyClaimed = details.totalAssets == 0;
+            uint256 requested = isFullyClaimed
+                ? 0
+                : details.requests[controller].mulDiv(details.totalShares, details.totalAssets, Math.Rounding.Ceil);
             if (requested <= shares) _memberOf[controller].popFront();
 
             uint256 batchShares = requested.min(shares);
-            // When `requested <= shares` we pop the controller's epoch entry and drain their full claim.
-            // Computing batchAssets from batchShares uses floor while `requested` was ceiled, so it can
-            // land up to 1 wei above the stored request. Cap to `details.requests[controller]`.
-            uint256 batchAssets = batchShares.mulDiv(details.totalAssets, details.totalShares, Math.Rounding.Floor).min(
-                details.requests[controller]
-            );
+            // `requested` is ceil-rounded so batchAssets recomputed via floor can exceed the
+            // stored request by 1 wei. Saturating subtraction absorbs the excess into the shared
+            // totals, so `totalAssets` reduces to 0 cleanly when fully claimed and the
+            // {_fulfillDeposit} sentinel stays unambiguous.
+            uint256 batchAssets = details.totalShares == 0
+                ? 0
+                : batchShares.mulDiv(details.totalAssets, details.totalShares, Math.Rounding.Floor);
 
-            details.requests[controller] -= batchAssets; // batchAssets <= details.requests[controller] (via .min cap above)
-            details.totalAssets -= batchAssets; // batchAssets <= details.totalAssets (invariant: requests[c] <= totalAssets)
-            details.totalShares -= batchShares; // batchShares <= requested <= details.totalShares (since requests[c] <= totalAssets => ceil(r*S/A) <= S)
+            details.requests[controller] = details.requests[controller].saturatingSub(
+                // If fully claimed, subtract the full stored slot to clear stuck dust
+                isFullyClaimed ? details.requests[controller] : batchAssets
+            );
+            details.totalAssets = details.totalAssets.saturatingSub(batchAssets);
+            details.totalShares = details.totalShares.saturatingSub(batchShares);
             shares -= batchShares; // batchShares <= shares (via .min)
             assets += batchAssets;
         }
