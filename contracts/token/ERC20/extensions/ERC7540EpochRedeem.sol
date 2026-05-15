@@ -105,7 +105,7 @@ abstract contract ERC7540EpochRedeem is ERC7540 {
      *
      * NOTE: This function iterates over the `owner`'s epoch queue, which is O(n) in the number of
      * epochs the owner participates in. This is bounded by {_requestQueueLimit} (default 32) and is
-     * per-account — an attacker creating many small requests can only inflate their own queue, not
+     * per-account; an attacker creating many small requests can only inflate their own queue, not
      * other users'. Cross-controller DoS is not possible because epoch fulfillment via {_fulfillRedeem}
      * is O(1) (it sets `totalAssets` for the entire epoch in a single write).
      */
