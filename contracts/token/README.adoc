@@ -10,7 +10,17 @@ Set of extensions and utilities for tokens (e.g ERC-20, ERC-721, ERC-1155) and d
  * {ERC20Blocklist}: Extension of ERC20 with transfers and approvals that can be disabled by adding users into a blocklist.
  * {ERC20Collateral}: Oracle-agnostic extension of ERC20 that limits the total supply based on a collateral amount.
  * {ERC20Custodian}: Extension of ERC20 that implements an access-control agnostic approach to define a custodian that can freeze user's transfers and approvals.
+ * {ERC20Freezable}: Extension of ERC20 that allows an authorized account to freeze a portion of an account's balance, preventing it from being transferred until unfrozen.
+ * {ERC20Restricted}: Extension of ERC20 that allows implementing user account transfer restrictions (blocklist or allowlist) inspired by EIP-7943.
+ * {ERC20uRWA}: Extension of ERC20 according to EIP-7943, combining standard ERC-20 with RWA-specific features like account restrictions, asset freezing, and forced transfers.
  * {ERC4626Fees}: ERC4626 vault with fees on entry (deposit/mint) or exit (withdraw/redeem).
+ * {ERC7540}: Implementation of ERC-7540 "Asynchronous ERC-4626 Tokenized Vaults", providing a base for vaults with asynchronous deposit and/or redemption flows.
+ * {ERC7540AdminDeposit}: Admin-controlled (operator-triggered) fulfillment strategy for asynchronous deposits in ERC-7540 vaults.
+ * {ERC7540AdminRedeem}: Admin-controlled (operator-triggered) fulfillment strategy for asynchronous redemptions in ERC-7540 vaults.
+ * {ERC7540DelayDeposit}: Time-delay fulfillment strategy for asynchronous deposits, becoming permissionlessly claimable after a configurable waiting period.
+ * {ERC7540DelayRedeem}: Time-delay fulfillment strategy for asynchronous redemptions, becoming permissionlessly claimable after a configurable waiting period.
+ * {ERC7540SyncDeposit}: Module for enabling synchronous (ERC-4626) deposit flow in an ERC-7540 vault.
+ * {ERC7540SyncRedeem}: Module for enabling synchronous (ERC-4626) redeem flow in an ERC-7540 vault.
 
 == General
 
@@ -26,4 +36,26 @@ Set of extensions and utilities for tokens (e.g ERC-20, ERC-721, ERC-1155) and d
 
 {{ERC20Custodian}}
 
+{{ERC20Freezable}}
+
+{{ERC20Restricted}}
+
+{{ERC20uRWA}}
+
 {{ERC4626Fees}}
+
+== ERC7540
+
+{{ERC7540}}
+
+{{ERC7540AdminDeposit}}
+
+{{ERC7540AdminRedeem}}
+
+{{ERC7540DelayDeposit}}
+
+{{ERC7540DelayRedeem}}
+
+{{ERC7540SyncDeposit}}
+
+{{ERC7540SyncRedeem}}

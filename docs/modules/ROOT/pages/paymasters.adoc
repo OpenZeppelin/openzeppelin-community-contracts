@@ -10,14 +10,14 @@ To enable sponsorship, users sign their user operations including a special fiel
 
 The xref:api:account.adoc#PaymasterSigner[`PaymasterSigner`] implements signature-based sponsorship via authorization signatures, allowing designated paymaster signers to authorize and sponsor specific user operations without requiring users to hold native ETH.
 
-TIP: Learn more about xref:accounts.adoc#selecting_a_signer[signers] to explore different approaches to user operation sponsorship via signatures.
+TIP: Learn more about xref:contracts::accounts.adoc#selecting-a-signer[signers] to explore different approaches to user operation sponsorship via signatures.
 
 [source,solidity]
 ----
 include::api:example$account/paymaster/PaymasterECDSASigner.sol[]
 ----
 
-TIP: Use https://docs.openzeppelin.com/contracts/5.x/api/account#ERC4337Utils[`ERC4337Utils`] to facilitate the access to paymaster-related fields of the userOp (e.g. `paymasterData`, `paymasterVerificationGasLimit`)
+TIP: Use xref:contracts::api:account.adoc#ERC4337Utils[`ERC4337Utils`] to facilitate the access to paymaster-related fields of the userOp (e.g. `paymasterData`, `paymasterVerificationGasLimit`)
 
 To implement signature-based sponsorship, you'll first need to deploy the paymaster contract. This contract will hold the ETH used to pay for user operations and verify signatures from your authorized signer. After deployment, you must fund the paymaster with ETH to cover gas costs for the operations it will sponsor:
 
@@ -208,7 +208,7 @@ NOTE: The price of the ERC-20 must be scaled by xref:api:account.adoc#PaymasterE
 
 Here's how an implementation of `_fetchOracleDetails` would look like using this approach:
 
-TIP: Use https://docs.openzeppelin.com/contracts/5.x/api/account#ERC4337Utils-combineValidationData-uint256-uint256-[`ERC4337Utils.combineValidationData`] to merge two `validationData` values.
+TIP: Use xref:contracts::api:account.adoc#ERC4337Utils-combineValidationData-uint256-uint256-[`ERC4337Utils.combineValidationData`] to merge two `validationData` values.
 
 [source,solidity]
 ----

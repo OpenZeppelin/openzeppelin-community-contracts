@@ -29,10 +29,11 @@ function shouldBehaveLikeERC7575({ selfAsset } = {}) {
   selfAsset ??= true;
 
   describe('Should behave like ERC7575', function () {
-    describe('supports ERC-7575 operator interface', function () {
+    describe('supports ERC-7575 interface', function () {
       expect(interfaceId(ERC7575)).to.equal('0x2f0a18c5');
       expect(interfaceId(ERC7575Share)).to.equal('0xf815c03d');
-      shouldSupportInterfaces({ ERC7575 });
+
+      shouldSupportInterfaces(Object.assign({ ERC7575 }, selfAsset ? { ERC7575Share } : {}));
     });
 
     it('get share address', async function () {

@@ -10,7 +10,7 @@ import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 import {LowLevelCall} from "@openzeppelin/contracts/utils/LowLevelCall.sol";
 import {Memory} from "@openzeppelin/contracts/utils/Memory.sol";
 import {IERC7540, IERC7540Operator, IERC7540Deposit, IERC7540Redeem} from "../../../interfaces/IERC7540.sol";
-import {IERC7575} from "../../../interfaces/IERC7575.sol";
+import {IERC7575, IERC7575Share} from "../../../interfaces/IERC7575.sol";
 
 /**
  * @dev Implementation of the ERC-7540 "Asynchronous ERC-4626 Tokenized Vaults" as defined in
@@ -56,8 +56,16 @@ import {IERC7575} from "../../../interfaces/IERC7575.sol";
  * using the controller's shares, and claim assets or shares on behalf of the controller. Users should only
  * approve operators they fully trust with both their assets and shares.
  * ====
+ *
+ * [CAUTION]
+ * ====
+ * This contract assumes the underlying `asset` is a well-behaved ERC-20: transfers move exactly the requested
+ * amount, balances do not change without explicit transfers, and `balanceOf` reports faithfully. Fee-on-transfer,
+ * rebasing, and similar non-standard asset behaviors are out of scope. When the asset misbehaves, internal
+ * accounting (notably {totalAssets}) can revert and freeze claim paths that depend on live conversions.
+ * ====
  */
-abstract contract ERC7540 is ERC165, ERC20, IERC4626, IERC7540 {
+abstract contract ERC7540 is ERC165, ERC20, IERC4626, IERC7540, IERC7575Share {
     using Math for uint256;
 
     IERC20 private immutable _asset;
@@ -130,10 +138,11 @@ abstract contract ERC7540 is ERC165, ERC20, IERC4626, IERC7540 {
      */
     function supportsInterface(bytes4 interfaceId) public view virtual override(IERC165, ERC165) returns (bool) {
         return
-            interfaceId == (type(IERC4626).interfaceId ^ type(IERC7575).interfaceId) ||
+            interfaceId == (type(IERC4626).interfaceId ^ type(IERC7575).interfaceId) || // ERC7575
             interfaceId == type(IERC7540Operator).interfaceId ||
             (interfaceId == type(IERC7540Deposit).interfaceId && _isDepositAsync()) ||
             (interfaceId == type(IERC7540Redeem).interfaceId && _isRedeemAsync()) ||
+            (interfaceId == type(IERC7575Share).interfaceId && share() == address(this)) ||
             super.supportsInterface(interfaceId);
     }
 
@@ -202,11 +211,22 @@ abstract contract ERC7540 is ERC165, ERC20, IERC4626, IERC7540 {
         return address(this);
     }
 
+    /// @inheritdoc IERC7575Share
+    function vault(address asset_) public view virtual returns (address) {
+        return share() == address(this) && asset_ == asset() ? address(this) : address(0);
+    }
+
     /**
      * @dev See {IERC4626-totalAssets}.
      *
      * Pending deposit assets are subtracted from the vault's token balance, since they have not yet been
      * converted into shares and must not be treated as yield for outstanding shareholders.
+     *
+     * NOTE: Internal flows preserve the invariant `balanceOf(asset, vault) >= totalPendingDepositAssets()` for
+     * any well-behaved ERC-20. Assets with transfer fees, negative rebases, or externally-mutable balances can
+     * violate it and cause this function to revert with an underflow. Strategies that read {totalAssets} on the
+     * claim path become uncallable in that state. Strategies that lock the rate at fulfillment time
+     * are unaffected.
      */
     function totalAssets() public view virtual override returns (uint256) {
         return IERC20(asset()).balanceOf(address(this)) - totalPendingDepositAssets();
@@ -218,6 +238,12 @@ abstract contract ERC7540 is ERC165, ERC20, IERC4626, IERC7540 {
      * Adds {totalPendingRedeemShares} to the ERC-20 supply. When shares are burned at request time
      * (i.e. {_redeemShareDestination} returns `address(0)`), pending redeem shares are removed from
      * the on-chain supply but still logically outstanding until claimed; this override compensates.
+     *
+     * NOTE: As a consequence, two standard ERC-20 assumptions do not hold: (a) `totalSupply()` may
+     * exceed the sum of all `balanceOf()` (pending shares are virtual and unowned); (b) `totalSupply()`
+     * can change without a matching `Transfer` event when {totalPendingRedeemShares} changes. Integrators
+     * that snapshot supply for governance or reward weighting, or reconstruct supply from event logs
+     * (indexers, bridges), must account for this.
      */
     function totalSupply() public view virtual override(IERC20, ERC20) returns (uint256) {
         return super.totalSupply() + totalPendingRedeemShares();
@@ -380,6 +406,12 @@ abstract contract ERC7540 is ERC165, ERC20, IERC4626, IERC7540 {
      * * {_isDepositAsync} must return `true`.
      * * `owner` must be `msg.sender` or `msg.sender` must be an approved operator of `owner`.
      * * `owner` must have approved the vault for at least `assets` of the underlying token.
+     *
+     * NOTE: The `controller` is the only address authorized to claim the resulting Request. Passing an address
+     * with no claim authority (e.g. `address(0)`, `0x...dead`) or any contract that cannot itself call
+     * {deposit}/{mint} or designate an operator via {setOperator} will permanently lock the committed
+     * `assets`, since claims are gated by {onlyOperatorOrController} on `controller` and there is no
+     * cancellation path. Callers are responsible for supplying a controller capable of authorizing claims.
      */
     function requestDeposit(
         uint256 assets,
@@ -475,6 +507,12 @@ abstract contract ERC7540 is ERC165, ERC20, IERC4626, IERC7540 {
      * Requirements:
      *
      * * {_isRedeemAsync} must return `true`.
+     *
+     * NOTE: The `controller` is the only address authorized to claim the resulting Request. Passing an address
+     * with no claim authority (e.g. `address(0)`, `0x...dead`) or any contract that cannot itself call
+     * {withdraw}/{redeem} or designate an operator via {setOperator} will permanently lock the committed
+     * `shares`, since claims are gated by {onlyOperatorOrController} on `controller` and there is no
+     * cancellation path. Callers are responsible for supplying a controller capable of authorizing claims.
      */
     function requestRedeem(uint256 shares, address controller, address owner) public virtual returns (uint256) {
         return _requestRedeem(shares, controller, owner, 0);

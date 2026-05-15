@@ -7,11 +7,23 @@ NOTE: This document is better viewed at https://docs.openzeppelin.com/contracts/
 
 These interfaces are available as `.sol` files. These are useful to interact with third party contracts that implement them.
 
+- {IERC7540} (`IERC7540Operator`, `IERC7540Deposit`, `IERC7540Redeem`): Operator management and asynchronous deposit/redeem request interfaces for ERC-7540 tokenized vaults.
+- {IERC7575} (`IERC7575`, `IERC7575Share`): Multi-asset ERC-4626 vaults and share-to-vault lookup interfaces.
+- {IERC7786Attributes}: Standard attributes for ERC-7786 cross-chain messaging.
 - {IERC7913SignatureVerifier}
-- {IERC7943}
+- {IERC7943}: ERC-20 based interface for RWA tokens with account restrictions, asset freezing, and forced transfers.
+- {IERC7969} (`IDKIMRegistry`): Onchain DKIM public key registry interface for email-based authentication.
 
 == Detailed ABI
+
+{{IERC7540}}
+
+{{IERC7575}}
+
+{{IERC7786Attributes}}
 
 {{IERC7913SignatureVerifier}}
 
 {{IERC7943}}
+
+{{IERC7969}}

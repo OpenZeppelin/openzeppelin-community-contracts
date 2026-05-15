@@ -29,7 +29,7 @@ To start sending cross-chain messages, developers can get started with a duplex 
 include::api:example$crosschain/MyCustomAxelarGatewayDuplex.sol[]
 ----
 
-For more details of how the duplex gateway works, see xref:crosschain.adoc#axelar_network[how to send and receive messages with the  Axelar Network] below
+For more details of how the duplex gateway works, see xref:crosschain.adoc#axelar-network[how to send and receive messages with the  Axelar Network] below
 
 NOTE: Developers can register supported chains and destination gateways using the xref:api:crosschain.adoc#AxelarGatewayBase-registerChainEquivalence-string-string-[`registerChainEquivalence`] and xref:api:crosschain.adoc#AxelarGatewayBase-registerRemoteGateway-string-string-[`registerRemoteGateway`] functions
 
@@ -92,14 +92,15 @@ The bridge maintains a list of known  gateways and a confirmation threshold. Whe
 
 When sending a message, the bridge tracks the message IDs from each gateway to maintain a record of the message's journey across different bridges:
 
-```solidity
+[source,solidity]
+----
 function sendMessage(
     string calldata destinationChain,
     string memory receiver,
     bytes memory payload,
     bytes[] memory attributes
 ) public payable virtual whenNotPaused returns (bytes32 outboxId) {
-    
+
     // ... Initialize variables and prepare payload ...
 
     // Post on all gateways
@@ -123,11 +124,12 @@ function sendMessage(
 
     // ... Handle message tracking and return value ...
 }
-```
+----
 
 On the receiving end, the bridge implements a threshold-based confirmation system. Messages are only executed after receiving enough confirmations from the gateways, ensuring message validity and preventing double execution. The xref:api:crosschain.adoc#ERC7786OpenBridge-receiveMessage-string-string-string-bytes-bytes---[`receiveMessage`] function handles this process:
 
-```solidity
+[source,solidity]
+----
 function receiveMessage(
     string calldata /*messageId*/, // gateway specific, empty or unique
     string calldata sourceChain, // CAIP-2 chain identifier
@@ -150,7 +152,7 @@ function receiveMessage(
     } else if (tracker.executed) {
         revert ERC7786OpenBridgeAlreadyExecuted();
     }
-    
+
     // ... Validate sender and prepare payload for execution ...
 
     // If ready to execute, and not yet executed
@@ -171,6 +173,6 @@ function receiveMessage(
 
     return IERC7786Receiver.receiveMessage.selector;
 }
-```
+----
 
 The bridge is designed to be configurable. As an `Ownable` contract, it allows the owner to manage the list of trusted gateways and adjust the confirmation threshold. The `_gateways` list and threshold are initially set during contract deployment using the xref:api:crosschain.adoc#ERC7786OpenBridge-_addGateway-address-[`++_addGateway++`] and xref:api:crosschain.adoc#ERC7786OpenBridge-_setThreshold-uint8-[`++_setThreshold++`] functions. The owner can update these settings as needed to adapt to changing requirements or add new gateways.
