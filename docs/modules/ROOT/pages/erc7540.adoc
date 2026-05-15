@@ -39,16 +39,12 @@ NOTE: An ERC-7540 vault must have at least one async side (deposit or redeem). I
 
 Every async request transitions through three states:
 
-....
-                 requestDeposit()           Fulfillment           deposit() / mint()
-                 requestRedeem()                                  withdraw() / redeem()
-   ┌─────────┐                 ┌─────────┐             ┌───────────┐                  ┌─────────┐
-   │  (none) │ ──────────────► │ Pending │ ──────────► │ Claimable │ ───────────────► │ Claimed │
-   └─────────┘                 └─────────┘             └───────────┘                  └─────────┘
-                                Assets/shares           Ready to claim                 Shares/assets
-                                locked in vault                                        delivered to
-                                                                                       receiver
-....
+```mermaid
+flowchart LR
+    None(["(none)"]) -->|"requestDeposit() / requestRedeem()"| Pending["Pending<br/><i>Assets/shares locked in vault</i>"]
+    Pending -->|Fulfillment| Claimable["Claimable<br/><i>Ready to claim</i>"]
+    Claimable -->|"deposit() / mint() / withdraw() / redeem()"| Claimed["Claimed<br/><i>Shares/assets delivered to receiver</i>"]
+```
 
 * **Pending**: Assets (for deposits) or shares (for redeems) are locked in the vault. The request is not yet ready to be claimed.
 * **Claimable**: The request has been fulfilled and the controller can claim at any time. The exchange rate is strategy-dependent: it may be fixed at fulfillment time (e.g. admin strategy) or determined at claim time from the live vault conversion (e.g. delay strategy).
@@ -60,27 +56,13 @@ CAUTION: Requests must NOT skip the Claimable state, even if fulfillment happens
 
 The implementation is split into a base contract and strategy extensions:
 
-....
-                    ┌──────────────────────────────────────────────────────────┐
-                    │                      ERC7540 (base)                      │
-                    │                                                          │
-                    │  Routing logic (sync vs async)                           │
-                    │  Operator management                                     │
-                    │  ERC-4626 interface                                      │
-                    │  totalAssets / totalSupply adjustments                   │
-                    │  14 virtual hooks for strategies to implement            │
-                    └────────────────────────┬─────────────────────────────────┘
-                                             │
-                    ┌────────────────────────┼─────────────────────────────────┐
-                    │                        │                                 │
-          ┌─────────▼──────────┐  ┌──────────▼──────────┐  ┌──────────────────▼───┐
-          │   Admin strategy   │  │   Delay strategy    │  │    Sync strategy     │
-          │                    │  │                      │  │                      │
-          │  Privileged caller │  │  Time-based, no      │  │  Standard ERC-4626   │
-          │  fulfills with     │  │  privileged caller   │  │  (no async lifecycle)│
-          │  explicit rate     │  │  needed              │  │                      │
-          └────────────────────┘  └─────────────────────┘  └──────────────────────┘
-....
+```mermaid
+flowchart TD
+    Base["<b>ERC7540 (base)</b><br/>Routing logic (sync vs async)<br/>Operator management<br/>ERC-4626 interface<br/>totalAssets / totalSupply adjustments<br/>14 virtual hooks for strategies to implement"]
+    Base --> Admin["<b>Admin strategy</b><br/>Privileged caller fulfills<br/>with explicit rate"]
+    Base --> Delay["<b>Delay strategy</b><br/>Time-based, no<br/>privileged caller needed"]
+    Base --> Sync["<b>Sync strategy</b><br/>Standard ERC-4626<br/>(no async lifecycle)"]
+```
 
 Each strategy comes in a deposit and redeem variant. You combine exactly one deposit strategy with one redeem strategy:
 
@@ -226,17 +208,12 @@ The `requestId` returned by the delay strategy is the absolute timestamp at whic
 
 The delay strategy uses `Checkpoints.Trace208` to track cumulative deposit/redeem amounts keyed by their maturity timepoint. Multiple requests accumulate and mature independently:
 
-....
-  Time ──────────────────────────────────────────────────────►
-
-  t=100              t=120              t=160              t=180
-  request 500        request 300        500 claimable      800 claimable
-  maturity=160       maturity=180       300 still pending   (all matured)
-
-  Checkpoints:
-    key=160 → value=500  (cumulative)
-    key=180 → value=800  (cumulative)
-....
+```mermaid
+flowchart LR
+    T100["<b>t=100</b><br/>request 500<br/>maturity=160"] --> T120["<b>t=120</b><br/>request 300<br/>maturity=180"] --> T160["<b>t=160</b><br/>500 claimable<br/>300 still pending"] --> T180["<b>t=180</b><br/>800 claimable<br/>(all matured)"]
+    CP["<b>Checkpoints (cumulative)</b><br/>key=160 → value=500<br/>key=180 → value=800"]
+    T120 -.-> CP
+```
 
 The total claimable amount at any time `T` is:
 
@@ -406,19 +383,16 @@ During the async lifecycle, shares and assets must be held somewhere between req
 
 The base `ERC7540` contract overrides both to keep the share price accurate during the async lifecycle:
 
-....
-totalAssets() = asset.balanceOf(vault) - _totalPendingDepositAssets
-                │                        │
-                │                        └─ Assets received but not yet converted to shares.
-                │                           Must not inflate the perceived yield.
-                └─ All assets in the vault, including pending ones.
+```mermaid
+flowchart TD
+    TA["<b>totalAssets()</b> = asset.balanceOf(vault) − _totalPendingDepositAssets"]
+    TA --> TA1["<b>asset.balanceOf(vault)</b><br/>All assets in the vault,<br/>including pending ones"]
+    TA --> TA2["<b>_totalPendingDepositAssets</b><br/>Assets received but not yet<br/>converted to shares.<br/>Must not inflate the perceived yield."]
 
-totalSupply() = ERC20.totalSupply() + _totalPendingRedeemShares
-                │                     │
-                │                     └─ Shares already burned/escrowed but logically still
-                │                        outstanding (request not yet settled).
-                └─ The on-chain ERC-20 supply.
-....
+    TS["<b>totalSupply()</b> = ERC20.totalSupply() + _totalPendingRedeemShares"]
+    TS --> TS1["<b>ERC20.totalSupply()</b><br/>The on-chain ERC-20 supply"]
+    TS --> TS2["<b>_totalPendingRedeemShares</b><br/>Shares already burned/escrowed<br/>but logically still outstanding<br/>(request not yet settled)"]
+```
 
 This ensures `convertToShares` / `convertToAssets` reflect the real exchange rate at all times, even while requests are in flight.
 
