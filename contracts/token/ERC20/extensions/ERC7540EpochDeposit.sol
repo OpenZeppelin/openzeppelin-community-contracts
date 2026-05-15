@@ -16,7 +16,6 @@ import {ERC7540} from "./ERC7540.sol";
  *
  * Production equivalents:
  * https://github.com/Storm-Labs-Inc/cove-contracts-core/blob/master/src/BasketToken.sol[Cove],
- * https://github.com/nashpoint/nashpoint-smart-contracts/blob/main/src/Node.sol[Nashpoint],
  * https://github.com/AmphorProtocol/asynchronous-vault/tree/main[Amphor],
  * https://github.com/hopperlabsxyz/lagoon-v0/blob/main/src/v0.5.0/ERC7540.sol[Lagoon].
  *
