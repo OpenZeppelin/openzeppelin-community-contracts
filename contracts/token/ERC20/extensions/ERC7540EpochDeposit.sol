@@ -288,8 +288,8 @@ abstract contract ERC7540EpochDeposit is ERC7540 {
             // claimed, so `totalAssets` reduces to 0 cleanly and the {_fulfillDeposit} sentinel
             // stays unambiguous.
             details.requests[controller] = requestedAssets.saturatingSub(batchAssets);
-            details.totalAssets = details.totalAssets.saturatingSub(batchAssets);
-            details.totalShares = details.totalShares.saturatingSub(batchShares);
+            details.totalAssets = totalDepositAssets(epochId).saturatingSub(batchAssets);
+            details.totalShares = totalDepositShares(epochId).saturatingSub(batchShares);
             shares -= batchShares; // batchShares <= shares (via .min)
             assets += batchAssets;
         }
