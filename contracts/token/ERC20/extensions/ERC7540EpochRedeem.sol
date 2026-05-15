@@ -263,8 +263,8 @@ abstract contract ERC7540EpochRedeem is ERC7540 {
             // claimed, so `totalShares` reduces to 0 cleanly and the {_fulfillRedeem} sentinel
             // stays unambiguous.
             details.requests[controller] = requestedShares.saturatingSub(batchShares);
-            details.totalAssets = details.totalAssets.saturatingSub(batchAssets);
-            details.totalShares = details.totalShares.saturatingSub(batchShares);
+            details.totalAssets = totalRedeemAssets(epochId).saturatingSub(batchAssets);
+            details.totalShares = totalRedeemShares(epochId).saturatingSub(batchShares);
             assets -= batchAssets; // batchAssets <= assets (via .min)
             shares += batchShares;
         }
