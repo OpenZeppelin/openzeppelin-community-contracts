@@ -78,6 +78,24 @@ abstract contract ERC7540EpochDeposit is ERC7540 {
     }
 
     /**
+     * @dev Returns the total assets queued in `epochId`. Equals the sum of all deposit requests
+     * during the Pending phase; decreases as claimants consume their pro-rata share once the
+     * epoch is fulfilled, and reaches 0 once the epoch is fully claimed.
+     */
+    function totalDepositAssets(uint256 epochId) public view virtual returns (uint256) {
+        return _epochs[epochId].totalAssets;
+    }
+
+    /**
+     * @dev Returns the shares allocated to `epochId` at fulfillment. Zero before
+     * {_fulfillDeposit} is called; decreases as claimants consume their pro-rata share.
+     * Together with {totalDepositAssets} it encodes the locked epoch rate.
+     */
+    function totalDepositShares(uint256 epochId) public view virtual returns (uint256) {
+        return _epochs[epochId].totalShares;
+    }
+
+    /**
      * @dev A request is pending if its epoch has not yet been fulfilled (`totalShares == 0`) and
      * still has assets queued (`totalAssets > 0`).
      */
@@ -85,10 +103,18 @@ abstract contract ERC7540EpochDeposit is ERC7540 {
         uint256 requestId,
         address controller
     ) internal view virtual override returns (uint256) {
-        EpochDepositMetadata storage details = _epochs[requestId];
-        // `details.totalAssets > 0` distinguishes the pending state from a fully-claimed
-        // post-fulfillment state where both totals reach 0.
-        return (details.totalShares == 0 && details.totalAssets > 0) ? details.requests[controller] : 0;
+        return totalDepositShares(requestId) == 0 ? _pendingAvailableDepositRequest(requestId, controller) : 0;
+    }
+
+    /**
+     * @dev Returns the controller's stored deposit request for `requestId`, or 0 if the epoch
+     * has been fully claimed (`totalAssets == 0`).
+     */
+    function _pendingAvailableDepositRequest(
+        uint256 requestId,
+        address controller
+    ) internal view virtual returns (uint256) {
+        return totalDepositAssets(requestId) == 0 ? 0 : _epochs[requestId].requests[controller];
     }
 
     /// @dev A request is claimable if its epoch has been fulfilled (`totalShares > 0`).
@@ -96,8 +122,7 @@ abstract contract ERC7540EpochDeposit is ERC7540 {
         uint256 requestId,
         address controller
     ) internal view virtual override returns (uint256) {
-        EpochDepositMetadata storage details = _epochs[requestId];
-        return details.totalShares == 0 ? 0 : details.requests[controller];
+        return totalDepositShares(requestId) == 0 ? 0 : _epochs[requestId].requests[controller];
     }
 
     /**
@@ -123,20 +148,37 @@ abstract contract ERC7540EpochDeposit is ERC7540 {
         uint256 result = 0;
         for (uint256 i = 0; i < _memberOf[owner].length(); ++i) {
             uint256 epochId = uint256(_memberOf[owner].at(i));
-            uint256 totalAssets = _epochs[epochId].totalAssets;
-            // An epoch's `totalAssets` may be 0 while some `requests[*]` slots are non-zero,
-            // when other controllers' share-driven claims ({_consumeClaimableMint}) round
-            // `requested` up via ceil and the saturating decrement zeroes the shared pool
-            // before all per-controller residues are allocated. Skip such epochs.
-            if (totalAssets == 0) continue;
-            result += Math.mulDiv(
-                _claimableDepositRequest(epochId, owner),
-                _epochs[epochId].totalShares,
-                totalAssets,
-                Math.Rounding.Floor
-            );
+            result += _convertToDepositShares(epochId, _claimableDepositRequest(epochId, owner), Math.Rounding.Floor);
         }
         return result;
+    }
+
+    /// @dev Converts `assets` to shares at `epochId`'s locked rate. Returns 0 if `totalAssets` is 0.
+    function _convertToDepositShares(
+        uint256 epochId,
+        uint256 assets,
+        Math.Rounding rounding
+    ) internal view virtual returns (uint256) {
+        // An epoch's `totalAssets` may be 0 while some `requests[*]` slots are non-zero,
+        // when other controllers' share-driven claims ({_consumeClaimableMint}) round
+        // `requested` up via ceil and the saturating decrement zeroes the shared pool
+        // before all per-controller residues are allocated.
+        uint256 totalAssets = totalDepositAssets(epochId);
+        return totalAssets == 0 ? 0 : assets.mulDiv(totalDepositShares(epochId), totalAssets, rounding);
+    }
+
+    /// @dev Converts `shares` to assets at `epochId`'s locked rate. Returns 0 if `totalShares` is 0.
+    function _convertToDepositAssets(
+        uint256 epochId,
+        uint256 shares,
+        Math.Rounding rounding
+    ) internal view virtual returns (uint256) {
+        // An epoch's `totalShares` may be 0 while some `requests[*]` slots are non-zero,
+        // when other controllers' share-driven claims ({_consumeClaimableMint}) round
+        // `requested` up via ceil and the saturating decrement zeroes the shared pool
+        // before all per-controller residues are allocated.
+        uint256 totalShares = totalDepositShares(epochId);
+        return totalShares == 0 ? 0 : shares.mulDiv(totalDepositAssets(epochId), totalShares, rounding);
     }
 
     /**
@@ -170,11 +212,6 @@ abstract contract ERC7540EpochDeposit is ERC7540 {
         return super._requestDeposit(assets, controller, owner, epochId);
     }
 
-    /// @dev Returns the total assets available to fulfill for `epochId`, or 0 if already fulfilled or still current.
-    function _assetsToFulfillDeposit(uint256 epochId) internal view virtual returns (uint256) {
-        return epochId < currentDepositEpoch() && _epochs[epochId].totalShares == 0 ? _epochs[epochId].totalAssets : 0;
-    }
-
     /**
      * @dev Fulfills a past epoch by setting its `totalShares`. All requests within the epoch
      * become claimable at the rate `totalShares / totalAssets`.
@@ -195,12 +232,12 @@ abstract contract ERC7540EpochDeposit is ERC7540 {
     function _fulfillDeposit(uint256 epochId, uint256 totalShares) internal virtual {
         require(epochId < currentDepositEpoch(), ERC7540EpochDepositTooEarly(epochId));
 
-        EpochDepositMetadata storage details = _epochs[epochId];
-        require(details.totalAssets > 0, ERC7540EpochDepositEmptyEpoch(epochId));
-        require(details.totalShares == 0, ERC7540EpochDepositAlreadyFulfilled(epochId));
+        uint256 totalAssets = totalDepositAssets(epochId);
+        require(totalAssets > 0, ERC7540EpochDepositEmptyEpoch(epochId));
+        require(totalDepositShares(epochId) == 0, ERC7540EpochDepositAlreadyFulfilled(epochId));
 
-        details.totalShares = totalShares;
-        emit ERC7540EpochDepositFulfilled(epochId, details.totalAssets, totalShares);
+        _epochs[epochId].totalShares = totalShares;
+        emit ERC7540EpochDepositFulfilled(epochId, totalAssets, totalShares);
     }
 
     /**
@@ -214,24 +251,15 @@ abstract contract ERC7540EpochDeposit is ERC7540 {
         while (assets > 0) {
             uint256 epochId = uint256(_memberOf[controller].front());
 
-            EpochDepositMetadata storage details = _epochs[epochId];
-
-            // `totalAssets == 0` indicates a fully-claimed epoch (over-claimed by other controllers via
-            // the share-driven path). Treating `requested` as 0 lets the loop pop the queue entry
-            // and skip the divide-by-zero without consuming user input.
-            bool isFullyClaimed = details.totalAssets == 0;
-            uint256 requested = isFullyClaimed ? 0 : details.requests[controller];
+            uint256 requested = _pendingAvailableDepositRequest(epochId, controller);
             if (requested <= assets) _memberOf[controller].popFront();
 
             uint256 batchAssets = requested.min(assets);
-            uint256 batchShares = isFullyClaimed
-                ? 0
-                : batchAssets.mulDiv(details.totalShares, details.totalAssets, Math.Rounding.Floor);
+            uint256 batchShares = _convertToDepositShares(epochId, batchAssets, Math.Rounding.Floor);
 
-            details.requests[controller] = details.requests[controller].saturatingSub(
-                // If fully claimed, subtract the full stored slot to clear stuck dust
-                isFullyClaimed ? details.requests[controller] : batchAssets
-            );
+            EpochDepositMetadata storage details = _epochs[epochId];
+            // Using `requested` (zero in the fully-claimed state) clears stuck dust.
+            details.requests[controller] = requested.saturatingSub(batchAssets);
             details.totalAssets -= batchAssets; // batchAssets <= details.totalAssets (invariant: requests[c] <= totalAssets)
             details.totalShares -= batchShares; // batchShares = floor(batchAssets * S/A) <= details.totalShares (since batchAssets <= totalAssets)
             assets -= batchAssets; // batchAssets <= assets (via .min)
@@ -248,30 +276,19 @@ abstract contract ERC7540EpochDeposit is ERC7540 {
         while (shares > 0) {
             uint256 epochId = uint256(_memberOf[controller].front());
 
-            EpochDepositMetadata storage details = _epochs[epochId];
-
-            // `totalAssets == 0` indicates a fully-claimed epoch. Treating `requested` as 0 lets the
-            // iteration pop the queue entry without consuming user input or attempting a
-            // divide-by-zero. See {_consumeClaimableDeposit} for the dust handling rationale.
-            bool isFullyClaimed = details.totalAssets == 0;
-            uint256 requested = isFullyClaimed
-                ? 0
-                : details.requests[controller].mulDiv(details.totalShares, details.totalAssets, Math.Rounding.Ceil);
+            uint256 requestedAssets = _pendingAvailableDepositRequest(epochId, controller);
+            uint256 requested = _convertToDepositShares(epochId, requestedAssets, Math.Rounding.Ceil);
             if (requested <= shares) _memberOf[controller].popFront();
 
             uint256 batchShares = requested.min(shares);
-            // `requested` is ceil-rounded so batchAssets recomputed via floor can exceed the
-            // stored request by 1 wei. Saturating subtraction absorbs the excess into the shared
-            // totals, so `totalAssets` reduces to 0 cleanly when fully claimed and the
-            // {_fulfillDeposit} sentinel stays unambiguous.
-            uint256 batchAssets = details.totalShares == 0
-                ? 0
-                : batchShares.mulDiv(details.totalAssets, details.totalShares, Math.Rounding.Floor);
+            uint256 batchAssets = _convertToDepositAssets(epochId, batchShares, Math.Rounding.Floor);
 
-            details.requests[controller] = details.requests[controller].saturatingSub(
-                // If fully claimed, subtract the full stored slot to clear stuck dust
-                isFullyClaimed ? details.requests[controller] : batchAssets
-            );
+            EpochDepositMetadata storage details = _epochs[epochId];
+            // Using `requestedAssets` (zero in the fully-claimed state) clears stuck dust
+            // The saturation absorbs the 1-wei ceil/floor excess in `batchAssets` when fully
+            // claimed, so `totalAssets` reduces to 0 cleanly and the {_fulfillDeposit} sentinel
+            // stays unambiguous.
+            details.requests[controller] = requestedAssets.saturatingSub(batchAssets);
             details.totalAssets = details.totalAssets.saturatingSub(batchAssets);
             details.totalShares = details.totalShares.saturatingSub(batchShares);
             shares -= batchShares; // batchShares <= shares (via .min)

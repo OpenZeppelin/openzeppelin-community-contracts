@@ -78,6 +78,24 @@ abstract contract ERC7540EpochRedeem is ERC7540 {
     }
 
     /**
+     * @dev Returns the total shares queued in `epochId`. Equals the sum of all redeem requests
+     * during the Pending phase; decreases as claimants consume their pro-rata share once the
+     * epoch is fulfilled, and reaches 0 once the epoch is fully claimed.
+     */
+    function totalRedeemShares(uint256 epochId) public view virtual returns (uint256) {
+        return _epochs[epochId].totalShares;
+    }
+
+    /**
+     * @dev Returns the assets allocated to `epochId` at fulfillment. Zero before
+     * {_fulfillRedeem} is called; decreases as claimants consume their pro-rata share.
+     * Together with {totalRedeemShares} it encodes the locked epoch rate.
+     */
+    function totalRedeemAssets(uint256 epochId) public view virtual returns (uint256) {
+        return _epochs[epochId].totalAssets;
+    }
+
+    /**
      * @dev A request is pending if its epoch has not yet been fulfilled (`totalAssets == 0`) and
      * still has shares queued (`totalShares > 0`).
      */
@@ -85,10 +103,18 @@ abstract contract ERC7540EpochRedeem is ERC7540 {
         uint256 requestId,
         address controller
     ) internal view virtual override returns (uint256) {
-        EpochRedeemMetadata storage details = _epochs[requestId];
-        // `details.totalShares > 0` distinguishes the pending state from a fully-claimed
-        // post-fulfillment state where both totals reach 0.
-        return (details.totalAssets == 0 && details.totalShares > 0) ? details.requests[controller] : 0;
+        return totalRedeemAssets(requestId) == 0 ? _pendingAvailableRedeemRequest(requestId, controller) : 0;
+    }
+
+    /**
+     * @dev Returns the controller's stored redeem request for `requestId`, or 0 if the epoch
+     * has been fully claimed (`totalShares == 0`).
+     */
+    function _pendingAvailableRedeemRequest(
+        uint256 requestId,
+        address controller
+    ) internal view virtual returns (uint256) {
+        return totalRedeemShares(requestId) == 0 ? 0 : _epochs[requestId].requests[controller];
     }
 
     /// @dev A request is claimable if its epoch has been fulfilled (`totalAssets > 0`).
@@ -96,8 +122,7 @@ abstract contract ERC7540EpochRedeem is ERC7540 {
         uint256 requestId,
         address controller
     ) internal view virtual override returns (uint256) {
-        EpochRedeemMetadata storage details = _epochs[requestId];
-        return details.totalAssets == 0 ? 0 : details.requests[controller];
+        return totalRedeemAssets(requestId) == 0 ? 0 : _epochs[requestId].requests[controller];
     }
 
     /**
@@ -113,18 +138,7 @@ abstract contract ERC7540EpochRedeem is ERC7540 {
         uint256 result = 0;
         for (uint256 i = 0; i < _memberOf[owner].length(); ++i) {
             uint256 epochId = uint256(_memberOf[owner].at(i));
-            uint256 totalShares = _epochs[epochId].totalShares;
-            // An epoch's `totalShares` may be 0 while some `requests[*]` slots are non-zero,
-            // when other controllers' asset-driven claims ({_consumeClaimableWithdraw}) round
-            // `requested` up via ceil and the saturating decrement zeroes the shared pool
-            // before all per-controller residues are allocated. Skip such epochs.
-            if (totalShares == 0) continue;
-            result += Math.mulDiv(
-                _claimableRedeemRequest(epochId, owner),
-                _epochs[epochId].totalAssets,
-                totalShares,
-                Math.Rounding.Floor
-            );
+            result += _convertToRedeemAssets(epochId, _claimableRedeemRequest(epochId, owner), Math.Rounding.Floor);
         }
         return result;
     }
@@ -137,6 +151,34 @@ abstract contract ERC7540EpochRedeem is ERC7540 {
             result += _claimableRedeemRequest(epochId, owner);
         }
         return result;
+    }
+
+    /// @dev Converts `shares` to assets at `epochId`'s locked rate. Returns 0 if `totalShares` is 0.
+    function _convertToRedeemAssets(
+        uint256 epochId,
+        uint256 shares,
+        Math.Rounding rounding
+    ) internal view virtual returns (uint256) {
+        // An epoch's `totalShares` may be 0 while some `requests[*]` slots are non-zero,
+        // when other controllers' asset-driven claims ({_consumeClaimableWithdraw}) round
+        // `requested` up via ceil and the saturating decrement zeroes the shared pool
+        // before all per-controller residues are allocated.
+        uint256 totalShares = totalRedeemShares(epochId);
+        return totalShares == 0 ? 0 : shares.mulDiv(totalRedeemAssets(epochId), totalShares, rounding);
+    }
+
+    /// @dev Converts `assets` to shares at `epochId`'s locked rate. Returns 0 if `totalAssets` is 0.
+    function _convertToRedeemShares(
+        uint256 epochId,
+        uint256 assets,
+        Math.Rounding rounding
+    ) internal view virtual returns (uint256) {
+        // An epoch's `totalAssets` may be 0 while some `requests[*]` slots are non-zero,
+        // when other controllers' asset-driven claims ({_consumeClaimableWithdraw}) round
+        // `requested` up via ceil and the saturating decrement zeroes the shared pool
+        // before all per-controller residues are allocated.
+        uint256 totalAssets = totalRedeemAssets(epochId);
+        return totalAssets == 0 ? 0 : assets.mulDiv(totalRedeemShares(epochId), totalAssets, rounding);
     }
 
     /**
@@ -170,11 +212,6 @@ abstract contract ERC7540EpochRedeem is ERC7540 {
         return super._requestRedeem(shares, controller, owner, epochId);
     }
 
-    /// @dev Returns the total shares available to fulfill for `epochId`, or 0 if already fulfilled or still current.
-    function _sharesToFulfillRedeem(uint256 epochId) internal view virtual returns (uint256) {
-        return epochId < currentRedeemEpoch() && _epochs[epochId].totalAssets == 0 ? _epochs[epochId].totalShares : 0;
-    }
-
     /**
      * @dev Fulfills a past epoch by setting its `totalAssets`. All requests within the epoch
      * become claimable at the rate `totalAssets / totalShares`.
@@ -195,12 +232,12 @@ abstract contract ERC7540EpochRedeem is ERC7540 {
     function _fulfillRedeem(uint256 epochId, uint256 totalAssets) internal virtual {
         require(epochId < currentRedeemEpoch(), ERC7540EpochRedeemTooEarly(epochId));
 
-        EpochRedeemMetadata storage details = _epochs[epochId];
-        require(details.totalShares > 0, ERC7540EpochRedeemEmptyEpoch(epochId));
-        require(details.totalAssets == 0, ERC7540EpochRedeemAlreadyFulfilled(epochId));
+        uint256 totalShares = totalRedeemShares(epochId);
+        require(totalShares > 0, ERC7540EpochRedeemEmptyEpoch(epochId));
+        require(totalRedeemAssets(epochId) == 0, ERC7540EpochRedeemAlreadyFulfilled(epochId));
 
-        details.totalAssets = totalAssets;
-        emit ERC7540EpochRedeemFulfilled(epochId, details.totalShares, totalAssets);
+        _epochs[epochId].totalAssets = totalAssets;
+        emit ERC7540EpochRedeemFulfilled(epochId, totalShares, totalAssets);
     }
 
     /**
@@ -214,30 +251,19 @@ abstract contract ERC7540EpochRedeem is ERC7540 {
         while (assets > 0) {
             uint256 epochId = uint256(_memberOf[controller].front());
 
-            EpochRedeemMetadata storage details = _epochs[epochId];
-
-            // `totalShares == 0` indicates a fully-claimed epoch. Treating `requested` as 0 lets the
-            // iteration pop the queue entry without consuming user input or attempting a
-            // divide-by-zero. See {_consumeClaimableRedeem} for the dust handling rationale.
-            bool isFullyClaimed = details.totalShares == 0;
-            uint256 requested = isFullyClaimed
-                ? 0
-                : details.requests[controller].mulDiv(details.totalAssets, details.totalShares, Math.Rounding.Ceil);
+            uint256 requestedShares = _pendingAvailableRedeemRequest(epochId, controller);
+            uint256 requested = _convertToRedeemAssets(epochId, requestedShares, Math.Rounding.Ceil);
             if (requested <= assets) _memberOf[controller].popFront();
 
             uint256 batchAssets = requested.min(assets);
-            // `requested` is ceil-rounded so batchShares recomputed via floor can exceed the
-            // stored request by 1 wei. Saturating subtraction absorbs the excess into the shared
-            // totals, so `totalShares` reduces to 0 cleanly when fully claimed and the
-            // {_fulfillRedeem} sentinel stays unambiguous.
-            uint256 batchShares = details.totalAssets == 0
-                ? 0
-                : batchAssets.mulDiv(details.totalShares, details.totalAssets, Math.Rounding.Floor);
+            uint256 batchShares = _convertToRedeemShares(epochId, batchAssets, Math.Rounding.Floor);
 
-            details.requests[controller] = details.requests[controller].saturatingSub(
-                // If fully claimed, subtract the full stored slot to clear stuck dust
-                isFullyClaimed ? details.requests[controller] : batchShares
-            );
+            EpochRedeemMetadata storage details = _epochs[epochId];
+            // Using `requestedShares` (zero in the fully-claimed state) clears stuck dust.
+            // The saturation absorbs the 1-wei ceil/floor excess in `batchShares` when fully
+            // claimed, so `totalShares` reduces to 0 cleanly and the {_fulfillRedeem} sentinel
+            // stays unambiguous.
+            details.requests[controller] = requestedShares.saturatingSub(batchShares);
             details.totalAssets = details.totalAssets.saturatingSub(batchAssets);
             details.totalShares = details.totalShares.saturatingSub(batchShares);
             assets -= batchAssets; // batchAssets <= assets (via .min)
@@ -254,24 +280,15 @@ abstract contract ERC7540EpochRedeem is ERC7540 {
         while (shares > 0) {
             uint256 epochId = uint256(_memberOf[controller].front());
 
-            EpochRedeemMetadata storage details = _epochs[epochId];
-
-            // `totalShares == 0` indicates a fully-claimed epoch (over-claimed by other controllers via
-            // the asset-driven path). Treating `requested` as 0 lets the loop pop the queue entry
-            // and skip the divide-by-zero without consuming user input.
-            bool isFullyClaimed = details.totalShares == 0;
-            uint256 requested = isFullyClaimed ? 0 : details.requests[controller];
+            uint256 requested = _pendingAvailableRedeemRequest(epochId, controller);
             if (requested <= shares) _memberOf[controller].popFront();
 
             uint256 batchShares = requested.min(shares);
-            uint256 batchAssets = isFullyClaimed
-                ? 0
-                : batchShares.mulDiv(details.totalAssets, details.totalShares, Math.Rounding.Floor);
+            uint256 batchAssets = _convertToRedeemAssets(epochId, batchShares, Math.Rounding.Floor);
 
-            details.requests[controller] = details.requests[controller].saturatingSub(
-                // If fully claimed, subtract the full stored slot to clear stuck dust
-                isFullyClaimed ? details.requests[controller] : batchShares
-            );
+            EpochRedeemMetadata storage details = _epochs[epochId];
+            // Using `requested` (zero in the fully-claimed state) clears stuck dust.
+            details.requests[controller] = requested.saturatingSub(batchShares);
             details.totalShares -= batchShares; // batchShares <= details.totalShares (invariant: requests[c] <= totalShares)
             details.totalAssets -= batchAssets; // batchAssets = floor(batchShares * A/S) <= details.totalAssets (since batchShares <= totalShares)
             shares -= batchShares; // batchShares <= shares (via .min)
