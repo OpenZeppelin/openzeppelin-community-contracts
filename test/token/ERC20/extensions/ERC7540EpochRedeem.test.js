@@ -302,6 +302,82 @@ describe('ERC7540EpochRedeem', function () {
     });
   });
 
+  describe('redeemEpochs', function () {
+    let user;
+
+    beforeEach(async function () {
+      [, user] = await ethers.getSigners();
+      await this.token.$_mint(this.mock, 10000n);
+      await this.mock.$_mint(user, 10000n);
+    });
+
+    it('returns empty for a controller with no requests', async function () {
+      await expect(this.mock.redeemEpochs(user, 0, ethers.MaxUint256)).to.eventually.deep.equal([]);
+      await expect(this.mock.redeemEpochs(user, 0, 10)).to.eventually.deep.equal([]);
+    });
+
+    it('returns each epoch in queue order (oldest first)', async function () {
+      const e0 = await this.mock.currentRedeemEpoch();
+      await this.mock.connect(user).requestRedeem(100n, user, user);
+      await time.increaseTo.timestamp((e0 + 1n) * week);
+      await this.mock.connect(user).requestRedeem(100n, user, user);
+      await time.increaseTo.timestamp((e0 + 2n) * week);
+      await this.mock.connect(user).requestRedeem(100n, user, user);
+
+      await expect(this.mock.redeemEpochs(user, 0, ethers.MaxUint256)).to.eventually.deep.equal([e0, e0 + 1n, e0 + 2n]);
+    });
+
+    it('collapses multiple requests in the same epoch into one entry', async function () {
+      const e0 = await this.mock.currentRedeemEpoch();
+      await this.mock.connect(user).requestRedeem(50n, user, user);
+      await this.mock.connect(user).requestRedeem(50n, user, user);
+
+      await expect(this.mock.redeemEpochs(user, 0, ethers.MaxUint256)).to.eventually.deep.equal([e0]);
+    });
+
+    it('pops fully-claimed epochs from the queue', async function () {
+      const e0 = await this.mock.currentRedeemEpoch();
+      await this.mock.connect(user).requestRedeem(100n, user, user);
+      await time.increaseTo.timestamp((e0 + 1n) * week);
+      await this.mock.connect(user).requestRedeem(100n, user, user);
+
+      await advancePast(e0 + 1n);
+      await this.mock.$_fulfillRedeem(e0, 200n);
+      await this.mock.$_fulfillRedeem(e0 + 1n, 200n);
+
+      await expect(this.mock.redeemEpochs(user, 0, ethers.MaxUint256)).to.eventually.deep.equal([e0, e0 + 1n]);
+
+      // Claim the first epoch fully — _consumeClaimableRedeem pops it from the queue
+      await this.mock.connect(user).redeem(100n, user, user);
+      await expect(this.mock.redeemEpochs(user, 0, ethers.MaxUint256)).to.eventually.deep.equal([e0 + 1n]);
+    });
+
+    it('paginates with [start, end)', async function () {
+      const e0 = await this.mock.currentRedeemEpoch();
+      for (let i = 0; i < 4; i++) {
+        await this.mock.connect(user).requestRedeem(10n, user, user);
+        await time.increaseTo.timestamp((e0 + BigInt(i + 1)) * week);
+      }
+      const all = [e0, e0 + 1n, e0 + 2n, e0 + 3n];
+
+      await expect(this.mock.redeemEpochs(user, 0, 4)).to.eventually.deep.equal(all);
+      await expect(this.mock.redeemEpochs(user, 1, 3)).to.eventually.deep.equal(all.slice(1, 3));
+      await expect(this.mock.redeemEpochs(user, 0, 1)).to.eventually.deep.equal(all.slice(0, 1));
+    });
+
+    it('clamps out-of-bound `start` and `end`', async function () {
+      const e0 = await this.mock.currentRedeemEpoch();
+      await this.mock.connect(user).requestRedeem(100n, user, user);
+
+      // end > length → clamped
+      await expect(this.mock.redeemEpochs(user, 0, ethers.MaxUint256)).to.eventually.deep.equal([e0]);
+      // start > length → empty after both clamps
+      await expect(this.mock.redeemEpochs(user, 10, ethers.MaxUint256)).to.eventually.deep.equal([]);
+      // start > end → empty
+      await expect(this.mock.redeemEpochs(user, 1, 0)).to.eventually.deep.equal([]);
+    });
+  });
+
   describe('queue limit', function () {
     it('enforces `_requestQueueLimit` per controller', async function () {
       const [, user] = await ethers.getSigners();

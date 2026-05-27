@@ -95,6 +95,23 @@ abstract contract ERC7540EpochRedeem is ERC7540 {
     }
 
     /**
+     * @dev Returns the redeem epoch IDs that `controller` has open requests in, in queue order
+     * (oldest first). Fully claimed epochs are popped from the queue and no longer appear.
+     *
+     * Using `start = 0` and `end = type(uint64).max` will return the entire set of epochs.
+     */
+    function redeemEpochs(
+        address controller,
+        uint256 start,
+        uint256 end
+    ) public view virtual returns (uint256[] memory epochIds) {
+        bytes32[] memory store = _memberOf[controller].values(start, end);
+        assembly ("memory-safe") {
+            epochIds := store
+        }
+    }
+
+    /**
      * @dev A request is pending if its epoch has not yet been fulfilled (`totalAssets == 0`) and
      * still has shares queued (`totalShares > 0`).
      */
