@@ -14,6 +14,7 @@ Set of extensions and utilities for tokens (e.g ERC-20, ERC-721, ERC-1155) and d
  * {ERC20Restricted}: Extension of ERC20 that allows implementing user account transfer restrictions (blocklist or allowlist) inspired by EIP-7943.
  * {ERC20uRWA}: Extension of ERC20 according to EIP-7943, combining standard ERC-20 with RWA-specific features like account restrictions, asset freezing, and forced transfers.
  * {ERC4626Fees}: ERC4626 vault with fees on entry (deposit/mint) or exit (withdraw/redeem).
+ * {ERC7535}: Implementation of ERC-7535 "Native Asset ERC-4626 Tokenized Vault", using the chain's native asset (e.g. Ether) as the underlying asset instead of an ERC-20 token.
  * {ERC7540}: Implementation of ERC-7540 "Asynchronous ERC-4626 Tokenized Vaults", providing a base for vaults with asynchronous deposit and/or redemption flows.
  * {ERC7540AdminDeposit}: Admin-controlled (operator-triggered) fulfillment strategy for asynchronous deposits in ERC-7540 vaults.
  * {ERC7540AdminRedeem}: Admin-controlled (operator-triggered) fulfillment strategy for asynchronous redemptions in ERC-7540 vaults.
@@ -43,6 +44,10 @@ Set of extensions and utilities for tokens (e.g ERC-20, ERC-721, ERC-1155) and d
 {{ERC20uRWA}}
 
 {{ERC4626Fees}}
+
+== ERC7535
+
+{{ERC7535}}
 
 == ERC7540
 
