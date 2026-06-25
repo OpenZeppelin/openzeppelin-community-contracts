@@ -252,6 +252,20 @@ describe('ERC20uRWA', function () {
 
         await expect(this.token.frozen(this.holder)).to.eventually.equal(frozenAmount);
       });
+
+      it('reverts when force transferring to self and does not reduce the frozen balance', async function () {
+        const frozenAmount = initialSupply; // Fully frozen
+        await this.token.connect(this.freezer).setFrozenTokens(this.holder, frozenAmount);
+
+        // A forced transfer to self moves no tokens but would otherwise lower the frozen balance,
+        // acting as an unauthorized unfreeze that bypasses the freezer role. It must revert instead.
+        await expect(this.token.connect(this.enforcer).forcedTransfer(this.holder, this.holder, frozenAmount))
+          .to.be.revertedWithCustomError(this.token, 'ERC7943CannotTransfer')
+          .withArgs(this.holder, this.holder, frozenAmount);
+
+        // The frozen balance is left untouched.
+        await expect(this.token.frozen(this.holder)).to.eventually.equal(frozenAmount);
+      });
     });
   });
 
