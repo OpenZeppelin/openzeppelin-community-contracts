@@ -69,6 +69,10 @@ abstract contract ERC20uRWA is ERC20, ERC165, ERC20Freezable, ERC20Restricted, I
     function forcedTransfer(address from, address to, uint256 amount) public virtual returns (bool result) {
         _checkEnforcer(from, to, amount);
         require(canTransact(to), ERC7943CannotTransact(to));
+        // A forced transfer to self moves no tokens, but the frozen balance adjustment below would still
+        // lower the frozen amount, effectively acting as an unauthorized unfreeze. Rejecting it preserves
+        // the separation between the enforcer and freezer roles.
+        require(from != to, ERC7943CannotTransfer(from, to, amount));
 
         // Update frozen balance if needed. ERC-7943 requires that balance is unfrozen first and then send the tokens.
         uint256 currentFrozen = frozen(from);

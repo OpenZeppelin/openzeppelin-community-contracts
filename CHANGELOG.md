@@ -1,3 +1,7 @@
+## 25-06-2026
+
+- `ERC20uRWA`: Reject `forcedTransfer` when `from == to`, preventing a self-directed forced transfer from reducing the frozen balance without moving any tokens (an unauthorized unfreeze that bypassed the freezer role).
+
 ## 28-04-2026
 
 - `IERC7540`: Add interface for ERC-7540 asynchronous tokenized vaults, extending ERC-4626 with request-based deposit and redeem flows.
