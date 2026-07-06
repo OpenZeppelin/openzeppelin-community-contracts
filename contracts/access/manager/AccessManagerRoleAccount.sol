@@ -3,7 +3,6 @@
 pragma solidity ^0.8.27;
 
 import {IAccessManager, AccessManager} from "@openzeppelin/contracts/access/manager/AccessManager.sol";
-import {Account} from "@openzeppelin/contracts/account/Account.sol";
 import {Clones} from "@openzeppelin/contracts/proxy/Clones.sol";
 import {AbstractSigner} from "@openzeppelin/contracts/utils/cryptography/signers/AbstractSigner.sol";
 import {ERC7739} from "@openzeppelin/contracts/utils/cryptography/signers/draft-ERC7739.sol";
@@ -37,7 +36,7 @@ contract RoleSigner is AbstractSigner {
     }
 }
 
-contract RoleAccount is Account, ERC7739, RoleSigner {
+contract RoleAccount is ERC7739, RoleSigner {
     constructor(IAccessManager accessManager_) RoleSigner(accessManager_) EIP712("RoleAccount", "1") {}
 }
 
