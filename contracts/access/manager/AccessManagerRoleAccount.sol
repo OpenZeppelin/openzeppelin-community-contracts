@@ -5,14 +5,15 @@ pragma solidity ^0.8.27;
 import {IAccessManager, AccessManager} from "@openzeppelin/contracts/access/manager/AccessManager.sol";
 import {Account} from "@openzeppelin/contracts/account/Account.sol";
 import {Clones} from "@openzeppelin/contracts/proxy/Clones.sol";
+import {AbstractSigner} from "@openzeppelin/contracts/utils/cryptography/signers/AbstractSigner.sol";
 import {ERC7739} from "@openzeppelin/contracts/utils/cryptography/signers/draft-ERC7739.sol";
 import {EIP712} from "@openzeppelin/contracts/utils/cryptography/EIP712.sol";
 import {SignatureChecker} from "@openzeppelin/contracts/utils/cryptography/SignatureChecker.sol";
 
-contract RoleAccount is Account, ERC7739 {
+contract RoleSigner is AbstractSigner {
     IAccessManager public immutable accessManager;
 
-    constructor(IAccessManager accessManager_) EIP712("RoleAccount", "1") {
+    constructor(IAccessManager accessManager_) {
         accessManager = accessManager_;
     }
 
@@ -36,21 +37,29 @@ contract RoleAccount is Account, ERC7739 {
     }
 }
 
+contract RoleAccount is Account, ERC7739, RoleSigner {
+    constructor(IAccessManager accessManager_) RoleSigner(accessManager_) EIP712("RoleAccount", "1") {}
+}
+
 contract AccessManagerWithRoleAccounts is AccessManager {
     address private immutable _template = address(new RoleAccount(this));
 
     constructor(address initialAdmin) AccessManager(initialAdmin) {}
 
     function getConfidentialHandler(uint64 roleId) public view returns (address) {
-        return Clones.predictDeterministicAddressWithImmutableArgs(_template, abi.encode(roleId), _roleToSalt(roleId));
+        return
+            Clones.predictDeterministicAddressWithImmutableArgs(
+                _template,
+                abi.encodePacked(roleId),
+                _roleToSalt(roleId)
+            );
     }
 
     function deployConfidentialHandler(uint64 roleId) public returns (address) {
-        return Clones.cloneDeterministicWithImmutableArgs(_template, abi.encode(roleId), _roleToSalt(roleId));
+        return Clones.cloneDeterministicWithImmutableArgs(_template, abi.encodePacked(roleId), _roleToSalt(roleId));
     }
 
     function _roleToSalt(uint64 roleId) internal view virtual returns (bytes32) {
-        require(roleId != PUBLIC_ROLE, AccessManagerLockedRole(roleId));
         return bytes32(uint256(roleId));
     }
 }
