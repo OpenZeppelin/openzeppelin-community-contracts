@@ -3,6 +3,7 @@
 pragma solidity ^0.8.27;
 
 import {IAccessManager, AccessManager} from "@openzeppelin/contracts/access/manager/AccessManager.sol";
+import {ERC7821} from "@openzeppelin/contracts/account/extensions/draft-ERC7821.sol";
 import {Clones} from "@openzeppelin/contracts/proxy/Clones.sol";
 import {AbstractSigner} from "@openzeppelin/contracts/utils/cryptography/signers/AbstractSigner.sol";
 import {ERC7739} from "@openzeppelin/contracts/utils/cryptography/signers/draft-ERC7739.sol";
@@ -22,22 +23,29 @@ contract RoleSigner is AbstractSigner {
         return uint64(bytes8(cloneArgs));
     }
 
+    function _isMember(address account) internal view virtual returns (bool isMember) {
+        (isMember, ) = accessManager.hasRole(roleId(), account);
+    }
+
     function _rawSignatureValidation(
         bytes32 hash,
         bytes calldata signature
     ) internal view virtual override returns (bool) {
         address signer = address(bytes20(signature));
-        (bool isMember, ) = accessManager.hasRole(roleId(), signer);
-        if (isMember) {
-            return SignatureChecker.isValidSignatureNow(signer, hash, signature[20:]);
-        } else {
-            return false;
-        }
+        return SignatureChecker.isValidSignatureNow(signer, hash, signature[20:]) && _isMember(signer);
     }
 }
 
-contract RoleAccount is ERC7739, RoleSigner {
+contract RoleAccount is ERC7821, ERC7739, RoleSigner {
     constructor(IAccessManager accessManager_) RoleSigner(accessManager_) EIP712("RoleAccount", "1") {}
+
+    function _erc7821AuthorizedExecutor(
+        address caller,
+        bytes32 mode,
+        bytes calldata executionData
+    ) internal view virtual override returns (bool) {
+        return super._erc7821AuthorizedExecutor(caller, mode, executionData) || _isMember(caller);
+    }
 }
 
 contract AccessManagerWithRoleAccounts is AccessManager {
