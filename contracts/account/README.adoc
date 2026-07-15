@@ -4,6 +4,7 @@ NOTE: This document is better viewed at https://docs.openzeppelin.com/community-
 
 This directory includes contracts to build accounts for ERC-4337. These include:
 
+ * {RoleAccount}: An account bound to a role of an `AccessManager` (through {RoleSigner}), acting on behalf of the current members of that role for both ERC-1271 signatures and ERC-7821 batched execution.
  * {ERC7579Executor}: An executor module that enables executing calls from accounts where the it's installed.
  * {ERC7579DelayedExecutor}: An executor module that adds a delay before executing an account operation.
  * {ERC7579SelectorExecutor}: An executor module that restricts execution to specific function selectors.
@@ -18,6 +19,10 @@ This directory includes contracts to build accounts for ERC-4337. These include:
  * {PaymasterERC20Guarantor}: A paymaster that enables third parties to guarantee user operations by pre-funding gas costs, with the option for users to repay or for guarantors to absorb the cost.
  * {PaymasterERC721Owner}: A paymaster that allows users to pay for user operations based on ERC-721 ownership.
  * {PaymasterSigner}: A paymaster that allows users to pay for user operations using an authorized signature.
+
+== Accounts
+
+{{RoleAccount}}
 
 == Modules
 
