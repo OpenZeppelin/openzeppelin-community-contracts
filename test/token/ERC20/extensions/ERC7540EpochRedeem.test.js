@@ -391,7 +391,9 @@ describe('ERC7540EpochRedeem', function () {
         await time.increaseTo.timestamp(epoch * week);
       }
 
-      await expect(this.mock.connect(user).requestRedeem(1n, user, user)).to.be.reverted;
+      await expect(this.mock.connect(user).requestRedeem(1n, user, user))
+        .to.be.revertedWithCustomError(this.mock, 'ERC7540EpochRedeemQueueLimitExceeded')
+        .withArgs(user);
     });
 
     it('multiple requests in the same epoch share one queue slot', async function () {
@@ -404,6 +406,78 @@ describe('ERC7540EpochRedeem', function () {
       }
       const epochId = await this.mock.currentRedeemEpoch();
       await expect(this.mock.totalRedeemShares(epochId)).to.eventually.equal(50n);
+    });
+  });
+
+  describe('out-of-order fulfillment', function () {
+    let user;
+
+    beforeEach(async function () {
+      [, user] = await ethers.getSigners();
+      await this.token.$_mint(this.mock, 1000n);
+      await this.mock.$_mint(user, 1000n);
+      this.epochA = await this.mock
+        .connect(user)
+        .requestRedeem(100n, user, user)
+        .then(tx => this.getRequestId(tx));
+      await time.increaseTo.timestamp((this.epochA + 1n) * week);
+      this.epochB = await this.mock
+        .connect(user)
+        .requestRedeem(50n, user, user)
+        .then(tx => this.getRequestId(tx));
+      await advancePast(this.epochB);
+    });
+
+    it('maxWithdraw / maxRedeem hide a fulfilled epoch when an older one is still Pending', async function () {
+      await this.mock.$_fulfillRedeem(this.epochB, 100n); // out of order; B before A
+
+      await expect(this.mock.maxWithdraw(user)).to.eventually.equal(0n);
+      await expect(this.mock.maxRedeem(user)).to.eventually.equal(0n);
+
+      await expect(this.mock.pendingRedeemRequest(this.epochA, user)).to.eventually.equal(100n);
+      await expect(this.mock.claimableRedeemRequest(this.epochB, user)).to.eventually.equal(50n);
+    });
+
+    it('_consumeClaimableWithdraw is a no-op when the oldest epoch is Pending', async function () {
+      await this.mock.$_fulfillRedeem(this.epochB, 100n);
+
+      await this.mock.$_consumeClaimableWithdraw(999n, user);
+
+      await expect(this.mock.totalRedeemShares(this.epochA)).to.eventually.equal(100n);
+      await expect(this.mock.totalRedeemShares(this.epochB)).to.eventually.equal(50n);
+      await expect(this.mock.totalRedeemAssets(this.epochB)).to.eventually.equal(100n);
+      await expect(this.mock.$_pendingAvailableRedeemRequest(this.epochA, user)).to.eventually.equal(100n);
+      await expect(this.mock.redeemEpochs(user, 0, ethers.MaxUint256)).to.eventually.deep.equal([
+        this.epochA,
+        this.epochB,
+      ]);
+    });
+
+    it('_consumeClaimableRedeem is a no-op when the oldest epoch is Pending', async function () {
+      await this.mock.$_fulfillRedeem(this.epochB, 100n);
+
+      await this.mock.$_consumeClaimableRedeem(999n, user);
+
+      await expect(this.mock.totalRedeemShares(this.epochA)).to.eventually.equal(100n);
+      await expect(this.mock.totalRedeemShares(this.epochB)).to.eventually.equal(50n);
+      await expect(this.mock.totalRedeemAssets(this.epochB)).to.eventually.equal(100n);
+      await expect(this.mock.$_pendingAvailableRedeemRequest(this.epochA, user)).to.eventually.equal(100n);
+      await expect(this.mock.redeemEpochs(user, 0, ethers.MaxUint256)).to.eventually.deep.equal([
+        this.epochA,
+        this.epochB,
+      ]);
+    });
+
+    it('claims unlock automatically once the older epoch is fulfilled', async function () {
+      await this.mock.$_fulfillRedeem(this.epochB, 100n); // B first
+      await this.mock.$_fulfillRedeem(this.epochA, 200n); // then A
+
+      await expect(this.mock.maxWithdraw(user)).to.eventually.equal(300n);
+      await expect(this.mock.maxRedeem(user)).to.eventually.equal(150n);
+
+      await this.mock.connect(user).redeem(150n, user, user);
+      await expect(this.token.balanceOf(user)).to.eventually.equal(300n);
+      await expect(this.mock.redeemEpochs(user, 0, ethers.MaxUint256)).to.eventually.deep.equal([]);
     });
   });
 

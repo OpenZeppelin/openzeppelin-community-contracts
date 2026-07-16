@@ -66,6 +66,9 @@ abstract contract ERC7540EpochRedeem is ERC7540 {
     /// @dev Attempted to fulfill a redeem epoch that has already been fulfilled.
     error ERC7540EpochRedeemAlreadyFulfilled(uint256 epochId);
 
+    /// @dev Attempted to enqueue an epoch for `controller` past {_requestQueueLimit}.
+    error ERC7540EpochRedeemQueueLimitExceeded(address controller);
+
     /// @inheritdoc ERC7540
     function _isRedeemAsync() internal pure virtual override returns (bool) {
         return true;
@@ -142,28 +145,31 @@ abstract contract ERC7540EpochRedeem is ERC7540 {
     }
 
     /**
-     * @dev Sums claimable assets across all fulfilled epochs the `owner` participates in.
+     * @dev Sums claimable assets from `owner`'s fulfilled epochs oldest-first, stopping at the
+     * first Pending epoch. Fulfilled epochs behind a Pending one are not counted until the
+     * Pending one is fulfilled. Matches {_consumeClaimableWithdraw}.
      *
-     * NOTE: This function iterates over the `owner`'s epoch queue, which is O(n) in the number of
-     * epochs the owner participates in. This is bounded by {_requestQueueLimit} (default 32) and is
-     * per-account; an attacker creating many small requests can only inflate their own queue, not
-     * other users'. Cross-controller DoS is not possible because epoch fulfillment via {_fulfillRedeem}
-     * is O(1) (it sets `totalAssets` for the entire epoch in a single write).
+     * NOTE: O(n) in `owner`'s epochs, bounded by {_requestQueueLimit} (default 32). Per-account,
+     * so an attacker creating many small requests can only inflate their own queue, not
+     * other users'. Cross-controller DoS is not possible because epoch fulfillment via
+     * {_fulfillRedeem} is O(1) (it sets `totalAssets` for the entire epoch in a single write).
      */
     function _asyncMaxWithdraw(address owner) internal view virtual override returns (uint256 assets) {
         uint256 result = 0;
         for (uint256 i = 0; i < _memberOf[owner].length(); ++i) {
             uint256 epochId = uint256(_memberOf[owner].at(i));
+            if (totalRedeemAssets(epochId) == 0) break; // stop at the oldest Pending epoch
             result += _convertToRedeemAssets(epochId, _claimableRedeemRequest(epochId, owner), Math.Rounding.Floor);
         }
         return result;
     }
 
-    /// @dev Sums claimable shares across all fulfilled epochs the `owner` participates in.
+    /// @dev Sums claimable shares across all fulfilled epochs the `owner` participates in. Same as {_asyncMaxWithdraw}.
     function _asyncMaxRedeem(address owner) internal view virtual override returns (uint256 shares) {
         uint256 result = 0;
         for (uint256 i = 0; i < _memberOf[owner].length(); ++i) {
             uint256 epochId = uint256(_memberOf[owner].at(i));
+            if (totalRedeemAssets(epochId) == 0) break; // stop at the oldest Pending epoch
             result += _claimableRedeemRequest(epochId, owner);
         }
         return result;
@@ -220,7 +226,10 @@ abstract contract ERC7540EpochRedeem is ERC7540 {
             // Limit the number of pending epochs per account to avoid O(n) loop in
             // _asyncMaxWithdraw and _asyncMaxRedeem being a concern. Users that have reached
             // the limit should claim fulfilled requests to clean up the queue.
-            require(_memberOf[controller].length() < _requestQueueLimit());
+            require(
+                _memberOf[controller].length() < _requestQueueLimit(),
+                ERC7540EpochRedeemQueueLimitExceeded(controller)
+            );
 
             _memberOf[controller].pushBack(bytes32(epochId));
         }
@@ -240,6 +249,11 @@ abstract contract ERC7540EpochRedeem is ERC7540 {
      * long as derived contracts preserve the no-side-effect semantics of this function — if not,
      * derived contracts should restrict `totalAssets != 0`.
      *
+     * NOTE: Out-of-order fulfillment is permitted, but each controller's claims stay gated on
+     * their oldest Pending epoch (see {_consumeClaimableWithdraw}). Funds are not lost; a later
+     * fulfilled epoch simply waits until the older one is fulfilled. Derived contracts wanting
+     * strict FIFO settlement should enforce it here.
+     *
      * Requirements:
      *
      * * `epochId` must be a past epoch (less than {currentRedeemEpoch}).
@@ -257,15 +271,20 @@ abstract contract ERC7540EpochRedeem is ERC7540 {
     }
 
     /**
-     * @dev Iterates through the controller's epoch queue front-to-back, consuming assets
-     * and converting them to shares at each epoch's locked rate. Fully consumed epochs
-     * are dequeued.
+     * @dev Consumes `assets` from `controller`'s epochs oldest-first at each epoch's locked rate,
+     * dequeueing fully consumed ones. Breaks early when the oldest epoch is still Pending:
+     * consuming from it would burn `assets` for zero shares. Claims are therefore gated on the
+     * oldest Pending epoch, matching {_asyncMaxWithdraw}.
+     *
+     * NOTE: Wrappers wanting stricter FIFO semantics should override to revert
+     * when the oldest epoch is Pending.
      */
     function _consumeClaimableWithdraw(uint256 assets, address controller) internal virtual override returns (uint256) {
         uint256 shares = 0;
 
         while (assets > 0) {
             uint256 epochId = uint256(_memberOf[controller].front());
+            if (totalRedeemAssets(epochId) == 0) break; // oldest queued epoch is still Pending
 
             uint256 requestedShares = _pendingAvailableRedeemRequest(epochId, controller);
             uint256 requested = _convertToRedeemAssets(epochId, requestedShares, Math.Rounding.Ceil);
@@ -295,6 +314,7 @@ abstract contract ERC7540EpochRedeem is ERC7540 {
 
         while (shares > 0) {
             uint256 epochId = uint256(_memberOf[controller].front());
+            if (totalRedeemAssets(epochId) == 0) break; // oldest queued epoch is still Pending
 
             uint256 requested = _pendingAvailableRedeemRequest(epochId, controller);
             if (requested <= shares) _memberOf[controller].popFront();

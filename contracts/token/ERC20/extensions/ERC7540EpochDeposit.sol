@@ -66,6 +66,9 @@ abstract contract ERC7540EpochDeposit is ERC7540 {
     /// @dev Attempted to fulfill a deposit epoch that has already been fulfilled.
     error ERC7540EpochDepositAlreadyFulfilled(uint256 epochId);
 
+    /// @dev Attempted to enqueue an epoch for `controller` past {_requestQueueLimit}.
+    error ERC7540EpochDepositQueueLimitExceeded(address controller);
+
     /// @inheritdoc ERC7540
     function _isDepositAsync() internal pure virtual override returns (bool) {
         return true;
@@ -142,28 +145,31 @@ abstract contract ERC7540EpochDeposit is ERC7540 {
     }
 
     /**
-     * @dev Sums claimable assets across all fulfilled epochs the `owner` participates in.
+     * @dev Sums claimable assets from `owner`'s fulfilled epochs oldest-first, stopping at the
+     * first Pending epoch. Fulfilled epochs behind a Pending one are not counted until the
+     * Pending one is fulfilled. Matches {_consumeClaimableDeposit}.
      *
-     * NOTE: This function iterates over the `owner`'s epoch queue, which is O(n) in the number of
-     * epochs the owner participates in. This is bounded by {_requestQueueLimit} (default 32) and is
-     * per-account; an attacker creating many small requests can only inflate their own queue, not
-     * other users'. Cross-controller DoS is not possible because epoch fulfillment via {_fulfillDeposit}
-     * is O(1) (it sets `totalShares` for the entire epoch in a single write).
+     * NOTE: O(n) in `owner`'s epochs, bounded by {_requestQueueLimit} (default 32). Per-account,
+     * so an attacker creating many small requests can only inflate their own queue, not
+     * other users'. Cross-controller DoS is not possible because epoch fulfillment via
+     * {_fulfillDeposit} is O(1) (it sets `totalShares` for the entire epoch in a single write).
      */
     function _asyncMaxDeposit(address owner) internal view virtual override returns (uint256 assets) {
         uint256 result = 0;
         for (uint256 i = 0; i < _memberOf[owner].length(); ++i) {
             uint256 epochId = uint256(_memberOf[owner].at(i));
+            if (totalDepositShares(epochId) == 0) break; // stop at the oldest Pending epoch
             result += _claimableDepositRequest(epochId, owner);
         }
         return result;
     }
 
-    /// @dev Sums claimable shares across all fulfilled epochs the `owner` participates in.
+    /// @dev Sums claimable shares across all fulfilled epochs the `owner` participates in. Same as {_asyncMaxDeposit}.
     function _asyncMaxMint(address owner) internal view virtual override returns (uint256 shares) {
         uint256 result = 0;
         for (uint256 i = 0; i < _memberOf[owner].length(); ++i) {
             uint256 epochId = uint256(_memberOf[owner].at(i));
+            if (totalDepositShares(epochId) == 0) break; // stop at the oldest Pending epoch
             result += _convertToDepositShares(epochId, _claimableDepositRequest(epochId, owner), Math.Rounding.Floor);
         }
         return result;
@@ -220,7 +226,10 @@ abstract contract ERC7540EpochDeposit is ERC7540 {
             // Limit the number of pending epochs per account to avoid O(n) loop in
             // _asyncMaxDeposit and _asyncMaxMint being a concern. Users that have reached
             // the limit should claim fulfilled requests to clean up the queue.
-            require(_memberOf[controller].length() < _requestQueueLimit());
+            require(
+                _memberOf[controller].length() < _requestQueueLimit(),
+                ERC7540EpochDepositQueueLimitExceeded(controller)
+            );
 
             _memberOf[controller].pushBack(bytes32(epochId));
         }
@@ -240,6 +249,11 @@ abstract contract ERC7540EpochDeposit is ERC7540 {
      * long as derived contracts preserve the no-side-effect semantics of this function — if not,
      * derived contracts should restrict `totalShares != 0`.
      *
+     * NOTE: Out-of-order fulfillment is permitted, but each controller's claims stay gated on
+     * their oldest Pending epoch (see {_consumeClaimableDeposit}). Funds are not lost; a later
+     * fulfilled epoch simply waits until the older one is fulfilled. Derived contracts wanting
+     * strict FIFO settlement should enforce it here.
+     *
      * Requirements:
      *
      * * `epochId` must be a past epoch (less than {currentDepositEpoch}).
@@ -257,15 +271,20 @@ abstract contract ERC7540EpochDeposit is ERC7540 {
     }
 
     /**
-     * @dev Iterates through the controller's epoch queue front-to-back, consuming assets
-     * and converting them to shares at each epoch's locked rate. Fully consumed epochs
-     * are dequeued.
+     * @dev Consumes `assets` from `controller`'s epochs oldest-first at each epoch's locked rate,
+     * dequeueing fully consumed ones. Breaks early when the oldest epoch is still Pending:
+     * consuming from it would burn `assets` for zero shares. Claims are therefore gated on the
+     * oldest Pending epoch, matching {_asyncMaxDeposit}.
+     *
+     * NOTE: Wrappers wanting stricter FIFO semantics should consider override to revert when
+     * the oldest epoch is Pending.
      */
     function _consumeClaimableDeposit(uint256 assets, address controller) internal virtual override returns (uint256) {
         uint256 shares = 0;
 
         while (assets > 0) {
             uint256 epochId = uint256(_memberOf[controller].front());
+            if (totalDepositShares(epochId) == 0) break; // oldest queued epoch is still Pending
 
             uint256 requested = _pendingAvailableDepositRequest(epochId, controller);
             if (requested <= assets) _memberOf[controller].popFront();
@@ -291,6 +310,7 @@ abstract contract ERC7540EpochDeposit is ERC7540 {
 
         while (shares > 0) {
             uint256 epochId = uint256(_memberOf[controller].front());
+            if (totalDepositShares(epochId) == 0) break; // oldest queued epoch is still Pending
 
             uint256 requestedAssets = _pendingAvailableDepositRequest(epochId, controller);
             uint256 requested = _convertToDepositShares(epochId, requestedAssets, Math.Rounding.Ceil);

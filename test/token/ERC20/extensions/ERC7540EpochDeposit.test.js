@@ -411,8 +411,10 @@ describe('ERC7540EpochDeposit', function () {
         await time.increaseTo.timestamp(epoch * week);
       }
 
-      // The 33rd distinct epoch should revert (bare require — no custom error)
-      await expect(this.mock.connect(user).requestDeposit(1n, user, user)).to.be.reverted;
+      // The 33rd distinct epoch should revert with the queue-limit error
+      await expect(this.mock.connect(user).requestDeposit(1n, user, user))
+        .to.be.revertedWithCustomError(this.mock, 'ERC7540EpochDepositQueueLimitExceeded')
+        .withArgs(user);
     });
 
     it('multiple requests in the same epoch share one queue slot', async function () {
@@ -427,6 +429,79 @@ describe('ERC7540EpochDeposit', function () {
       // Did not hit the queue limit despite > 32 requests
       const epochId = await this.mock.currentDepositEpoch();
       await expect(this.mock.totalDepositAssets(epochId)).to.eventually.equal(50n);
+    });
+  });
+
+  describe('out-of-order fulfillment', function () {
+    let user;
+
+    beforeEach(async function () {
+      [, user] = await ethers.getSigners();
+      await this.token.$_mint(user, 1000n);
+      await this.token.connect(user).approve(this.mock, ethers.MaxUint256);
+      this.epochA = await this.mock
+        .connect(user)
+        .requestDeposit(100n, user, user)
+        .then(tx => this.getRequestId(tx));
+      await time.increaseTo.timestamp((this.epochA + 1n) * week);
+      this.epochB = await this.mock
+        .connect(user)
+        .requestDeposit(50n, user, user)
+        .then(tx => this.getRequestId(tx));
+      await advancePast(this.epochB);
+    });
+
+    it('maxDeposit / maxMint hide a fulfilled epoch when an older one is still Pending', async function () {
+      await this.mock.$_fulfillDeposit(this.epochB, 100n); // out of order; B before A
+
+      await expect(this.mock.maxDeposit(user)).to.eventually.equal(0n);
+      await expect(this.mock.maxMint(user)).to.eventually.equal(0n);
+
+      await expect(this.mock.pendingDepositRequest(this.epochA, user)).to.eventually.equal(100n);
+      await expect(this.mock.claimableDepositRequest(this.epochB, user)).to.eventually.equal(50n);
+    });
+
+    it('_consumeClaimableDeposit is a no-op when the oldest epoch is Pending', async function () {
+      await this.mock.$_fulfillDeposit(this.epochB, 100n);
+
+      await this.mock.$_consumeClaimableDeposit(999n, user);
+
+      await expect(this.mock.totalDepositAssets(this.epochA)).to.eventually.equal(100n);
+      await expect(this.mock.totalDepositAssets(this.epochB)).to.eventually.equal(50n);
+      await expect(this.mock.totalDepositShares(this.epochB)).to.eventually.equal(100n);
+      await expect(this.mock.$_pendingAvailableDepositRequest(this.epochA, user)).to.eventually.equal(100n);
+      await expect(this.mock.depositEpochs(user, 0, ethers.MaxUint256)).to.eventually.deep.equal([
+        this.epochA,
+        this.epochB,
+      ]);
+    });
+
+    it('_consumeClaimableMint is a no-op when the oldest epoch is Pending', async function () {
+      await this.mock.$_fulfillDeposit(this.epochB, 100n);
+
+      await this.mock.$_consumeClaimableMint(999n, user);
+
+      await expect(this.mock.totalDepositAssets(this.epochA)).to.eventually.equal(100n);
+      await expect(this.mock.totalDepositAssets(this.epochB)).to.eventually.equal(50n);
+      await expect(this.mock.totalDepositShares(this.epochB)).to.eventually.equal(100n);
+      await expect(this.mock.$_pendingAvailableDepositRequest(this.epochA, user)).to.eventually.equal(100n);
+      await expect(this.mock.depositEpochs(user, 0, ethers.MaxUint256)).to.eventually.deep.equal([
+        this.epochA,
+        this.epochB,
+      ]);
+    });
+
+    it('claims unlock automatically once the older epoch is fulfilled', async function () {
+      await this.mock.$_fulfillDeposit(this.epochB, 100n); // B first
+      await this.mock.$_fulfillDeposit(this.epochA, 200n); // then A
+
+      await expect(this.mock.maxDeposit(user)).to.eventually.equal(150n);
+      await expect(this.mock.maxMint(user)).to.eventually.equal(300n);
+
+      // A single deposit call drains both epochs in queue order
+      await this.mock.connect(user).deposit(150n, user, ethers.Typed.address(user));
+      await expect(this.mock.balanceOf(user)).to.eventually.equal(300n);
+      await expect(this.mock.depositEpochs(user, 0, ethers.MaxUint256)).to.eventually.deep.equal([]);
     });
   });
 
