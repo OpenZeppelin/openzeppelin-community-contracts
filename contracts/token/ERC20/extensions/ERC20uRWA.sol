@@ -30,13 +30,31 @@ abstract contract ERC20uRWA is ERC20, ERC165, ERC20Freezable, ERC20Restricted, I
     }
 
     /**
+     * @dev Returns whether `account` is allowed to send tokens. Defaults to {canTransact}.
+     *
+     * Override to implement sender-specific restrictions distinct from {canReceive}.
+     */
+    function canSend(address account) public view virtual returns (bool) {
+        return canTransact(account);
+    }
+
+    /**
+     * @dev Returns whether `account` is allowed to receive tokens. Defaults to {canTransact}.
+     *
+     * Override to implement recipient-specific restrictions distinct from {canSend}.
+     */
+    function canReceive(address account) public view virtual returns (bool) {
+        return canTransact(account);
+    }
+
+    /**
      * @dev See {IERC7943Fungible-canTransfer}.
      *
      * CAUTION: This function is only meant for external use. Overriding it will not apply the new checks to
      * the internal {_update} function. Consider overriding {_update} accordingly to keep both functions in sync.
      */
-    function canTransfer(address from, address to, uint256 amount) external view virtual returns (bool) {
-        return (amount <= available(from) && canTransact(from) && canTransact(to));
+    function canTransfer(address from, address to, uint256 /* amount */) external view virtual returns (bool) {
+        return (canSend(from) && canReceive(to));
     }
 
     /// @inheritdoc IERC7943Fungible
@@ -70,7 +88,7 @@ abstract contract ERC20uRWA is ERC20, ERC165, ERC20Freezable, ERC20Restricted, I
      */
     function forcedTransfer(address from, address to, uint256 amount) public virtual returns (bool result) {
         _checkEnforcer(from, to, amount);
-        require(canTransact(to), ERC7943CannotTransact(to));
+        require(canReceive(to), ERC7943CannotTransact(to));
 
         // Update frozen balance if needed. ERC-7943 requires that balance is unfrozen first and then send the tokens.
         uint256 currentFrozen = frozen(from);
