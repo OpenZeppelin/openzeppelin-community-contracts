@@ -21,6 +21,9 @@ import {SignatureChecker} from "@openzeppelin/contracts/utils/cryptography/Signa
  * arguments (see {AccessManagerWithRoleAccounts}, which deploys one clone per role).
  */
 contract RoleSigner is AbstractSigner {
+    /// @dev Thrown when the access manager is the zero address.
+    error InvalidAccessManager();
+
     /// @dev The access manager whose role membership authorizes signatures for this signer.
     IAccessManager public immutable accessManager;
 
@@ -29,6 +32,7 @@ contract RoleSigner is AbstractSigner {
 
     /// @dev Sets the {accessManager} whose role membership authorizes signatures for this signer.
     constructor(IAccessManager accessManager_) {
+        require(address(accessManager_) != address(0), InvalidAccessManager());
         accessManager = accessManager_;
     }
 
