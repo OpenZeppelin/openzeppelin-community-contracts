@@ -40,4 +40,7 @@ contract RoleAccount is ERC7821, ERC7739, RoleSigner {
     ) internal view virtual override returns (bool) {
         return super._erc7821AuthorizedExecutor(caller, mode, executionData) || _isMember(caller);
     }
+
+    /// @dev Allow the account to receive ETH.
+    receive() external payable {}
 }
