@@ -179,4 +179,34 @@ describe('ERC7786OpenBridge', function () {
       }
     });
   });
+
+  describe('gateway resilience', function () {
+    it('delivers the message even if one gateway reverts, as long as the threshold is met', async function () {
+      // Two synchronous gateway mocks shared by both bridges, with a threshold of 1
+      const gateways = await Promise.all([
+        ethers.deployContract('ERC7786GatewayMock'),
+        ethers.deployContract('ERC7786GatewayMock'),
+      ]);
+      const bridgeA = await ethers.deployContract('ERC7786OpenBridge', [this.owner, gateways, 1]);
+      const bridgeB = await ethers.deployContract('ERC7786OpenBridge', [this.owner, gateways, 1]);
+      await bridgeA.registerRemoteBridge(this.chain.toErc7930(bridgeB));
+      await bridgeB.registerRemoteBridge(this.chain.toErc7930(bridgeA));
+
+      const destination = await ethers.deployContract('$ERC7786RecipientMock', [bridgeB]);
+      const payload = ethers.randomBytes(128);
+
+      // Make the first gateway revert when sending
+      await gateways[0].setRevertOnSent(true);
+
+      // The message is still delivered through the second gateway, and a failure event is emitted for the first one
+      await expect(bridgeA.connect(this.sender).sendMessage(this.chain.toErc7930(destination), payload, []))
+        .to.emit(bridgeA, 'ERC7786OpenBridgeSendMessageFailed')
+        .withArgs(gateways[0])
+        .to.emit(bridgeA, 'MessageSent')
+        .to.emit(bridgeB, 'Received')
+        .to.emit(bridgeB, 'ExecutionSuccess')
+        .to.emit(destination, 'MessageReceived')
+        .withArgs(bridgeB, anyValue, this.chain.toErc7930(this.sender), payload, 0n);
+    });
+  });
 });

@@ -34,6 +34,7 @@ contract ERC7786OpenBridge is IERC7786GatewaySource, IERC7786Recipient, Ownable,
     event ExecutionFailed(bytes32 indexed receiveId);
     event GatewayAdded(address indexed gateway);
     event GatewayRemoved(address indexed gateway);
+    event ERC7786OpenBridgeSendMessageFailed(address indexed gateway);
     event ThresholdUpdated(uint8 threshold);
 
     error UnsupportedNativeTransfer();
@@ -127,6 +128,7 @@ contract ERC7786OpenBridge is IERC7786GatewaySource, IERC7786Recipient, Ownable,
                     ++sent;
                 } catch {
                     // if one gateway fails, we still want to send the message through the others
+                    emit ERC7786OpenBridgeSendMessageFailed(gateway);
                 }
             }
             require(sent >= getThreshold(), ERC7786OpenBridgeInsufficientGateways());
