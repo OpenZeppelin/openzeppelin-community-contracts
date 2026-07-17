@@ -98,7 +98,9 @@ describe('ERC7786OpenBridge', function () {
       this.payload = ethers.randomBytes(128);
       this.attributes = [];
       this.opts = {};
-      this.outcome = 'ERC7786OpenBridgeInvalidExecutionReturnValue'; // revert with custom error
+      // With the synchronous mock, every gateway delivery reverts on the destination and is caught by the
+      // send-side try/catch, so no gateway reaches the threshold.
+      this.outcome = 'ERC7786OpenBridgeInsufficientGateways'; // revert with custom error
     });
 
     it('invalid recipient - EOA', async function () {
@@ -106,7 +108,9 @@ describe('ERC7786OpenBridge', function () {
       this.payload = ethers.randomBytes(128);
       this.attributes = [];
       this.opts = {};
-      this.outcome = 'ERC7786OpenBridgeInvalidExecutionReturnValue'; // revert with custom error
+      // With the synchronous mock, every gateway delivery reverts on the destination and is caught by the
+      // send-side try/catch, so no gateway reaches the threshold.
+      this.outcome = 'ERC7786OpenBridgeInsufficientGateways'; // revert with custom error
     });
 
     afterEach(async function () {
