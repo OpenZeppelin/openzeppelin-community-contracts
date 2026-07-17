@@ -52,7 +52,7 @@ contract RoleSigner is AbstractSigner {
      * @dev Returns whether `account` currently holds {roleId} in the {accessManager} and has no execution delay.
      * This signer does not allow roles with execution delays to interact with it.
      */
-    function _isMember(address account) internal view virtual returns (bool) {
+    function _isUnrestrictedMember(address account) internal view virtual returns (bool) {
         (bool hasRole, uint32 executionDelay) = accessManager.hasRole(roleId(), account);
         return hasRole && executionDelay == 0;
     }
@@ -73,6 +73,6 @@ contract RoleSigner is AbstractSigner {
     ) internal view virtual override returns (bool) {
         if (signature.length < 20) return false;
         address signer = address(bytes20(signature));
-        return SignatureChecker.isValidSignatureNow(signer, hash, signature[20:]) && _isMember(signer);
+        return SignatureChecker.isValidSignatureNow(signer, hash, signature[20:]) && _isUnrestrictedMember(signer);
     }
 }
