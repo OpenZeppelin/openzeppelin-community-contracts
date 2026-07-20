@@ -304,7 +304,7 @@ flowchart TD
 
 === Epoch identification
 
-By default `currentDepositEpoch()` and `currentRedeemEpoch()` return `block.timestamp / 1 weeks`. Both functions are `virtual` and intended to be overridden in production deployments — common patterns are a manually-bumped counter incremented inside the admin fulfillment, a different cadence (daily, hourly), or a cyclic scheme tied to an external rebalance trigger.
+By default `currentDepositEpoch()` and `currentRedeemEpoch()` return `block.timestamp / 1 weeks + 1`. The `+ 1` keeps `requestId != 0` so the epoch strategy is never mistaken for ERC-7540's controller-only (`requestId == 0`) accounting mode. Both functions are `virtual` and intended to be overridden in production deployments — common patterns are a manually-bumped counter incremented inside the admin fulfillment, a different cadence (daily, hourly), or a cyclic scheme tied to an external rebalance trigger.
 
 NOTE: The contract requires `epochId < currentXEpoch()` to fulfill — only past epochs can be settled. New requests are always recorded against the current epoch, so the admin only ever sees totals for already-closed epochs at fulfillment time.
 
@@ -344,11 +344,13 @@ vault.redeem(950e18, receiver, controller); // receiver gets 1010 USDC
 
 Each controller tracks the epochs they participate in via a `DoubleEndedQueue` capped at 32 entries by default (override `_depositRequestQueueLimit()` / `_redeemRequestQueueLimit()` to change). Claims walk the queue front-to-back, popping fully-consumed epochs. The cap is per-controller — an attacker cannot fill another user's queue, and epoch fulfillment is O(1) (a single write per epoch) so cross-controller DoS is not possible.
 
+NOTE: To enforce the per-controller isolation, the epoch strategy tightens the base's authorization: on top of the owner-side check, `requestDeposit` and `requestRedeem` also require `msg.sender` to be `controller` or an approved operator of `controller`. Third-party attribution (`msg.sender != controller`) needs the controller's prior `setOperator` approval — the standard operator pattern applies.
+
 Users that hit the queue limit must claim fulfilled epochs to free up slots before submitting new requests.
 
 === Rounding and dust handling
 
-Within a single epoch, claims pay each controller's pro-rata share floor-rounded against the remaining `totalAssets` / `totalShares`. In rare cases involving very small fulfillment values relative to the number of claimants, rounding can leave up to 1 wei of unclaimable per-controller residue. The contract uses saturating subtraction to absorb the excess into the shared totals so they drain to 0 cleanly when fully claimed — at realistic ERC-20 decimals this dust is sub-unit and economically immaterial.
+Within a single epoch, claims pay each controller's pro-rata share floor-rounded against the remaining `totalAssets` / `totalShares`. In rare cases involving very small fulfillment values relative to the number of claimants, rounding can leave up to 1 wei of unclaimable per-controller residue. At realistic ERC-20 decimals this dust is sub-unit and economically immaterial.
 
 Unlike the standard ERC-4626 inflation-attack surface, per-epoch `totalAssets` and `totalShares` cannot be inflated by donation — they only change via `requestDeposit` / `requestRedeem` and `_fulfillDeposit` / `_fulfillRedeem`. Deployers wanting finer per-claim granularity can set `_decimalsOffset()` to scale share precision relative to assets.
 
