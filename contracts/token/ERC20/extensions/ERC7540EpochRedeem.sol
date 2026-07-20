@@ -74,9 +74,10 @@ abstract contract ERC7540EpochRedeem is ERC7540 {
         return true;
     }
 
-    /// @dev Returns the current epoch ID. Defaults to `block.timestamp / 1 weeks`.
+    /// @dev Returns the current epoch ID. Defaults to `block.timestamp / 1 weeks + 1`.
     function currentRedeemEpoch() public view virtual returns (uint256) {
-        return block.timestamp / 1 weeks;
+        // +1 to keep requestId != 0 so the strategy is never mistaken for ERC-7540's controller-only (requestId == 0) accounting mode.
+        return block.timestamp / 1 weeks + 1;
     }
 
     /**
@@ -205,10 +206,13 @@ abstract contract ERC7540EpochRedeem is ERC7540 {
 
     /**
      * @dev Records the request in the current epoch and enqueues the epoch ID for `controller`
-     * if not already present.
+     * if not already present. A zero-amount request is a no-op at the epoch layer (it emits the
+     * event via `super` but does not create an unfulfillable epoch or occupy a queue slot).
      *
      * Requirements:
      *
+     * * `_msgSender()` must be `controller` or an approved operator of `controller`. This is on
+     * top of the base's `owner` allowance/operator check and prevents third-party queue spam.
      * * The controller's epoch queue must not exceed {_requestQueueLimit}.
      */
     function _requestRedeem(
@@ -217,21 +221,24 @@ abstract contract ERC7540EpochRedeem is ERC7540 {
         address owner,
         uint256 /* requestId */
     ) internal virtual override returns (uint256) {
+        _checkOperatorOrController(_isRedeemAsync(), controller, _msgSender());
         uint256 epochId = currentRedeemEpoch();
-        _epochs[epochId].totalShares += shares;
-        _epochs[epochId].requests[controller] += shares;
+        if (shares > 0) {
+            _epochs[epochId].totalShares += shares;
+            _epochs[epochId].requests[controller] += shares;
 
-        (bool success, bytes32 lastEpochId) = _memberOf[controller].tryBack();
-        if (!success || lastEpochId != bytes32(epochId)) {
-            // Limit the number of pending epochs per account to avoid O(n) loop in
-            // _asyncMaxWithdraw and _asyncMaxRedeem being a concern. Users that have reached
-            // the limit should claim fulfilled requests to clean up the queue.
-            require(
-                _memberOf[controller].length() < _requestQueueLimit(),
-                ERC7540EpochRedeemQueueLimitExceeded(controller)
-            );
+            (bool success, bytes32 lastEpochId) = _memberOf[controller].tryBack();
+            if (!success || lastEpochId != bytes32(epochId)) {
+                // Limit the number of pending epochs per account to avoid O(n) loop in
+                // _asyncMaxWithdraw and _asyncMaxRedeem being a concern. Users that have reached
+                // the limit should claim fulfilled requests to clean up the queue.
+                require(
+                    _memberOf[controller].length() < _requestQueueLimit(),
+                    ERC7540EpochRedeemQueueLimitExceeded(controller)
+                );
 
-            _memberOf[controller].pushBack(bytes32(epochId));
+                _memberOf[controller].pushBack(bytes32(epochId));
+            }
         }
 
         return super._requestRedeem(shares, controller, owner, epochId);
@@ -247,7 +254,9 @@ abstract contract ERC7540EpochRedeem is ERC7540 {
      * to fulfill at zero (a confiscation event with no economic purpose); if 0 is passed by
      * accident, the call is a no-op and the admin can re-fulfill. This recovery only holds as
      * long as derived contracts preserve the no-side-effect semantics of this function — if not,
-     * derived contracts should restrict `totalAssets != 0`.
+     * derived contracts should restrict `totalAssets != 0`. A genuine total-loss settlement is
+     * not representable in this encoding; deployers needing that SHOULD override to encode the
+     * fulfilled state separately (e.g. an explicit boolean).
      *
      * NOTE: Out-of-order fulfillment is permitted, but each controller's claims stay gated on
      * their oldest Pending epoch (see {_consumeClaimableWithdraw}). Funds are not lost; a later
@@ -278,6 +287,12 @@ abstract contract ERC7540EpochRedeem is ERC7540 {
      *
      * NOTE: Wrappers wanting stricter FIFO semantics should consider overriding to revert when
      * the oldest epoch is Pending.
+     *
+     * NOTE: When the epoch's locked rate skews the `shares : assets` ratio (either direction),
+     * a small `assets` input can round `batchShares` to zero; the epoch's asset pool moves
+     * without burning shares from the caller's request. At realistic ERC-20 decimals the per-call
+     * drift is sub-cent. Deployers with non-standard decimals or a zero-drift requirement SHOULD
+     * override to revert when `batchAssets > 0 && batchShares == 0`.
      */
     function _consumeClaimableWithdraw(uint256 assets, address controller) internal virtual override returns (uint256) {
         uint256 shares = 0;
@@ -291,16 +306,17 @@ abstract contract ERC7540EpochRedeem is ERC7540 {
             if (requested <= assets) _memberOf[controller].popFront();
 
             uint256 batchAssets = requested.min(assets);
-            uint256 batchShares = _convertToRedeemShares(epochId, batchAssets, Math.Rounding.Floor);
+            // Cap batchShares at requestedShares so a ceil-floor gap on the last asset of an
+            // earlier epoch cannot consume more shares than the controller was entitled to
+            // (prevents cross-epoch borrowing).
+            uint256 batchShares = _convertToRedeemShares(epochId, batchAssets, Math.Rounding.Floor).min(
+                requestedShares
+            );
 
             EpochRedeemMetadata storage details = _epochs[epochId];
-            // Using `requestedShares` (zero in the fully-claimed state) clears stuck dust.
-            // The saturation absorbs the 1-wei ceil/floor excess in `batchShares` when fully
-            // claimed, so `totalShares` reduces to 0 cleanly and the {_fulfillRedeem} sentinel
-            // stays unambiguous.
-            details.requests[controller] = requestedShares.saturatingSub(batchShares);
-            details.totalAssets = totalRedeemAssets(epochId).saturatingSub(batchAssets);
-            details.totalShares = totalRedeemShares(epochId).saturatingSub(batchShares);
+            details.requests[controller] -= batchShares; // batchShares <= requestedShares via .min
+            details.totalAssets -= batchAssets; // batchAssets <= requested <= totalAssets (see invariants)
+            details.totalShares -= batchShares; // batchShares <= requestedShares <= totalShares (invariant)
             assets -= batchAssets; // batchAssets <= assets (via .min)
             shares += batchShares;
         }
@@ -308,7 +324,15 @@ abstract contract ERC7540EpochRedeem is ERC7540 {
         return shares;
     }
 
-    /// @dev Same as {_consumeClaimableWithdraw} but iterates by shares instead of assets.
+    /**
+     * @dev Same as {_consumeClaimableWithdraw} but iterates by shares instead of assets.
+     *
+     * NOTE: When the epoch's locked rate skews the `shares : assets` ratio (either direction),
+     * a small `shares` input can round `batchAssets` to zero; the epoch's share pool moves
+     * without paying assets to the caller. At realistic ERC-20 decimals the per-call drift is
+     * sub-cent. Deployers with non-standard decimals or a zero-drift requirement SHOULD override
+     * to revert when `batchShares > 0 && batchAssets == 0`.
+     */
     function _consumeClaimableRedeem(uint256 shares, address controller) internal virtual override returns (uint256) {
         uint256 assets = 0;
 
@@ -323,8 +347,7 @@ abstract contract ERC7540EpochRedeem is ERC7540 {
             uint256 batchAssets = _convertToRedeemAssets(epochId, batchShares, Math.Rounding.Floor);
 
             EpochRedeemMetadata storage details = _epochs[epochId];
-            // Using `requested` (zero in the fully-claimed state) clears stuck dust.
-            details.requests[controller] = requested.saturatingSub(batchShares);
+            details.requests[controller] -= batchShares; // batchShares <= requested via .min
             details.totalShares -= batchShares; // batchShares <= details.totalShares (invariant: requests[c] <= totalShares)
             details.totalAssets -= batchAssets; // batchAssets = floor(batchShares * A/S) <= details.totalAssets (since batchShares <= totalShares)
             shares -= batchShares; // batchShares <= shares (via .min)

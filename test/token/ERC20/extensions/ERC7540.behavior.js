@@ -50,11 +50,13 @@ function shouldBehaveLikeERC7540Deposit({
   balance,
   supportCustomFulfill,
   withTmpHolder,
+  gateOnController,
 } = {}) {
   initialAssets ??= ethers.parseEther('17000000');
   initialShares ??= ethers.parseEther('42000000');
   balance ??= ethers.parseEther('1000');
   supportCustomFulfill ??= true;
+  gateOnController ??= false;
 
   describe('Should behave like ERC7540Deposit', function () {
     before(async function () {
@@ -69,6 +71,9 @@ function shouldBehaveLikeERC7540Deposit({
       await this.token.connect(this.owner).approve(this.mock, ethers.MaxUint256);
       await this.mock.connect(this.owner).setOperator(this.operator, true);
       await this.mock.connect(this.controller).setOperator(this.operator, true);
+      if (gateOnController) {
+        await this.mock.connect(this.controller).setOperator(this.owner, true);
+      }
     });
 
     describe('supports ERC-7540 operator interface', function () {
@@ -386,11 +391,18 @@ function shouldBehaveLikeERC7540Deposit({
   });
 }
 
-function shouldBehaveLikeERC7540Redeem({ initialAssets, initialShares, balance, supportCustomFulfill } = {}) {
+function shouldBehaveLikeERC7540Redeem({
+  initialAssets,
+  initialShares,
+  balance,
+  supportCustomFulfill,
+  gateOnController,
+} = {}) {
   initialAssets ??= ethers.parseEther('17000000');
   initialShares ??= ethers.parseEther('42000000');
   balance ??= ethers.parseEther('1000');
   supportCustomFulfill ??= true;
+  gateOnController ??= false;
 
   describe('Should behave like ERC7540Redeem', function () {
     before(async function () {
@@ -405,6 +417,9 @@ function shouldBehaveLikeERC7540Redeem({ initialAssets, initialShares, balance, 
       await this.token.connect(this.owner).approve(this.mock, ethers.MaxUint256);
       await this.mock.connect(this.owner).setOperator(this.operator, true);
       await this.mock.connect(this.controller).setOperator(this.operator, true);
+      if (gateOnController) {
+        await this.mock.connect(this.controller).setOperator(this.owner, true);
+      }
     });
 
     describe('supports ERC-7540 operator interface', function () {
@@ -476,6 +491,9 @@ function shouldBehaveLikeERC7540Redeem({ initialAssets, initialShares, balance, 
 
         it('spends allowance when caller is neither owner nor operator', async function () {
           await this.mock.connect(this.owner).approve(this.other, shares);
+          if (gateOnController) {
+            await this.mock.connect(this.controller).setOperator(this.other, true);
+          }
 
           const tx = this.mock.connect(this.other).requestRedeem(shares, this.controller, this.owner);
           const requestId = await this.getRequestId(tx);
@@ -488,6 +506,10 @@ function shouldBehaveLikeERC7540Redeem({ initialAssets, initialShares, balance, 
         });
 
         it('revert of caller is neither owner nor operator and has no allowance', async function () {
+          if (gateOnController) {
+            await this.mock.connect(this.controller).setOperator(this.other, true);
+          }
+
           await expect(this.mock.connect(this.other).requestRedeem(shares, this.controller, this.owner))
             .to.be.revertedWithCustomError(this.mock, 'ERC20InsufficientAllowance')
             .withArgs(this.other, 0n, shares);
