@@ -24,7 +24,7 @@ import {ERC7540} from "./ERC7540.sol";
  * manually-bumped epoch counters.
  *
  * Each account tracks its epoch memberships via a {DoubleEndedQueue} capped at
- * {_requestQueueLimit} entries (default: 32) to bound the O(n) loops in {_asyncMaxDeposit}
+ * {_depositRequestQueueLimit} entries (default: 32) to bound the O(n) loops in {_asyncMaxDeposit}
  * and {_asyncMaxMint}. Users that hit the limit should claim fulfilled epochs to free up space.
  *
  * NOTE: Claims pay each controller's pro-rata share floor-rounded against the remaining epoch
@@ -66,7 +66,7 @@ abstract contract ERC7540EpochDeposit is ERC7540 {
     /// @dev Attempted to fulfill a deposit epoch that has already been fulfilled.
     error ERC7540EpochDepositAlreadyFulfilled(uint256 epochId);
 
-    /// @dev Attempted to enqueue an epoch for `controller` past {_requestQueueLimit}.
+    /// @dev Attempted to enqueue an epoch for `controller` past {_depositRequestQueueLimit}.
     error ERC7540EpochDepositQueueLimitExceeded(address controller);
 
     /// @inheritdoc ERC7540
@@ -150,7 +150,7 @@ abstract contract ERC7540EpochDeposit is ERC7540 {
      * first Pending epoch. Fulfilled epochs behind a Pending one are not counted until the
      * Pending one is fulfilled. Matches {_consumeClaimableDeposit}.
      *
-     * NOTE: O(n) in `owner`'s epochs, bounded by {_requestQueueLimit} (default 32). Per-account,
+     * NOTE: O(n) in `owner`'s epochs, bounded by {_depositRequestQueueLimit} (default 32). Per-account,
      * so an attacker creating many small requests can only inflate their own queue, not
      * other users'. Cross-controller DoS is not possible because epoch fulfillment via
      * {_fulfillDeposit} is O(1) (it sets `totalShares` for the entire epoch in a single write).
@@ -213,7 +213,7 @@ abstract contract ERC7540EpochDeposit is ERC7540 {
      *
      * * `_msgSender()` must be `controller` or an approved operator of `controller`. This is on
      * top of the base's `owner` authentication and prevents third-party queue spam.
-     * * The controller's epoch queue must not exceed {_requestQueueLimit}.
+     * * The controller's epoch queue must not exceed {_depositRequestQueueLimit}.
      */
     function _requestDeposit(
         uint256 assets,
@@ -233,7 +233,7 @@ abstract contract ERC7540EpochDeposit is ERC7540 {
                 // _asyncMaxDeposit and _asyncMaxMint being a concern. Users that have reached
                 // the limit should claim fulfilled requests to clean up the queue.
                 require(
-                    _memberOf[controller].length() < _requestQueueLimit(),
+                    _memberOf[controller].length() < _depositRequestQueueLimit(),
                     ERC7540EpochDepositQueueLimitExceeded(controller)
                 );
 
@@ -361,7 +361,7 @@ abstract contract ERC7540EpochDeposit is ERC7540 {
      * @dev Maximum number of epoch entries in a controller's queue. Defaults to 32.
      * Prevents unbounded iteration in {_asyncMaxDeposit} and {_asyncMaxMint}.
      */
-    function _requestQueueLimit() internal view virtual returns (uint256) {
+    function _depositRequestQueueLimit() internal view virtual returns (uint256) {
         return 32;
     }
 }

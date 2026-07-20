@@ -342,7 +342,7 @@ vault.redeem(950e18, receiver, controller); // receiver gets 1010 USDC
 
 === Per-controller queue
 
-Each controller tracks the epochs they participate in via a `DoubleEndedQueue` capped at 32 entries by default (override `_requestQueueLimit()` to change). Claims walk the queue front-to-back, popping fully-consumed epochs. The cap is per-controller — an attacker cannot fill another user's queue, and epoch fulfillment is O(1) (a single write per epoch) so cross-controller DoS is not possible.
+Each controller tracks the epochs they participate in via a `DoubleEndedQueue` capped at 32 entries by default (override `_depositRequestQueueLimit()` / `_redeemRequestQueueLimit()` to change). Claims walk the queue front-to-back, popping fully-consumed epochs. The cap is per-controller — an attacker cannot fill another user's queue, and epoch fulfillment is O(1) (a single write per epoch) so cross-controller DoS is not possible.
 
 Users that hit the queue limit must claim fulfilled epochs to free up slots before submitting new requests.
 
@@ -391,11 +391,6 @@ contract NAVVault is ERC7540EpochDeposit, ERC7540EpochRedeem, Ownable {
         return super._requestRedeem(shares, controller, owner, requestId);
     }
 
-    function _requestQueueLimit()
-        internal view override(ERC7540EpochDeposit, ERC7540EpochRedeem) returns (uint256)
-    {
-        return super._requestQueueLimit();
-    }
 }
 ----
 
@@ -580,4 +575,4 @@ In the *admin strategy*, the admin has full control over the exchange rate at fu
 
 In the *delay strategy*, the exchange rate is computed at claim time using the live vault conversion. This means the rate can change between request and claim. If the vault's underlying yield fluctuates significantly, claimers may receive more or fewer shares/assets than expected at request time.
 
-In the *epoch strategy*, the admin picks a single rate per epoch that applies to every controller in the batch. Choosing a rate that does not reflect the real `totalAssets()` after deploying the epoch's capital dilutes existing shareholders just as in the admin strategy, but the impact is amplified because every request in the epoch is settled at that same rate. The per-controller queue limit (`_requestQueueLimit`, default 32) further bounds the per-account state — a user who fills their queue with small requests can only block themselves from submitting new ones, not other users, and fulfillment is O(1) per epoch.
+In the *epoch strategy*, the admin picks a single rate per epoch that applies to every controller in the batch. Choosing a rate that does not reflect the real `totalAssets()` after deploying the epoch's capital dilutes existing shareholders just as in the admin strategy, but the impact is amplified because every request in the epoch is settled at that same rate. The per-controller queue limit (`_depositRequestQueueLimit` / `_redeemRequestQueueLimit`, default 32) further bounds the per-account state — a user who fills their queue with small requests can only block themselves from submitting new ones, not other users, and fulfillment is O(1) per epoch.

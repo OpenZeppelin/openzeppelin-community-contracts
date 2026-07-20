@@ -24,14 +24,4 @@ abstract contract ERC7540EpochMock is ERC7540EpochDeposit, ERC7540EpochRedeem {
     ) internal virtual override(ERC7540, ERC7540EpochRedeem) returns (uint256) {
         return super._requestRedeem(shares, controller, owner, requestId);
     }
-
-    function _requestQueueLimit()
-        internal
-        view
-        virtual
-        override(ERC7540EpochDeposit, ERC7540EpochRedeem)
-        returns (uint256)
-    {
-        return super._requestQueueLimit();
-    }
 }

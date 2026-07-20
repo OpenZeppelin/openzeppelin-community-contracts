@@ -400,7 +400,7 @@ describe('ERC7540EpochDeposit', function () {
   });
 
   describe('queue limit', function () {
-    it('enforces `_requestQueueLimit` per controller', async function () {
+    it('enforces `_depositRequestQueueLimit` per controller', async function () {
       const [, user] = await ethers.getSigners();
       await this.token.$_mint(user, 10000n);
       await this.token.connect(user).approve(this.mock, ethers.MaxUint256);

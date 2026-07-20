@@ -24,7 +24,7 @@ import {ERC7540} from "./ERC7540.sol";
  * manually-bumped epoch counters.
  *
  * Each account tracks its epoch memberships via a {DoubleEndedQueue} capped at
- * {_requestQueueLimit} entries (default: 32) to bound the O(n) loops in {_asyncMaxWithdraw}
+ * {_redeemRequestQueueLimit} entries (default: 32) to bound the O(n) loops in {_asyncMaxWithdraw}
  * and {_asyncMaxRedeem}. Users that hit the limit should claim fulfilled epochs to free up space.
  *
  * NOTE: Claims pay each controller's pro-rata share floor-rounded against the remaining epoch
@@ -66,7 +66,7 @@ abstract contract ERC7540EpochRedeem is ERC7540 {
     /// @dev Attempted to fulfill a redeem epoch that has already been fulfilled.
     error ERC7540EpochRedeemAlreadyFulfilled(uint256 epochId);
 
-    /// @dev Attempted to enqueue an epoch for `controller` past {_requestQueueLimit}.
+    /// @dev Attempted to enqueue an epoch for `controller` past {_redeemRequestQueueLimit}.
     error ERC7540EpochRedeemQueueLimitExceeded(address controller);
 
     /// @inheritdoc ERC7540
@@ -150,7 +150,7 @@ abstract contract ERC7540EpochRedeem is ERC7540 {
      * first Pending epoch. Fulfilled epochs behind a Pending one are not counted until the
      * Pending one is fulfilled. Matches {_consumeClaimableWithdraw}.
      *
-     * NOTE: O(n) in `owner`'s epochs, bounded by {_requestQueueLimit} (default 32). Per-account,
+     * NOTE: O(n) in `owner`'s epochs, bounded by {_redeemRequestQueueLimit} (default 32). Per-account,
      * so an attacker creating many small requests can only inflate their own queue, not
      * other users'. Cross-controller DoS is not possible because epoch fulfillment via
      * {_fulfillRedeem} is O(1) (it sets `totalAssets` for the entire epoch in a single write).
@@ -213,7 +213,7 @@ abstract contract ERC7540EpochRedeem is ERC7540 {
      *
      * * `_msgSender()` must be `controller` or an approved operator of `controller`. This is on
      * top of the base's `owner` allowance/operator check and prevents third-party queue spam.
-     * * The controller's epoch queue must not exceed {_requestQueueLimit}.
+     * * The controller's epoch queue must not exceed {_redeemRequestQueueLimit}.
      */
     function _requestRedeem(
         uint256 shares,
@@ -233,7 +233,7 @@ abstract contract ERC7540EpochRedeem is ERC7540 {
                 // _asyncMaxWithdraw and _asyncMaxRedeem being a concern. Users that have reached
                 // the limit should claim fulfilled requests to clean up the queue.
                 require(
-                    _memberOf[controller].length() < _requestQueueLimit(),
+                    _memberOf[controller].length() < _redeemRequestQueueLimit(),
                     ERC7540EpochRedeemQueueLimitExceeded(controller)
                 );
 
@@ -361,7 +361,7 @@ abstract contract ERC7540EpochRedeem is ERC7540 {
      * @dev Maximum number of epoch entries in a controller's queue. Defaults to 32.
      * Prevents unbounded iteration in {_asyncMaxWithdraw} and {_asyncMaxRedeem}.
      */
-    function _requestQueueLimit() internal view virtual returns (uint256) {
+    function _redeemRequestQueueLimit() internal view virtual returns (uint256) {
         return 32;
     }
 }
