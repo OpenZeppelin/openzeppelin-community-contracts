@@ -276,8 +276,8 @@ abstract contract ERC7540EpochRedeem is ERC7540 {
      * consuming from it would burn `assets` for zero shares. Claims are therefore gated on the
      * oldest Pending epoch, matching {_asyncMaxWithdraw}.
      *
-     * NOTE: Wrappers wanting stricter FIFO semantics should override to revert
-     * when the oldest epoch is Pending.
+     * NOTE: Wrappers wanting stricter FIFO semantics should consider overriding to revert when
+     * the oldest epoch is Pending.
      */
     function _consumeClaimableWithdraw(uint256 assets, address controller) internal virtual override returns (uint256) {
         uint256 shares = 0;
