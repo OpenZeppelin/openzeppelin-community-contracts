@@ -28,12 +28,12 @@ contract ERC20uRWATest is Test {
         assertTrue(token.canTransfer(holder, recipient, amount));
     }
 
-    function test_canTransfer_trueWhenAmountExceedsAvailableDueToFrozenTokens() public {
+    function test_canTransfer_falseWhenAmountExceedsUnfrozenButWithinBalance() public {
         vm.prank(freezer);
         token.setFrozenTokens(holder, 80);
 
-        // Available = 100 - 80 = 20, but requesting more than available.
-        assertTrue(token.canTransfer(holder, recipient, 30));
+        // Available = 100 - 80 = 20; 30 is within the balance but exceeds the unfrozen amount.
+        assertFalse(token.canTransfer(holder, recipient, 30));
     }
 
     function test_canTransfer_trueForZeroBalanceSender() public {
@@ -73,7 +73,7 @@ contract ERC20uRWATest is Test {
         token.setCanReceive(recipient, false);
 
         vm.prank(enforcer);
-        vm.expectRevert(abi.encodeWithSelector(IERC7943Fungible.ERC7943CannotTransact.selector, recipient));
+        vm.expectRevert(abi.encodeWithSelector(IERC7943Fungible.ERC7943CannotReceive.selector, recipient));
         token.forcedTransfer(holder, recipient, 10);
     }
 

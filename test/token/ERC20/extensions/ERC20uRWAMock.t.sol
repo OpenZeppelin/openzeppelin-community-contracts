@@ -15,12 +15,7 @@ contract ERC20uRWAMock is ERC20uRWA, AccessControl {
     mapping(address => bool) private _sendOverrideSet;
     mapping(address => bool) private _receiveOverrideSet;
 
-    constructor(
-        string memory name,
-        string memory symbol,
-        address freezer,
-        address enforcer
-    ) ERC20(name, symbol) {
+    constructor(string memory name, string memory symbol, address freezer, address enforcer) ERC20(name, symbol) {
         _grantRole(FREEZER_ROLE, freezer);
         _grantRole(ENFORCER_ROLE, enforcer);
     }
