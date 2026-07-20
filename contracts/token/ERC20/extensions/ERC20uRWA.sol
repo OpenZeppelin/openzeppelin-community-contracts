@@ -4,7 +4,6 @@ pragma solidity ^0.8.26;
 import {IERC7943Fungible} from "../../../interfaces/IERC7943.sol";
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import {ERC165, IERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
-import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 import {ERC20Freezable} from "./ERC20Freezable.sol";
 import {ERC20Restricted} from "./ERC20Restricted.sol";
 
@@ -47,13 +46,12 @@ abstract contract ERC20uRWA is ERC20, ERC165, ERC20Freezable, ERC20Restricted, I
     /**
      * @dev See {IERC7943Fungible-setFrozenTokens}. Always returns true if successful. Reverts otherwise.
      *
-     * NOTE: The `amount` is capped to the balance of the `account` to ensure the {IERC7943Fungible-Frozen} event
-     * emits values that consistently reflect the actual amount of tokens that are frozen.
+     * NOTE: The `amount` is allowed to exceed the current balance to support future balances withholding,
+     * as required by the EIP-7943 spec.
      */
     function setFrozenTokens(address account, uint256 amount) public virtual returns (bool result) {
-        uint256 actualAmount = Math.min(amount, balanceOf(account));
-        _checkFreezer(account, actualAmount);
-        _setFrozen(account, actualAmount);
+        _checkFreezer(account, amount);
+        _setFrozen(account, amount);
         return true;
     }
 

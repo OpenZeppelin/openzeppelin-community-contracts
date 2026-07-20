@@ -149,15 +149,26 @@ describe('ERC20uRWA', function () {
         );
       });
 
-      it('caps frozen amount to user balance when trying to freeze more than balance', async function () {
+      it('allows freezing more than the current balance for future balances withholding', async function () {
         const requestedFrozenAmount = initialSupply + 10n;
-        const expectedFrozenAmount = initialSupply; // Should be capped to balance
 
         await expect(this.token.connect(this.freezer).setFrozenTokens(this.holder, requestedFrozenAmount))
           .to.emit(this.token, 'Frozen')
-          .withArgs(this.holder, expectedFrozenAmount);
+          .withArgs(this.holder, requestedFrozenAmount);
 
-        await expect(this.token.frozen(this.holder)).to.eventually.equal(expectedFrozenAmount);
+        await expect(this.token.frozen(this.holder)).to.eventually.equal(requestedFrozenAmount);
+        await expect(this.token.available(this.holder)).to.eventually.equal(0n);
+      });
+
+      it('withholds future incoming transfers when frozen exceeds balance', async function () {
+        await this.token.connect(this.freezer).setFrozenTokens(this.recipient, 30n);
+        await this.token.connect(this.holder).transfer(this.recipient, 20n);
+
+        // recipient balance (20) is still fully covered by the frozen amount (30)
+        await expect(this.token.available(this.recipient)).to.eventually.equal(0n);
+        await expect(this.token.connect(this.recipient).transfer(this.holder, 1n))
+          .to.be.revertedWithCustomError(this.token, 'ERC20InsufficientUnfrozenBalance')
+          .withArgs(this.recipient, 1n, 0n);
       });
 
       it('allows freezer to update frozen amount', async function () {
