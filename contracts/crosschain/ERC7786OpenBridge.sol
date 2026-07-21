@@ -73,7 +73,6 @@ contract ERC7786OpenBridge is IERC7786GatewaySource, IERC7786Recipient, Ownable,
      *                                        E V E N T S   &   E R R O R S                                         *
      ****************************************************************************************************************/
     event RemoteRegistered(bytes remote);
-    error RemoteAlreadyRegistered(bytes remote);
 
     /****************************************************************************************************************
      *                                              F U N C T I O N S                                               *
@@ -314,6 +313,11 @@ contract ERC7786OpenBridge is IERC7786GatewaySource, IERC7786Recipient, Ownable,
         emit ThresholdUpdated(newThreshold);
     }
 
+    /**
+     * @dev Registers or rotates the trusted remote bridge for the (chainType, chainReference) encoded in `bridge`.
+     * If a remote is already registered for that chain, it is overwritten. This is intentional to support remote
+     * bridge rotation; messages in flight from the previous remote will fail sender authentication after rotation.
+     */
     function _registerRemoteBridge(bytes calldata bridge) internal virtual {
         (bytes2 chainType, bytes calldata chainReference, bytes calldata addr) = bridge.parseV1Calldata();
         _remotes[chainType][chainReference] = addr;
