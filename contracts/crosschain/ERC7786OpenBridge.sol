@@ -292,6 +292,11 @@ contract ERC7786OpenBridge is IERC7786GatewaySource, IERC7786Recipient, Ownable,
         emit GatewayAdded(gateway);
     }
 
+    /**
+     * @dev Removes a gateway from the authorized set. Receipts previously recorded by the removed gateway remain
+     * counted toward the threshold of messages that have not yet been executed. Owners performing a rotation that
+     * must invalidate such in-flight receipts should pause the bridge before removing the gateway.
+     */
     function _removeGateway(address gateway) internal virtual {
         require(_gateways.remove(gateway), ERC7786OpenBridgeGatewayNotRegistered(gateway));
         require(_threshold <= _gateways.length(), ERC7786OpenBridgeThresholdViolation());
