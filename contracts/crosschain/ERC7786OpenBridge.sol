@@ -31,6 +31,11 @@ contract ERC7786OpenBridge is IERC7786GatewaySource, IERC7786Recipient, Ownable,
     event OutboxDetails(bytes32 indexed sendId, Outbox[] outbox);
     event Received(bytes32 indexed receiveId, address gateway);
     event ExecutionSuccess(bytes32 indexed receiveId);
+    /**
+     * @dev Emitted when the recipient call fails on a threshold-crossing delivery. The `(sender, payload)` preimage
+     * needed to retry {receiveMessage} is not included here to keep the failure path gas-lean; it can be reconstructed
+     * from the gateway-level events (or the transaction trace) that carried the message.
+     */
     event ExecutionFailed(bytes32 indexed receiveId);
     event GatewayAdded(address indexed gateway);
     event GatewayRemoved(address indexed gateway);
