@@ -116,12 +116,11 @@ contract AxelarGatewayAdapter is IERC7786GatewaySource, Ownable, AxelarExecutabl
     }
 
     /**
-     * @inheritdoc IERC7786GatewaySource
-     *
-     * @dev The adapter forwards `payload` and `recipient` verbatim to the destination chain. It does not enforce a
-     * maximum size for `payload` nor validate the address component of `recipient`; the caller is responsible for
-     * supplying values that the destination chain can decode and that resolve to a live recipient. Oversized payloads
-     * or malformed recipients will surface as undeliverable messages on the destination side.
+     * @dev See {IERC7786GatewaySource-sendMessage}. The adapter forwards `payload` and `recipient` verbatim to the
+     * destination chain. It does not enforce a maximum size for `payload` nor validate the address component of
+     * `recipient`; the caller is responsible for supplying values that the destination chain can decode and that
+     * resolve to a live recipient. Oversized payloads or malformed recipients will surface as undeliverable messages
+     * on the destination side.
      */
     function sendMessage(
         bytes calldata recipient, // Binary Interoperable Address
