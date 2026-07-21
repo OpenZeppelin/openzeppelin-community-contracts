@@ -38,7 +38,6 @@ Developers can access interoperability protocols through gateway adapters. The l
 :ERC7786OpenBridgeThresholdViolation: pass:normal[xref:#ERC7786OpenBridge-ERC7786OpenBridgeThresholdViolation--[`++ERC7786OpenBridgeThresholdViolation++`]]
 :ERC7786OpenBridgeInvalidExecutionReturnValue: pass:normal[xref:#ERC7786OpenBridge-ERC7786OpenBridgeInvalidExecutionReturnValue--[`++ERC7786OpenBridgeInvalidExecutionReturnValue++`]]
 :RemoteRegistered: pass:normal[xref:#ERC7786OpenBridge-RemoteRegistered-bytes-[`++RemoteRegistered++`]]
-:RemoteAlreadyRegistered: pass:normal[xref:#ERC7786OpenBridge-RemoteAlreadyRegistered-bytes-[`++RemoteAlreadyRegistered++`]]
 :constructor: pass:normal[xref:#ERC7786OpenBridge-constructor-address-address---uint8-[`++constructor++`]]
 :supportsAttribute: pass:normal[xref:#ERC7786OpenBridge-supportsAttribute-bytes4-[`++supportsAttribute++`]]
 :sendMessage: pass:normal[xref:#ERC7786OpenBridge-sendMessage-bytes-bytes-bytes---[`++sendMessage++`]]
@@ -159,7 +158,6 @@ equivalent bridge on the destination chain if N of the M gateways agree.
 * `++ERC7786OpenBridgeGatewayNotRegistered(gateway)++`
 * `++ERC7786OpenBridgeThresholdViolation()++`
 * `++ERC7786OpenBridgeInvalidExecutionReturnValue()++`
-* `++RemoteAlreadyRegistered(remote)++`
 
 [.contract-subindex-inherited]
 .Pausable
@@ -293,6 +291,11 @@ Recovery method in case value is ever received through {receiveMessage}
 [[ERC7786OpenBridge-_removeGateway-address-]]
 ==== `[.contract-item-name]#++_removeGateway++#++(address gateway)++` [.item-kind]#internal#
 
+Removes a gateway from the authorized set. Receipts previously recorded by the removed gateway remain
+counted toward the threshold of not-yet-executed messages; there is no on-chain mechanism to invalidate them.
+Pausing the bridge before removal blocks concurrent {receiveMessage} deliveries during the rotation but does
+not clear existing {Tracker} state, which remains eligible once the bridge is unpaused.
+
 [.contract-item]
 [[ERC7786OpenBridge-_setThreshold-uint8-]]
 ==== `[.contract-item-name]#++_setThreshold++#++(uint8 newThreshold)++` [.item-kind]#internal#
@@ -300,6 +303,10 @@ Recovery method in case value is ever received through {receiveMessage}
 [.contract-item]
 [[ERC7786OpenBridge-_registerRemoteBridge-bytes-]]
 ==== `[.contract-item-name]#++_registerRemoteBridge++#++(bytes bridge)++` [.item-kind]#internal#
+
+Registers or rotates the trusted remote bridge for the (chainType, chainReference) encoded in `bridge`.
+If a remote is already registered for that chain, it is overwritten. This is intentional to support remote
+bridge rotation; messages in flight from the previous remote will fail sender authentication after rotation.
 
 [.contract-item]
 [[ERC7786OpenBridge-OutboxDetails-bytes32-struct-ERC7786OpenBridge-Outbox---]]
@@ -316,6 +323,10 @@ Recovery method in case value is ever received through {receiveMessage}
 [.contract-item]
 [[ERC7786OpenBridge-ExecutionFailed-bytes32-]]
 ==== `[.contract-item-name]#++ExecutionFailed++#++(bytes32 indexed receiveId)++` [.item-kind]#event#
+
+Emitted when the recipient call fails on a threshold-crossing delivery. The `(sender, payload)` preimage
+needed to retry {receiveMessage} is not included here to keep the failure path gas-lean; it can be reconstructed
+from the gateway-level events (or the transaction trace) that carried the message.
 
 [.contract-item]
 [[ERC7786OpenBridge-GatewayAdded-address-]]
@@ -364,10 +375,6 @@ Recovery method in case value is ever received through {receiveMessage}
 [.contract-item]
 [[ERC7786OpenBridge-ERC7786OpenBridgeInvalidExecutionReturnValue--]]
 ==== `[.contract-item-name]#++ERC7786OpenBridgeInvalidExecutionReturnValue++#++()++` [.item-kind]#error#
-
-[.contract-item]
-[[ERC7786OpenBridge-RemoteAlreadyRegistered-bytes-]]
-==== `[.contract-item-name]#++RemoteAlreadyRegistered++#++(bytes remote)++` [.item-kind]#error#
 
 == Utilities
 
@@ -586,14 +593,12 @@ Getter to check whether an attribute is supported or not.
 [[AxelarGatewayAdapter-sendMessage-bytes-bytes-bytes---]]
 ==== `[.contract-item-name]#++sendMessage++#++(bytes recipient, bytes payload, bytes[] attributes) → bytes32++` [.item-kind]#external#
 
-Endpoint for creating a new message. If the message requires further (gateway specific) processing before
-it can be sent to the destination chain, then a non-zero `sendId` must be returned. Otherwise, the
-message MUST be sent and this function must return 0.
-
-* MUST emit a {MessageSent} event.
-
-If any of the `attributes` is not supported, this function SHOULD revert with an {UnsupportedAttribute} error.
-Other errors SHOULD revert with errors not specified in ERC-7786.
+See {IERC7786GatewaySource-sendMessage}. The adapter forwards `payload` and `recipient` to the destination
+chain. Structurally malformed ERC-7930 `recipient` values that fail to parse revert on the source side before
+forwarding. It does not enforce a maximum size for `payload` nor validate the address component of a validly
+encoded `recipient`; the caller is responsible for supplying values that the destination chain can decode and
+that resolve to a live recipient. Oversized payloads or recipients with invalid or non-contract targets will
+surface as undeliverable messages on the destination side.
 
 [.contract-item]
 [[AxelarGatewayAdapter-_execute-bytes32-string-string-bytes-]]
