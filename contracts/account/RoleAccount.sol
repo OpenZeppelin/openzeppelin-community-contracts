@@ -23,7 +23,7 @@ import {RoleSigner} from "../utils/cryptography/signers/RoleSigner.sol";
  *   replay-safe ERC-1271 validation on top of {RoleSigner}.
  * * {ERC7821}: minimal batch executor.
  *
- * These accounts are intended to be deployed as {Clones}-with-immutable-args proxies, one per role, by
+ * These accounts are intended to be deployed as `Clones.cloneWithImmutableArgs`, one per role, by
  * {AccessManagerWithRoleAccounts}.
  */
 contract RoleAccount is ERC7821, ERC7739, RoleSigner {
