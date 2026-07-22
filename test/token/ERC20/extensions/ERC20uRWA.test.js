@@ -34,10 +34,6 @@ describe('ERC20uRWA', function () {
         'canReceive(address)',
       ],
     });
-
-    it('supports the final EIP-7943 fungible interface id', async function () {
-      await expect(this.token.supportsInterface('0x3edbb4c4')).to.eventually.equal(true);
-    });
   });
 
   describe('combined restriction and freezing', function () {
@@ -358,17 +354,29 @@ describe('ERC20uRWA', function () {
         await expect(this.token.frozen(this.holder)).to.eventually.equal(frozenAmount);
       });
 
-      it('reverts when force transferring to self and does not reduce the frozen balance', async function () {
+      it('does not reduce the frozen balance when force transferring to self', async function () {
         const frozenAmount = initialSupply; // Fully frozen
         await this.token.connect(this.freezer).setFrozenTokens(this.holder, frozenAmount);
 
-        // A forced transfer to self moves no tokens but would otherwise lower the frozen balance,
-        // acting as an unauthorized unfreeze that bypasses the freezer role. It must revert instead.
+        // A forced transfer to self moves no tokens, so no frozen adjustment happens (it would
+        // otherwise act as an unauthorized unfreeze bypassing the freezer role). It behaves as a
+        // regular ERC-20 self-transfer, reverting when amount exceeds the unfrozen balance.
         await expect(this.token.connect(this.enforcer).forcedTransfer(this.holder, this.holder, frozenAmount))
-          .to.be.revertedWithCustomError(this.token, 'ERC7943CannotTransfer')
-          .withArgs(this.holder, this.holder, frozenAmount);
+          .to.be.revertedWithCustomError(this.token, 'ERC20InsufficientUnfrozenBalance')
+          .withArgs(this.holder, frozenAmount, 0n);
 
         // The frozen balance is left untouched.
+        await expect(this.token.frozen(this.holder)).to.eventually.equal(frozenAmount);
+      });
+
+      it('allows force transferring to self within the unfrozen balance without frozen adjustment', async function () {
+        const frozenAmount = 60n;
+        const transferAmount = 30n; // Available: 100 - 60 = 40
+        await this.token.connect(this.freezer).setFrozenTokens(this.holder, frozenAmount);
+
+        const tx = this.token.connect(this.enforcer).forcedTransfer(this.holder, this.holder, transferAmount);
+        await expect(tx).to.emit(this.token, 'ForcedTransfer').withArgs(this.holder, this.holder, transferAmount);
+        await expect(tx).to.changeTokenBalance(this.token, this.holder, 0n);
         await expect(this.token.frozen(this.holder)).to.eventually.equal(frozenAmount);
       });
     });

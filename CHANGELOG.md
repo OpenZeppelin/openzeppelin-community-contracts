@@ -1,6 +1,6 @@
 ## 20-07-2026
 
-- `IERC7943`: Align `IERC7943Fungible` with the final EIP-7943 specification: replace `canTransact` with `canSend`/`canReceive` and `ERC7943CannotTransact` with `ERC7943CannotSend`/`ERC7943CannotReceive`. `supportsInterface` now reports the final `0x3edbb4c4` interface id.
+- `IERC7943`: Align all interfaces (fungible, non-fungible, multi-token) with the final EIP-7943 specification: replace `canTransact` with `canSend`/`canReceive` and `ERC7943CannotTransact` with `ERC7943CannotSend`/`ERC7943CannotReceive`. `supportsInterface` now reports the final `0x3edbb4c4` fungible interface id.
 - `ERC20uRWA`: `setFrozenTokens` no longer caps the frozen amount to the current balance, allowing future balances withholding as required by the spec.
 - `ERC20uRWA`: `canTransfer` now returns false only for permissioned rules (insufficient unfrozen balance while within the total balance, or `canSend`/`canReceive` restrictions); plain balance insufficiency no longer returns false.
 - `ERC20uRWA`: `_update` enforces `canSend`/`canReceive`, so overrides of these checks apply to actual transfers, minting, and burning. Transfers involving restricted accounts now revert with `ERC7943CannotSend`/`ERC7943CannotReceive` instead of `ERC20UserRestricted`.
@@ -8,7 +8,7 @@
 
 ## 25-06-2026
 
-- `ERC20uRWA`: Reject `forcedTransfer` when `from == to`, preventing a self-directed forced transfer from reducing the frozen balance without moving any tokens (an unauthorized unfreeze that bypassed the freezer role).
+- `ERC20uRWA`: A self-directed `forcedTransfer` no longer reduces the frozen balance (previously an unauthorized unfreeze that bypassed the freezer role); it behaves as a regular ERC-20 self-transfer with no frozen adjustment.
 
 ## 28-04-2026
 

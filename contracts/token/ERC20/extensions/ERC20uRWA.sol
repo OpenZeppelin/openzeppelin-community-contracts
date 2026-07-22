@@ -33,7 +33,7 @@ abstract contract ERC20uRWA is ERC20, ERC165, ERC20Freezable, ERC20Restricted, I
     }
 
     /**
-     * @dev Returns whether `account` is allowed to send tokens. Defaults to {ERC20Restricted-canTransact}.
+     * @dev See {IERC7943Fungible-canSend}. Returns whether `account` is allowed to send tokens. Defaults to {ERC20Restricted-canTransact}.
      *
      * Override to implement sender-specific restrictions distinct from {canReceive}.
      */
@@ -42,7 +42,7 @@ abstract contract ERC20uRWA is ERC20, ERC165, ERC20Freezable, ERC20Restricted, I
     }
 
     /**
-     * @dev Returns whether `account` is allowed to receive tokens. Defaults to {ERC20Restricted-canTransact}.
+     * @dev See {IERC7943Fungible-canReceive}. Returns whether `account` is allowed to receive tokens. Defaults to {ERC20Restricted-canTransact}.
      *
      * Override to implement recipient-specific restrictions distinct from {canSend}.
      */
@@ -63,8 +63,7 @@ abstract contract ERC20uRWA is ERC20, ERC165, ERC20Freezable, ERC20Restricted, I
      * unfrozen balance directly. Consider overriding {_update} accordingly to keep both in sync.
      */
     function canTransfer(address from, address to, uint256 amount) external view virtual returns (bool) {
-        if (amount <= balanceOf(from) && amount > available(from)) return false;
-        return canSend(from) && canReceive(to);
+        return canSend(from) && canReceive(to) && (amount > balanceOf(from) || amount <= available(from));
     }
 
     /// @inheritdoc IERC7943Fungible
@@ -95,31 +94,36 @@ abstract contract ERC20uRWA is ERC20, ERC165, ERC20Freezable, ERC20Restricted, I
      * side effects (such as balance updates and events) are preserved. If you override {_update}
      * to add additional restrictions or logic, those changes will also apply here.
      * Consider overriding this function to bypass newer restrictions if needed.
+     *
+     * NOTE: A forced transfer to self moves no tokens, so it performs no frozen balance adjustment
+     * (otherwise it would act as an unauthorized unfreeze bypassing the freezer role). It behaves
+     * as a regular ERC-20 self-transfer, reverting if `amount` exceeds the unfrozen balance.
+     *
+     * CAUTION: The sender-side and recipient-side checks are suppressed for the duration of the
+     * internal {_update} call. If an override of {_update} performs external calls, a reentering
+     * transfer will skip those checks as well. Consider adding reentrancy protection when
+     * extending {_update} with external calls.
      */
     function forcedTransfer(address from, address to, uint256 amount) public virtual returns (bool result) {
         _checkEnforcer(from, to, amount);
         require(canReceive(to), ERC7943CannotReceive(to));
-        // A forced transfer to self moves no tokens, but the frozen balance adjustment below would still
-        // lower the frozen amount, effectively acting as an unauthorized unfreeze. Rejecting it preserves
-        // the separation between the enforcer and freezer roles.
-        require(from != to, ERC7943CannotTransfer(from, to, amount));
 
         // Update frozen balance if needed. ERC-7943 requires that balance is unfrozen first (emitting
-        // the corresponding {IERC7943Fungible-Frozen} event via {ERC20Freezable-_setFrozen}) and then
-        // send the tokens.
+        // the corresponding Frozen event via _setFrozen) and then send the tokens. Skipped for
+        // self-transfers, where the balance does not change and no unfreeze is warranted.
         uint256 currentFrozen = frozen(from);
         uint256 newBalance;
         unchecked {
             // Safe because ERC20._update will check that balanceOf(from) >= amount
             newBalance = balanceOf(from) - amount;
         }
-        if (currentFrozen > newBalance) {
+        if (from != to && currentFrozen > newBalance) {
             _setFrozen(from, newBalance);
         }
 
         // Temporarily flag the transfer as forced rather than calling ERC20._update directly.
         // This preserves any side effects from future overrides to _update while letting
-        // {_update} and {_checkRestriction} skip the sender-side and recipient-side checks.
+        // _update and _checkRestriction skip the sender-side and recipient-side checks.
         ERC20_URWA_FORCED_TRANSFER_SLOT.asBoolean().tstore(true);
         _update(from, to, amount);
         ERC20_URWA_FORCED_TRANSFER_SLOT.asBoolean().tstore(false);
@@ -154,7 +158,7 @@ abstract contract ERC20uRWA is ERC20, ERC165, ERC20Freezable, ERC20Restricted, I
     }
 
     /// @dev Whether the current transfer is being performed by {forcedTransfer}.
-    function _isForcedTransfer() internal view returns (bool) {
+    function _isForcedTransfer() internal view virtual returns (bool) {
         return ERC20_URWA_FORCED_TRANSFER_SLOT.asBoolean().tload();
     }
 

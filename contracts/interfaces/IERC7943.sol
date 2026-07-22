@@ -93,9 +93,13 @@ interface IERC7943NonFungible is IERC165 {
     /// @param frozenStatus Whether `tokenId` has been frozen or unfrozen.
     event Frozen(address indexed account, uint256 indexed tokenId, bool indexed frozenStatus);
 
-    /// @notice Error reverted when an account is not allowed to transact.
-    /// @param account The address of the account which is not allowed for transfers.
-    error ERC7943CannotTransact(address account);
+    /// @notice Error reverted when an account is not allowed to send tokens.
+    /// @param account The address of the account which is not allowed to send.
+    error ERC7943CannotSend(address account);
+
+    /// @notice Error reverted when an account is not allowed to receive tokens.
+    /// @param account The address of the account which is not allowed to receive.
+    error ERC7943CannotReceive(address account);
 
     /// @notice Error reverted when a transfer is not allowed according to internal rules.
     /// @param from The address from which tokens are being sent.
@@ -125,11 +129,17 @@ interface IERC7943NonFungible is IERC165 {
     /// @return result True if the freezing executed correctly, false otherwise.
     function setFrozenTokens(address account, uint256 tokenId, bool frozenStatus) external returns (bool result);
 
-    /// @notice Checks if a specific account is allowed to transact according to token rules.
+    /// @notice Checks if a specific account is allowed to send tokens according to token rules.
     /// @dev This is often used for allowlist/KYC/KYB/AML checks.
     /// @param account The address to check.
-    /// @return allowed True if the account is allowed, false otherwise.
-    function canTransact(address account) external view returns (bool allowed);
+    /// @return allowed True if the account is allowed to send, false otherwise.
+    function canSend(address account) external view returns (bool allowed);
+
+    /// @notice Checks if a specific account is allowed to receive tokens according to token rules.
+    /// @dev This is often used for allowlist/KYC/KYB/AML checks.
+    /// @param account The address to check.
+    /// @return allowed True if the account is allowed to receive, false otherwise.
+    function canReceive(address account) external view returns (bool allowed);
 
     /// @notice Checks the frozen status of a specific `tokenId`.
     /// @dev It could return true even if account does not hold the token.
@@ -162,9 +172,13 @@ interface IERC7943MultiToken is IERC165 {
     /// @param amount The amount of tokens frozen after the change.
     event Frozen(address indexed account, uint256 indexed tokenId, uint256 amount);
 
-    /// @notice Error reverted when an account is not allowed to transact.
-    /// @param account The address of the account which is not allowed for transfers.
-    error ERC7943CannotTransact(address account);
+    /// @notice Error reverted when an account is not allowed to send tokens.
+    /// @param account The address of the account which is not allowed to send.
+    error ERC7943CannotSend(address account);
+
+    /// @notice Error reverted when an account is not allowed to receive tokens.
+    /// @param account The address of the account which is not allowed to receive.
+    error ERC7943CannotReceive(address account);
 
     /// @notice Error reverted when a transfer is not allowed according to internal rules.
     /// @param from The address from which tokens are being sent.
@@ -198,11 +212,17 @@ interface IERC7943MultiToken is IERC165 {
     /// @return result True if the freezing executed correctly, false otherwise.
     function setFrozenTokens(address account, uint256 tokenId, uint256 amount) external returns (bool result);
 
-    /// @notice Checks if a specific account is allowed to transact according to token rules.
+    /// @notice Checks if a specific account is allowed to send tokens according to token rules.
     /// @dev This is often used for allowlist/KYC/KYB/AML checks.
     /// @param account The address to check.
-    /// @return allowed True if the account is allowed, false otherwise.
-    function canTransact(address account) external view returns (bool allowed);
+    /// @return allowed True if the account is allowed to send, false otherwise.
+    function canSend(address account) external view returns (bool allowed);
+
+    /// @notice Checks if a specific account is allowed to receive tokens according to token rules.
+    /// @dev This is often used for allowlist/KYC/KYB/AML checks.
+    /// @param account The address to check.
+    /// @return allowed True if the account is allowed to receive, false otherwise.
+    function canReceive(address account) external view returns (bool allowed);
 
     /// @notice Checks the frozen status/amount of a specific `tokenId`.
     /// @dev It could return an amount higher than the account's balance.
