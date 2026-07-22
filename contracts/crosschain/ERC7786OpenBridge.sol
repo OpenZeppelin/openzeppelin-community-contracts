@@ -31,6 +31,11 @@ contract ERC7786OpenBridge is IERC7786GatewaySource, IERC7786Recipient, Ownable,
     event OutboxDetails(bytes32 indexed sendId, Outbox[] outbox);
     event Received(bytes32 indexed receiveId, address gateway);
     event ExecutionSuccess(bytes32 indexed receiveId);
+    /**
+     * @dev Emitted when the recipient call fails on a threshold-crossing delivery. The `(sender, payload)` preimage
+     * needed to retry {receiveMessage} is not included here to keep the failure path gas-lean; it can be reconstructed
+     * from the gateway-level events (or the transaction trace) that carried the message.
+     */
     event ExecutionFailed(bytes32 indexed receiveId);
     event GatewayAdded(address indexed gateway);
     event GatewayRemoved(address indexed gateway);
@@ -71,7 +76,6 @@ contract ERC7786OpenBridge is IERC7786GatewaySource, IERC7786Recipient, Ownable,
      *                                        E V E N T S   &   E R R O R S                                         *
      ****************************************************************************************************************/
     event RemoteRegistered(bytes remote);
-    error RemoteAlreadyRegistered(bytes remote);
 
     /****************************************************************************************************************
      *                                              F U N C T I O N S                                               *
@@ -120,11 +124,8 @@ contract ERC7786OpenBridge is IERC7786GatewaySource, IERC7786Recipient, Ownable,
                 try IERC7786GatewaySource(gateway).sendMessage(bridge, wrappedPayload, attributes) returns (
                     bytes32 id
                 ) {
-                    // if ID, track it
-                    if (id != bytes32(0)) {
-                        outbox[i] = Outbox(gateway, id);
-                        needsId = true;
-                    }
+                    outbox[i] = Outbox(gateway, id);
+                    needsId = needsId || id != bytes32(0);
                     ++sent;
                 } catch {
                     // if one gateway fails, we still want to send the message through the others
@@ -307,6 +308,12 @@ contract ERC7786OpenBridge is IERC7786GatewaySource, IERC7786Recipient, Ownable,
         emit GatewayAdded(gateway);
     }
 
+    /**
+     * @dev Removes a gateway from the authorized set. Receipts previously recorded by the removed gateway remain
+     * counted toward the threshold of not-yet-executed messages; there is no on-chain mechanism to invalidate them.
+     * Pausing the bridge before removal blocks concurrent {receiveMessage} deliveries during the rotation but does
+     * not clear existing {Tracker} state, which remains eligible once the bridge is unpaused.
+     */
     function _removeGateway(address gateway) internal virtual {
         require(_gateways.remove(gateway), ERC7786OpenBridgeGatewayNotRegistered(gateway));
         require(_threshold <= _gateways.length(), ERC7786OpenBridgeThresholdViolation());
@@ -319,6 +326,11 @@ contract ERC7786OpenBridge is IERC7786GatewaySource, IERC7786Recipient, Ownable,
         emit ThresholdUpdated(newThreshold);
     }
 
+    /**
+     * @dev Registers or rotates the trusted remote bridge for the (chainType, chainReference) encoded in `bridge`.
+     * If a remote is already registered for that chain, it is overwritten. This is intentional to support remote
+     * bridge rotation; messages in flight from the previous remote will fail sender authentication after rotation.
+     */
     function _registerRemoteBridge(bytes calldata bridge) internal virtual {
         (bytes2 chainType, bytes calldata chainReference, bytes calldata addr) = bridge.parseV1Calldata();
         _remotes[chainType][chainReference] = addr;
