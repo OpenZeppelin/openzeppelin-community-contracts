@@ -29,6 +29,7 @@ contract RoleSigner is AbstractSigner {
 
     /// @dev The access manager whose role membership authorizes signatures for this signer.
     IAccessManager public immutable accessManager;
+    address private immutable _self = address(this);
     uint256 private immutable _roleIdOffset;
 
     /// @dev Sets the {accessManager} whose role membership authorizes signatures for this signer.
@@ -47,8 +48,12 @@ contract RoleSigner is AbstractSigner {
      * signer and no funds are permanently lost.
      */
     function roleId() public view virtual returns (uint64) {
-        bytes memory cloneArgs = Clones.fetchCloneArgs(address(this)).splice(_roleIdOffset);
-        return cloneArgs.length >= 8 ? uint64(bytes8(cloneArgs)) : 0;
+        if (_self == address(this)) {
+            return 0;
+        } else {
+            bytes memory cloneArgs = Clones.fetchCloneArgs(address(this)).splice(_roleIdOffset);
+            return cloneArgs.length >= 8 ? uint64(bytes8(cloneArgs)) : 0;
+        }
     }
 
     /**

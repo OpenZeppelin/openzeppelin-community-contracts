@@ -7,6 +7,7 @@ const { encodeMode, encodeBatch, CALL_TYPE_BATCH } = require('@openzeppelin/cont
 const { shouldBehaveLikeERC1271 } = require('@openzeppelin/contracts/test/utils/cryptography/ERC1271.behavior');
 
 const ERC1271_MAGIC_VALUE = '0x1626ba7e';
+const ADMIN_ROLE = 0n;
 const ROLE = 42n;
 const OTHER_ROLE = 17n;
 
@@ -61,9 +62,31 @@ describe('AccessManagerWithRoleAccounts', function () {
     Object.assign(this, await loadFixture(fixture));
   });
 
+  describe('template behavior', function () {
+    beforeEach(async function () {
+      this.template = this.account.attach(ethers.getCreateAddress({ from: this.manager.target, nonce: 1n }));
+    });
+
+    it('deploys the role account at the predicted deterministic address', async function () {
+      await expect(ethers.provider.getCode(this.template)).to.eventually.not.equal('0x');
+    });
+
+    it('exposes the access manager instance', async function () {
+      await expect(this.template.accessManager()).to.eventually.equal(this.manager);
+    });
+
+    it('is controlled by the admin role', async function () {
+      await expect(this.template.roleId()).to.eventually.equal(ADMIN_ROLE);
+    });
+  });
+
   describe('role account deployment', function () {
     it('deploys the role account at the predicted deterministic address', async function () {
       await expect(ethers.provider.getCode(this.account)).to.eventually.not.equal('0x');
+    });
+
+    it('exposes the access manager instance', async function () {
+      await expect(this.account.accessManager()).to.eventually.equal(this.manager);
     });
 
     it('getRoleAccount matches the address returned by deployRoleAccount', async function () {
