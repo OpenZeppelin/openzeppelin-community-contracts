@@ -6,6 +6,7 @@ import {IAccessManager} from "@openzeppelin/contracts/access/manager/IAccessMana
 import {Clones} from "@openzeppelin/contracts/proxy/Clones.sol";
 import {AbstractSigner} from "@openzeppelin/contracts/utils/cryptography/signers/AbstractSigner.sol";
 import {SignatureChecker} from "@openzeppelin/contracts/utils/cryptography/SignatureChecker.sol";
+import {Bytes} from "@openzeppelin/contracts/utils/Bytes.sol";
 
 /**
  * @dev Implementation of {AbstractSigner} whose authority is delegated to the members of a role
@@ -21,16 +22,20 @@ import {SignatureChecker} from "@openzeppelin/contracts/utils/cryptography/Signa
  * arguments (see {AccessManagerWithRoleAccounts}, which deploys one clone per role).
  */
 contract RoleSigner is AbstractSigner {
+    using Bytes for bytes;
+
     /// @dev Thrown when the access manager is the zero address.
     error InvalidAccessManager();
 
     /// @dev The access manager whose role membership authorizes signatures for this signer.
     IAccessManager public immutable accessManager;
+    uint256 private immutable _roleIdOffset;
 
     /// @dev Sets the {accessManager} whose role membership authorizes signatures for this signer.
-    constructor(IAccessManager accessManager_) {
+    constructor(IAccessManager accessManager_, uint256 offset_) {
         require(address(accessManager_) != address(0), InvalidAccessManager());
         accessManager = accessManager_;
+        _roleIdOffset = offset_;
     }
 
     /**
@@ -42,7 +47,7 @@ contract RoleSigner is AbstractSigner {
      * signer and no funds are permanently lost.
      */
     function roleId() public view virtual returns (uint64) {
-        bytes memory cloneArgs = Clones.fetchCloneArgs(address(this));
+        bytes memory cloneArgs = Clones.fetchCloneArgs(address(this)).splice(_roleIdOffset);
         return cloneArgs.length >= 8 ? uint64(bytes8(cloneArgs)) : 0;
     }
 

@@ -27,7 +27,7 @@ import {RoleSigner} from "../utils/cryptography/signers/RoleSigner.sol";
  * {AccessManagerWithRoleAccounts}.
  */
 contract RoleAccount is ERC7821, ERC7739, RoleSigner {
-    constructor(IAccessManager accessManager_) RoleSigner(accessManager_) EIP712("RoleAccount", "1.0.0") {}
+    constructor(IAccessManager accessManager_) RoleSigner(accessManager_, 0) EIP712("RoleAccount", "1.0.0") {}
 
     /**
      * @dev See {ERC7821-_erc7821AuthorizedExecutor}. In addition to the default authorization (a
