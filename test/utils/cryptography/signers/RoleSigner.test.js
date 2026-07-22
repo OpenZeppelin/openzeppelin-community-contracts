@@ -5,7 +5,7 @@ const { expect } = require('chai');
 describe('RoleSigner', function () {
   it('should revert if deployed with address(0) access manager', async function () {
     const factory = await ethers.getContractFactory('$RoleSigner');
-    await expect(ethers.deployContract('$RoleSigner', [ethers.ZeroAddress])).to.be.revertedWithCustomError(
+    await expect(ethers.deployContract('$RoleSigner', [ethers.ZeroAddress, 0n])).to.be.revertedWithCustomError(
       factory,
       'InvalidAccessManager',
     );
@@ -16,7 +16,7 @@ describe('RoleSigner', function () {
     const manager = await ethers.deployContract('$AccessManager', [admin]);
 
     const factory = await ethers.deployContract('$Clones');
-    const implementation = await ethers.deployContract('$RoleSigner', [manager]);
+    const implementation = await ethers.deployContract('$RoleSigner', [manager, 0n]);
 
     const signer = await factory.$clone.staticCall(implementation).then(address => implementation.attach(address));
     await factory.$clone(implementation);
