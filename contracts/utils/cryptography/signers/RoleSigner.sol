@@ -44,8 +44,7 @@ contract RoleSigner is AbstractSigner {
      */
     function roleId() public view virtual returns (uint64) {
         bytes memory cloneArgs = Clones.fetchCloneArgs(address(this));
-        if (cloneArgs.length != 8) revert InvalidCloneArgs();
-        return uint64(bytes8(cloneArgs));
+        return cloneArgs.length >= 8 ? uint64(bytes8(cloneArgs)) : 0;
     }
 
     /**
@@ -71,8 +70,10 @@ contract RoleSigner is AbstractSigner {
         bytes32 hash,
         bytes calldata signature
     ) internal view virtual override returns (bool) {
-        if (signature.length < 20) return false;
         address signer = address(bytes20(signature));
-        return SignatureChecker.isValidSignatureNow(signer, hash, signature[20:]) && _isUnrestrictedMember(signer);
+        return 
+            signature.length >= 20 
+                && SignatureChecker.isValidSignatureNow(signer, hash, signature[20:])
+                && _isUnrestrictedMember(signer);
     }
 }
