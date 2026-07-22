@@ -95,7 +95,9 @@ abstract contract AbstractSplitter {
 
     function _addRelease(address account, int256 amount) private {
         _released[account] += amount;
-        _totalReleased += amount;
+        _totalReleased += amount; // This should be rounded up to round against the user. This is part of the
+        // denominator in {_allocation} and downrounding could result in uprounding the allocation. This could lead
+        // to insolvency.
     }
 
     function _subRelease(address account, int256 amount) private {
