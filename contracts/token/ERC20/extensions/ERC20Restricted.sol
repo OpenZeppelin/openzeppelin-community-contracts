@@ -6,11 +6,12 @@ import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 /**
  * @dev Extension of {ERC20} that allows to implement user account transfer restrictions
- * through the {canTransact} function. Inspired by https://eips.ethereum.org/EIPS/eip-7943[EIP-7943].
+ * through the {canSend} and {canReceive} functions. Inspired by https://eips.ethereum.org/EIPS/eip-7943[EIP-7943].
  *
- * By default, each account has no explicit restriction. The {canTransact} function acts as
- * a blocklist. Developers can override {canTransact} to check that `restriction == ALLOWED`
- * to implement an allowlist.
+ * By default, each account has no explicit restriction and both functions act as a blocklist
+ * over the same per-account {Restriction}. Developers can override {canSend} and {canReceive}
+ * to check that `restriction == ALLOWED` to implement an allowlist, or override them
+ * independently to implement one-way restrictions (e.g. an account that may receive but not send).
  */
 abstract contract ERC20Restricted is ERC20 {
     enum Restriction {
@@ -33,19 +34,29 @@ abstract contract ERC20Restricted is ERC20 {
     }
 
     /**
-     * @dev Returns whether a user account is allowed to interact with the token.
+     * @dev Returns whether a user account is allowed to send tokens.
      *
      * Default implementation only disallows explicitly BLOCKED accounts (i.e. a blocklist).
      *
      * To convert into an allowlist, override as:
      *
      * ```solidity
-     * function canTransact(address account) public view virtual override returns (bool) {
+     * function canSend(address account) public view virtual override returns (bool) {
      *     return getRestriction(account) == Restriction.ALLOWED;
      * }
      * ```
      */
-    function canTransact(address account) public view virtual returns (bool) {
+    function canSend(address account) public view virtual returns (bool) {
+        return getRestriction(account) != Restriction.BLOCKED; // i.e. DEFAULT && ALLOWED
+    }
+
+    /**
+     * @dev Returns whether a user account is allowed to receive tokens.
+     *
+     * Default implementation only disallows explicitly BLOCKED accounts (i.e. a blocklist).
+     * See {canSend} for the allowlist conversion pattern.
+     */
+    function canReceive(address account) public view virtual returns (bool) {
         return getRestriction(account) != Restriction.BLOCKED; // i.e. DEFAULT && ALLOWED
     }
 
@@ -54,12 +65,12 @@ abstract contract ERC20Restricted is ERC20 {
      *
      * Requirements:
      *
-     * * `from` must be allowed to transfer tokens (see {canTransact}).
-     * * `to` must be allowed to receive tokens (see {canTransact}).
+     * * `from` must be allowed to send tokens (see {canSend}).
+     * * `to` must be allowed to receive tokens (see {canReceive}).
      */
     function _update(address from, address to, uint256 value) internal virtual override {
-        if (from != address(0)) _checkRestriction(from); // Not minting
-        if (to != address(0)) _checkRestriction(to); // Not burning
+        if (from != address(0)) _checkSend(from); // Not minting
+        if (to != address(0)) _checkReceive(to); // Not burning
         super._update(from, to, value);
     }
 
@@ -89,8 +100,13 @@ abstract contract ERC20Restricted is ERC20 {
         _setRestriction(account, Restriction.DEFAULT);
     }
 
-    /// @dev Checks if a user account is restricted. Reverts with {ERC20Restricted} if so.
-    function _checkRestriction(address account) internal view virtual {
-        require(canTransact(account), ERC20UserRestricted(account));
+    /// @dev Checks if a user account is allowed to send tokens. Reverts with {ERC20UserRestricted} if not.
+    function _checkSend(address account) internal view virtual {
+        require(canSend(account), ERC20UserRestricted(account));
+    }
+
+    /// @dev Checks if a user account is allowed to receive tokens. Reverts with {ERC20UserRestricted} if not.
+    function _checkReceive(address account) internal view virtual {
+        require(canReceive(account), ERC20UserRestricted(account));
     }
 }
