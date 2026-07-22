@@ -71,9 +71,9 @@ contract RoleSigner is AbstractSigner {
         bytes calldata signature
     ) internal view virtual override returns (bool) {
         address signer = address(bytes20(signature));
-        return 
-            signature.length >= 20 
-                && SignatureChecker.isValidSignatureNow(signer, hash, signature[20:])
-                && _isUnrestrictedMember(signer);
+        return
+            signature.length >= 20 &&
+            SignatureChecker.isValidSignatureNow(signer, hash, signature[20:]) &&
+            _isUnrestrictedMember(signer);
     }
 }
