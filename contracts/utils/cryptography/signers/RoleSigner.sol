@@ -21,7 +21,7 @@ import {Bytes} from "@openzeppelin/contracts/utils/Bytes.sol";
  * behind a `Clones.cloneWithImmutableArgs` proxy that carries the target role id as its immutable
  * arguments (see {AccessManagerWithRoleAccounts}, which deploys one clone per role).
  */
-contract RoleSigner is AbstractSigner {
+abstract contract RoleSigner is AbstractSigner {
     using Bytes for bytes;
 
     /// @dev Thrown when the access manager is the zero address.
