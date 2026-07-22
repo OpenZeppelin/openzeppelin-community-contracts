@@ -1,3 +1,7 @@
+## 15-05-2026
+
+- `ERC7540EpochDeposit`, `ERC7540EpochRedeem`: Add epoch-based batch fulfillment strategies for ERC-7540 vaults. Requests submitted in the same epoch share a single queue slot per controller and are settled together at one locked exchange rate when the admin closes the epoch via `_fulfillDeposit` / `_fulfillRedeem`.
+
 ## 28-04-2026
 
 - `IERC7540`: Add interface for ERC-7540 asynchronous tokenized vaults, extending ERC-4626 with request-based deposit and redeem flows.
