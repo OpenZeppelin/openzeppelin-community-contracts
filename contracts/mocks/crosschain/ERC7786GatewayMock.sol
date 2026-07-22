@@ -10,6 +10,12 @@ contract ERC7786GatewayMock is IERC7786GatewaySource {
     using BitMaps for BitMaps.BitMap;
     using InteroperableAddress for *;
 
+    bytes32 public sendId;
+
+    function setSendId(bytes32 _sendId) public {
+        sendId = _sendId;
+    }
+
     function supportsAttribute(bytes4 /*selector*/) public pure returns (bool) {
         return false;
     }
@@ -33,7 +39,7 @@ contract ERC7786GatewayMock is IERC7786GatewaySource {
             "Receiver error"
         );
 
-        emit MessageSent(0, sender, recipient, payload, 0, attributes);
-        return 0;
+        emit MessageSent(sendId, sender, recipient, payload, 0, attributes);
+        return sendId;
     }
 }

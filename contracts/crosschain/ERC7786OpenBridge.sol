@@ -117,11 +117,9 @@ contract ERC7786OpenBridge is IERC7786GatewaySource, IERC7786Recipient, Ownable,
             address gateway = _gateways.at(i);
             // send message
             bytes32 id = IERC7786GatewaySource(gateway).sendMessage(bridge, wrappedPayload, attributes);
-            // if ID, track it
-            if (id != bytes32(0)) {
-                outbox[i] = Outbox(gateway, id);
-                needsId = true;
-            }
+            // fill outbox
+            outbox[i] = Outbox(gateway, id);
+            needsId = needsId || id != bytes32(0);
         }
 
         if (needsId) {
