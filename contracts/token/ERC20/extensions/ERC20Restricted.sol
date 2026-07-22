@@ -9,9 +9,8 @@ import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
  * through the {canSend} and {canReceive} functions. Inspired by https://eips.ethereum.org/EIPS/eip-7943[EIP-7943].
  *
  * By default, each account has no explicit restriction and both functions act as a blocklist
- * over the same per-account {Restriction}. Developers can override {canSend} and {canReceive}
- * to check that `restriction == ALLOWED` to implement an allowlist, or override them
- * independently to implement one-way restrictions (e.g. an account that may receive but not send).
+ * over the same per-account {Restriction}: only explicitly BLOCKED accounts are disallowed.
+ * Both functions are virtual and can be overridden independently to implement other policies.
  */
 abstract contract ERC20Restricted is ERC20 {
     enum Restriction {
@@ -37,14 +36,6 @@ abstract contract ERC20Restricted is ERC20 {
      * @dev Returns whether a user account is allowed to send tokens.
      *
      * Default implementation only disallows explicitly BLOCKED accounts (i.e. a blocklist).
-     *
-     * To convert into an allowlist, override as:
-     *
-     * ```solidity
-     * function canSend(address account) public view virtual override returns (bool) {
-     *     return getRestriction(account) == Restriction.ALLOWED;
-     * }
-     * ```
      */
     function canSend(address account) public view virtual returns (bool) {
         return getRestriction(account) != Restriction.BLOCKED; // i.e. DEFAULT && ALLOWED
@@ -54,7 +45,6 @@ abstract contract ERC20Restricted is ERC20 {
      * @dev Returns whether a user account is allowed to receive tokens.
      *
      * Default implementation only disallows explicitly BLOCKED accounts (i.e. a blocklist).
-     * See {canSend} for the allowlist conversion pattern.
      */
     function canReceive(address account) public view virtual returns (bool) {
         return getRestriction(account) != Restriction.BLOCKED; // i.e. DEFAULT && ALLOWED
