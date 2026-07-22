@@ -6,7 +6,10 @@ NOTE: This document is better viewed at https://docs.openzeppelin.com/community-
 This directory contains utility contracts to restrict access control in smart contracts. These include:
 
  * {AccessManagerLight}: A simpler version of an AccessManager that uses `bytes8` roles to allow function calls identified by their 4-bytes selector.
+ * {AccessManagerWithRoleAccounts}: An `AccessManager` extension that exposes a deterministic account ({RoleAccount}) for each role, so the current members of a role can produce signatures and execute calls on its behalf.
 
 == AccessManager
 
 {{AccessManagerLight}}
+
+{{AccessManagerWithRoleAccounts}}
