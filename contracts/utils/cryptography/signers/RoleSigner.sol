@@ -41,7 +41,7 @@ contract RoleSigner is AbstractSigner {
     /**
      * @dev Returns the role id this signer is bound to, decoded from the clone's immutable arguments.
      *
-     * Returns 0 (the {IAccessManager} admin role) when the immutable arguments do not encode a `uint64`,
+     * Returns 0 (the {IAccessManager} admin role) when the immutable arguments are not at least 8 bytes,
      * which happens when the contract is not deployed as a {Clones}-with-immutable-args proxy. Rather than
      * reverting, this falls back to the admin role so the access manager's admin retains control over the
      * signer and no funds are permanently lost.
