@@ -4,6 +4,7 @@ pragma solidity ^0.8.27;
 
 import {IAccessManager} from "@openzeppelin/contracts/access/manager/IAccessManager.sol";
 import {ERC7821} from "@openzeppelin/contracts/account/extensions/draft-ERC7821.sol";
+import {Clones} from "@openzeppelin/contracts/proxy/Clones.sol";
 import {ERC7739} from "@openzeppelin/contracts/utils/cryptography/signers/draft-ERC7739.sol";
 import {EIP712} from "@openzeppelin/contracts/utils/cryptography/EIP712.sol";
 import {RoleSigner} from "../utils/cryptography/signers/RoleSigner.sol";
@@ -27,7 +28,26 @@ import {RoleSigner} from "../utils/cryptography/signers/RoleSigner.sol";
  * {AccessManagerWithRoleAccounts}.
  */
 contract RoleAccount is ERC7821, ERC7739, RoleSigner {
-    constructor(IAccessManager accessManager_) RoleSigner(accessManager_, 0) EIP712("RoleAccount", "1.0.0") {}
+    address private immutable _self = address(this);
+
+    constructor(IAccessManager accessManager_) RoleSigner(accessManager_) EIP712("RoleAccount", "1.0.0") {}
+
+    /**
+     * @dev Returns the role id this signer is bound to, decoded from the clone's immutable arguments.
+     *
+     * Returns 0 (the {IAccessManager} admin role) when the immutable arguments are not at least 8 bytes,
+     * which happens when the contract is not deployed as a `Clones.cloneWithImmutableArgs` proxy. Rather than
+     * reverting, this falls back to the admin role so the access manager's admin retains control over the
+     * signer and no funds are permanently lost.
+     */
+    function roleId() public view virtual override returns (uint64) {
+        if (_self == address(this)) {
+            return 0;
+        } else {
+            bytes memory cloneArgs = Clones.fetchCloneArgs(address(this));
+            return cloneArgs.length >= 8 ? uint64(bytes8(cloneArgs)) : 0;
+        }
+    }
 
     /**
      * @dev See {ERC7821-_erc7821AuthorizedExecutor}. In addition to the default authorization (a

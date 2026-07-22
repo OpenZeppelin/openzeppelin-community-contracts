@@ -1,11 +1,11 @@
 const { ethers } = require('hardhat');
 const { expect } = require('chai');
 
-// Note that most tests related to RoleSigner are in test/access/manager/AccessManagerWithRoleAccounts.test.js
-describe('RoleSigner', function () {
+// Note that most tests related to RoleAccount are in test/access/manager/AccessManagerWithRoleAccounts.test.js
+describe('RoleAccount', function () {
   it('should revert if deployed with address(0) access manager', async function () {
-    const factory = await ethers.getContractFactory('$RoleSigner');
-    await expect(ethers.deployContract('$RoleSigner', [ethers.ZeroAddress, 0n])).to.be.revertedWithCustomError(
+    const factory = await ethers.getContractFactory('$RoleAccount');
+    await expect(ethers.deployContract('$RoleAccount', [ethers.ZeroAddress])).to.be.revertedWithCustomError(
       factory,
       'InvalidAccessManager',
     );
@@ -15,7 +15,7 @@ describe('RoleSigner', function () {
     const [admin] = await ethers.getSigners();
     const manager = await ethers.deployContract('$AccessManager', [admin]);
 
-    const implementation = await ethers.deployContract('$RoleSigner', [manager, 0n]);
+    const implementation = await ethers.deployContract('$RoleAccount', [manager]);
 
     await expect(implementation.accessManager()).to.eventually.equal(manager);
     await expect(implementation.roleId()).to.eventually.equal(0n);
@@ -27,7 +27,7 @@ describe('RoleSigner', function () {
     const manager = await ethers.deployContract('$AccessManager', [admin]);
 
     const factory = await ethers.deployContract('$Clones');
-    const implementation = await ethers.deployContract('$RoleSigner', [manager, 0n]);
+    const implementation = await ethers.deployContract('$RoleAccount', [manager]);
 
     const signer = await factory.$clone.staticCall(implementation).then(address => implementation.attach(address));
     await factory.$clone(implementation);
