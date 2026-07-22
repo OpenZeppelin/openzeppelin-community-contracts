@@ -27,9 +27,6 @@ contract RoleSigner is AbstractSigner {
     /// @dev The access manager whose role membership authorizes signatures for this signer.
     IAccessManager public immutable accessManager;
 
-    /// @dev The clone's immutable arguments do not encode a single `uint64` role id.
-    error InvalidCloneArgs();
-
     /// @dev Sets the {accessManager} whose role membership authorizes signatures for this signer.
     constructor(IAccessManager accessManager_) {
         require(address(accessManager_) != address(0), InvalidAccessManager());
@@ -39,8 +36,10 @@ contract RoleSigner is AbstractSigner {
     /**
      * @dev Returns the role id this signer is bound to, decoded from the clone's immutable arguments.
      *
-     * Reverts with {InvalidCloneArgs} when the immutable arguments are not exactly a `uint64`, which
-     * happens when the contract is not deployed as a {Clones}-with-immutable-args proxy.
+     * Returns 0 (the {IAccessManager} admin role) when the immutable arguments do not encode a `uint64`,
+     * which happens when the contract is not deployed as a {Clones}-with-immutable-args proxy. Rather than
+     * reverting, this falls back to the admin role so the access manager's admin retains control over the
+     * signer and no funds are permanently lost.
      */
     function roleId() public view virtual returns (uint64) {
         bytes memory cloneArgs = Clones.fetchCloneArgs(address(this));

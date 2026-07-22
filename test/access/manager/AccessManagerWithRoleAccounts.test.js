@@ -8,6 +8,7 @@ const { shouldBehaveLikeERC1271 } = require('@openzeppelin/contracts/test/utils/
 
 const ERC1271_MAGIC_VALUE = '0x1626ba7e';
 const ROLE = 42n;
+const OTHER_ROLE = 17n;
 
 // Wraps a signer so that its produced signatures are prefixed with the signer's address, matching the
 // `[20-byte signer address][inner signature]` layout expected by RoleSigner. The ERC7739Signer helper
@@ -20,6 +21,10 @@ class RoleMemberSigner extends ethers.AbstractSigner {
     this.#signer = signer;
   }
 
+  static from(...args) {
+    return new this(...args);
+  }
+
   getAddress() {
     return this.#signer.getAddress();
   }
@@ -28,31 +33,27 @@ class RoleMemberSigner extends ethers.AbstractSigner {
     return new RoleMemberSigner(this.#signer.connect(provider));
   }
 
-  signTransaction(tx) {
-    return this.#signer.signTransaction(tx);
-  }
-
-  signMessage(message) {
-    return this.#signer.signMessage(message);
-  }
-
-  async signTypedData(domain, types, value) {
-    return ethers.concat([await this.#signer.getAddress(), await this.#signer.signTypedData(domain, types, value)]);
+  // Note: because this is used within an ERC-7739 context, only signTypedData is needed.
+  // ERC-191 are wrapped in EIP-712 structs, and signed as such following ERC-7739.
+  signTypedData(domain, types, value) {
+    return Promise.all([this.#signer.getAddress(), this.#signer.signTypedData(domain, types, value)]).then(
+      ethers.concat,
+    );
   }
 }
 
 async function fixture() {
-  const [admin, member, other] = await ethers.getSigners();
+  const [admin, member, delayed, other] = await ethers.getSigners();
 
-  const manager = await ethers.deployContract('$AccessManagerWithRoleAccounts', [admin.address]);
+  const manager = await ethers.deployContract('$AccessManagerWithRoleAccounts', [admin]);
+  await manager.connect(admin).grantRole(ROLE, member, 0n);
+  await manager.connect(admin).grantRole(ROLE, delayed, 1n);
 
   // Deploy the role account for ROLE and grant the role to `member`.
-  const predicted = await manager.getRoleAccount(ROLE);
+  const account = await manager.getRoleAccount(ROLE).then(predicted => ethers.getContractAt('RoleAccount', predicted));
   await manager.deployRoleAccount(ROLE);
-  const account = await ethers.getContractAt('RoleAccount', predicted);
-  await manager.connect(admin).grantRole(ROLE, member.address, 0);
 
-  return { admin, member, other, manager, account, predicted };
+  return { admin, member, delayed, other, manager, account };
 }
 
 describe('AccessManagerWithRoleAccounts', function () {
@@ -62,14 +63,12 @@ describe('AccessManagerWithRoleAccounts', function () {
 
   describe('role account deployment', function () {
     it('deploys the role account at the predicted deterministic address', async function () {
-      await expect(ethers.provider.getCode(this.predicted)).to.eventually.not.equal('0x');
+      await expect(ethers.provider.getCode(this.account)).to.eventually.not.equal('0x');
     });
 
     it('getRoleAccount matches the address returned by deployRoleAccount', async function () {
-      const otherRole = 7n;
-      await expect(this.manager.deployRoleAccount.staticCall(otherRole)).to.eventually.equal(
-        await this.manager.getRoleAccount(otherRole),
-      );
+      const predicted = await this.manager.getRoleAccount(OTHER_ROLE);
+      await expect(this.manager.deployRoleAccount.staticCall(OTHER_ROLE)).to.eventually.equal(predicted);
     });
 
     it('reverts when deploying the same role twice', async function () {
@@ -77,27 +76,45 @@ describe('AccessManagerWithRoleAccounts', function () {
     });
 
     it('exposes the role id decoded from the clone immutable args', async function () {
-      expect(await this.account.roleId()).to.equal(ROLE);
+      await expect(this.account.roleId()).to.eventually.equal(ROLE);
     });
   });
 
   describe('ERC-1271 / ERC-7739 signature validation', function () {
     beforeEach(function () {
       this.mock = this.account;
-      this.signer = new RoleMemberSigner(this.member);
+      this.signer = RoleMemberSigner.from(this.member);
     });
 
     shouldBehaveLikeERC1271({ erc7739: true });
 
     it('rejects a signature from a non-member', async function () {
       const domain = await getDomain(this.account);
-      const signer = new ERC7739Signer(new RoleMemberSigner(this.other), domain);
-
       const text = 'authorize me';
-      const hash = ethers.hashMessage(text);
-      const signature = await signer.signMessage(text);
 
-      expect(await this.account.isValidSignature(hash, signature)).to.not.equal(ERC1271_MAGIC_VALUE);
+      // by valid signer
+      await expect(
+        this.account.isValidSignature(
+          ethers.hashMessage(text),
+          ERC7739Signer.from(RoleMemberSigner.from(this.member), domain).signMessage(text),
+        ),
+      ).to.eventually.equal(ERC1271_MAGIC_VALUE);
+
+      // by a signer with delay
+      await expect(
+        this.account.isValidSignature(
+          ethers.hashMessage(text),
+          ERC7739Signer.from(RoleMemberSigner.from(this.delayed), domain).signMessage(text),
+        ),
+      ).to.eventually.not.equal(ERC1271_MAGIC_VALUE);
+
+      // by other signer
+      await expect(
+        this.account.isValidSignature(
+          ethers.hashMessage(text),
+          ERC7739Signer.from(RoleMemberSigner.from(this.other), domain).signMessage(text),
+        ),
+      ).to.eventually.not.equal(ERC1271_MAGIC_VALUE);
     });
   });
 
@@ -113,6 +130,12 @@ describe('AccessManagerWithRoleAccounts', function () {
         this.target,
         'MockFunctionCalled',
       );
+    });
+
+    it('rejects execution triggered by a role member with a delay', async function () {
+      await expect(this.account.connect(this.delayed).execute(this.mode, this.data))
+        .to.be.revertedWithCustomError(this.account, 'AccountUnauthorized')
+        .withArgs(this.delayed.address);
     });
 
     it('rejects execution triggered by a non-member', async function () {
