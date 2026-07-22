@@ -18,7 +18,7 @@ import {Bytes} from "@openzeppelin/contracts/utils/Bytes.sol";
  * or revoked through the access manager without redeploying or reconfiguring the signer.
  *
  * The `roleId` is not stored in a regular state variable. This contract is meant to be deployed
- * behind a {Clones}-with-immutable-args proxy that carries the target role id as its immutable
+ * behind a `Clones.cloneWithImmutableArgs` proxy that carries the target role id as its immutable
  * arguments (see {AccessManagerWithRoleAccounts}, which deploys one clone per role).
  */
 contract RoleSigner is AbstractSigner {
@@ -43,7 +43,7 @@ contract RoleSigner is AbstractSigner {
      * @dev Returns the role id this signer is bound to, decoded from the clone's immutable arguments.
      *
      * Returns 0 (the {IAccessManager} admin role) when the immutable arguments are not at least 8 bytes,
-     * which happens when the contract is not deployed as a {Clones}-with-immutable-args proxy. Rather than
+     * which happens when the contract is not deployed as a `Clones.cloneWithImmutableArgs` proxy. Rather than
      * reverting, this falls back to the admin role so the access manager's admin retains control over the
      * signer and no funds are permanently lost.
      */
