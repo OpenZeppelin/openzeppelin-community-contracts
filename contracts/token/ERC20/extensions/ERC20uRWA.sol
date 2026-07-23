@@ -15,6 +15,10 @@ import {ERC20Restricted} from "./ERC20Restricted.sol";
  * asset freezing, and forced asset transfers. This contract doesn't expose minting or burning
  * capabilities; if implemented in derived contracts as needed, they must include 7943-specific
  * logic.
+ *
+ * NOTE: {canSend} and {canReceive} default to {ERC20Restricted-canTransact}. Overriding them to
+ * be more permissive than `canTransact` requires overriding `canTransact` (or the restriction
+ * setup) accordingly, otherwise {ERC20Restricted-_update} will still block the transfer.
  */
 abstract contract ERC20uRWA is ERC20, ERC165, ERC20Freezable, ERC20Restricted, IERC7943Fungible {
     using TransientSlot for *;
@@ -29,23 +33,21 @@ abstract contract ERC20uRWA is ERC20, ERC165, ERC20Freezable, ERC20Restricted, I
     }
 
     /**
-     * @dev See {IERC7943Fungible-canSend}. Defaults to {ERC20Restricted-canSend}.
+     * @dev See {IERC7943Fungible-canSend}. Returns whether `account` is allowed to send tokens. Defaults to {ERC20Restricted-canTransact}.
      *
      * Override to implement sender-specific restrictions distinct from {canReceive}.
      */
-    function canSend(address account) public view virtual override(IERC7943Fungible, ERC20Restricted) returns (bool) {
-        return super.canSend(account);
+    function canSend(address account) public view virtual returns (bool) {
+        return canTransact(account);
     }
 
     /**
-     * @dev See {IERC7943Fungible-canReceive}. Defaults to {ERC20Restricted-canReceive}.
+     * @dev See {IERC7943Fungible-canReceive}. Returns whether `account` is allowed to receive tokens. Defaults to {ERC20Restricted-canTransact}.
      *
      * Override to implement recipient-specific restrictions distinct from {canSend}.
      */
-    function canReceive(
-        address account
-    ) public view virtual override(IERC7943Fungible, ERC20Restricted) returns (bool) {
-        return super.canReceive(account);
+    function canReceive(address account) public view virtual returns (bool) {
+        return canTransact(account);
     }
 
     /**
@@ -121,7 +123,7 @@ abstract contract ERC20uRWA is ERC20, ERC165, ERC20Freezable, ERC20Restricted, I
 
         // Temporarily flag the transfer as forced rather than calling ERC20._update directly.
         // This preserves any side effects from future overrides to _update while letting
-        // _checkSend and _checkReceive skip the sender-side and recipient-side checks.
+        // _update and _checkRestriction skip the sender-side and recipient-side checks.
         ERC20_URWA_FORCED_TRANSFER_SLOT.asBoolean().tstore(true);
         _update(from, to, amount);
         ERC20_URWA_FORCED_TRANSFER_SLOT.asBoolean().tstore(false);
@@ -130,34 +132,29 @@ abstract contract ERC20uRWA is ERC20, ERC165, ERC20Freezable, ERC20Restricted, I
     }
 
     /**
-     * @dev See {ERC20-_update}. The inherited {ERC20Restricted} and {ERC20Freezable} checks apply,
-     * with the sender-side and recipient-side eligibility enforced through {_checkSend} and
-     * {_checkReceive}, so that public transfers cannot succeed in cases where {canTransfer} would
-     * return false.
+     * @dev See {ERC20-_update}. Enforces the {canSend} and {canReceive} checks on top of the
+     * inherited freezing ({ERC20Freezable}) and restriction ({ERC20Restricted}) checks, so that
+     * public transfers cannot succeed in cases where {canTransfer} would return false. Skipped
+     * during a {forcedTransfer}.
      */
     function _update(
         address from,
         address to,
         uint256 amount
     ) internal virtual override(ERC20, ERC20Freezable, ERC20Restricted) {
+        if (!_isForcedTransfer()) {
+            if (from != address(0)) require(canSend(from), ERC7943CannotSend(from)); // Not minting
+            if (to != address(0)) require(canReceive(to), ERC7943CannotReceive(to)); // Not burning
+        }
         super._update(from, to, amount);
     }
 
     /**
-     * @dev See {ERC20Restricted-_checkSend}. Reverts with {IERC7943Fungible-ERC7943CannotSend}.
-     * Skipped during a {forcedTransfer} so that enforcement transfers can move tokens out of
-     * restricted accounts.
+     * @dev See {ERC20Restricted-_checkRestriction}. Skipped during a {forcedTransfer} so that
+     * enforcement transfers can move tokens out of restricted accounts.
      */
-    function _checkSend(address account) internal view virtual override {
-        if (!_isForcedTransfer()) require(canSend(account), ERC7943CannotSend(account));
-    }
-
-    /**
-     * @dev See {ERC20Restricted-_checkReceive}. Reverts with {IERC7943Fungible-ERC7943CannotReceive}.
-     * Skipped during a {forcedTransfer}, where the recipient has already been checked upfront.
-     */
-    function _checkReceive(address account) internal view virtual override {
-        if (!_isForcedTransfer()) require(canReceive(account), ERC7943CannotReceive(account));
+    function _checkRestriction(address account) internal view virtual override {
+        if (!_isForcedTransfer()) super._checkRestriction(account);
     }
 
     /// @dev Whether the current transfer is being performed by {forcedTransfer}.

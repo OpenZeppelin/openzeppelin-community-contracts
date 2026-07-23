@@ -4,7 +4,6 @@
 - `ERC20uRWA`: `setFrozenTokens` no longer caps the frozen amount to the current balance, allowing future balances withholding as required by the spec.
 - `ERC20uRWA`: `canTransfer` now returns false only for permissioned rules (insufficient unfrozen balance while within the total balance, or `canSend`/`canReceive` restrictions); plain balance insufficiency no longer returns false.
 - `ERC20uRWA`: `_update` enforces `canSend`/`canReceive`, so overrides of these checks apply to actual transfers, minting, and burning. Transfers involving restricted accounts now revert with `ERC7943CannotSend`/`ERC7943CannotReceive` instead of `ERC20UserRestricted`.
-- `ERC20Restricted`: Replace `canTransact` with directional `canSend`/`canReceive` (and `_checkRestriction` with `_checkSend`/`_checkReceive`), keeping a single per-account `Restriction`. Enables one-way restrictions and removes the duplicate symmetric check in `ERC20uRWA`.
 - `ERC20uRWA`: `forcedTransfer` gates the recipient with `canReceive` and bypasses sender-side checks through a transient flag instead of temporarily rewriting the sender's restriction.
 
 ## 25-06-2026

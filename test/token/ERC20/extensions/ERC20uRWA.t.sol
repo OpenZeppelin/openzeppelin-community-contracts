@@ -59,8 +59,8 @@ contract ERC20uRWATest is Test {
         assertTrue(token.canTransfer(holder, recipient, 10));
     }
 
-    function test_canTransfer_defaultsToRestrictionWhenNotOverridden() public {
-        // No overrides set: canSend/canReceive fall back to the restriction blocklist, defaulting to true.
+    function test_canTransfer_defaultsToCanTransactWhenNotOverridden() public {
+        // No overrides set: canSend/canReceive fall back to canTransact, which defaults to true.
         assertTrue(token.canTransfer(holder, recipient, 10));
 
         token.blockUser(holder);
