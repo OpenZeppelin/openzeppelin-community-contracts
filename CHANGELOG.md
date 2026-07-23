@@ -1,3 +1,15 @@
+## 20-07-2026
+
+- `IERC7943`: Align all interfaces (fungible, non-fungible, multi-token) with the final EIP-7943 specification: replace `canTransact` with `canSend`/`canReceive` and `ERC7943CannotTransact` with `ERC7943CannotSend`/`ERC7943CannotReceive`. `supportsInterface` now reports the final `0x3edbb4c4` fungible interface id.
+- `ERC20uRWA`: `setFrozenTokens` no longer caps the frozen amount to the current balance, allowing future balances withholding as required by the spec.
+- `ERC20uRWA`: `canTransfer` now returns false only for permissioned rules (insufficient unfrozen balance while within the total balance, or `canSend`/`canReceive` restrictions); plain balance insufficiency no longer returns false.
+- `ERC20uRWA`: `_update` enforces `canSend`/`canReceive`, so overrides of these checks apply to actual transfers, minting, and burning (reverting with `ERC20UserRestricted`).
+- `ERC20uRWA`: `forcedTransfer` gates the recipient with `canReceive` and bypasses sender-side checks through a transient flag instead of temporarily rewriting the sender's restriction.
+
+## 25-06-2026
+
+- `ERC20uRWA`: A self-directed `forcedTransfer` no longer reduces the frozen balance (previously an unauthorized unfreeze that bypassed the freezer role); it behaves as a regular ERC-20 self-transfer with no frozen adjustment.
+
 ## 28-04-2026
 
 - `IERC7540`: Add interface for ERC-7540 asynchronous tokenized vaults, extending ERC-4626 with request-based deposit and redeem flows.
