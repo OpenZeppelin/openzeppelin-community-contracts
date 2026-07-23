@@ -1,3 +1,8 @@
+## 12-06-2026
+
+- `IERC7535`: Add interface for ERC-7535 native asset tokenized vaults — the full ERC-4626 surface with `payable` `deposit`/`mint` and the ERC-7528 native-asset placeholder as `asset()`.
+- `ERC7535`: Add base implementation of ERC-7535 with balance-based `totalAssets`, exact-`msg.value` deposit and mint, pre-`msg.value` exchange-rate accounting, the same configurable virtual-offset inflation-attack mitigation as `ERC4626`, checks-effects-interactions withdrawals via `Address.sendValue`, and a reverting (but `virtual`) `receive()` that rejects unsolicited plain transfers.
+
 ## 28-04-2026
 
 - `IERC7540`: Add interface for ERC-7540 asynchronous tokenized vaults, extending ERC-4626 with request-based deposit and redeem flows.
