@@ -51,7 +51,7 @@ describe('ERC20uRWA', function () {
       await this.token.$_blockUser(this.holder); // Sets to BLOCKED
 
       await expect(this.token.connect(this.holder).transfer(this.recipient, 30n))
-        .to.be.revertedWithCustomError(this.token, 'ERC7943CannotSend')
+        .to.be.revertedWithCustomError(this.token, 'ERC20UserRestricted')
         .withArgs(this.holder);
     });
 
@@ -59,7 +59,7 @@ describe('ERC20uRWA', function () {
       await this.token.$_blockUser(this.recipient); // Sets to BLOCKED
 
       await expect(this.token.connect(this.holder).transfer(this.recipient, 30n))
-        .to.be.revertedWithCustomError(this.token, 'ERC7943CannotReceive')
+        .to.be.revertedWithCustomError(this.token, 'ERC20UserRestricted')
         .withArgs(this.recipient);
     });
 
@@ -142,7 +142,7 @@ describe('ERC20uRWA', function () {
       await this.token.setSendDenied(this.holder, true);
 
       await expect(this.token.connect(this.holder).transfer(this.recipient, 10n))
-        .to.be.revertedWithCustomError(this.token, 'ERC7943CannotSend')
+        .to.be.revertedWithCustomError(this.token, 'ERC20UserRestricted')
         .withArgs(this.holder);
     });
 
@@ -150,7 +150,7 @@ describe('ERC20uRWA', function () {
       await this.token.setReceiveDenied(this.recipient, true);
 
       await expect(this.token.connect(this.holder).transfer(this.recipient, 10n))
-        .to.be.revertedWithCustomError(this.token, 'ERC7943CannotReceive')
+        .to.be.revertedWithCustomError(this.token, 'ERC20UserRestricted')
         .withArgs(this.recipient);
     });
 
@@ -167,7 +167,7 @@ describe('ERC20uRWA', function () {
 
       // but cannot send
       await expect(this.token.connect(this.recipient).transfer(this.holder, 5n))
-        .to.be.revertedWithCustomError(this.token, 'ERC7943CannotSend')
+        .to.be.revertedWithCustomError(this.token, 'ERC20UserRestricted')
         .withArgs(this.recipient);
     });
   });
@@ -394,7 +394,7 @@ describe('ERC20uRWA', function () {
         await this.token.$_blockUser(this.recipient); // Sets to BLOCKED
 
         await expect(this.token.$_mint(this.recipient, value))
-          .to.be.revertedWithCustomError(this.token, 'ERC7943CannotReceive')
+          .to.be.revertedWithCustomError(this.token, 'ERC20UserRestricted')
           .withArgs(this.recipient);
       });
 
@@ -417,7 +417,7 @@ describe('ERC20uRWA', function () {
         await this.token.$_blockUser(this.holder); // Sets to BLOCKED
 
         await expect(this.token.$_burn(this.holder, value))
-          .to.be.revertedWithCustomError(this.token, 'ERC7943CannotSend')
+          .to.be.revertedWithCustomError(this.token, 'ERC20UserRestricted')
           .withArgs(this.holder);
       });
 
@@ -458,7 +458,7 @@ describe('ERC20uRWA', function () {
         await this.token.$_blockUser(this.holder); // Sets to BLOCKED
 
         await expect(this.token.connect(this.approved).transferFrom(this.holder, this.recipient, allowance))
-          .to.be.revertedWithCustomError(this.token, 'ERC7943CannotSend')
+          .to.be.revertedWithCustomError(this.token, 'ERC20UserRestricted')
           .withArgs(this.holder);
       });
 
@@ -466,7 +466,7 @@ describe('ERC20uRWA', function () {
         await this.token.$_blockUser(this.recipient); // Sets to BLOCKED
 
         await expect(this.token.connect(this.approved).transferFrom(this.holder, this.recipient, allowance))
-          .to.be.revertedWithCustomError(this.token, 'ERC7943CannotReceive')
+          .to.be.revertedWithCustomError(this.token, 'ERC20UserRestricted')
           .withArgs(this.recipient);
       });
 

@@ -145,8 +145,8 @@ abstract contract ERC20uRWA is ERC20, ERC165, ERC20Freezable, ERC20Restricted, I
         uint256 amount
     ) internal virtual override(ERC20, ERC20Freezable, ERC20Restricted) {
         if (!_isForcedTransfer()) {
-            if (from != address(0)) require(canSend(from), ERC7943CannotSend(from)); // Not minting
-            if (to != address(0)) require(canReceive(to), ERC7943CannotReceive(to)); // Not burning
+            if (from != address(0)) require(canSend(from), ERC20UserRestricted(from)); // Not minting
+            if (to != address(0)) require(canReceive(to), ERC20UserRestricted(to)); // Not burning
         }
         super._update(from, to, amount);
     }
