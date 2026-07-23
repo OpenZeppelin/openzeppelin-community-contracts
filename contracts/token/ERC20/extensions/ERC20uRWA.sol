@@ -111,14 +111,16 @@ abstract contract ERC20uRWA is ERC20, ERC165, ERC20Freezable, ERC20Restricted, I
         // Update frozen balance if needed. ERC-7943 requires that balance is unfrozen first (emitting
         // the corresponding Frozen event via _setFrozen) and then send the tokens. Skipped for
         // self-transfers, where the balance does not change and no unfreeze is warranted.
-        uint256 currentFrozen = frozen(from);
-        uint256 newBalance;
-        unchecked {
-            // Safe because ERC20._update will check that balanceOf(from) >= amount
-            newBalance = balanceOf(from) - amount;
-        }
-        if (from != to && currentFrozen > newBalance) {
-            _setFrozen(from, newBalance);
+        if (from != to) {
+            uint256 currentFrozen = frozen(from);
+            uint256 newBalance;
+            unchecked {
+                // Safe because ERC20._update will check that balanceOf(from) >= amount
+                newBalance = balanceOf(from) - amount;
+            }
+            if (currentFrozen > newBalance) {
+                _setFrozen(from, newBalance);
+            }
         }
 
         // Temporarily flag the transfer as forced rather than calling ERC20._update directly.
