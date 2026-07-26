@@ -19,11 +19,19 @@
 :ERC20Restricted: pass:normal[xref:token.adoc#ERC20Restricted[`ERC20Restricted`]]
 :ERC20Freezable: pass:normal[xref:token.adoc#ERC20Freezable[`ERC20Freezable`]]
 :ERC20Restricted: pass:normal[xref:token.adoc#ERC20Restricted[`ERC20Restricted`]]
+:ERC20Restricted-canTransact: pass:normal[xref:token.adoc#ERC20Restricted-canTransact-address-[`ERC20Restricted.canTransact`]]
+:ERC20Restricted-_update: pass:normal[xref:token.adoc#ERC20Restricted-_update-address-address-uint256-[`ERC20Restricted._update`]]
+:IERC7943Fungible-canSend: pass:normal[xref:interfaces.adoc#IERC7943Fungible-canSend-address-[`IERC7943Fungible.canSend`]]
+:ERC20Restricted-canTransact: pass:normal[xref:token.adoc#ERC20Restricted-canTransact-address-[`ERC20Restricted.canTransact`]]
+:IERC7943Fungible-canReceive: pass:normal[xref:interfaces.adoc#IERC7943Fungible-canReceive-address-[`IERC7943Fungible.canReceive`]]
+:ERC20Restricted-canTransact: pass:normal[xref:token.adoc#ERC20Restricted-canTransact-address-[`ERC20Restricted.canTransact`]]
 :IERC7943Fungible-canTransfer: pass:normal[xref:interfaces.adoc#IERC7943Fungible-canTransfer-address-address-uint256-[`IERC7943Fungible.canTransfer`]]
 :IERC7943Fungible-setFrozenTokens: pass:normal[xref:interfaces.adoc#IERC7943Fungible-setFrozenTokens-address-uint256-[`IERC7943Fungible.setFrozenTokens`]]
-:IERC7943Fungible-Frozen: pass:normal[xref:interfaces.adoc#IERC7943Fungible-Frozen-address-uint256-[`IERC7943Fungible.Frozen`]]
 :IERC7943Fungible-forcedTransfer: pass:normal[xref:interfaces.adoc#IERC7943Fungible-forcedTransfer-address-address-uint256-[`IERC7943Fungible.forcedTransfer`]]
 :ERC20Restricted: pass:normal[xref:token.adoc#ERC20Restricted[`ERC20Restricted`]]
+:ERC20Freezable: pass:normal[xref:token.adoc#ERC20Freezable[`ERC20Freezable`]]
+:ERC20Restricted: pass:normal[xref:token.adoc#ERC20Restricted[`ERC20Restricted`]]
+:ERC20Restricted-_checkRestriction: pass:normal[xref:token.adoc#ERC20Restricted-_checkRestriction-address-[`ERC20Restricted._checkRestriction`]]
 :IERC7540Operator: pass:normal[xref:interfaces.adoc#IERC7540Operator[`IERC7540Operator`]]
 :IERC7540Operator: pass:normal[xref:interfaces.adoc#IERC7540Operator[`IERC7540Operator`]]
 :IERC7540Deposit: pass:normal[xref:interfaces.adoc#IERC7540Deposit[`IERC7540Deposit`]]
@@ -1133,13 +1141,16 @@ Emitted when a user account's restriction is updated.
 
 The operation failed because the user account is restricted.
 
-:canTransact: pass:normal[xref:#ERC20uRWA-canTransact-address-[`++canTransact++`]]
 :supportsInterface: pass:normal[xref:#ERC20uRWA-supportsInterface-bytes4-[`++supportsInterface++`]]
+:canSend: pass:normal[xref:#ERC20uRWA-canSend-address-[`++canSend++`]]
+:canReceive: pass:normal[xref:#ERC20uRWA-canReceive-address-[`++canReceive++`]]
 :canTransfer: pass:normal[xref:#ERC20uRWA-canTransfer-address-address-uint256-[`++canTransfer++`]]
 :getFrozenTokens: pass:normal[xref:#ERC20uRWA-getFrozenTokens-address-[`++getFrozenTokens++`]]
 :setFrozenTokens: pass:normal[xref:#ERC20uRWA-setFrozenTokens-address-uint256-[`++setFrozenTokens++`]]
 :forcedTransfer: pass:normal[xref:#ERC20uRWA-forcedTransfer-address-address-uint256-[`++forcedTransfer++`]]
 :_update: pass:normal[xref:#ERC20uRWA-_update-address-address-uint256-[`++_update++`]]
+:_checkRestriction: pass:normal[xref:#ERC20uRWA-_checkRestriction-address-[`++_checkRestriction++`]]
+:_isForcedTransfer: pass:normal[xref:#ERC20uRWA-_isForcedTransfer--[`++_isForcedTransfer++`]]
 :_checkEnforcer: pass:normal[xref:#ERC20uRWA-_checkEnforcer-address-address-uint256-[`++_checkEnforcer++`]]
 :_checkFreezer: pass:normal[xref:#ERC20uRWA-_checkFreezer-address-uint256-[`++_checkFreezer++`]]
 
@@ -1159,16 +1170,23 @@ asset freezing, and forced asset transfers. This contract doesn't expose minting
 capabilities; if implemented in derived contracts as needed, they must include 7943-specific
 logic.
 
+NOTE: {canSend} and {canReceive} default to {ERC20Restricted-canTransact}. Overriding them to
+be more permissive than `canTransact` requires overriding `canTransact` (or the restriction
+setup) accordingly, otherwise {ERC20Restricted-_update} will still block the transfer.
+
 [.contract-index]
 .Functions
 --
-* `++canTransact(account)++`
 * `++supportsInterface(interfaceId)++`
+* `++canSend(account)++`
+* `++canReceive(account)++`
 * `++canTransfer(from, to, amount)++`
 * `++getFrozenTokens(account)++`
 * `++setFrozenTokens(account, amount)++`
 * `++forcedTransfer(from, to, amount)++`
 * `++_update(from, to, amount)++`
+* `++_checkRestriction(account)++`
+* `++_isForcedTransfer()++`
 * `++_checkEnforcer(from, to, amount)++`
 * `++_checkFreezer(account, amount)++`
 
@@ -1178,11 +1196,11 @@ logic.
 [.contract-subindex-inherited]
 .ERC20Restricted
 * `++getRestriction(account)++`
+* `++canTransact(account)++`
 * `++_setRestriction(account, restriction)++`
 * `++_blockUser(account)++`
 * `++_allowUser(account)++`
 * `++_resetUser(account)++`
-* `++_checkRestriction(account)++`
 
 [.contract-subindex-inherited]
 .ERC20Freezable
@@ -1269,7 +1287,8 @@ logic.
 
 [.contract-subindex-inherited]
 .IERC7943Fungible
-* `++ERC7943CannotTransact(account)++`
+* `++ERC7943CannotSend(account)++`
+* `++ERC7943CannotReceive(account)++`
 * `++ERC7943CannotTransfer(from, to, amount)++`
 * `++ERC7943InsufficientUnfrozenBalance(account, amount, unfrozen)++`
 
@@ -1308,22 +1327,6 @@ logic.
 --
 
 [.contract-item]
-[[ERC20uRWA-canTransact-address-]]
-==== `[.contract-item-name]#++canTransact++#++(address account) → bool++` [.item-kind]#public#
-
-Returns whether a user account is allowed to interact with the token.
-
-Default implementation only disallows explicitly BLOCKED accounts (i.e. a blocklist).
-
-To convert into an allowlist, override as:
-
-```solidity
-function canTransact(address account) public view virtual override returns (bool) {
-    return getRestriction(account) == Restriction.ALLOWED;
-}
-```
-
-[.contract-item]
 [[ERC20uRWA-supportsInterface-bytes4-]]
 ==== `[.contract-item-name]#++supportsInterface++#++(bytes4 interfaceId) → bool++` [.item-kind]#public#
 
@@ -1335,13 +1338,35 @@ to learn more about how these ids are created.
 This function call must use less than 30 000 gas.
 
 [.contract-item]
+[[ERC20uRWA-canSend-address-]]
+==== `[.contract-item-name]#++canSend++#++(address account) → bool++` [.item-kind]#public#
+
+See {IERC7943Fungible-canSend}. Returns whether `account` is allowed to send tokens. Defaults to {ERC20Restricted-canTransact}.
+
+Override to implement sender-specific restrictions distinct from {canReceive}.
+
+[.contract-item]
+[[ERC20uRWA-canReceive-address-]]
+==== `[.contract-item-name]#++canReceive++#++(address account) → bool++` [.item-kind]#public#
+
+See {IERC7943Fungible-canReceive}. Returns whether `account` is allowed to receive tokens. Defaults to {ERC20Restricted-canTransact}.
+
+Override to implement recipient-specific restrictions distinct from {canSend}.
+
+[.contract-item]
 [[ERC20uRWA-canTransfer-address-address-uint256-]]
 ==== `[.contract-item-name]#++canTransfer++#++(address from, address to, uint256 amount) → bool++` [.item-kind]#external#
 
 See {IERC7943Fungible-canTransfer}.
 
-CAUTION: This function is only meant for external use. Overriding it will not apply the new checks to
-the internal {_update} function. Consider overriding {_update} accordingly to keep both functions in sync.
+Returns false when the transfer is prevented by a permissioned rule: an `amount` exceeding
+the unfrozen balance (only while covered by the current balance), or {canSend} / {canReceive}
+restrictions. Plain balance insufficiency (`amount > balanceOf(from)`) does not return false
+here, as those validations belong to the base ERC-20 standard per EIP-7943.
+
+CAUTION: This function is only meant for external use. Overriding it will not apply the new
+checks to the internal {_update} function, which enforces {canSend}, {canReceive} and the
+unfrozen balance directly. Consider overriding {_update} accordingly to keep both in sync.
 
 [.contract-item]
 [[ERC20uRWA-getFrozenTokens-address-]]
@@ -1355,8 +1380,8 @@ It could return an amount higher than the account's balance.
 
 See {IERC7943Fungible-setFrozenTokens}. Always returns true if successful. Reverts otherwise.
 
-NOTE: The `amount` is capped to the balance of the `account` to ensure the {IERC7943Fungible-Frozen} event
-emits values that consistently reflect the actual amount of tokens that are frozen.
+NOTE: The `amount` is allowed to exceed the current balance to support future balances withholding,
+as required by the EIP-7943 spec.
 
 [.contract-item]
 [[ERC20uRWA-forcedTransfer-address-address-uint256-]]
@@ -1364,23 +1389,45 @@ emits values that consistently reflect the actual amount of tokens that are froz
 
 See {IERC7943Fungible-forcedTransfer}. Always returns true if successful. Reverts otherwise.
 
-Bypasses the {ERC20Restricted} restrictions for the `from` address and adjusts the frozen balance
-to the new balance after the transfer.
+Bypasses the {canSend} and {ERC20Restricted} checks for the `from` address and adjusts the
+frozen balance to the new balance after the transfer. The recipient is still required to
+pass the {canReceive} check, as recommended by EIP-7943.
 
 NOTE: This function uses {_update} to perform the transfer, ensuring all standard ERC20
 side effects (such as balance updates and events) are preserved. If you override {_update}
 to add additional restrictions or logic, those changes will also apply here.
 Consider overriding this function to bypass newer restrictions if needed.
 
+NOTE: A forced transfer to self moves no tokens, so it performs no frozen balance adjustment
+(otherwise it would act as an unauthorized unfreeze bypassing the freezer role). It behaves
+as a regular ERC-20 self-transfer, reverting if `amount` exceeds the unfrozen balance.
+
+CAUTION: The sender-side and recipient-side checks are suppressed for the duration of the
+internal {_update} call. If an override of {_update} performs external calls, a reentering
+transfer will skip those checks as well. Consider adding reentrancy protection when
+extending {_update} with external calls.
+
 [.contract-item]
 [[ERC20uRWA-_update-address-address-uint256-]]
 ==== `[.contract-item-name]#++_update++#++(address from, address to, uint256 amount)++` [.item-kind]#internal#
 
-Transfers a `value` amount of tokens from `from` to `to`, or alternatively mints (or burns) if `from`
-(or `to`) is the zero address. All customizations to transfers, mints, and burns should be done by overriding
-this function.
+See {ERC20-_update}. Enforces the {canSend} and {canReceive} checks on top of the
+inherited freezing ({ERC20Freezable}) and restriction ({ERC20Restricted}) checks, so that
+public transfers cannot succeed in cases where {canTransfer} would return false. Skipped
+during a {forcedTransfer}.
 
-Emits a {Transfer} event.
+[.contract-item]
+[[ERC20uRWA-_checkRestriction-address-]]
+==== `[.contract-item-name]#++_checkRestriction++#++(address account)++` [.item-kind]#internal#
+
+See {ERC20Restricted-_checkRestriction}. Skipped during a {forcedTransfer} so that
+enforcement transfers can move tokens out of restricted accounts.
+
+[.contract-item]
+[[ERC20uRWA-_isForcedTransfer--]]
+==== `[.contract-item-name]#++_isForcedTransfer++#++() → bool++` [.item-kind]#internal#
+
+Whether the current transfer is being performed by {forcedTransfer}.
 
 [.contract-item]
 [[ERC20uRWA-_checkEnforcer-address-address-uint256-]]
