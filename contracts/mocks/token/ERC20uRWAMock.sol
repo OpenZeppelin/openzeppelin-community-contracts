@@ -9,9 +9,28 @@ abstract contract ERC20uRWAMock is ERC20uRWA, AccessControl {
     bytes32 public constant FREEZER_ROLE = keccak256("FREEZER_ROLE");
     bytes32 public constant ENFORCER_ROLE = keccak256("ENFORCER_ROLE");
 
+    mapping(address account => bool) private _sendDenied;
+    mapping(address account => bool) private _receiveDenied;
+
     constructor(address freezer, address enforcer) {
         _grantRole(FREEZER_ROLE, freezer);
         _grantRole(ENFORCER_ROLE, enforcer);
+    }
+
+    function setSendDenied(address account, bool denied) public {
+        _sendDenied[account] = denied;
+    }
+
+    function setReceiveDenied(address account, bool denied) public {
+        _receiveDenied[account] = denied;
+    }
+
+    function canSend(address account) public view override returns (bool) {
+        return !_sendDenied[account] && super.canSend(account);
+    }
+
+    function canReceive(address account) public view override returns (bool) {
+        return !_receiveDenied[account] && super.canReceive(account);
     }
 
     function supportsInterface(
