@@ -47,7 +47,10 @@
   ],
   "devDependencies": {
     "@openzeppelin/contracts": "file:lib/@openzeppelin-contracts",
-    "husky": "^9.1.7"
+    "husky": "^9.1.7",
+    "lz4js": "^0.2.0",
+    "snappy": "^7.3.3",
+    "solady": "^0.1.26"
   },
   "lint-staged": {
     "*.{js,ts}": [
