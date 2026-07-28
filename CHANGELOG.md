@@ -1,8 +1,20 @@
-## 15-07-2026
+## 28-07-2026
 
 - `RoleSigner`: Add an `AbstractSigner` whose authority is delegated to the members of a role tracked by an `AccessManager`. A signature is accepted only when its `[signer][inner signature]` payload is valid and the signer currently holds the bound role.
 - `RoleAccount`: Add an account combining `RoleSigner` (ERC-1271 via ERC-7739) and `ERC7821` batched execution, acting on behalf of the current members of a role.
 - `AccessManagerWithRoleAccounts`: Add an `AccessManager` extension that deploys a deterministic `RoleAccount` per role via clones-with-immutable-args.
+
+## 20-07-2026
+
+- `IERC7943`: Align all interfaces (fungible, non-fungible, multi-token) with the final EIP-7943 specification: replace `canTransact` with `canSend`/`canReceive` and `ERC7943CannotTransact` with `ERC7943CannotSend`/`ERC7943CannotReceive`. `supportsInterface` now reports the final `0x3edbb4c4` fungible interface id.
+- `ERC20uRWA`: `setFrozenTokens` no longer caps the frozen amount to the current balance, allowing future balances withholding as required by the spec.
+- `ERC20uRWA`: `canTransfer` now returns false only for permissioned rules (insufficient unfrozen balance while within the total balance, or `canSend`/`canReceive` restrictions); plain balance insufficiency no longer returns false.
+- `ERC20uRWA`: `_update` enforces `canSend`/`canReceive`, so overrides of these checks apply to actual transfers, minting, and burning (reverting with `ERC20UserRestricted`).
+- `ERC20uRWA`: `forcedTransfer` gates the recipient with `canReceive` and bypasses sender-side checks through a transient flag instead of temporarily rewriting the sender's restriction.
+
+## 25-06-2026
+
+- `ERC20uRWA`: A self-directed `forcedTransfer` no longer reduces the frozen balance (previously an unauthorized unfreeze that bypassed the freezer role); it behaves as a regular ERC-20 self-transfer with no frozen adjustment.
 
 ## 28-04-2026
 
