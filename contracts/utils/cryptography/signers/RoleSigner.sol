@@ -67,7 +67,7 @@ abstract contract RoleSigner is AbstractSigner {
         address signer = address(bytes20(signature));
         return
             signature.length >= 20 &&
-            SignatureChecker.isValidSignatureNow(signer, hash, signature[20:]) &&
+            SignatureChecker.isValidSignatureNowCalldata(signer, hash, signature[20:]) &&
             _isUnrestrictedMember(signer);
     }
 }
