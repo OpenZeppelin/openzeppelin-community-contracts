@@ -21,6 +21,8 @@ Set of extensions and utilities for tokens (e.g ERC-20, ERC-721, ERC-1155) and d
  * {ERC7540DelayRedeem}: Time-delay fulfillment strategy for asynchronous redemptions, becoming permissionlessly claimable after a configurable waiting period.
  * {ERC7540SyncDeposit}: Module for enabling synchronous (ERC-4626) deposit flow in an ERC-7540 vault.
  * {ERC7540SyncRedeem}: Module for enabling synchronous (ERC-4626) redeem flow in an ERC-7540 vault.
+ * {ERC7540EpochDeposit}: Epoch-based batch fulfillment strategy for asynchronous deposits, batching requests submitted in the same epoch and settling them at a single locked rate.
+ * {ERC7540EpochRedeem}: Epoch-based batch fulfillment strategy for asynchronous redemptions, batching requests submitted in the same epoch and settling them at a single locked rate.
 
 == General
 
@@ -59,3 +61,7 @@ Set of extensions and utilities for tokens (e.g ERC-20, ERC-721, ERC-1155) and d
 {{ERC7540SyncDeposit}}
 
 {{ERC7540SyncRedeem}}
+
+{{ERC7540EpochDeposit}}
+
+{{ERC7540EpochRedeem}}

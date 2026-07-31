@@ -1,3 +1,7 @@
+## 31-07-2026
+
+- `ERC7540EpochDeposit`, `ERC7540EpochRedeem`: Add epoch-based batch fulfillment strategies for ERC-7540 vaults. Requests submitted in the same epoch share a single queue slot per controller and are settled together at one locked exchange rate when the admin closes the epoch via `_fulfillDeposit` / `_fulfillRedeem`.
+
 ## 20-07-2026
 
 - `IERC7943`: Align all interfaces (fungible, non-fungible, multi-token) with the final EIP-7943 specification: replace `canTransact` with `canSend`/`canReceive` and `ERC7943CannotTransact` with `ERC7943CannotSend`/`ERC7943CannotReceive`. `supportsInterface` now reports the final `0x3edbb4c4` fungible interface id.
