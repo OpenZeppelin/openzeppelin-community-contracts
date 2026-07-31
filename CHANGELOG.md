@@ -2,7 +2,7 @@
 
 - `SignerRole`: Add an `AbstractSigner` whose authority is delegated to the members of a role tracked by an `AccessManager`. A signature is accepted only when its `[signer][inner signature]` payload is valid and the signer currently holds the bound role.
 - `RoleAccount`: Add an account combining `SignerRole` (ERC-1271 via ERC-7739) and `ERC7821` batched execution, acting on behalf of the current members of a role.
-- `AccessManagerWithRoleAccounts`: Add an `AccessManager` extension that deploys a deterministic `RoleAccount` per role via clones-with-immutable-args.
+- `RoleAccountFactory`: Add a factory that deploys a deterministic `RoleAccount` per (access manager, role) pair via clones-with-immutable-args.
 
 ## 20-07-2026
 

@@ -7,7 +7,6 @@ const { encodeMode, encodeBatch, CALL_TYPE_BATCH } = require('@openzeppelin/cont
 const { shouldBehaveLikeERC1271 } = require('@openzeppelin/contracts/test/utils/cryptography/ERC1271.behavior');
 
 const ERC1271_MAGIC_VALUE = '0x1626ba7e';
-const ADMIN_ROLE = 0n;
 const ROLE = 42n;
 const OTHER_ROLE = 17n;
 
@@ -46,37 +45,41 @@ class RoleMemberSigner extends ethers.AbstractSigner {
 async function fixture() {
   const [admin, member, delayed, other] = await ethers.getSigners();
 
-  const manager = await ethers.deployContract('$AccessManagerWithRoleAccounts', [admin]);
+  const manager = await ethers.deployContract('$AccessManager', [admin]);
   await manager.connect(admin).grantRole(ROLE, member, 0n);
   await manager.connect(admin).grantRole(ROLE, delayed, 1n);
 
-  // Deploy the role account for ROLE and grant the role to `member`.
-  const account = await manager.getRoleAccount(ROLE).then(predicted => ethers.getContractAt('RoleAccount', predicted));
-  await manager.deployRoleAccount(ROLE);
+  const factory = await ethers.deployContract('$RoleAccountFactory');
 
-  return { admin, member, delayed, other, manager, account };
+  // Deploy the role account for ROLE and grant the role to `member`.
+  const account = await factory
+    .getRoleAccount(manager, ROLE)
+    .then(predicted => ethers.getContractAt('RoleAccount', predicted));
+  await factory.deployRoleAccount(manager, ROLE);
+
+  return { admin, member, delayed, other, manager, factory, account };
 }
 
-describe('AccessManagerWithRoleAccounts', function () {
+describe('RoleAccountFactory', function () {
   beforeEach(async function () {
     Object.assign(this, await loadFixture(fixture));
   });
 
   describe('template behavior', function () {
     beforeEach(async function () {
-      this.template = this.account.attach(ethers.getCreateAddress({ from: this.manager.target, nonce: 1n }));
+      this.template = this.account.attach(ethers.getCreateAddress({ from: this.factory.target, nonce: 1n }));
     });
 
     it('deploys the role account at the predicted deterministic address', async function () {
       await expect(ethers.provider.getCode(this.template)).to.eventually.not.equal('0x');
     });
 
-    it('exposes the access manager instance', async function () {
-      await expect(this.template.accessManager()).to.eventually.equal(this.manager);
+    it('does not expose any access manager', async function () {
+      await expect(this.template.accessManager()).to.be.revertedWithCustomError(this.template, 'DirectCallNotAllowed');
     });
 
-    it('is controlled by the admin role', async function () {
-      await expect(this.template.roleId()).to.eventually.equal(ADMIN_ROLE);
+    it('does not expose any role', async function () {
+      await expect(this.template.roleId()).to.be.revertedWithCustomError(this.template, 'DirectCallNotAllowed');
     });
   });
 
@@ -85,28 +88,28 @@ describe('AccessManagerWithRoleAccounts', function () {
       await expect(ethers.provider.getCode(this.account)).to.eventually.not.equal('0x');
     });
 
-    it('exposes the access manager instance', async function () {
+    it('exposes the access manager decoded from the clone immutable args', async function () {
       await expect(this.account.accessManager()).to.eventually.equal(this.manager);
-    });
-
-    it('getRoleAccount matches the address returned by deployRoleAccount', async function () {
-      const predicted = await this.manager.getRoleAccount(OTHER_ROLE);
-      await expect(this.manager.deployRoleAccount.staticCall(OTHER_ROLE)).to.eventually.equal(predicted);
-    });
-
-    it('reverts when deploying the same role twice', async function () {
-      await expect(this.manager.deployRoleAccount(ROLE)).to.be.reverted;
     });
 
     it('exposes the role id decoded from the clone immutable args', async function () {
       await expect(this.account.roleId()).to.eventually.equal(ROLE);
     });
 
+    it('getRoleAccount matches the address returned by deployRoleAccount', async function () {
+      const predicted = await this.factory.getRoleAccount(this.manager, OTHER_ROLE);
+      await expect(this.factory.deployRoleAccount.staticCall(this.manager, OTHER_ROLE)).to.eventually.equal(predicted);
+    });
+
     it('emits a RoleAccountDeployed event when a role account is deployed', async function () {
-      const predicted = await this.manager.getRoleAccount(OTHER_ROLE);
-      await expect(this.manager.deployRoleAccount(OTHER_ROLE))
-        .to.emit(this.manager, 'RoleAccountDeployed')
-        .withArgs(OTHER_ROLE, predicted);
+      const predicted = await this.factory.getRoleAccount(this.manager, OTHER_ROLE);
+      await expect(this.factory.deployRoleAccount(this.manager, OTHER_ROLE))
+        .to.emit(this.factory, 'RoleAccountDeployed')
+        .withArgs(this.manager, OTHER_ROLE, predicted);
+    });
+
+    it('reverts when deploying the same role twice', async function () {
+      await expect(this.factory.deployRoleAccount(this.manager, ROLE)).to.be.reverted;
     });
   });
 

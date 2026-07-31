@@ -24,29 +24,49 @@ import {SignerRole} from "../utils/cryptography/signers/SignerRole.sol";
  *   replay-safe ERC-1271 validation on top of {SignerRole}.
  * * {ERC7821}: minimal batch executor.
  *
- * These accounts are intended to be deployed as `Clones.cloneWithImmutableArgs`, one per role, by
- * {AccessManagerWithRoleAccounts}.
+ * These accounts are intended to be deployed as `Clones.cloneWithImmutableArgs`, one per (access manager,
+ * role) pair, by {RoleAccountFactory}. The access manager and role id are encoded in the clone's immutable
+ * arguments, so calling the getters on the implementation directly (outside a clone) reverts.
  */
 contract RoleAccount is ERC7821, ERC7739, SignerRole {
     address private immutable _self = address(this);
 
-    constructor(IAccessManager accessManager_) SignerRole(accessManager_) EIP712("RoleAccount", "1.0.0") {}
+    error DirectCallNotAllowed();
+    error MissingImmutableArgs();
+
+    constructor() EIP712("RoleAccount", "1.0.0") {}
+
+    /**
+     * @dev Returns the access manager this account is bound to, decoded from the clone's immutable arguments.
+     *
+     * Reverts with {DirectCallNotAllowed} when called on the implementation directly (i.e. not through a
+     * `Clones.cloneWithImmutableArgs` proxy), and with {MissingImmutableArgs} when the immutable arguments
+     * are malformed.
+     */
+    function accessManager() public view virtual override returns (IAccessManager accessManager_) {
+        require(_self != address(this), DirectCallNotAllowed());
+        (accessManager_, ) = _fetchArgs();
+    }
 
     /**
      * @dev Returns the role id this signer is bound to, decoded from the clone's immutable arguments.
      *
-     * Returns 0 (the {IAccessManager} admin role) when the immutable arguments are not at least 8 bytes,
-     * which happens when the contract is not deployed as a `Clones.cloneWithImmutableArgs` proxy. Rather than
-     * reverting, this falls back to the admin role so the access manager's admin retains control over the
-     * signer and no funds are permanently lost.
+     * Reverts with {DirectCallNotAllowed} when called on the implementation directly (i.e. not through a
+     * `Clones.cloneWithImmutableArgs` proxy), and with {MissingImmutableArgs} when the immutable arguments
+     * are malformed.
      */
-    function roleId() public view virtual override returns (uint64) {
-        if (_self == address(this)) {
-            return 0;
-        } else {
-            bytes memory cloneArgs = Clones.fetchCloneArgs(address(this));
-            return cloneArgs.length >= 8 ? uint64(bytes8(cloneArgs)) : 0;
-        }
+    function roleId() public view virtual override returns (uint64 roleId_) {
+        require(_self != address(this), DirectCallNotAllowed());
+        (, roleId_) = _fetchArgs();
+    }
+
+    /// @dev Decodes the access manager and role id packed in the clone's immutable arguments.
+    function _fetchArgs() private view returns (IAccessManager, uint64) {
+        bytes memory cloneArgs = Clones.fetchCloneArgs(address(this));
+        require(cloneArgs.length >= 28, MissingImmutableArgs());
+
+        bytes28 data = bytes28(cloneArgs);
+        return (IAccessManager(address(bytes20(data))), uint64(bytes8(data << 160)));
     }
 
     /**

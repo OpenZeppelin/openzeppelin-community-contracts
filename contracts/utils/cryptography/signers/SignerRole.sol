@@ -15,22 +15,18 @@ import {SignatureChecker} from "@openzeppelin/contracts/utils/cryptography/Signa
  * {accessManager} with 0 delay. This lets a role behave as a shared signer: membership can be granted
  * or revoked through the access manager without redeploying or reconfiguring the signer.
  *
- * How the `roleId` is resolved is left to implementations (see {roleId}). {RoleAccount} decodes it
- * from the immutable arguments of a `Clones.cloneWithImmutableArgs` proxy (see
- * {AccessManagerWithRoleAccounts}, which deploys one clone per role).
+ * How the {accessManager} and `roleId` are resolved is left to implementations (see {accessManager} and
+ * {roleId}). {RoleAccount} decodes both from the immutable arguments of a `Clones.cloneWithImmutableArgs`
+ * proxy (see {RoleAccountFactory}, which deploys one clone per (access manager, role) pair).
  */
 abstract contract SignerRole is AbstractSigner {
-    /// @dev Thrown when the access manager is the zero address.
-    error InvalidAccessManager();
-
-    /// @dev The access manager whose role membership authorizes signatures for this signer.
-    IAccessManager public immutable accessManager;
-
-    /// @dev Sets the {accessManager} whose role membership authorizes signatures for this signer.
-    constructor(IAccessManager accessManager_) {
-        require(address(accessManager_) != address(0), InvalidAccessManager());
-        accessManager = accessManager_;
-    }
+    /**
+     * @dev Returns the {IAccessManager} whose role membership authorizes signatures for this signer.
+     *
+     * Implementations are responsible for defining how the access manager is resolved (see {RoleAccount},
+     * which decodes it from the clone's immutable arguments).
+     */
+    function accessManager() public view virtual returns (IAccessManager);
 
     /**
      * @dev Returns the role id this signer is bound to. Members of this role in the {accessManager}
@@ -46,7 +42,7 @@ abstract contract SignerRole is AbstractSigner {
      * This signer does not allow roles with execution delays to interact with it.
      */
     function _isUnrestrictedMember(address account) internal view virtual returns (bool) {
-        (bool hasRole, uint32 executionDelay) = accessManager.hasRole(roleId(), account);
+        (bool hasRole, uint32 executionDelay) = accessManager().hasRole(roleId(), account);
         return hasRole && executionDelay == 0;
     }
 
