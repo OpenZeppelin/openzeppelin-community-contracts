@@ -24,7 +24,7 @@ import {SignerRole} from "../utils/cryptography/signers/SignerRole.sol";
  *   replay-safe ERC-1271 validation on top of {SignerRole}.
  * * {ERC7821}: minimal batch executor.
  *
- * These accounts are intended to be deployed as `Clones.cloneWithImmutableArgs`, one per (access manager,
+ * These accounts are intended to be deployed as `Clones.cloneWithImmutableArgs`, once per (access manager,
  * role) pair, by {RoleAccountFactory}. The access manager and role id are encoded in the clone's immutable
  * arguments, so calling the getters on the implementation directly (outside a clone) reverts.
  */

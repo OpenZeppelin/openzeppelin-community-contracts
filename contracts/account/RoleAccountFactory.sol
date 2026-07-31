@@ -46,7 +46,7 @@ contract RoleAccountFactory {
 
     /**
      * @dev Deploys the {RoleAccount} clone for `roleId` on `accessManager` at its deterministic address and
-     * returns it. Reverts if that account has already been deployed.
+     * returns it. Reverts if the account has already been deployed.
      */
     function deployRoleAccount(address accessManager, uint64 roleId) public virtual returns (address) {
         address roleAccount = Clones.cloneDeterministicWithImmutableArgs(
