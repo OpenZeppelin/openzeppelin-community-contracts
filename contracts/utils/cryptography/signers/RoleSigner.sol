@@ -19,7 +19,7 @@ import {SignatureChecker} from "@openzeppelin/contracts/utils/cryptography/Signa
  * from the immutable arguments of a `Clones.cloneWithImmutableArgs` proxy (see
  * {AccessManagerWithRoleAccounts}, which deploys one clone per role).
  */
-abstract contract RoleSigner is AbstractSigner {
+abstract contract SignerRole is AbstractSigner {
     /// @dev Thrown when the access manager is the zero address.
     error InvalidAccessManager();
 

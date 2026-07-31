@@ -7,30 +7,30 @@ import {ERC7821} from "@openzeppelin/contracts/account/extensions/draft-ERC7821.
 import {Clones} from "@openzeppelin/contracts/proxy/Clones.sol";
 import {ERC7739} from "@openzeppelin/contracts/utils/cryptography/signers/draft-ERC7739.sol";
 import {EIP712} from "@openzeppelin/contracts/utils/cryptography/EIP712.sol";
-import {RoleSigner} from "../utils/cryptography/signers/RoleSigner.sol";
+import {SignerRole} from "../utils/cryptography/signers/SignerRole.sol";
 
 /**
  * @dev On-chain account that represents a role of an {IAccessManager}.
  *
- * A `RoleAccount` is bound to a single role (see {RoleSigner}) and acts on behalf of whoever currently
+ * A `RoleAccount` is bound to a single role (see {SignerRole}) and acts on behalf of whoever currently
  * holds that role: any member can produce ERC-1271 signatures for the account or trigger batched calls
  * through it. Because authorization is resolved live against the access manager, granting or revoking
  * the role immediately grants or revokes control of the account, without touching the account itself.
  *
  * It composes:
  *
- * * {RoleSigner}: gates signature validation on role membership.
+ * * {SignerRole}: gates signature validation on role membership.
  * * {ERC7739}: wraps signatures as ERC-7739 nested typed data / personal-sign messages to provide
- *   replay-safe ERC-1271 validation on top of {RoleSigner}.
+ *   replay-safe ERC-1271 validation on top of {SignerRole}.
  * * {ERC7821}: minimal batch executor.
  *
  * These accounts are intended to be deployed as `Clones.cloneWithImmutableArgs`, one per role, by
  * {AccessManagerWithRoleAccounts}.
  */
-contract RoleAccount is ERC7821, ERC7739, RoleSigner {
+contract RoleAccount is ERC7821, ERC7739, SignerRole {
     address private immutable _self = address(this);
 
-    constructor(IAccessManager accessManager_) RoleSigner(accessManager_) EIP712("RoleAccount", "1.0.0") {}
+    constructor(IAccessManager accessManager_) SignerRole(accessManager_) EIP712("RoleAccount", "1.0.0") {}
 
     /**
      * @dev Returns the role id this signer is bound to, decoded from the clone's immutable arguments.
