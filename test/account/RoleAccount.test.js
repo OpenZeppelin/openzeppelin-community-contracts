@@ -1,7 +1,7 @@
 const { ethers } = require('hardhat');
 const { expect } = require('chai');
 
-// Note that most tests related to RoleAccount are in test/access/manager/AccessManagerWithRoleAccounts.test.js
+// Note that most tests related to RoleAccount are in test/account/RoleAccountFactory.test.js
 describe('RoleAccount', function () {
   it('should revert if deployed with address(0) access manager', async function () {
     const factory = await ethers.getContractFactory('$RoleAccount');

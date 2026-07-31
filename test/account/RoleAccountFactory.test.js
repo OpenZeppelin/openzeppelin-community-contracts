@@ -46,25 +46,26 @@ class RoleMemberSigner extends ethers.AbstractSigner {
 async function fixture() {
   const [admin, member, delayed, other] = await ethers.getSigners();
 
-  const manager = await ethers.deployContract('$AccessManagerWithRoleAccounts', [admin]);
-  await manager.connect(admin).grantRole(ROLE, member, 0n);
-  await manager.connect(admin).grantRole(ROLE, delayed, 1n);
+  const accessManager = await ethers.deployContract('AccessManager', [admin]);
+  const factory = await ethers.deployContract('$RoleAccountFactory', [accessManager.target]);
+  await accessManager.connect(admin).grantRole(ROLE, member, 0n);
+  await accessManager.connect(admin).grantRole(ROLE, delayed, 1n);
 
   // Deploy the role account for ROLE and grant the role to `member`.
-  const account = await manager.getRoleAccount(ROLE).then(predicted => ethers.getContractAt('RoleAccount', predicted));
-  await manager.deployRoleAccount(ROLE);
+  const account = await factory.getRoleAccount(ROLE).then(predicted => ethers.getContractAt('RoleAccount', predicted));
+  await factory.deployRoleAccount(ROLE);
 
-  return { admin, member, delayed, other, manager, account };
+  return { admin, member, delayed, other, factory, accessManager, account };
 }
 
-describe('AccessManagerWithRoleAccounts', function () {
+describe('RoleAccountFactory', function () {
   beforeEach(async function () {
     Object.assign(this, await loadFixture(fixture));
   });
 
   describe('template behavior', function () {
     beforeEach(async function () {
-      this.template = this.account.attach(ethers.getCreateAddress({ from: this.manager.target, nonce: 1n }));
+      this.template = this.account.attach(ethers.getCreateAddress({ from: this.factory.target, nonce: 1n }));
     });
 
     it('deploys the role account at the predicted deterministic address', async function () {
@@ -72,7 +73,7 @@ describe('AccessManagerWithRoleAccounts', function () {
     });
 
     it('exposes the access manager instance', async function () {
-      await expect(this.template.accessManager()).to.eventually.equal(this.manager);
+      await expect(this.template.accessManager()).to.eventually.equal(this.accessManager);
     });
 
     it('is controlled by the admin role', async function () {
@@ -86,16 +87,16 @@ describe('AccessManagerWithRoleAccounts', function () {
     });
 
     it('exposes the access manager instance', async function () {
-      await expect(this.account.accessManager()).to.eventually.equal(this.manager);
+      await expect(this.account.accessManager()).to.eventually.equal(this.accessManager);
     });
 
     it('getRoleAccount matches the address returned by deployRoleAccount', async function () {
-      const predicted = await this.manager.getRoleAccount(OTHER_ROLE);
-      await expect(this.manager.deployRoleAccount.staticCall(OTHER_ROLE)).to.eventually.equal(predicted);
+      const predicted = await this.factory.getRoleAccount(OTHER_ROLE);
+      await expect(this.factory.deployRoleAccount.staticCall(OTHER_ROLE)).to.eventually.equal(predicted);
     });
 
     it('reverts when deploying the same role twice', async function () {
-      await expect(this.manager.deployRoleAccount(ROLE)).to.be.reverted;
+      await expect(this.factory.deployRoleAccount(ROLE)).to.be.reverted;
     });
 
     it('exposes the role id decoded from the clone immutable args', async function () {
