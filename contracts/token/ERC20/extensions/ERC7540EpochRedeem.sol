@@ -276,6 +276,11 @@ abstract contract ERC7540EpochRedeem is ERC7540 {
         require(totalRedeemAssets(epochId) == 0, ERC7540EpochRedeemAlreadyFulfilled(epochId));
 
         _epochs[epochId].totalAssets = totalAssets;
+
+        if (_redeemShareDestination() != address(0)) {
+            _burnSharesOnRedeemFulfill(totalAssets, totalAssets == 0 ? 0 : totalShares);
+        }
+
         emit ERC7540EpochRedeemFulfilled(epochId, totalShares, totalAssets);
     }
 

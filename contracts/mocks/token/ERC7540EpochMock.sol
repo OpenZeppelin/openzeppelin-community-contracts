@@ -7,6 +7,12 @@ import {ERC7540EpochDeposit} from "../../token/ERC20/extensions/ERC7540EpochDepo
 import {ERC7540EpochRedeem} from "../../token/ERC20/extensions/ERC7540EpochRedeem.sol";
 
 abstract contract ERC7540EpochMock is ERC7540EpochDeposit, ERC7540EpochRedeem {
+    address private immutable _tmpShareHolder;
+
+    constructor(address tmpShareHolder) {
+        _tmpShareHolder = tmpShareHolder;
+    }
+
     function _requestDeposit(
         uint256 assets,
         address controller,
@@ -23,5 +29,13 @@ abstract contract ERC7540EpochMock is ERC7540EpochDeposit, ERC7540EpochRedeem {
         uint256 requestId
     ) internal virtual override(ERC7540, ERC7540EpochRedeem) returns (uint256) {
         return super._requestRedeem(shares, controller, owner, requestId);
+    }
+
+    function _depositShareOrigin() internal view virtual override returns (address) {
+        return _tmpShareHolder;
+    }
+
+    function _redeemShareDestination() internal view virtual override returns (address) {
+        return _tmpShareHolder;
     }
 }

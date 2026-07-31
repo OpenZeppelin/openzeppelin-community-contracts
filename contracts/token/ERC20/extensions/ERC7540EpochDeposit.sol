@@ -276,6 +276,11 @@ abstract contract ERC7540EpochDeposit is ERC7540 {
         require(totalDepositShares(epochId) == 0, ERC7540EpochDepositAlreadyFulfilled(epochId));
 
         _epochs[epochId].totalShares = totalShares;
+
+        if (_depositShareOrigin() != address(0)) {
+            _mintSharesOnDepositFulfill(totalShares == 0 ? 0 : totalAssets, totalShares);
+        }
+
         emit ERC7540EpochDepositFulfilled(epochId, totalAssets, totalShares);
     }
 
