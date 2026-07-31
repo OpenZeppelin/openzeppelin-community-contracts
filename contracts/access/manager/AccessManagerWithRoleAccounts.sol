@@ -35,7 +35,7 @@ contract AccessManagerWithRoleAccounts is AccessManager {
      * @dev Returns the deterministic address of the {RoleAccount} for `roleId`, whether or not it has
      * already been deployed.
      */
-    function getRoleAccount(uint64 roleId) public view returns (address) {
+    function getRoleAccount(uint64 roleId) public view virtual returns (address) {
         return
             Clones.predictDeterministicAddressWithImmutableArgs(
                 _template,
@@ -48,7 +48,7 @@ contract AccessManagerWithRoleAccounts is AccessManager {
      * @dev Deploys the {RoleAccount} clone for `roleId` at its deterministic address and returns it.
      * Reverts if the account for `roleId` has already been deployed.
      */
-    function deployRoleAccount(uint64 roleId) public returns (address) {
+    function deployRoleAccount(uint64 roleId) public virtual returns (address) {
         return Clones.cloneDeterministicWithImmutableArgs(_template, abi.encodePacked(roleId), _roleToSalt(roleId));
     }
 
