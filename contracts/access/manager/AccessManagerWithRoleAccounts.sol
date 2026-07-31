@@ -29,6 +29,9 @@ contract AccessManagerWithRoleAccounts is AccessManager {
     /// @dev Implementation cloned (with the role id as immutable args) to produce each {RoleAccount}.
     address private immutable _template = address(new RoleAccount(this));
 
+    /// @dev Emitted when a {RoleAccount} is deployed for a role.
+    event RoleAccountDeployed(uint64 indexed roleId, address account);
+
     constructor(address initialAdmin) AccessManager(initialAdmin) {}
 
     /**
@@ -49,7 +52,14 @@ contract AccessManagerWithRoleAccounts is AccessManager {
      * Reverts if the account for `roleId` has already been deployed.
      */
     function deployRoleAccount(uint64 roleId) public virtual returns (address) {
-        return Clones.cloneDeterministicWithImmutableArgs(_template, abi.encodePacked(roleId), _roleToSalt(roleId));
+        address roleAccount = Clones.cloneDeterministicWithImmutableArgs(
+            _template,
+            abi.encodePacked(roleId),
+            _roleToSalt(roleId)
+        );
+        emit RoleAccountDeployed(roleId, roleAccount);
+
+        return roleAccount;
     }
 
     /**

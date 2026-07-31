@@ -101,6 +101,13 @@ describe('AccessManagerWithRoleAccounts', function () {
     it('exposes the role id decoded from the clone immutable args', async function () {
       await expect(this.account.roleId()).to.eventually.equal(ROLE);
     });
+
+    it('emits a RoleAccountDeployed event when a role account is deployed', async function () {
+      const predicted = await this.manager.getRoleAccount(OTHER_ROLE);
+      await expect(this.manager.deployRoleAccount(OTHER_ROLE))
+        .to.emit(this.manager, 'RoleAccountDeployed')
+        .withArgs(OTHER_ROLE, predicted);
+    });
   });
 
   describe('ERC-1271 / ERC-7739 signature validation', function () {
