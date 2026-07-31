@@ -17,7 +17,7 @@ import {SignatureChecker} from "@openzeppelin/contracts/utils/cryptography/Signa
  *
  * How the `roleId` is resolved is left to implementations (see {roleId}). {RoleAccount} decodes it
  * from the immutable arguments of a `Clones.cloneWithImmutableArgs` proxy (see
- * {AccessManagerWithRoleAccounts}, which deploys one clone per role).
+ * {RoleAccountFactory}, which deploys one clone per role).
  */
 abstract contract RoleSigner is AbstractSigner {
     /// @dev Thrown when the access manager is the zero address.

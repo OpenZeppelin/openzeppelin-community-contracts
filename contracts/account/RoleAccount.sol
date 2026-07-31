@@ -25,7 +25,7 @@ import {RoleSigner} from "../utils/cryptography/signers/RoleSigner.sol";
  * * {ERC7821}: minimal batch executor.
  *
  * These accounts are intended to be deployed as `Clones.cloneWithImmutableArgs`, one per role, by
- * {AccessManagerWithRoleAccounts}.
+ * {RoleAccountFactory}.
  */
 contract RoleAccount is ERC7821, ERC7739, RoleSigner {
     address private immutable _self = address(this);
