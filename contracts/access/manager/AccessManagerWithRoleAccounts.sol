@@ -5,6 +5,7 @@ pragma solidity ^0.8.27;
 import {AccessManager} from "@openzeppelin/contracts/access/manager/AccessManager.sol";
 import {Clones} from "@openzeppelin/contracts/proxy/Clones.sol";
 import {RoleAccount} from "../../account/RoleAccount.sol";
+import {RoleAccountFactory} from "../../account/RoleAccountFactory.sol";
 
 /**
  * @dev Extension of {AccessManager} that exposes a deterministic {RoleAccount} for each role.
@@ -25,48 +26,6 @@ import {RoleAccount} from "../../account/RoleAccount.sol";
  * NOTE: {deployRoleAccount} is permissionless. Because the deployment is deterministic and behaviorally
  * fixed, this is harmless (front-running it only produces the same account).
  */
-contract AccessManagerWithRoleAccounts is AccessManager {
-    /// @dev Implementation cloned (with the role id as immutable args) to produce each {RoleAccount}.
-    address private immutable _template = address(new RoleAccount(this));
-
-    /// @dev Emitted when a {RoleAccount} is deployed for a role.
-    event RoleAccountDeployed(uint64 indexed roleId, address account);
-
-    constructor(address initialAdmin) AccessManager(initialAdmin) {}
-
-    /**
-     * @dev Returns the deterministic address of the {RoleAccount} for `roleId`, whether or not it has
-     * already been deployed.
-     */
-    function getRoleAccount(uint64 roleId) public view virtual returns (address) {
-        return
-            Clones.predictDeterministicAddressWithImmutableArgs(
-                _template,
-                abi.encodePacked(roleId),
-                _roleToSalt(roleId)
-            );
-    }
-
-    /**
-     * @dev Deploys the {RoleAccount} clone for `roleId` at its deterministic address and returns it.
-     * Reverts if the account for `roleId` has already been deployed.
-     */
-    function deployRoleAccount(uint64 roleId) public virtual returns (address) {
-        address roleAccount = Clones.cloneDeterministicWithImmutableArgs(
-            _template,
-            abi.encodePacked(roleId),
-            _roleToSalt(roleId)
-        );
-        emit RoleAccountDeployed(roleId, roleAccount);
-
-        return roleAccount;
-    }
-
-    /**
-     * @dev Derives the CREATE2 salt used to deploy the clone for `roleId`. Defaults to the role id
-     * itself.
-     */
-    function _roleToSalt(uint64 roleId) internal view virtual returns (bytes32) {
-        return bytes32(uint256(roleId));
-    }
+contract AccessManagerWithRoleAccounts is AccessManager, RoleAccountFactory {
+    constructor(address initialAdmin) RoleAccountFactory(address(this)) AccessManager(initialAdmin) {}
 }
