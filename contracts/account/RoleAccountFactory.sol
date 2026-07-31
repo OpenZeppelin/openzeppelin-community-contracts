@@ -25,11 +25,18 @@ import {RoleAccount} from "./RoleAccount.sol";
  * fixed, this is harmless (front-running it only produces the same account).
  */
 contract RoleAccountFactory {
-    /// @dev Implementation cloned (with the access manager and role id as immutable args) to produce each {RoleAccount}.
-    RoleAccount private immutable _template = new RoleAccount();
+    /**
+     * @dev The template used for deploying each role account. This is set in the constructor and cannot
+     * be changed.
+     */
+    address private immutable _template;
 
     /// @dev Emitted when a {RoleAccount} is deployed for a role on an access manager.
     event RoleAccountDeployed(address indexed accessManager, uint64 indexed roleId, address account);
+
+    constructor() {
+        _template = _deployTemplate();
+    }
 
     /**
      * @dev Returns the deterministic address of the {RoleAccount} for `roleId` on `accessManager`, whether
@@ -38,7 +45,7 @@ contract RoleAccountFactory {
     function getRoleAccount(address accessManager, uint64 roleId) public view virtual returns (address) {
         return
             Clones.predictDeterministicAddressWithImmutableArgs(
-                address(_template),
+                _template,
                 abi.encodePacked(accessManager, roleId),
                 bytes32(0)
             );
@@ -57,5 +64,10 @@ contract RoleAccountFactory {
         emit RoleAccountDeployed(accessManager, roleId, roleAccount);
 
         return roleAccount;
+    }
+
+    /// @dev Called once during construction to get the template used for deploying role accounts.
+    function _deployTemplate() internal virtual returns (address) {
+        return address(new RoleAccount());
     }
 }
