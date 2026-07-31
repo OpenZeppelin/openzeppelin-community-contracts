@@ -12,7 +12,7 @@ const ROLE = 42n;
 const OTHER_ROLE = 17n;
 
 // Wraps a signer so that its produced signatures are prefixed with the signer's address, matching the
-// `[20-byte signer address][inner signature]` layout expected by RoleSigner. The ERC7739Signer helper
+// `[20-byte signer address][inner signature]` layout expected by SignerRole. The ERC7739Signer helper
 // then appends the ERC-7739 envelope (for typed data) on top of this inner signature.
 class RoleMemberSigner extends ethers.AbstractSigner {
   #signer;
