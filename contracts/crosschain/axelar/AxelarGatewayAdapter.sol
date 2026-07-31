@@ -115,7 +115,14 @@ contract AxelarGatewayAdapter is IERC7786GatewaySource, Ownable, AxelarExecutabl
         return false;
     }
 
-    /// @inheritdoc IERC7786GatewaySource
+    /**
+     * @dev See {IERC7786GatewaySource-sendMessage}. The adapter forwards `payload` and `recipient` to the destination
+     * chain. Structurally malformed ERC-7930 `recipient` values that fail to parse revert on the source side before
+     * forwarding. It does not enforce a maximum size for `payload` nor validate the address component of a validly
+     * encoded `recipient`; the caller is responsible for supplying values that the destination chain can decode and
+     * that resolve to a live recipient. Oversized payloads or recipients with invalid or non-contract targets will
+     * surface as undeliverable messages on the destination side.
+     */
     function sendMessage(
         bytes calldata recipient, // Binary Interoperable Address
         bytes calldata payload,

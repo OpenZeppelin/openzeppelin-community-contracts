@@ -30,7 +30,8 @@ describe('ERC20uRWA', function () {
         'getFrozenTokens(address)',
         'setFrozenTokens(address,uint256)',
         'forcedTransfer(address,address,uint256)',
-        'canTransact(address)',
+        'canSend(address)',
+        'canReceive(address)',
       ],
     });
   });
@@ -107,13 +108,67 @@ describe('ERC20uRWA', function () {
       await expect(this.token.canTransfer(this.holder, this.recipient, 30n)).to.eventually.equal(false);
     });
 
-    it('returns false when amount exceeds available balance', async function () {
+    it('returns false when amount exceeds unfrozen balance but is within the total balance', async function () {
       const frozenAmount = 80n;
       const transferAmount = 30n; // Available: 100 - 80 = 20
 
       await this.token.connect(this.freezer).setFrozenTokens(this.holder, frozenAmount);
 
       await expect(this.token.canTransfer(this.holder, this.recipient, transferAmount)).to.eventually.equal(false);
+    });
+
+    it('returns true when amount exceeds the total balance', async function () {
+      // Plain balance insufficiency is a base ERC-20 validation, not a permissioned rule.
+      await expect(this.token.canTransfer(this.holder, this.recipient, initialSupply + 1n)).to.eventually.equal(true);
+    });
+
+    it('returns true for a zero-balance sender', async function () {
+      await expect(this.token.canTransfer(this.other, this.recipient, 1n)).to.eventually.equal(true);
+    });
+
+    it('reflects canSend and canReceive overrides', async function () {
+      await this.token.setSendDenied(this.holder, true);
+      await expect(this.token.canTransfer(this.holder, this.recipient, 10n)).to.eventually.equal(false);
+      await expect(this.token.canTransfer(this.recipient, this.holder, 10n)).to.eventually.equal(true);
+
+      await this.token.setSendDenied(this.holder, false);
+      await this.token.setReceiveDenied(this.recipient, true);
+      await expect(this.token.canTransfer(this.holder, this.recipient, 10n)).to.eventually.equal(false);
+    });
+  });
+
+  describe('canSend / canReceive enforcement', function () {
+    it('reverts transfer when canSend returns false for the sender', async function () {
+      await this.token.setSendDenied(this.holder, true);
+
+      await expect(this.token.connect(this.holder).transfer(this.recipient, 10n))
+        .to.be.revertedWithCustomError(this.token, 'ERC20UserRestricted')
+        .withArgs(this.holder);
+    });
+
+    it('reverts transfer when canReceive returns false for the recipient', async function () {
+      await this.token.setReceiveDenied(this.recipient, true);
+
+      await expect(this.token.connect(this.holder).transfer(this.recipient, 10n))
+        .to.be.revertedWithCustomError(this.token, 'ERC20UserRestricted')
+        .withArgs(this.recipient);
+    });
+
+    it('allows one-way restrictions (can receive but not send)', async function () {
+      await this.token.connect(this.holder).transfer(this.recipient, 10n);
+      await this.token.setSendDenied(this.recipient, true);
+
+      // recipient can still receive
+      await expect(this.token.connect(this.holder).transfer(this.recipient, 10n)).to.changeTokenBalances(
+        this.token,
+        [this.holder, this.recipient],
+        [-10n, 10n],
+      );
+
+      // but cannot send
+      await expect(this.token.connect(this.recipient).transfer(this.holder, 5n))
+        .to.be.revertedWithCustomError(this.token, 'ERC20UserRestricted')
+        .withArgs(this.recipient);
     });
   });
 
@@ -149,15 +204,26 @@ describe('ERC20uRWA', function () {
         );
       });
 
-      it('caps frozen amount to user balance when trying to freeze more than balance', async function () {
+      it('allows freezing more than the current balance for future balances withholding', async function () {
         const requestedFrozenAmount = initialSupply + 10n;
-        const expectedFrozenAmount = initialSupply; // Should be capped to balance
 
         await expect(this.token.connect(this.freezer).setFrozenTokens(this.holder, requestedFrozenAmount))
           .to.emit(this.token, 'Frozen')
-          .withArgs(this.holder, expectedFrozenAmount);
+          .withArgs(this.holder, requestedFrozenAmount);
 
-        await expect(this.token.frozen(this.holder)).to.eventually.equal(expectedFrozenAmount);
+        await expect(this.token.frozen(this.holder)).to.eventually.equal(requestedFrozenAmount);
+        await expect(this.token.available(this.holder)).to.eventually.equal(0n);
+      });
+
+      it('withholds future incoming transfers when frozen exceeds balance', async function () {
+        await this.token.connect(this.freezer).setFrozenTokens(this.recipient, 30n);
+        await this.token.connect(this.holder).transfer(this.recipient, 20n);
+
+        // recipient balance (20) is still fully covered by the frozen amount (30)
+        await expect(this.token.available(this.recipient)).to.eventually.equal(0n);
+        await expect(this.token.connect(this.recipient).transfer(this.holder, 1n))
+          .to.be.revertedWithCustomError(this.token, 'ERC20InsufficientUnfrozenBalance')
+          .withArgs(this.recipient, 1n, 0n);
       });
 
       it('allows freezer to update frozen amount', async function () {
@@ -200,8 +266,25 @@ describe('ERC20uRWA', function () {
         await this.token.$_blockUser(this.recipient); // Sets to BLOCKED
 
         await expect(this.token.connect(this.enforcer).forcedTransfer(this.holder, this.recipient, 40n))
-          .to.be.revertedWithCustomError(this.token, 'ERC7943CannotTransact')
+          .to.be.revertedWithCustomError(this.token, 'ERC7943CannotReceive')
           .withArgs(this.recipient);
+      });
+
+      it('reverts when forcing transfer to a canReceive-denied recipient', async function () {
+        await this.token.setReceiveDenied(this.recipient, true);
+
+        await expect(this.token.connect(this.enforcer).forcedTransfer(this.holder, this.recipient, 40n))
+          .to.be.revertedWithCustomError(this.token, 'ERC7943CannotReceive')
+          .withArgs(this.recipient);
+      });
+
+      it('allows force transfer from a canSend-denied sender', async function () {
+        const transferAmount = 40n;
+        await this.token.setSendDenied(this.holder, true);
+
+        await expect(
+          this.token.connect(this.enforcer).forcedTransfer(this.holder, this.recipient, transferAmount),
+        ).to.changeTokenBalances(this.token, [this.holder, this.recipient], [-transferAmount, transferAmount]);
       });
 
       it('allows force transfer from restricted sender', async function () {
@@ -232,6 +315,24 @@ describe('ERC20uRWA', function () {
         );
       });
 
+      it('emits a single Frozen event before the Transfer event when unfreezing', async function () {
+        const transferAmount = 40n;
+        await this.token.connect(this.freezer).setFrozenTokens(this.holder, initialSupply);
+
+        const tx = await this.token.connect(this.enforcer).forcedTransfer(this.holder, this.recipient, transferAmount);
+        const receipt = await tx.wait();
+        const parsed = receipt.logs.map(log => this.token.interface.parseLog(log)).filter(Boolean);
+
+        const frozenLogs = parsed.filter(log => log.name === 'Frozen');
+        expect(frozenLogs).to.have.lengthOf(1);
+        expect(frozenLogs[0].args).to.deep.equal([this.holder.address, initialSupply - transferAmount]);
+
+        // EIP-7943: the Frozen event must precede the base token Transfer event.
+        expect(parsed.findIndex(log => log.name === 'Frozen')).to.be.lessThan(
+          parsed.findIndex(log => log.name === 'Transfer'),
+        );
+      });
+
       it('updates frozen balance when force transferring frozen tokens', async function () {
         const frozenAmount = 80n;
         const transferAmount = 70n;
@@ -252,6 +353,32 @@ describe('ERC20uRWA', function () {
 
         await expect(this.token.frozen(this.holder)).to.eventually.equal(frozenAmount);
       });
+
+      it('does not reduce the frozen balance when force transferring to self', async function () {
+        const frozenAmount = initialSupply; // Fully frozen
+        await this.token.connect(this.freezer).setFrozenTokens(this.holder, frozenAmount);
+
+        // A forced transfer to self moves no tokens, so no frozen adjustment happens (it would
+        // otherwise act as an unauthorized unfreeze bypassing the freezer role). It behaves as a
+        // regular ERC-20 self-transfer, reverting when amount exceeds the unfrozen balance.
+        await expect(this.token.connect(this.enforcer).forcedTransfer(this.holder, this.holder, frozenAmount))
+          .to.be.revertedWithCustomError(this.token, 'ERC20InsufficientUnfrozenBalance')
+          .withArgs(this.holder, frozenAmount, 0n);
+
+        // The frozen balance is left untouched.
+        await expect(this.token.frozen(this.holder)).to.eventually.equal(frozenAmount);
+      });
+
+      it('allows force transferring to self within the unfrozen balance without frozen adjustment', async function () {
+        const frozenAmount = 60n;
+        const transferAmount = 30n; // Available: 100 - 60 = 40
+        await this.token.connect(this.freezer).setFrozenTokens(this.holder, frozenAmount);
+
+        const tx = this.token.connect(this.enforcer).forcedTransfer(this.holder, this.holder, transferAmount);
+        await expect(tx).to.emit(this.token, 'ForcedTransfer').withArgs(this.holder, this.holder, transferAmount);
+        await expect(tx).to.changeTokenBalance(this.token, this.holder, 0n);
+        await expect(this.token.frozen(this.holder)).to.eventually.equal(frozenAmount);
+      });
     });
   });
 
@@ -267,7 +394,6 @@ describe('ERC20uRWA', function () {
         await this.token.$_blockUser(this.recipient); // Sets to BLOCKED
 
         await expect(this.token.$_mint(this.recipient, value))
-          // ERC7943CannotTransact is not required by ERC-7943
           .to.be.revertedWithCustomError(this.token, 'ERC20UserRestricted')
           .withArgs(this.recipient);
       });
