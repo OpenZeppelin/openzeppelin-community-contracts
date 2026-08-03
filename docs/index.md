@@ -541,16 +541,15 @@ _See {ERC20-_update}._
 
 _Extension of {ERC20} that allows to implement a custodian
 mechanism that can be managed by an authorized account with the
-{freeze} and {unfreeze} functions.
+{freeze} function.
 
 This mechanism allows a custodian (e.g. a DAO or a
 well-configured multisig) to freeze and unfreeze the balance
 of a user.
 
 The frozen balance is not available for transfers or approvals
-to other entities to operate on its behalf if {freeze} was not
-called with such account as an argument. Similarly, the account
-will be unfrozen again if {unfreeze} is called._
+to other entities to operate on its behalf. The frozen balance
+can be reduced by calling {freeze} again with a lower amount.
 
 ### _frozen
 
@@ -573,22 +572,7 @@ _Emitted when tokens are frozen for a user._
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | user | address | The address of the user whose tokens were frozen. |
-| amount | uint256 | The amount of tokens that were frozen. |
-
-### TokensUnfrozen
-
-```solidity
-event TokensUnfrozen(address user, uint256 amount)
-```
-
-_Emitted when tokens are unfrozen for a user._
-
-#### Parameters
-
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| user | address | The address of the user whose tokens were unfrozen. |
-| amount | uint256 | The amount of tokens that were unfrozen. |
+| amount | uint256 | The total amount of tokens frozen for the user. |
 
 ### ERC20InsufficientUnfrozenBalance
 
@@ -597,14 +581,6 @@ error ERC20InsufficientUnfrozenBalance(address user)
 ```
 
 _The operation failed because the user has insufficient unfrozen balance._
-
-### ERC20InsufficientFrozenBalance
-
-```solidity
-error ERC20InsufficientFrozenBalance(address user)
-```
-
-_The operation failed because the user has insufficient frozen balance._
 
 ### ERC20NotCustodian
 
@@ -643,7 +619,7 @@ _Adjusts the amount of tokens frozen for a user._
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | user | address | The address of the user whose tokens to freeze. |
-| amount | uint256 | The amount of tokens frozen. Requirements: - The user must have sufficient unfrozen balance. |
+| amount | uint256 | The total amount of tokens frozen for the user. Requirements: - The amount must not exceed the user's total balance. |
 
 ### availableBalance
 
@@ -1034,4 +1010,3 @@ any of the following bytes , )\x00
 
 If the `contentsType` is invalid, this returns an empty string. Otherwise, the return string has non-zero
 length._
-
