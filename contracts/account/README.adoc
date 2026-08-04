@@ -13,11 +13,6 @@ This directory includes contracts to build accounts for ERC-4337. These include:
  * {ERC7579MultisigWeighted}: An extension of {ERC7579Multisig} that allows different weights to be assigned to signers.
  * {ERC7579MultisigConfirmation}: An extension of {ERC7579Multisig} that requires each signer to provide a confirmation signature.
  * {ERC7579MultisigStorage}: An extension of {ERC7579Multisig} that allows storing presigned approvals in storage.
- * {PaymasterCore}: An ERC-4337 paymaster implementation that includes the core logic to validate and pay for user operations.
- * {PaymasterERC20}: A paymaster that allows users to pay for user operations using ERC-20 tokens.
- * {PaymasterERC20Guarantor}: A paymaster that enables third parties to guarantee user operations by pre-funding gas costs, with the option for users to repay or for guarantors to absorb the cost.
- * {PaymasterERC721Owner}: A paymaster that allows users to pay for user operations based on ERC-721 ownership.
- * {PaymasterSigner}: A paymaster that allows users to pay for user operations using an authorized signature.
 
 == Modules
 
@@ -42,15 +37,3 @@ This directory includes contracts to build accounts for ERC-4337. These include:
 {{ERC7579MultisigConfirmation}}
 
 {{ERC7579MultisigStorage}}
-
-== Paymaster
-
-{{PaymasterCore}}
-
-{{PaymasterERC20}}
-
-{{PaymasterERC20Guarantor}}
-
-{{PaymasterERC721Owner}}
-
-{{PaymasterSigner}}
