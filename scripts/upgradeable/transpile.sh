@@ -29,8 +29,6 @@ if [ $build_info_num -ne 1 ]; then
   exit 1
 fi
 
-# Transpiler flags. IMPORTANT: do not put `#` comments between the `\`-continued lines below — an
-# inline comment truncates the whole argument list at that point, silently dropping every later flag.
 # -D: delete original and excluded files
 # -b: use this build info file
 # -x: exclude contracts from transpilation entirely
@@ -39,11 +37,13 @@ fi
 # -q: partial transpilation using @openzeppelin/contracts as peer project
 npx @openzeppelin/upgrade-safe-transpiler -D \
   -b "$build_info" \
+  -i '@openzeppelin/contracts/proxy/utils/Initializable.sol' \
   -x 'contracts-exposed/**/*' \
   -N '@openzeppelin/contracts-upgradeable/**/*' \
+  -N '@openzeppelin/contracts/**/*' \
   -n \
   -N 'contracts/mocks/**/*' \
-  -q '@openzeppelin/'
+  -q '@openzeppelin/community-contracts'
 
 # delete compilation artifacts of vanilla code
 npm run clean
