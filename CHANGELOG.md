@@ -1,3 +1,7 @@
+## 30-07-2026
+
+- Remove `PaymasterCore`, `PaymasterERC20`, `PaymasterERC20Guarantor`, `PaymasterERC721Owner` and `PaymasterSigner`. These contracts were migrated to `@openzeppelin/contracts>=5.7.0` (`PaymasterCore` as `Paymaster`).
+
 ## 20-07-2026
 
 - `IERC7943`: Align all interfaces (fungible, non-fungible, multi-token) with the final EIP-7943 specification: replace `canTransact` with `canSend`/`canReceive` and `ERC7943CannotTransact` with `ERC7943CannotSend`/`ERC7943CannotReceive`. `supportsInterface` now reports the final `0x3edbb4c4` fungible interface id.
