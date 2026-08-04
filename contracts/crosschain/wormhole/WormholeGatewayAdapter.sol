@@ -24,6 +24,15 @@ contract WormholeGatewayAdapter is IERC7786GatewaySource, IWormholeReceiver, Own
     using BitMaps for BitMaps.BitMap;
     using InteroperableAddress for bytes;
 
+    // Message temporary representation, waiting for gas payment in requestRelay
+    struct PendingMessage {
+        bool pending;
+        address sender;
+        uint256 value;
+        bytes recipient;
+        bytes payload;
+    }
+
     IWormholeRelayer internal immutable _wormholeRelayer;
     uint16 internal immutable _wormholeChainId;
     uint24 private constant EVM_ID_FLAG = 1 << 16;
@@ -34,15 +43,6 @@ contract WormholeGatewayAdapter is IERC7786GatewaySource, IWormholeReceiver, Own
     // Chain equivalence ChainId <> Wormhole
     mapping(uint256 chainId => uint24 wormholeId) private _chainIdToWormhole;
     mapping(uint16 wormholeId => uint256 chainId) private _wormholeToChainId;
-
-    // Message temporary representation, waiting for gas payment in requestRelay
-    struct PendingMessage {
-        bool pending;
-        address sender;
-        uint256 value;
-        bytes recipient;
-        bytes payload;
-    }
 
     uint256 private _lastMsgId;
     mapping(bytes32 sendId => PendingMessage) private _pending;
