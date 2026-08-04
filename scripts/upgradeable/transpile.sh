@@ -43,7 +43,6 @@ npx @openzeppelin/upgrade-safe-transpiler -D \
   -N '@openzeppelin/contracts/**/*' \
   -n \
   -N 'contracts/mocks/**/*' \
-  -q '@openzeppelin/community-contracts' \
   -q '@openzeppelin/'
 
 # delete compilation artifacts of vanilla code
