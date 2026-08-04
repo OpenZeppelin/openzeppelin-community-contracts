@@ -42,7 +42,7 @@ if git diff --quiet --cached; then
 fi
 
 if [[ -v SUBMODULE_REMOTE ]]; then
-  lib=lib/openzeppelin-contracts
+  lib=lib/openzeppelin-community-contracts
   git submodule add -b "${base#origin/}" "$SUBMODULE_REMOTE" "$lib"
   git -C "$lib" checkout "$commit"
   git add "$lib"
