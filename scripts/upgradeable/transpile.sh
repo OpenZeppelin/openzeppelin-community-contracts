@@ -45,5 +45,8 @@ npx @openzeppelin/upgrade-safe-transpiler -D \
   -N 'contracts/mocks/**/*' \
   -q '@openzeppelin/'
 
+find contracts -name '*.sol' -exec perl -pi -e \
+  's{"\@openzeppelin/contracts/([^"]*Upgradeable\.sol)"}{"\@openzeppelin/contracts-upgradeable/$1"}g' {} +
+
 # delete compilation artifacts of vanilla code
 npm run clean
