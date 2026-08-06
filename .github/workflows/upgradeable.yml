@@ -2,22 +2,25 @@ name: Transpile upgradeable
 
 on:
   push:
-    # branches:
+    # branches: # TODO: Enable when testing is complete
     #   - master
     #   - release-v*
-    branches-ignore:
+    branches-ignore: # TODO: Remove when testing is complete
       - '*-upgradeable'
 
 jobs:
   transpile:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           submodules: recursive
+          fetch-depth: 0
       - name: Set up environment
         uses: ./.github/actions/setup
       - run: bash scripts/git-user-config.sh
+      # Fetch "<x>-upgradeable" branch or create it (|| true)
+      - run: git fetch origin "${{ github.ref_name }}-upgradeable:${{ github.ref_name }}-upgradeable" || true
       - name: Transpile to upgradeable
         run: bash scripts/upgradeable/transpile-onto.sh ${{ github.ref_name }}-upgradeable origin/${{ github.ref_name }}
         env:

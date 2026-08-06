@@ -17,6 +17,8 @@ bash scripts/upgradeable/transpile.sh
 commit="$(git rev-parse --short HEAD)"
 start_branch="$(git rev-parse --abbrev-ref HEAD)"
 
+sed -i'' -e 's/viaIR: argv.ir/viaIR: true/g' hardhat.config.js && git add hardhat.config.js
+
 git add contracts
 
 # detach from the current branch to avoid making changes to it
@@ -49,6 +51,9 @@ if [[ -v SUBMODULE_REMOTE ]]; then
 fi
 
 git commit -m "Transpile $commit" --no-verify
+
+# Check transpiled output compiles
+#npm run clean && npm run compile # disable for now for faster CI
 
 # return to original branch
 git checkout "$start_branch"
