@@ -18,6 +18,7 @@ commit="$(git rev-parse --short HEAD)"
 start_branch="$(git rev-parse --abbrev-ref HEAD)"
 
 sed -i'' -e 's/viaIR: argv.ir/viaIR: true/g' hardhat.config.js && git add hardhat.config.js
+sed -i'' -e 's#@openzeppelin/community-contracts/=contracts/#@openzeppelin/community-contracts/=lib/openzeppelin-community-contracts/#' remappings.txt && git add remappings.txt
 
 git add contracts
 
