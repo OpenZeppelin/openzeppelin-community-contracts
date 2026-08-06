@@ -74,10 +74,12 @@ abstract contract ERC7540EpochDeposit is ERC7540 {
         return true;
     }
 
-    /// @dev Returns the current epoch ID. Defaults to `block.timestamp / 1 weeks + 1`.
+    /**
+     * @dev Returns the current epoch ID. Defaults to `(block.timestamp + 3 days) / 1 weeks`, so
+     * epochs transition at Monday 00:00 UTC (weeks start Monday).
+     */
     function currentDepositEpoch() public view virtual returns (uint256) {
-        // +1 to keep requestId != 0 so the strategy is never mistaken for ERC-7540's controller-only (requestId == 0) accounting mode.
-        return block.timestamp / 1 weeks + 1;
+        return (block.timestamp + 3 days) / 1 weeks;
     }
 
     /**

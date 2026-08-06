@@ -304,7 +304,7 @@ flowchart TD
 
 === Epoch identification
 
-By default `currentDepositEpoch()` and `currentRedeemEpoch()` return `block.timestamp / 1 weeks + 1`. The `+ 1` keeps `requestId != 0` so the epoch strategy is never mistaken for ERC-7540's controller-only (`requestId == 0`) accounting mode. Both functions are `virtual` and intended to be overridden in production deployments — common patterns are a manually-bumped counter incremented inside the admin fulfillment, a different cadence (daily, hourly), or a cyclic scheme tied to an external rebalance trigger.
+By default `currentDepositEpoch()` and `currentRedeemEpoch()` return `(block.timestamp + 3 days) / 1 weeks`, so epochs transition at Monday 00:00 UTC (weeks start Monday). `block.timestamp` on any live chain is already many weeks past the Unix genesis, so this value is always > 0 — the epoch strategy is never mistaken for ERC-7540's controller-only (`requestId == 0`) accounting mode. Both functions are `virtual` and intended to be overridden in production deployments — common patterns are a manually-bumped counter incremented inside the admin fulfillment, a different cadence (daily, hourly), or a cyclic scheme tied to an external rebalance trigger.
 
 NOTE: The contract requires `epochId < currentXEpoch()` to fulfill — only past epochs can be settled. New requests are always recorded against the current epoch, so the admin only ever sees totals for already-closed epochs at fulfillment time.
 

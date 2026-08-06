@@ -11,13 +11,15 @@ const symbol = 'vSHR';
 const tokenName = 'Asset Token';
 const tokenSymbol = 'AST';
 const week = 7n * 24n * 3600n;
+// `currentRedeemEpoch() = (block.timestamp + 3 days) / week`, so epoch `N` starts at Monday
+// 00:00 UTC of that week (`t = N * week - 3 days`). Epoch `N` is passed when the chain crosses
+// into epoch `N + 1`, i.e. `t >= (N + 1) * week - 3 days`.
+const MONDAY_OFFSET = 3n * 24n * 3600n;
 
 // Advances time so that `currentRedeemEpoch() > epochId`. Idempotent: no-op if already past.
-// `currentRedeemEpoch() = block.timestamp / week + 1`, so `epochId` is passed once
-// `block.timestamp >= epochId * week`.
 async function advancePast(epochId) {
   const now = await time.clock.timestamp();
-  const target = BigInt(epochId) * week;
+  const target = (BigInt(epochId) + 1n) * week - MONDAY_OFFSET;
   if (now < target) await time.increaseTo.timestamp(target);
 }
 
@@ -38,7 +40,7 @@ describe('ERC7540EpochRedeem', function () {
       beforeEach(async function () {
         Object.assign(this, await loadFixture(fixture));
 
-        this.getRequestId = tx => time.clockFromReceipt.timestamp(tx).then(timestamp => timestamp / week + 1n);
+        this.getRequestId = tx => time.clockFromReceipt.timestamp(tx).then(timestamp => (timestamp + MONDAY_OFFSET) / week);
 
         this.fulfillDeposit = async (requestId, _assets, shares) => {
           await advancePast(requestId);
@@ -66,9 +68,9 @@ describe('ERC7540EpochRedeem', function () {
           await expect(this.mock.$_isRedeemAsync()).to.eventually.equal(true);
         });
 
-        it('default epoch matches `block.timestamp / 1 weeks + 1`', async function () {
+        it('default epoch matches `(block.timestamp + 3 days) / 1 weeks`', async function () {
           const now = await time.clock.timestamp();
-          await expect(this.mock.currentRedeemEpoch()).to.eventually.equal(now / week + 1n);
+          await expect(this.mock.currentRedeemEpoch()).to.eventually.equal((now + MONDAY_OFFSET) / week);
         });
       });
 
@@ -87,7 +89,7 @@ describe('ERC7540EpochRedeem', function () {
 
         it('`requestRedeem` returns the current epoch as `requestId`', async function () {
           const tx = await this.mock.connect(user).requestRedeem(100n, user, user);
-          const expected = (await time.clockFromReceipt.timestamp(tx)) / week + 1n;
+          const expected = ((await time.clockFromReceipt.timestamp(tx)) + MONDAY_OFFSET) / week;
           await expect(tx).to.emit(this.mock, 'RedeemRequest').withArgs(user, user, expected, user, 100n);
         });
 
@@ -257,7 +259,7 @@ describe('ERC7540EpochRedeem', function () {
           const txA = await this.mock.connect(user).requestRedeem(100n, user, user);
           const epochA = await this.getRequestId(txA);
 
-          await time.increaseTo.timestamp(epochA * week);
+          await time.increaseTo.timestamp((epochA + 1n) * week - MONDAY_OFFSET);
           const txB = await this.mock.connect(user).requestRedeem(50n, user, user);
           const epochB = await this.getRequestId(txB);
           expect(epochB).to.equal(epochA + 1n);
@@ -328,9 +330,9 @@ describe('ERC7540EpochRedeem', function () {
         it('returns each epoch in queue order (oldest first)', async function () {
           const e0 = await this.mock.currentRedeemEpoch();
           await this.mock.connect(user).requestRedeem(100n, user, user);
-          await time.increaseTo.timestamp(e0 * week);
+          await time.increaseTo.timestamp((e0 + 1n) * week - MONDAY_OFFSET);
           await this.mock.connect(user).requestRedeem(100n, user, user);
-          await time.increaseTo.timestamp((e0 + 1n) * week);
+          await time.increaseTo.timestamp((e0 + 2n) * week - MONDAY_OFFSET);
           await this.mock.connect(user).requestRedeem(100n, user, user);
 
           await expect(this.mock.redeemEpochs(user, 0, ethers.MaxUint256)).to.eventually.deep.equal([
@@ -351,7 +353,7 @@ describe('ERC7540EpochRedeem', function () {
         it('pops fully-claimed epochs from the queue', async function () {
           const e0 = await this.mock.currentRedeemEpoch();
           await this.mock.connect(user).requestRedeem(100n, user, user);
-          await time.increaseTo.timestamp(e0 * week);
+          await time.increaseTo.timestamp((e0 + 1n) * week - MONDAY_OFFSET);
           await this.mock.connect(user).requestRedeem(100n, user, user);
 
           await advancePast(e0 + 1n);
@@ -369,7 +371,7 @@ describe('ERC7540EpochRedeem', function () {
           const e0 = await this.mock.currentRedeemEpoch();
           for (let i = 0; i < 4; i++) {
             await this.mock.connect(user).requestRedeem(10n, user, user);
-            await time.increaseTo.timestamp((e0 + BigInt(i)) * week);
+            await time.increaseTo.timestamp((e0 + BigInt(i) + 1n) * week - MONDAY_OFFSET);
           }
           const all = [e0, e0 + 1n, e0 + 2n, e0 + 3n];
 
@@ -401,7 +403,7 @@ describe('ERC7540EpochRedeem', function () {
           for (let i = 0; i < 32; i++) {
             await this.mock.connect(user).requestRedeem(1n, user, user);
             epoch = epoch + 1n;
-            await time.increaseTo.timestamp((epoch - 1n) * week);
+            await time.increaseTo.timestamp(epoch * week - MONDAY_OFFSET);
           }
 
           await expect(this.mock.connect(user).requestRedeem(1n, user, user))
@@ -453,7 +455,7 @@ describe('ERC7540EpochRedeem', function () {
             .connect(user)
             .requestRedeem(100n, user, user)
             .then(tx => this.getRequestId(tx));
-          await time.increaseTo.timestamp(this.epochA * week);
+          await time.increaseTo.timestamp((this.epochA + 1n) * week - MONDAY_OFFSET);
           this.epochB = await this.mock
             .connect(user)
             .requestRedeem(50n, user, user)
