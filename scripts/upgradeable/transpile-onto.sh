@@ -53,7 +53,7 @@ fi
 git commit -m "Transpile $commit" --no-verify
 
 # Check transpiled output compiles
-#npm run clean && npm run compile # disable for now for faster CI
+npm run clean && npm run compile # disable for now for faster CI
 
 # return to original branch
 git checkout "$start_branch"
