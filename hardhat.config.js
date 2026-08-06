@@ -24,6 +24,10 @@ const { argv } = require('yargs/yargs')()
       type: 'string',
       default: '',
     },
+    ir: {
+      type: 'boolean',
+      default: false,
+    },
   });
 
 require('@nomicfoundation/hardhat-chai-matchers');
@@ -44,6 +48,7 @@ module.exports = {
         runs: 200,
       },
       evmVersion: argv.hardfork,
+      viaIR: argv.ir,
     },
   },
   networks: {

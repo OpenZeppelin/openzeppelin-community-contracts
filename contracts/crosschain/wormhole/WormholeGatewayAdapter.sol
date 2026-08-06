@@ -24,17 +24,6 @@ contract WormholeGatewayAdapter is IERC7786GatewaySource, IWormholeReceiver, Own
     using BitMaps for BitMaps.BitMap;
     using InteroperableAddress for bytes;
 
-    IWormholeRelayer internal immutable _wormholeRelayer;
-    uint16 internal immutable _wormholeChainId;
-    uint24 private constant EVM_ID_FLAG = 1 << 16;
-
-    // Remote gateway.
-    mapping(uint256 chainId => address) private _remoteGateways;
-
-    // Chain equivalence ChainId <> Wormhole
-    mapping(uint256 chainId => uint24 wormholeId) private _chainIdToWormhole;
-    mapping(uint16 wormholeId => uint256 chainId) private _wormholeToChainId;
-
     // Message temporary representation, waiting for gas payment in requestRelay
     struct PendingMessage {
         bool pending;
@@ -43,6 +32,17 @@ contract WormholeGatewayAdapter is IERC7786GatewaySource, IWormholeReceiver, Own
         bytes recipient;
         bytes payload;
     }
+
+    IWormholeRelayer immutable _wormholeRelayer;
+    uint16 immutable _wormholeChainId;
+    uint24 private constant EVM_ID_FLAG = 1 << 16;
+
+    // Remote gateway.
+    mapping(uint256 chainId => address) private _remoteGateways;
+
+    // Chain equivalence ChainId <> Wormhole
+    mapping(uint256 chainId => uint24 wormholeId) private _chainIdToWormhole;
+    mapping(uint16 wormholeId => uint256 chainId) private _wormholeToChainId;
 
     uint256 private _lastMsgId;
     mapping(bytes32 sendId => PendingMessage) private _pending;
@@ -71,7 +71,7 @@ contract WormholeGatewayAdapter is IERC7786GatewaySource, IWormholeReceiver, Own
     error MessageAlreadyExecuted(uint256 chainId, bytes32 outboxId);
 
     modifier onlyWormholeRelayer() {
-        require(msg.sender == address(_wormholeRelayer), UnauthorizedCaller(msg.sender));
+        require(msg.sender == relayer(), UnauthorizedCaller(msg.sender));
         _;
     }
 

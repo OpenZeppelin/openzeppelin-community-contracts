@@ -1,0 +1,12 @@
+diff --git a/contracts/mocks/import.sol b/contracts/mocks/import.sol
+index 0c388c5..7014e0b 100644
+--- a/contracts/mocks/import.sol
++++ b/contracts/mocks/import.sol
+@@ -2,7 +2,6 @@
+ 
+ pragma solidity ^0.8.20;
+ 
+-import {ECDSAOwnedDKIMRegistry} from "@zk-email/email-tx-builder/src/utils/ECDSAOwnedDKIMRegistry.sol";
+ import {UpgradeableBeacon} from "@openzeppelin/contracts/proxy/beacon/UpgradeableBeacon.sol";
+ import {ERC721} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
+ import {ERC721Enumerable} from "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
