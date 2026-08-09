@@ -28,15 +28,18 @@ Developers can access interoperability protocols through gateway adapters. The l
 :ExecutionFailed: pass:normal[xref:#ERC7786OpenBridge-ExecutionFailed-bytes32-[`++ExecutionFailed++`]]
 :GatewayAdded: pass:normal[xref:#ERC7786OpenBridge-GatewayAdded-address-[`++GatewayAdded++`]]
 :GatewayRemoved: pass:normal[xref:#ERC7786OpenBridge-GatewayRemoved-address-[`++GatewayRemoved++`]]
+:ERC7786OpenBridgeSendMessageFailed: pass:normal[xref:#ERC7786OpenBridge-ERC7786OpenBridgeSendMessageFailed-address-[`++ERC7786OpenBridgeSendMessageFailed++`]]
 :ThresholdUpdated: pass:normal[xref:#ERC7786OpenBridge-ThresholdUpdated-uint8-[`++ThresholdUpdated++`]]
 :UnsupportedNativeTransfer: pass:normal[xref:#ERC7786OpenBridge-UnsupportedNativeTransfer--[`++UnsupportedNativeTransfer++`]]
 :ERC7786OpenBridgeInvalidCrosschainSender: pass:normal[xref:#ERC7786OpenBridge-ERC7786OpenBridgeInvalidCrosschainSender--[`++ERC7786OpenBridgeInvalidCrosschainSender++`]]
 :ERC7786OpenBridgeAlreadyExecuted: pass:normal[xref:#ERC7786OpenBridge-ERC7786OpenBridgeAlreadyExecuted--[`++ERC7786OpenBridgeAlreadyExecuted++`]]
 :ERC7786OpenBridgeRemoteNotRegistered: pass:normal[xref:#ERC7786OpenBridge-ERC7786OpenBridgeRemoteNotRegistered-bytes2-bytes-[`++ERC7786OpenBridgeRemoteNotRegistered++`]]
+:ERC7786OpenBridgeGatewayNotAContract: pass:normal[xref:#ERC7786OpenBridge-ERC7786OpenBridgeGatewayNotAContract-address-[`++ERC7786OpenBridgeGatewayNotAContract++`]]
 :ERC7786OpenBridgeGatewayAlreadyRegistered: pass:normal[xref:#ERC7786OpenBridge-ERC7786OpenBridgeGatewayAlreadyRegistered-address-[`++ERC7786OpenBridgeGatewayAlreadyRegistered++`]]
 :ERC7786OpenBridgeGatewayNotRegistered: pass:normal[xref:#ERC7786OpenBridge-ERC7786OpenBridgeGatewayNotRegistered-address-[`++ERC7786OpenBridgeGatewayNotRegistered++`]]
 :ERC7786OpenBridgeThresholdViolation: pass:normal[xref:#ERC7786OpenBridge-ERC7786OpenBridgeThresholdViolation--[`++ERC7786OpenBridgeThresholdViolation++`]]
 :ERC7786OpenBridgeInvalidExecutionReturnValue: pass:normal[xref:#ERC7786OpenBridge-ERC7786OpenBridgeInvalidExecutionReturnValue--[`++ERC7786OpenBridgeInvalidExecutionReturnValue++`]]
+:ERC7786OpenBridgeInsufficientGateways: pass:normal[xref:#ERC7786OpenBridge-ERC7786OpenBridgeInsufficientGateways--[`++ERC7786OpenBridgeInsufficientGateways++`]]
 :RemoteRegistered: pass:normal[xref:#ERC7786OpenBridge-RemoteRegistered-bytes-[`++RemoteRegistered++`]]
 :constructor: pass:normal[xref:#ERC7786OpenBridge-constructor-address-address---uint8-[`++constructor++`]]
 :supportsAttribute: pass:normal[xref:#ERC7786OpenBridge-supportsAttribute-bytes4-[`++supportsAttribute++`]]
@@ -126,6 +129,7 @@ equivalent bridge on the destination chain if N of the M gateways agree.
 * `++ExecutionFailed(receiveId)++`
 * `++GatewayAdded(gateway)++`
 * `++GatewayRemoved(gateway)++`
+* `++ERC7786OpenBridgeSendMessageFailed(gateway)++`
 * `++ThresholdUpdated(threshold)++`
 * `++RemoteRegistered(remote)++`
 
@@ -154,10 +158,12 @@ equivalent bridge on the destination chain if N of the M gateways agree.
 * `++ERC7786OpenBridgeInvalidCrosschainSender()++`
 * `++ERC7786OpenBridgeAlreadyExecuted()++`
 * `++ERC7786OpenBridgeRemoteNotRegistered(chainType, chainReference)++`
+* `++ERC7786OpenBridgeGatewayNotAContract(gateway)++`
 * `++ERC7786OpenBridgeGatewayAlreadyRegistered(gateway)++`
 * `++ERC7786OpenBridgeGatewayNotRegistered(gateway)++`
 * `++ERC7786OpenBridgeThresholdViolation()++`
 * `++ERC7786OpenBridgeInvalidExecutionReturnValue()++`
+* `++ERC7786OpenBridgeInsufficientGateways()++`
 
 [.contract-subindex-inherited]
 .Pausable
@@ -337,6 +343,10 @@ from the gateway-level events (or the transaction trace) that carried the messag
 ==== `[.contract-item-name]#++GatewayRemoved++#++(address indexed gateway)++` [.item-kind]#event#
 
 [.contract-item]
+[[ERC7786OpenBridge-ERC7786OpenBridgeSendMessageFailed-address-]]
+==== `[.contract-item-name]#++ERC7786OpenBridgeSendMessageFailed++#++(address indexed gateway)++` [.item-kind]#event#
+
+[.contract-item]
 [[ERC7786OpenBridge-ThresholdUpdated-uint8-]]
 ==== `[.contract-item-name]#++ThresholdUpdated++#++(uint8 threshold)++` [.item-kind]#event#
 
@@ -361,6 +371,10 @@ from the gateway-level events (or the transaction trace) that carried the messag
 ==== `[.contract-item-name]#++ERC7786OpenBridgeRemoteNotRegistered++#++(bytes2 chainType, bytes chainReference)++` [.item-kind]#error#
 
 [.contract-item]
+[[ERC7786OpenBridge-ERC7786OpenBridgeGatewayNotAContract-address-]]
+==== `[.contract-item-name]#++ERC7786OpenBridgeGatewayNotAContract++#++(address gateway)++` [.item-kind]#error#
+
+[.contract-item]
 [[ERC7786OpenBridge-ERC7786OpenBridgeGatewayAlreadyRegistered-address-]]
 ==== `[.contract-item-name]#++ERC7786OpenBridgeGatewayAlreadyRegistered++#++(address gateway)++` [.item-kind]#error#
 
@@ -375,6 +389,10 @@ from the gateway-level events (or the transaction trace) that carried the messag
 [.contract-item]
 [[ERC7786OpenBridge-ERC7786OpenBridgeInvalidExecutionReturnValue--]]
 ==== `[.contract-item-name]#++ERC7786OpenBridgeInvalidExecutionReturnValue++#++()++` [.item-kind]#error#
+
+[.contract-item]
+[[ERC7786OpenBridge-ERC7786OpenBridgeInsufficientGateways--]]
+==== `[.contract-item-name]#++ERC7786OpenBridgeInsufficientGateways++#++()++` [.item-kind]#error#
 
 == Utilities
 
