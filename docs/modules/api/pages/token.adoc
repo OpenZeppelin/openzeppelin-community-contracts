@@ -583,6 +583,8 @@ Returns the minimum liveness duration of collateral.
 
 Clock used for flagging checkpoints. Can be overridden to implement timestamp based checkpoints (and voting).
 
+NOTE: Clock must not return 0.
+
 [.contract-item]
 [[ERC20Collateral-CLOCK_MODE--]]
 ==== `[.contract-item-name]#++CLOCK_MODE++#++() → string++` [.item-kind]#public#
@@ -3841,6 +3843,8 @@ storage that is not yet initialized when the parent's constructor runs
 
 Clock used for flagging checkpoints. Can be overridden to implement timestamp based checkpoints (and voting).
 
+NOTE: Clock must not return 0.
+
 [.contract-item]
 [[ERC7540DelayDeposit-CLOCK_MODE--]]
 ==== `[.contract-item-name]#++CLOCK_MODE++#++() → string++` [.item-kind]#public#
@@ -4244,6 +4248,8 @@ storage that is not yet initialized when the parent's constructor runs.
 ==== `[.contract-item-name]#++clock++#++() → uint48++` [.item-kind]#public#
 
 Clock used for flagging checkpoints. Can be overridden to implement timestamp based checkpoints (and voting).
+
+NOTE: Clock must not return 0.
 
 [.contract-item]
 [[ERC7540DelayRedeem-CLOCK_MODE--]]
