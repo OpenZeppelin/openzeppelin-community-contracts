@@ -8,13 +8,19 @@ import {Clones} from "@openzeppelin/contracts/proxy/Clones.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 import {ERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
-// prettier-ignore
-import {ERC20PermitUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC20PermitUpgradeable.sol";
-// prettier-ignore
-import {ERC20FlashMintUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC20FlashMintUpgradeable.sol";
+import {
+    ERC20PermitUpgradeable
+} from "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC20PermitUpgradeable.sol";
+import {
+    ERC20FlashMintUpgradeable
+} from "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC20FlashMintUpgradeable.sol";
+import {
+    ERC20TemporaryApprovalUpgradeable
+} from "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/draft-ERC20TemporaryApprovalUpgradeable.sol";
 import {ERC1363Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC1363Upgradeable.sol";
-// prettier-ignore
-import {ERC3009Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/draft-ERC3009Upgradeable.sol";
+import {
+    ERC3009Upgradeable
+} from "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/draft-ERC3009Upgradeable.sol";
 import {ERC4626Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC4626Upgradeable.sol";
 
 /// @dev Settings flag enabling a variable (vault-like) exchange rate between the underlying asset and the wrapper.
@@ -31,8 +37,8 @@ uint8 constant _FLASH_MINT_FLAG = 0x02;
  * but appended to the clone's bytecode and read back on demand by {_parseArgs}. Consequently, a given (asset,
  * settings) pair maps to a single deterministic wrapper address, and deploying a wrapper costs no storage writes.
  *
- * The wrapper exposes {IERC20Permit}, {IERC1363}, {IERC3009} and {IERC4626} on top of the wrapped asset. Two
- * behaviors are configurable per clone, through the settings byte:
+ * The wrapper exposes {IERC20Permit}, {IERC1363}, {IERC3009}, {IERC4626} and {IERC7674} on top of the wrapped asset.
+ * Two behaviors are configurable per clone, through the settings byte:
  *
  * * {_VARIABLE_RATE_FLAG}: when unset, the wrapper behaves like a 1:1 wrapper (as {ERC20Wrapper} would). When set,
  *   the wrapper behaves like a normal {ERC4626} vault, whose exchange rate follows the assets it holds.
@@ -48,6 +54,7 @@ uint8 constant _FLASH_MINT_FLAG = 0x02;
 contract ERC20UniversalWrapper is
     ERC20PermitUpgradeable,
     ERC20FlashMintUpgradeable,
+    ERC20TemporaryApprovalUpgradeable,
     ERC1363Upgradeable,
     ERC3009Upgradeable,
     ERC4626Upgradeable
@@ -136,6 +143,27 @@ contract ERC20UniversalWrapper is
         require(cloneArgs.length == 21, MissingImmutableArgs());
         bytes21 data = bytes21(cloneArgs);
         return (address(bytes20(data)), uint8(bytes1(data << 160)));
+    }
+
+    // ===============================================================================================================
+    // =                                       Overrides required by Solidity                                        =
+    // ===============================================================================================================
+
+    /// @inheritdoc ERC20TemporaryApprovalUpgradeable
+    function allowance(
+        address owner,
+        address spender
+    ) public view override(IERC20, ERC20Upgradeable, ERC20TemporaryApprovalUpgradeable) returns (uint256) {
+        return super.allowance(owner, spender);
+    }
+
+    /// @inheritdoc ERC20TemporaryApprovalUpgradeable
+    function _spendAllowance(
+        address owner,
+        address spender,
+        uint256 value
+    ) internal override(ERC20Upgradeable, ERC20TemporaryApprovalUpgradeable) {
+        super._spendAllowance(owner, spender, value);
     }
 }
 
