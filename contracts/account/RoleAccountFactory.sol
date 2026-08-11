@@ -57,7 +57,7 @@ contract RoleAccountFactory {
      */
     function deployRoleAccount(address accessManager, uint64 roleId) public virtual returns (address) {
         address roleAccount = Clones.cloneDeterministicWithImmutableArgs(
-            address(_template),
+            _template,
             abi.encodePacked(accessManager, roleId),
             bytes32(0)
         );
