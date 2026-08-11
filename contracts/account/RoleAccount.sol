@@ -32,7 +32,7 @@ contract RoleAccount is ERC7821, ERC7739, SignerRole {
     address private immutable _self = address(this);
 
     error DirectCallNotAllowed();
-    error MissingImmutableArgs();
+    error InvalidImmutableArgs();
 
     constructor() EIP712("RoleAccount", "1") {}
 
@@ -40,11 +40,10 @@ contract RoleAccount is ERC7821, ERC7739, SignerRole {
      * @dev Returns the access manager this account is bound to, decoded from the clone's immutable arguments.
      *
      * Reverts with {DirectCallNotAllowed} when called on the implementation directly (i.e. not through a
-     * `Clones.cloneWithImmutableArgs` proxy), and with {MissingImmutableArgs} when the immutable arguments
-     * are malformed.
+     * `Clones.cloneWithImmutableArgs` proxy), and with {InvalidImmutableArgs} when the immutable arguments
+     * are not 28 bytes long.
      */
     function accessManager() public view virtual override returns (IAccessManager accessManager_) {
-        require(_self != address(this), DirectCallNotAllowed());
         (accessManager_, ) = _fetchArgs();
     }
 
@@ -52,18 +51,19 @@ contract RoleAccount is ERC7821, ERC7739, SignerRole {
      * @dev Returns the role id this signer is bound to, decoded from the clone's immutable arguments.
      *
      * Reverts with {DirectCallNotAllowed} when called on the implementation directly (i.e. not through a
-     * `Clones.cloneWithImmutableArgs` proxy), and with {MissingImmutableArgs} when the immutable arguments
-     * are malformed.
+     * `Clones.cloneWithImmutableArgs` proxy), and with {InvalidImmutableArgs} when the immutable arguments
+     * are not 28 bytes long.
      */
     function roleId() public view virtual override returns (uint64 roleId_) {
-        require(_self != address(this), DirectCallNotAllowed());
         (, roleId_) = _fetchArgs();
     }
 
     /// @dev Decodes the access manager and role id packed in the clone's immutable arguments.
     function _fetchArgs() private view returns (IAccessManager, uint64) {
+        require(_self != address(this), DirectCallNotAllowed());
+
         bytes memory cloneArgs = Clones.fetchCloneArgs(address(this));
-        require(cloneArgs.length == 28, MissingImmutableArgs());
+        require(cloneArgs.length == 28, InvalidImmutableArgs());
 
         bytes28 data = bytes28(cloneArgs);
         return (IAccessManager(address(bytes20(data))), uint64(bytes8(data << 160)));

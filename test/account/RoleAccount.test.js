@@ -17,7 +17,7 @@ describe('RoleAccount', function () {
     const signer = await factory.$clone.staticCall(implementation).then(address => implementation.attach(address));
     await factory.$clone(implementation);
 
-    await expect(signer.accessManager()).to.be.revertedWithCustomError(signer, 'MissingImmutableArgs');
-    await expect(signer.roleId()).to.be.revertedWithCustomError(signer, 'MissingImmutableArgs');
+    await expect(signer.accessManager()).to.be.revertedWithCustomError(signer, 'InvalidImmutableArgs');
+    await expect(signer.roleId()).to.be.revertedWithCustomError(signer, 'InvalidImmutableArgs');
   });
 });
