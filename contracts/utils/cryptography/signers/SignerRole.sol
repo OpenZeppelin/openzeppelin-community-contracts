@@ -15,16 +15,13 @@ import {SignatureChecker} from "@openzeppelin/contracts/utils/cryptography/Signa
  * {accessManager} with 0 delay. This lets a role behave as a shared signer: membership can be granted
  * or revoked through the access manager without redeploying or reconfiguring the signer.
  *
- * How the {accessManager} and `roleId` are resolved is left to implementations (see {accessManager} and
- * {roleId}). {RoleAccount} decodes both from the immutable arguments of a `Clones.cloneWithImmutableArgs`
- * proxy (see {RoleAccountFactory}, which deploys one clone per (access manager, role) pair).
+ * How the {accessManager} and {roleId} are resolved is left to implementations.
  */
 abstract contract SignerRole is AbstractSigner {
     /**
      * @dev Returns the {IAccessManager} whose role membership authorizes signatures for this signer.
      *
-     * Implementations are responsible for defining how the access manager is resolved (see {RoleAccount},
-     * which decodes it from the clone's immutable arguments).
+     * Implementations are responsible for defining how the access manager is resolved.
      */
     function accessManager() public view virtual returns (IAccessManager);
 
@@ -32,8 +29,7 @@ abstract contract SignerRole is AbstractSigner {
      * @dev Returns the role id this signer is bound to. Members of this role in the {accessManager}
      * are authorized to produce signatures on behalf of this signer.
      *
-     * Implementations are responsible for defining how the role id is resolved (see {RoleAccount},
-     * which decodes it from the clone's immutable arguments).
+     * Implementations are responsible for defining how the role id is resolved.
      */
     function roleId() public view virtual returns (uint64);
 
