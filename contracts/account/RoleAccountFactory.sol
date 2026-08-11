@@ -66,7 +66,10 @@ contract RoleAccountFactory {
         return roleAccount;
     }
 
-    /// @dev Called once during construction to get the template used for deploying role accounts.
+    /**
+     * @dev Called once during construction to get the template used for deploying role accounts.
+     * Can be overridden to provide a custom template.
+     */
     function _deployTemplate() internal virtual returns (address) {
         return address(new RoleAccount());
     }
