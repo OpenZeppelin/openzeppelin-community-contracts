@@ -34,7 +34,7 @@ contract RoleAccount is ERC7821, ERC7739, SignerRole {
     error DirectCallNotAllowed();
     error MissingImmutableArgs();
 
-    constructor() EIP712("RoleAccount", "1.0.0") {}
+    constructor() EIP712("RoleAccount", "1") {}
 
     /**
      * @dev Returns the access manager this account is bound to, decoded from the clone's immutable arguments.
