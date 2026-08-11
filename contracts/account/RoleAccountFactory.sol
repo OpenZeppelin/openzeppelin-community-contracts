@@ -17,10 +17,6 @@ import {RoleAccount} from "./RoleAccount.sol";
  * so it can be used as an authorization target or funded ahead of time. {deployRoleAccount} materializes
  * the clone at that address when needed.
  *
- * WARNING: A role account grants control to *every current member* of its role. For the special
- * `PUBLIC_ROLE` (`type(uint64).max`), which every address belongs to, this means the account is
- * controllable by anyone.
- *
  * NOTE: {deployRoleAccount} is permissionless. Because the deployment is deterministic and behaviorally
  * fixed, this is harmless (front-running it only produces the same account).
  */

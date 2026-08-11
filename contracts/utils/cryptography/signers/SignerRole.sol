@@ -15,7 +15,11 @@ import {SignatureChecker} from "@openzeppelin/contracts/utils/cryptography/Signa
  * {accessManager} with 0 delay. This lets a role behave as a shared signer: membership can be granted
  * or revoked through the access manager without redeploying or reconfiguring the signer.
  *
- * How the {accessManager} and {roleId} are resolved is left to implementations.
+ * {accessManager} and {roleId} resolution is left to the implementation.
+ *
+ * WARNING: A role account grants control to *every current member* of its role. For the special
+ * `PUBLIC_ROLE` (`type(uint64).max`), which every address belongs to, this means the account is
+ * controllable by anyone.
  */
 abstract contract SignerRole is AbstractSigner {
     /**
