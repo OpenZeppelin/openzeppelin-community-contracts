@@ -25,6 +25,10 @@ class RoleMemberSigner extends ethers.AbstractSigner {
     return new this(...args);
   }
 
+  get signingKey() {
+    return this.#signer.signingKey;
+  }
+
   getAddress() {
     return this.#signer.getAddress();
   }
@@ -114,9 +118,11 @@ describe('RoleAccountFactory', function () {
   });
 
   describe('ERC-1271 / ERC-7739 signature validation', function () {
-    beforeEach(function () {
+    beforeEach(async function () {
+      const walletMember = ethers.Wallet.createRandom();
       this.mock = this.account;
-      this.signer = RoleMemberSigner.from(this.member);
+      this.signer = RoleMemberSigner.from(walletMember);
+      await this.manager.connect(this.admin).grantRole(ROLE, walletMember, 0n);
     });
 
     shouldBehaveLikeERC1271({ erc7739: true });
