@@ -10,7 +10,7 @@ import {EIP712} from "@openzeppelin/contracts/utils/cryptography/EIP712.sol";
 import {SignerRole} from "../utils/cryptography/signers/SignerRole.sol";
 
 /**
- * @dev On-chain account that represents a role of an {IAccessManager}.
+ * @dev On-chain account managed by the members of a role of an {IAccessManager}.
  *
  * A `RoleAccount` is bound to a single role (see {SignerRole}) and acts on behalf of whoever currently
  * holds that role: any member can produce ERC-1271 signatures for the account or trigger batched calls
