@@ -63,7 +63,7 @@ contract RoleAccount is ERC7821, ERC7739, SignerRole {
     /// @dev Decodes the access manager and role id packed in the clone's immutable arguments.
     function _fetchArgs() private view returns (IAccessManager, uint64) {
         bytes memory cloneArgs = Clones.fetchCloneArgs(address(this));
-        require(cloneArgs.length >= 28, MissingImmutableArgs());
+        require(cloneArgs.length == 28, MissingImmutableArgs());
 
         bytes28 data = bytes28(cloneArgs);
         return (IAccessManager(address(bytes20(data))), uint64(bytes8(data << 160)));
