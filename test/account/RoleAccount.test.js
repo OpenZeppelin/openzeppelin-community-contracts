@@ -6,8 +6,14 @@ describe('RoleAccount', function () {
   it('should revert if called directly', async function () {
     const implementation = await ethers.deployContract('$RoleAccount');
 
-    await expect(implementation.accessManager()).to.be.revertedWithCustomError(implementation, 'RoleAccountDirectCallNotAllowed');
-    await expect(implementation.roleId()).to.be.revertedWithCustomError(implementation, 'RoleAccountDirectCallNotAllowed');
+    await expect(implementation.accessManager()).to.be.revertedWithCustomError(
+      implementation,
+      'RoleAccountDirectCallNotAllowed',
+    );
+    await expect(implementation.roleId()).to.be.revertedWithCustomError(
+      implementation,
+      'RoleAccountDirectCallNotAllowed',
+    );
   });
 
   it('should revert if deployed via clones without immutable args', async function () {

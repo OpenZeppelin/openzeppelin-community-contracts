@@ -7,28 +7,28 @@ import {ERC7821} from "@openzeppelin/contracts/account/extensions/draft-ERC7821.
 import {Clones} from "@openzeppelin/contracts/proxy/Clones.sol";
 import {ERC7739} from "@openzeppelin/contracts/utils/cryptography/signers/draft-ERC7739.sol";
 import {EIP712} from "@openzeppelin/contracts/utils/cryptography/EIP712.sol";
-import {SignerRole} from "../utils/cryptography/signers/SignerRole.sol";
+import {SignerAccessManaged} from "../utils/cryptography/signers/SignerAccessManaged.sol";
 
 /**
  * @dev On-chain account managed by the members of a role of an {IAccessManager}.
  *
- * A `RoleAccount` is bound to a single role (see {SignerRole}) and acts on behalf of whoever currently
+ * A `RoleAccount` is bound to a single role (see {SignerAccessManaged}) and acts on behalf of whoever currently
  * holds that role: any member can produce ERC-1271 signatures for the account or trigger batched calls
  * through it. Because authorization is resolved live against the access manager, granting or revoking
  * the role immediately grants or revokes control of the account, without touching the account itself.
  *
  * It composes:
  *
- * * {SignerRole}: gates signature validation on role membership.
+ * * {SignerAccessManaged}: gates signature validation on role membership.
  * * {ERC7739}: wraps signatures as ERC-7739 nested typed data / personal-sign messages to provide
- *   replay-safe ERC-1271 validation on top of {SignerRole}.
+ *   replay-safe ERC-1271 validation on top of {SignerAccessManaged}.
  * * {ERC7821}: minimal batch executor.
  *
  * These accounts are intended to be deployed as `Clones.cloneWithImmutableArgs`, once per (access manager,
  * role) pair, by {RoleAccountFactory}. The access manager and role id are encoded in the clone's immutable
  * arguments, so calling the getters on the implementation directly (outside a clone) reverts.
  */
-contract RoleAccount is ERC7821, ERC7739, SignerRole {
+contract RoleAccount is ERC7821, ERC7739, SignerAccessManaged {
     address private immutable _self = address(this);
 
     error RoleAccountDirectCallNotAllowed();
