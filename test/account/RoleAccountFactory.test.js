@@ -78,6 +78,10 @@ describe('RoleAccountFactory', function () {
       await expect(ethers.provider.getCode(this.implementation)).to.eventually.not.equal('0x');
     });
 
+    it('exposes the implementation via getImplementation', async function () {
+      await expect(this.factory.getImplementation()).to.eventually.equal(this.implementation);
+    });
+
     it('does not expose any access manager', async function () {
       await expect(this.implementation.accessManager()).to.be.revertedWithCustomError(this.implementation, 'DirectCallNotAllowed');
     });

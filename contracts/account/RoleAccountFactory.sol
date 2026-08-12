@@ -47,6 +47,11 @@ contract RoleAccountFactory {
             );
     }
 
+    /// @dev Returns the implementation used for deploying role accounts.
+    function getImplementation() public view virtual returns (address) {
+        return _implementation;
+    }
+
     /**
      * @dev Deploys the {RoleAccount} clone for `roleId` on `accessManager` at its deterministic address and
      * returns it. Reverts if the account has already been deployed.
