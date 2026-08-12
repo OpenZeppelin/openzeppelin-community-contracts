@@ -6,8 +6,8 @@ describe('RoleAccount', function () {
   it('should revert if called directly', async function () {
     const implementation = await ethers.deployContract('$RoleAccount');
 
-    await expect(implementation.accessManager()).to.be.revertedWithCustomError(implementation, 'DirectCallNotAllowed');
-    await expect(implementation.roleId()).to.be.revertedWithCustomError(implementation, 'DirectCallNotAllowed');
+    await expect(implementation.accessManager()).to.be.revertedWithCustomError(implementation, 'RoleAccountDirectCallNotAllowed');
+    await expect(implementation.roleId()).to.be.revertedWithCustomError(implementation, 'RoleAccountDirectCallNotAllowed');
   });
 
   it('should revert if deployed via clones without immutable args', async function () {
@@ -17,7 +17,7 @@ describe('RoleAccount', function () {
     const signer = await factory.$clone.staticCall(implementation).then(address => implementation.attach(address));
     await factory.$clone(implementation);
 
-    await expect(signer.accessManager()).to.be.revertedWithCustomError(signer, 'InvalidImmutableArgs');
-    await expect(signer.roleId()).to.be.revertedWithCustomError(signer, 'InvalidImmutableArgs');
+    await expect(signer.accessManager()).to.be.revertedWithCustomError(signer, 'RoleAccountInvalidImmutableArgs');
+    await expect(signer.roleId()).to.be.revertedWithCustomError(signer, 'RoleAccountInvalidImmutableArgs');
   });
 });

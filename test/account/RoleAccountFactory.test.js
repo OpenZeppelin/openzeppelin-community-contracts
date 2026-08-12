@@ -83,11 +83,11 @@ describe('RoleAccountFactory', function () {
     });
 
     it('does not expose any access manager', async function () {
-      await expect(this.implementation.accessManager()).to.be.revertedWithCustomError(this.implementation, 'DirectCallNotAllowed');
+      await expect(this.implementation.accessManager()).to.be.revertedWithCustomError(this.implementation, 'RoleAccountDirectCallNotAllowed');
     });
 
     it('does not expose any role', async function () {
-      await expect(this.implementation.roleId()).to.be.revertedWithCustomError(this.implementation, 'DirectCallNotAllowed');
+      await expect(this.implementation.roleId()).to.be.revertedWithCustomError(this.implementation, 'RoleAccountDirectCallNotAllowed');
     });
   });
 

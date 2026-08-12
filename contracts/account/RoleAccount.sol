@@ -31,16 +31,16 @@ import {SignerRole} from "../utils/cryptography/signers/SignerRole.sol";
 contract RoleAccount is ERC7821, ERC7739, SignerRole {
     address private immutable _self = address(this);
 
-    error DirectCallNotAllowed();
-    error InvalidImmutableArgs();
+    error RoleAccountDirectCallNotAllowed();
+    error RoleAccountInvalidImmutableArgs();
 
     constructor() EIP712("RoleAccount", "1") {}
 
     /**
      * @dev Returns the access manager this account is bound to, decoded from the clone's immutable arguments.
      *
-     * Reverts with {DirectCallNotAllowed} when called on the implementation directly (i.e. not through a
-     * `Clones.cloneWithImmutableArgs` proxy), and with {InvalidImmutableArgs} when the immutable arguments
+     * Reverts with {RoleAccountDirectCallNotAllowed} when called on the implementation directly (i.e. not through a
+     * `Clones.cloneWithImmutableArgs` proxy), and with {RoleAccountInvalidImmutableArgs} when the immutable arguments
      * are not 28 bytes long.
      */
     function accessManager() public view virtual override returns (IAccessManager accessManager_) {
@@ -50,8 +50,8 @@ contract RoleAccount is ERC7821, ERC7739, SignerRole {
     /**
      * @dev Returns the role id this signer is bound to, decoded from the clone's immutable arguments.
      *
-     * Reverts with {DirectCallNotAllowed} when called on the implementation directly (i.e. not through a
-     * `Clones.cloneWithImmutableArgs` proxy), and with {InvalidImmutableArgs} when the immutable arguments
+     * Reverts with {RoleAccountDirectCallNotAllowed} when called on the implementation directly (i.e. not through a
+     * `Clones.cloneWithImmutableArgs` proxy), and with {RoleAccountInvalidImmutableArgs} when the immutable arguments
      * are not 28 bytes long.
      */
     function roleId() public view virtual override returns (uint64 roleId_) {
@@ -60,10 +60,10 @@ contract RoleAccount is ERC7821, ERC7739, SignerRole {
 
     /// @dev Decodes the access manager and role id packed in the clone's immutable arguments.
     function _fetchArgs() private view returns (IAccessManager, uint64) {
-        require(_self != address(this), DirectCallNotAllowed());
+        require(_self != address(this), RoleAccountDirectCallNotAllowed());
 
         bytes memory cloneArgs = Clones.fetchCloneArgs(address(this));
-        require(cloneArgs.length == 28, InvalidImmutableArgs());
+        require(cloneArgs.length == 28, RoleAccountInvalidImmutableArgs());
 
         bytes28 data = bytes28(cloneArgs);
         return (IAccessManager(address(bytes20(data))), uint64(bytes8(data << 160)));
