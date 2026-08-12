@@ -69,21 +69,21 @@ describe('RoleAccountFactory', function () {
     Object.assign(this, await loadFixture(fixture));
   });
 
-  describe('template behavior', function () {
+  describe('implementation behavior', function () {
     beforeEach(async function () {
-      this.template = this.account.attach(ethers.getCreateAddress({ from: this.factory.target, nonce: 1n }));
+      this.implementation = this.account.attach(ethers.getCreateAddress({ from: this.factory.target, nonce: 1n }));
     });
 
     it('deploys the role account at the predicted deterministic address', async function () {
-      await expect(ethers.provider.getCode(this.template)).to.eventually.not.equal('0x');
+      await expect(ethers.provider.getCode(this.implementation)).to.eventually.not.equal('0x');
     });
 
     it('does not expose any access manager', async function () {
-      await expect(this.template.accessManager()).to.be.revertedWithCustomError(this.template, 'DirectCallNotAllowed');
+      await expect(this.implementation.accessManager()).to.be.revertedWithCustomError(this.implementation, 'DirectCallNotAllowed');
     });
 
     it('does not expose any role', async function () {
-      await expect(this.template.roleId()).to.be.revertedWithCustomError(this.template, 'DirectCallNotAllowed');
+      await expect(this.implementation.roleId()).to.be.revertedWithCustomError(this.implementation, 'DirectCallNotAllowed');
     });
   });
 

@@ -22,16 +22,16 @@ import {RoleAccount} from "./RoleAccount.sol";
  */
 contract RoleAccountFactory {
     /**
-     * @dev The template used for deploying each role account. This is set in the constructor and cannot
+     * @dev The implementation used for deploying each role account. This is set in the constructor and cannot
      * be changed.
      */
-    address private immutable _template;
+    address private immutable _implementation;
 
     /// @dev Emitted when a {RoleAccount} is deployed for a role on an access manager.
     event RoleAccountDeployed(address indexed accessManager, uint64 indexed roleId, address account);
 
     constructor() {
-        _template = _deployTemplate();
+        _implementation = _deployImplementation();
     }
 
     /**
@@ -41,7 +41,7 @@ contract RoleAccountFactory {
     function getRoleAccount(address accessManager, uint64 roleId) public view virtual returns (address) {
         return
             Clones.predictDeterministicAddressWithImmutableArgs(
-                _template,
+                _implementation,
                 abi.encodePacked(accessManager, roleId),
                 bytes32(0)
             );
@@ -53,7 +53,7 @@ contract RoleAccountFactory {
      */
     function deployRoleAccount(address accessManager, uint64 roleId) public virtual returns (address) {
         address roleAccount = Clones.cloneDeterministicWithImmutableArgs(
-            _template,
+            _implementation,
             abi.encodePacked(accessManager, roleId),
             bytes32(0)
         );
@@ -63,10 +63,10 @@ contract RoleAccountFactory {
     }
 
     /**
-     * @dev Called once during construction to get the template used for deploying role accounts.
-     * Can be overridden to provide a custom template.
+     * @dev Called once during construction to get the implementation used for deploying role accounts.
+     * Can be overridden to provide a custom implementation.
      */
-    function _deployTemplate() internal virtual returns (address) {
+    function _deployImplementation() internal virtual returns (address) {
         return address(new RoleAccount());
     }
 }
