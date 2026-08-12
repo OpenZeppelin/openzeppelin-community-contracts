@@ -41,7 +41,7 @@ abstract contract SignerRole is AbstractSigner {
      * @dev Returns whether `account` currently holds {roleId} in the {accessManager} and has no execution delay.
      * This signer does not allow roles with execution delays to interact with it.
      */
-    function _isUnrestrictedMember(address account) internal view virtual returns (bool) {
+    function _isAuthorizedMember(address account) internal view virtual returns (bool) {
         (bool hasRole, uint32 executionDelay) = accessManager().hasRole(roleId(), account);
         return hasRole && executionDelay == 0;
     }
@@ -52,8 +52,8 @@ abstract contract SignerRole is AbstractSigner {
      * The `signature` is expected to be the concatenation `[20-byte signer address][inner signature]`.
      * The leading 20 bytes identify the account that produced the inner signature. Validation succeeds
      * only when the inner signature is valid for `hash` (verified through {SignatureChecker}, so both
-     * EOAs and ERC-1271 smart contract signers are supported) AND that signer is an unrestricted
-     * {roleId} member (see {_isUnrestrictedMember}).
+     * EOAs and ERC-1271 smart contract signers are supported) AND that signer is an authorized
+     * {roleId} member (see {_isAuthorizedMember}).
      *
      * A `signature` shorter than the 20-byte address prefix is rejected without reverting.
      */
@@ -65,6 +65,6 @@ abstract contract SignerRole is AbstractSigner {
         return
             signature.length >= 20 &&
             SignatureChecker.isValidSignatureNowCalldata(signer, hash, signature[20:]) &&
-            _isUnrestrictedMember(signer);
+            _isAuthorizedMember(signer);
     }
 }
