@@ -61,10 +61,9 @@ abstract contract SignerRole is AbstractSigner {
         bytes32 hash,
         bytes calldata signature
     ) internal view virtual override returns (bool) {
+        if (signature.length < 20) return false;
         address signer = address(bytes20(signature));
         return
-            signature.length >= 20 &&
-            SignatureChecker.isValidSignatureNowCalldata(signer, hash, signature[20:]) &&
-            _isAuthorizedMember(signer);
+            SignatureChecker.isValidSignatureNowCalldata(signer, hash, signature[20:]) && _isAuthorizedMember(signer);
     }
 }
