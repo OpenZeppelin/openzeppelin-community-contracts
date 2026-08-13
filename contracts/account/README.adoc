@@ -2,7 +2,7 @@
 [.readme-notice]
 NOTE: This document is better viewed at https://docs.openzeppelin.com/community-contracts/api/account
 
-This directory includes contracts to build accounts for ERC-4337. These include:
+This directory includes contracts to build smart accounts and account modules:
 
  * {RoleAccount}: An account bound to a role of an `IAccessManager` (through {SignerAccessManaged}), acting on behalf of the current members of that role for both ERC-1271 signatures and ERC-7821 batched execution.
  * {RoleAccountFactory}: A factory that deploys a deterministic account ({RoleAccount}) for any role of any `IAccessManager`, so the current members of a role can produce signatures and execute calls on its behalf.
