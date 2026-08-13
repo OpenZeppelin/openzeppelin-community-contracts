@@ -15,27 +15,37 @@ import {SignatureChecker} from "@openzeppelin/contracts/utils/cryptography/Signa
  * {accessManager} with 0 delay. This lets a role behave as a shared signer: membership can be granted
  * or revoked through the access manager without redeploying or reconfiguring the signer.
  *
- * {accessManager} and {roleId} resolution is left to the implementation.
- *
  * WARNING: A role account grants control to *every current member* of its role. For the special
  * `PUBLIC_ROLE` (`type(uint64).max`), which every address belongs to, this means the account is
  * controllable by anyone.
  */
 abstract contract SignerAccessManaged is AbstractSigner {
+    IAccessManager private immutable _accessManager;
+    uint64 private immutable _roleId;
+
+    /**
+     * @dev Create a new signer where access is managed by the given access manager and role id.
+     * Access is checked via {_isAuthorizedMember}.
+     */
+    constructor(address accessManager_, uint64 roleId_) {
+        _accessManager = IAccessManager(accessManager_);
+        _roleId = roleId_;
+    }
+
     /**
      * @dev Returns the {IAccessManager} whose role membership authorizes signatures for this signer.
-     *
-     * Implementations are responsible for defining how the access manager is resolved.
      */
-    function accessManager() public view virtual returns (IAccessManager);
+    function accessManager() public view virtual returns (IAccessManager) {
+        return _accessManager;
+    }
 
     /**
      * @dev Returns the role id this signer is bound to. Members of this role in the {accessManager}
      * are authorized to produce signatures on behalf of this signer.
-     *
-     * Implementations are responsible for defining how the role id is resolved.
      */
-    function roleId() public view virtual returns (uint64);
+    function roleId() public view virtual returns (uint64) {
+        return _roleId;
+    }
 
     /**
      * @dev Returns whether `account` currently holds {roleId} in the {accessManager} and has no execution delay.

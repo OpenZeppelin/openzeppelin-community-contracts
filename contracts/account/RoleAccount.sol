@@ -34,7 +34,7 @@ contract RoleAccount is ERC7821, ERC7739, SignerAccessManaged {
     error RoleAccountDirectCallNotAllowed();
     error RoleAccountInvalidImmutableArgs();
 
-    constructor() EIP712("RoleAccount", "1") {}
+    constructor() EIP712("RoleAccount", "1") SignerAccessManaged(address(0), 0) {}
 
     /**
      * @dev Returns the access manager this account is bound to, decoded from the clone's immutable arguments.
@@ -59,11 +59,11 @@ contract RoleAccount is ERC7821, ERC7739, SignerAccessManaged {
     }
 
     /// @dev Decodes the access manager and role id packed in the clone's immutable arguments.
-    function _fetchArgs() private view returns (IAccessManager, uint64) {
+    function _fetchArgs() private view returns (IAccessManager accessManager_, uint64 roleId_) {
         require(_self != address(this), RoleAccountDirectCallNotAllowed());
 
         bytes memory cloneArgs = Clones.fetchCloneArgs(address(this));
-        require(cloneArgs.length == 28, RoleAccountInvalidImmutableArgs());
+        require(cloneArgs.length >= 28, RoleAccountInvalidImmutableArgs());
 
         bytes28 data = bytes28(cloneArgs);
         return (IAccessManager(address(bytes20(data))), uint64(bytes8(data << 160)));
