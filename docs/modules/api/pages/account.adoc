@@ -1,4 +1,8 @@
 :github-icon: pass:[<svg class="icon"><use href="#github-icon"/></svg>]
+:RoleAccount: pass:normal[xref:account.adoc#RoleAccount[`RoleAccount`]]
+:SignerAccessManaged: pass:normal[xref:utils/cryptography.adoc#SignerAccessManaged[`SignerAccessManaged`]]
+:RoleAccountFactory: pass:normal[xref:account.adoc#RoleAccountFactory[`RoleAccountFactory`]]
+:RoleAccount: pass:normal[xref:account.adoc#RoleAccount[`RoleAccount`]]
 :ERC7579Executor: pass:normal[xref:account.adoc#ERC7579Executor[`ERC7579Executor`]]
 :ERC7579DelayedExecutor: pass:normal[xref:account.adoc#ERC7579DelayedExecutor[`ERC7579DelayedExecutor`]]
 :ERC7579SelectorExecutor: pass:normal[xref:account.adoc#ERC7579SelectorExecutor[`ERC7579SelectorExecutor`]]
@@ -13,6 +17,15 @@
 :ERC7579Multisig: pass:normal[xref:account.adoc#ERC7579Multisig[`ERC7579Multisig`]]
 :ERC7579MultisigStorage: pass:normal[xref:account.adoc#ERC7579MultisigStorage[`ERC7579MultisigStorage`]]
 :ERC7579Multisig: pass:normal[xref:account.adoc#ERC7579Multisig[`ERC7579Multisig`]]
+:SignerAccessManaged: pass:normal[xref:utils/cryptography.adoc#SignerAccessManaged[`SignerAccessManaged`]]
+:SignerAccessManaged: pass:normal[xref:utils/cryptography.adoc#SignerAccessManaged[`SignerAccessManaged`]]
+:SignerAccessManaged: pass:normal[xref:utils/cryptography.adoc#SignerAccessManaged[`SignerAccessManaged`]]
+:RoleAccountFactory: pass:normal[xref:account.adoc#RoleAccountFactory[`RoleAccountFactory`]]
+:RoleAccount: pass:normal[xref:account.adoc#RoleAccount[`RoleAccount`]]
+:RoleAccount: pass:normal[xref:account.adoc#RoleAccount[`RoleAccount`]]
+:RoleAccount: pass:normal[xref:account.adoc#RoleAccount[`RoleAccount`]]
+:RoleAccount: pass:normal[xref:account.adoc#RoleAccount[`RoleAccount`]]
+:RoleAccount: pass:normal[xref:account.adoc#RoleAccount[`RoleAccount`]]
 :ERC7579DelayedExecutor: pass:normal[xref:account.adoc#ERC7579DelayedExecutor[`ERC7579DelayedExecutor`]]
 :ERC7579Executor: pass:normal[xref:account.adoc#ERC7579Executor[`ERC7579Executor`]]
 :ERC7579Executor-_execute: pass:normal[xref:account.adoc#ERC7579Executor-_execute-address-bytes32-bytes32-bytes-[`ERC7579Executor._execute`]]
@@ -38,8 +51,10 @@
 [.readme-notice]
 NOTE: This document is better viewed at https://docs.openzeppelin.com/community-contracts/api/account
 
-This directory includes contracts to build accounts for ERC-4337. These include:
+This directory includes contracts to build smart accounts and account modules:
 
+ * {RoleAccount}: An account bound to a role of an `IAccessManager` (through {SignerAccessManaged}), acting on behalf of the current members of that role for both ERC-1271 signatures and ERC-7821 batched execution.
+ * {RoleAccountFactory}: A factory that deploys a deterministic account ({RoleAccount}) for any role of any `IAccessManager`, so the current members of a role can produce signatures and execute calls on its behalf.
  * {ERC7579Executor}: An executor module that enables executing calls from accounts where the it's installed.
  * {ERC7579DelayedExecutor}: An executor module that adds a delay before executing an account operation.
  * {ERC7579SelectorExecutor}: An executor module that restricts execution to specific function selectors.
@@ -49,6 +64,282 @@ This directory includes contracts to build accounts for ERC-4337. These include:
  * {ERC7579MultisigWeighted}: An extension of {ERC7579Multisig} that allows different weights to be assigned to signers.
  * {ERC7579MultisigConfirmation}: An extension of {ERC7579Multisig} that requires each signer to provide a confirmation signature.
  * {ERC7579MultisigStorage}: An extension of {ERC7579Multisig} that allows storing presigned approvals in storage.
+
+== Accounts
+
+:RoleAccountDirectCallNotAllowed: pass:normal[xref:#RoleAccount-RoleAccountDirectCallNotAllowed--[`++RoleAccountDirectCallNotAllowed++`]]
+:RoleAccountInvalidImmutableArgs: pass:normal[xref:#RoleAccount-RoleAccountInvalidImmutableArgs--[`++RoleAccountInvalidImmutableArgs++`]]
+:constructor: pass:normal[xref:#RoleAccount-constructor--[`++constructor++`]]
+:accessManager: pass:normal[xref:#RoleAccount-accessManager--[`++accessManager++`]]
+:roleId: pass:normal[xref:#RoleAccount-roleId--[`++roleId++`]]
+:_erc7821AuthorizedExecutor: pass:normal[xref:#RoleAccount-_erc7821AuthorizedExecutor-address-bytes32-bytes-[`++_erc7821AuthorizedExecutor++`]]
+:receive: pass:normal[xref:#RoleAccount-receive--[`++receive++`]]
+
+[.contract]
+[[RoleAccount]]
+=== `++RoleAccount++` link:https://github.com/OpenZeppelin/openzeppelin-community-contracts/blob/master/contracts/account/RoleAccount.sol[{github-icon},role=heading-link]
+
+[.hljs-theme-light.nopadding]
+```solidity
+import "@openzeppelin/community-contracts/account/RoleAccount.sol";
+```
+
+On-chain account managed by the members of a role of an {IAccessManager}.
+
+A `RoleAccount` is bound to a single role (see {SignerAccessManaged}) and acts on behalf of whoever currently
+holds that role: any member can produce ERC-1271 signatures for the account or trigger batched calls
+through it. Because authorization is resolved live against the access manager, granting or revoking
+the role immediately grants or revokes control of the account, without touching the account itself.
+
+It composes:
+
+* {SignerAccessManaged}: gates signature validation on role membership.
+* {ERC7739}: wraps signatures as ERC-7739 nested typed data / personal-sign messages to provide
+  replay-safe ERC-1271 validation on top of {SignerAccessManaged}.
+* {ERC7821}: minimal batch executor.
+
+These accounts are intended to be deployed as `Clones.cloneWithImmutableArgs`, once per (access manager,
+role) pair, by {RoleAccountFactory}. The access manager and role id are encoded in the clone's immutable
+arguments, so calling the getters on the implementation directly (outside a clone) reverts.
+
+[.contract-index]
+.Functions
+--
+* `++constructor()++`
+* `++accessManager()++`
+* `++roleId()++`
+* `++_erc7821AuthorizedExecutor(caller, mode, executionData)++`
+* `++receive()++`
+
+[.contract-subindex-inherited]
+.SignerAccessManaged
+* `++_isAuthorizedMember(account)++`
+* `++_rawSignatureValidation(hash, signature)++`
+
+[.contract-subindex-inherited]
+.ERC7739
+* `++isValidSignature(hash, signature)++`
+
+[.contract-subindex-inherited]
+.IERC1271
+
+[.contract-subindex-inherited]
+.EIP712
+* `++_domainSeparatorV4()++`
+* `++_hashTypedDataV4(structHash)++`
+* `++eip712Domain()++`
+* `++_EIP712Name()++`
+* `++_EIP712Version()++`
+
+[.contract-subindex-inherited]
+.IERC5267
+
+[.contract-subindex-inherited]
+.AbstractSigner
+
+[.contract-subindex-inherited]
+.ERC7821
+* `++execute(mode, executionData)++`
+* `++supportsExecutionMode(mode)++`
+
+[.contract-subindex-inherited]
+.IERC7821
+
+--
+
+[.contract-index]
+.Events
+--
+
+[.contract-subindex-inherited]
+.SignerAccessManaged
+
+[.contract-subindex-inherited]
+.ERC7739
+
+[.contract-subindex-inherited]
+.IERC1271
+
+[.contract-subindex-inherited]
+.EIP712
+
+[.contract-subindex-inherited]
+.IERC5267
+* `++EIP712DomainChanged()++`
+
+[.contract-subindex-inherited]
+.AbstractSigner
+
+[.contract-subindex-inherited]
+.ERC7821
+
+[.contract-subindex-inherited]
+.IERC7821
+
+--
+
+[.contract-index]
+.Errors
+--
+* `++RoleAccountDirectCallNotAllowed()++`
+* `++RoleAccountInvalidImmutableArgs()++`
+
+[.contract-subindex-inherited]
+.SignerAccessManaged
+
+[.contract-subindex-inherited]
+.ERC7739
+
+[.contract-subindex-inherited]
+.IERC1271
+
+[.contract-subindex-inherited]
+.EIP712
+
+[.contract-subindex-inherited]
+.IERC5267
+
+[.contract-subindex-inherited]
+.AbstractSigner
+
+[.contract-subindex-inherited]
+.ERC7821
+* `++UnsupportedExecutionMode()++`
+
+[.contract-subindex-inherited]
+.IERC7821
+
+--
+
+[.contract-item]
+[[RoleAccount-constructor--]]
+==== `[.contract-item-name]#++constructor++#++()++` [.item-kind]#public#
+
+[.contract-item]
+[[RoleAccount-accessManager--]]
+==== `[.contract-item-name]#++accessManager++#++() → contract IAccessManager accessManager_++` [.item-kind]#public#
+
+Returns the access manager this account is bound to, decoded from the clone's immutable arguments.
+
+Reverts with {RoleAccountDirectCallNotAllowed} when called on the implementation directly (i.e. not through a
+`Clones.cloneWithImmutableArgs` proxy), and with {RoleAccountInvalidImmutableArgs} when the immutable arguments
+are not 28 bytes long.
+
+[.contract-item]
+[[RoleAccount-roleId--]]
+==== `[.contract-item-name]#++roleId++#++() → uint64 roleId_++` [.item-kind]#public#
+
+Returns the role id this signer is bound to, decoded from the clone's immutable arguments.
+
+Reverts with {RoleAccountDirectCallNotAllowed} when called on the implementation directly (i.e. not through a
+`Clones.cloneWithImmutableArgs` proxy), and with {RoleAccountInvalidImmutableArgs} when the immutable arguments
+are not 28 bytes long.
+
+[.contract-item]
+[[RoleAccount-_erc7821AuthorizedExecutor-address-bytes32-bytes-]]
+==== `[.contract-item-name]#++_erc7821AuthorizedExecutor++#++(address caller, bytes32 mode, bytes executionData) → bool++` [.item-kind]#internal#
+
+See {ERC7821-_erc7821AuthorizedExecutor}. In addition to the default authorization (a
+self-call by the account), any current member of the account's role is authorized to execute.
+
+[.contract-item]
+[[RoleAccount-receive--]]
+==== `[.contract-item-name]#++receive++#++()++` [.item-kind]#external#
+
+Allow the account to receive ETH.
+
+[.contract-item]
+[[RoleAccount-RoleAccountDirectCallNotAllowed--]]
+==== `[.contract-item-name]#++RoleAccountDirectCallNotAllowed++#++()++` [.item-kind]#error#
+
+[.contract-item]
+[[RoleAccount-RoleAccountInvalidImmutableArgs--]]
+==== `[.contract-item-name]#++RoleAccountInvalidImmutableArgs++#++()++` [.item-kind]#error#
+
+:RoleAccountDeployed: pass:normal[xref:#RoleAccountFactory-RoleAccountDeployed-address-uint64-address-[`++RoleAccountDeployed++`]]
+:constructor: pass:normal[xref:#RoleAccountFactory-constructor--[`++constructor++`]]
+:getRoleAccount: pass:normal[xref:#RoleAccountFactory-getRoleAccount-address-uint64-[`++getRoleAccount++`]]
+:getImplementation: pass:normal[xref:#RoleAccountFactory-getImplementation--[`++getImplementation++`]]
+:deployRoleAccount: pass:normal[xref:#RoleAccountFactory-deployRoleAccount-address-uint64-[`++deployRoleAccount++`]]
+:_deployImplementation: pass:normal[xref:#RoleAccountFactory-_deployImplementation--[`++_deployImplementation++`]]
+
+[.contract]
+[[RoleAccountFactory]]
+=== `++RoleAccountFactory++` link:https://github.com/OpenZeppelin/openzeppelin-community-contracts/blob/master/contracts/account/RoleAccountFactory.sol[{github-icon},role=heading-link]
+
+[.hljs-theme-light.nopadding]
+```solidity
+import "@openzeppelin/community-contracts/account/RoleAccountFactory.sol";
+```
+
+Factory for building {RoleAccount} for any role of any access manager.
+
+Each (access manager, role) pair has an associated {RoleAccount} deployed at an address derived
+deterministically from that pair. That account acts on behalf of the current members of the role:
+it can produce ERC-1271 signatures and execute batched calls, and its authority follows role
+membership as it is granted or revoked through the access manager.
+
+The account address can be computed off-chain (or on-chain via {getRoleAccount}) before deployment,
+so it can be used as an authorization target or funded ahead of time. {deployRoleAccount} materializes
+the clone at that address when needed.
+
+NOTE: {deployRoleAccount} is permissionless. Because the deployment is deterministic and behaviorally
+fixed, this is harmless (front-running it only produces the same account).
+
+[.contract-index]
+.Functions
+--
+* `++constructor()++`
+* `++getRoleAccount(accessManager, roleId)++`
+* `++getImplementation()++`
+* `++deployRoleAccount(accessManager, roleId)++`
+* `++_deployImplementation()++`
+
+--
+
+[.contract-index]
+.Events
+--
+* `++RoleAccountDeployed(accessManager, roleId, account)++`
+
+--
+
+[.contract-item]
+[[RoleAccountFactory-constructor--]]
+==== `[.contract-item-name]#++constructor++#++()++` [.item-kind]#public#
+
+[.contract-item]
+[[RoleAccountFactory-getRoleAccount-address-uint64-]]
+==== `[.contract-item-name]#++getRoleAccount++#++(address accessManager, uint64 roleId) → address++` [.item-kind]#public#
+
+Returns the deterministic address of the {RoleAccount} for `roleId` on `accessManager`, whether
+or not it has already been deployed.
+
+[.contract-item]
+[[RoleAccountFactory-getImplementation--]]
+==== `[.contract-item-name]#++getImplementation++#++() → address++` [.item-kind]#public#
+
+Returns the implementation used for deploying role accounts.
+
+[.contract-item]
+[[RoleAccountFactory-deployRoleAccount-address-uint64-]]
+==== `[.contract-item-name]#++deployRoleAccount++#++(address accessManager, uint64 roleId) → address++` [.item-kind]#public#
+
+Deploys the {RoleAccount} clone for `roleId` on `accessManager` at its deterministic address and
+returns it. Reverts if the account has already been deployed.
+
+[.contract-item]
+[[RoleAccountFactory-_deployImplementation--]]
+==== `[.contract-item-name]#++_deployImplementation++#++() → address++` [.item-kind]#internal#
+
+Called once during construction to get the implementation used for deploying role accounts.
+Can be overridden to provide a custom implementation.
+
+[.contract-item]
+[[RoleAccountFactory-RoleAccountDeployed-address-uint64-address-]]
+==== `[.contract-item-name]#++RoleAccountDeployed++#++(address indexed accessManager, uint64 indexed roleId, address account)++` [.item-kind]#event#
+
+Emitted when a {RoleAccount} is deployed for a role on an access manager.
 
 == Modules
 
