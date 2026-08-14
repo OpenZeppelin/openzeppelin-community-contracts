@@ -2,6 +2,7 @@
 :ZKEmailUtils: pass:normal[xref:utils/cryptography.adoc#ZKEmailUtils[`ZKEmailUtils`]]
 :DKIMRegistry: pass:normal[xref:utils/cryptography.adoc#DKIMRegistry[`DKIMRegistry`]]
 :SignerZKEmail: pass:normal[xref:utils/cryptography.adoc#SignerZKEmail[`SignerZKEmail`]]
+:SignerAccessManaged: pass:normal[xref:utils/cryptography.adoc#SignerAccessManaged[`SignerAccessManaged`]]
 :ERC7913ZKEmailVerifier: pass:normal[xref:utils/cryptography.adoc#ERC7913ZKEmailVerifier[`ERC7913ZKEmailVerifier`]]
 :DKIMRegistry: pass:normal[xref:utils/cryptography.adoc#DKIMRegistry[`DKIMRegistry`]]
 :DKIMRegistry: pass:normal[xref:utils/cryptography.adoc#DKIMRegistry[`DKIMRegistry`]]
@@ -17,6 +18,7 @@ A collection of contracts and libraries that implement various signature validat
  * {ZKEmailUtils}: Library for ZKEmail signature validation utilities, enabling email-based authentication through zero-knowledge proofs.
  * {DKIMRegistry}: Implementation of https://eips.ethereum.org/EIPS/eip-7969[ERC-7969] to enable onchain verification of DomainKeys Identified Mail (DKIM) signatures.
  * {SignerZKEmail}: Implementation of an https://docs.openzeppelin.com/contracts/5.x/api/utils/cryptography#AbstractSigner[AbstractSigner] that enables email-based authentication through zero-knowledge proofs.
+ * {SignerAccessManaged}: Implementation of an https://docs.openzeppelin.com/contracts/5.x/api/utils/cryptography#AbstractSigner[AbstractSigner] whose authority is delegated to the members of a role tracked by an `IAccessManager`.
  * {ERC7913ZKEmailVerifier}: Ready to use ERC-7913 signature verifiers for ZKEmail.
 
 == Utils
@@ -402,6 +404,88 @@ See {AbstractSigner-_rawSignatureValidation}. Validates a raw signature by:
 ==== `[.contract-item-name]#++InvalidEmailProof++#++(enum ZKEmailUtils.EmailProofError err)++` [.item-kind]#error#
 
 Proof verification error.
+
+:constructor: pass:normal[xref:#SignerAccessManaged-constructor-address-uint64-[`++constructor++`]]
+:accessManager: pass:normal[xref:#SignerAccessManaged-accessManager--[`++accessManager++`]]
+:roleId: pass:normal[xref:#SignerAccessManaged-roleId--[`++roleId++`]]
+:_isAuthorizedMember: pass:normal[xref:#SignerAccessManaged-_isAuthorizedMember-address-[`++_isAuthorizedMember++`]]
+:_rawSignatureValidation: pass:normal[xref:#SignerAccessManaged-_rawSignatureValidation-bytes32-bytes-[`++_rawSignatureValidation++`]]
+
+[.contract]
+[[SignerAccessManaged]]
+=== `++SignerAccessManaged++` link:https://github.com/OpenZeppelin/openzeppelin-community-contracts/blob/master/contracts/utils/cryptography/signers/SignerAccessManaged.sol[{github-icon},role=heading-link]
+
+[.hljs-theme-light.nopadding]
+```solidity
+import "@openzeppelin/community-contracts/utils/cryptography/signers/SignerAccessManaged.sol";
+```
+
+Implementation of {AbstractSigner} whose authority is delegated to the members of a role
+tracked by an {IAccessManager}.
+
+Instead of holding its own key material, this signer is bound to a single `roleId` and accepts a
+signature only when it was produced by an address that currently holds that role in the associated
+{accessManager} with 0 delay. This lets a role behave as a shared signer: membership can be granted
+or revoked through the access manager without redeploying or reconfiguring the signer.
+
+WARNING: A role account grants control to *every current member* of its role. For the special
+`PUBLIC_ROLE` (`type(uint64).max`), which every address belongs to, this means the account is
+controllable by anyone.
+
+[.contract-index]
+.Functions
+--
+* `++constructor(accessManager_, roleId_)++`
+* `++accessManager()++`
+* `++roleId()++`
+* `++_isAuthorizedMember(account)++`
+* `++_rawSignatureValidation(hash, signature)++`
+
+[.contract-subindex-inherited]
+.AbstractSigner
+
+--
+
+[.contract-item]
+[[SignerAccessManaged-constructor-address-uint64-]]
+==== `[.contract-item-name]#++constructor++#++(address accessManager_, uint64 roleId_)++` [.item-kind]#internal#
+
+Create a new signer where access is managed by the given access manager and role id.
+Access is checked via {_isAuthorizedMember}.
+
+[.contract-item]
+[[SignerAccessManaged-accessManager--]]
+==== `[.contract-item-name]#++accessManager++#++() → contract IAccessManager++` [.item-kind]#public#
+
+Returns the {IAccessManager} whose role membership authorizes signatures for this signer.
+
+[.contract-item]
+[[SignerAccessManaged-roleId--]]
+==== `[.contract-item-name]#++roleId++#++() → uint64++` [.item-kind]#public#
+
+Returns the role id this signer is bound to. Members of this role in the {accessManager}
+are authorized to produce signatures on behalf of this signer.
+
+[.contract-item]
+[[SignerAccessManaged-_isAuthorizedMember-address-]]
+==== `[.contract-item-name]#++_isAuthorizedMember++#++(address account) → bool++` [.item-kind]#internal#
+
+Returns whether `account` currently holds {roleId} in the {accessManager} and has no execution delay.
+This signer does not allow roles with execution delays to interact with it.
+
+[.contract-item]
+[[SignerAccessManaged-_rawSignatureValidation-bytes32-bytes-]]
+==== `[.contract-item-name]#++_rawSignatureValidation++#++(bytes32 hash, bytes signature) → bool++` [.item-kind]#internal#
+
+See {AbstractSigner-_rawSignatureValidation}.
+
+The `signature` is expected to be the concatenation `[20-byte signer address][inner signature]`.
+The leading 20 bytes identify the account that produced the inner signature. Validation succeeds
+only when the inner signature is valid for `hash` (verified through {SignatureChecker}, so both
+EOAs and ERC-1271 smart contract signers are supported) AND that signer is an authorized
+{roleId} member (see {_isAuthorizedMember}).
+
+A `signature` shorter than the 20-byte address prefix is rejected without reverting.
 
 == Verifiers
 
