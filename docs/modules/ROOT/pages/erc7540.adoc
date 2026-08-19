@@ -346,7 +346,7 @@ Each controller tracks the epochs they participate in via a `DoubleEndedQueue` c
 
 NOTE: To enforce the per-controller isolation, the epoch strategy tightens the base's authorization: on top of the owner-side check, `requestDeposit` and `requestRedeem` also require `msg.sender` to be `controller` or an approved operator of `controller`. Third-party attribution (`msg.sender != controller`) needs the controller's prior `setOperator` approval — the standard operator pattern applies.
 
-Users that hit the queue limit must claim fulfilled epochs to free up slots before submitting new requests.
+Users that hit the queue limit must claim fulfilled epochs to free up slots before submitting new requests. Because claims walk from the front, an unresolved oldest epoch blocks all later-fulfilled ones behind it and prevents queue cleanup — admins should resolve epochs close to FIFO order.
 
 === Rounding and dust handling
 

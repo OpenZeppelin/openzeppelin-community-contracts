@@ -59,9 +59,22 @@ abstract contract ERC7579MultisigStorage is ERC7579Multisig {
     ) internal view virtual override returns (bool valid) {
         uint256 signersLength = signingSigners.length;
 
-        // Check validity of presigned signatures
+        // Check validity of presigned signatures and reject duplicates across the full array.
+        // The split into presigned/live buckets below would otherwise hide duplicates from
+        // {SignatureChecker-areValidSignaturesNow}'s deduplication.
         uint256 presignedCount = 0;
+        bytes32 lastId = bytes32(0);
         for (uint256 i = 0; i < signersLength; i++) {
+            bytes32 id = keccak256(signingSigners[i]);
+            if (lastId < id) {
+                lastId = id;
+            } else {
+                // Unordered entry: scan previous signers for a duplicate.
+                for (uint256 j = 0; j < i; ++j) {
+                    if (id == keccak256(signingSigners[j])) return false;
+                }
+            }
+
             if (signatures[i].length == 0) {
                 // Presigned signature
                 if (!isSigner(account, signingSigners[i]) || !presigned(account, signingSigners[i], hash)) {

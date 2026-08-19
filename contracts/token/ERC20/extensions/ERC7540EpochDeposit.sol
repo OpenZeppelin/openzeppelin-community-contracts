@@ -260,10 +260,11 @@ abstract contract ERC7540EpochDeposit is ERC7540 {
      * not representable in this encoding; deployers needing that SHOULD override to encode the
      * fulfilled state separately (e.g. an explicit boolean).
      *
-     * NOTE: Out-of-order fulfillment is permitted, but each controller's claims stay gated on
-     * their oldest Pending epoch (see {_consumeClaimableDeposit}). Funds are not lost; a later
-     * fulfilled epoch simply waits until the older one is fulfilled. Derived contracts wanting
-     * strict FIFO settlement should enforce it here.
+     * NOTE: Out-of-order fulfillment is permitted, but each controller's claims and queue
+     * cleanup stay gated on their oldest Pending epoch (see {_consumeClaimableDeposit}). Funds
+     * are not lost, but a controller at {_depositRequestQueueLimit} cannot submit new requests
+     * until admin resolves the front, so admins should stay close to FIFO order. Derived
+     * contracts wanting strict FIFO settlement should enforce it here.
      *
      * Requirements:
      *
