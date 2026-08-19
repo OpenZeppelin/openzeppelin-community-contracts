@@ -343,13 +343,13 @@ abstract contract ERC7540EpochDeposit is ERC7540 {
             if (totalDepositShares(epochId) == 0) break; // oldest queued epoch is still Pending
 
             uint256 requestedAssets = _pendingAvailableDepositRequest(epochId, controller);
-            uint256 requested = _convertToDepositShares(epochId, requestedAssets, Math.Rounding.Ceil);
+            // Floor here (not ceil) so the per-epoch share entitlement matches {_asyncMaxMint}.
+            // A ceil-rounded `requested` could exhaust `totalShares` to 0 while `totalAssets`
+            // remains > 0, dirtying the Pending sentinel and stranding later controllers.
+            uint256 requested = _convertToDepositShares(epochId, requestedAssets, Math.Rounding.Floor);
             if (requested <= shares) _memberOf[controller].popFront();
 
             uint256 batchShares = requested.min(shares);
-            // Cap batchAssets at requestedAssets so a ceil-floor gap on the last share of an
-            // earlier epoch cannot consume more assets than the controller was entitled to
-            // (prevents cross-epoch borrowing).
             uint256 batchAssets = _convertToDepositAssets(epochId, batchShares, Math.Rounding.Floor).min(
                 requestedAssets
             );
@@ -357,7 +357,7 @@ abstract contract ERC7540EpochDeposit is ERC7540 {
             EpochDepositMetadata storage details = _epochs[epochId];
             details.requests[controller] -= batchAssets; // batchAssets <= requestedAssets via .min
             details.totalAssets -= batchAssets; // batchAssets <= requestedAssets <= totalAssets (invariant)
-            details.totalShares -= batchShares; // batchShares <= requested = ceil(rA*S/A) <= S (see contract-level NOTE)
+            details.totalShares -= batchShares; // batchShares <= floor(rA*S/A) <= totalShares (matches _asyncMaxMint)
             shares -= batchShares; // batchShares <= shares (via .min)
             assets += batchAssets;
         }

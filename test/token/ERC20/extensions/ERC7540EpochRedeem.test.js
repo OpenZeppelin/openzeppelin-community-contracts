@@ -537,17 +537,12 @@ describe('ERC7540EpochRedeem', function () {
           await expect(this.token.balanceOf(user)).to.eventually.equal(1n);
         });
 
-        it('asset-driven claims cannot consume more shares than the controller was entitled to', async function () {
-          // Pathological tiny-totals scenario. Without the `batchShares <= requestedShares` cap on
-          // the asset-driven path, Alice's Case A would floor-convert 2 assets to 3 shares (overshoot
-          // by 1) and drain part of Bob's share pool. With the cap in place Alice consumes exactly
-          // her entitlement (2 shares); the ceil/floor gap stays in the epoch as unclaimable dust.
-          //
-          // Setup: r_alice=2, r_bob=3, totalShares=5. Fulfill totalAssets=3.
-          //   Alice: requested=ceil(2*3/5)=2, batchShares=min(floor(2*5/3), 2)=2.
-          //   State: r_alice 2->0, totalShares 5->3, totalAssets 3->1.
-          //   Bob: requested=ceil(3*1/3)=1, batchAssets=min(1,1)=1, batchShares=min(floor(1*3/1), 3)=3.
-          //   State: r_bob 3->0, totalShares 3->0, totalAssets 1->0.
+        it('asset-driven claim cannot exhaust `totalAssets` while `totalShares > 0` (H-02)', async function () {
+          // Regression for audit H-02: with `_asyncMaxWithdraw` and `_consumeClaimableWithdraw`
+          // both floor-rounding the per-epoch entitlement, an asset-driven claim cannot drive
+          // `totalAssets` to the Pending sentinel while `totalShares` still holds a controller's
+          // request. Setup mirrors the audit toy on the redeem side: r_alice=2, r_bob=1,
+          // totalShares=3, A=2.
           const [, alice, bob] = await ethers.getSigners();
           await this.token.$_mint(this.mock, 1000n);
           for (const u of [alice, bob]) {
@@ -555,26 +550,22 @@ describe('ERC7540EpochRedeem', function () {
           }
 
           const tx = await this.mock.connect(alice).requestRedeem(2n, alice, alice);
-          await this.mock.connect(bob).requestRedeem(3n, bob, bob);
+          await this.mock.connect(bob).requestRedeem(1n, bob, bob);
           const epochId = await this.getRequestId(tx);
           await advancePast(epochId);
-          await this.mock.$_fulfillRedeem(epochId, 3n);
+          await this.mock.$_fulfillRedeem(epochId, 2n);
 
-          // Alice's claim is capped at her request; overshoot stays in the pool.
-          await this.mock.$_consumeClaimableWithdraw(2n, alice);
-          await expect(this.mock.totalRedeemShares(epochId)).to.eventually.equal(3n);
+          // Both sides use floor; Alice's per-epoch asset entitlement is 1, not 2.
+          await expect(this.mock.maxWithdraw(alice)).to.eventually.equal(1n);
+
+          await this.mock.$_consumeClaimableWithdraw(1n, alice);
+
+          // Sentinel preserved: totalAssets stays > 0 while requests remain unclaimed.
           await expect(this.mock.totalRedeemAssets(epochId)).to.eventually.equal(1n);
+          await expect(this.mock.totalRedeemShares(epochId)).to.eventually.equal(2n);
 
-          // Bob's claim drains the remainder cleanly (no requests-slot dust).
-          await this.mock.$_consumeClaimableWithdraw(1n, bob);
-          await expect(this.mock.totalRedeemShares(epochId)).to.eventually.equal(0n);
-          await expect(this.mock.totalRedeemAssets(epochId)).to.eventually.equal(0n);
-
-          // No dust visible from any public view.
-          await expect(this.mock.pendingRedeemRequest(epochId, bob)).to.eventually.equal(0n);
-          await expect(this.mock.claimableRedeemRequest(epochId, bob)).to.eventually.equal(0n);
-          await expect(this.mock.maxWithdraw(bob)).to.eventually.equal(0n);
-          await expect(this.mock.maxRedeem(bob)).to.eventually.equal(0n);
+          // Bob's claim slot is still reachable — not frozen behind a dirty sentinel.
+          await expect(this.mock.claimableRedeemRequest(epochId, bob)).to.eventually.equal(1n);
         });
 
         it('a fully-drained epoch keeps the {_fulfillRedeem} sentinel intact', async function () {

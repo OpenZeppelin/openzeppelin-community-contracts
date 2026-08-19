@@ -310,20 +310,20 @@ abstract contract ERC7540EpochRedeem is ERC7540 {
             if (totalRedeemAssets(epochId) == 0) break; // oldest queued epoch is still Pending
 
             uint256 requestedShares = _pendingAvailableRedeemRequest(epochId, controller);
-            uint256 requested = _convertToRedeemAssets(epochId, requestedShares, Math.Rounding.Ceil);
+            // Floor here (not ceil) so the per-epoch asset entitlement matches {_asyncMaxWithdraw}.
+            // A ceil-rounded `requested` could exhaust `totalAssets` to 0 while `totalShares`
+            // remains > 0, dirtying the Pending sentinel and stranding later controllers.
+            uint256 requested = _convertToRedeemAssets(epochId, requestedShares, Math.Rounding.Floor);
             if (requested <= assets) _memberOf[controller].popFront();
 
             uint256 batchAssets = requested.min(assets);
-            // Cap batchShares at requestedShares so a ceil-floor gap on the last asset of an
-            // earlier epoch cannot consume more shares than the controller was entitled to
-            // (prevents cross-epoch borrowing).
             uint256 batchShares = _convertToRedeemShares(epochId, batchAssets, Math.Rounding.Floor).min(
                 requestedShares
             );
 
             EpochRedeemMetadata storage details = _epochs[epochId];
             details.requests[controller] -= batchShares; // batchShares <= requestedShares via .min
-            details.totalAssets -= batchAssets; // batchAssets <= requested <= totalAssets (see invariants)
+            details.totalAssets -= batchAssets; // batchAssets <= floor(rS*A/S) <= totalAssets (matches _asyncMaxWithdraw)
             details.totalShares -= batchShares; // batchShares <= requestedShares <= totalShares (invariant)
             assets -= batchAssets; // batchAssets <= assets (via .min)
             shares += batchShares;
