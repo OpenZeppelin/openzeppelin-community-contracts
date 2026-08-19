@@ -40,7 +40,8 @@ describe('ERC7540EpochRedeem', function () {
       beforeEach(async function () {
         Object.assign(this, await loadFixture(fixture));
 
-        this.getRequestId = tx => time.clockFromReceipt.timestamp(tx).then(timestamp => (timestamp + MONDAY_OFFSET) / week);
+        this.getRequestId = tx =>
+          time.clockFromReceipt.timestamp(tx).then(timestamp => (timestamp + MONDAY_OFFSET) / week);
 
         this.fulfillDeposit = async (requestId, _assets, shares) => {
           await advancePast(requestId);
