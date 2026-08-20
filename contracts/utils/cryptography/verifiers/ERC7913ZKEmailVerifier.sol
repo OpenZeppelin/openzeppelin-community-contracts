@@ -3,8 +3,8 @@
 pragma solidity ^0.8.24;
 
 import {IERC7913SignatureVerifier} from "@openzeppelin/contracts/interfaces/IERC7913.sol";
-import {IDKIMRegistry} from "@zk-email/contracts/DKIMRegistry.sol";
-import {EmailProof} from "@zk-email/email-tx-builder/src/interfaces/IEmailTypes.sol";
+import {IDKIMRegistry} from "@zk-email/contracts/interfaces/IDKIMRegistry.sol";
+import {EmailProof} from "@zk-email/email-tx-builder/src/interfaces/IVerifier.sol";
 import {IGroth16Verifier} from "@zk-email/email-tx-builder/src/interfaces/IGroth16Verifier.sol";
 import {ZKEmailUtils} from "../ZKEmailUtils.sol";
 
