@@ -213,8 +213,9 @@ abstract contract ERC7540EpochDeposit is ERC7540 {
      *
      * Requirements:
      *
-     * * `_msgSender()` must be `controller` or an approved operator of `controller`. This is on
-     * top of the base's `owner` authentication and prevents third-party queue spam.
+     * * `_msgSender()` must be `controller` or an approved operator of `controller`. This is a
+     * strict subset of ERC-7540 request auth (added on top of the base's `owner` check) to
+     * prevent third-party queue spam.
      * * The controller's epoch queue must not exceed {_depositRequestQueueLimit}.
      */
     function _requestDeposit(

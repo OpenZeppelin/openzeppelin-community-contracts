@@ -344,7 +344,7 @@ vault.redeem(950e18, receiver, controller); // receiver gets 1010 USDC
 
 Each controller tracks the epochs they participate in via a `DoubleEndedQueue` capped at 32 entries by default (override `_depositRequestQueueLimit()` / `_redeemRequestQueueLimit()` to change). Claims walk the queue front-to-back, popping fully-consumed epochs. The cap is per-controller — an attacker cannot fill another user's queue, and epoch fulfillment is O(1) (a single write per epoch) so cross-controller DoS is not possible.
 
-NOTE: To enforce the per-controller isolation, the epoch strategy tightens the base's authorization: on top of the owner-side check, `requestDeposit` and `requestRedeem` also require `msg.sender` to be `controller` or an approved operator of `controller`. Third-party attribution (`msg.sender != controller`) needs the controller's prior `setOperator` approval — the standard operator pattern applies.
+NOTE: To enforce the per-controller isolation, the epoch strategy is a strict subset of ERC-7540 request auth: on top of the base's owner-side check, `requestDeposit` and `requestRedeem` also require `msg.sender` to be `controller` or an approved operator of `controller`. Third-party attribution (`msg.sender != controller`) — e.g. gifting a deposit to another account, or a router relaying a redeem via ERC-20 allowance — needs the controller's prior `setOperator` approval.
 
 Users that hit the queue limit must claim fulfilled epochs to free up slots before submitting new requests. Because claims walk from the front, an unresolved oldest epoch blocks all later-fulfilled ones behind it and prevents queue cleanup — admins should resolve epochs close to FIFO order.
 
