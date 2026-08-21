@@ -77,6 +77,12 @@ abstract contract ERC7540EpochDeposit is ERC7540 {
     /**
      * @dev Returns the current epoch ID. Defaults to `(block.timestamp + 3 days) / 1 weeks`, so
      * epochs transition at Monday 00:00 UTC (weeks start Monday).
+     *
+     * IMPORTANT: Successive calls MUST never return a value smaller than any earlier one (they may
+     * stay the same or grow). If a later call returns an epoch older than a controller's queue tail,
+     * the request enqueues a duplicate entry pointing at the same epoch's shared accounting, which
+     * double-counts in {_asyncMaxDeposit} / {_asyncMaxMint} and can settle caller-specified output
+     * that was not backed by consumed state.
      */
     function currentDepositEpoch() public view virtual returns (uint256) {
         return (block.timestamp + 3 days) / 1 weeks;
