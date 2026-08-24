@@ -1,16 +1,19 @@
-const { ethers } = require('hardhat');
-const { loadFixture } = require('@nomicfoundation/hardhat-network-helpers');
-
-const { ERC4337Helper } = require('@openzeppelin/contracts/test/helpers/erc4337');
-const { NonNativeSigner } = require('@openzeppelin/contracts/test/helpers/signers');
-const { ZKEmailSigningKey } = require('../helpers/signers');
-
-const {
+import { network } from 'hardhat';
+import { ERC4337Helper } from '@openzeppelin/contracts/test/helpers/erc4337';
+import { NonNativeSigner } from '@openzeppelin/contracts/test/helpers/signers';
+import {
   shouldBehaveLikeAccountCore,
   shouldBehaveLikeAccountHolder,
-} = require('@openzeppelin/contracts/test/account/Account.behavior');
-const { shouldBehaveLikeERC7821 } = require('@openzeppelin/contracts/test/account/extensions/ERC7821.behavior');
-const { shouldBehaveLikeERC1271 } = require('@openzeppelin/contracts/test/utils/cryptography/ERC1271.behavior');
+} from '@openzeppelin/contracts/test/account/Account.behavior';
+import { shouldBehaveLikeERC1271 } from '@openzeppelin/contracts/test/utils/cryptography/ERC1271.behavior';
+import { shouldBehaveLikeERC7821 } from '@openzeppelin/contracts/test/account/extensions/ERC7821.behavior';
+import { ZKEmailSigningKey } from '../helpers/signers';
+
+const connection = await network.create();
+const {
+  ethers,
+  networkHelpers: { loadFixture },
+} = connection;
 
 const accountSalt = '0x046582bce36cdd0a8953b9d40b8f20d58302bacf3bcecffeb6741c98a52725e2'; // keccak256("test@example.com")
 const selector = '12345';
@@ -40,7 +43,7 @@ async function fixture() {
   const signer = new NonNativeSigner(new ZKEmailSigningKey(domainName, publicKeyHash, emailNullifier, accountSalt));
 
   // ERC-4337 account
-  const helper = new ERC4337Helper();
+  const helper = new ERC4337Helper(connection);
   const mock = await helper.newAccount('$AccountZKEmailMock', [accountSalt, dkim.target, verifier.target]);
 
   const signUserOp = async userOp => {
@@ -80,7 +83,7 @@ async function fixture() {
 
 describe('AccountZKEmail', function () {
   beforeEach(async function () {
-    Object.assign(this, await loadFixture(fixture));
+    Object.assign(this, connection, await loadFixture(fixture));
   });
 
   shouldBehaveLikeAccountCore();

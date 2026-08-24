@@ -1,5 +1,7 @@
-const { ethers } = require('hardhat');
-const { expect } = require('chai');
+import { network } from 'hardhat';
+import { expect } from 'chai';
+
+const { ethers } = await network.create();
 
 // Note that most tests related to RoleAccount are in test/account/RoleAccountFactory.test.js
 describe('RoleAccount', function () {

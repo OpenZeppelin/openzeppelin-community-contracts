@@ -1,18 +1,21 @@
-const { ethers } = require('hardhat');
-const { expect } = require('chai');
-const { loadFixture } = require('@nomicfoundation/hardhat-network-helpers');
-const { anyValue } = require('@nomicfoundation/hardhat-chai-matchers/withArgs');
-const { getLocalChain } = require('@openzeppelin/contracts/test/helpers/chains');
+import { network } from 'hardhat';
+import { expect } from 'chai';
+import { anyValue } from '@nomicfoundation/hardhat-ethers-chai-matchers/withArgs';
 
 const getAddress = account => ethers.getAddress(account.target ?? account.address ?? account);
 
 const N = 3;
 const M = 5;
 
+const {
+  ethers,
+  helpers: { chain },
+  networkHelpers: { loadFixture },
+} = await network.create();
+
 async function fixture() {
   const [owner, sender, ...accounts] = await ethers.getSigners();
 
-  const chain = await getLocalChain();
   const protocoles = await Promise.all(
     Array(M)
       .fill()
@@ -24,7 +27,7 @@ async function fixture() {
   await bridgeA.registerRemoteBridge(chain.toErc7930(bridgeB));
   await bridgeB.registerRemoteBridge(chain.toErc7930(bridgeA));
 
-  return { owner, sender, accounts, chain, protocoles, bridgeA, bridgeB };
+  return { owner, sender, accounts, protocoles, bridgeA, bridgeB };
 }
 
 describe('ERC7786OpenBridge', function () {
@@ -35,15 +38,11 @@ describe('ERC7786OpenBridge', function () {
   it('initial setup', async function () {
     await expect(this.bridgeA.getGateways()).to.eventually.deep.equal(this.protocoles.map(getAddress));
     await expect(this.bridgeA.getThreshold()).to.eventually.equal(N);
-    await expect(this.bridgeA.getRemoteBridge(this.chain.erc7930)).to.eventually.equal(
-      this.chain.toErc7930(this.bridgeB),
-    );
+    await expect(this.bridgeA.getRemoteBridge(chain.erc7930)).to.eventually.equal(chain.toErc7930(this.bridgeB));
 
     await expect(this.bridgeB.getGateways()).to.eventually.deep.equal(this.protocoles.map(getAddress));
     await expect(this.bridgeB.getThreshold()).to.eventually.equal(N);
-    await expect(this.bridgeB.getRemoteBridge(this.chain.erc7930)).to.eventually.equal(
-      this.chain.toErc7930(this.bridgeA),
-    );
+    await expect(this.bridgeB.getRemoteBridge(chain.erc7930)).to.eventually.equal(chain.toErc7930(this.bridgeA));
   });
 
   describe('cross chain call', function () {
@@ -102,7 +101,7 @@ describe('ERC7786OpenBridge', function () {
     afterEach(async function () {
       const txPromise = this.bridgeA
         .connect(this.sender)
-        .sendMessage(this.chain.toErc7930(this.destination), this.payload, this.attributes, this.opts ?? {});
+        .sendMessage(chain.toErc7930(this.destination), this.payload, this.attributes, this.opts ?? {});
 
       switch (typeof this.outcome) {
         case 'string': {
@@ -118,8 +117,8 @@ describe('ERC7786OpenBridge', function () {
             .to.emit(this.bridgeA, 'MessageSent')
             .withArgs(
               ethers.ZeroHash,
-              this.chain.toErc7930(this.sender),
-              this.chain.toErc7930(this.destination),
+              chain.toErc7930(this.sender),
+              chain.toErc7930(this.destination),
               this.payload,
               0n,
               this.attributes,
@@ -131,8 +130,8 @@ describe('ERC7786OpenBridge', function () {
               .to.emit(gateway, 'MessageSent')
               .withArgs(
                 ethers.ZeroHash,
-                this.chain.toErc7930(this.bridgeA),
-                this.chain.toErc7930(this.bridgeB),
+                chain.toErc7930(this.bridgeA),
+                chain.toErc7930(this.bridgeB),
                 anyValue,
                 0n,
                 anyValue,
@@ -144,7 +143,7 @@ describe('ERC7786OpenBridge', function () {
           if (this.outcome) {
             await expect(txPromise)
               .to.emit(this.destination, 'MessageReceived')
-              .withArgs(this.bridgeB, anyValue, this.chain.toErc7930(this.sender), this.payload, 0n)
+              .withArgs(this.bridgeB, anyValue, chain.toErc7930(this.sender), this.payload, 0n)
               .to.emit(this.bridgeB, 'ExecutionSuccess')
               .withArgs(resultId)
               .to.not.emit(this.bridgeB, 'ExecutionFailed');
@@ -182,11 +181,9 @@ describe('ERC7786OpenBridge', function () {
       // The outbox lists all gateways, including the one that returned a zero id (with its address, not address(0))
       const sendId = ethers.keccak256(ethers.AbiCoder.defaultAbiCoder().encode(['(address,bytes32)[]'], [outbox]));
 
-      await expect(
-        this.bridgeA.connect(this.sender).sendMessage(this.chain.toErc7930(destination), payload, attributes),
-      )
+      await expect(this.bridgeA.connect(this.sender).sendMessage(chain.toErc7930(destination), payload, attributes))
         .to.emit(this.bridgeA, 'MessageSent')
-        .withArgs(sendId, this.chain.toErc7930(this.sender), this.chain.toErc7930(destination), payload, 0n, [])
+        .withArgs(sendId, chain.toErc7930(this.sender), chain.toErc7930(destination), payload, 0n, [])
         .to.emit(this.bridgeA, 'OutboxDetails')
         .withArgs(sendId, outbox);
     });
@@ -196,18 +193,9 @@ describe('ERC7786OpenBridge', function () {
       const payload = ethers.randomBytes(128);
       const attributes = [];
 
-      await expect(
-        this.bridgeA.connect(this.sender).sendMessage(this.chain.toErc7930(destination), payload, attributes),
-      )
+      await expect(this.bridgeA.connect(this.sender).sendMessage(chain.toErc7930(destination), payload, attributes))
         .to.emit(this.bridgeA, 'MessageSent')
-        .withArgs(
-          ethers.ZeroHash,
-          this.chain.toErc7930(this.sender),
-          this.chain.toErc7930(destination),
-          payload,
-          0n,
-          [],
-        )
+        .withArgs(ethers.ZeroHash, chain.toErc7930(this.sender), chain.toErc7930(destination), payload, 0n, [])
         .to.not.emit(this.bridgeA, 'OutboxDetails');
     });
   });
@@ -221,8 +209,8 @@ describe('ERC7786OpenBridge', function () {
       ]);
       const bridgeA = await ethers.deployContract('ERC7786OpenBridge', [this.owner, gateways, 1]);
       const bridgeB = await ethers.deployContract('ERC7786OpenBridge', [this.owner, gateways, 1]);
-      await bridgeA.registerRemoteBridge(this.chain.toErc7930(bridgeB));
-      await bridgeB.registerRemoteBridge(this.chain.toErc7930(bridgeA));
+      await bridgeA.registerRemoteBridge(chain.toErc7930(bridgeB));
+      await bridgeB.registerRemoteBridge(chain.toErc7930(bridgeA));
 
       const destination = await ethers.deployContract('$ERC7786RecipientMock', [bridgeB]);
       const payload = ethers.randomBytes(128);
@@ -231,14 +219,14 @@ describe('ERC7786OpenBridge', function () {
       await gateways[0].setRevertOnSent(true);
 
       // The message is still delivered through the second gateway, and a failure event is emitted for the first one
-      await expect(bridgeA.connect(this.sender).sendMessage(this.chain.toErc7930(destination), payload, []))
+      await expect(bridgeA.connect(this.sender).sendMessage(chain.toErc7930(destination), payload, []))
         .to.emit(bridgeA, 'ERC7786OpenBridgeSendMessageFailed')
         .withArgs(gateways[0])
         .to.emit(bridgeA, 'MessageSent')
         .to.emit(bridgeB, 'Received')
         .to.emit(bridgeB, 'ExecutionSuccess')
         .to.emit(destination, 'MessageReceived')
-        .withArgs(bridgeB, anyValue, this.chain.toErc7930(this.sender), payload, 0n);
+        .withArgs(bridgeB, anyValue, chain.toErc7930(this.sender), payload, 0n);
     });
   });
 });

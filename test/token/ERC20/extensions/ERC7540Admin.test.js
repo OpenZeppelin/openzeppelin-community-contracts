@@ -1,13 +1,16 @@
-const { ethers } = require('hardhat');
-const { expect } = require('chai');
-const { loadFixture } = require('@nomicfoundation/hardhat-network-helpers');
-
-const {
+import { network } from 'hardhat';
+import { expect } from 'chai';
+import {
   shouldBehaveLikeERC7540Operator,
   shouldBehaveLikeERC7540Deposit,
   shouldBehaveLikeERC7540Redeem,
-} = require('./ERC7540.behavior');
-const { shouldBehaveLikeERC7575 } = require('./ERC7575.behavior');
+} from './ERC7540.behavior';
+import { shouldBehaveLikeERC7575 } from './ERC7575.behavior';
+
+const {
+  ethers,
+  networkHelpers: { loadFixture },
+} = await network.create();
 
 const name = 'Vault Shares';
 const symbol = 'vSHR';
@@ -15,6 +18,10 @@ const tokenName = 'Asset Token';
 const tokenSymbol = 'AST';
 
 describe('ERC7540Admin', function () {
+  before(async function () {
+    Object.assign(this, { ethers });
+  });
+
   for (const withTmpHolder of [false, true]) {
     describe(withTmpHolder ? 'With a temporary share holder' : 'With direct share operations', function () {
       async function fixture() {

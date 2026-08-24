@@ -1,5 +1,5 @@
-const format = require('@openzeppelin/contracts/scripts/generate/format-lines');
-const { SET_TYPES, MAP_TYPES } = require('./Enumerable.opts');
+import format from '@openzeppelin/contracts/scripts/generate/format-lines.js';
+import { SET_TYPES, MAP_TYPES } from './Enumerable.opts.js';
 
 const header = `\
 pragma solidity ^0.8.24;
@@ -181,7 +181,7 @@ function keys(${name} storage map, uint256 start, uint256 end) internal view ret
 `;
 
 // GENERATE
-module.exports = format(
+export default format(
   header.trimEnd(),
   'library EnumerableMapExtended {',
   format(

@@ -1,7 +1,11 @@
-const { ethers } = require('hardhat');
-const { expect } = require('chai');
-const { loadFixture } = require('@nomicfoundation/hardhat-network-helpers');
-const { time } = require('@nomicfoundation/hardhat-network-helpers');
+import { network } from 'hardhat';
+import { expect } from 'chai';
+
+const {
+  ethers,
+  helpers: { time },
+  networkHelpers: { loadFixture },
+} = await network.create();
 
 const name = 'My Token';
 const symbol = 'MTKN';
@@ -26,6 +30,7 @@ describe('ERC20Collateral', function () {
 
     it('mint all of collateral amount', async function () {
       await expect(this.token.$_mint(this.holder, MAX_UINT128 - initialSupply)).to.changeTokenBalance(
+        ethers,
         this.token,
         this.holder,
         MAX_UINT128 - initialSupply,
@@ -43,6 +48,7 @@ describe('ERC20Collateral', function () {
   describe('expiration', function () {
     it('mint before expiration', async function () {
       await expect(this.token.$_mint(this.holder, initialSupply)).to.changeTokenBalance(
+        ethers,
         this.token,
         this.holder,
         initialSupply,
@@ -50,7 +56,7 @@ describe('ERC20Collateral', function () {
     });
 
     it('reverts when minting after expiration', async function () {
-      await time.increase(await this.token.liveness());
+      await time.increaseBy.timestamp(await this.token.liveness());
       await expect(this.token.$_mint(this.holder, initialSupply)).to.be.revertedWithCustomError(
         this.token,
         'ERC20ExpiredCollateral',

@@ -4,9 +4,7 @@ pragma solidity ^0.8.20;
 
 import {Test} from "forge-std/Test.sol";
 import {TimelockControllerEnumerableMock} from "./TimelockControllerEnumerableMock.t.sol";
-import {
-    TimelockControllerEnumerable
-} from "@openzeppelin/community-contracts/governance/TimelockControllerEnumerable.sol";
+import {TimelockControllerEnumerable} from "@openzeppelin/community-contracts/governance/TimelockControllerEnumerable.sol";
 
 contract TimelockControllerEnumerableTest is Test {
     TimelockControllerEnumerableMock public timelockControllerEnumerable;
@@ -26,7 +24,7 @@ contract TimelockControllerEnumerableTest is Test {
         emit Call();
     }
 
-    function test_schedule() public {
+    function testSchedule() public {
         timelockControllerEnumerable.schedule(
             address(this),
             0,
@@ -59,8 +57,8 @@ contract TimelockControllerEnumerableTest is Test {
         assertEq(operation.delay, 1 days);
     }
 
-    function test_operations() public {
-        test_schedule();
+    function testOperations() public {
+        testSchedule();
         TimelockControllerEnumerable.Operation[] memory operations = timelockControllerEnumerable.operations(0, 1);
         assertEq(operations.length, 1);
         assertEq(operations[0].target, address(this));
@@ -82,8 +80,8 @@ contract TimelockControllerEnumerableTest is Test {
         assertEq(operations[0].delay, 1 days);
     }
 
-    function test_schedule_execute() public {
-        test_schedule();
+    function testScheduleExecute() public {
+        testSchedule();
         TimelockControllerEnumerable.Operation memory operation = timelockControllerEnumerable.operation(uint256(0));
         bytes32 id = timelockControllerEnumerable.hashOperation(
             operation.target,
@@ -104,7 +102,7 @@ contract TimelockControllerEnumerableTest is Test {
         assertEq(timelockControllerEnumerable.isOperationPending(id), false);
     }
 
-    function test_scheduleBatch() public {
+    function testScheduleBatch() public {
         address[] memory targets = new address[](1);
         uint256[] memory values = new uint256[](1);
         bytes[] memory payloads = new bytes[](1);
@@ -132,8 +130,8 @@ contract TimelockControllerEnumerableTest is Test {
         assertEq(operationBatch.delay, 1 days);
     }
 
-    function test_operationsBatch() public {
-        test_scheduleBatch();
+    function testOperationsBatch() public {
+        testScheduleBatch();
         TimelockControllerEnumerable.OperationBatch[] memory operationBatches = timelockControllerEnumerable
             .operationsBatch(0, 1);
         assertEq(operationBatches.length, 1);
@@ -156,8 +154,8 @@ contract TimelockControllerEnumerableTest is Test {
         assertEq(operationBatches[0].delay, 1 days);
     }
 
-    function test_scheduleBatch_execute() public {
-        test_scheduleBatch();
+    function testScheduleBatchExecute() public {
+        testScheduleBatch();
         TimelockControllerEnumerable.OperationBatch memory operationBatch = timelockControllerEnumerable.operationBatch(
             uint256(0)
         );
@@ -180,7 +178,7 @@ contract TimelockControllerEnumerableTest is Test {
         assertEq(timelockControllerEnumerable.isOperationPending(id), false);
     }
 
-    function test_cancel_schedule() public {
+    function testCancelSchedule() public {
         timelockControllerEnumerable.schedule(
             address(this),
             0,
@@ -205,7 +203,7 @@ contract TimelockControllerEnumerableTest is Test {
         timelockControllerEnumerable.operation(uint256(0));
     }
 
-    function test_cancel_scheduleBatch() public {
+    function testCancelScheduleBatch() public {
         address[] memory targets = new address[](1);
         uint256[] memory values = new uint256[](1);
         bytes[] memory payloads = new bytes[](1);

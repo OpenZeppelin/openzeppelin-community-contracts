@@ -543,9 +543,8 @@ abstract contract ERC7540 is ERC165, ERC20, IERC4626, IERC7540, IERC7575Share {
             revert ERC4626ExceededMaxWithdraw(ownerOrController, assets, maxAssets);
         }
 
-        uint256 shares = _isRedeemAsync()
-            ? _consumeClaimableWithdraw(assets, ownerOrController)
-            : previewWithdraw(assets);
+        uint256 shares =
+            _isRedeemAsync() ? _consumeClaimableWithdraw(assets, ownerOrController) : previewWithdraw(assets);
         _withdraw(_msgSender(), receiver, ownerOrController, assets, shares);
         return shares;
     }

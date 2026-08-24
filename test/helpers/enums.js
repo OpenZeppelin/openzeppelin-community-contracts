@@ -1,15 +1,16 @@
-const enums = require('@openzeppelin/contracts/test/helpers/enums');
+import { Enum, EnumTyped } from '@openzeppelin/contracts/test/helpers/enums';
 
-module.exports = {
-  ...enums,
-  EmailProofError: enums.Enum(
-    'NoError',
-    'DKIMPublicKeyHash',
-    'MaskedCommandLength',
-    'MismatchedCommand',
-    'InvalidFieldPoint',
-    'EmailProof',
-  ),
-  Case: enums.EnumTyped('CHECKSUM', 'LOWERCASE', 'UPPERCASE', 'ANY'),
-  OperationState: enums.Enum('Unknown', 'Scheduled', 'Ready', 'Expired', 'Executed', 'Canceled'),
-};
+export * from '@openzeppelin/contracts/test/helpers/enums';
+
+export const EmailProofError = Enum(
+  'NoError',
+  'DKIMPublicKeyHash',
+  'MaskedCommandLength',
+  'MismatchedCommand',
+  'InvalidFieldPoint',
+  'EmailProof',
+);
+
+export const Case = EnumTyped('CHECKSUM', 'LOWERCASE', 'UPPERCASE', 'ANY');
+
+export const OperationState = Enum('Unknown', 'Scheduled', 'Ready', 'Expired', 'Executed', 'Canceled');

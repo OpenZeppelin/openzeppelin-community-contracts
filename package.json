@@ -19,15 +19,15 @@
     "lint:fix": "npm run lint:js:fix && npm run lint:sol:fix",
     "lint:js": "prettier --log-level warn '**/*.{js,ts}' --check && eslint . --ignore-pattern lib/",
     "lint:js:fix": "prettier --log-level warn '**/*.{js,ts}' --write && eslint . --fix --ignore-pattern lib/",
-    "lint:sol": "prettier --log-level warn '{contracts,test}/**/*.sol' --check && solhint '{contracts,test}/**/*.sol'",
+    "lint:sol": "prettier --log-level warn '{contracts,test}/**/*.sol' --check && solhint --config solhint.config.cjs --noPoster '{contracts,test}/**/*.sol'",
     "lint:sol:fix": "prettier --log-level warn '{contracts,test}/**/*.sol' --write",
-    "coverage": "scripts/checks/coverage.sh",
     "generate": "scripts/generate/run.js",
     "test": "hardhat test",
     "test:generation": "scripts/checks/generation.sh",
     "test:inheritance": "scripts/checks/inheritance-ordering.js artifacts/build-info/*",
     "test:pragma": "scripts/checks/pragma-validity.js artifacts/build-info/*",
-    "gas-report": "env ENABLE_GAS_REPORT=true npm run test"
+    "coverage": "hardhat test --coverage",
+    "gas-report": "hardhat test --gas-stats"
   },
   "homepage": "https://openzeppelin.com/contracts/",
   "repository": {
@@ -47,7 +47,8 @@
   ],
   "devDependencies": {
     "@openzeppelin/contracts": "file:lib/@openzeppelin-contracts",
-    "husky": "^9.1.7"
+    "husky": "^9.1.7",
+    "openzeppelin-solidity": "file:lib/@openzeppelin-contracts"
   },
   "lint-staged": {
     "*.{js,ts}": [
@@ -56,7 +57,8 @@
     ],
     "*.sol": [
       "prettier --log-level warn --ignore-path .gitignore --check",
-      "solhint"
+      "solhint --config solhint.config.cjs --noPoster"
     ]
-  }
+  },
+  "type": "module"
 }

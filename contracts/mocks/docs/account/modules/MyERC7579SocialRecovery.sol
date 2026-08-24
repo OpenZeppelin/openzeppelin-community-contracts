@@ -9,8 +9,9 @@ import {ERC7579Validator} from "../../../../account/modules/ERC7579Validator.sol
 import {ERC7579Multisig} from "../../../../account/modules/ERC7579Multisig.sol";
 
 abstract contract MyERC7579SocialRecovery is EIP712, ERC7579Executor, ERC7579Multisig, Nonces {
-    bytes32 private constant RECOVER_TYPEHASH =
-        keccak256("Recover(address account,bytes32 salt,uint256 nonce,bytes32 mode,bytes executionCalldata)");
+    bytes32 private constant RECOVER_TYPEHASH = keccak256(
+        "Recover(address account,bytes32 salt,uint256 nonce,bytes32 mode,bytes executionCalldata)"
+    );
 
     function isModuleType(uint256 moduleTypeId) public pure override(ERC7579Executor, ERC7579Validator) returns (bool) {
         return ERC7579Executor.isModuleType(moduleTypeId) || ERC7579Executor.isModuleType(moduleTypeId);

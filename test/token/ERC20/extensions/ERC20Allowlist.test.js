@@ -1,6 +1,10 @@
-const { ethers } = require('hardhat');
-const { expect } = require('chai');
-const { loadFixture } = require('@nomicfoundation/hardhat-network-helpers');
+import { network } from 'hardhat';
+import { expect } from 'chai';
+
+const {
+  ethers,
+  networkHelpers: { loadFixture },
+} = await network.create();
 
 const name = 'My Token';
 const symbol = 'MTKN';
@@ -26,6 +30,7 @@ describe('ERC20Allowlist', function () {
     describe('transfer', function () {
       it('allows to transfer when allowed', async function () {
         await expect(this.token.connect(this.holder).transfer(this.recipient, initialSupply)).to.changeTokenBalances(
+          ethers,
           this.token,
           [this.holder, this.recipient],
           [-initialSupply, initialSupply],
@@ -37,6 +42,7 @@ describe('ERC20Allowlist', function () {
         await this.token.$_allowUser(this.holder);
 
         await expect(this.token.connect(this.holder).transfer(this.recipient, initialSupply)).to.changeTokenBalances(
+          ethers,
           this.token,
           [this.holder, this.recipient],
           [-initialSupply, initialSupply],
@@ -62,7 +68,7 @@ describe('ERC20Allowlist', function () {
       it('allows to transfer from when allowed', async function () {
         await expect(
           this.token.connect(this.approved).transferFrom(this.holder, this.recipient, allowance),
-        ).to.changeTokenBalances(this.token, [this.holder, this.recipient], [-allowance, allowance]);
+        ).to.changeTokenBalances(ethers, this.token, [this.holder, this.recipient], [-allowance, allowance]);
       });
 
       it('allows to transfer when disallowed and then allowed', async function () {
@@ -71,7 +77,7 @@ describe('ERC20Allowlist', function () {
 
         await expect(
           this.token.connect(this.approved).transferFrom(this.holder, this.recipient, allowance),
-        ).to.changeTokenBalances(this.token, [this.holder, this.recipient], [-allowance, allowance]);
+        ).to.changeTokenBalances(ethers, this.token, [this.holder, this.recipient], [-allowance, allowance]);
       });
 
       it('reverts when trying to transfer from when disallowed', async function () {
@@ -87,14 +93,24 @@ describe('ERC20Allowlist', function () {
       const value = 42n;
 
       it('allows to mint when allowed', async function () {
-        await expect(this.token.$_mint(this.recipient, value)).to.changeTokenBalance(this.token, this.recipient, value);
+        await expect(this.token.$_mint(this.recipient, value)).to.changeTokenBalance(
+          ethers,
+          this.token,
+          this.recipient,
+          value,
+        );
       });
 
       it('allows to mint when disallowed and then allowed', async function () {
         await this.token.$_disallowUser(this.recipient);
         await this.token.$_allowUser(this.recipient);
 
-        await expect(this.token.$_mint(this.recipient, value)).to.changeTokenBalance(this.token, this.recipient, value);
+        await expect(this.token.$_mint(this.recipient, value)).to.changeTokenBalance(
+          ethers,
+          this.token,
+          this.recipient,
+          value,
+        );
       });
 
       it('reverts when trying to mint when disallowed', async function () {
@@ -111,14 +127,24 @@ describe('ERC20Allowlist', function () {
       const value = 42n;
 
       it('allows to burn when allowed', async function () {
-        await expect(this.token.$_burn(this.holder, value)).to.changeTokenBalance(this.token, this.holder, -value);
+        await expect(this.token.$_burn(this.holder, value)).to.changeTokenBalance(
+          ethers,
+          this.token,
+          this.holder,
+          -value,
+        );
       });
 
       it('allows to burn when disallowed and then allowed', async function () {
         await this.token.$_disallowUser(this.holder);
         await this.token.$_allowUser(this.holder);
 
-        await expect(this.token.$_burn(this.holder, value)).to.changeTokenBalance(this.token, this.holder, -value);
+        await expect(this.token.$_burn(this.holder, value)).to.changeTokenBalance(
+          ethers,
+          this.token,
+          this.holder,
+          -value,
+        );
       });
 
       it('reverts when trying to burn when disallowed', async function () {

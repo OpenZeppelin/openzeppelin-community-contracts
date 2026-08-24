@@ -1,11 +1,17 @@
-const { ethers } = require('hardhat');
-const { loadFixture } = require('@nomicfoundation/hardhat-network-helpers');
+import { network } from 'hardhat';
+import { mapValues } from '@openzeppelin/contracts/test/helpers/iterate';
+import * as random from '@openzeppelin/contracts/test/helpers/random';
+import { shouldBehaveLikeMap } from '@openzeppelin/contracts/test/utils/structs/EnumerableMap.behavior';
 
-const { mapValues } = require('@openzeppelin/contracts/test/helpers/iterate');
-const { generators } = require('@openzeppelin/contracts/test/helpers/random');
-const { MAP_TYPES } = require('../../../scripts/generate/templates/Enumerable.opts');
+import { MAP_TYPES } from '../../../scripts/generate/templates/Enumerable.opts';
 
-const { shouldBehaveLikeMap } = require('@openzeppelin/contracts/test/utils/structs/EnumerableMap.behavior');
+const {
+  ethers,
+  networkHelpers: { loadFixture },
+} = await network.create();
+
+// Chai matchers expect hexadecimal data when dealing with bytes
+const randomOf = type => random[type === 'bytes' ? 'hexBytes' : type];
 
 async function fixture() {
   const mock = await ethers.deployContract('$EnumerableMapExtended');
@@ -16,9 +22,9 @@ async function fixture() {
       {
         key,
         value,
-        keys: Array.from({ length: 3 }, generators[key.type]),
-        values: Array.from({ length: 3 }, generators[value.type]),
-        zeroValue: generators[value.type].zero,
+        keys: Array.from({ length: 3 }, randomOf(key.type)),
+        values: Array.from({ length: 3 }, randomOf(value.type)),
+        zeroValue: randomOf(value.type).zero,
         methods: mapValues(
           {
             set: `$set(uint256,${key.type},${value.type})`,
