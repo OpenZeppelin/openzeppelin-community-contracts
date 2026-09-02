@@ -1,3 +1,7 @@
+## 02-09-2026
+
+- `ERC7540`: `_setOperator` now reverts with `ERC7540InvalidSelfOperator` when the controller is set as its own operator. A controller always has unrestricted access to its own tokens and requests, and that access cannot be restricted.
+
 ## 04-08-2026
 
 - `SignerAccessManaged`: Add an `AbstractSigner` whose authority is delegated to the members of a role tracked by an `IAccessManager`. A signature is accepted only when its `[signer][inner signature]` payload is valid and the signer currently holds the bound role.
