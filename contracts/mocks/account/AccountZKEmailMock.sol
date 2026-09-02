@@ -8,7 +8,7 @@ import {ERC7739, EIP712} from "@openzeppelin/contracts/utils/cryptography/signer
 import {ERC721Holder} from "@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol";
 import {ERC1155Holder} from "@openzeppelin/contracts/token/ERC1155/utils/ERC1155Holder.sol";
 import {SignerZKEmail} from "../../utils/cryptography/signers/SignerZKEmail.sol";
-import {IDKIMRegistry} from "@zk-email/contracts/DKIMRegistry.sol";
+import {IDKIMRegistry} from "@zk-email/contracts/interfaces/IDKIMRegistry.sol";
 import {IGroth16Verifier} from "@zk-email/email-tx-builder/src/interfaces/IGroth16Verifier.sol";
 
 contract AccountZKEmailMock is Account, SignerZKEmail, ERC7739, ERC7821, ERC721Holder, ERC1155Holder {

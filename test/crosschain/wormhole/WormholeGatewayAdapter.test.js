@@ -39,6 +39,7 @@ describe('WormholeGatewayAdapter', function () {
 
   it('initial setup', async function () {
     await expect(this.gatewayA.relayer()).to.eventually.equal(this.wormhole);
+    await expect(this.gatewayA.wormholeChainId()).to.eventually.equal(this.wormholeChainId);
     await expect(this.gatewayA.getChainId(this.wormholeChainId)).to.eventually.equal(this.chain.reference);
     await expect(this.gatewayA.getWormholeChain(ethers.Typed.bytes(this.chain.erc7930))).to.eventually.equal(
       this.wormholeChainId,
