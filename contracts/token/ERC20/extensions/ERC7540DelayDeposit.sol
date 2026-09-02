@@ -30,9 +30,12 @@ import {ERC7540} from "./ERC7540.sol";
  * Override {depositDelay} to customize the waiting period (default: 1 hour) and {clock} to
  * change the time source (default: `block.timestamp`).
  *
- * NOTE: This module does not support temporary share custody through {_depositShareOrigin}. The constructor
- * tries to enforce that property, but the check may be insufficient if {_depositShareOrigin} reads from
- * storage that is not yet initialized when the parent's constructor runs
+ * NOTE: This module does not support temporary share custody through {_depositShareOrigin}, which must return
+ * `address(0)` for the lifetime of the vault, not merely at construction. The constructor tries to enforce that
+ * property, but the check runs once and cannot see an override backed by storage written later, whether by the
+ * child constructor body or by a setter. Such a vault deploys successfully and then sends every claim down the
+ * pre-mint branch, which a delay-based vault never mints into: the claim reverts, the assets stay locked, and
+ * {ERC7540-totalPendingDepositAssets} stays permanently inflated.
  */
 abstract contract ERC7540DelayDeposit is ERC7540, IERC6372 {
     using SafeCast for uint256;
