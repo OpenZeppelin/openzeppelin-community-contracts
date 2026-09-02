@@ -76,9 +76,9 @@ contract WormholeGatewayAdapter is IERC7786GatewaySource, IWormholeReceiver, Own
     }
 
     /// @dev Initializes the contract with the Wormhole gateway and the initial owner.
-    constructor(IWormholeRelayer wormholeRelayer, uint16 wormholeChainId, address initialOwner) Ownable(initialOwner) {
+    constructor(IWormholeRelayer wormholeRelayer, uint16 wormholeChainId_, address initialOwner) Ownable(initialOwner) {
         _wormholeRelayer = wormholeRelayer;
-        _wormholeChainId = wormholeChainId;
+        _wormholeChainId = wormholeChainId_;
     }
 
     /// @dev Returns the local Wormhole relayer
