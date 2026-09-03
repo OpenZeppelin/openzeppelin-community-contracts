@@ -35,7 +35,6 @@ contract WormholeGatewayAdapter is IERC7786GatewaySource, IWormholeReceiver, Own
 
     uint24 private constant EVM_ID_FLAG = 1 << 16;
     IWormholeRelayer private immutable _wormholeRelayer;
-    uint16 private immutable _wormholeChainId;
 
     // Remote gateway.
     mapping(uint256 chainId => address) private _remoteGateways;
@@ -76,19 +75,13 @@ contract WormholeGatewayAdapter is IERC7786GatewaySource, IWormholeReceiver, Own
     }
 
     /// @dev Initializes the contract with the Wormhole gateway and the initial owner.
-    constructor(IWormholeRelayer wormholeRelayer, uint16 wormholeChainId_, address initialOwner) Ownable(initialOwner) {
+    constructor(IWormholeRelayer wormholeRelayer, address initialOwner) Ownable(initialOwner) {
         _wormholeRelayer = wormholeRelayer;
-        _wormholeChainId = wormholeChainId_;
     }
 
     /// @dev Returns the local Wormhole relayer
     function relayer() public view virtual returns (address) {
         return address(_wormholeRelayer);
-    }
-
-    /// @dev Returns the Wormhole chain id.
-    function wormholeChainId() public view virtual returns (uint16) {
-        return _wormholeChainId;
     }
 
     /// @dev Returns whether a binary interoperable chain id is supported.
