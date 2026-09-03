@@ -689,7 +689,6 @@ A chain equivalence has been registered.
 === Wormhole
 
 :_wormholeRelayer: pass:normal[xref:#WormholeGatewayAdapter-_wormholeRelayer-contract-IWormholeRelayer[`++_wormholeRelayer++`]]
-:_wormholeChainId: pass:normal[xref:#WormholeGatewayAdapter-_wormholeChainId-uint16[`++_wormholeChainId++`]]
 :PendingMessage: pass:normal[xref:#WormholeGatewayAdapter-PendingMessage[`++PendingMessage++`]]
 :MessageRelayed: pass:normal[xref:#WormholeGatewayAdapter-MessageRelayed-bytes32-[`++MessageRelayed++`]]
 :RegisteredRemoteGateway: pass:normal[xref:#WormholeGatewayAdapter-RegisteredRemoteGateway-uint256-address-[`++RegisteredRemoteGateway++`]]
@@ -707,7 +706,7 @@ A chain equivalence has been registered.
 :AdditionalMessagesNotSupported: pass:normal[xref:#WormholeGatewayAdapter-AdditionalMessagesNotSupported--[`++AdditionalMessagesNotSupported++`]]
 :MessageAlreadyExecuted: pass:normal[xref:#WormholeGatewayAdapter-MessageAlreadyExecuted-uint256-bytes32-[`++MessageAlreadyExecuted++`]]
 :onlyWormholeRelayer: pass:normal[xref:#WormholeGatewayAdapter-onlyWormholeRelayer--[`++onlyWormholeRelayer++`]]
-:constructor: pass:normal[xref:#WormholeGatewayAdapter-constructor-contract-IWormholeRelayer-uint16-address-[`++constructor++`]]
+:constructor: pass:normal[xref:#WormholeGatewayAdapter-constructor-contract-IWormholeRelayer-address-[`++constructor++`]]
 :relayer: pass:normal[xref:#WormholeGatewayAdapter-relayer--[`++relayer++`]]
 :supportedChain: pass:normal[xref:#WormholeGatewayAdapter-supportedChain-bytes-[`++supportedChain++`]]
 :supportedChain: pass:normal[xref:#WormholeGatewayAdapter-supportedChain-uint256-[`++supportedChain++`]]
@@ -748,7 +747,7 @@ Note: only EVM chains are currently supported
 [.contract-index]
 .Functions
 --
-* `++constructor(wormholeRelayer, wormholeChainId, initialOwner)++`
+* `++constructor(wormholeRelayer, initialOwner)++`
 * `++relayer()++`
 * `++supportedChain(chain)++`
 * `++supportedChain(chainId)++`
@@ -837,7 +836,6 @@ Note: only EVM chains are currently supported
 .Internal Variables
 --
 * `++contract IWormholeRelayer  _wormholeRelayer++`
-* `++uint16  _wormholeChainId++`
 
 [.contract-subindex-inherited]
 .Ownable
@@ -855,8 +853,8 @@ Note: only EVM chains are currently supported
 ==== `[.contract-item-name]#++onlyWormholeRelayer++#++()++` [.item-kind]#modifier#
 
 [.contract-item]
-[[WormholeGatewayAdapter-constructor-contract-IWormholeRelayer-uint16-address-]]
-==== `[.contract-item-name]#++constructor++#++(contract IWormholeRelayer wormholeRelayer, uint16 wormholeChainId, address initialOwner)++` [.item-kind]#public#
+[[WormholeGatewayAdapter-constructor-contract-IWormholeRelayer-address-]]
+==== `[.contract-item-name]#++constructor++#++(contract IWormholeRelayer wormholeRelayer, address initialOwner)++` [.item-kind]#public#
 
 Initializes the contract with the Wormhole gateway and the initial owner.
 
@@ -1036,8 +1034,4 @@ A chain equivalence has been registered.
 [.contract-item]
 [[WormholeGatewayAdapter-_wormholeRelayer-contract-IWormholeRelayer]]
 ==== `contract IWormholeRelayer [.contract-item-name]#++_wormholeRelayer++#` [.item-kind]#internal#
-
-[.contract-item]
-[[WormholeGatewayAdapter-_wormholeChainId-uint16]]
-==== `uint16 [.contract-item-name]#++_wormholeChainId++#` [.item-kind]#internal#
 

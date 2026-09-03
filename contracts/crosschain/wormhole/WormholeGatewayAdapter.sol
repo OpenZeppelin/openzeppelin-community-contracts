@@ -25,7 +25,6 @@ contract WormholeGatewayAdapter is IERC7786GatewaySource, IWormholeReceiver, Own
     using InteroperableAddress for bytes;
 
     IWormholeRelayer internal immutable _wormholeRelayer;
-    uint16 internal immutable _wormholeChainId;
     uint24 private constant EVM_ID_FLAG = 1 << 16;
 
     // Remote gateway.
@@ -76,9 +75,8 @@ contract WormholeGatewayAdapter is IERC7786GatewaySource, IWormholeReceiver, Own
     }
 
     /// @dev Initializes the contract with the Wormhole gateway and the initial owner.
-    constructor(IWormholeRelayer wormholeRelayer, uint16 wormholeChainId, address initialOwner) Ownable(initialOwner) {
+    constructor(IWormholeRelayer wormholeRelayer, address initialOwner) Ownable(initialOwner) {
         _wormholeRelayer = wormholeRelayer;
-        _wormholeChainId = wormholeChainId;
     }
 
     /// @dev Returns the local Wormhole relayer
