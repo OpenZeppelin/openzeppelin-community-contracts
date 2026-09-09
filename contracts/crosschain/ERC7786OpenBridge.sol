@@ -135,7 +135,7 @@ contract ERC7786OpenBridge is IERC7786GatewaySource, IERC7786Recipient, Ownable,
             require(sent >= getThreshold(), ERC7786OpenBridgeInsufficientGateways());
 
             if (needsId) {
-                sendId = keccak256(abi.encode(outbox));
+                sendId = keccak256(abi.encode(_nonce, outbox));
                 emit OutboxDetails(sendId, outbox);
             }
         }

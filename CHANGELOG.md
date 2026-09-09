@@ -1,3 +1,7 @@
+## 09-09-2026
+
+- `ERC7786OpenBridge`: Bind `sendId` to the per-message nonce so it uniquely identifies each message independently of the ids returned by the underlying gateways.
+
 ## 04-08-2026
 
 - `SignerAccessManaged`: Add an `AbstractSigner` whose authority is delegated to the members of a role tracked by an `IAccessManager`. A signature is accepted only when its `[signer][inner signature]` payload is valid and the signer currently holds the bound role.
