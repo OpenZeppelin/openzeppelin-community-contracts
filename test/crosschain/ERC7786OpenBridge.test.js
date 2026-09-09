@@ -180,7 +180,10 @@ describe('ERC7786OpenBridge', function () {
       await this.protocoles[2].setSendId(id2);
 
       // The outbox lists all gateways, including the one that returned a zero id (with its address, not address(0))
-      const sendId = ethers.keccak256(ethers.AbiCoder.defaultAbiCoder().encode(['(address,bytes32)[]'], [outbox]));
+      const nonce = 1n;
+      const sendId = ethers.keccak256(
+        ethers.AbiCoder.defaultAbiCoder().encode(['uint256', '(address,bytes32)[]'], [nonce, outbox]),
+      );
 
       await expect(
         this.bridgeA.connect(this.sender).sendMessage(this.chain.toErc7930(destination), payload, attributes),
