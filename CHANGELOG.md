@@ -1,3 +1,7 @@
+## 10-09-2026
+
+- `ERC7786OpenBridge`: Read only the first word of the recipient's return buffer in `receiveMessage`, so a recipient cannot pad its return data to exhaust the caller's gas on the copy.
+
 ## 04-08-2026
 
 - `SignerAccessManaged`: Add an `AbstractSigner` whose authority is delegated to the members of a role tracked by an `IAccessManager`. A signature is accepted only when its `[signer][inner signature]` payload is valid and the signer currently holds the bound role.
