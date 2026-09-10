@@ -101,15 +101,11 @@ contract ERC7786OpenBridge is IERC7786GatewaySource, IERC7786Recipient, Ownable,
      *
      * NOTE: This function does not enforce a maximum size for `payload` nor validate the address component of a
      * validly encoded `recipient`; the caller is responsible for supplying values that the destination chain can
-     * decode and that resolve to a live recipient. Oversized payloads or recipients with invalid or non-contract
-     * targets will surface as undeliverable messages on the destination side.
+     * decode and that resolve to a live recipient.
      *
-     * NOTE: The per-gateway {try}/{catch} isolates gateway reverts, allowing the aggregate send to proceed as long
-     * as the {getThreshold} number of gateways succeed. It does not, and is not intended to, isolate ABI-decoding
-     * failures produced in this function's own frame when a gateway returns EVM success with malformed data (fewer
-     * than 32 bytes, oversized returndata, or an unexpected shape). Registered gateways are trusted to implement
-     * the {IERC7786GatewaySource} interface; interface non-compliance is deliberately propagated so a non-conforming
-     * gateway surfaces loudly rather than being silently counted as a successful send.
+     * NOTE: Registered gateways are trusted to implement the {IERC7786GatewaySource} interface correctly. The
+     * aggregate send tolerates a subset of gateways failing at runtime, but relies on each gateway conforming to
+     * the interface it was registered under.
      */
     function sendMessage(
         bytes calldata recipient, // Binary Interoperable Address
@@ -136,6 +132,9 @@ contract ERC7786OpenBridge is IERC7786GatewaySource, IERC7786Recipient, Ownable,
             for (uint256 i = 0; i < outbox.length; ++i) {
                 address gateway = _gateways.at(i);
                 // send message
+                //
+                // The typed try/catch is intentional: delegates to Solidity's canonical decoding to reject a gateway
+                // that returns EVM success with a value that does not conform to the interface it was registered under.
                 try IERC7786GatewaySource(gateway).sendMessage(bridge, wrappedPayload, attributes) returns (
                     bytes32 id
                 ) {
@@ -186,9 +185,7 @@ contract ERC7786OpenBridge is IERC7786GatewaySource, IERC7786Recipient, Ownable,
      * * someone tries re-execute a message that was already successfully delivered. This includes gateways that call
      *   this function a second time with a message that was already executed.
      * * the execution of the message (on the {IERC7786Recipient} recipient) is successful but fails to return the
-     *   expected magic value. This is deliberate: a recipient that succeeds with a non-conforming return value is
-     *   treated as an interface violation on the recipient side, and Solidity's canonical revert is used as the
-     *   signal. The message becomes deliverable again once the recipient is updated to return the correct value.
+     *   expected magic value (reverts with {ERC7786OpenBridgeInvalidExecutionReturnValue}).
      *
      * This function does not revert if:
      *
