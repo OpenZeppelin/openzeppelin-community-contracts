@@ -95,8 +95,19 @@ contract ERC7786OpenBridge is IERC7786GatewaySource, IERC7786Recipient, Ownable,
         return false;
     }
 
-    /// @inheritdoc IERC7786GatewaySource
-    /// @dev Using memory instead of calldata avoids stack too deep errors
+    /**
+     * @inheritdoc IERC7786GatewaySource
+     *
+     * @dev Using memory instead of calldata avoids stack too deep errors.
+     *
+     * NOTE: This function does not enforce a maximum size for `payload` nor validate the address component of a
+     * validly encoded `recipient`; the caller is responsible for supplying values that the destination chain can
+     * decode and that resolve to a live recipient.
+     *
+     * NOTE: Registered gateways are trusted to implement the {IERC7786GatewaySource} interface correctly. The
+     * aggregate send tolerates a subset of gateways failing at runtime, but relies on each gateway conforming to
+     * the interface it was registered under.
+     */
     function sendMessage(
         bytes calldata recipient, // Binary Interoperable Address
         bytes calldata payload,
@@ -122,6 +133,9 @@ contract ERC7786OpenBridge is IERC7786GatewaySource, IERC7786Recipient, Ownable,
             for (uint256 i = 0; i < outbox.length; ++i) {
                 address gateway = _gateways.at(i);
                 // send message
+                //
+                // The typed try/catch is intentional: delegates to Solidity's canonical decoding to reject a gateway
+                // that returns EVM success with a value that does not conform to the interface it was registered under.
                 try IERC7786GatewaySource(gateway).sendMessage(bridge, wrappedPayload, attributes) returns (
                     bytes32 id
                 ) {
@@ -157,6 +171,9 @@ contract ERC7786OpenBridge is IERC7786GatewaySource, IERC7786Recipient, Ownable,
      *
      * It can also be called by anyone (including an ERC-7786 gateway) to retry the execution. This can be useful if
      * the automatic execution (that is triggered when the threshold is reached) fails, and someone wants to retry it.
+     * The retry path only performs work when {getThreshold} gateway deliveries have already been recorded for the
+     * message; a caller that is not a registered gateway against a message that has not yet accumulated enough
+     * receipts falls through the counting branch and returns the magic value without executing anything.
      *
      * When a message is forwarded by a known gateway, a {Received} event is emitted. If a known gateway calls this
      * function more than once (for a given message), only the first call is counts toward the threshold and emits an
@@ -169,7 +186,7 @@ contract ERC7786OpenBridge is IERC7786GatewaySource, IERC7786Recipient, Ownable,
      * * someone tries re-execute a message that was already successfully delivered. This includes gateways that call
      *   this function a second time with a message that was already executed.
      * * the execution of the message (on the {IERC7786Recipient} recipient) is successful but fails to return the
-     *   executed value.
+     *   expected magic value (reverts with {ERC7786OpenBridgeInvalidExecutionReturnValue}).
      *
      * This function does not revert if:
      *
@@ -308,6 +325,14 @@ contract ERC7786OpenBridge is IERC7786GatewaySource, IERC7786Recipient, Ownable,
 
     // ================================================== Internal ===================================================
 
+    /**
+     * @dev Adds a gateway to the authorized set. Registering a gateway trusts it to implement the
+     * {IERC7786GatewaySource} interface correctly; non-conforming gateways (returning malformed data, returning an
+     * unexpected shape, or refusing to relay) are the operator's responsibility to identify and rotate out via
+     * {removeGateway}. The `gateway.code.length > 0` check is a fat-finger guard against registering a plain EOA;
+     * it does not attest that the address implements the interface (for example, an EIP-7702 delegated EOA carries
+     * a 23-byte delegation indicator and would pass this check).
+     */
     function _addGateway(address gateway) internal virtual {
         require(gateway.code.length > 0, ERC7786OpenBridgeGatewayNotAContract(gateway));
         require(_gateways.add(gateway), ERC7786OpenBridgeGatewayAlreadyRegistered(gateway));
