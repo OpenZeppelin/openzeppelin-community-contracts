@@ -29,7 +29,7 @@ async function fixture() {
           {
             add: `$add(uint256,${value.type})`,
             remove: `$remove(uint256,${value.type})`,
-            removeAt: `$removeAt(uint256,uint256)`,
+            removeAt: `$removeAt(uint256,uint256)`, // `$removeAt_EnumerableSetExtended_${name}(uint256,uint256)` when more types are added
             contains: `$contains(uint256,${value.type})`,
             clear: `$clear(uint256)`, // `$clear_EnumerableSetExtended_${name}(uint256)` when more types are added
             length: `$length(uint256)`, // `$length_EnumerableSetExtended_${name}(uint256)` when more types are added
