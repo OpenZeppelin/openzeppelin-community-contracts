@@ -5,8 +5,8 @@ export const fromUniversalAddress = addr => ethers.getAddress(ethers.hexlify(eth
 
 export async function deploy(connection, owner, wormholeChainId = 23600) {
   const wormhole = await connection.ethers.deployContract('WormholeRelayerMock', [wormholeChainId]);
-  const gatewayA = await connection.ethers.deployContract('WormholeGatewayAdapter', [wormhole, wormholeChainId, owner]);
-  const gatewayB = await connection.ethers.deployContract('WormholeGatewayAdapter', [wormhole, wormholeChainId, owner]);
+  const gatewayA = await connection.ethers.deployContract('WormholeGatewayAdapter', [wormhole, owner]);
+  const gatewayB = await connection.ethers.deployContract('WormholeGatewayAdapter', [wormhole, owner]);
 
   await gatewayA
     .connect(owner)
