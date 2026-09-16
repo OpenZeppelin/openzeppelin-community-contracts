@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.26;
 
-import {IERC7943Fungible} from "../../../interfaces/IERC7943.sol";
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import {ERC165, IERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 import {TransientSlot} from "@openzeppelin/contracts/utils/TransientSlot.sol";
+import {IERC7943Fungible} from "../../../interfaces/IERC7943.sol";
 import {ERC20Freezable} from "./ERC20Freezable.sol";
 import {ERC20Restricted} from "./ERC20Restricted.sol";
 
