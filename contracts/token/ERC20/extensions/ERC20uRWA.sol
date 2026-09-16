@@ -62,7 +62,7 @@ abstract contract ERC20uRWA is ERC20, ERC165, ERC20Freezable, ERC20Restricted, I
      * checks to the internal {_update} function, which enforces {canSend}, {canReceive} and the
      * unfrozen balance directly. Consider overriding {_update} accordingly to keep both in sync.
      */
-    function canTransfer(address from, address to, uint256 amount) external view virtual returns (bool) {
+    function canTransfer(address from, address to, uint256 amount) public view virtual returns (bool) {
         return canSend(from) && canReceive(to) && (amount > balanceOf(from) || amount <= available(from));
     }
 
