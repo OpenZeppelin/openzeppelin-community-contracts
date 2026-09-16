@@ -1,17 +1,21 @@
-const { ethers, predeploy } = require('hardhat');
-const { expect } = require('chai');
-const { loadFixture } = require('@nomicfoundation/hardhat-network-helpers');
-const { impersonate } = require('@openzeppelin/contracts/test/helpers/account');
-const { ERC4337Helper } = require('@openzeppelin/contracts/test/helpers/erc4337');
-
-const {
+import { network } from 'hardhat';
+import { expect } from 'chai';
+import { ERC4337Helper } from '@openzeppelin/contracts/test/helpers/erc4337';
+import {
   MODULE_TYPE_EXECUTOR,
-  encodeSingle,
-  encodeMode,
   CALL_TYPE_CALL,
   EXEC_TYPE_DEFAULT,
-} = require('@openzeppelin/contracts/test/helpers/erc7579');
-const { shouldBehaveLikeERC7579Module } = require('./ERC7579Module.behavior');
+  encodeMode,
+  encodeSingle,
+} from '@openzeppelin/contracts/test/helpers/erc7579';
+import { shouldBehaveLikeERC7579Module } from './ERC7579Module.behavior';
+
+const connection = await network.create();
+const {
+  ethers,
+  helpers: { impersonate },
+  networkHelpers: { loadFixture },
+} = connection;
 
 async function fixture() {
   // Deploy ERC-7579 selector executor module
@@ -19,13 +23,13 @@ async function fixture() {
   const target = await ethers.deployContract('CallReceiverMock');
 
   // ERC-4337 env
-  const helper = new ERC4337Helper();
+  const helper = new ERC4337Helper(connection);
   await helper.wait();
 
   // ERC-7579 account
   const mockAccount = await helper.newAccount('$AccountERC7579');
   const mockFromAccount = await impersonate(mockAccount.address).then(asAccount => mock.connect(asAccount));
-  const mockAccountFromEntrypoint = await impersonate(predeploy.entrypoint.v09.target).then(asEntrypoint =>
+  const mockAccountFromEntrypoint = await impersonate(ethers.predeploy.entrypoint.v09.target).then(asEntrypoint =>
     mockAccount.connect(asEntrypoint),
   );
 
@@ -63,7 +67,7 @@ async function fixture() {
 
 describe('ERC7579SelectorExecutor', function () {
   beforeEach(async function () {
-    Object.assign(this, await loadFixture(fixture));
+    Object.assign(this, connection, await loadFixture(fixture));
   });
 
   shouldBehaveLikeERC7579Module();
@@ -304,8 +308,9 @@ describe('ERC7579SelectorExecutor', function () {
 
       // This should revert when trying to extract the selector, but behavior depends on how account handles it
       // The test verifies that our module doesn't crash with malformed data
-      await expect(this.mockFromAccount.execute(this.mockAccount.address, ethers.ZeroHash, this.mode, shortCalldata)).to
-        .be.reverted; // Could be various revert reasons depending on account implementation
+      await expect(
+        this.mockFromAccount.execute(this.mockAccount.address, ethers.ZeroHash, this.mode, shortCalldata),
+      ).to.revert(ethers); // Could be various revert reasons depending on account implementation
     });
   });
 

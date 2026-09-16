@@ -2,12 +2,12 @@
 
 pragma solidity ^0.8.27;
 
+import {IERC4626} from "@openzeppelin/contracts/interfaces/IERC4626.sol";
 import {IERC20, IERC20Metadata, ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {IERC4626} from "@openzeppelin/contracts/interfaces/IERC4626.sol";
 import {IERC165, ERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
-import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 import {LowLevelCall} from "@openzeppelin/contracts/utils/LowLevelCall.sol";
+import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 import {Memory} from "@openzeppelin/contracts/utils/Memory.sol";
 import {IERC7540, IERC7540Operator, IERC7540Deposit, IERC7540Redeem} from "../../../interfaces/IERC7540.sol";
 import {IERC7575, IERC7575Share} from "../../../interfaces/IERC7575.sol";
@@ -543,9 +543,8 @@ abstract contract ERC7540 is ERC165, ERC20, IERC4626, IERC7540, IERC7575Share {
             revert ERC4626ExceededMaxWithdraw(ownerOrController, assets, maxAssets);
         }
 
-        uint256 shares = _isRedeemAsync()
-            ? _consumeClaimableWithdraw(assets, ownerOrController)
-            : previewWithdraw(assets);
+        uint256 shares =
+            _isRedeemAsync() ? _consumeClaimableWithdraw(assets, ownerOrController) : previewWithdraw(assets);
         _withdraw(_msgSender(), receiver, ownerOrController, assets, shares);
         return shares;
     }

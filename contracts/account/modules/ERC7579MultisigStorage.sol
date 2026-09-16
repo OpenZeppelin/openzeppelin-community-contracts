@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
-import {ERC7579Multisig} from "./ERC7579Multisig.sol";
 import {SignatureChecker} from "@openzeppelin/contracts/utils/cryptography/SignatureChecker.sol";
+import {ERC7579Multisig} from "./ERC7579Multisig.sol";
 
 /**
  * @dev Extension of {ERC7579Multisig} that allows storing presigned approvals in storage.

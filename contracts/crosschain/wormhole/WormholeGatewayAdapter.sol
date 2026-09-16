@@ -2,17 +2,17 @@
 
 pragma solidity ^0.8.27;
 
-import {IWormholeRelayer} from "wormhole-solidity-sdk/interfaces/IWormholeRelayer.sol";
-import {IWormholeReceiver} from "wormhole-solidity-sdk/interfaces/IWormholeReceiver.sol";
-import {VaaKey} from "wormhole-solidity-sdk/interfaces/IWormholeRelayer.sol";
-import {fromUniversalAddress, toUniversalAddress} from "wormhole-solidity-sdk/utils/UniversalAddress.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
-import {IERC7786GatewaySource, IERC7786Recipient} from "@openzeppelin/contracts/interfaces/draft-IERC7786.sol";
-import {BitMaps} from "@openzeppelin/contracts/utils/structs/BitMaps.sol";
+import {IERC7786GatewaySource, IERC7786Recipient} from "@openzeppelin/contracts/interfaces/IERC7786.sol";
 import {InteroperableAddress} from "@openzeppelin/contracts/utils/draft-InteroperableAddress.sol";
 import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
-import {ERC7786Attributes} from "../utils/ERC7786Attributes.sol";
+import {BitMaps} from "@openzeppelin/contracts/utils/structs/BitMaps.sol";
+import {IWormholeReceiver} from "wormhole-solidity-sdk/interfaces/IWormholeReceiver.sol";
+import {IWormholeRelayer} from "wormhole-solidity-sdk/interfaces/IWormholeRelayer.sol";
+import {VaaKey} from "wormhole-solidity-sdk/interfaces/IWormholeRelayer.sol";
+import {fromUniversalAddress, toUniversalAddress} from "wormhole-solidity-sdk/utils/UniversalAddress.sol";
 import {IERC7786Attributes} from "../../interfaces/IERC7786Attributes.sol";
+import {ERC7786Attributes} from "../utils/ERC7786Attributes.sol";
 
 /**
  * @dev An ERC-7786 compliant adapter to send and receive messages via Wormhole.
