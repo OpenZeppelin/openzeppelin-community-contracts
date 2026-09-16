@@ -10,17 +10,19 @@
   ],
   "scripts": {
     "compile": "hardhat compile",
-    "clean": "hardhat clean && rimraf build contracts/build",
     "docs": "npm run prepare-docs && oz-docs",
     "docs:watch": "oz-docs watch contracts docs/templates docs/config.js",
     "prepare": "husky",
     "prepare-docs": "scripts/prepare-docs.sh",
     "lint": "npm run lint:js && npm run lint:sol",
     "lint:fix": "npm run lint:js:fix && npm run lint:sol:fix",
-    "lint:js": "prettier --log-level warn '**/*.{js,ts}' --check && eslint . --ignore-pattern lib/",
-    "lint:js:fix": "prettier --log-level warn '**/*.{js,ts}' --write && eslint . --fix --ignore-pattern lib/",
-    "lint:sol": "prettier --log-level warn '{contracts,test}/**/*.sol' --check && solhint --config solhint.config.cjs --noPoster '{contracts,test}/**/*.sol'",
-    "lint:sol:fix": "prettier --log-level warn '{contracts,test}/**/*.sol' --write",
+    "lint:js": "npm run prettier -- '**/*.{js,ts}' --check && eslint .",
+    "lint:js:fix": "npm run prettier -- '**/*.{js,ts}' --write && eslint . --fix",
+    "lint:sol": "npm run prettier -- '{contracts,test}/**/*.sol' --check && npm run solhint -- '{contracts,test}/**/*.sol'",
+    "lint:sol:fix": "npm run prettier -- '{contracts,test}/**/*.sol' --write && npm run solhint -- '{contracts,test}/**/*.sol' --fix",
+    "prettier": "prettier --log-level warn --ignore-path .gitignore",
+    "solhint": "solhint --config solhint.config.cjs --noPoster --noPrompt --disc",
+    "clean": "hardhat clean && rimraf build contracts/build",
     "generate": "scripts/generate/run.js",
     "test": "hardhat test",
     "test:generation": "scripts/checks/generation.sh",
@@ -47,17 +49,16 @@
   ],
   "devDependencies": {
     "@openzeppelin/contracts": "file:lib/@openzeppelin-contracts",
-    "husky": "^9.1.7",
-    "openzeppelin-solidity": "file:lib/@openzeppelin-contracts"
+    "husky": "^9.1.7"
   },
   "lint-staged": {
-    "*.{js,ts}": [
-      "prettier --log-level warn --ignore-path .gitignore --check",
+    "**/*.{js,ts}": [
+      "npm run prettier -- --check",
       "eslint"
     ],
-    "*.sol": [
-      "prettier --log-level warn --ignore-path .gitignore --check",
-      "solhint --config solhint.config.cjs --noPoster"
+    "{contracts,test}/**/*.sol": [
+      "npm run prettier -- --check",
+      "npm run solhint --"
     ]
   },
   "type": "module"
