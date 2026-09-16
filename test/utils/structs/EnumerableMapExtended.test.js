@@ -31,16 +31,18 @@ async function fixture() {
             get: `$get(uint256,${key.type})`,
             tryGet: `$tryGet(uint256,${key.type})`,
             remove: `$remove(uint256,${key.type})`,
+            removeAt: `$removeAt_EnumerableMapExtended_${name}(uint256,uint256)`,
+            contains: `$contains(uint256,${key.type})`,
             clear: `$clear_EnumerableMapExtended_${name}(uint256)`,
             length: `$length_EnumerableMapExtended_${name}(uint256)`,
             at: `$at_EnumerableMapExtended_${name}(uint256,uint256)`,
-            contains: `$contains(uint256,${key.type})`,
             keys: `$keys_EnumerableMapExtended_${name}(uint256)`,
             keysPage: `$keys_EnumerableMapExtended_${name}(uint256,uint256,uint256)`,
           },
           fnSig =>
-            (...args) =>
-              mock.getFunction(fnSig)(0, ...args),
+            Object.assign((...args) => mock.getFunction(fnSig)(0, ...args), {
+              staticCall: (...args) => mock.getFunction(fnSig).staticCall(0, ...args),
+            }),
         ),
         events: {
           setReturn: `return$set_EnumerableMapExtended_${name}_${key.type}_${value.type}`,

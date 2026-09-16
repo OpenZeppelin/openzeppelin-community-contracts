@@ -29,6 +29,7 @@ async function fixture() {
           {
             add: `$add(uint256,${value.type})`,
             remove: `$remove(uint256,${value.type})`,
+            removeAt: `$removeAt(uint256,uint256)`,
             contains: `$contains(uint256,${value.type})`,
             clear: `$clear(uint256)`, // `$clear_EnumerableSetExtended_${name}(uint256)` when more types are added
             length: `$length(uint256)`, // `$length_EnumerableSetExtended_${name}(uint256)` when more types are added
@@ -37,8 +38,9 @@ async function fixture() {
             valuesPage: `$values(uint256,uint256,uint256)`, // `$values_EnumerableSetExtended_${name}(uint256,uint256,uint256)` when more types are added
           },
           fnSig =>
-            (...args) =>
-              mock.getFunction(fnSig)(0, ...args),
+            Object.assign((...args) => mock.getFunction(fnSig)(0, ...args), {
+              staticCall: (...args) => mock.getFunction(fnSig).staticCall(0, ...args),
+            }),
         ),
         events: {
           addReturn: 'return$add', // `return$add_EnumerableSetExtended_${name}_${value.type.replace(/[[\]]/g, '_')}`,

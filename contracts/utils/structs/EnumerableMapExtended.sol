@@ -83,6 +83,27 @@ library EnumerableMapExtended {
     }
 
     /**
+     * @dev Removes the key-value pair stored at position `index` in the map. O(1).
+     *
+     * Returns the removed key and its associated value.
+     *
+     * This is cheaper than {remove} when the caller already knows the index, because it skips the position lookup
+     * that {remove} performs.
+     *
+     * Note that there are no guarantees on the ordering of the entries inside the map, and it may change when more
+     * entries are added or removed.
+     *
+     * Requirements:
+     *
+     * - `index` must be strictly less than {length}.
+     */
+    function removeAt(BytesToUintMap storage map, uint256 index) internal returns (bytes memory key, uint256 value) {
+        key = map._keys.removeAt(index);
+        value = map._values[key];
+        delete map._values[key];
+    }
+
+    /**
      * @dev Removes all the entries from a map. O(n).
      *
      * WARNING: Developers should keep in mind that this function has an unbounded cost and using it may render the
@@ -204,6 +225,30 @@ library EnumerableMapExtended {
     function remove(StringToStringMap storage map, string memory key) internal returns (bool) {
         delete map._values[key];
         return map._keys.remove(key);
+    }
+
+    /**
+     * @dev Removes the key-value pair stored at position `index` in the map. O(1).
+     *
+     * Returns the removed key and its associated value.
+     *
+     * This is cheaper than {remove} when the caller already knows the index, because it skips the position lookup
+     * that {remove} performs.
+     *
+     * Note that there are no guarantees on the ordering of the entries inside the map, and it may change when more
+     * entries are added or removed.
+     *
+     * Requirements:
+     *
+     * - `index` must be strictly less than {length}.
+     */
+    function removeAt(
+        StringToStringMap storage map,
+        uint256 index
+    ) internal returns (string memory key, string memory value) {
+        key = map._keys.removeAt(index);
+        value = map._values[key];
+        delete map._values[key];
     }
 
     /**

@@ -3,7 +3,7 @@
 import cp from 'child_process';
 import fs from 'fs';
 import path from 'path';
-import format from '@openzeppelin/contracts/scripts/generate/format-lines.js';
+import format from './format-lines.js';
 
 function getVersion(path) {
   try {

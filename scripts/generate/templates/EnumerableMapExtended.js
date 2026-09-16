@@ -1,4 +1,4 @@
-import format from '@openzeppelin/contracts/scripts/generate/format-lines.js';
+import format from '../format-lines.js';
 import { SET_TYPES, MAP_TYPES } from './Enumerable.opts.js';
 
 const header = `\
@@ -80,6 +80,27 @@ function set(${name} storage map, ${key.typeLoc} key, ${value.typeLoc} value) in
 function remove(${name} storage map, ${key.typeLoc} key) internal returns (bool) {
     delete map._values[key];
     return map._keys.remove(key);
+}
+
+/**
+ * @dev Removes the key-value pair stored at position \`index\` in the map. O(1).
+ *
+ * Returns the removed key and its associated value.
+ *
+ * This is cheaper than {remove} when the caller already knows the index, because it skips the position lookup
+ * that {remove} performs.
+ *
+ * Note that there are no guarantees on the ordering of the entries inside the map, and it may change when more
+ * entries are added or removed.
+ *
+ * Requirements:
+ *
+ * - \`index\` must be strictly less than {length}.
+ */
+function removeAt(${name} storage map, uint256 index) internal returns (${key.typeLoc} key, ${value.typeLoc} value) {
+    key = map._keys.removeAt(index);
+    value = map._values[key];
+    delete map._values[key];
 }
 
 /**
