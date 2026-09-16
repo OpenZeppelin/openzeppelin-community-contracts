@@ -228,5 +228,28 @@ describe('ERC7786OpenBridge', function () {
         .to.emit(destination, 'MessageReceived')
         .withArgs(bridgeB, anyValue, chain.toErc7930(this.sender), payload, 0n);
     });
+
+    it('delivers to a recipient that returns the correct magic value followed by large padding', async function () {
+      // A recipient that returns the ERC-7786 magic in the first word and pads the return buffer to 1 MiB does not
+      // cause the bridge to run out of gas copying the response; only the first word is read.
+      const gateway = await ethers.deployContract('ERC7786GatewayMock');
+      const bridgeA = await ethers.deployContract('ERC7786OpenBridge', [this.owner, [gateway], 1]);
+      const bridgeB = await ethers.deployContract('ERC7786OpenBridge', [this.owner, [gateway], 1]);
+      await bridgeA.registerRemoteBridge(chain.toErc7930(bridgeB));
+      await bridgeB.registerRemoteBridge(chain.toErc7930(bridgeA));
+
+      const destination = await ethers.deployContract('ERC7786RecipientReturnBombMock');
+      const payload = ethers.randomBytes(128);
+
+      // An explicit gas limit is required: the bridge catches a failing delivery (emitting ExecutionFailed), so the
+      // transaction succeeds either way and gas estimation settles on the cheapest path, which is the one where the
+      // recipient runs out of gas while allocating its return buffer.
+      await expect(
+        bridgeA.connect(this.sender).sendMessage(chain.toErc7930(destination), payload, [], { gasLimit: 5_000_000n }),
+      )
+        .to.emit(bridgeB, 'Received')
+        .to.emit(bridgeB, 'ExecutionSuccess')
+        .to.not.emit(bridgeB, 'ExecutionFailed');
+    });
   });
 });
