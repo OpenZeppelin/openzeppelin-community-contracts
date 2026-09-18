@@ -1,43 +1,42 @@
 #!/usr/bin/env node
 
-import cp from 'child_process';
 import fs from 'fs';
 import path from 'path';
-import format from './format-lines.js';
+import prettier from 'prettier';
+import { Eta } from 'eta';
 
-function getVersion(path) {
-  try {
-    return fs.readFileSync(path, 'utf8').match(/\/\/ OpenZeppelin Contracts \(last updated v[^)]+\)/)[0];
-  } catch {
-    return null;
-  }
-}
+import * as context from './data.js';
 
-async function generateFromTemplate(file, template, outputPrefix = '', lint = false) {
-  const script = path.relative(path.join(import.meta.dirname, '../..'), import.meta.filename);
-  const input = path.join(path.dirname(script), template);
-  const output = path.join(outputPrefix, file);
-  const version = getVersion(output);
-  const content = format(
+const repoRoot = path.join(import.meta.dirname, '../..');
+const templatesDir = path.join(import.meta.dirname, 'templates');
+const eta = new Eta({ views: templatesDir, autoEscape: false, autoTrim: false, defaultExtension: '' });
+
+for (const [filepath, needsPrettier] of Object.entries({
+  'contracts/utils/structs/EnumerableSetExtended.sol': false,
+  'contracts/utils/structs/EnumerableMapExtended.sol': true,
+})) {
+  console.log(`Generating ${filepath}...`);
+  const template = `${path.basename(filepath)}.eta`;
+  const input = path.relative(repoRoot, path.join(templatesDir, template));
+  const version =
+    fs.existsSync(filepath) &&
+    fs.readFileSync(filepath, 'utf8').match(/^\/\/ OpenZeppelin Contracts \(last updated v[^)]+\) \([^)]+\)$/m)?.[0];
+  const content = [
     '// SPDX-License-Identifier: MIT',
-    ...(version ? [version + ` (${file})`] : []),
+    ...(version ? [version] : []),
     `// This file was procedurally generated from ${input}.`,
     '',
-    (await import(template)).default.trimEnd(),
-  );
+    eta.render(template, context),
+  ].join('\n');
 
-  fs.mkdirSync(path.dirname(output), { recursive: true });
-  fs.writeFileSync(output, content);
-  lint && cp.execFileSync('prettier', ['--write', output]);
-}
-
-// Some templates needs to go through the linter after generation
-const needsLinter = ['utils/structs/EnumerableMapExtended.sol'];
-
-// Contracts
-for (const [file, template] of Object.entries({
-  'utils/structs/EnumerableSetExtended.sol': './templates/EnumerableSetExtended.js',
-  'utils/structs/EnumerableMapExtended.sol': './templates/EnumerableMapExtended.js',
-})) {
-  await generateFromTemplate(file, template, './contracts/', needsLinter.includes(file));
+  await (
+    needsPrettier
+      ? prettier
+          .resolveConfig(filepath)
+          .then(prettierConfig => prettier.format(content, { ...prettierConfig, filepath }))
+      : Promise.resolve(content)
+  ).then(formatted => {
+    fs.mkdirSync(path.dirname(filepath), { recursive: true });
+    fs.writeFileSync(filepath, formatted);
+  });
 }
