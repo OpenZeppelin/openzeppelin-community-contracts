@@ -3,7 +3,7 @@ import { mapValues } from '@openzeppelin/contracts/test/helpers/iterate';
 import * as random from '@openzeppelin/contracts/test/helpers/random';
 import { shouldBehaveLikeMap } from '@openzeppelin/contracts/test/utils/structs/EnumerableMap.behavior';
 
-import { MAP_TYPES } from '../../../scripts/generate/templates/Enumerable.opts';
+import { MAP_TYPES } from '../../../scripts/generate/data.js';
 
 const {
   ethers,
