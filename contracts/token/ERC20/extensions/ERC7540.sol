@@ -816,6 +816,13 @@ abstract contract ERC7540 is ERC165, ERC20, IERC4626, IERC7540, IERC7575Share {
      * shares (otherwise pre-minted shares could be moved before they are claimed). Use an unowned
      * address such as `address(0xdead)`. Avoid addresses in the precompile reserved range
      * (`address(1)` through `address(0x1ff)`, see EIP-7587).
+     *
+     * IMPORTANT: The returned value MUST stay constant while any request is outstanding, whether Pending or
+     * Claimable. Fulfillment and claim read this hook independently, at different times, and each selects its
+     * branch from its own read. A value that changes in between leaves them inconsistent: shares pre-minted at
+     * fulfillment are stranded and minted a second time on claim, and {totalPendingDepositAssets} is decremented
+     * twice for a single request, the second time against another controller's pending assets, which makes that
+     * controller's claim revert permanently. Prefer an immutable or constant override.
      */
     function _depositShareOrigin() internal view virtual returns (address) {
         return address(0);
@@ -833,6 +840,15 @@ abstract contract ERC7540 is ERC165, ERC20, IERC4626, IERC7540, IERC7575Share {
      * shares (otherwise escrowed shares could be moved before they are burned). Use an unowned
      * address such as `address(0xdead)`. Avoid addresses in the precompile reserved range
      * (`address(1)` through `address(0x1ff)`, see EIP-7587).
+     *
+     * IMPORTANT: The returned value MUST stay constant from a request until that request is fulfilled. This
+     * hook is read at request time and again at fulfillment, and exactly one of those two reads is meant to
+     * raise {totalPendingRedeemShares}: the request raises it when the hook reads zero, and
+     * {_burnSharesOnRedeemFulfill} raises it when it does not. The claim path never reads this hook, it lowers
+     * that counter unconditionally, so the two earlier reads have to agree. When they do not, either
+     * fulfillment reverts trying to burn from an escrow that never received the shares, or the request is
+     * never counted at all and the claim takes the shortfall out of another controller's accounting, leaving
+     * that controller permanently unable to claim. Prefer an immutable or constant override.
      */
     function _redeemShareDestination() internal view virtual returns (address) {
         return address(0);
