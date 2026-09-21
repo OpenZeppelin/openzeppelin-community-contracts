@@ -26,7 +26,7 @@
     "generate": "scripts/generate/run.js",
     "test": "hardhat test",
     "test:generation": "scripts/checks/generation.sh",
-    "test:inheritance": "scripts/checks/inheritance-ordering.js artifacts/build-info/*",
+    "test:inheritance": "scripts/checks/inheritance-ordering.js artifacts/build-info/*.output.json",
     "test:pragma": "scripts/checks/pragma-validity.js artifacts/build-info/*",
     "coverage": "hardhat test --coverage",
     "gas-report": "hardhat test --gas-stats"

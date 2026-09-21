@@ -1,25 +1,37 @@
 #!/usr/bin/env node
 
-const path = require('path');
-const graphlib = require('graphlib');
-const match = require('micromatch');
-const { findAll } = require('solidity-ast/utils');
-const { _: artifacts } = require('yargs/yargs')().argv;
+import fs from 'fs';
+import path from 'path';
+import graphlib from 'graphlib';
+import match from 'micromatch';
+import { findAll } from 'solidity-ast/utils.js';
+import yargs from 'yargs';
+import { hideBin } from 'yargs/helpers';
+
+const { _: artifacts } = yargs(hideBin(process.argv)).argv;
 
 // files to skip
-const skipPatterns = ['contracts-exposed/**', 'contracts/mocks/**'];
+const skipPatterns = ['contracts-exposed/**', 'contracts/mocks/**', 'test/**'];
+const isChecked = source => !source.startsWith('npm/') && !match.any(source.replace(/^project\//, ''), skipPatterns);
 
 for (const artifact of artifacts) {
-  const { output: solcOutput } = require(path.resolve(__dirname, '../..', artifact));
+  const { output: solcOutput } = JSON.parse(
+    fs.readFileSync(path.resolve(import.meta.dirname, '../..', artifact), 'utf-8'),
+  );
 
   const graph = new graphlib.Graph({ directed: true });
   const names = {};
   const linearized = [];
 
-  for (const source in solcOutput.contracts) {
-    if (match.any(source, skipPatterns)) continue;
+  for (const source in solcOutput.sources) {
     for (const contractDef of findAll('ContractDefinition', solcOutput.sources[source].ast)) {
-      names[contractDef.id] = contractDef.name;
+      names[contractDef.id] = contractDef.name; // include any source needed for resolution (e.g. external IERC165)
+    }
+  }
+
+  for (const source in solcOutput.sources) {
+    if (!isChecked(source)) continue; // skip non-production/non-project sources (e.g. external IERC165)
+    for (const contractDef of findAll('ContractDefinition', solcOutput.sources[source].ast)) {
       linearized.push(contractDef.linearizedBaseContracts);
 
       contractDef.linearizedBaseContracts.forEach((c1, i, contracts) =>

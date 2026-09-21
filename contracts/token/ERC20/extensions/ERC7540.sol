@@ -65,7 +65,7 @@ import {IERC7575, IERC7575Share} from "../../../interfaces/IERC7575.sol";
  * accounting (notably {totalAssets}) can revert and freeze claim paths that depend on live conversions.
  * ====
  */
-abstract contract ERC7540 is ERC165, ERC20, IERC4626, IERC7540, IERC7575Share {
+abstract contract ERC7540 is ERC20, IERC4626, ERC165, IERC7540, IERC7575Share {
     using Math for uint256;
 
     IERC20 private immutable _asset;
