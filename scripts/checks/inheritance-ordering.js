@@ -10,9 +10,11 @@ import { hideBin } from 'yargs/helpers';
 
 const { _: artifacts } = yargs(hideBin(process.argv)).argv;
 
-// files to skip
-const skipPatterns = ['contracts-exposed/**', 'contracts/mocks/**', 'test/**'];
-const isChecked = source => !source.startsWith('npm/') && !match.any(source.replace(/^project\//, ''), skipPatterns);
+// only consider files in the package: take pattern from package.json
+// npm `files` entries are rooted (`/contracts/**/*.sol`); solc source keys are not
+const patterns = JSON.parse(
+  fs.readFileSync(path.resolve(import.meta.dirname, '../../', 'package.json'), 'utf-8'),
+).files.map(p => p.replace(/^(!?)\/+/, '$1'));
 
 for (const artifact of artifacts) {
   const { output: solcOutput } = JSON.parse(
@@ -23,22 +25,27 @@ for (const artifact of artifacts) {
   const names = {};
   const linearized = [];
 
-  for (const source in solcOutput.sources) {
-    for (const contractDef of findAll('ContractDefinition', solcOutput.sources[source].ast)) {
-      names[contractDef.id] = contractDef.name; // include any source needed for resolution (e.g. external IERC165)
-    }
-  }
+  // Rebuild solcOutput?.sources by removing the "project" prefix from the keys, so that we can match them against the patterns in package.json
+  const sources = Object.fromEntries(
+    Object.entries(solcOutput?.sources ?? {}).map(([key, value]) => [key.replace(/^project\//, ''), value]),
+  );
 
-  for (const source in solcOutput.sources) {
-    if (!isChecked(source)) continue; // skip non-production/non-project sources (e.g. external IERC165)
-    for (const contractDef of findAll('ContractDefinition', solcOutput.sources[source].ast)) {
-      linearized.push(contractDef.linearizedBaseContracts);
-
-      contractDef.linearizedBaseContracts.forEach((c1, i, contracts) =>
-        contracts.slice(i + 1).forEach(c2 => {
-          graph.setEdge(c1, c2);
-        }),
-      );
+  // For each source file ...
+  for (const file of Object.keys(sources)) {
+    // ... find all ContractDefinition in this file ...
+    for (const contractDef of findAll('ContractDefinition', sources[file].ast)) {
+      // ... record the name for that contracts ...
+      names[contractDef.id] = contractDef.name;
+      // ... consider inheritance ordering of contracts in files that matches the patterns
+      if (match(file, patterns).length > 0) {
+        linearized.push(contractDef.linearizedBaseContracts);
+        // ... and add edges to the graph for each pair of contracts in the linearized base contracts.
+        contractDef.linearizedBaseContracts.forEach((c1, i, contracts) =>
+          contracts.slice(i + 1).forEach(c2 => {
+            graph.setEdge(c1, c2);
+          }),
+        );
+      }
     }
   }
 
