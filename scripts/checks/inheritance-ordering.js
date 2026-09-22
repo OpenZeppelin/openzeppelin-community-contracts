@@ -30,19 +30,22 @@ for (const artifact of artifacts) {
     Object.entries(solcOutput?.sources ?? {}).map(([key, value]) => [key.replace(/^project\//, ''), value]),
   );
 
-  // For each source file that matches the patterns ...
-  for (const file of match(Object.keys(sources), patterns)) {
+  // For each source file ...
+  for (const file of Object.keys(sources)) {
     // ... find all ContractDefinition in this file ...
     for (const contractDef of findAll('ContractDefinition', sources[file].ast)) {
-      // ... record the details for that contracts ...
+      // ... record the name for that contracts ...
       names[contractDef.id] = contractDef.name;
-      linearized.push(contractDef.linearizedBaseContracts);
-      // ... and add edges to the graph for each pair of contracts in the linearized base contracts.
-      contractDef.linearizedBaseContracts.forEach((c1, i, contracts) =>
-        contracts.slice(i + 1).forEach(c2 => {
-          graph.setEdge(c1, c2);
-        }),
-      );
+      // ... consider inheritance ordering of contracts in files that matches the patterns
+      if (match(file, patterns)) {
+        linearized.push(contractDef.linearizedBaseContracts);
+        // ... and add edges to the graph for each pair of contracts in the linearized base contracts.
+        contractDef.linearizedBaseContracts.forEach((c1, i, contracts) =>
+          contracts.slice(i + 1).forEach(c2 => {
+            graph.setEdge(c1, c2);
+          }),
+        );
+      }
     }
   }
 
