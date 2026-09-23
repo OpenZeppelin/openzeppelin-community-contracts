@@ -9,8 +9,6 @@ import {ERC7579Multisig} from "../../../account/modules/ERC7579Multisig.sol";
 import {ERC7579MultisigWeighted} from "../../../account/modules/ERC7579MultisigWeighted.sol";
 import {ERC7579MultisigConfirmation} from "../../../account/modules/ERC7579MultisigConfirmation.sol";
 import {ERC7579MultisigStorage} from "../../../account/modules/ERC7579MultisigStorage.sol";
-import {MODULE_TYPE_EXECUTOR, IERC7579Hook} from "@openzeppelin/contracts/interfaces/draft-IERC7579.sol";
-import {Mode} from "@openzeppelin/contracts/account/utils/draft-ERC7579Utils.sol";
 
 abstract contract ERC7579MultisigExecutorMock is EIP712, ERC7579Executor, ERC7579Multisig {
     bytes32 private constant EXECUTE_OPERATION = keccak256(
