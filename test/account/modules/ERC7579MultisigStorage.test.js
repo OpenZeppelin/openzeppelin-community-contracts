@@ -1,18 +1,22 @@
-const { ethers, predeploy } = require('hardhat');
-const { expect } = require('chai');
-const { loadFixture } = require('@nomicfoundation/hardhat-network-helpers');
-const { impersonate } = require('@openzeppelin/contracts/test/helpers/account');
-const { ERC4337Helper } = require('@openzeppelin/contracts/test/helpers/erc4337');
-const { NonNativeSigner, MultiERC7913SigningKey } = require('@openzeppelin/contracts/test/helpers/signers');
-
-const {
+import { network } from 'hardhat';
+import { expect } from 'chai';
+import { ERC4337Helper } from '@openzeppelin/contracts/test/helpers/erc4337';
+import {
   MODULE_TYPE_EXECUTOR,
   CALL_TYPE_CALL,
   EXEC_TYPE_DEFAULT,
   encodeMode,
   encodeSingle,
-} = require('@openzeppelin/contracts/test/helpers/erc7579');
-const { shouldBehaveLikeERC7579Module } = require('./ERC7579Module.behavior');
+} from '@openzeppelin/contracts/test/helpers/erc7579';
+import { NonNativeSigner, MultiERC7913SigningKey } from '@openzeppelin/contracts/test/helpers/signers';
+import { shouldBehaveLikeERC7579Module } from './ERC7579Module.behavior';
+
+const connection = await network.create();
+const {
+  ethers,
+  helpers: { impersonate },
+  networkHelpers: { loadFixture },
+} = connection;
 
 // Prepare signers in advance
 const signerECDSA1 = ethers.Wallet.createRandom();
@@ -26,7 +30,7 @@ async function fixture() {
   const target = await ethers.deployContract('CallReceiverMock');
 
   // ERC-4337 env
-  const helper = new ERC4337Helper();
+  const helper = new ERC4337Helper(connection);
   await helper.wait();
 
   // Prepare signers
@@ -40,7 +44,7 @@ async function fixture() {
   // ERC-7579 account
   const mockAccount = await helper.newAccount('$AccountERC7579');
   const mockFromAccount = await impersonate(mockAccount.address).then(asAccount => mock.connect(asAccount));
-  const mockAccountFromEntrypoint = await impersonate(predeploy.entrypoint.v09.target).then(asEntrypoint =>
+  const mockAccountFromEntrypoint = await impersonate(ethers.predeploy.entrypoint.v09.target).then(asEntrypoint =>
     mockAccount.connect(asEntrypoint),
   );
 
@@ -73,7 +77,7 @@ async function fixture() {
 
 describe('ERC7579MultisigStorage', function () {
   beforeEach(async function () {
-    Object.assign(this, await loadFixture(fixture));
+    Object.assign(this, connection, await loadFixture(fixture));
     await this.mockAccountFromEntrypoint.installModule(this.moduleType, this.mock.target, this.installData);
   });
 

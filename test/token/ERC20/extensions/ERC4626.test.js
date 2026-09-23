@@ -1,6 +1,10 @@
-const { ethers } = require('hardhat');
-const { loadFixture } = require('@nomicfoundation/hardhat-network-helpers');
-const { shouldBehaveLikeERC4626Deposit, shouldBehaveLikeERC4626Redeem } = require('./ERC4626.behavior');
+import { network } from 'hardhat';
+import { shouldBehaveLikeERC4626Deposit, shouldBehaveLikeERC4626Redeem } from './ERC4626.behavior';
+
+const {
+  ethers,
+  networkHelpers: { loadFixture },
+} = await network.create();
 
 const name = 'Vault Shares';
 const symbol = 'vSHR';
@@ -14,6 +18,10 @@ async function fixture() {
 }
 
 describe('ERC4626 behavior is compatible with reference implementation', function () {
+  before(async function () {
+    Object.assign(this, { ethers });
+  });
+
   beforeEach(async function () {
     Object.assign(this, await loadFixture(fixture));
   });

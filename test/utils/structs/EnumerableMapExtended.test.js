@@ -1,11 +1,17 @@
-const { ethers } = require('hardhat');
-const { loadFixture } = require('@nomicfoundation/hardhat-network-helpers');
+import { network } from 'hardhat';
+import { mapValues } from '@openzeppelin/contracts/test/helpers/iterate';
+import * as random from '@openzeppelin/contracts/test/helpers/random';
+import { shouldBehaveLikeMap } from '@openzeppelin/contracts/test/utils/structs/EnumerableMap.behavior';
 
-const { mapValues } = require('@openzeppelin/contracts/test/helpers/iterate');
-const { generators } = require('@openzeppelin/contracts/test/helpers/random');
-const { MAP_TYPES } = require('../../../scripts/generate/templates/Enumerable.opts');
+import { MAP_TYPES } from '../../../scripts/generate/templates/Enumerable.opts';
 
-const { shouldBehaveLikeMap } = require('@openzeppelin/contracts/test/utils/structs/EnumerableMap.behavior');
+const {
+  ethers,
+  networkHelpers: { loadFixture },
+} = await network.create();
+
+// Chai matchers expect hexadecimal data when dealing with bytes
+const randomOf = type => random[type === 'bytes' ? 'hexBytes' : type];
 
 async function fixture() {
   const mock = await ethers.deployContract('$EnumerableMapExtended');
@@ -16,25 +22,27 @@ async function fixture() {
       {
         key,
         value,
-        keys: Array.from({ length: 3 }, generators[key.type]),
-        values: Array.from({ length: 3 }, generators[value.type]),
-        zeroValue: generators[value.type].zero,
+        keys: Array.from({ length: 3 }, randomOf(key.type)),
+        values: Array.from({ length: 3 }, randomOf(value.type)),
+        zeroValue: randomOf(value.type).zero,
         methods: mapValues(
           {
             set: `$set(uint256,${key.type},${value.type})`,
             get: `$get(uint256,${key.type})`,
             tryGet: `$tryGet(uint256,${key.type})`,
             remove: `$remove(uint256,${key.type})`,
+            removeAt: `$removeAt_EnumerableMapExtended_${name}(uint256,uint256)`,
+            contains: `$contains(uint256,${key.type})`,
             clear: `$clear_EnumerableMapExtended_${name}(uint256)`,
             length: `$length_EnumerableMapExtended_${name}(uint256)`,
             at: `$at_EnumerableMapExtended_${name}(uint256,uint256)`,
-            contains: `$contains(uint256,${key.type})`,
             keys: `$keys_EnumerableMapExtended_${name}(uint256)`,
             keysPage: `$keys_EnumerableMapExtended_${name}(uint256,uint256,uint256)`,
           },
           fnSig =>
-            (...args) =>
-              mock.getFunction(fnSig)(0, ...args),
+            Object.assign((...args) => mock.getFunction(fnSig)(0, ...args), {
+              staticCall: (...args) => mock.getFunction(fnSig).staticCall(0, ...args),
+            }),
         ),
         events: {
           setReturn: `return$set_EnumerableMapExtended_${name}_${key.type}_${value.type}`,

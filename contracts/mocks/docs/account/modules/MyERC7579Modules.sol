@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
-import {EIP712} from "@openzeppelin/contracts/utils/cryptography/EIP712.sol";
 import {IERC7579Module, IERC7579Hook} from "@openzeppelin/contracts/interfaces/draft-IERC7579.sol";
 import {ERC7579Executor} from "../../../../account/modules/ERC7579Executor.sol";
 import {ERC7579Validator} from "../../../../account/modules/ERC7579Validator.sol";
