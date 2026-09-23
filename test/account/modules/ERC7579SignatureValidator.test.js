@@ -70,14 +70,32 @@ describe('ERC7579Signature', function () {
     );
   });
 
-  it('behaves as a noop when the validator is already installed for an account', async function () {
-    // First installation should succeed
+  it('installs signer correctly on first call', async function () {
     const signerData = ethers.solidityPacked(['address'], [signerECDSA.address]);
     await expect(this.mockFromAccount.onInstall(signerData)).to.not.be.reverted;
+    await expect(this.mock.signer(this.mockAccount.address)).to.eventually.equal(signerData);
+  });
 
-    // Second installation should behave as a no-op
-    await this.mockFromAccount.onInstall(ethers.solidityPacked(['address'], [ethers.Wallet.createRandom().address])); // Not revert
-    await expect(this.mock.signer(this.mockAccount.address)).to.eventually.equal(signerData); // No change in signers
+  it('does not revert when onInstall is called again with the same signer', async function () {
+    const signerData = ethers.solidityPacked(['address'], [signerECDSA.address]);
+    await this.mockFromAccount.onInstall(signerData);
+
+    // Same signer — should NOT revert
+    await expect(this.mockFromAccount.onInstall(signerData)).to.not.be.reverted;
+
+    // Signer unchanged
+    await expect(this.mock.signer(this.mockAccount.address)).to.eventually.equal(signerData);
+  });
+
+  it('reverts when onInstall is called with a different signer already set', async function () {
+    const signerData = ethers.solidityPacked(['address'], [signerECDSA.address]);
+    await this.mockFromAccount.onInstall(signerData);
+
+    const differentSigner = ethers.solidityPacked(['address'], [ethers.Wallet.createRandom().address]);
+    await expect(this.mockFromAccount.onInstall(differentSigner)).to.be.revertedWithCustomError(
+      this.mock,
+      'ERC7579SignatureAlreadyInstalled',
+    );
   });
 
   it('emits event on ERC7579SignatureSignerSet on both installation and uninstallation', async function () {

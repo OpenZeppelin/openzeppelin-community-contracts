@@ -62,8 +62,9 @@ abstract contract ERC7579MultisigWeighted is ERC7579Multisig {
      */
     function onInstall(bytes calldata initData) public virtual override {
         bool installed = getSignerCount(msg.sender) > 0;
+        if (installed) return;
         super.onInstall(initData);
-        if (initData.length > 96 && !installed) {
+        if (initData.length > 96) {
             (bytes[] memory signers, , uint64[] memory weights) = abi.decode(initData, (bytes[], uint64, uint64[]));
             _setSignerWeights(msg.sender, signers, weights);
         }
