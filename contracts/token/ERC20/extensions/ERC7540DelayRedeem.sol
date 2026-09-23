@@ -23,7 +23,7 @@ import {ERC7540} from "./ERC7540.sol";
  * https://github.com/MagmaStaking/contracts-public/blob/live/src/MagmaV2.sol[MagmaV2] (admin-configurable delay),
  * https://github.com/tangle-network/tnt-core/blob/main/src/staking/LiquidDelegationVault.sol[Tangle] (protocol-dictated).
  *
- * Requests are tracked using {Checkpoints-Trace208}, storing cumulative redeem amounts keyed by
+ * Requests are tracked using `Checkpoints.Trace208`, storing cumulative redeem amounts keyed by
  * their maturity timepoint. The `requestId` returned by {requestRedeem} equals the absolute
  * timestamp at which the request becomes claimable (`clock() + redeemDelay(controller)`).
  *

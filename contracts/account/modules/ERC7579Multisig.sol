@@ -227,7 +227,7 @@ abstract contract ERC7579Multisig is ERC7579Validator {
     }
 
     /**
-     * @dev Validates the current threshold is reachable with the number of {signers}.
+     * @dev Validates the current threshold is reachable with the number of signers.
      *
      * Requirements:
      *
