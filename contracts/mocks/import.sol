@@ -2,6 +2,8 @@
 
 pragma solidity ^0.8.20;
 
+// This file forces the compilation of contracts that are only used (as artifacts) in tests.
+// forge-lint: disable-start(unused-import)
 import {AccessManager} from "@openzeppelin/contracts/access/manager/AccessManager.sol";
 import {ERC721} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import {ERC721Enumerable} from "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
@@ -13,3 +15,4 @@ import {
 } from "@openzeppelin/contracts/mocks/account/AccountMock.sol";
 import {ERC1271WalletMock} from "@openzeppelin/contracts/mocks/ERC1271WalletMock.sol";
 import {Create2} from "@openzeppelin/contracts/utils/Create2.sol";
+// forge-lint: disable-end(unused-import)

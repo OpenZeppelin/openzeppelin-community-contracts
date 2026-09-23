@@ -3,7 +3,6 @@
 
 pragma solidity ^0.8.24;
 
-import {Arrays} from "@openzeppelin/contracts/utils/Arrays.sol";
 import {Hashes} from "@openzeppelin/contracts/utils/cryptography/Hashes.sol";
 import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 
