@@ -48,7 +48,7 @@ contract ERC7913ZKEmailVerifier is IERC7913SignatureVerifier {
      *
      * See {_decodeKey} for the key encoding format.
      *
-     * The signature is an ABI-encoded {EmailProof} struct containing
+     * The signature is an ABI-encoded `EmailProof` struct containing
      * the proof details.
      *
      * Signature encoding:

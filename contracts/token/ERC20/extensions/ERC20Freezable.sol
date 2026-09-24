@@ -28,7 +28,7 @@ abstract contract ERC20Freezable is ERC20 {
         return _frozenBalances[account];
     }
 
-    /// @dev Returns the available (unfrozen) balance of an account. Up to {balanceOf}.
+    /// @dev Returns the available (unfrozen) balance of an account. Up to {IERC20-balanceOf}.
     function available(address account) public view virtual returns (uint256) {
         (bool success, uint256 unfrozen) = Math.trySub(balanceOf(account), _frozenBalances[account]);
         return success ? unfrozen : 0;

@@ -56,7 +56,7 @@ library ZKEmailUtils {
         ANY
     }
 
-    /// @dev Variant of {isValidZKEmail} that validates the `["signHash", "{uint}"]` command template.
+    /// @dev Variant of {isValidZKEmail} that validates the `["signHash", "\{uint}"]` command template.
     function isValidZKEmail(
         EmailProof memory emailProof,
         IDKIMRegistry dkimregistry,
@@ -95,7 +95,7 @@ library ZKEmailUtils {
     /**
      * @dev Variant of {isValidZKEmail} that validates a template with a specific string {Case}.
      *
-     * Useful for templates with Ethereum address matchers (i.e. `{ethAddr}`), which are case-sensitive (e.g., `["someCommand", "{address}"]`).
+     * Useful for templates with Ethereum address matchers (i.e. `\{ethAddr}`), which are case-sensitive (e.g., `["someCommand", "\{address}"]`).
      */
     function isValidZKEmail(
         EmailProof memory emailProof,

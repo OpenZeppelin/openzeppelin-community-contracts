@@ -24,11 +24,6 @@ Smart contract developers only need to worry about implementing the xref:api:cro
 
 To start sending cross-chain messages, developers can get started with a duplex gateway powered by Axelar Network. This will allow a contract to send or receive cross-chain messages leveraging automated execution by Axelar relayers on the destination chain.
 
-[source,solidity]
-----
-include::api:example$crosschain/MyCustomAxelarGatewayDuplex.sol[]
-----
-
 For more details of how the duplex gateway works, see xref:crosschain.adoc#axelar-network[how to send and receive messages with the  Axelar Network] below
 
 NOTE: Developers can register supported chains and destination gateways using the xref:api:crosschain.adoc#AxelarGatewayBase-registerChainEquivalence-string-string-[`registerChainEquivalence`] and xref:api:crosschain.adoc#AxelarGatewayBase-registerRemoteGateway-string-string-[`registerRemoteGateway`] functions
@@ -54,11 +49,6 @@ Every cross-chain message protocol already offers a way to receive the message e
 
 To receive a message on a custom smart contract, OpenZeppelin Community Contracts provide an xref:api:crosschain.adoc#ERC7786Receiver[ERC7786Receiver] implementation for developers to inherit. This way your contracts can receive a cross-chain message relayed through a known destination gateway gateway.
 
-[source,solidity]
-----
-include::api:example$crosschain/MyERC7786ReceiverContract.sol[]
-----
-
 The standard receiving interface abstracts away the underlying protocol. This way, it is possible for a contract to send a message through an ERC-7786 compliant gateway (or through an adapter) and get it received on the destination chain without worrying about the protocol implementation details.
 
 === Axelar Network
@@ -72,17 +62,7 @@ The implementation takes a local gateway address that MUST correspond to https:/
 
 The xref:api:crosschain.adoc#AxelarGatewaySource[AxelarGatewaySource] implementation can be used out of the box
 
-[source,solidity]
-----
-include::api:example$crosschain/MyCustomAxelarGatewaySource.sol[]
-----
-
 For a destination gateway, the library provides an adapter of the `AxelarExecutable` interface to receive messages and relay them to an xref:api:crosschain.adoc#IERC7786Receiver[IERC7786Receiver].
-
-[source,solidity]
-----
-include::api:example$crosschain/MyCustomAxelarGatewayDestination.sol[]
-----
 
 === Open Bridge
 

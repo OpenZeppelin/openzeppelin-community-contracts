@@ -11,19 +11,31 @@ These interfaces are available as `.sol` files. These are useful to interact wit
 - {IERC7575} (`IERC7575`, `IERC7575Share`): Multi-asset ERC-4626 vaults and share-to-vault lookup interfaces.
 - {IERC7786Attributes}: Standard attributes for ERC-7786 cross-chain messaging.
 - {IERC7913SignatureVerifier}
-- {IERC7943}: ERC-20 based interface for RWA tokens with account restrictions, asset freezing, and forced transfers.
-- {IERC7969} (`IDKIMRegistry`): Onchain DKIM public key registry interface for email-based authentication.
+- {IERC7943Fungible}, {IERC7943MultiToken}, {IERC7943NonFungible}: ERC-7943 interfaces for RWA tokens with account restrictions, asset freezing, and forced transfers.
+- {IDKIMRegistry}: Onchain DKIM public key registry interface (ERC-7969) for email-based authentication.
 
 == Detailed ABI
 
 {{IERC7540}}
 
+{{IERC7540Operator}}
+
+{{IERC7540Deposit}}
+
+{{IERC7540Redeem}}
+
 {{IERC7575}}
+
+{{IERC7575Share}}
 
 {{IERC7786Attributes}}
 
 {{IERC7913SignatureVerifier}}
 
-{{IERC7943}}
+{{IERC7943Fungible}}
 
-{{IERC7969}}
+{{IERC7943MultiToken}}
+
+{{IERC7943NonFungible}}
+
+{{IDKIMRegistry}}

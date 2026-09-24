@@ -49,7 +49,7 @@ abstract contract ERC7579MultisigStorage is ERC7579Multisig {
      * @dev See {ERC7579Multisig-_validateSignatures}.
      *
      * If a signature is empty, it indicates a presignature and the validation will check the storage mapping
-     * instead of cryptographic verification. See {sign} for more details.
+     * instead of cryptographic verification. See {ERC7579MultisigStorage-presign} for more details.
      */
     function _validateSignatures(
         address account,
