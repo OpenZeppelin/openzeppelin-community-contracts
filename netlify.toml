@@ -1,9 +1,12 @@
 [build]
-command = "npm run docs"
+# Netlify only initializes top-level submodules, but the compilation reaches a nested one:
+# lib/email-tx-builder/.../Verifier.sol imports @openzeppelin/contracts-upgradeable, whose own
+# remappings.txt resolves @openzeppelin/contracts to its nested lib/openzeppelin-contracts.
+# Mirror the `submodules: recursive` checkout that .github/workflows/checks.yml uses.
+command = "git submodule update --init --recursive && npm run docs"
 publish = "build/site"
 
-# Hardhat 3 requires Node >= 22.13. Netlify's per-site default is older than that, which aborts
-# `prepare-docs` before it can run docgen. Keep this in sync with `NODE_DEFAULT_VERSION` in
+# Hardhat 3 requires Node >= 22.13. Keep in sync with NODE_DEFAULT_VERSION in
 # .github/actions/setup/action.yml.
 [build.environment]
 NODE_VERSION = "24"
