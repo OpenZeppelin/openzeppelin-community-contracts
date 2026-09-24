@@ -112,5 +112,5 @@ export default defineConfig({
     include: ['contracts/**/*.sol'],
     exclude: ['**/*WithInit.sol'],
   },
-  // docgen: await import('./docs/config.mjs').then(m => m.default),
+  docgen: await import('./docs/config.mjs').then(m => m.default),
 });

@@ -41,13 +41,7 @@ const menuItems = files.reduce(
     return acc;
   },
   {
-    items: {
-      token: {
-        name: 'tokens',
-        dir: '',
-        items: {},
-      },
-    },
+    items: {},
   },
 );
 
