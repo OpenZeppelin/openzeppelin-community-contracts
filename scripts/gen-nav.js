@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 
-const path = require('path');
-const glob = require('glob');
-const startCase = require('lodash.startcase');
+import path from 'node:path';
+import { glob } from 'glob';
+import startCase from 'lodash.startcase';
 
 const baseDir = process.argv[2];
 
@@ -11,7 +11,12 @@ const files = glob.sync(baseDir + '/**/*.adoc').map(f => path.relative(baseDir, 
 console.log('.API');
 
 function getPageTitle(directory) {
-  return startCase(directory);
+  switch (directory) {
+    case 'metatx':
+      return 'Meta Transactions';
+    default:
+      return startCase(directory);
+  }
 }
 
 const menuItems = files.reduce(

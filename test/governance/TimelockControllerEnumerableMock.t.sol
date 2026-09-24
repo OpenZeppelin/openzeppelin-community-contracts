@@ -2,9 +2,7 @@
 
 pragma solidity ^0.8.20;
 
-import {
-    TimelockControllerEnumerable
-} from "@openzeppelin/community-contracts/governance/TimelockControllerEnumerable.sol";
+import {TimelockControllerEnumerable} from "@openzeppelin/community-contracts/governance/TimelockControllerEnumerable.sol";
 import {TimelockController} from "@openzeppelin/contracts/governance/TimelockController.sol";
 
 contract TimelockControllerEnumerableMock is TimelockControllerEnumerable {

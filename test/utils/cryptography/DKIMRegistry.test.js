@@ -1,6 +1,10 @@
-const { expect } = require('chai');
-const { ethers } = require('hardhat');
-const { loadFixture } = require('@nomicfoundation/hardhat-network-helpers');
+import { network } from 'hardhat';
+import { expect } from 'chai';
+
+const {
+  ethers,
+  networkHelpers: { loadFixture },
+} = await network.create();
 
 const DOMAIN_EXAMPLE_COM = ethers.keccak256(ethers.toUtf8Bytes('example.com'));
 const DOMAIN_EXAMPLE_ORG = ethers.keccak256(ethers.toUtf8Bytes('example.org'));
