@@ -1,3 +1,7 @@
+## 29-09-2026
+
+- `ERC7579DelayedExecutor`: Fix the parameter order of the `_execute` override to match `ERC7579Executor`, so an operation scheduled with a `salt` different from its `mode` can be executed once ready.
+
 ## 10-09-2026
 
 - `ERC7786OpenBridge`: Read only the first word of the recipient's return buffer in `receiveMessage`, so a recipient cannot pad its return data to exhaust the caller's gas on the copy.

@@ -93,6 +93,23 @@ describe('ERC7579DelayedExecutor', function () {
     );
   });
 
+  it('executes an operation scheduled with a non-zero salt', async function () {
+    const nonZeroSalt = ethers.id('salt');
+
+    await this.mockAccountFromEntrypoint.installModule(this.moduleType, this.mock.target, this.installData);
+    await this.mockFromAccount.schedule(this.mockAccount.address, nonZeroSalt, this.mode, this.calldata);
+    await time.increase(this.delay);
+    await expect(this.mock.state(this.mockAccount.address, nonZeroSalt, this.mode, this.calldata)).to.eventually.eq(
+      OperationState.Ready,
+    );
+    await expect(this.mock.execute(this.mockAccount.address, nonZeroSalt, this.mode, this.calldata))
+      .to.emit(this.target, 'MockFunctionCalledWithArgs')
+      .withArgs(...this.args);
+    await expect(this.mock.state(this.mockAccount.address, nonZeroSalt, this.mode, this.calldata)).to.eventually.eq(
+      OperationState.Executed,
+    );
+  });
+
   it('returns the correct state (expiration)', async function () {
     await this.mockAccountFromEntrypoint.installModule(this.moduleType, this.mock.target, this.installData);
     await expect(this.mock.state(this.mockAccount.address, salt, this.mode, this.calldata)).to.eventually.eq(
