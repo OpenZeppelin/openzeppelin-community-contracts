@@ -377,8 +377,8 @@ abstract contract ERC7579DelayedExecutor is ERC7579Executor {
      */
     function _execute(
         address account,
-        bytes32 salt,
         bytes32 mode,
+        bytes32 salt,
         bytes calldata executionCalldata
     ) internal virtual override returns (bytes[] memory returnData) {
         bytes32 id = hashOperation(account, salt, mode, executionCalldata);
@@ -386,7 +386,7 @@ abstract contract ERC7579DelayedExecutor is ERC7579Executor {
 
         _schedules[id].executed = true;
 
-        return super._execute(account, salt, mode, executionCalldata);
+        return super._execute(account, mode, salt, executionCalldata);
     }
 
     /**
