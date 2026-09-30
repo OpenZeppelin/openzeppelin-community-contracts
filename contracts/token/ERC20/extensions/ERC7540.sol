@@ -630,10 +630,10 @@ abstract contract ERC7540 is ERC165, ERC20, IERC4626, IERC7540, IERC7575Share {
      * Strategy extensions (e.g. {ERC7540AdminDeposit}) should override this to record per-controller
      * pending state before calling `super._requestDeposit(...)`.
      *
-     * NOTE: Pending accounting is updated before {_transferIn} to follow Checks-Effects-Interactions.
-     * Assets with transfer hooks (e.g. ERC-777) may observe {totalAssets} temporarily understated
-     * during the transfer, since `_totalPendingDepositAssets` is already incremented while the
-     * token balance has not yet increased.
+     * NOTE: {totalPendingDepositAssets} is incremented after {_transferIn} so that {totalAssets} stays
+     * consistent if the asset has a pre-transfer hook (e.g. ERC-777 `tokensToSend`). Incrementing it before
+     * the transfer would let such a hook observe the new liability without the matching balance, and claim
+     * against a depressed {totalAssets} at an inflated rate.
      *
      * Requirements:
      *
@@ -647,10 +647,14 @@ abstract contract ERC7540 is ERC165, ERC20, IERC4626, IERC7540, IERC7575Share {
     ) internal virtual returns (uint256) {
         require(_isDepositAsync(), ERC7540SyncDeposit());
 
-        _totalPendingDepositAssets += assets;
-
+        // If asset() is ERC-777, `transferFrom` can trigger a reentrancy BEFORE the transfer happens through the
+        // `tokensToSend` hook. Pending accounting must therefore be updated after the transfer, so that any
+        // reentrancy observes neither the assets nor the corresponding liability, which is a valid state.
+        //
         // Must revert with ERC20InsufficientBalance or equivalent error if there's not enough balance.
+        // slither-disable-next-line reentrancy-no-eth
         _transferIn(owner, assets);
+        _totalPendingDepositAssets += assets;
 
         emit DepositRequest(controller, owner, requestId, _msgSender(), assets);
         return requestId;
