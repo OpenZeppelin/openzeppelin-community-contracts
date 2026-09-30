@@ -21,7 +21,9 @@ contract AccessManagerLight is IAuthority {
 
     uint8 public constant ADMIN_ROLE = 0x00;
     uint8 public constant PUBLIC_ROLE = 0xFF;
+    /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
     Masks.Mask public immutable ADMIN_MASK = ADMIN_ROLE.toMask();
+    /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
     Masks.Mask public immutable PUBLIC_MASK = PUBLIC_ROLE.toMask();
 
     mapping(address => Masks.Mask) private _groups;
