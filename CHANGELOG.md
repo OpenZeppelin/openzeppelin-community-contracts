@@ -1,6 +1,10 @@
-## 02-09-2026
+## 30-09-2026
 
 - `ERC7540`: `_setOperator` now reverts with `ERC7540InvalidSelfOperator` when the controller is set as its own operator. A controller always has unrestricted access to its own tokens and requests, and that access cannot be restricted.
+
+## 10-09-2026
+
+- `ERC7786OpenBridge`: Read only the first word of the recipient's return buffer in `receiveMessage`, so a recipient cannot pad its return data to exhaust the caller's gas on the copy.
 
 ## 04-08-2026
 

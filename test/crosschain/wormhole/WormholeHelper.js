@@ -8,8 +8,8 @@ async function deploy(owner, wormholeChainId = 23600) {
   const chain = await getLocalChain();
 
   const wormhole = await ethers.deployContract('WormholeRelayerMock', [wormholeChainId]);
-  const gatewayA = await ethers.deployContract('WormholeGatewayAdapter', [wormhole, wormholeChainId, owner]);
-  const gatewayB = await ethers.deployContract('WormholeGatewayAdapter', [wormhole, wormholeChainId, owner]);
+  const gatewayA = await ethers.deployContract('WormholeGatewayAdapter', [wormhole, owner]);
+  const gatewayB = await ethers.deployContract('WormholeGatewayAdapter', [wormhole, owner]);
 
   await gatewayA.connect(owner).registerChainEquivalence(ethers.Typed.bytes(chain.erc7930), wormholeChainId);
   await gatewayB.connect(owner).registerChainEquivalence(ethers.Typed.bytes(chain.erc7930), wormholeChainId);
