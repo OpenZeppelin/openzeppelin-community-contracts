@@ -125,7 +125,7 @@ abstract contract TimelockControllerEnumerable is TimelockController {
         }
         operations_ = new Operation[](end - start);
         for (uint256 i = start; i < end; i++) {
-            operations_[i] = _operationsMap[_operationsIdSet.at(i)];
+            operations_[i - start] = _operationsMap[_operationsIdSet.at(i)];
         }
         return operations_;
     }
@@ -176,7 +176,7 @@ abstract contract TimelockControllerEnumerable is TimelockController {
         }
         operationsBatch_ = new OperationBatch[](end - start);
         for (uint256 i = start; i < end; i++) {
-            operationsBatch_[i] = _operationsBatchMap[_operationsBatchIdSet.at(i)];
+            operationsBatch_[i - start] = _operationsBatchMap[_operationsBatchIdSet.at(i)];
         }
         return operationsBatch_;
     }
