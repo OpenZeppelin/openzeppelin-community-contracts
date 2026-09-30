@@ -98,4 +98,78 @@ contract ERC7540EpochRedeemFuzzTest is Test {
         // Bob's claim slot on epoch1 stays reachable.
         assertEq(vault.claimableRedeemRequest(epoch1, BOB), tA1 > 0 ? rB1 : 0);
     }
+
+    // A withdraw that exhausts a controller's asset entitlement in an epoch dequeues it and must
+    // consume the entire share request, leaving no residue behind the popped entry.
+    function testFuzz_WithdrawExhaustsRequest(uint128 rA, uint128 rB, uint128 fulfillA) public {
+        rA = uint128(bound(rA, 1, 1e30));
+        rB = uint128(bound(rB, 1, 1e30));
+        fulfillA = uint128(bound(fulfillA, 1, 1e30));
+
+        uint256 epoch = _requestAndFulfill(rA, rB, fulfillA);
+
+        uint256 aliceMax = vault.maxWithdraw(ALICE);
+        vm.assume(aliceMax > 0);
+        vm.prank(ALICE);
+        vault.withdraw(aliceMax, ALICE, ALICE);
+
+        assertEq(vault.redeemEpochs(ALICE, 0, type(uint64).max).length, 0);
+        assertEq(vault.claimableRedeemRequest(epoch, ALICE), 0);
+        assertEq(vault.maxRedeem(ALICE), 0);
+
+        _claimAllAndCheckDrained(BOB, epoch);
+    }
+
+    // A partial withdraw must burn at least the pro-rata shares for the assets it receives (rounding
+    // in favor of the vault), and the epoch must still drain completely afterwards.
+    function testFuzz_PartialWithdrawRoundsUp(uint128 rA, uint128 rB, uint128 fulfillA, uint256 assets) public {
+        rA = uint128(bound(rA, 1, 1e30));
+        rB = uint128(bound(rB, 1, 1e30));
+        fulfillA = uint128(bound(fulfillA, 1, 1e30));
+
+        uint256 epoch = _requestAndFulfill(rA, rB, fulfillA);
+
+        uint256 aliceMax = vault.maxWithdraw(ALICE);
+        vm.assume(aliceMax > 1);
+        assets = bound(assets, 1, aliceMax - 1);
+
+        uint256 tS = vault.totalRedeemShares(epoch);
+        uint256 tA = vault.totalRedeemAssets(epoch);
+
+        vm.prank(ALICE);
+        uint256 shares = vault.withdraw(assets, ALICE, ALICE);
+        assertGe(shares * tA, assets * tS, "partial withdraw rounded in favor of caller");
+
+        _claimAllAndCheckDrained(ALICE, epoch);
+        _claimAllAndCheckDrained(BOB, epoch);
+    }
+
+    function _requestAndFulfill(uint256 rA, uint256 rB, uint256 fulfillA) internal returns (uint256 epoch) {
+        vault.mintShares(ALICE, rA);
+        vault.mintShares(BOB, rB);
+        token.mint(address(vault), fulfillA);
+
+        vm.prank(ALICE);
+        vault.requestRedeem(rA, ALICE, ALICE);
+        vm.prank(BOB);
+        vault.requestRedeem(rB, BOB, BOB);
+
+        epoch = vault.currentRedeemEpoch();
+        vm.warp(block.timestamp + WEEK);
+        vault.fulfillRedeem(epoch, fulfillA);
+    }
+
+    function _claimAllAndCheckDrained(address controller, uint256 epoch) internal {
+        uint256 max = vault.maxRedeem(controller);
+        if (max > 0) {
+            vm.prank(controller);
+            vault.redeem(max, controller, controller);
+        }
+        assertEq(vault.redeemEpochs(controller, 0, type(uint64).max).length, 0);
+        if (controller == BOB) {
+            assertEq(vault.totalRedeemShares(epoch), 0, "epoch shares not drained");
+            assertEq(vault.totalRedeemAssets(epoch), 0, "epoch assets not drained");
+            assertEq(vault.totalPendingRedeemShares(), 0, "pending shares not drained");
+        }
+    }
 }

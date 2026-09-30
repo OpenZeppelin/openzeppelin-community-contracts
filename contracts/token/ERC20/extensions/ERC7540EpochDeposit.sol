@@ -336,11 +336,9 @@ abstract contract ERC7540EpochDeposit is ERC7540 {
     /**
      * @dev Same as {_consumeClaimableDeposit} but iterates by shares instead of assets.
      *
-     * NOTE: When the epoch's locked rate skews the `assets : shares` ratio (either direction),
-     * a small `shares` input can round `batchAssets` to zero; the epoch's share pool moves
-     * without consuming the caller's asset entitlement. At realistic ERC-20 decimals the per-call
-     * drift is sub-cent. Deployers with non-standard decimals or a zero-drift requirement SHOULD
-     * override to revert when `batchShares > 0 && batchAssets == 0`.
+     * When the claim exhausts the controller's share entitlement in an epoch, the epoch is dequeued
+     * and the controller's entire asset request is consumed, so no residue is left behind. Partial
+     * claims round the consumed assets up, in favor of the vault.
      */
     function _consumeClaimableMint(uint256 shares, address controller) internal virtual override returns (uint256) {
         uint256 assets = 0;
@@ -354,18 +352,20 @@ abstract contract ERC7540EpochDeposit is ERC7540 {
             // A ceil-rounded `requested` could exhaust `totalShares` to 0 while `totalAssets`
             // remains > 0, dirtying the Pending sentinel and stranding later controllers.
             uint256 requested = _convertToDepositShares(epochId, requestedAssets, Math.Rounding.Floor);
-            if (requested <= shares) _memberOf[controller].popFront();
 
-            uint256 batchShares = requested.min(shares);
-            uint256 batchAssets = _convertToDepositAssets(epochId, batchShares, Math.Rounding.Floor).min(
-                requestedAssets
-            );
+            // shares < floor(rA*S/A) implies ceil(shares*A/S) <= rA
+            (uint256 batchShares, uint256 batchAssets) = shares < requested
+                ? (shares, _convertToDepositAssets(epochId, shares, Math.Rounding.Ceil))
+                : (requested, requestedAssets);
+
+            // Dequeue once the request is fully consumed (including when a partial claim rounds up to it)
+            if (batchAssets == requestedAssets) _memberOf[controller].popFront();
 
             EpochDepositMetadata storage details = _epochs[epochId];
-            details.requests[controller] -= batchAssets; // batchAssets <= requestedAssets via .min
+            details.requests[controller] -= batchAssets; // batchAssets <= requestedAssets
             details.totalAssets -= batchAssets; // batchAssets <= requestedAssets <= totalAssets (invariant)
             details.totalShares -= batchShares; // batchShares <= floor(rA*S/A) <= totalShares (matches _asyncMaxMint)
-            shares -= batchShares; // batchShares <= shares (via .min)
+            shares -= batchShares; // batchShares <= shares (batchShares = shares, or requested <= shares)
             assets += batchAssets;
         }
 
