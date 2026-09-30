@@ -1,3 +1,7 @@
+## 01-10-2026
+
+- `ERC7540EpochDeposit`, `ERC7540EpochRedeem`: Add epoch-based batch fulfillment strategies for ERC-7540 vaults. Requests submitted in the same epoch share a single queue slot per controller and are settled together at one locked exchange rate when the admin closes the epoch via `_fulfillDeposit` / `_fulfillRedeem`.
+
 ## 30-09-2026
 
 - `ERC7540`: `_setOperator` now reverts with `ERC7540InvalidSelfOperator` when the controller is set as its own operator. A controller always has unrestricted access to its own tokens and requests, and that access cannot be restricted.
