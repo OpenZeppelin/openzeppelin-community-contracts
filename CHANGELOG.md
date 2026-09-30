@@ -4,6 +4,7 @@
 - `ERC7540`: Add the `_totalClaimableDepositAssets`, `_totalClaimableDepositShares`, `_totalClaimableRedeemAssets` and `_totalClaimableRedeemShares` hooks. `totalAssets` and `totalSupply` now account requests fulfilled at a locked rate as settled, even before they are claimed, so that the exchange rate seen by a synchronous side is not skewed by in-flight requests. Custom strategies must implement these hooks (returning 0 if the rate is computed at claim time).
 - `ERC7540AdminDeposit`, `ERC7540AdminRedeem`: Report fulfilled but unclaimed requests through the `_totalClaimable*` hooks. `totalAssets` and `totalSupply` now change at fulfillment instead of at claim time.
 - `ERC7540`: `_requestDeposit` now increments `totalPendingDepositAssets` after the asset transfer, so that a pre-transfer hook (e.g. ERC-777 `tokensToSend`) cannot claim against a transiently understated `totalAssets`.
+- `ERC7540`: `totalSupply` is no longer overridden and always equals the sum of ERC-20 balances. The share count used by conversions, which includes pending redeem shares and unminted claimable deposit shares, is now computed by the new internal `_totalOutstandingShares` function. Integrators computing a share price from `totalAssets() / totalSupply()` should use `convertToAssets` instead.
 
 ## 30-09-2026
 
