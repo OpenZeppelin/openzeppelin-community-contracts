@@ -13,9 +13,8 @@ import {MODULE_TYPE_EXECUTOR, IERC7579Hook} from "@openzeppelin/contracts/interf
 import {Mode} from "@openzeppelin/contracts/account/utils/draft-ERC7579Utils.sol";
 
 abstract contract ERC7579MultisigExecutorMock is EIP712, ERC7579Executor, ERC7579Multisig {
-    bytes32 private constant EXECUTE_OPERATION = keccak256(
-        "ExecuteOperation(address account,bytes32 mode,bytes executionCalldata,bytes32 salt)"
-    );
+    bytes32 private constant EXECUTE_OPERATION =
+        keccak256("ExecuteOperation(address account,bytes32 mode,bytes executionCalldata,bytes32 salt)");
 
     function isModuleType(uint256 moduleTypeId) public pure override(ERC7579Executor, ERC7579Validator) returns (bool) {
         return ERC7579Executor.isModuleType(moduleTypeId) || ERC7579Executor.isModuleType(moduleTypeId);
@@ -46,9 +45,8 @@ abstract contract ERC7579MultisigExecutorMock is EIP712, ERC7579Executor, ERC757
 }
 
 abstract contract ERC7579MultisigWeightedExecutorMock is EIP712, ERC7579Executor, ERC7579MultisigWeighted {
-    bytes32 private constant EXECUTE_OPERATION = keccak256(
-        "ExecuteOperation(address account,bytes32 mode,bytes executionCalldata,bytes32 salt)"
-    );
+    bytes32 private constant EXECUTE_OPERATION =
+        keccak256("ExecuteOperation(address account,bytes32 mode,bytes executionCalldata,bytes32 salt)");
 
     function isModuleType(uint256 moduleTypeId) public pure override(ERC7579Executor, ERC7579Validator) returns (bool) {
         return ERC7579Executor.isModuleType(moduleTypeId) || ERC7579Executor.isModuleType(moduleTypeId);
@@ -79,9 +77,8 @@ abstract contract ERC7579MultisigWeightedExecutorMock is EIP712, ERC7579Executor
 }
 
 abstract contract ERC7579MultisigConfirmationExecutorMock is ERC7579Executor, ERC7579MultisigConfirmation {
-    bytes32 private constant EXECUTE_OPERATION = keccak256(
-        "ExecuteOperation(address account,bytes32 mode,bytes executionCalldata,bytes32 salt)"
-    );
+    bytes32 private constant EXECUTE_OPERATION =
+        keccak256("ExecuteOperation(address account,bytes32 mode,bytes executionCalldata,bytes32 salt)");
 
     function isModuleType(uint256 moduleTypeId) public pure override(ERC7579Executor, ERC7579Validator) returns (bool) {
         return ERC7579Executor.isModuleType(moduleTypeId) || ERC7579Executor.isModuleType(moduleTypeId);
@@ -112,9 +109,8 @@ abstract contract ERC7579MultisigConfirmationExecutorMock is ERC7579Executor, ER
 }
 
 abstract contract ERC7579MultisigStorageExecutorMock is EIP712, ERC7579Executor, ERC7579MultisigStorage {
-    bytes32 private constant EXECUTE_OPERATION = keccak256(
-        "ExecuteOperation(address account,bytes32 mode,bytes executionCalldata,bytes32 salt)"
-    );
+    bytes32 private constant EXECUTE_OPERATION =
+        keccak256("ExecuteOperation(address account,bytes32 mode,bytes executionCalldata,bytes32 salt)");
 
     function isModuleType(uint256 moduleTypeId) public pure override(ERC7579Executor, ERC7579Validator) returns (bool) {
         return ERC7579Executor.isModuleType(moduleTypeId) || ERC7579Executor.isModuleType(moduleTypeId);

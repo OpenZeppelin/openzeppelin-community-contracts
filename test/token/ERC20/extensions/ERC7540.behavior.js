@@ -255,11 +255,11 @@ function shouldBehaveLikeERC7540Deposit({
 
       describe('claim', function () {
         beforeEach(async function () {
-          ((this.requestId = await this.mock
+          (this.requestId = await this.mock
             .connect(this.owner)
             .requestDeposit(assets, this.controller, this.owner)
             .then(this.getRequestId)),
-            await this.fulfillDeposit(this.requestId, assets, shares, this.controller));
+            await this.fulfillDeposit(this.requestId, assets, shares, this.controller);
         });
 
         describe('via deposit()', function () {
