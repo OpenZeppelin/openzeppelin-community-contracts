@@ -76,6 +76,50 @@ describe('ERC7540Delay', function () {
   shouldBehaveLikeERC7540Redeem({ supportCustomFulfill: false, settleOnFulfill: false });
   shouldBehaveLikeERC7575();
 
+  describe('reentrancy', function () {
+    it('a pre-transfer hook in requestDeposit cannot claim at a depressed rate', async function () {
+      const [seeder, attacker] = await ethers.getSigners();
+      const token = await ethers.deployContract('$ERC20Reentrant');
+      const mock = await ethers.deployContract('$ERC7540DelayMock', [name, symbol, token]);
+
+      await token.$_mint(seeder, 1000n);
+      await token.$_mint(attacker, 1000n);
+      await token.connect(seeder).approve(mock, ethers.MaxUint256);
+      await token.connect(attacker).approve(mock, ethers.MaxUint256);
+
+      // 1,000 active assets backing 1,000 shares
+      await mock.connect(seeder).requestDeposit(1000n, seeder, seeder);
+      // attacker's 100-asset request, matured alongside the seeder's
+      await mock.connect(attacker).requestDeposit(100n, attacker, attacker);
+      await time.increaseBy.timestamp(delay);
+      await mock.connect(seeder).getFunction('deposit(uint256,address,address)')(1000n, seeder, seeder);
+
+      await expect(mock.totalAssets()).to.eventually.equal(1000n);
+      await expect(mock.totalSupply()).to.eventually.equal(1000n);
+      await expect(mock.maxMint(attacker)).to.eventually.equal(100n);
+
+      // the token (reentry caller) acts as the attacker's operator
+      await mock.connect(attacker).setOperator(token, true);
+      await token.scheduleReenter(
+        0x01, // Before
+        mock,
+        mock.interface.encodeFunctionData('deposit(uint256,address,address)', [
+          100n,
+          attacker.address,
+          attacker.address,
+        ]),
+      );
+
+      await mock.connect(attacker).requestDeposit(900n, attacker, attacker);
+
+      // the reentrant claim was priced at the settled rate
+      await expect(mock.balanceOf(attacker)).to.eventually.equal(100n);
+      await expect(mock.totalAssets()).to.eventually.equal(1100n);
+      await expect(mock.totalSupply()).to.eventually.equal(1100n);
+      await expect(mock.totalPendingDepositAssets()).to.eventually.equal(900n);
+    });
+  });
+
   describe('multiple requests and partial claims', function () {
     it('deposit flow', async function () {
       const expectPendingClaimable = (requestId, account, pending, claimable) =>
