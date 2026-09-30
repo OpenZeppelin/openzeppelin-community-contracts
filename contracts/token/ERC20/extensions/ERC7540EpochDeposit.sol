@@ -53,6 +53,8 @@ abstract contract ERC7540EpochDeposit is ERC7540 {
 
     mapping(uint256 epochId => EpochDepositMetadata) private _epochs;
     mapping(address account => DoubleEndedQueue.Bytes32Deque) private _memberOf;
+    uint256 private _claimableAssets;
+    uint256 private _claimableShares;
 
     /// @dev Emitted when a deposit epoch transitions from Pending to Claimable via {_fulfillDeposit}.
     event ERC7540EpochDepositFulfilled(uint256 indexed epochId, uint256 totalAssets, uint256 totalShares);
@@ -287,8 +289,13 @@ abstract contract ERC7540EpochDeposit is ERC7540 {
 
         _epochs[epochId].totalShares = totalShares;
 
-        if (_depositShareOrigin() != address(0)) {
-            _mintSharesOnDepositFulfill(totalShares == 0 ? 0 : totalAssets, totalShares);
+        if (totalShares > 0) {
+            _claimableAssets += totalAssets;
+            _claimableShares += totalShares;
+
+            if (_depositShareOrigin() != address(0)) {
+                _mintSharesOnDepositFulfill(totalAssets, totalShares);
+            }
         }
 
         emit ERC7540EpochDepositFulfilled(epochId, totalAssets, totalShares);
@@ -310,6 +317,7 @@ abstract contract ERC7540EpochDeposit is ERC7540 {
      * to revert when `batchAssets > 0 && batchShares == 0`.
      */
     function _consumeClaimableDeposit(uint256 assets, address controller) internal virtual override returns (uint256) {
+        uint256 consumed = 0;
         uint256 shares = 0;
 
         while (assets > 0) {
@@ -327,8 +335,12 @@ abstract contract ERC7540EpochDeposit is ERC7540 {
             details.totalAssets -= batchAssets; // batchAssets <= details.totalAssets (invariant: requests[c] <= totalAssets)
             details.totalShares -= batchShares; // batchShares = floor(batchAssets * S/A) <= details.totalShares (since batchAssets <= totalAssets)
             assets -= batchAssets; // batchAssets <= assets (via .min)
+            consumed += batchAssets;
             shares += batchShares;
         }
+
+        _claimableAssets -= consumed;
+        _claimableShares -= shares;
 
         return shares;
     }
@@ -341,6 +353,7 @@ abstract contract ERC7540EpochDeposit is ERC7540 {
      * claims round the consumed assets up, in favor of the vault.
      */
     function _consumeClaimableMint(uint256 shares, address controller) internal virtual override returns (uint256) {
+        uint256 consumed = 0;
         uint256 assets = 0;
 
         while (shares > 0) {
@@ -370,11 +383,28 @@ abstract contract ERC7540EpochDeposit is ERC7540 {
             details.requests[controller] -= batchAssets; // batchAssets <= requestedAssets
             details.totalAssets -= batchAssets; // batchAssets <= requestedAssets <= totalAssets (invariant)
             details.totalShares -= batchShares; // batchShares <= floor(rA*S/A) <= totalShares (matches _asyncMaxMint)
-            shares -= batchShares; // batchShares <= shares (via .min)
+            shares -= batchShares; // batchShares <= shares
+            consumed += batchShares;
             assets += batchAssets;
         }
 
+        _claimableAssets -= assets;
+        _claimableShares -= consumed;
+
         return assets;
+    }
+
+    /**
+     * @dev Assets of fulfilled but unclaimed epochs. Only reported in mint-on-claim custody: with pre-mint
+     * custody, fulfillment already settles them in {totalPendingDepositAssets} and {totalSupply}.
+     */
+    function _totalClaimableDepositAssets() internal view virtual override returns (uint256) {
+        return _depositShareOrigin() == address(0) ? _claimableAssets : 0;
+    }
+
+    /// @dev Shares owed to fulfilled but unclaimed epochs. See {_totalClaimableDepositAssets}.
+    function _totalClaimableDepositShares() internal view virtual override returns (uint256) {
+        return _depositShareOrigin() == address(0) ? _claimableShares : 0;
     }
 
     /**

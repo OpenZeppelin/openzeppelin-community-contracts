@@ -55,13 +55,14 @@ function shouldBehaveLikeERC7540Deposit({
   initialShares,
   balance,
   supportCustomFulfill,
-  withTmpHolder,
+  settleOnFulfill,
   gateOnController,
 } = {}) {
   initialAssets ??= ethers.parseEther('17000000');
   initialShares ??= ethers.parseEther('42000000');
   balance ??= ethers.parseEther('1000');
   supportCustomFulfill ??= true;
+  settleOnFulfill ??= true; // whether the strategy locks the rate at fulfillment (vs. at claim time)
   gateOnController ??= false;
 
   describe('Should behave like ERC7540Deposit', function () {
@@ -191,12 +192,9 @@ function shouldBehaveLikeERC7540Deposit({
 
             await this.fulfillDeposit(this.requestId, assets, shares, this.controller);
 
-            await expect(this.mock.totalAssets()).to.eventually.equal(
-              withTmpHolder ? assetsBefore + assets : assetsBefore,
-            );
-            await expect(this.mock.totalSupply()).to.eventually.equal(
-              withTmpHolder ? supplyBefore + shares : supplyBefore,
-            );
+            // Fulfilled requests are settled at the locked rate, regardless of the share custody model
+            await expect(this.mock.totalAssets()).to.eventually.equal(assetsBefore + assets);
+            await expect(this.mock.totalSupply()).to.eventually.equal(supplyBefore + shares);
 
             await expect(this.mock.pendingDepositRequest(this.requestId, this.controller)).to.eventually.equal(0n);
             await expect(this.mock.claimableDepositRequest(this.requestId, this.controller)).to.eventually.equal(
@@ -284,10 +282,10 @@ function shouldBehaveLikeERC7540Deposit({
             await expect(this.mock.claimableDepositRequest(this.requestId, this.controller)).to.eventually.equal(0n);
             await expect(this.mock.maxDeposit(this.controller)).to.eventually.equal(0n);
             await expect(this.mock.totalAssets()).to.eventually.equal(
-              withTmpHolder ? assetsBefore : assetsBefore + assets,
+              settleOnFulfill ? assetsBefore : assetsBefore + assets,
             );
             await expect(this.mock.totalSupply()).to.eventually.equal(
-              withTmpHolder ? supplyBefore : supplyBefore + shares,
+              settleOnFulfill ? supplyBefore : supplyBefore + shares,
             );
           });
 
@@ -350,10 +348,10 @@ function shouldBehaveLikeERC7540Deposit({
             await expect(this.mock.claimableDepositRequest(this.requestId, this.controller)).to.eventually.equal(0n);
             await expect(this.mock.maxMint(this.controller)).to.eventually.equal(0n);
             await expect(this.mock.totalAssets()).to.eventually.equal(
-              withTmpHolder ? assetsBefore : assetsBefore + assets,
+              settleOnFulfill ? assetsBefore : assetsBefore + assets,
             );
             await expect(this.mock.totalSupply()).to.eventually.equal(
-              withTmpHolder ? supplyBefore : supplyBefore + shares,
+              settleOnFulfill ? supplyBefore : supplyBefore + shares,
             );
           });
 
@@ -402,12 +400,14 @@ function shouldBehaveLikeERC7540Redeem({
   initialShares,
   balance,
   supportCustomFulfill,
+  settleOnFulfill,
   gateOnController,
 } = {}) {
   initialAssets ??= ethers.parseEther('17000000');
   initialShares ??= ethers.parseEther('42000000');
   balance ??= ethers.parseEther('1000');
   supportCustomFulfill ??= true;
+  settleOnFulfill ??= true; // whether the strategy locks the rate at fulfillment (vs. at claim time)
   gateOnController ??= false;
 
   describe('Should behave like ERC7540Redeem', function () {
@@ -561,8 +561,9 @@ function shouldBehaveLikeERC7540Redeem({
 
             await this.fulfillRedeem(this.requestId, assets, shares, this.controller);
 
-            await expect(this.mock.totalAssets()).to.eventually.equal(assetsBefore);
-            await expect(this.mock.totalSupply()).to.eventually.equal(supplyBefore);
+            // Fulfilled requests are settled at the locked rate
+            await expect(this.mock.totalAssets()).to.eventually.equal(assetsBefore - assets);
+            await expect(this.mock.totalSupply()).to.eventually.equal(supplyBefore - shares);
 
             await expect(this.mock.pendingRedeemRequest(0n, this.controller)).to.eventually.equal(0n);
             await expect(this.mock.claimableRedeemRequest(0n, this.controller)).to.eventually.equal(shares);
@@ -645,8 +646,12 @@ function shouldBehaveLikeERC7540Redeem({
             await expect(this.mock.pendingRedeemRequest(this.requestId, this.controller)).to.eventually.equal(0n);
             await expect(this.mock.claimableRedeemRequest(this.requestId, this.controller)).to.eventually.equal(0n);
             await expect(this.mock.maxRedeem(this.controller)).to.eventually.equal(0n);
-            await expect(this.mock.totalAssets()).to.eventually.equal(assetsBefore - assets);
-            await expect(this.mock.totalSupply()).to.eventually.equal(supplyBefore - shares);
+            await expect(this.mock.totalAssets()).to.eventually.equal(
+              settleOnFulfill ? assetsBefore : assetsBefore - assets,
+            );
+            await expect(this.mock.totalSupply()).to.eventually.equal(
+              settleOnFulfill ? supplyBefore : supplyBefore - shares,
+            );
           });
 
           it('operator can trigger redeem on behalf of controller', async function () {
@@ -698,8 +703,12 @@ function shouldBehaveLikeERC7540Redeem({
             await expect(this.mock.pendingRedeemRequest(this.requestId, this.controller)).to.eventually.equal(0n);
             await expect(this.mock.claimableRedeemRequest(this.requestId, this.controller)).to.eventually.equal(0n);
             await expect(this.mock.maxWithdraw(this.controller)).to.eventually.equal(0n);
-            await expect(this.mock.totalAssets()).to.eventually.equal(assetsBefore - assets);
-            await expect(this.mock.totalSupply()).to.eventually.equal(supplyBefore - shares);
+            await expect(this.mock.totalAssets()).to.eventually.equal(
+              settleOnFulfill ? assetsBefore : assetsBefore - assets,
+            );
+            await expect(this.mock.totalSupply()).to.eventually.equal(
+              settleOnFulfill ? supplyBefore : supplyBefore - shares,
+            );
           });
 
           it('operator can trigger withdraw on behalf of controller', async function () {

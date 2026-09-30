@@ -58,7 +58,7 @@ The implementation is split into a base contract and strategy extensions:
 
 ```mermaid
 flowchart TD
-    Base["<b>ERC7540 (base)</b><br/>Routing logic (sync vs async)<br/>Operator management<br/>ERC-4626 interface<br/>totalAssets / totalSupply adjustments<br/>14 virtual hooks for strategies to implement"]
+    Base["<b>ERC7540 (base)</b><br/>Routing logic (sync vs async)<br/>Operator management<br/>ERC-4626 interface<br/>totalAssets / totalSupply adjustments<br/>18 virtual hooks for strategies to implement"]
     Base --> Admin["<b>Admin strategy</b><br/>Privileged caller fulfills<br/>per request with explicit rate"]
     Base --> Delay["<b>Delay strategy</b><br/>Time-based, no<br/>privileged caller needed"]
     Base --> Epoch["<b>Epoch strategy</b><br/>Privileged caller batches<br/>requests per time window"]
@@ -512,23 +512,27 @@ The base `ERC7540` contract overrides both to keep the share price accurate duri
 
 ```mermaid
 flowchart TD
-    TA["<b>totalAssets()</b> = asset.balanceOf(vault) − _totalPendingDepositAssets"]
+    TA["<b>totalAssets()</b> = asset.balanceOf(vault) − (_totalPendingDepositAssets − _totalClaimableDepositAssets()) − _totalClaimableRedeemAssets()"]
     TA --> TA1["<b>asset.balanceOf(vault)</b><br/>All assets in the vault,<br/>including pending ones"]
-    TA --> TA2["<b>_totalPendingDepositAssets</b><br/>Assets received but not yet<br/>converted to shares.<br/>Must not inflate the perceived yield."]
+    TA --> TA2["<b>_totalPendingDepositAssets − _totalClaimableDepositAssets()</b><br/>Assets received but not yet<br/>settled at a locked rate.<br/>Must not inflate the perceived yield."]
+    TA --> TA3["<b>_totalClaimableRedeemAssets()</b><br/>Assets owed to fulfilled redeems,<br/>still held until claimed"]
 
-    TS["<b>totalSupply()</b> = ERC20.totalSupply() + _totalPendingRedeemShares"]
+    TS["<b>totalSupply()</b> = ERC20.totalSupply() + _totalClaimableDepositShares() + (_totalPendingRedeemShares − _totalClaimableRedeemShares())"]
     TS --> TS1["<b>ERC20.totalSupply()</b><br/>The on-chain ERC-20 supply"]
-    TS --> TS2["<b>_totalPendingRedeemShares</b><br/>Shares already burned/escrowed<br/>but logically still outstanding<br/>(request not yet settled)"]
+    TS --> TS2["<b>_totalClaimableDepositShares()</b><br/>Shares owed to fulfilled deposits,<br/>minted at claim time"]
+    TS --> TS3["<b>_totalPendingRedeemShares − _totalClaimableRedeemShares()</b><br/>Shares already burned/escrowed<br/>but logically still outstanding<br/>(request not yet fulfilled)"]
 ```
 
 This ensures `convertToShares` / `convertToAssets` reflect the real exchange rate at all times, even while requests are in flight.
 
+A request fulfilled at a locked rate (admin and epoch strategies) is settled from the vault's point of view, even before its controller claims it: the assets and shares it locked are accounted as if the claim had happened. Without this, a vault combining such a strategy with a synchronous side (e.g. `ERC7540EpochDeposit` with `ERC7540SyncRedeem`) would price sync operations at a rate that ignores fulfilled deposits or mis-values fulfilled redeems, moving value between holders depending on when claims are made. Strategies report these amounts through the `_totalClaimable*` hooks; strategies that compute the rate at claim time (delay) and synchronous sides report 0.
+
 [[custom-strategy]]
 == Building a custom strategy
 
-If none of the bundled strategies (admin, delay, epoch) fit your use case, you can build a custom fulfillment strategy by extending `ERC7540` directly and implementing the 14 virtual hooks.
+If none of the bundled strategies (admin, delay, epoch) fit your use case, you can build a custom fulfillment strategy by extending `ERC7540` directly and implementing the 18 virtual hooks.
 
-Each async side (deposit or redeem) requires 7 hooks:
+Each async side (deposit or redeem) requires 9 hooks:
 
 [%header,cols="1,3"]
 |===
@@ -554,6 +558,12 @@ Each async side (deposit or redeem) requires 7 hooks:
 
 | `_asyncMaxMint()` / `_asyncMaxRedeem()`
 | Return the maximum claimable amount (in shares) for `mint()` / `redeem()`
+
+| `_totalClaimableDepositAssets()` / `_totalClaimableRedeemAssets()`
+| Return the assets locked in fulfilled but unclaimed requests (0 if the rate is computed at claim time)
+
+| `_totalClaimableDepositShares()` / `_totalClaimableRedeemShares()`
+| Return the shares locked in fulfilled but unclaimed requests (0 if the rate is computed at claim time)
 |===
 
 For example, an oracle-driven strategy could mark requests claimable when an external price feed crosses a threshold; or a per-request strategy could give each request its own settlement timeline driven by off-chain compliance checks.
