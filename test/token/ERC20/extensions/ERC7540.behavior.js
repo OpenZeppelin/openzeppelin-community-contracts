@@ -105,7 +105,7 @@ function shouldBehaveLikeERC7540Deposit({
       describe('requestDeposit', function () {
         it('transfers tokens, marks as pending, emits DepositRequest with requestId 0', async function () {
           const assetsBefore = await this.mock.totalAssets();
-          const supplyBefore = await this.mock.totalSupply();
+          const sharesBefore = await this.mock.$_totalOutstandingShares();
           const convertToAssetsBefore = await this.mock.convertToAssets(shares);
           const convertToSharesBefore = await this.mock.convertToShares(assets);
 
@@ -119,7 +119,7 @@ function shouldBehaveLikeERC7540Deposit({
           await expect(tx).to.changeTokenBalances(this.mock, [this.controller], [0n]);
 
           await expect(this.mock.totalAssets()).to.eventually.equal(assetsBefore);
-          await expect(this.mock.totalSupply()).to.eventually.equal(supplyBefore);
+          await expect(this.mock.$_totalOutstandingShares()).to.eventually.equal(sharesBefore);
           await expect(this.mock.convertToAssets(shares)).to.eventually.equal(convertToAssetsBefore);
           await expect(this.mock.convertToShares(assets)).to.eventually.equal(convertToSharesBefore);
 
@@ -183,7 +183,7 @@ function shouldBehaveLikeERC7540Deposit({
 
           it('transitions pending to claimable and emits DepositClaimable', async function () {
             const assetsBefore = await this.mock.totalAssets();
-            const supplyBefore = await this.mock.totalSupply();
+            const sharesBefore = await this.mock.$_totalOutstandingShares();
 
             await expect(this.mock.pendingDepositRequest(this.requestId, this.controller)).to.eventually.equal(assets);
             await expect(this.mock.claimableDepositRequest(this.requestId, this.controller)).to.eventually.equal(0n);
@@ -194,7 +194,7 @@ function shouldBehaveLikeERC7540Deposit({
 
             // Fulfilled requests are settled at the locked rate, regardless of the share custody model
             await expect(this.mock.totalAssets()).to.eventually.equal(assetsBefore + assets);
-            await expect(this.mock.totalSupply()).to.eventually.equal(supplyBefore + shares);
+            await expect(this.mock.$_totalOutstandingShares()).to.eventually.equal(sharesBefore + shares);
 
             await expect(this.mock.pendingDepositRequest(this.requestId, this.controller)).to.eventually.equal(0n);
             await expect(this.mock.claimableDepositRequest(this.requestId, this.controller)).to.eventually.equal(
@@ -269,7 +269,7 @@ function shouldBehaveLikeERC7540Deposit({
             await expect(this.mock.maxDeposit(this.controller)).to.eventually.equal(assets);
 
             const assetsBefore = await this.mock.totalAssets();
-            const supplyBefore = await this.mock.totalSupply();
+            const sharesBefore = await this.mock.$_totalOutstandingShares();
 
             const tx = this.mock
               .connect(this.controller)
@@ -284,8 +284,8 @@ function shouldBehaveLikeERC7540Deposit({
             await expect(this.mock.totalAssets()).to.eventually.equal(
               settleOnFulfill ? assetsBefore : assetsBefore + assets,
             );
-            await expect(this.mock.totalSupply()).to.eventually.equal(
-              settleOnFulfill ? supplyBefore : supplyBefore + shares,
+            await expect(this.mock.$_totalOutstandingShares()).to.eventually.equal(
+              settleOnFulfill ? sharesBefore : sharesBefore + shares,
             );
           });
 
@@ -334,7 +334,7 @@ function shouldBehaveLikeERC7540Deposit({
             await expect(this.mock.maxMint(this.controller)).to.eventually.equal(shares);
 
             const assetsBefore = await this.mock.totalAssets();
-            const supplyBefore = await this.mock.totalSupply();
+            const sharesBefore = await this.mock.$_totalOutstandingShares();
 
             const tx = this.mock
               .connect(this.controller)
@@ -350,8 +350,8 @@ function shouldBehaveLikeERC7540Deposit({
             await expect(this.mock.totalAssets()).to.eventually.equal(
               settleOnFulfill ? assetsBefore : assetsBefore + assets,
             );
-            await expect(this.mock.totalSupply()).to.eventually.equal(
-              settleOnFulfill ? supplyBefore : supplyBefore + shares,
+            await expect(this.mock.$_totalOutstandingShares()).to.eventually.equal(
+              settleOnFulfill ? sharesBefore : sharesBefore + shares,
             );
           });
 
@@ -450,7 +450,7 @@ function shouldBehaveLikeERC7540Redeem({
       describe('requestRedeem', function () {
         it('burns shares, marks as pending, emits RedeemRequest with requestId 0', async function () {
           const assetsBefore = await this.mock.totalAssets();
-          const supplyBefore = await this.mock.totalSupply();
+          const sharesBefore = await this.mock.$_totalOutstandingShares();
           const convertToAssetsBefore = await this.mock.convertToAssets(shares);
           const convertToSharesBefore = await this.mock.convertToShares(assets);
 
@@ -465,9 +465,9 @@ function shouldBehaveLikeERC7540Redeem({
           await expect(tx).to.changeTokenBalances(this.token, [this.controller, this.mock], [0n, 0n]);
           await expect(tx).to.changeTokenBalances(this.mock, [this.owner], [-shares]);
 
-          // totalSupply includes shares for in-flight redeem
+          // _totalOutstandingShares includes shares for in-flight redeem
           await expect(this.mock.totalAssets()).to.eventually.equal(assetsBefore);
-          await expect(this.mock.totalSupply()).to.eventually.equal(supplyBefore);
+          await expect(this.mock.$_totalOutstandingShares()).to.eventually.equal(sharesBefore);
           await expect(this.mock.convertToAssets(shares)).to.eventually.equal(convertToAssetsBefore);
           await expect(this.mock.convertToShares(assets)).to.eventually.equal(convertToSharesBefore);
 
@@ -552,7 +552,7 @@ function shouldBehaveLikeERC7540Redeem({
 
           it('transitions pending to claimable and emits RedeemClaimable', async function () {
             const assetsBefore = await this.mock.totalAssets();
-            const supplyBefore = await this.mock.totalSupply();
+            const sharesBefore = await this.mock.$_totalOutstandingShares();
 
             await expect(this.mock.pendingRedeemRequest(this.requestId, this.controller)).to.eventually.equal(shares);
             await expect(this.mock.claimableRedeemRequest(this.requestId, this.controller)).to.eventually.equal(0n);
@@ -563,7 +563,7 @@ function shouldBehaveLikeERC7540Redeem({
 
             // Fulfilled requests are settled at the locked rate
             await expect(this.mock.totalAssets()).to.eventually.equal(assetsBefore - assets);
-            await expect(this.mock.totalSupply()).to.eventually.equal(supplyBefore - shares);
+            await expect(this.mock.$_totalOutstandingShares()).to.eventually.equal(sharesBefore - shares);
 
             await expect(this.mock.pendingRedeemRequest(0n, this.controller)).to.eventually.equal(0n);
             await expect(this.mock.claimableRedeemRequest(0n, this.controller)).to.eventually.equal(shares);
@@ -634,7 +634,7 @@ function shouldBehaveLikeERC7540Redeem({
             await expect(this.mock.maxRedeem(this.controller)).to.eventually.equal(shares);
 
             const assetsBefore = await this.mock.totalAssets();
-            const supplyBefore = await this.mock.totalSupply();
+            const sharesBefore = await this.mock.$_totalOutstandingShares();
 
             const tx = this.mock.connect(this.controller).redeem(shares, this.receiver, this.controller);
 
@@ -649,8 +649,8 @@ function shouldBehaveLikeERC7540Redeem({
             await expect(this.mock.totalAssets()).to.eventually.equal(
               settleOnFulfill ? assetsBefore : assetsBefore - assets,
             );
-            await expect(this.mock.totalSupply()).to.eventually.equal(
-              settleOnFulfill ? supplyBefore : supplyBefore - shares,
+            await expect(this.mock.$_totalOutstandingShares()).to.eventually.equal(
+              settleOnFulfill ? sharesBefore : sharesBefore - shares,
             );
           });
 
@@ -691,7 +691,7 @@ function shouldBehaveLikeERC7540Redeem({
             await expect(this.mock.maxWithdraw(this.controller)).to.eventually.equal(assets);
 
             const assetsBefore = await this.mock.totalAssets();
-            const supplyBefore = await this.mock.totalSupply();
+            const sharesBefore = await this.mock.$_totalOutstandingShares();
 
             const tx = this.mock.connect(this.controller).withdraw(assets, this.receiver, this.controller);
 
@@ -706,8 +706,8 @@ function shouldBehaveLikeERC7540Redeem({
             await expect(this.mock.totalAssets()).to.eventually.equal(
               settleOnFulfill ? assetsBefore : assetsBefore - assets,
             );
-            await expect(this.mock.totalSupply()).to.eventually.equal(
-              settleOnFulfill ? supplyBefore : supplyBefore - shares,
+            await expect(this.mock.$_totalOutstandingShares()).to.eventually.equal(
+              settleOnFulfill ? sharesBefore : sharesBefore - shares,
             );
           });
 

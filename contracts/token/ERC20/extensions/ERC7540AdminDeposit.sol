@@ -161,7 +161,7 @@ abstract contract ERC7540AdminDeposit is ERC7540 {
 
     /**
      * @dev Assets of fulfilled but unclaimed deposits. Only reported in mint-on-claim custody: with pre-mint
-     * custody, fulfillment already settles them in {totalPendingDepositAssets} and {totalSupply}.
+     * custody, fulfillment already settles them in {totalPendingDepositAssets} and {_totalOutstandingShares}.
      */
     function _totalClaimableDepositAssets() internal view virtual override returns (uint256) {
         return _depositShareOrigin() == address(0) ? _totalClaimableAssets : 0;

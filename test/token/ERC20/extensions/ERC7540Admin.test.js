@@ -62,6 +62,43 @@ describe('ERC7540Admin', function () {
       shouldBehaveLikeERC7540Redeem({ supportCustomFulfill: true });
       shouldBehaveLikeERC7575();
 
+      it('totalSupply matches ERC-20 balances while requests are in flight', async function () {
+        const [, alice, bob] = await ethers.getSigners();
+        const tmpHolder = withTmpHolder ? '0x000000000000000000000000000000000000dead' : ethers.ZeroAddress;
+        const sumOfBalances = () =>
+          Promise.all([alice, bob, tmpHolder].map(account => this.mock.balanceOf(account))).then(balances =>
+            balances.reduce((a, b) => a + b, 0n),
+          );
+        const expectSupply = async (supply, outstanding) => {
+          await expect(this.mock.totalSupply()).to.eventually.equal(supply);
+          await expect(this.mock.totalSupply()).to.eventually.equal(await sumOfBalances());
+          await expect(this.mock.$_totalOutstandingShares()).to.eventually.equal(outstanding);
+        };
+
+        // alice and bob each hold 100 shares
+        for (const user of [alice, bob]) {
+          await this.token.$_mint(user, 200n);
+          await this.token.connect(user).approve(this.mock, ethers.MaxUint256);
+          await this.mock.connect(user).requestDeposit(100n, user, user);
+          await this.mock.$_fulfillDeposit(100n, 100n, user);
+          await this.mock.connect(user).getFunction('deposit(uint256,address,address)')(100n, user, user);
+        }
+        await expectSupply(200n, 200n);
+
+        // bob's redeem request takes his shares out of circulation (burned or escrowed)
+        await this.mock.connect(bob).requestRedeem(100n, bob, bob);
+        await expectSupply(withTmpHolder ? 200n : 100n, 200n);
+
+        // fulfilling the redeem settles it: the shares are no longer outstanding
+        await this.mock.$_fulfillRedeem(100n, 100n, bob);
+        await expectSupply(100n, 100n);
+
+        // fulfilling a deposit settles it: the shares are outstanding, but only minted if pre-minted
+        await this.mock.connect(alice).requestDeposit(100n, alice, alice);
+        await this.mock.$_fulfillDeposit(100n, 100n, alice);
+        await expectSupply(withTmpHolder ? 200n : 100n, 200n);
+      });
+
       describe('multiple partial claims', function () {
         it('deposit flow - finish with a deposit', async function () {
           const [, user] = await ethers.getSigners();

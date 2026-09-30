@@ -58,7 +58,7 @@ The implementation is split into a base contract and strategy extensions:
 
 ```mermaid
 flowchart TD
-    Base["<b>ERC7540 (base)</b><br/>Routing logic (sync vs async)<br/>Operator management<br/>ERC-4626 interface<br/>totalAssets / totalSupply adjustments<br/>18 virtual hooks for strategies to implement"]
+    Base["<b>ERC7540 (base)</b><br/>Routing logic (sync vs async)<br/>Operator management<br/>ERC-4626 interface<br/>totalAssets / _totalOutstandingShares adjustments<br/>18 virtual hooks for strategies to implement"]
     Base --> Admin["<b>Admin strategy</b><br/>Privileged caller fulfills<br/>per request with explicit rate"]
     Base --> Delay["<b>Delay strategy</b><br/>Time-based, no<br/>privileged caller needed"]
     Base --> Epoch["<b>Epoch strategy</b><br/>Privileged caller batches<br/>requests per time window"]
@@ -506,9 +506,9 @@ During the async lifecycle, shares and assets must be held somewhere between req
 | **Escrow on request.** Shares are transferred to the specified address when the user calls `requestRedeem`. They are burned later when the admin fulfills the request.
 |===
 
-=== Why `totalAssets` and `totalSupply` are adjusted
+=== Why `totalAssets` and `_totalOutstandingShares` are adjusted
 
-The base `ERC7540` contract overrides both to keep the share price accurate during the async lifecycle:
+The base `ERC7540` contract prices shares using an adjusted `totalAssets()` and a dedicated internal `_totalOutstandingShares()` count, to keep the share price accurate during the async lifecycle:
 
 ```mermaid
 flowchart TD
@@ -517,13 +517,15 @@ flowchart TD
     TA --> TA2["<b>_totalPendingDepositAssets − _totalClaimableDepositAssets()</b><br/>Assets received but not yet<br/>settled at a locked rate.<br/>Must not inflate the perceived yield."]
     TA --> TA3["<b>_totalClaimableRedeemAssets()</b><br/>Assets owed to fulfilled redeems,<br/>still held until claimed"]
 
-    TS["<b>totalSupply()</b> = ERC20.totalSupply() + _totalClaimableDepositShares() + (_totalPendingRedeemShares − _totalClaimableRedeemShares())"]
-    TS --> TS1["<b>ERC20.totalSupply()</b><br/>The on-chain ERC-20 supply"]
+    TS["<b>_totalOutstandingShares()</b> = totalSupply() + _totalClaimableDepositShares() + (_totalPendingRedeemShares − _totalClaimableRedeemShares())"]
+    TS --> TS1["<b>totalSupply()</b><br/>The on-chain ERC-20 supply"]
     TS --> TS2["<b>_totalClaimableDepositShares()</b><br/>Shares owed to fulfilled deposits,<br/>minted at claim time"]
     TS --> TS3["<b>_totalPendingRedeemShares − _totalClaimableRedeemShares()</b><br/>Shares already burned/escrowed<br/>but logically still outstanding<br/>(request not yet fulfilled)"]
 ```
 
 This ensures `convertToShares` / `convertToAssets` reflect the real exchange rate at all times, even while requests are in flight.
+
+`totalSupply()` itself is not adjusted: it always equals the sum of all ERC-20 balances and only changes with `Transfer` events, so reward distributors, governance, supply caps and indexers keep working. While requests are in flight it can differ from `_totalOutstandingShares()`, so integrators pricing shares should use `convertToAssets` rather than `totalAssets() / totalSupply()`.
 
 A request fulfilled at a locked rate (admin and epoch strategies) is settled from the vault's point of view, even before its controller claims it: the assets and shares it locked are accounted as if the claim had happened. Without this, a vault combining such a strategy with a synchronous side (e.g. `ERC7540EpochDeposit` with `ERC7540SyncRedeem`) would price sync operations at a rate that ignores fulfilled deposits or mis-values fulfilled redeems, moving value between holders depending on when claims are made. Strategies report these amounts through the `_totalClaimable*` hooks; strategies that compute the rate at claim time (delay) and synchronous sides report 0.
 
