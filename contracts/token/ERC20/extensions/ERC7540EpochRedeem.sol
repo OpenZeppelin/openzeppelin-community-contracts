@@ -303,11 +303,9 @@ abstract contract ERC7540EpochRedeem is ERC7540 {
      * NOTE: Wrappers wanting stricter FIFO semantics should consider overriding to revert when
      * the oldest epoch is Pending.
      *
-     * NOTE: When the epoch's locked rate skews the `shares : assets` ratio (either direction),
-     * a small `assets` input can round `batchShares` to zero; the epoch's asset pool moves
-     * without burning shares from the caller's request. At realistic ERC-20 decimals the per-call
-     * drift is sub-cent. Deployers with non-standard decimals or a zero-drift requirement SHOULD
-     * override to revert when `batchAssets > 0 && batchShares == 0`.
+     * When the claim exhausts the controller's asset entitlement in an epoch, the epoch is dequeued
+     * and the controller's entire share request is consumed, so no residue is left behind. Partial
+     * claims round the consumed shares up, in favor of the vault.
      */
     function _consumeClaimableWithdraw(uint256 assets, address controller) internal virtual override returns (uint256) {
         uint256 shares = 0;
@@ -321,15 +319,22 @@ abstract contract ERC7540EpochRedeem is ERC7540 {
             // A ceil-rounded `requested` could exhaust `totalAssets` to 0 while `totalShares`
             // remains > 0, dirtying the Pending sentinel and stranding later controllers.
             uint256 requested = _convertToRedeemAssets(epochId, requestedShares, Math.Rounding.Floor);
-            if (requested <= assets) _memberOf[controller].popFront();
 
-            uint256 batchAssets = requested.min(assets);
-            uint256 batchShares = _convertToRedeemShares(epochId, batchAssets, Math.Rounding.Floor).min(
-                requestedShares
-            );
+            uint256 batchAssets;
+            uint256 batchShares;
+            if (requested <= assets) {
+                batchAssets = requested;
+                batchShares = requestedShares;
+            } else {
+                // assets < floor(rS*A/S) implies ceil(assets*S/A) <= rS
+                batchAssets = assets;
+                batchShares = _convertToRedeemShares(epochId, assets, Math.Rounding.Ceil);
+            }
+            // Dequeue once the request is fully consumed (including when a partial claim rounds up to it)
+            if (batchShares == requestedShares) _memberOf[controller].popFront();
 
             EpochRedeemMetadata storage details = _epochs[epochId];
-            details.requests[controller] -= batchShares; // batchShares <= requestedShares via .min
+            details.requests[controller] -= batchShares; // batchShares <= requestedShares
             details.totalAssets -= batchAssets; // batchAssets <= floor(rS*A/S) <= totalAssets (matches _asyncMaxWithdraw)
             details.totalShares -= batchShares; // batchShares <= requestedShares <= totalShares (invariant)
             assets -= batchAssets; // batchAssets <= assets (via .min)

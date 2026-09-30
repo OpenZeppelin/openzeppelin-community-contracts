@@ -584,7 +584,9 @@ describe('ERC7540EpochDeposit', function () {
 
           // Sentinel preserved: totalShares stays > 0 while requests remain unclaimed.
           await expect(this.mock.totalDepositShares(epochId)).to.eventually.equal(1n);
-          await expect(this.mock.totalDepositAssets(epochId)).to.eventually.equal(2n);
+          // Exhausting her entitlement consumes Alice's entire request: only Bob's remains.
+          await expect(this.mock.totalDepositAssets(epochId)).to.eventually.equal(1n);
+          await expect(this.mock.claimableDepositRequest(epochId, alice)).to.eventually.equal(0n);
 
           // Bob's claim slot is still reachable — not frozen behind a dirty sentinel.
           await expect(this.mock.claimableDepositRequest(epochId, bob)).to.eventually.equal(1n);
