@@ -1665,6 +1665,7 @@ Send exit fee to {_exitFeeRecipient}. See {IERC4626-_deposit}.
 :ERC4626ExceededMaxWithdraw: pass:normal[xref:#ERC7540-ERC4626ExceededMaxWithdraw-address-uint256-uint256-[`++ERC4626ExceededMaxWithdraw++`]]
 :ERC4626ExceededMaxRedeem: pass:normal[xref:#ERC7540-ERC4626ExceededMaxRedeem-address-uint256-uint256-[`++ERC4626ExceededMaxRedeem++`]]
 :ERC7540InvalidOperator: pass:normal[xref:#ERC7540-ERC7540InvalidOperator-address-address-[`++ERC7540InvalidOperator++`]]
+:ERC7540InvalidSelfOperator: pass:normal[xref:#ERC7540-ERC7540InvalidSelfOperator-address-[`++ERC7540InvalidSelfOperator++`]]
 :ERC7540SyncDeposit: pass:normal[xref:#ERC7540-ERC7540SyncDeposit--[`++ERC7540SyncDeposit++`]]
 :ERC7540AsyncDeposit: pass:normal[xref:#ERC7540-ERC7540AsyncDeposit--[`++ERC7540AsyncDeposit++`]]
 :ERC7540SyncRedeem: pass:normal[xref:#ERC7540-ERC7540SyncRedeem--[`++ERC7540SyncRedeem++`]]
@@ -1986,6 +1987,7 @@ accounting (notably {totalAssets}) can revert and freeze claim paths that depend
 * `++ERC4626ExceededMaxWithdraw(owner, assets, max)++`
 * `++ERC4626ExceededMaxRedeem(owner, shares, max)++`
 * `++ERC7540InvalidOperator(controller, operator)++`
+* `++ERC7540InvalidSelfOperator(controller)++`
 * `++ERC7540SyncDeposit()++`
 * `++ERC7540AsyncDeposit()++`
 * `++ERC7540SyncRedeem()++`
@@ -2095,6 +2097,11 @@ Grants or revokes permissions for `operator` to manage requests on behalf of the
 ==== `[.contract-item-name]#++_setOperator++#++(address controller, address operator, bool approved)++` [.item-kind]#internal#
 
 Sets the `operator` approval status for `controller` to `approved`.
+
+Requirements:
+
+* `operator` must not be the `controller`. A controller always has unrestricted access to its own
+  tokens and requests, and that access cannot be revoked.
 
 Emits an {IERC7540Operator-OperatorSet} event.
 
@@ -2746,6 +2753,12 @@ Attempted to redeem more shares than the max amount for `owner`.
 The `operator` is not the caller or an approved operator of the `controller`.
 
 [.contract-item]
+[[ERC7540-ERC7540InvalidSelfOperator-address-]]
+==== `[.contract-item-name]#++ERC7540InvalidSelfOperator++#++(address controller)++` [.item-kind]#error#
+
+The `controller` cannot set (or unset) itself as its own operator.
+
+[.contract-item]
 [[ERC7540-ERC7540SyncDeposit--]]
 ==== `[.contract-item-name]#++ERC7540SyncDeposit++#++()++` [.item-kind]#error#
 
@@ -3019,6 +3032,7 @@ All requests share `requestId = 0` (per-controller accounting only).
 * `++ERC4626ExceededMaxWithdraw(owner, assets, max)++`
 * `++ERC4626ExceededMaxRedeem(owner, shares, max)++`
 * `++ERC7540InvalidOperator(controller, operator)++`
+* `++ERC7540InvalidSelfOperator(controller)++`
 * `++ERC7540SyncDeposit()++`
 * `++ERC7540AsyncDeposit()++`
 * `++ERC7540SyncRedeem()++`
@@ -3392,6 +3406,7 @@ All requests share `requestId = 0` (per-controller accounting only).
 * `++ERC4626ExceededMaxWithdraw(owner, assets, max)++`
 * `++ERC4626ExceededMaxRedeem(owner, shares, max)++`
 * `++ERC7540InvalidOperator(controller, operator)++`
+* `++ERC7540InvalidSelfOperator(controller)++`
 * `++ERC7540SyncDeposit()++`
 * `++ERC7540AsyncDeposit()++`
 * `++ERC7540SyncRedeem()++`
@@ -3778,6 +3793,7 @@ storage that is not yet initialized when the parent's constructor runs
 * `++ERC4626ExceededMaxWithdraw(owner, assets, max)++`
 * `++ERC4626ExceededMaxRedeem(owner, shares, max)++`
 * `++ERC7540InvalidOperator(controller, operator)++`
+* `++ERC7540InvalidSelfOperator(controller)++`
 * `++ERC7540SyncDeposit()++`
 * `++ERC7540AsyncDeposit()++`
 * `++ERC7540SyncRedeem()++`
@@ -4184,6 +4200,7 @@ storage that is not yet initialized when the parent's constructor runs.
 * `++ERC4626ExceededMaxWithdraw(owner, assets, max)++`
 * `++ERC4626ExceededMaxRedeem(owner, shares, max)++`
 * `++ERC7540InvalidOperator(controller, operator)++`
+* `++ERC7540InvalidSelfOperator(controller)++`
 * `++ERC7540SyncDeposit()++`
 * `++ERC7540AsyncDeposit()++`
 * `++ERC7540SyncRedeem()++`
@@ -4546,6 +4563,7 @@ cannot be combined with {ERC7540SyncRedeem}.
 * `++ERC4626ExceededMaxWithdraw(owner, assets, max)++`
 * `++ERC4626ExceededMaxRedeem(owner, shares, max)++`
 * `++ERC7540InvalidOperator(controller, operator)++`
+* `++ERC7540InvalidSelfOperator(controller)++`
 * `++ERC7540SyncDeposit()++`
 * `++ERC7540AsyncDeposit()++`
 * `++ERC7540SyncRedeem()++`
@@ -4858,6 +4876,7 @@ cannot be combined with {ERC7540SyncDeposit}.
 * `++ERC4626ExceededMaxWithdraw(owner, assets, max)++`
 * `++ERC4626ExceededMaxRedeem(owner, shares, max)++`
 * `++ERC7540InvalidOperator(controller, operator)++`
+* `++ERC7540InvalidSelfOperator(controller)++`
 * `++ERC7540SyncDeposit()++`
 * `++ERC7540AsyncDeposit()++`
 * `++ERC7540SyncRedeem()++`
