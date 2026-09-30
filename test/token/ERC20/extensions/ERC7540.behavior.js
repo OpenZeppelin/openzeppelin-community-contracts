@@ -40,6 +40,12 @@ function shouldBehaveLikeERC7540Operator() {
 
         await expect(this.mock.isOperator(this.owner, this.operator)).to.eventually.equal(status);
       });
+
+      it(`setOperator to ${status} reverts if the operator is the controller`, async function () {
+        await expect(this.mock.connect(this.owner).setOperator(this.owner, status))
+          .to.be.revertedWithCustomError(this.mock, 'ERC7540InvalidSelfOperator')
+          .withArgs(this.owner);
+      });
     }
   });
 }
@@ -249,11 +255,11 @@ function shouldBehaveLikeERC7540Deposit({
 
       describe('claim', function () {
         beforeEach(async function () {
-          (this.requestId = await this.mock
+          ((this.requestId = await this.mock
             .connect(this.owner)
             .requestDeposit(assets, this.controller, this.owner)
             .then(this.getRequestId)),
-            await this.fulfillDeposit(this.requestId, assets, shares, this.controller);
+            await this.fulfillDeposit(this.requestId, assets, shares, this.controller));
         });
 
         describe('via deposit()', function () {

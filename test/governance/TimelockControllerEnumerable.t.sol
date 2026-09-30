@@ -4,9 +4,7 @@ pragma solidity ^0.8.20;
 
 import {Test} from "forge-std/Test.sol";
 import {TimelockControllerEnumerableMock} from "./TimelockControllerEnumerableMock.t.sol";
-import {
-    TimelockControllerEnumerable
-} from "@openzeppelin/community-contracts/governance/TimelockControllerEnumerable.sol";
+import {TimelockControllerEnumerable} from "@openzeppelin/community-contracts/governance/TimelockControllerEnumerable.sol";
 
 contract TimelockControllerEnumerableTest is Test {
     TimelockControllerEnumerableMock public timelockControllerEnumerable;

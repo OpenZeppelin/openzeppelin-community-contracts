@@ -1,6 +1,24 @@
-## 31-07-2026
+## 01-10-2026
 
 - `ERC7540EpochDeposit`, `ERC7540EpochRedeem`: Add epoch-based batch fulfillment strategies for ERC-7540 vaults. Requests submitted in the same epoch share a single queue slot per controller and are settled together at one locked exchange rate when the admin closes the epoch via `_fulfillDeposit` / `_fulfillRedeem`.
+
+## 30-09-2026
+
+- `ERC7540`: `_setOperator` now reverts with `ERC7540InvalidSelfOperator` when the controller is set as its own operator. A controller always has unrestricted access to its own tokens and requests, and that access cannot be restricted.
+
+## 10-09-2026
+
+- `ERC7786OpenBridge`: Read only the first word of the recipient's return buffer in `receiveMessage`, so a recipient cannot pad its return data to exhaust the caller's gas on the copy.
+
+## 04-08-2026
+
+- `SignerAccessManaged`: Add an `AbstractSigner` whose authority is delegated to the members of a role tracked by an `IAccessManager`. A signature is accepted only when its `[signer][inner signature]` payload is valid and the signer currently holds the bound role.
+- `RoleAccount`: Add an account combining `SignerAccessManaged` (ERC-1271 via ERC-7739) and `ERC7821` batched execution, acting on behalf of the current members of a role.
+- `RoleAccountFactory`: Add a factory that deploys a deterministic `RoleAccount` per (access manager, role) pair via clones-with-immutable-args.
+
+## 30-07-2026
+
+- Remove `PaymasterCore`, `PaymasterERC20`, `PaymasterERC20Guarantor`, `PaymasterERC721Owner` and `PaymasterSigner`. These contracts were migrated to `@openzeppelin/contracts>=5.7.0` (`PaymasterCore` as `Paymaster`).
 
 ## 20-07-2026
 

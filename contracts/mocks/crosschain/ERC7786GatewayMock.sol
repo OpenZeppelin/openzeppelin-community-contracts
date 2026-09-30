@@ -10,11 +10,8 @@ contract ERC7786GatewayMock is IERC7786GatewaySource {
     using BitMaps for BitMaps.BitMap;
     using InteroperableAddress for *;
 
-    bytes32 public sendId;
-
-    function setSendId(bytes32 _sendId) public {
-        sendId = _sendId;
-    }
+    bool public revertOnSent = false;
+    bytes32 public sendId = bytes32(0);
 
     function supportsAttribute(bytes4 /*selector*/) public pure returns (bool) {
         return false;
@@ -25,6 +22,8 @@ contract ERC7786GatewayMock is IERC7786GatewaySource {
         bytes calldata payload,
         bytes[] calldata attributes
     ) public payable returns (bytes32) {
+        require(!revertOnSent, "Reverting on send");
+
         require(msg.value == 0, "Value not supported");
         // Use of `if () revert` syntax to avoid accessing attributes[0] if it's empty
         if (attributes.length > 0) revert UnsupportedAttribute(bytes4(attributes[0][0:4]));
@@ -41,5 +40,13 @@ contract ERC7786GatewayMock is IERC7786GatewaySource {
 
         emit MessageSent(sendId, sender, recipient, payload, 0, attributes);
         return sendId;
+    }
+
+    function setRevertOnSent(bool value) external {
+        revertOnSent = value;
+    }
+
+    function setSendId(bytes32 value) public {
+        sendId = value;
     }
 }

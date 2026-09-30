@@ -6,6 +6,7 @@ import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {IERC7786GatewaySource, IERC7786Recipient} from "@openzeppelin/contracts/interfaces/draft-IERC7786.sol";
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import {Address} from "@openzeppelin/contracts/utils/Address.sol";
+import {LowLevelCall} from "@openzeppelin/contracts/utils/LowLevelCall.sol";
 import {Pausable} from "@openzeppelin/contracts/utils/Pausable.sol";
 import {InteroperableAddress} from "@openzeppelin/contracts/utils/draft-InteroperableAddress.sol";
 
@@ -39,16 +40,19 @@ contract ERC7786OpenBridge is IERC7786GatewaySource, IERC7786Recipient, Ownable,
     event ExecutionFailed(bytes32 indexed receiveId);
     event GatewayAdded(address indexed gateway);
     event GatewayRemoved(address indexed gateway);
+    event ERC7786OpenBridgeSendMessageFailed(address indexed gateway);
     event ThresholdUpdated(uint8 threshold);
 
     error UnsupportedNativeTransfer();
     error ERC7786OpenBridgeInvalidCrosschainSender();
     error ERC7786OpenBridgeAlreadyExecuted();
     error ERC7786OpenBridgeRemoteNotRegistered(bytes2 chainType, bytes chainReference);
+    error ERC7786OpenBridgeGatewayNotAContract(address gateway);
     error ERC7786OpenBridgeGatewayAlreadyRegistered(address gateway);
     error ERC7786OpenBridgeGatewayNotRegistered(address gateway);
     error ERC7786OpenBridgeThresholdViolation();
     error ERC7786OpenBridgeInvalidExecutionReturnValue();
+    error ERC7786OpenBridgeInsufficientGateways();
 
     /****************************************************************************************************************
      *                                        S T A T E   V A R I A B L E S                                         *
@@ -111,20 +115,30 @@ contract ERC7786OpenBridge is IERC7786GatewaySource, IERC7786Recipient, Ownable,
         bytes memory wrappedPayload = abi.encode(++_nonce, sender, recipient, payload);
 
         // Post on all gateways
-        Outbox[] memory outbox = new Outbox[](_gateways.length());
-        bool needsId = false;
-        for (uint256 i = 0; i < outbox.length; ++i) {
-            address gateway = _gateways.at(i);
-            // send message
-            bytes32 id = IERC7786GatewaySource(gateway).sendMessage(bridge, wrappedPayload, attributes);
-            // fill outbox
-            outbox[i] = Outbox(gateway, id);
-            needsId = needsId || id != bytes32(0);
-        }
+        {
+            Outbox[] memory outbox = new Outbox[](_gateways.length());
+            bool needsId = false;
+            uint256 sent = 0;
+            for (uint256 i = 0; i < outbox.length; ++i) {
+                address gateway = _gateways.at(i);
+                // send message
+                try IERC7786GatewaySource(gateway).sendMessage(bridge, wrappedPayload, attributes) returns (
+                    bytes32 id
+                ) {
+                    outbox[i] = Outbox(gateway, id);
+                    needsId = needsId || id != bytes32(0);
+                    ++sent;
+                } catch {
+                    // if one gateway fails, we still want to send the message through the others
+                    emit ERC7786OpenBridgeSendMessageFailed(gateway);
+                }
+            }
+            require(sent >= getThreshold(), ERC7786OpenBridgeInsufficientGateways());
 
-        if (needsId) {
-            sendId = keccak256(abi.encode(outbox));
-            emit OutboxDetails(sendId, outbox);
+            if (needsId) {
+                sendId = keccak256(abi.encode(outbox));
+                emit OutboxDetails(sendId, outbox);
+            }
         }
 
         emit MessageSent(sendId, sender, recipient, payload, 0, attributes);
@@ -217,13 +231,18 @@ contract ERC7786OpenBridge is IERC7786GatewaySource, IERC7786Recipient, Ownable,
             );
             // slither-disable-next-line reentrancy-no-eth
             (, address target) = recipient.parseEvmV1();
-            (bool success, bytes memory returndata) = target.call(call);
+            // A malicious recipient can pad its return buffer to force the caller to run out of gas copying it back.
+            // Only the first 32 bytes are inspected, so bound the copy to that window.
+            (bool success, bytes32 returndata, ) = LowLevelCall.callReturn64Bytes(target, call);
 
             if (!success) {
                 // rollback to enable retry
                 tracker.executed = false;
                 emit ExecutionFailed(id);
-            } else if (bytes32(returndata) == bytes32(IERC7786Recipient.receiveMessage.selector)) {
+            } else if (
+                LowLevelCall.returnDataSize() >= 0x20 &&
+                returndata == bytes32(IERC7786Recipient.receiveMessage.selector)
+            ) {
                 // call successful and correct value returned
                 emit ExecutionSuccess(id);
             } else {
@@ -290,6 +309,7 @@ contract ERC7786OpenBridge is IERC7786GatewaySource, IERC7786Recipient, Ownable,
     // ================================================== Internal ===================================================
 
     function _addGateway(address gateway) internal virtual {
+        require(gateway.code.length > 0, ERC7786OpenBridgeGatewayNotAContract(gateway));
         require(_gateways.add(gateway), ERC7786OpenBridgeGatewayAlreadyRegistered(gateway));
         emit GatewayAdded(gateway);
     }
