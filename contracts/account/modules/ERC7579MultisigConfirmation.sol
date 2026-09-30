@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
-import {SignatureChecker} from "@openzeppelin/contracts/utils/cryptography/SignatureChecker.sol";
 import {EIP712} from "@openzeppelin/contracts/utils/cryptography/EIP712.sol";
+import {SignatureChecker} from "@openzeppelin/contracts/utils/cryptography/SignatureChecker.sol";
 import {ERC7579Multisig} from "./ERC7579Multisig.sol";
 
 /**
@@ -17,8 +17,9 @@ import {ERC7579Multisig} from "./ERC7579Multisig.sol";
  * explicitly agreed to their roles.
  */
 abstract contract ERC7579MultisigConfirmation is ERC7579Multisig, EIP712 {
-    bytes32 private constant MULTISIG_CONFIRMATION =
-        keccak256("MultisigConfirmation(address account,address module,uint256 deadline)");
+    bytes32 private constant MULTISIG_CONFIRMATION = keccak256(
+        "MultisigConfirmation(address account,address module,uint256 deadline)"
+    );
 
     /// @dev Error thrown when a `signer`'s confirmation signature is invalid
     error ERC7579MultisigInvalidConfirmationSignature(bytes signer);

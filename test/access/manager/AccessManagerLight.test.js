@@ -1,7 +1,11 @@
-const { ethers } = require('hardhat');
-const { expect } = require('chai');
-const { loadFixture } = require('@nomicfoundation/hardhat-network-helpers');
-const { mapValues } = require('@openzeppelin/contracts/test/helpers/iterate');
+import { network } from 'hardhat';
+import { expect } from 'chai';
+import { mapValues } from '@openzeppelin/contracts/test/helpers/iterate';
+
+const {
+  ethers,
+  networkHelpers: { loadFixture },
+} = await network.create();
 
 // Mask helpers
 const toHexString = i => '0x' + i.toString(16).padStart(64, 0);
@@ -37,7 +41,7 @@ describe('AccessManaged', function () {
     const groups = [13n, 69n, 128n];
 
     describe('canCall', function () {
-      describe('simple case: one group', async function () {
+      describe('simple case: one group', function () {
         it('Requirements set and Permissions set', async function () {
           this.withRequirements = true;
           this.withPermission = true;
@@ -71,7 +75,7 @@ describe('AccessManaged', function () {
         });
       });
 
-      describe('complexe case: one of many groups', async function () {
+      describe('complexe case: one of many groups', function () {
         it('some intersection', async function () {
           this.userGroups = [32, 42, 94, 128]; // User has all these groups
           this.targetGroups = [17, 35, 42, 69, 91]; // Target accepts any of these groups

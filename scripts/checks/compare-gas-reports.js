@@ -1,10 +1,12 @@
 #!/usr/bin/env node
 
-const fs = require('fs');
-const chalk = require('chalk');
+import fs from 'fs';
+import chalk from 'chalk';
 
-const { hideBin } = require('yargs/helpers');
-const { argv } = require('yargs/yargs')(hideBin(process.argv))
+import { hideBin } from 'yargs/helpers';
+import yargs from 'yargs/yargs';
+
+const { argv } = yargs(hideBin(process.argv))
   .env('')
   .options({
     style: {
@@ -20,27 +22,33 @@ const { argv } = require('yargs/yargs')(hideBin(process.argv))
       type: 'boolean',
       default: false,
     },
+    // JSON array of source files the change reaches (from `scripts/list-dependencies.js`); absent = report all.
+    filtered: {
+      type: 'string',
+    },
   });
 
 // Deduce base tx cost from the percentage denominator
 const BASE_TX_COST = 21000;
 
 // Utilities
-function sum(...args) {
-  return args.reduce((a, b) => a + b, 0);
-}
+const variation = (current, previous, offset = 0) => ({
+  value: current - offset,
+  delta: current - previous,
+  prcnt: (100 * (current - previous)) / (previous - offset),
+});
 
-function average(...args) {
-  return sum(...args) / args.length;
-}
-
-function variation(current, previous, offset = 0) {
-  return {
-    value: current,
-    delta: current - previous,
-    prcnt: (100 * (current - previous)) / (previous - offset),
-  };
-}
+const variations = (current, previous, offset = 0) =>
+  current.min == current.max && previous.min == previous.max
+    ? {
+        avg: variation(current.avg, previous.avg, offset),
+      }
+    : {
+        min: variation(current.min, previous.min, offset),
+        max: variation(current.max, previous.max, offset),
+        avg: variation(current.avg, previous.avg, offset),
+        median: variation(current.median, previous.median, offset),
+      };
 
 // Report class
 class Report {
@@ -51,54 +59,38 @@ class Report {
 
   // Compare two reports
   static compare(update, ref, opts = { hideEqual: true, strictTesting: false }) {
-    if (JSON.stringify(update.options?.solcInfo) !== JSON.stringify(ref.options?.solcInfo)) {
-      console.warn('WARNING: Reports produced with non matching metadata');
-    }
-
-    // gasReporter 1.0.0 uses ".info", but 2.0.0 uses ".data"
-    const updateInfo = update.info ?? update.data;
-    const refInfo = ref.info ?? ref.data;
-
-    const deployments = updateInfo.deployments
-      .map(contract =>
-        Object.assign(contract, { previousVersion: refInfo.deployments.find(({ name }) => name === contract.name) }),
-      )
-      .filter(contract => contract.gasData?.length && contract.previousVersion?.gasData?.length)
-      .flatMap(contract => [
-        {
-          contract: contract.name,
-          method: '[bytecode length]',
-          avg: variation(contract.bytecode.length / 2 - 1, contract.previousVersion.bytecode.length / 2 - 1),
-        },
-        {
-          contract: contract.name,
-          method: '[construction cost]',
-          avg: variation(
-            ...[contract.gasData, contract.previousVersion.gasData].map(x => Math.round(average(...x))),
-            BASE_TX_COST,
-          ),
-        },
-      ])
-      .sort((a, b) => `${a.contract}:${a.method}`.localeCompare(`${b.contract}:${b.method}`));
-
-    const methods = Object.keys(updateInfo.methods)
-      .filter(key => refInfo.methods[key])
-      .filter(key => updateInfo.methods[key].numberOfCalls > 0)
-      .filter(
-        key => !opts.strictTesting || updateInfo.methods[key].numberOfCalls === refInfo.methods[key].numberOfCalls,
-      )
-      .map(key => ({
-        contract: refInfo.methods[key].contract,
-        method: refInfo.methods[key].fnSig,
-        min: variation(...[updateInfo, refInfo].map(x => Math.min(...x.methods[key].gasData)), BASE_TX_COST),
-        max: variation(...[updateInfo, refInfo].map(x => Math.max(...x.methods[key].gasData)), BASE_TX_COST),
-        avg: variation(...[updateInfo, refInfo].map(x => Math.round(average(...x.methods[key].gasData))), BASE_TX_COST),
-      }))
-      .sort((a, b) => `${a.contract}:${a.method}`.localeCompare(`${b.contract}:${b.method}`));
-
-    return []
-      .concat(deployments, methods)
-      .filter(row => !opts.hideEqual || row.min?.delta || row.max?.delta || row.avg?.delta);
+    const refContracts = ref.contracts ?? {};
+    const updateContracts = update.contracts ?? {};
+    // Drop contracts the change cannot reach: their min/max/avg/median only move with test-suite
+    // churn, not a real change. `sourceName` is the path `filtered` is expressed in.
+    return Object.entries(updateContracts)
+      .filter(([key]) => key in refContracts)
+      .filter(([, contract]) => !opts.filtered || opts.filtered.has(contract.sourceName))
+      .flatMap(([key, contract]) => {
+        const refContract = refContracts[key];
+        const refFunctions = refContracts[key]?.functions ?? {};
+        return [
+          ...(contract.deployment && refContract.deployment
+            ? [
+                {
+                  contract: contract.contractName,
+                  method: '[constructor]',
+                  ...variations(contract.deployment, refContract.deployment, BASE_TX_COST),
+                },
+              ]
+            : []),
+          ...Object.entries(contract.functions ?? {})
+            .filter(([method]) => method in refFunctions)
+            .filter(([method, data]) => !opts.strictTesting || data.count === refFunctions[method].count)
+            .map(([method, currentData]) => ({
+              contract: contract.contractName,
+              method,
+              ...variations(currentData, refFunctions[method], BASE_TX_COST),
+            })),
+        ];
+      })
+      .sort((a, b) => `${a.contract}:${a.method}`.localeCompare(`${b.contract}:${b.method}`))
+      .filter(row => !opts.hideEqual || row.min?.delta || row.max?.delta || row.avg?.delta || row.median?.delta);
   }
 }
 
@@ -130,6 +122,7 @@ function formatCmpShell(rows) {
     { txt: 'Method', length: methodLength },
     { txt: 'Min', length: 30 },
     { txt: 'Max', length: 30 },
+    { txt: 'Median', length: 30 },
     { txt: 'Avg', length: 30 },
     { txt: '', length: 0 },
   ];
@@ -150,6 +143,7 @@ function formatCmpShell(rows) {
         entry.method.padEnd(methodLength),
         ...formatCellShell(entry.min),
         ...formatCellShell(entry.max),
+        ...formatCellShell(entry.median),
         ...formatCellShell(entry.avg),
         '',
       ]
@@ -197,6 +191,9 @@ function formatCmpMarkdown(rows) {
     { txt: 'Max', align: 'right' },
     { txt: '(+/-)', align: 'right' },
     { txt: '%', align: 'right' },
+    { txt: 'Median', align: 'right' },
+    { txt: '(+/-)', align: 'right' },
+    { txt: '%', align: 'right' },
     { txt: 'Avg', align: 'right' },
     { txt: '(+/-)', align: 'right' },
     { txt: '%', align: 'right' },
@@ -222,6 +219,7 @@ function formatCmpMarkdown(rows) {
           entry.method,
           ...formatCellMarkdown(entry.min),
           ...formatCellMarkdown(entry.max),
+          ...formatCellMarkdown(entry.median),
           ...formatCellMarkdown(entry.avg),
           '',
         ]
@@ -236,11 +234,14 @@ function formatCmpMarkdown(rows) {
 }
 
 // MAIN
-const report = Report.compare(Report.load(argv._[0]), Report.load(argv._[1]), argv);
+const filtered = argv.filtered && new Set(Report.load(argv.filtered));
+const report = Report.compare(Report.load(argv._[0]), Report.load(argv._[1]), { ...argv, filtered });
 
 switch (argv.style) {
   case 'markdown':
-    console.log(formatCmpMarkdown(report));
+    // Empty output (no reachable contract changed cost) rather than a bare header: gas-comment.yml
+    // deletes the comment when the body is empty.
+    if (report.length > 0) console.log(formatCmpMarkdown(report));
     break;
   case 'shell':
   default:

@@ -1,12 +1,15 @@
-const { ethers, predeploy } = require('hardhat');
-const { loadFixture } = require('@nomicfoundation/hardhat-network-helpers');
+import { network } from 'hardhat';
+import { ERC4337Helper } from '@openzeppelin/contracts/test/helpers/erc4337';
+import { getDomain, PackedUserOperation } from '@openzeppelin/contracts/test/helpers/eip712';
+import { MODULE_TYPE_VALIDATOR } from '@openzeppelin/contracts/test/helpers/erc7579';
+import { shouldBehaveLikeERC7579Module, shouldBehaveLikeERC7579Validator } from './ERC7579Module.behavior';
 
-const { impersonate } = require('@openzeppelin/contracts/test/helpers/account');
-const { getDomain, PackedUserOperation } = require('@openzeppelin/contracts/test/helpers/eip712');
-const { ERC4337Helper } = require('@openzeppelin/contracts/test/helpers/erc4337');
-const { MODULE_TYPE_VALIDATOR } = require('@openzeppelin/contracts/test/helpers/erc7579');
-
-const { shouldBehaveLikeERC7579Module, shouldBehaveLikeERC7579Validator } = require('./ERC7579Module.behavior');
+const connection = await network.create();
+const {
+  ethers,
+  helpers: { impersonate },
+  networkHelpers: { loadFixture },
+} = connection;
 
 async function fixture() {
   const [other] = await ethers.getSigners();
@@ -15,9 +18,9 @@ async function fixture() {
   const mock = await ethers.deployContract('$ERC7579Signature');
 
   // ERC-4337 env
-  const helper = new ERC4337Helper();
+  const helper = new ERC4337Helper(connection);
   await helper.wait();
-  const entrypointDomain = await getDomain(predeploy.entrypoint.v09);
+  const entrypointDomain = await getDomain(ethers.predeploy.entrypoint.v09);
 
   // Prepare signer
   const signer = ethers.Wallet.createRandom();
@@ -47,7 +50,7 @@ async function fixture() {
 
 describe('ERC7579Validator', function () {
   beforeEach(async function () {
-    Object.assign(this, await loadFixture(fixture));
+    Object.assign(this, connection, await loadFixture(fixture));
   });
 
   describe('ECDSA key', function () {

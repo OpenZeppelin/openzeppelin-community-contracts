@@ -1,11 +1,9 @@
-const { ethers } = require('hardhat');
-const { expect } = require('chai');
+import { ethers } from 'ethers';
+import { expect } from 'chai';
 
-const { batchInBlock } = require('@openzeppelin/contracts/test/helpers/txpool');
-const { interfaceId } = require('@openzeppelin/contracts/test/helpers/methods');
-const {
-  shouldSupportInterfaces,
-} = require('@openzeppelin/contracts/test/utils/introspection/SupportsInterface.behavior');
+import { batchInBlock } from '@openzeppelin/contracts/test/helpers/txpool';
+import { interfaceId } from '@openzeppelin/contracts/test/helpers/methods';
+import { shouldSupportInterfaces } from '@openzeppelin/contracts/test/utils/introspection/SupportsInterface.behavior';
 
 const ERC7540Operator = ['setOperator(address,bool)', 'isOperator(address,address)'];
 const ERC7540Deposit = [
@@ -21,10 +19,10 @@ const ERC7540Redeem = [
   'claimableRedeemRequest(uint256,address)',
 ];
 
-function shouldBehaveLikeERC7540Operator() {
+export function shouldBehaveLikeERC7540Operator() {
   describe('Should behave like ERC7540Operator', function () {
     before(async function () {
-      [this.owner, this.controller, this.receiver, this.operator, this.other] = await ethers.getSigners();
+      [this.owner, this.controller, this.receiver, this.operator, this.other] = await this.ethers.getSigners();
     });
 
     describe('supports ERC-7540 operator interface', function () {
@@ -50,7 +48,7 @@ function shouldBehaveLikeERC7540Operator() {
   });
 }
 
-function shouldBehaveLikeERC7540Deposit({
+export function shouldBehaveLikeERC7540Deposit({
   initialAssets,
   initialShares,
   balance,
@@ -64,7 +62,7 @@ function shouldBehaveLikeERC7540Deposit({
 
   describe('Should behave like ERC7540Deposit', function () {
     before(async function () {
-      [this.owner, this.controller, this.receiver, this.operator, this.other] = await ethers.getSigners();
+      [this.owner, this.controller, this.receiver, this.operator, this.other] = await this.ethers.getSigners();
     });
 
     beforeEach(async function () {
@@ -109,8 +107,8 @@ function shouldBehaveLikeERC7540Deposit({
           await expect(tx)
             .to.emit(this.mock, 'DepositRequest')
             .withArgs(this.controller, this.owner, requestId, this.owner, assets);
-          await expect(tx).to.changeTokenBalances(this.token, [this.owner, this.mock], [-assets, assets]);
-          await expect(tx).to.changeTokenBalances(this.mock, [this.controller], [0n]);
+          await expect(tx).to.changeTokenBalances(this.ethers, this.token, [this.owner, this.mock], [-assets, assets]);
+          await expect(tx).to.changeTokenBalances(this.ethers, this.mock, [this.controller], [0n]);
 
           await expect(this.mock.totalAssets()).to.eventually.equal(assetsBefore);
           await expect(this.mock.totalSupply()).to.eventually.equal(supplyBefore);
@@ -136,8 +134,8 @@ function shouldBehaveLikeERC7540Deposit({
           await expect(tx)
             .to.emit(this.mock, 'DepositRequest')
             .withArgs(this.controller, this.owner, requestId, this.operator, assets);
-          await expect(tx).to.changeTokenBalances(this.token, [this.owner, this.mock], [-assets, assets]);
-          await expect(tx).to.changeTokenBalances(this.mock, [this.controller], [0n]);
+          await expect(tx).to.changeTokenBalances(this.ethers, this.token, [this.owner, this.mock], [-assets, assets]);
+          await expect(tx).to.changeTokenBalances(this.ethers, this.mock, [this.controller], [0n]);
         });
 
         it('reverts when caller is neither owner nor operator of owner', async function () {
@@ -154,7 +152,7 @@ function shouldBehaveLikeERC7540Deposit({
               () =>
                 this.mock.connect(this.owner).requestDeposit(42n, this.controller, this.owner, { gasLimit: 200000n }),
             ],
-            ethers.provider,
+            this.ethers.provider,
           );
 
           const requestId1 = await this.getRequestId(tx1);
@@ -250,11 +248,11 @@ function shouldBehaveLikeERC7540Deposit({
 
       describe('claim', function () {
         beforeEach(async function () {
-          (this.requestId = await this.mock
+          ((this.requestId = await this.mock
             .connect(this.owner)
             .requestDeposit(assets, this.controller, this.owner)
             .then(this.getRequestId)),
-            await this.fulfillDeposit(this.requestId, assets, shares, this.controller);
+            await this.fulfillDeposit(this.requestId, assets, shares, this.controller));
         });
 
         describe('via deposit()', function () {
@@ -273,7 +271,7 @@ function shouldBehaveLikeERC7540Deposit({
               .deposit(assets, this.receiver, ethers.Typed.address(this.controller));
 
             await expect(tx).to.emit(this.mock, 'Deposit').withArgs(this.controller, this.receiver, assets, shares);
-            await expect(tx).to.changeTokenBalance(this.mock, this.receiver, shares);
+            await expect(tx).to.changeTokenBalance(this.ethers, this.mock, this.receiver, shares);
 
             await expect(this.mock.pendingDepositRequest(this.requestId, this.controller)).to.eventually.equal(0n);
             await expect(this.mock.claimableDepositRequest(this.requestId, this.controller)).to.eventually.equal(0n);
@@ -292,7 +290,7 @@ function shouldBehaveLikeERC7540Deposit({
               .deposit(assets, this.receiver, ethers.Typed.address(this.controller));
 
             await expect(tx).to.emit(this.mock, 'Deposit').withArgs(this.controller, this.receiver, assets, shares);
-            await expect(tx).to.changeTokenBalance(this.mock, this.receiver, shares);
+            await expect(tx).to.changeTokenBalance(this.ethers, this.mock, this.receiver, shares);
           });
 
           it('reverts when trying to deposit more than what is claimable', async function () {
@@ -318,7 +316,7 @@ function shouldBehaveLikeERC7540Deposit({
               .connect(this.controller)
               .deposit(0n, this.receiver, ethers.Typed.address(this.controller));
             await expect(tx).to.emit(this.mock, 'Deposit').withArgs(this.controller, this.receiver, 0n, 0n);
-            await expect(tx).to.changeTokenBalance(this.mock, this.receiver, 0n);
+            await expect(tx).to.changeTokenBalance(this.ethers, this.mock, this.receiver, 0n);
           });
         });
 
@@ -339,7 +337,7 @@ function shouldBehaveLikeERC7540Deposit({
 
             await expect(tx).to.emit(this.mock, 'Deposit').withArgs(this.controller, this.receiver, assets, shares);
 
-            await expect(tx).to.changeTokenBalance(this.mock, this.receiver, shares);
+            await expect(tx).to.changeTokenBalance(this.ethers, this.mock, this.receiver, shares);
 
             await expect(this.mock.pendingDepositRequest(this.requestId, this.controller)).to.eventually.equal(0n);
             await expect(this.mock.claimableDepositRequest(this.requestId, this.controller)).to.eventually.equal(0n);
@@ -358,7 +356,7 @@ function shouldBehaveLikeERC7540Deposit({
               .mint(shares, this.receiver, ethers.Typed.address(this.controller));
 
             await expect(tx).to.emit(this.mock, 'Deposit').withArgs(this.controller, this.receiver, assets, shares);
-            await expect(tx).to.changeTokenBalance(this.mock, this.receiver, shares);
+            await expect(tx).to.changeTokenBalance(this.ethers, this.mock, this.receiver, shares);
           });
 
           it('reverts when trying to mint more than what is claimable', async function () {
@@ -384,7 +382,7 @@ function shouldBehaveLikeERC7540Deposit({
               .connect(this.controller)
               .mint(0n, this.receiver, ethers.Typed.address(this.controller));
             await expect(tx).to.emit(this.mock, 'Deposit').withArgs(this.controller, this.receiver, 0n, 0n);
-            await expect(tx).to.changeTokenBalance(this.mock, this.receiver, 0n);
+            await expect(tx).to.changeTokenBalance(this.ethers, this.mock, this.receiver, 0n);
           });
         });
       });
@@ -392,7 +390,7 @@ function shouldBehaveLikeERC7540Deposit({
   });
 }
 
-function shouldBehaveLikeERC7540Redeem({ initialAssets, initialShares, balance, supportCustomFulfill } = {}) {
+export function shouldBehaveLikeERC7540Redeem({ initialAssets, initialShares, balance, supportCustomFulfill } = {}) {
   initialAssets ??= ethers.parseEther('17000000');
   initialShares ??= ethers.parseEther('42000000');
   balance ??= ethers.parseEther('1000');
@@ -400,7 +398,7 @@ function shouldBehaveLikeERC7540Redeem({ initialAssets, initialShares, balance, 
 
   describe('Should behave like ERC7540Redeem', function () {
     before(async function () {
-      [this.owner, this.controller, this.receiver, this.operator, this.other] = await ethers.getSigners();
+      [this.owner, this.controller, this.receiver, this.operator, this.other] = await this.ethers.getSigners();
     });
 
     beforeEach(async function () {
@@ -447,8 +445,8 @@ function shouldBehaveLikeERC7540Redeem({ initialAssets, initialShares, balance, 
           await expect(tx)
             .to.emit(this.mock, 'RedeemRequest')
             .withArgs(this.controller, this.owner, requestId, this.owner, shares);
-          await expect(tx).to.changeTokenBalances(this.token, [this.controller, this.mock], [0n, 0n]);
-          await expect(tx).to.changeTokenBalances(this.mock, [this.owner], [-shares]);
+          await expect(tx).to.changeTokenBalances(this.ethers, this.token, [this.controller, this.mock], [0n, 0n]);
+          await expect(tx).to.changeTokenBalances(this.ethers, this.mock, [this.owner], [-shares]);
 
           // totalSupply includes shares for in-flight redeem
           await expect(this.mock.totalAssets()).to.eventually.equal(assetsBefore);
@@ -476,8 +474,8 @@ function shouldBehaveLikeERC7540Redeem({ initialAssets, initialShares, balance, 
           await expect(tx)
             .to.emit(this.mock, 'RedeemRequest')
             .withArgs(this.controller, this.owner, requestId, this.operator, shares);
-          await expect(tx).to.changeTokenBalances(this.token, [this.controller, this.mock], [0n, 0n]);
-          await expect(tx).to.changeTokenBalances(this.mock, [this.owner], [-shares]);
+          await expect(tx).to.changeTokenBalances(this.ethers, this.token, [this.controller, this.mock], [0n, 0n]);
+          await expect(tx).to.changeTokenBalances(this.ethers, this.mock, [this.owner], [-shares]);
         });
 
         it('spends allowance when caller is neither owner nor operator', async function () {
@@ -507,7 +505,7 @@ function shouldBehaveLikeERC7540Redeem({ initialAssets, initialShares, balance, 
               () =>
                 this.mock.connect(this.operator).requestRedeem(42n, this.controller, this.owner, { gasLimit: 200000n }),
             ],
-            ethers.provider,
+            this.ethers.provider,
           );
 
           const requestId1 = await this.getRequestId(tx1);
@@ -618,7 +616,12 @@ function shouldBehaveLikeERC7540Redeem({ initialAssets, initialShares, balance, 
             await expect(tx)
               .to.emit(this.mock, 'Withdraw')
               .withArgs(this.controller, this.receiver, this.controller, assets, shares);
-            await expect(tx).to.changeTokenBalances(this.token, [this.mock, this.receiver], [-assets, assets]);
+            await expect(tx).to.changeTokenBalances(
+              this.ethers,
+              this.token,
+              [this.mock, this.receiver],
+              [-assets, assets],
+            );
 
             await expect(this.mock.pendingRedeemRequest(this.requestId, this.controller)).to.eventually.equal(0n);
             await expect(this.mock.claimableRedeemRequest(this.requestId, this.controller)).to.eventually.equal(0n);
@@ -633,7 +636,12 @@ function shouldBehaveLikeERC7540Redeem({ initialAssets, initialShares, balance, 
             await expect(tx)
               .to.emit(this.mock, 'Withdraw')
               .withArgs(this.operator, this.receiver, this.controller, assets, shares);
-            await expect(tx).to.changeTokenBalances(this.token, [this.mock, this.receiver], [-assets, assets]);
+            await expect(tx).to.changeTokenBalances(
+              this.ethers,
+              this.token,
+              [this.mock, this.receiver],
+              [-assets, assets],
+            );
           });
 
           it('reverts when trying to redeem more than what is claimable', async function () {
@@ -653,7 +661,7 @@ function shouldBehaveLikeERC7540Redeem({ initialAssets, initialShares, balance, 
             await expect(tx)
               .to.emit(this.mock, 'Withdraw')
               .withArgs(this.controller, this.receiver, this.controller, 0n, 0n);
-            await expect(tx).to.changeTokenBalances(this.token, [this.mock, this.receiver], [0n, 0n]);
+            await expect(tx).to.changeTokenBalances(this.ethers, this.token, [this.mock, this.receiver], [0n, 0n]);
           });
         });
 
@@ -671,7 +679,12 @@ function shouldBehaveLikeERC7540Redeem({ initialAssets, initialShares, balance, 
             await expect(tx)
               .to.emit(this.mock, 'Withdraw')
               .withArgs(this.controller, this.receiver, this.controller, assets, shares);
-            await expect(tx).to.changeTokenBalances(this.token, [this.mock, this.receiver], [-assets, assets]);
+            await expect(tx).to.changeTokenBalances(
+              this.ethers,
+              this.token,
+              [this.mock, this.receiver],
+              [-assets, assets],
+            );
 
             await expect(this.mock.pendingRedeemRequest(this.requestId, this.controller)).to.eventually.equal(0n);
             await expect(this.mock.claimableRedeemRequest(this.requestId, this.controller)).to.eventually.equal(0n);
@@ -686,7 +699,12 @@ function shouldBehaveLikeERC7540Redeem({ initialAssets, initialShares, balance, 
             await expect(tx)
               .to.emit(this.mock, 'Withdraw')
               .withArgs(this.operator, this.receiver, this.controller, assets, shares);
-            await expect(tx).to.changeTokenBalances(this.token, [this.mock, this.receiver], [-assets, assets]);
+            await expect(tx).to.changeTokenBalances(
+              this.ethers,
+              this.token,
+              [this.mock, this.receiver],
+              [-assets, assets],
+            );
           });
 
           it('reverts when trying to withdraw more than what is claimable', async function () {
@@ -706,16 +724,10 @@ function shouldBehaveLikeERC7540Redeem({ initialAssets, initialShares, balance, 
             await expect(tx)
               .to.emit(this.mock, 'Withdraw')
               .withArgs(this.controller, this.receiver, this.controller, 0n, 0n);
-            await expect(tx).to.changeTokenBalances(this.token, [this.mock, this.receiver], [0n, 0n]);
+            await expect(tx).to.changeTokenBalances(this.ethers, this.token, [this.mock, this.receiver], [0n, 0n]);
           });
         });
       });
     });
   });
 }
-
-module.exports = {
-  shouldBehaveLikeERC7540Operator,
-  shouldBehaveLikeERC7540Deposit,
-  shouldBehaveLikeERC7540Redeem,
-};

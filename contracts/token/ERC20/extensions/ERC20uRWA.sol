@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.26;
 
-import {IERC7943Fungible} from "../../../interfaces/IERC7943.sol";
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import {ERC165, IERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 import {TransientSlot} from "@openzeppelin/contracts/utils/TransientSlot.sol";
+import {IERC7943Fungible} from "../../../interfaces/IERC7943.sol";
 import {ERC20Freezable} from "./ERC20Freezable.sol";
 import {ERC20Restricted} from "./ERC20Restricted.sol";
 
@@ -62,7 +62,7 @@ abstract contract ERC20uRWA is ERC20, ERC165, ERC20Freezable, ERC20Restricted, I
      * checks to the internal {_update} function, which enforces {canSend}, {canReceive} and the
      * unfrozen balance directly. Consider overriding {_update} accordingly to keep both in sync.
      */
-    function canTransfer(address from, address to, uint256 amount) external view virtual returns (bool) {
+    function canTransfer(address from, address to, uint256 amount) public view virtual returns (bool) {
         return canSend(from) && canReceive(to) && (amount > balanceOf(from) || amount <= available(from));
     }
 

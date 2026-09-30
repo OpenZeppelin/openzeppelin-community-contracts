@@ -1,23 +1,14 @@
-const { ethers } = require('hardhat');
-const { getLocalChain } = require('@openzeppelin/contracts/test/helpers/chains');
-
-async function deploy(owner) {
-  const chain = await getLocalChain();
-
-  const axelar = await ethers.deployContract('AxelarGatewayMock');
-  const gatewayA = await ethers.deployContract('AxelarGatewayAdapter', [axelar, owner]);
-  const gatewayB = await ethers.deployContract('AxelarGatewayAdapter', [axelar, owner]);
+export async function deploy(connection, owner) {
+  const axelar = await connection.ethers.deployContract('AxelarGatewayMock');
+  const gatewayA = await connection.ethers.deployContract('AxelarGatewayAdapter', [axelar, owner]);
+  const gatewayB = await connection.ethers.deployContract('AxelarGatewayAdapter', [axelar, owner]);
 
   await Promise.all([
-    gatewayA.connect(owner).registerChainEquivalence(chain.erc7930, 'local'),
-    gatewayB.connect(owner).registerChainEquivalence(chain.erc7930, 'local'),
-    gatewayA.connect(owner).registerRemoteGateway(chain.toErc7930(gatewayB)),
-    gatewayB.connect(owner).registerRemoteGateway(chain.toErc7930(gatewayA)),
+    gatewayA.connect(owner).registerChainEquivalence(connection.helpers.chain.erc7930, 'local'),
+    gatewayB.connect(owner).registerChainEquivalence(connection.helpers.chain.erc7930, 'local'),
+    gatewayA.connect(owner).registerRemoteGateway(connection.helpers.chain.toErc7930(gatewayB)),
+    gatewayB.connect(owner).registerRemoteGateway(connection.helpers.chain.toErc7930(gatewayA)),
   ]);
 
-  return { chain, axelar, gatewayA, gatewayB };
+  return { axelar, gatewayA, gatewayB };
 }
-
-module.exports = {
-  deploy,
-};

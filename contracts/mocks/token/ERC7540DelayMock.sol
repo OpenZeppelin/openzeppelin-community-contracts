@@ -11,6 +11,7 @@ abstract contract ERC7540DelayMock is ERC7540DelayDeposit, ERC7540DelayRedeem {
         return super.clock();
     }
 
+    // solhint-disable-next-line func-name-mixedcase
     function CLOCK_MODE()
         public
         view

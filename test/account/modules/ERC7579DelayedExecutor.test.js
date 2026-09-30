@@ -1,19 +1,22 @@
-const { ethers, predeploy } = require('hardhat');
-const { expect } = require('chai');
-const { loadFixture, time } = require('@nomicfoundation/hardhat-network-helpers');
-
-const { impersonate } = require('@openzeppelin/contracts/test/helpers/account');
-const { ERC4337Helper } = require('@openzeppelin/contracts/test/helpers/erc4337');
-const {
+import { network } from 'hardhat';
+import { expect } from 'chai';
+import { ERC4337Helper } from '@openzeppelin/contracts/test/helpers/erc4337';
+import {
   MODULE_TYPE_EXECUTOR,
   CALL_TYPE_CALL,
   EXEC_TYPE_DEFAULT,
   encodeMode,
   encodeSingle,
-} = require('@openzeppelin/contracts/test/helpers/erc7579');
-const { OperationState } = require('../../helpers/enums');
+} from '@openzeppelin/contracts/test/helpers/erc7579';
+import { OperationState } from '../../helpers/enums';
+import { shouldBehaveLikeERC7579Module } from './ERC7579Module.behavior';
 
-const { shouldBehaveLikeERC7579Module } = require('./ERC7579Module.behavior');
+const connection = await network.create();
+const {
+  ethers,
+  helpers: { time, impersonate },
+  networkHelpers: { loadFixture },
+} = connection;
 
 async function fixture() {
   const [other] = await ethers.getSigners();
@@ -23,7 +26,7 @@ async function fixture() {
   const target = await ethers.deployContract('CallReceiverMock');
 
   // ERC-4337 env
-  const helper = new ERC4337Helper();
+  const helper = new ERC4337Helper(connection);
   await helper.wait();
 
   // Prepare module installation data
@@ -34,7 +37,7 @@ async function fixture() {
   // ERC-7579 account
   const mockAccount = await helper.newAccount('$AccountERC7579');
   const mockFromAccount = await impersonate(mockAccount.address).then(asAccount => mock.connect(asAccount));
-  const mockAccountFromEntrypoint = await impersonate(predeploy.entrypoint.v09.target).then(asEntrypoint =>
+  const mockAccountFromEntrypoint = await impersonate(ethers.predeploy.entrypoint.v09.target).then(asEntrypoint =>
     mockAccount.connect(asEntrypoint),
   );
 
@@ -69,7 +72,7 @@ describe('ERC7579DelayedExecutor', function () {
   const salt = ethers.ZeroHash;
 
   beforeEach(async function () {
-    Object.assign(this, await loadFixture(fixture));
+    Object.assign(this, connection, await loadFixture(fixture));
   });
 
   shouldBehaveLikeERC7579Module();
@@ -83,7 +86,7 @@ describe('ERC7579DelayedExecutor', function () {
     await expect(this.mock.state(this.mockAccount.address, salt, this.mode, this.calldata)).to.eventually.eq(
       OperationState.Scheduled,
     );
-    await time.increase(this.delay);
+    await time.increaseBy.timestamp(this.delay);
     await expect(this.mock.state(this.mockAccount.address, salt, this.mode, this.calldata)).to.eventually.eq(
       OperationState.Ready,
     );
@@ -102,11 +105,11 @@ describe('ERC7579DelayedExecutor', function () {
     await expect(this.mock.state(this.mockAccount.address, salt, this.mode, this.calldata)).to.eventually.eq(
       OperationState.Scheduled,
     );
-    await time.increase(this.delay);
+    await time.increaseBy.timestamp(this.delay);
     await expect(this.mock.state(this.mockAccount.address, salt, this.mode, this.calldata)).to.eventually.eq(
       OperationState.Ready,
     );
-    await time.increase(this.expiration);
+    await time.increaseBy.timestamp(this.expiration);
     await expect(this.mock.state(this.mockAccount.address, salt, this.mode, this.calldata)).to.eventually.eq(
       OperationState.Expired,
     );
@@ -121,7 +124,7 @@ describe('ERC7579DelayedExecutor', function () {
     await expect(this.mock.state(this.mockAccount.address, salt, this.mode, this.calldata)).to.eventually.eq(
       OperationState.Scheduled,
     );
-    await time.increase(this.delay);
+    await time.increaseBy.timestamp(this.delay);
     await expect(this.mock.state(this.mockAccount.address, salt, this.mode, this.calldata)).to.eventually.eq(
       OperationState.Ready,
     );
@@ -133,7 +136,7 @@ describe('ERC7579DelayedExecutor', function () {
 
   it('sets an initial delay and expiration on installation', async function () {
     const tx = await this.mockAccountFromEntrypoint.installModule(this.moduleType, this.mock.target, this.installData);
-    const now = await time.latest();
+    const now = await time.clock.timestamp();
     await expect(tx)
       .to.emit(this.mock, 'ERC7579ExecutorDelayUpdated')
       .withArgs(this.mockAccount.address, this.delay, now)
@@ -149,7 +152,7 @@ describe('ERC7579DelayedExecutor', function () {
 
   it('sets default delay and expiration on installation', async function () {
     const tx = await this.mockAccountFromEntrypoint.installModule(this.moduleType, this.mock.target, '0x');
-    const now = await time.latest();
+    const now = await time.clock.timestamp();
     await expect(tx)
       .to.emit(this.mock, 'ERC7579ExecutorDelayUpdated')
       .withArgs(this.mockAccount.address, time.duration.days(5), now)
@@ -160,7 +163,7 @@ describe('ERC7579DelayedExecutor', function () {
   it('schedule delay unset and unsets expiration on uninstallation', async function () {
     await this.mockAccountFromEntrypoint.installModule(this.moduleType, this.mock.target, this.installData);
     const tx = await this.mockAccountFromEntrypoint.uninstallModule(this.moduleType, this.mock.target, '0x');
-    const now = await time.latest();
+    const now = await time.clock.timestamp();
     await expect(tx)
       .to.emit(this.mock, 'ERC7579ExecutorDelayUpdated')
       .withArgs(this.mockAccount.address, 0, now + this.delay) // Old delay
@@ -173,7 +176,7 @@ describe('ERC7579DelayedExecutor', function () {
 
     const newDelay = time.duration.days(5);
     const tx = await this.mockFromAccount.setDelay(newDelay);
-    const now = await time.latest();
+    const now = await time.clock.timestamp();
     const effect = now + this.delay - newDelay;
 
     // Delay is scheduled, will take effect later
@@ -183,7 +186,7 @@ describe('ERC7579DelayedExecutor', function () {
     await expect(this.mock.getDelay(this.mockAccount.target)).to.eventually.deep.equal([this.delay, newDelay, effect]);
 
     // Later, it takes effect
-    await time.increaseTo(effect);
+    await time.increaseTo.timestamp(effect);
     await expect(this.mock.getDelay(this.mockAccount.target)).to.eventually.deep.equal([newDelay, 0, 0]);
   });
 
@@ -205,7 +208,7 @@ describe('ERC7579DelayedExecutor', function () {
     it('schedules an operation if called by the account', async function () {
       const id = this.mock.hashOperation(this.mockAccount.address, salt, this.mode, this.calldata);
       const tx = await this.mockFromAccount.schedule(this.mockAccount.address, salt, this.mode, this.calldata);
-      const now = await time.latest();
+      const now = await time.clock.timestamp();
       await expect(tx)
         .to.emit(this.mock, 'ERC7579ExecutorOperationScheduled')
         .withArgs(this.mockAccount.address, id, salt, this.mode, this.calldata, now + this.delay);
@@ -227,7 +230,7 @@ describe('ERC7579DelayedExecutor', function () {
   describe('execution', function () {
     beforeEach(async function () {
       await this.mockAccountFromEntrypoint.installModule(this.moduleType, this.mock.target, this.installData);
-      const now = await time.latest();
+      const now = await time.clock.timestamp();
       const [delay] = await this.mock.getDelay(this.mockAccount.address);
       await this.mock.$_scheduleAt(this.mockAccount.address, salt, this.mode, this.calldata, now, delay);
     });
@@ -245,7 +248,7 @@ describe('ERC7579DelayedExecutor', function () {
     });
 
     it('executes if called by the account when delay passes but has not expired with any caller', async function () {
-      await time.increase(this.delay);
+      await time.increaseBy.timestamp(this.delay);
       await expect(this.mock.execute(this.mockAccount.address, salt, this.mode, this.calldata))
         .to.emit(this.target, 'MockFunctionCalledWithArgs')
         .withArgs(...this.args);
@@ -255,7 +258,7 @@ describe('ERC7579DelayedExecutor', function () {
     });
 
     it('executes if called by the account when delay passes but has not expired with the account as caller', async function () {
-      await time.increase(this.delay);
+      await time.increaseBy.timestamp(this.delay);
       await expect(this.mockFromAccount.execute(this.mockAccount.address, salt, this.mode, this.calldata))
         .to.emit(this.target, 'MockFunctionCalledWithArgs')
         .withArgs(...this.args);
@@ -265,14 +268,14 @@ describe('ERC7579DelayedExecutor', function () {
     });
 
     it('reverts with ERC7579ExecutorUnexpectedOperationState if the operation was expired with any caller', async function () {
-      await time.increase(this.delay + this.expiration);
+      await time.increaseBy.timestamp(this.delay + this.expiration);
       await expect(
         this.mock.execute(this.mockAccount.address, salt, this.mode, this.calldata),
       ).to.be.revertedWithCustomError(this.mock, 'ERC7579ExecutorUnexpectedOperationState');
     });
 
     it('reverts if the operation was expired with the account as caller', async function () {
-      await time.increase(this.delay + this.expiration);
+      await time.increaseBy.timestamp(this.delay + this.expiration);
       await expect(
         this.mockFromAccount.execute(this.mockAccount.address, salt, this.mode, this.calldata),
       ).to.be.revertedWithCustomError(this.mock, 'ERC7579ExecutorUnexpectedOperationState'); // Allowed, expired
@@ -282,7 +285,7 @@ describe('ERC7579DelayedExecutor', function () {
   describe('cancelling', function () {
     beforeEach(async function () {
       await this.mockAccountFromEntrypoint.installModule(this.moduleType, this.mock.target, this.installData);
-      const now = await time.latest();
+      const now = await time.clock.timestamp();
       const [delay] = await this.mock.getDelay(this.mockAccount.address);
       await this.mock.$_scheduleAt(this.mockAccount.address, salt, this.mode, this.calldata, now, delay);
     });
