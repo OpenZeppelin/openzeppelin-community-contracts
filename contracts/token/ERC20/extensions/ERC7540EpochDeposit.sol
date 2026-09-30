@@ -353,16 +353,11 @@ abstract contract ERC7540EpochDeposit is ERC7540 {
             // remains > 0, dirtying the Pending sentinel and stranding later controllers.
             uint256 requested = _convertToDepositShares(epochId, requestedAssets, Math.Rounding.Floor);
 
-            uint256 batchShares;
-            uint256 batchAssets;
-            if (requested <= shares) {
-                batchShares = requested;
-                batchAssets = requestedAssets;
-            } else {
-                // shares < floor(rA*S/A) implies ceil(shares*A/S) <= rA
-                batchShares = shares;
-                batchAssets = _convertToDepositAssets(epochId, shares, Math.Rounding.Ceil);
-            }
+            // shares < floor(rA*S/A) implies ceil(shares*A/S) <= rA
+            (uint256 batchShares, uint256 batchAssets) = shares < requested
+                ? (shares, _convertToDepositAssets(epochId, shares, Math.Rounding.Ceil))
+                : (requested, requestedAssets);
+
             // Dequeue once the request is fully consumed (including when a partial claim rounds up to it)
             if (batchAssets == requestedAssets) _memberOf[controller].popFront();
 
@@ -370,7 +365,7 @@ abstract contract ERC7540EpochDeposit is ERC7540 {
             details.requests[controller] -= batchAssets; // batchAssets <= requestedAssets
             details.totalAssets -= batchAssets; // batchAssets <= requestedAssets <= totalAssets (invariant)
             details.totalShares -= batchShares; // batchShares <= floor(rA*S/A) <= totalShares (matches _asyncMaxMint)
-            shares -= batchShares; // batchShares <= shares (via .min)
+            shares -= batchShares; // batchShares <= shares (batchShares = shares, or requested <= shares)
             assets += batchAssets;
         }
 

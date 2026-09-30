@@ -320,16 +320,11 @@ abstract contract ERC7540EpochRedeem is ERC7540 {
             // remains > 0, dirtying the Pending sentinel and stranding later controllers.
             uint256 requested = _convertToRedeemAssets(epochId, requestedShares, Math.Rounding.Floor);
 
-            uint256 batchAssets;
-            uint256 batchShares;
-            if (requested <= assets) {
-                batchAssets = requested;
-                batchShares = requestedShares;
-            } else {
-                // assets < floor(rS*A/S) implies ceil(assets*S/A) <= rS
-                batchAssets = assets;
-                batchShares = _convertToRedeemShares(epochId, assets, Math.Rounding.Ceil);
-            }
+            // assets < floor(rS*A/S) implies ceil(assets*S/A) <= rS
+            (uint256 batchAssets, uint256 batchShares) = assets < requested
+                ? (assets, _convertToRedeemShares(epochId, assets, Math.Rounding.Ceil))
+                : (requested, requestedShares);
+
             // Dequeue once the request is fully consumed (including when a partial claim rounds up to it)
             if (batchShares == requestedShares) _memberOf[controller].popFront();
 
@@ -337,7 +332,7 @@ abstract contract ERC7540EpochRedeem is ERC7540 {
             details.requests[controller] -= batchShares; // batchShares <= requestedShares
             details.totalAssets -= batchAssets; // batchAssets <= floor(rS*A/S) <= totalAssets (matches _asyncMaxWithdraw)
             details.totalShares -= batchShares; // batchShares <= requestedShares <= totalShares (invariant)
-            assets -= batchAssets; // batchAssets <= assets (via .min)
+            assets -= batchAssets; // batchAssets <= assets (batchAssets = assets, or requested <= assets)
             shares += batchShares;
         }
 
