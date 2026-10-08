@@ -264,8 +264,8 @@ contract ERC7786OpenBridge is IERC7786GatewaySource, IERC7786Recipient, Ownable,
         return _threshold;
     }
 
-    function getRemoteBridge(bytes memory chain) public view virtual returns (bytes memory) {
-        (bytes2 chainType, bytes memory chainReference, ) = chain.parseV1();
+    function getRemoteBridge(bytes memory interoperableAddress) public view virtual returns (bytes memory) {
+        (bytes2 chainType, bytes memory chainReference, ) = interoperableAddress.parseV1();
         return getRemoteBridge(chainType, chainReference);
     }
 
