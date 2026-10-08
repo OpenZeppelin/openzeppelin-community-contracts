@@ -53,6 +53,8 @@ abstract contract ERC7540EpochRedeem is ERC7540 {
 
     mapping(uint256 epochId => EpochRedeemMetadata) private _epochs;
     mapping(address account => DoubleEndedQueue.Bytes32Deque) private _memberOf;
+    uint256 private _claimableShares;
+    uint256 private _claimableAssets;
 
     /// @dev Emitted when a redeem epoch transitions from Pending to Claimable via {_fulfillRedeem}.
     event ERC7540EpochRedeemFulfilled(uint256 indexed epochId, uint256 totalShares, uint256 totalAssets);
@@ -287,8 +289,13 @@ abstract contract ERC7540EpochRedeem is ERC7540 {
 
         _epochs[epochId].totalAssets = totalAssets;
 
-        if (_redeemShareDestination() != address(0)) {
-            _burnSharesOnRedeemFulfill(totalAssets, totalAssets == 0 ? 0 : totalShares);
+        if (totalAssets > 0) {
+            _claimableShares += totalShares;
+            _claimableAssets += totalAssets;
+
+            if (_redeemShareDestination() != address(0)) {
+                _burnSharesOnRedeemFulfill(totalAssets, totalShares);
+            }
         }
 
         emit ERC7540EpochRedeemFulfilled(epochId, totalShares, totalAssets);
@@ -308,6 +315,7 @@ abstract contract ERC7540EpochRedeem is ERC7540 {
      * claims round the consumed shares up, in favor of the vault.
      */
     function _consumeClaimableWithdraw(uint256 assets, address controller) internal virtual override returns (uint256) {
+        uint256 consumed = 0;
         uint256 shares = 0;
 
         while (assets > 0) {
@@ -333,8 +341,12 @@ abstract contract ERC7540EpochRedeem is ERC7540 {
             details.totalAssets -= batchAssets; // batchAssets <= floor(rS*A/S) <= totalAssets (matches _asyncMaxWithdraw)
             details.totalShares -= batchShares; // batchShares <= requestedShares <= totalShares (invariant)
             assets -= batchAssets; // batchAssets <= assets (batchAssets = assets, or requested <= assets)
+            consumed += batchAssets;
             shares += batchShares;
         }
+
+        _claimableShares -= shares;
+        _claimableAssets -= consumed;
 
         return shares;
     }
@@ -349,6 +361,7 @@ abstract contract ERC7540EpochRedeem is ERC7540 {
      * to revert when `batchShares > 0 && batchAssets == 0`.
      */
     function _consumeClaimableRedeem(uint256 shares, address controller) internal virtual override returns (uint256) {
+        uint256 consumed = 0;
         uint256 assets = 0;
 
         while (shares > 0) {
@@ -366,10 +379,24 @@ abstract contract ERC7540EpochRedeem is ERC7540 {
             details.totalShares -= batchShares; // batchShares <= details.totalShares (invariant: requests[c] <= totalShares)
             details.totalAssets -= batchAssets; // batchAssets = floor(batchShares * A/S) <= details.totalAssets (since batchShares <= totalShares)
             shares -= batchShares; // batchShares <= shares (via .min)
+            consumed += batchShares;
             assets += batchAssets;
         }
 
+        _claimableShares -= consumed;
+        _claimableAssets -= assets;
+
         return assets;
+    }
+
+    /// @dev Assets owed to fulfilled but unclaimed epochs.
+    function _totalClaimableRedeemAssets() internal view virtual override returns (uint256) {
+        return _claimableAssets;
+    }
+
+    /// @dev Shares of fulfilled but unclaimed epochs.
+    function _totalClaimableRedeemShares() internal view virtual override returns (uint256) {
+        return _claimableShares;
     }
 
     /**
