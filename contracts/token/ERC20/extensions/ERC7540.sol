@@ -252,24 +252,23 @@ abstract contract ERC7540 is ERC165, ERC20, IERC4626, IERC7540, IERC7575Share {
     }
 
     /**
-     * @dev See {IERC20-totalSupply}.
+     * @dev Total number of shares backing {totalAssets}, used by the vault's conversions in place of
+     * {totalSupply}.
      *
      * Adds {totalPendingRedeemShares} to the ERC-20 supply. When shares are burned at request time
      * (i.e. {_redeemShareDestination} returns `address(0)`), pending redeem shares are removed from
-     * the on-chain supply but still logically outstanding until fulfilled; this override compensates.
+     * the on-chain supply but still logically outstanding until fulfilled; this function compensates.
      * Requests that were fulfilled at a locked rate but not yet claimed are accounted as settled: shares
      * owed to Claimable deposits ({_totalClaimableDepositShares}) are added, and shares of Claimable
      * redeems ({_totalClaimableRedeemShares}) are subtracted.
      *
-     * NOTE: As a consequence, two standard ERC-20 assumptions do not hold: (a) `totalSupply()` may
-     * exceed the sum of all `balanceOf()` (pending shares are virtual and unowned); (b) `totalSupply()`
-     * can change without a matching `Transfer` event when {totalPendingRedeemShares} changes. Integrators
-     * that snapshot supply for governance or reward weighting, or reconstruct supply from event logs
-     * (indexers, bridges), must account for this.
+     * NOTE: {totalSupply} is left unchanged and always equals the sum of all ERC-20 balances, so it can
+     * differ from this value while requests are in flight. Integrators pricing shares should use
+     * {convertToAssets} rather than `totalAssets() / totalSupply()`.
      */
-    function totalSupply() public view virtual override(IERC20, ERC20) returns (uint256) {
+    function _totalOutstandingShares() internal view virtual returns (uint256) {
         return
-            super.totalSupply() +
+            totalSupply() +
             _totalClaimableDepositShares() +
             (totalPendingRedeemShares() - _totalClaimableRedeemShares());
     }
@@ -613,14 +612,14 @@ abstract contract ERC7540 is ERC165, ERC20, IERC4626, IERC7540, IERC7575Share {
      * The offset is configurable via {_decimalsOffset}.
      */
     function _convertToShares(uint256 assets, Math.Rounding rounding) internal view virtual returns (uint256) {
-        return assets.mulDiv(totalSupply() + 10 ** _decimalsOffset(), totalAssets() + 1, rounding);
+        return assets.mulDiv(_totalOutstandingShares() + 10 ** _decimalsOffset(), totalAssets() + 1, rounding);
     }
 
     /**
      * @dev Internal conversion function (from shares to assets) with support for rounding direction.
      */
     function _convertToAssets(uint256 shares, Math.Rounding rounding) internal view virtual returns (uint256) {
-        return shares.mulDiv(totalAssets() + 1, totalSupply() + 10 ** _decimalsOffset(), rounding);
+        return shares.mulDiv(totalAssets() + 1, _totalOutstandingShares() + 10 ** _decimalsOffset(), rounding);
     }
 
     /**
