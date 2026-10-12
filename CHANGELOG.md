@@ -1,3 +1,8 @@
+## 12-10-2026
+
+- `XMSS`: Add a library to verify XMSS-style hash-based signatures (a Merkle tree of WOTS+ one-time keys) instantiated with `keccak256` truncated to 16 bytes.
+- `ERC7913XMSSVerifier`: Add an ERC-7913 signature verifier for `XMSS` keys with a tree height fixed at deployment.
+
 ## 30-09-2026
 
 - `ERC7540`: `_setOperator` now reverts with `ERC7540InvalidSelfOperator` when the controller is set as its own operator. A controller always has unrestricted access to its own tokens and requests, and that access cannot be restricted.
