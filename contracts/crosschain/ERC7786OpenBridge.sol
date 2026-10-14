@@ -102,10 +102,6 @@ contract ERC7786OpenBridge is IERC7786GatewaySource, IERC7786Recipient, Ownable,
      * NOTE: This function does not enforce a maximum size for `payload` nor validate the address component of a
      * validly encoded `recipient`; the caller is responsible for supplying values that the destination chain can
      * decode and that resolve to a live recipient.
-     *
-     * NOTE: Registered gateways are trusted to implement the {IERC7786GatewaySource} interface correctly. The
-     * aggregate send tolerates a subset of gateways failing at runtime, but relies on each gateway conforming to
-     * the interface it was registered under.
      */
     function sendMessage(
         bytes calldata recipient, // Binary Interoperable Address
@@ -326,9 +322,9 @@ contract ERC7786OpenBridge is IERC7786GatewaySource, IERC7786Recipient, Ownable,
      *
      * As a source, a gateway is required to implement {IERC7786GatewaySource} and is trusted to return well-formed
      * data, not consume all forwarded gas, and relay the messages it accepts. As a destination, it is trusted to
-     * deliver only messages properly verified by the underlying protocol, including that they were sent to this
-     * chain. Gateways that break these or any other ERC-7786 requirements are the operator's responsibility to rotate
-     * out via {removeGateway}.
+     * deliver only messages properly verified by the underlying protocol, including but not limited to being sent to
+     * the chain they are delivered to. Gateways that break these or any other ERC-7786 requirements are the
+     * operator's responsibility to rotate out via {removeGateway}.
      */
     function _addGateway(address gateway) internal virtual {
         require(gateway.code.length > 0, ERC7786OpenBridgeGatewayNotAContract(gateway));
