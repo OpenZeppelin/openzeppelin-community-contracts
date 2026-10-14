@@ -320,12 +320,15 @@ contract ERC7786OpenBridge is IERC7786GatewaySource, IERC7786Recipient, Ownable,
     // ================================================== Internal ===================================================
 
     /**
-     * @dev Adds a gateway to the authorized set. Registering a gateway trusts it to implement the
-     * {IERC7786GatewaySource} interface correctly; non-conforming gateways (returning malformed data, returning an
-     * unexpected shape, or refusing to relay) are the operator's responsibility to identify and rotate out via
-     * {removeGateway}. The `gateway.code.length > 0` check is a fat-finger guard against registering a plain EOA;
-     * it does not attest that the address implements the interface (for example, an EIP-7702 delegated EOA carries
-     * a 23-byte delegation indicator and would pass this check).
+     * @dev Adds a gateway to the authorized set. A gateway may serve as a source, a destination, or both. Every
+     * registered gateway is called by {sendMessage}: a gateway that does not support sending must revert, and does
+     * not count toward the sends required by {getThreshold}.
+     *
+     * As a source, a gateway is required to implement {IERC7786GatewaySource} and is trusted to return well-formed
+     * data, not consume all forwarded gas, and relay the messages it accepts. As a destination, it is trusted to
+     * deliver only messages properly verified by the underlying protocol, including that they were sent to this
+     * chain. Gateways that break these or any other ERC-7786 requirements are the operator's responsibility to rotate
+     * out via {removeGateway}.
      */
     function _addGateway(address gateway) internal virtual {
         require(gateway.code.length > 0, ERC7786OpenBridgeGatewayNotAContract(gateway));
