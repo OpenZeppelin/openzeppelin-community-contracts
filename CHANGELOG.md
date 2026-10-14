@@ -1,3 +1,7 @@
+## 14-10-2026
+
+- `ERC7786OpenBridge`: `receiveMessage` now reverts with `ERC7786OpenBridgeInvalidRecipientChain` when the recipient of the message is not on the current chain.
+
 ## 30-09-2026
 
 - `ERC7540`: `_setOperator` now reverts with `ERC7540InvalidSelfOperator` when the controller is set as its own operator. A controller always has unrestricted access to its own tokens and requests, and that access cannot be restricted.

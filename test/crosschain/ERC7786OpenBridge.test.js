@@ -2,7 +2,8 @@ const { ethers } = require('hardhat');
 const { expect } = require('chai');
 const { loadFixture } = require('@nomicfoundation/hardhat-network-helpers');
 const { anyValue } = require('@nomicfoundation/hardhat-chai-matchers/withArgs');
-const { getLocalChain } = require('@openzeppelin/contracts/test/helpers/chains');
+const { impersonate } = require('@openzeppelin/contracts/test/helpers/account');
+const { CHAINS, getLocalChain } = require('@openzeppelin/contracts/test/helpers/chains');
 
 const getAddress = account => ethers.getAddress(account.target ?? account.address ?? account);
 
@@ -256,6 +257,31 @@ describe('ERC7786OpenBridge', function () {
       await expect(bridgeA.connect(this.sender).sendMessage(this.chain.toErc7930(destination), payload, []))
         .to.emit(bridgeB, 'Received')
         .to.emit(bridgeB, 'ExecutionSuccess');
+    });
+  });
+
+  describe('destination chain', function () {
+    it('rejects a message whose recipient is on another chain', async function () {
+      const gateway = await ethers.deployContract('ERC7786GatewayMock');
+      const bridge = await ethers.deployContract('ERC7786OpenBridge', [this.owner, [gateway], 1]);
+      await bridge.registerRemoteBridge(this.chain.toErc7930(this.bridgeA));
+
+      // Same target address, but the recipient is addressed to another chain
+      const destination = await ethers.deployContract('$ERC7786RecipientMock', [bridge]);
+      const foreignChain = CHAINS.Ethereum;
+      const wrappedPayload = ethers.AbiCoder.defaultAbiCoder().encode(
+        ['uint256', 'bytes', 'bytes', 'bytes'],
+        [1n, this.chain.toErc7930(this.sender), foreignChain.toErc7930(destination), ethers.randomBytes(128)],
+      );
+
+      const gatewayAsSigner = await impersonate(gateway.target);
+      await expect(
+        bridge
+          .connect(gatewayAsSigner)
+          .receiveMessage(ethers.ZeroHash, this.chain.toErc7930(this.bridgeA), wrappedPayload),
+      )
+        .to.be.revertedWithCustomError(bridge, 'ERC7786OpenBridgeInvalidRecipientChain')
+        .withArgs(foreignChain.reference);
     });
   });
 });

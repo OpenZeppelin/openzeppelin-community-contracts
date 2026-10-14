@@ -53,6 +53,7 @@ contract ERC7786OpenBridge is IERC7786GatewaySource, IERC7786Recipient, Ownable,
     error ERC7786OpenBridgeThresholdViolation();
     error ERC7786OpenBridgeInvalidExecutionReturnValue();
     error ERC7786OpenBridgeInsufficientGateways();
+    error ERC7786OpenBridgeInvalidRecipientChain(uint256 chainId);
 
     /****************************************************************************************************************
      *                                        S T A T E   V A R I A B L E S                                         *
@@ -166,6 +167,7 @@ contract ERC7786OpenBridge is IERC7786GatewaySource, IERC7786Recipient, Ownable,
      *
      * * the message is not properly formatted or does not originate from the registered bridge on the source
      *   chain.
+     * * the recipient of the message is not on the current chain.
      * * someone tries re-execute a message that was already successfully delivered. This includes gateways that call
      *   this function a second time with a message that was already executed.
      * * the execution of the message (on the {IERC7786Recipient} recipient) is successful but fails to return the
@@ -219,6 +221,8 @@ contract ERC7786OpenBridge is IERC7786GatewaySource, IERC7786Recipient, Ownable,
             payload,
             (uint256, bytes, bytes, bytes)
         );
+        (uint256 chainId, address target) = recipient.parseEvmV1();
+        require(chainId == block.chainid, ERC7786OpenBridgeInvalidRecipientChain(chainId));
 
         // If ready to execute, and not yet executed
         if (tracker.countReceived >= getThreshold()) {
@@ -229,10 +233,9 @@ contract ERC7786OpenBridge is IERC7786GatewaySource, IERC7786Recipient, Ownable,
                 IERC7786Recipient.receiveMessage,
                 (id, originalSender, unwrappedPayload)
             );
-            // slither-disable-next-line reentrancy-no-eth
-            (, address target) = recipient.parseEvmV1();
             // A malicious recipient can pad its return buffer to force the caller to run out of gas copying it back.
             // Only the first 32 bytes are inspected, so bound the copy to that window.
+            // slither-disable-next-line reentrancy-no-eth
             (bool success, bytes32 returndata, ) = LowLevelCall.callReturn64Bytes(target, call);
 
             if (!success) {
