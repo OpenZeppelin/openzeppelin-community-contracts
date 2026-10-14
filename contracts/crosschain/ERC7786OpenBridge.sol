@@ -127,8 +127,6 @@ contract ERC7786OpenBridge is IERC7786GatewaySource, IERC7786Recipient, Ownable,
             uint256 sent = 0;
             for (uint256 i = 0; i < outbox.length; ++i) {
                 address gateway = _gateways.at(i);
-                // send message
-                //
                 // The typed try/catch is intentional: delegates to Solidity's canonical decoding to reject a gateway
                 // that returns EVM success with a value that does not conform to the interface it was registered under.
                 try IERC7786GatewaySource(gateway).sendMessage(bridge, wrappedPayload, attributes) returns (
