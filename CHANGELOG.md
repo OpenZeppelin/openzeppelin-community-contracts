@@ -1,3 +1,7 @@
+## 14-10-2026
+
+- `ERC7786OpenBridge`: `sendMessage` now includes the message nonce in `sendId`, so `sendId` identifies each message even if a gateway returns non-unique ids. This changes the `sendId` value emitted for a given outbox.
+
 ## 30-09-2026
 
 - `ERC7540`: `_setOperator` now reverts with `ERC7540InvalidSelfOperator` when the controller is set as its own operator. A controller always has unrestricted access to its own tokens and requests, and that access cannot be restricted.

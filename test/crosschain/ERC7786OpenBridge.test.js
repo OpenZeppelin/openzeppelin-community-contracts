@@ -180,7 +180,10 @@ describe('ERC7786OpenBridge', function () {
       await this.protocoles[2].setSendId(id2);
 
       // The outbox lists all gateways, including the one that returned a zero id (with its address, not address(0))
-      const sendId = ethers.keccak256(ethers.AbiCoder.defaultAbiCoder().encode(['(address,bytes32)[]'], [outbox]));
+      const nonce = 1n; // first message sent by the fixture's bridge
+      const sendId = ethers.keccak256(
+        ethers.AbiCoder.defaultAbiCoder().encode(['uint256', '(address,bytes32)[]'], [nonce, outbox]),
+      );
 
       await expect(
         this.bridgeA.connect(this.sender).sendMessage(this.chain.toErc7930(destination), payload, attributes),
@@ -189,6 +192,22 @@ describe('ERC7786OpenBridge', function () {
         .withArgs(sendId, this.chain.toErc7930(this.sender), this.chain.toErc7930(destination), payload, 0n, [])
         .to.emit(this.bridgeA, 'OutboxDetails')
         .withArgs(sendId, outbox);
+    });
+
+    it('emits a distinct sendId per message when a gateway returns a constant id', async function () {
+      const destination = await ethers.deployContract('$ERC7786RecipientMock', [this.bridgeB]);
+      await this.protocoles[0].setSendId(ethers.hexlify(ethers.randomBytes(32)));
+
+      const sendIds = [];
+      for (let i = 0; i < 2; ++i) {
+        const tx = await this.bridgeA
+          .connect(this.sender)
+          .sendMessage(this.chain.toErc7930(destination), ethers.randomBytes(128), []);
+        const { logs } = await tx.wait();
+        sendIds.push(logs.find(log => log.fragment?.name === 'OutboxDetails').args.sendId);
+      }
+
+      expect(sendIds[0]).to.not.equal(sendIds[1]);
     });
 
     it('does not emit OutboxDetails and keeps a zero sendId when all gateways return zero', async function () {
