@@ -90,6 +90,9 @@ abstract contract ERC7540 is ERC165, ERC20, IERC4626, IERC7540, IERC7575Share {
     /// @dev The `operator` is not the caller or an approved operator of the `controller`.
     error ERC7540InvalidOperator(address controller, address operator);
 
+    /// @dev The `controller` cannot set (or unset) itself as its own operator.
+    error ERC7540InvalidSelfOperator(address controller);
+
     /// @dev A deposit Request was attempted but {_isDepositAsync} returns `false`.
     error ERC7540SyncDeposit();
 
@@ -171,9 +174,15 @@ abstract contract ERC7540 is ERC165, ERC20, IERC4626, IERC7540, IERC7575Share {
     /**
      * @dev Sets the `operator` approval status for `controller` to `approved`.
      *
+     * Requirements:
+     *
+     * * `operator` must not be the `controller`. A controller always has unrestricted access to its own
+     *   tokens and requests, and that access cannot be revoked.
+     *
      * Emits an {IERC7540Operator-OperatorSet} event.
      */
     function _setOperator(address controller, address operator, bool approved) internal {
+        require(controller != operator, ERC7540InvalidSelfOperator(controller));
         _isOperator[controller][operator] = approved;
         emit OperatorSet(controller, operator, approved);
     }

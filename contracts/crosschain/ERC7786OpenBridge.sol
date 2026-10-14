@@ -6,6 +6,7 @@ import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {IERC7786GatewaySource, IERC7786Recipient} from "@openzeppelin/contracts/interfaces/draft-IERC7786.sol";
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import {Address} from "@openzeppelin/contracts/utils/Address.sol";
+import {LowLevelCall} from "@openzeppelin/contracts/utils/LowLevelCall.sol";
 import {Pausable} from "@openzeppelin/contracts/utils/Pausable.sol";
 import {InteroperableAddress} from "@openzeppelin/contracts/utils/draft-InteroperableAddress.sol";
 
@@ -230,13 +231,18 @@ contract ERC7786OpenBridge is IERC7786GatewaySource, IERC7786Recipient, Ownable,
             );
             // slither-disable-next-line reentrancy-no-eth
             (, address target) = recipient.parseEvmV1();
-            (bool success, bytes memory returndata) = target.call(call);
+            // A malicious recipient can pad its return buffer to force the caller to run out of gas copying it back.
+            // Only the first 32 bytes are inspected, so bound the copy to that window.
+            (bool success, bytes32 returndata, ) = LowLevelCall.callReturn64Bytes(target, call);
 
             if (!success) {
                 // rollback to enable retry
                 tracker.executed = false;
                 emit ExecutionFailed(id);
-            } else if (bytes32(returndata) == bytes32(IERC7786Recipient.receiveMessage.selector)) {
+            } else if (
+                LowLevelCall.returnDataSize() >= 0x20 &&
+                returndata == bytes32(IERC7786Recipient.receiveMessage.selector)
+            ) {
                 // call successful and correct value returned
                 emit ExecutionSuccess(id);
             } else {
