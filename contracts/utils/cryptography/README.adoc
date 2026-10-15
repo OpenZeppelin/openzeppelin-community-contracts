@@ -6,14 +6,18 @@ NOTE: This document is better viewed at https://docs.openzeppelin.com/community-
 A collection of contracts and libraries that implement various signature validation schemes and cryptographic primitives. These utilities enable secure authentication, multisignature operations, and advanced cryptographic operations in smart contracts.
 
  * {ZKEmailUtils}: Library for ZKEmail signature validation utilities, enabling email-based authentication through zero-knowledge proofs.
+ * {XMSS}: Library to verify XMSS-style hash-based signatures instantiated with `keccak256`.
  * {DKIMRegistry}: Implementation of https://eips.ethereum.org/EIPS/eip-7969[ERC-7969] to enable onchain verification of DomainKeys Identified Mail (DKIM) signatures.
  * {SignerZKEmail}: Implementation of an https://docs.openzeppelin.com/contracts/5.x/api/utils/cryptography#AbstractSigner[AbstractSigner] that enables email-based authentication through zero-knowledge proofs.
  * {SignerAccessManaged}: Implementation of an https://docs.openzeppelin.com/contracts/5.x/api/utils/cryptography#AbstractSigner[AbstractSigner] whose authority is delegated to the members of a role tracked by an `IAccessManager`.
  * {ERC7913ZKEmailVerifier}: Ready to use ERC-7913 signature verifiers for ZKEmail.
+ * {ERC7913XMSSVerifier}: Ready to use ERC-7913 signature verifier for XMSS-style hash-based signatures.
 
 == Utils
 
 {{ZKEmailUtils}}
+
+{{XMSS}}
 
 {{DKIMRegistry}}
 
@@ -26,3 +30,5 @@ A collection of contracts and libraries that implement various signature validat
 == Verifiers
 
 {{ERC7913ZKEmailVerifier}}
+
+{{ERC7913XMSSVerifier}}

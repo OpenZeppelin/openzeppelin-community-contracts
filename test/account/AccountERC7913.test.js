@@ -4,7 +4,7 @@ const { loadFixture } = require('@nomicfoundation/hardhat-network-helpers');
 const { getDomain, PackedUserOperation } = require('@openzeppelin/contracts/test/helpers/eip712');
 const { ERC4337Helper } = require('@openzeppelin/contracts/test/helpers/erc4337');
 const { NonNativeSigner } = require('@openzeppelin/contracts/test/helpers/signers');
-const { ZKEmailSigningKey } = require('../helpers/signers');
+const { ZKEmailSigningKey, XMSSSigningKey } = require('../helpers/signers');
 
 const {
   shouldBehaveLikeAccountCore,
@@ -24,6 +24,8 @@ const emailNullifier = '0x00a83fce3d4b1c9ef0f600644c1ecc6c8115b57b1596e0e3295e2c
 const signerZKEmail = new NonNativeSigner(
   new ZKEmailSigningKey(domainName, publicKeyHash, emailNullifier, accountSalt),
 );
+const xmssHeight = 6;
+const signerXMSS = new NonNativeSigner(new XMSSSigningKey(xmssHeight));
 
 // Minimal fixture common to the different signer verifiers
 async function fixture() {
@@ -45,6 +47,7 @@ async function fixture() {
 
   // ERC-7913 verifiers
   const verifierZKEmail = await ethers.deployContract('$ERC7913ZKEmailVerifier');
+  const verifierXMSS = await ethers.deployContract('$ERC7913XMSSVerifier', [xmssHeight]);
 
   // ERC-4337 env
   const helper = new ERC4337Helper();
@@ -67,6 +70,7 @@ async function fixture() {
   return {
     helper,
     verifierZKEmail,
+    verifierXMSS,
     dkim,
     zkEmailVerifier,
     domain,
@@ -105,6 +109,19 @@ describe('AccountERC7913', function () {
         const hash = await userOp.hash();
         return Object.assign(userOp, { signature: this.signer.signingKey.sign(hash).serialized });
       };
+    });
+
+    shouldBehaveLikeAccountCore();
+    shouldBehaveLikeAccountHolder();
+    shouldBehaveLikeERC1271({ erc7739: true });
+    shouldBehaveLikeERC7821();
+  });
+
+  // Using XMSS with an ERC-7913 verifier
+  describe('XMSS', function () {
+    beforeEach(async function () {
+      this.signer = signerXMSS;
+      this.mock = await this.makeMock(ethers.concat([this.verifierXMSS.target, this.signer.signingKey.publicKey]));
     });
 
     shouldBehaveLikeAccountCore();
