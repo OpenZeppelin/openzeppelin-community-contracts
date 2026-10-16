@@ -1,8 +1,8 @@
-const { ethers } = require('hardhat');
-const { expect } = require('chai');
-const { SIG_VALIDATION_SUCCESS, SIG_VALIDATION_FAILURE } = require('@openzeppelin/contracts/test/helpers/erc4337');
+import { ethers } from 'ethers';
+import { expect } from 'chai';
+import { SIG_VALIDATION_SUCCESS, SIG_VALIDATION_FAILURE } from '@openzeppelin/contracts/test/helpers/erc4337';
 
-function shouldBehaveLikeERC7579Module() {
+export function shouldBehaveLikeERC7579Module() {
   describe('behaves like ERC7579Module', function () {
     it('identifies its module type correctly', async function () {
       await expect(this.mock.isModuleType(this.moduleType)).to.eventually.be.true;
@@ -10,14 +10,14 @@ function shouldBehaveLikeERC7579Module() {
     });
 
     it('handles installation, uninstallation, and re-installation', async function () {
-      await expect(this.mockFromAccount.onInstall(this.installData || '0x')).to.not.be.reverted;
-      await expect(this.mockFromAccount.onUninstall(this.uninstallData || '0x')).to.not.be.reverted;
-      await expect(this.mockFromAccount.onInstall(this.installData || '0x')).to.not.be.reverted;
+      await expect(this.mockFromAccount.onInstall(this.installData || '0x')).to.not.revert(this.ethers);
+      await expect(this.mockFromAccount.onUninstall(this.uninstallData || '0x')).to.not.revert(this.ethers);
+      await expect(this.mockFromAccount.onInstall(this.installData || '0x')).to.not.revert(this.ethers);
     });
   });
 }
 
-function shouldBehaveLikeERC7579Validator() {
+export function shouldBehaveLikeERC7579Validator() {
   describe('behaves like ERC7579Validator', function () {
     const MAGIC_VALUE = '0x1626ba7e';
     const INVALID_VALUE = '0xffffffff';
@@ -63,8 +63,3 @@ function shouldBehaveLikeERC7579Validator() {
     });
   });
 }
-
-module.exports = {
-  shouldBehaveLikeERC7579Module,
-  shouldBehaveLikeERC7579Validator,
-};

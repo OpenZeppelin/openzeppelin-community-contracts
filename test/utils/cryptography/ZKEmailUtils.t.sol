@@ -598,6 +598,7 @@ contract ZKEmailUtilsTest is Test {
         uint256[2][2] memory pB,
         uint256[2] memory pC
     ) private pure returns (uint256[2] memory, uint256[2][2] memory, uint256[2] memory) {
+        // solhint-disable-next-line var-name-mixedcase
         uint256 Q = ZKEmailUtils.Q;
         pA[0] = bound(pA[0], 1, Q - 1);
         pA[1] = bound(pA[1], 1, Q - 1);

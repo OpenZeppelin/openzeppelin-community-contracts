@@ -2,7 +2,6 @@
 pragma solidity ^0.8.27;
 
 import {Time} from "@openzeppelin/contracts/utils/types/Time.sol";
-import {IERC7579ModuleConfig, MODULE_TYPE_EXECUTOR} from "@openzeppelin/contracts/interfaces/draft-IERC7579.sol";
 import {ERC7579Executor} from "./ERC7579Executor.sol";
 
 /**

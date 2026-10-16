@@ -1,10 +1,9 @@
-const format = require('@openzeppelin/contracts/scripts/generate/format-lines');
-const { SET_TYPES } = require('./Enumerable.opts');
+import format from '../format-lines.js';
+import { SET_TYPES } from './Enumerable.opts.js';
 
 const header = `\
 pragma solidity ^0.8.24;
 
-import {Arrays} from "@openzeppelin/contracts/utils/Arrays.sol";
 import {Hashes} from "@openzeppelin/contracts/utils/cryptography/Hashes.sol";
 import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 
@@ -81,37 +80,67 @@ function add(${name} storage self, ${value.type} memory value) internal returns 
  * present.
  */
 function remove(${name} storage self, ${value.type} memory value) internal returns (bool) {
-    // We cache the value's position to prevent multiple reads from the same storage slot
     uint256 position = self._positions[value];
 
     if (position != 0) {
-        // Equivalent to contains(self, value)
-        // To delete an element from the _values array in O(1), we swap the element to delete with the last one in
-        // the array, and then remove the last element (sometimes called as 'swap and pop').
-        // This modifies the order of the array, as noted in {at}.
-
-        uint256 valueIndex = position - 1;
-        uint256 lastIndex = self._values.length - 1;
-
-        if (valueIndex != lastIndex) {
-            ${value.type} memory lastValue = self._values[lastIndex];
-
-            // Move the lastValue to the index where the value to delete is
-            self._values[valueIndex] = lastValue;
-            // Update the tracked position of the lastValue (that was just moved)
-            self._positions[lastValue] = position;
-        }
-
-        // Delete the slot where the moved value was stored
-        self._values.pop();
-
-        // Delete the tracked position for the deleted slot
-        delete self._positions[value];
-
+        _removeValueAt(self, value, position - 1);
         return true;
     } else {
         return false;
     }
+}
+
+/**
+ * @dev Removes the value stored at position \`index\` from a set. O(1).
+ *
+ * Returns the removed value.
+ *
+ * This is cheaper than {remove} when the caller already knows the index, because it skips the position lookup
+ * that {remove} performs.
+ *
+ * Note that there are no guarantees on the ordering of values inside the array, and it may change when more
+ * values are added or removed.
+ *
+ * Requirements:
+ *
+ * - \`index\` must be strictly less than {length}.
+ */
+function removeAt(${name} storage self, uint256 index) internal returns (${value.type} memory value) {
+    value = self._values[index];
+    _removeValueAt(self, value, index);
+}
+
+/**
+ * @dev Removes the value stored at position \`index\` from a set. O(1).
+ *
+ * To delete an element from the \`_values\` array in O(1), we swap the element to delete with the last one in the
+ * array, and then remove the last element (sometimes called as 'swap and pop'). This modifies the order of the
+ * array, as noted in {at}.
+ *
+ * IMPORTANT: This does not verify that \`value\` is the value currently stored at \`index\`. Callers must ensure
+ * both arguments are consistent, otherwise the set is left in a corrupted state.
+ *
+ * Requirements:
+ *
+ * - \`index\` must be strictly less than {length}.
+ */
+function _removeValueAt(${name} storage self, ${value.type} memory value, uint256 index) private {
+    uint256 lastIndex = self._values.length - 1;
+
+    if (index != lastIndex) {
+        ${value.type} memory lastValue = self._values[lastIndex];
+
+        // Move the lastValue to the index where the value to delete is
+        self._values[index] = lastValue;
+        // Update the tracked position of the lastValue (that was just moved)
+        self._positions[lastValue] = index + 1;
+    }
+
+    // Delete the slot where the moved value was stored
+    self._values.pop();
+
+    // Delete the tracked position for the deleted slot
+    delete self._positions[value];
 }
 
 /**
@@ -120,13 +149,13 @@ function remove(${name} storage self, ${value.type} memory value) internal retur
  * WARNING: Developers should keep in mind that this function has an unbounded cost and using it may render the
  * function uncallable if the set grows to the point where clearing it consumes too much gas to fit in a block.
  */
-function clear(${name} storage set) internal {
-    uint256 len = length(set);
+function clear(${name} storage self) internal {
+    uint256 len = length(self);
     for (uint256 i = 0; i < len; ++i) {
-        delete set._positions[set._values[i]];
+        delete self._positions[self._values[i]];
     }
     // Replace when these are available in Arrays.sol
-    ${value.type}[] storage array = set._values;
+    ${value.type}[] storage array = self._values;
     assembly ("memory-safe") {
         sstore(array.slot, 0)
     }
@@ -180,15 +209,15 @@ function values(${name} storage self) internal view returns (${value.type}[] mem
  * this function has an unbounded cost, and using it as part of a state-changing function may render the function
  * uncallable if the set grows to a point where copying to memory consumes too much gas to fit in a block.
  */
-function values(${name} storage set, uint256 start, uint256 end) internal view returns (${value.type}[] memory) {
+function values(${name} storage self, uint256 start, uint256 end) internal view returns (${value.type}[] memory) {
     unchecked {
-        end = Math.min(end, length(set));
+        end = Math.min(end, length(self));
         start = Math.min(start, end);
 
         uint256 len = end - start;
         ${value.type}[] memory result = new ${value.type}[](len);
         for (uint256 i = 0; i < len; ++i) {
-            result[i] = Arrays.unsafeAccess(set._values, start + i).value;
+            result[i] = Arrays.unsafeAccess(self._values, start + i).value;
         }
         return result;
     }
@@ -234,33 +263,64 @@ function remove(${name} storage self, ${value.type} memory value) internal retur
     uint256 position = self._positions[valueHash];
 
     if (position != 0) {
-        // Equivalent to contains(self, value)
-        // To delete an element from the _values array in O(1), we swap the element to delete with the last one in
-        // the array, and then remove the last element (sometimes called as 'swap and pop').
-        // This modifies the order of the array, as noted in {at}.
-
-        uint256 valueIndex = position - 1;
-        uint256 lastIndex = self._values.length - 1;
-
-        if (valueIndex != lastIndex) {
-            ${value.type} memory lastValue = self._values[lastIndex];
-
-            // Move the lastValue to the index where the value to delete is
-            self._values[valueIndex] = lastValue;
-            // Update the tracked position of the lastValue (that was just moved)
-            self._positions[_hash(lastValue)] = position;
-        }
-
-        // Delete the slot where the moved value was stored
-        self._values.pop();
-
-        // Delete the tracked position for the deleted slot
-        delete self._positions[valueHash];
-
+        _removeValueAt(self, value, position - 1);
         return true;
     } else {
         return false;
     }
+}
+
+/**
+ * @dev Removes the value stored at position \`index\` from a set. O(1).
+ *
+ * Returns the removed value.
+ *
+ * This is cheaper than {remove} when the caller already knows the index, because it skips the position lookup
+ * that {remove} performs.
+ *
+ * Note that there are no guarantees on the ordering of values inside the array, and it may change when more
+ * values are added or removed.
+ *
+ * Requirements:
+ *
+ * - \`index\` must be strictly less than {length}.
+ */
+function removeAt(${name} storage self, uint256 index) internal returns (${value.type} memory value) {
+    value = self._values[index];
+    _removeValueAt(self, value, index);
+}
+
+/**
+ * @dev Removes the value stored at position \`index\` from a set. O(1).
+ *
+ * To delete an element from the \`_values\` array in O(1), we swap the element to delete with the last one in the
+ * array, and then remove the last element (sometimes called as 'swap and pop'). This modifies the order of the
+ * array, as noted in {at}.
+ *
+ * IMPORTANT: This does not verify that \`value\` is the value currently stored at \`index\`. Callers must ensure
+ * both arguments are consistent, otherwise the set is left in a corrupted state.
+ *
+ * Requirements:
+ *
+ * - \`index\` must be strictly less than {length}.
+ */
+function _removeValueAt(${name} storage self, ${value.type} memory value, uint256 index) private {
+    uint256 lastIndex = self._values.length - 1;
+
+    if (index != lastIndex) {
+        ${value.type} memory lastValue = self._values[lastIndex];
+
+        // Move the lastValue to the index where the value to delete is
+        self._values[index] = lastValue;
+        // Update the tracked position of the lastValue (that was just moved)
+        self._positions[_hash(lastValue)] = index + 1;
+    }
+
+    // Delete the slot where the moved value was stored
+    self._values.pop();
+
+    // Delete the tracked position for the deleted slot
+    delete self._positions[_hash(value)];
 }
 
 /**
@@ -329,15 +389,15 @@ function values(${name} storage self) internal view returns (${value.type}[] mem
  * this function has an unbounded cost, and using it as part of a state-changing function may render the function
  * uncallable if the set grows to a point where copying to memory consumes too much gas to fit in a block.
  */
-function values(${name} storage set, uint256 start, uint256 end) internal view returns (${value.type}[] memory) {
+function values(${name} storage self, uint256 start, uint256 end) internal view returns (${value.type}[] memory) {
     unchecked {
-        end = Math.min(end, length(set));
+        end = Math.min(end, length(self));
         start = Math.min(start, end);
 
         uint256 len = end - start;
         ${value.type}[] memory result = new ${value.type}[](len);
         for (uint256 i = 0; i < len; ++i) {
-            result[i] = set._values[start + i];
+            result[i] = self._values[start + i];
         }
         return result;
     }
@@ -351,7 +411,7 @@ function _hash(bytes32[2] memory value) private pure returns (bytes32) {
 `;
 
 // GENERATE
-module.exports = format(
+export default format(
   header.trimEnd(),
   'library EnumerableSetExtended {',
   format(

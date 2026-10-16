@@ -1,17 +1,22 @@
-const { ethers } = require('hardhat');
-const { expect } = require('chai');
-const { loadFixture } = require('@nomicfoundation/hardhat-network-helpers');
-const { anyValue } = require('@nomicfoundation/hardhat-chai-matchers/withArgs');
-
-const ERC7786Attributes = require('../../helpers/erc7786attributes');
-const WormholeHelper = require('./WormholeHelper');
+import { network } from 'hardhat';
+import { expect } from 'chai';
+import { anyValue } from '@nomicfoundation/hardhat-ethers-chai-matchers/withArgs';
+import ERC7786Attributes from '../../helpers/erc7786attributes';
+import * as WormholeHelper from './WormholeHelper';
 
 const value = 1_000n;
+
+const connection = await network.create();
+const {
+  ethers,
+  helpers: { chain },
+  networkHelpers: { loadFixture },
+} = connection;
 
 async function fixture() {
   const [owner, sender, ...accounts] = await ethers.getSigners();
 
-  const { chain, wormholeChainId, wormhole, gatewayA, gatewayB } = await WormholeHelper.deploy(owner);
+  const { wormholeChainId, wormhole, gatewayA, gatewayB } = await WormholeHelper.deploy(connection, owner);
 
   const recipient = await ethers.deployContract('$ERC7786RecipientMock', [gatewayB]);
   const invalidRecipient = await ethers.deployContract('$ERC7786RecipientInvalidMock');

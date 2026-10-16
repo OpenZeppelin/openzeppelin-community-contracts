@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.27;
 
-import {IERC7786Recipient} from "@openzeppelin/contracts/interfaces/draft-IERC7786.sol";
+import {IERC7786Recipient} from "@openzeppelin/contracts/interfaces/IERC7786.sol";
 
 /// @dev Returns the correct ERC-7786 magic value followed by a large amount of padding, so a caller that copies
 /// the full return buffer runs out of gas on the copy.
