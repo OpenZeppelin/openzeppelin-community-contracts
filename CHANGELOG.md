@@ -1,3 +1,7 @@
+## 19-10-2026
+
+- `WormholeGatewayAdapter`: `_wormholeRelayer` is now `private`. Use `relayer()` to read it.
+
 ## 30-09-2026
 
 - `ERC7540`: `_setOperator` now reverts with `ERC7540InvalidSelfOperator` when the controller is set as its own operator. A controller always has unrestricted access to its own tokens and requests, and that access cannot be restricted.
