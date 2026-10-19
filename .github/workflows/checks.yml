@@ -52,6 +52,28 @@ jobs:
         with:
           token: ${{ github.token }}
 
+  tests-upgradeable:
+    runs-on: ubuntu-latest
+    env:
+      FORCE_COLOR: 1
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          fetch-depth: 0 # Include history so patch conflicts are resolved automatically
+      - name: Set up environment
+        uses: ./.github/actions/setup
+      - name: Copy non-upgradeable contracts as dependency
+        run: |
+          mkdir -p lib/openzeppelin-community-contracts
+          cp -rnT contracts lib/openzeppelin-community-contracts/contracts
+      - name: Transpile to upgradeable
+        run: bash scripts/upgradeable/transpile.sh
+      - name: Run tests
+        run: npm run test
+      - name: Check linearisation of the inheritance graph
+        run: npm run test:inheritance
+
   tests-foundry:
     runs-on: ubuntu-latest
     steps:
