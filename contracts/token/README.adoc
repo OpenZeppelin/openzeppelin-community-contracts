@@ -14,6 +14,10 @@ Set of extensions and utilities for tokens (e.g ERC-20, ERC-721, ERC-1155) and d
  * {ERC20Restricted}: Extension of ERC20 that allows implementing user account transfer restrictions (blocklist or allowlist) inspired by EIP-7943.
  * {ERC20uRWA}: Extension of ERC20 according to EIP-7943, combining standard ERC-20 with RWA-specific features like account restrictions, asset freezing, and forced transfers.
  * {ERC4626Fees}: ERC4626 vault with fees on entry (deposit/mint) or exit (withdraw/redeem).
+ * {ERC3643IdentityRegistry}: ERC-3643 identity registry that tells whether a wallet holds valid claims from trusted issuers for every required claim topic.
+ * {ERC3643IdentityRegistryStorage}: ERC-3643 storage of the identity and country of each wallet, shared by the identity registries bound to it.
+ * {ERC3643TrustedIssuersRegistry}: ERC-3643 registry of the claim issuers trusted by an identity registry and the claim topics each of them is trusted for.
+ * {ERC3643ClaimTopicsRegistry}: ERC-3643 registry of the claim topics an identity must hold a valid claim for.
  * {ERC7540}: Implementation of ERC-7540 "Asynchronous ERC-4626 Tokenized Vaults", providing a base for vaults with asynchronous deposit and/or redemption flows.
  * {ERC7540AdminDeposit}: Admin-controlled (operator-triggered) fulfillment strategy for asynchronous deposits in ERC-7540 vaults.
  * {ERC7540AdminRedeem}: Admin-controlled (operator-triggered) fulfillment strategy for asynchronous redemptions in ERC-7540 vaults.
@@ -43,6 +47,16 @@ Set of extensions and utilities for tokens (e.g ERC-20, ERC-721, ERC-1155) and d
 {{ERC20uRWA}}
 
 {{ERC4626Fees}}
+
+== ERC3643
+
+{{ERC3643IdentityRegistry}}
+
+{{ERC3643IdentityRegistryStorage}}
+
+{{ERC3643TrustedIssuersRegistry}}
+
+{{ERC3643ClaimTopicsRegistry}}
 
 == ERC7540
 
