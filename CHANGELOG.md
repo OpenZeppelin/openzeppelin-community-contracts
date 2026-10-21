@@ -1,3 +1,7 @@
+## 20-10-2026
+
+- `ERC7579Executor`, `ERC7579Validator`, `ERC7579DelayedExecutor`, `ERC7579Multisig`, `ERC7579MultisigWeighted`: Deprecate in favor of OpenZeppelin Accounts (`@openzeppelin-accounts/contracts`). The replacements are not drop-in: `ERC7579Multisig` and `ERC7579MultisigWeighted` map to `ERC7579MultisigValidator` and `ERC7579MultisigWeightedValidator`, take signers as `calldata`, and `ERC7579DelayedExecutor` leaves public `schedule`/`cancel` to derived contracts.
+
 ## 30-09-2026
 
 - `ERC7540`: `_setOperator` now reverts with `ERC7540InvalidSelfOperator` when the controller is set as its own operator. A controller always has unrestricted access to its own tokens and requests, and that access cannot be restricted.

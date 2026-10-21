@@ -55,6 +55,10 @@ import {IERC1271} from "@openzeppelin/contracts/interfaces/IERC1271.sol";
  *     // ... rest of execute logic
  * }
  * ```
+ *
+ * IMPORTANT: Deprecated. Use `ERC7579Validator` from
+ * https://docs.openzeppelin.com/accounts/api/modules#ERC7579Validator[OpenZeppelin Accounts]
+ * instead. It remains here as the base of {ERC7579Signature}.
  */
 abstract contract ERC7579Validator is IERC7579Module, IERC7579Validator {
     /// @inheritdoc IERC7579Module
