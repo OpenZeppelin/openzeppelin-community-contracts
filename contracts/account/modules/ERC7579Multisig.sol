@@ -48,6 +48,9 @@ abstract contract ERC7579Multisig is ERC7579Validator {
     /// @dev The `threshold` is unreachable given the number of `signers`.
     error ERC7579MultisigUnreachableThreshold(uint64 signers, uint64 threshold);
 
+    /// @dev Thrown when attempting to install while signers are already configured.
+    error ERC7579MultisigAlreadyInstalled();
+
     mapping(address account => EnumerableSet.BytesSet) private _signersSetByAccount;
     mapping(address account => uint64) private _thresholdByAccount;
 
@@ -62,12 +65,12 @@ abstract contract ERC7579Multisig is ERC7579Validator {
      * If no signers or threshold are provided, the multisignature functionality will be
      * disabled until they are added later.
      *
-     * NOTE: An account can only call onInstall once. If called directly by the account,
-     * the signer will be set to the provided data. Future installations will behave as a no-op.
+     * NOTE: An account can only call onInstall once. Future installations will revert with
+     *       {ERC7579MultisigAlreadyInstalled} if signers are already configured.
      */
     function onInstall(bytes calldata initData) public virtual {
-        if (initData.length > 32 && getSignerCount(msg.sender) == 0) {
-            // More than just delay parameter
+        require(getSignerCount(msg.sender) == 0, ERC7579MultisigAlreadyInstalled());
+        if (initData.length > 32) {
             (bytes[] memory signers_, uint64 threshold_) = abi.decode(initData, (bytes[], uint64));
             _addSigners(msg.sender, signers_);
             _setThreshold(msg.sender, threshold_);
