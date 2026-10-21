@@ -305,7 +305,9 @@ abstract contract ERC7540EpochRedeem is ERC7540 {
      *
      * When the claim exhausts the controller's asset entitlement in an epoch, the epoch is dequeued
      * and the controller's entire share request is consumed, so no residue is left behind. Partial
-     * claims round the consumed shares up, in favor of the vault.
+     * claims round the consumed shares up, in favor of the vault. If rounding up consumes the last
+     * shares of an epoch while assets remain, these assets can no longer be claimed and are released
+     * to the vault, where they accrue to the remaining shareholders.
      */
     function _consumeClaimableWithdraw(uint256 assets, address controller) internal virtual override returns (uint256) {
         uint256 shares = 0;
@@ -334,6 +336,9 @@ abstract contract ERC7540EpochRedeem is ERC7540 {
             details.totalShares -= batchShares; // batchShares <= requestedShares <= totalShares (invariant)
             assets -= batchAssets; // batchAssets <= assets (batchAssets = assets, or requested <= assets)
             shares += batchShares;
+
+            // All requests are consumed but a partial claim rounded up, leaving assets nobody can claim
+            if (details.totalShares == 0 && details.totalAssets > 0) details.totalAssets = 0;
         }
 
         return shares;

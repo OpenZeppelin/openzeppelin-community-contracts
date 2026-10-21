@@ -10,7 +10,10 @@ import {ERC7540} from "../../../../contracts/token/ERC20/extensions/ERC7540.sol"
 import {ERC7540EpochMock} from "../../../../contracts/mocks/token/ERC7540EpochMock.sol";
 
 contract EpochVault is ERC7540EpochMock {
-    constructor(IERC20 asset_) ERC20("Vault", "VLT") ERC7540(asset_) ERC7540EpochMock(address(0)) {}
+    constructor(
+        IERC20 asset_,
+        address tmpShareHolder
+    ) ERC20("Vault", "VLT") ERC7540(asset_) ERC7540EpochMock(tmpShareHolder) {}
 
     function fulfillDeposit(uint256 epochId, uint256 shares) external {
         _fulfillDeposit(epochId, shares);
@@ -27,12 +30,13 @@ contract ERC7540EpochDepositFuzzTest is Test {
 
     address internal constant ALICE = address(0xA11CE);
     address internal constant BOB = address(0xB0B);
+    address internal constant CUSTODY = address(0xC057);
 
     uint256 internal constant WEEK = 7 days;
 
     function setUp() public {
         token = new ERC20Mock();
-        vault = new EpochVault(token);
+        vault = new EpochVault(token, address(0));
     }
 
     // Two epochs so `maxMint(alice)` sums floor entitlements across epochs — the shape
@@ -140,6 +144,75 @@ contract ERC7540EpochDepositFuzzTest is Test {
 
         _claimAllAndCheckDrained(ALICE, epoch);
         _claimAllAndCheckDrained(BOB, epoch);
+    }
+
+    // A partial mint by the last claimant of an epoch can round up to its whole remaining request. The
+    // shares left in the epoch can no longer be claimed, so they must be released to the vault.
+    function test_LastPartialMintReleasesResidue() public {
+        vault = new EpochVault(token, CUSTODY);
+
+        token.mint(ALICE, 10);
+        vm.startPrank(ALICE);
+        token.approve(address(vault), type(uint256).max);
+        vault.requestDeposit(10, ALICE, ALICE);
+        vm.stopPrank();
+
+        uint256 epoch = vault.currentDepositEpoch();
+        vm.warp(block.timestamp + WEEK);
+        vault.fulfillDeposit(epoch, 1000);
+        assertEq(vault.balanceOf(CUSTODY), 1000);
+
+        vm.prank(ALICE);
+        assertEq(vault.mint(999, ALICE, ALICE), 10); // ceil(999 * 10 / 1000) consumes the whole request
+
+        assertEq(vault.maxMint(ALICE), 0);
+        assertEq(vault.totalDepositAssets(epoch), 0);
+        assertEq(vault.totalDepositShares(epoch), 0);
+        assertEq(vault.balanceOf(ALICE), 999);
+        assertEq(vault.balanceOf(CUSTODY), 0);
+        assertEq(vault.totalSupply(), 999);
+    }
+
+    // Whatever the claim order and custody model, once every controller has claimed, the epoch is
+    // drained and no shares are left at the custody address.
+    function testFuzz_LastPartialMintDrainsEpoch(
+        uint128 rA,
+        uint128 rB,
+        uint128 fulfillS,
+        uint256 shares,
+        bool preMint
+    ) public {
+        vault = new EpochVault(token, preMint ? CUSTODY : address(0));
+
+        rA = uint128(bound(rA, 1, 1e30));
+        rB = uint128(bound(rB, 1, 1e30));
+        fulfillS = uint128(bound(fulfillS, 1, 1e30));
+
+        uint256 epoch = _requestAndFulfill(rA, rB, fulfillS);
+
+        uint256 bobMax = vault.maxDeposit(BOB);
+        if (bobMax > 0) {
+            vm.prank(BOB);
+            vault.deposit(bobMax, BOB, BOB);
+        }
+
+        uint256 aliceMax = vault.maxMint(ALICE);
+        vm.assume(aliceMax > 1);
+        shares = bound(shares, 1, aliceMax - 1);
+        vm.prank(ALICE);
+        vault.mint(shares, ALICE, ALICE);
+
+        uint256 aliceRest = vault.maxDeposit(ALICE);
+        if (aliceRest > 0) {
+            vm.prank(ALICE);
+            vault.deposit(aliceRest, ALICE, ALICE);
+        }
+
+        assertEq(vault.totalDepositAssets(epoch), 0, "epoch assets not drained");
+        assertEq(vault.totalDepositShares(epoch), 0, "epoch shares not drained");
+        assertEq(vault.totalPendingDepositAssets(), 0, "pending assets not drained");
+        assertEq(vault.balanceOf(CUSTODY), 0, "shares left at custody");
+        assertEq(vault.totalSupply(), vault.balanceOf(ALICE) + vault.balanceOf(BOB));
     }
 
     function _requestAndFulfill(uint256 rA, uint256 rB, uint256 fulfillS) internal returns (uint256 epoch) {
