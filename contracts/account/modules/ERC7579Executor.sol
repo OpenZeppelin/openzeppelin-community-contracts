@@ -19,6 +19,10 @@ import {
  * TIP: This is a simplified executor that directly executes operations without delay or expiration
  * mechanisms. For a more advanced implementation with time-delayed execution patterns and
  * security features, see {ERC7579DelayedExecutor}.
+ *
+ * IMPORTANT: Deprecated. Use `ERC7579Executor` from
+ * https://docs.openzeppelin.com/accounts/api/modules#ERC7579Executor[OpenZeppelin Accounts]
+ * instead. It remains here as the base of {ERC7579SelectorExecutor}.
  */
 abstract contract ERC7579Executor is IERC7579Module {
     /// @dev Emitted when an operation is executed.

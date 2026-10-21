@@ -22,6 +22,10 @@ import {ERC7579Multisig} from "./ERC7579Multisig.sol";
  * IMPORTANT: When setting a threshold value, ensure it matches the scale used for signer weights.
  * For example, if signers have weights like 1, 2, or 3, then a threshold of 4 would require
  * signatures with a total weight of at least 4 (e.g., one with weight 1 and one with weight 3).
+ *
+ * IMPORTANT: Deprecated. Use `ERC7579MultisigWeightedValidator` from
+ * https://docs.openzeppelin.com/accounts/api/modules#ERC7579MultisigWeightedValidator[OpenZeppelin Accounts]
+ * instead.
  */
 abstract contract ERC7579MultisigWeighted is ERC7579Multisig {
     using EnumerableSet for EnumerableSet.BytesSet;
