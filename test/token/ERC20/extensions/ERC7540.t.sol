@@ -109,10 +109,13 @@ contract ERC7540InvariantHandler is Test {
         asset.mint(owner, amount);
         vm.startPrank(owner);
         asset.approve(address(vault), amount);
-        vault.requestDeposit(amount, controller, owner);
+        try vault.requestDeposit(amount, controller, owner) {
+            depRequested += amount;
+            depPerController[controller] += amount;
+        } catch {
+            _fail("requestDeposit reverted");
+        }
         vm.stopPrank();
-        depRequested += amount;
-        depPerController[controller] += amount;
     }
 
     function fulfillDeposit(uint256 c, uint256 amount, uint256 rateBps) external {
@@ -122,9 +125,12 @@ contract ERC7540InvariantHandler is Test {
         if (pending == 0) return;
         amount = bound(amount, 1, pending);
         uint256 shares = (amount * bound(rateBps, 1, 30_000)) / 10_000;
-        vault.fulfillDeposit(amount, shares, controller);
-        depFulfilledAssets += amount;
-        depFulfilledShares += shares;
+        try vault.fulfillDeposit(amount, shares, controller) {
+            depFulfilledAssets += amount;
+            depFulfilledShares += shares;
+        } catch {
+            _fail("fulfillDeposit reverted");
+        }
     }
 
     function claimDeposit(uint256 c, uint256 amount) external {
@@ -170,9 +176,12 @@ contract ERC7540InvariantHandler is Test {
         if (bal == 0) return;
         shares = bound(shares, 1, bal);
         vm.prank(owner);
-        vault.requestRedeem(shares, controller, owner);
-        redRequested += shares;
-        redPerController[controller] += shares;
+        try vault.requestRedeem(shares, controller, owner) {
+            redRequested += shares;
+            redPerController[controller] += shares;
+        } catch {
+            _fail("requestRedeem reverted");
+        }
     }
 
     function fulfillRedeem(uint256 c, uint256 shares, uint256 rateBps) external {
@@ -185,9 +194,12 @@ contract ERC7540InvariantHandler is Test {
         uint256 free = asset.balanceOf(address(vault)) - vault.totalPendingDepositAssets() - _owedRedeemAssets();
         uint256 assets = (shares * bound(rateBps, 1, 30_000)) / 10_000;
         if (assets > free) assets = free;
-        vault.fulfillRedeem(shares, assets, controller);
-        redFulfilledShares += shares;
-        redFulfilledAssets += assets;
+        try vault.fulfillRedeem(shares, assets, controller) {
+            redFulfilledShares += shares;
+            redFulfilledAssets += assets;
+        } catch {
+            _fail("fulfillRedeem reverted");
+        }
     }
 
     function claimWithdraw(uint256 c, uint256 assets) external {
@@ -302,6 +314,7 @@ abstract contract ERC7540InvariantBase is Test {
 
 /// forge-config: default.invariant.runs = 64
 /// forge-config: default.invariant.depth = 200
+/// forge-config: default.invariant.fail_on_revert = true
 contract ERC7540AdminMintOnClaimInvariant is ERC7540InvariantBase {
     function setUp() public {
         asset = new ERC7540InvariantAsset();
@@ -329,6 +342,7 @@ contract ERC7540AdminMintOnClaimInvariant is ERC7540InvariantBase {
 
 /// forge-config: default.invariant.runs = 64
 /// forge-config: default.invariant.depth = 200
+/// forge-config: default.invariant.fail_on_revert = true
 contract ERC7540AdminEscrowInvariant is ERC7540InvariantBase {
     address internal constant HOLDER = address(0xC0FFEE);
 
@@ -348,6 +362,7 @@ contract ERC7540AdminEscrowInvariant is ERC7540InvariantBase {
         // escrow: pending shares sit in the holder, claimable shares are burned and tracked
         assertEq(vault.totalPendingRedeemShares(), handler.redFulfilledShares() - handler.redClaimedShares());
         assertEq(_sumActors(vault.maxRedeem), handler.redFulfilledShares() - handler.redClaimedShares());
+        assertEq(_sumActors(vault.maxWithdraw), handler.redFulfilledAssets() - handler.redClaimedAssets());
     }
 
     function invariant_holderCustody() public view {
@@ -368,6 +383,7 @@ contract ERC7540AdminEscrowInvariant is ERC7540InvariantBase {
 
 /// forge-config: default.invariant.runs = 64
 /// forge-config: default.invariant.depth = 200
+/// forge-config: default.invariant.fail_on_revert = true
 contract ERC7540DelayInvariant is ERC7540InvariantBase {
     function setUp() public {
         asset = new ERC7540InvariantAsset();
