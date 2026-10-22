@@ -82,6 +82,24 @@ contract TimelockControllerEnumerableTest is Test {
         assertEq(operations[0].delay, 1 days);
     }
 
+    function test_operations_nonzeroStart() public {
+        for (uint256 i = 0; i < 3; ++i) {
+            timelockControllerEnumerable.schedule(
+                address(this),
+                0,
+                abi.encodeCall(this.call, ()),
+                bytes32(0),
+                bytes32(i),
+                1 days
+            );
+        }
+
+        TimelockControllerEnumerable.Operation[] memory operations = timelockControllerEnumerable.operations(1, 3);
+        assertEq(operations.length, 2);
+        assertEq(operations[0].salt, bytes32(uint256(1)));
+        assertEq(operations[1].salt, bytes32(uint256(2)));
+    }
+
     function test_schedule_execute() public {
         test_schedule();
         TimelockControllerEnumerable.Operation memory operation = timelockControllerEnumerable.operation(uint256(0));
@@ -154,6 +172,31 @@ contract TimelockControllerEnumerableTest is Test {
         assertEq(operationBatches[0].predecessor, bytes32(0));
         assertEq(operationBatches[0].salt, bytes32(0));
         assertEq(operationBatches[0].delay, 1 days);
+    }
+
+    function test_operationsBatch_nonzeroStart() public {
+        address[] memory targets = new address[](1);
+        uint256[] memory values = new uint256[](1);
+        bytes[] memory payloads = new bytes[](1);
+        targets[0] = address(this);
+        payloads[0] = abi.encodeCall(this.call, ());
+
+        for (uint256 i = 0; i < 3; ++i) {
+            timelockControllerEnumerable.scheduleBatch(
+                targets,
+                values,
+                payloads,
+                bytes32(0),
+                bytes32(i),
+                1 days
+            );
+        }
+
+        TimelockControllerEnumerable.OperationBatch[] memory operationBatches = timelockControllerEnumerable
+            .operationsBatch(1, 3);
+        assertEq(operationBatches.length, 2);
+        assertEq(operationBatches[0].salt, bytes32(uint256(1)));
+        assertEq(operationBatches[1].salt, bytes32(uint256(2)));
     }
 
     function test_scheduleBatch_execute() public {
