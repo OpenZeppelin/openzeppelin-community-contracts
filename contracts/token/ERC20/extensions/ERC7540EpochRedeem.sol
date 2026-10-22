@@ -190,10 +190,8 @@ abstract contract ERC7540EpochRedeem is ERC7540 {
         uint256 shares,
         Math.Rounding rounding
     ) internal view virtual returns (uint256) {
-        // An epoch's `totalShares` may be 0 while some `requests[*]` slots are non-zero,
-        // when other controllers' asset-driven claims ({_consumeClaimableWithdraw}) round
-        // `requested` up via ceil and the saturating decrement zeroes the shared pool
-        // before all per-controller residues are allocated.
+        // `totalShares` is 0 for an epoch with no requests, or once it is fully claimed (claims
+        // drain both totals together, see {_consumeClaimableWithdraw}).
         uint256 totalShares = totalRedeemShares(epochId);
         return totalShares == 0 ? 0 : shares.mulDiv(totalRedeemAssets(epochId), totalShares, rounding);
     }
@@ -204,10 +202,8 @@ abstract contract ERC7540EpochRedeem is ERC7540 {
         uint256 assets,
         Math.Rounding rounding
     ) internal view virtual returns (uint256) {
-        // An epoch's `totalAssets` may be 0 while some `requests[*]` slots are non-zero,
-        // when other controllers' asset-driven claims ({_consumeClaimableWithdraw}) round
-        // `requested` up via ceil and the saturating decrement zeroes the shared pool
-        // before all per-controller residues are allocated.
+        // `totalAssets` is 0 while the epoch is Pending, or once it is fully claimed (claims
+        // drain both totals together, see {_consumeClaimableWithdraw}).
         uint256 totalAssets = totalRedeemAssets(epochId);
         return totalAssets == 0 ? 0 : assets.mulDiv(totalRedeemShares(epochId), totalAssets, rounding);
     }
