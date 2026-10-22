@@ -7,6 +7,8 @@ NOTE: This document is better viewed at https://docs.openzeppelin.com/contracts/
 
 These interfaces are available as `.sol` files. These are useful to interact with third party contracts that implement them.
 
+- {IIdentityRegistry}, {IIdentityRegistryStorage}, {ITrustedIssuersRegistry}, {IClaimTopicsRegistry}: Registries of the ERC-3643 permissioned token ecosystem.
+- {IERC735}, {IERC735ClaimIssuer}: ERC-735 claim holder getter and the claim validity check of its issuers.
 - {IERC7540} (`IERC7540Operator`, `IERC7540Deposit`, `IERC7540Redeem`): Operator management and asynchronous deposit/redeem request interfaces for ERC-7540 tokenized vaults.
 - {IERC7575} (`IERC7575`, `IERC7575Share`): Multi-asset ERC-4626 vaults and share-to-vault lookup interfaces.
 - {IERC7786Attributes}: Standard attributes for ERC-7786 cross-chain messaging.
@@ -15,6 +17,18 @@ These interfaces are available as `.sol` files. These are useful to interact wit
 - {IERC7969} (`IDKIMRegistry`): Onchain DKIM public key registry interface for email-based authentication.
 
 == Detailed ABI
+
+{{IIdentityRegistry}}
+
+{{IIdentityRegistryStorage}}
+
+{{ITrustedIssuersRegistry}}
+
+{{IClaimTopicsRegistry}}
+
+{{IERC735}}
+
+{{IERC735ClaimIssuer}}
 
 {{IERC7540}}
 
