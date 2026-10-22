@@ -562,7 +562,9 @@ describe('ERC7540EpochRedeem', function () {
 
           // Sentinel preserved: totalAssets stays > 0 while requests remain unclaimed.
           await expect(this.mock.totalRedeemAssets(epochId)).to.eventually.equal(1n);
-          await expect(this.mock.totalRedeemShares(epochId)).to.eventually.equal(2n);
+          // Exhausting her entitlement consumes Alice's entire request: only Bob's remains.
+          await expect(this.mock.totalRedeemShares(epochId)).to.eventually.equal(1n);
+          await expect(this.mock.claimableRedeemRequest(epochId, alice)).to.eventually.equal(0n);
 
           // Bob's claim slot is still reachable — not frozen behind a dirty sentinel.
           await expect(this.mock.claimableRedeemRequest(epochId, bob)).to.eventually.equal(1n);
