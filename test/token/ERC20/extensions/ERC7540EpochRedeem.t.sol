@@ -10,7 +10,10 @@ import {ERC7540} from "../../../../contracts/token/ERC20/extensions/ERC7540.sol"
 import {ERC7540EpochMock} from "../../../../contracts/mocks/token/ERC7540EpochMock.sol";
 
 contract EpochVault is ERC7540EpochMock {
-    constructor(IERC20 asset_) ERC20("Vault", "VLT") ERC7540(asset_) ERC7540EpochMock(address(0)) {}
+    constructor(
+        IERC20 asset_,
+        address tmpShareHolder
+    ) ERC20("Vault", "VLT") ERC7540(asset_) ERC7540EpochMock(tmpShareHolder) {}
 
     function fulfillRedeem(uint256 epochId, uint256 assets) external {
         _fulfillRedeem(epochId, assets);
@@ -31,12 +34,13 @@ contract ERC7540EpochRedeemFuzzTest is Test {
 
     address internal constant ALICE = address(0xA11CE);
     address internal constant BOB = address(0xB0B);
+    address internal constant CUSTODY = address(0xC057);
 
     uint256 internal constant WEEK = 7 days;
 
     function setUp() public {
         token = new ERC20Mock();
-        vault = new EpochVault(token);
+        vault = new EpochVault(token, address(0));
     }
 
     // Two epochs so `maxWithdraw(alice)` sums floor entitlements across epochs — the
@@ -142,6 +146,72 @@ contract ERC7540EpochRedeemFuzzTest is Test {
 
         _claimAllAndCheckDrained(ALICE, epoch);
         _claimAllAndCheckDrained(BOB, epoch);
+    }
+
+    // A partial withdraw by the last claimant of an epoch can round up to its whole remaining request.
+    // The assets left in the epoch can no longer be claimed, so they must be released to the vault.
+    function test_LastPartialWithdrawReleasesResidue() public {
+        vault.mintShares(ALICE, 10);
+        token.mint(address(vault), 1000);
+
+        vm.prank(ALICE);
+        vault.requestRedeem(10, ALICE, ALICE);
+
+        uint256 epoch = vault.currentRedeemEpoch();
+        vm.warp(block.timestamp + WEEK);
+        vault.fulfillRedeem(epoch, 1000);
+        assertEq(vault.totalAssets(), 1000);
+
+        vm.prank(ALICE);
+        assertEq(vault.withdraw(999, ALICE, ALICE), 10); // ceil(999 * 10 / 1000) consumes the whole request
+
+        assertEq(vault.maxWithdraw(ALICE), 0);
+        assertEq(vault.totalRedeemShares(epoch), 0);
+        assertEq(vault.totalRedeemAssets(epoch), 0);
+        assertEq(vault.totalPendingRedeemShares(), 0);
+        assertEq(token.balanceOf(ALICE), 999);
+        assertEq(vault.totalAssets(), 1);
+    }
+
+    // Whatever the claim order and custody model, once every controller has claimed, the epoch is
+    // drained.
+    function testFuzz_LastPartialWithdrawDrainsEpoch(
+        uint128 rA,
+        uint128 rB,
+        uint128 fulfillA,
+        uint256 assets,
+        bool escrow
+    ) public {
+        vault = new EpochVault(token, escrow ? CUSTODY : address(0));
+
+        rA = uint128(bound(rA, 1, 1e30));
+        rB = uint128(bound(rB, 1, 1e30));
+        fulfillA = uint128(bound(fulfillA, 1, 1e30));
+
+        uint256 epoch = _requestAndFulfill(rA, rB, fulfillA);
+
+        uint256 bobMax = vault.maxRedeem(BOB);
+        if (bobMax > 0) {
+            vm.prank(BOB);
+            vault.redeem(bobMax, BOB, BOB);
+        }
+
+        uint256 aliceMax = vault.maxWithdraw(ALICE);
+        vm.assume(aliceMax > 1);
+        assets = bound(assets, 1, aliceMax - 1);
+        vm.prank(ALICE);
+        vault.withdraw(assets, ALICE, ALICE);
+
+        uint256 aliceRest = vault.maxRedeem(ALICE);
+        if (aliceRest > 0) {
+            vm.prank(ALICE);
+            vault.redeem(aliceRest, ALICE, ALICE);
+        }
+
+        assertEq(vault.totalRedeemShares(epoch), 0, "epoch shares not drained");
+        assertEq(vault.totalRedeemAssets(epoch), 0, "epoch assets not drained");
+        assertEq(vault.totalPendingRedeemShares(), 0, "pending shares not drained");
+        assertEq(vault.balanceOf(CUSTODY), 0, "shares left at custody");
     }
 
     function _requestAndFulfill(uint256 rA, uint256 rB, uint256 fulfillA) internal returns (uint256 epoch) {

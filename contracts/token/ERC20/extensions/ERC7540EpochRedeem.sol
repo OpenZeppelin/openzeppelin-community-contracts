@@ -192,10 +192,8 @@ abstract contract ERC7540EpochRedeem is ERC7540 {
         uint256 shares,
         Math.Rounding rounding
     ) internal view virtual returns (uint256) {
-        // An epoch's `totalShares` may be 0 while some `requests[*]` slots are non-zero,
-        // when other controllers' asset-driven claims ({_consumeClaimableWithdraw}) round
-        // `requested` up via ceil and the saturating decrement zeroes the shared pool
-        // before all per-controller residues are allocated.
+        // `totalShares` is 0 for an epoch with no requests, or once it is fully claimed (claims
+        // drain both totals together, see {_consumeClaimableWithdraw}).
         uint256 totalShares = totalRedeemShares(epochId);
         return totalShares == 0 ? 0 : shares.mulDiv(totalRedeemAssets(epochId), totalShares, rounding);
     }
@@ -206,10 +204,8 @@ abstract contract ERC7540EpochRedeem is ERC7540 {
         uint256 assets,
         Math.Rounding rounding
     ) internal view virtual returns (uint256) {
-        // An epoch's `totalAssets` may be 0 while some `requests[*]` slots are non-zero,
-        // when other controllers' asset-driven claims ({_consumeClaimableWithdraw}) round
-        // `requested` up via ceil and the saturating decrement zeroes the shared pool
-        // before all per-controller residues are allocated.
+        // `totalAssets` is 0 while the epoch is Pending, or once it is fully claimed (claims
+        // drain both totals together, see {_consumeClaimableWithdraw}).
         uint256 totalAssets = totalRedeemAssets(epochId);
         return totalAssets == 0 ? 0 : assets.mulDiv(totalRedeemShares(epochId), totalAssets, rounding);
     }
@@ -312,7 +308,9 @@ abstract contract ERC7540EpochRedeem is ERC7540 {
      *
      * When the claim exhausts the controller's asset entitlement in an epoch, the epoch is dequeued
      * and the controller's entire share request is consumed, so no residue is left behind. Partial
-     * claims round the consumed shares up, in favor of the vault.
+     * claims round the consumed shares up, in favor of the vault. If rounding up consumes the last
+     * shares of an epoch while assets remain, these assets can no longer be claimed and are released
+     * to the vault, where they accrue to the remaining shareholders.
      */
     function _consumeClaimableWithdraw(uint256 assets, address controller) internal virtual override returns (uint256) {
         uint256 consumed = 0;
@@ -343,6 +341,9 @@ abstract contract ERC7540EpochRedeem is ERC7540 {
             assets -= batchAssets; // batchAssets <= assets (batchAssets = assets, or requested <= assets)
             consumed += batchAssets;
             shares += batchShares;
+
+            // All requests are consumed but a partial claim rounded up, leaving assets nobody can claim
+            if (details.totalShares == 0 && details.totalAssets > 0) details.totalAssets = 0;
         }
 
         _claimableShares -= shares;

@@ -192,10 +192,8 @@ abstract contract ERC7540EpochDeposit is ERC7540 {
         uint256 assets,
         Math.Rounding rounding
     ) internal view virtual returns (uint256) {
-        // An epoch's `totalAssets` may be 0 while some `requests[*]` slots are non-zero,
-        // when other controllers' share-driven claims ({_consumeClaimableMint}) round
-        // `requested` up via ceil and the saturating decrement zeroes the shared pool
-        // before all per-controller residues are allocated.
+        // `totalAssets` is 0 for an epoch with no requests, or once it is fully claimed (claims
+        // drain both totals together, see {_consumeClaimableMint}).
         uint256 totalAssets = totalDepositAssets(epochId);
         return totalAssets == 0 ? 0 : assets.mulDiv(totalDepositShares(epochId), totalAssets, rounding);
     }
@@ -206,10 +204,8 @@ abstract contract ERC7540EpochDeposit is ERC7540 {
         uint256 shares,
         Math.Rounding rounding
     ) internal view virtual returns (uint256) {
-        // An epoch's `totalShares` may be 0 while some `requests[*]` slots are non-zero,
-        // when other controllers' share-driven claims ({_consumeClaimableMint}) round
-        // `requested` up via ceil and the saturating decrement zeroes the shared pool
-        // before all per-controller residues are allocated.
+        // `totalShares` is 0 while the epoch is Pending, or once it is fully claimed (claims
+        // drain both totals together, see {_consumeClaimableMint}).
         uint256 totalShares = totalDepositShares(epochId);
         return totalShares == 0 ? 0 : shares.mulDiv(totalDepositAssets(epochId), totalShares, rounding);
     }
@@ -350,7 +346,9 @@ abstract contract ERC7540EpochDeposit is ERC7540 {
      *
      * When the claim exhausts the controller's share entitlement in an epoch, the epoch is dequeued
      * and the controller's entire asset request is consumed, so no residue is left behind. Partial
-     * claims round the consumed assets up, in favor of the vault.
+     * claims round the consumed assets up, in favor of the vault. If rounding up consumes the last
+     * assets of an epoch while shares remain, these shares can no longer be claimed and are released
+     * to the vault (burned from {_depositShareOrigin} when shares are minted at fulfillment).
      */
     function _consumeClaimableMint(uint256 shares, address controller) internal virtual override returns (uint256) {
         uint256 consumed = 0;
@@ -381,6 +379,13 @@ abstract contract ERC7540EpochDeposit is ERC7540 {
             shares -= batchShares; // batchShares <= shares (batchShares = shares, or requested <= shares)
             consumed += batchShares;
             assets += batchAssets;
+
+            // All requests are consumed but a partial claim rounded up, leaving shares nobody can claim
+            if (details.totalAssets == 0 && details.totalShares > 0) {
+                uint256 residue = details.totalShares;
+                details.totalShares = 0;
+                if (_depositShareOrigin() != address(0)) _burn(_depositShareOrigin(), residue);
+            }
         }
 
         _claimableAssets -= assets;
