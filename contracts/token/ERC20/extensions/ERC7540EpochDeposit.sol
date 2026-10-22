@@ -190,10 +190,8 @@ abstract contract ERC7540EpochDeposit is ERC7540 {
         uint256 assets,
         Math.Rounding rounding
     ) internal view virtual returns (uint256) {
-        // An epoch's `totalAssets` may be 0 while some `requests[*]` slots are non-zero,
-        // when other controllers' share-driven claims ({_consumeClaimableMint}) round
-        // `requested` up via ceil and the saturating decrement zeroes the shared pool
-        // before all per-controller residues are allocated.
+        // `totalAssets` is 0 for an epoch with no requests, or once it is fully claimed (claims
+        // drain both totals together, see {_consumeClaimableMint}).
         uint256 totalAssets = totalDepositAssets(epochId);
         return totalAssets == 0 ? 0 : assets.mulDiv(totalDepositShares(epochId), totalAssets, rounding);
     }
@@ -204,10 +202,8 @@ abstract contract ERC7540EpochDeposit is ERC7540 {
         uint256 shares,
         Math.Rounding rounding
     ) internal view virtual returns (uint256) {
-        // An epoch's `totalShares` may be 0 while some `requests[*]` slots are non-zero,
-        // when other controllers' share-driven claims ({_consumeClaimableMint}) round
-        // `requested` up via ceil and the saturating decrement zeroes the shared pool
-        // before all per-controller residues are allocated.
+        // `totalShares` is 0 while the epoch is Pending, or once it is fully claimed (claims
+        // drain both totals together, see {_consumeClaimableMint}).
         uint256 totalShares = totalDepositShares(epochId);
         return totalShares == 0 ? 0 : shares.mulDiv(totalDepositAssets(epochId), totalShares, rounding);
     }
@@ -336,11 +332,12 @@ abstract contract ERC7540EpochDeposit is ERC7540 {
     /**
      * @dev Same as {_consumeClaimableDeposit} but iterates by shares instead of assets.
      *
-     * NOTE: When the epoch's locked rate skews the `assets : shares` ratio (either direction),
-     * a small `shares` input can round `batchAssets` to zero; the epoch's share pool moves
-     * without consuming the caller's asset entitlement. At realistic ERC-20 decimals the per-call
-     * drift is sub-cent. Deployers with non-standard decimals or a zero-drift requirement SHOULD
-     * override to revert when `batchShares > 0 && batchAssets == 0`.
+     * When the claim exhausts the controller's share entitlement in an epoch, the epoch is dequeued
+     * and the controller's entire asset request is consumed, so no residue is left behind. Partial
+     * claims round the consumed assets up, against the caller: the rounding benefits the remaining
+     * claimants of the epoch. If rounding up consumes the last assets of an epoch while shares remain,
+     * these shares can no longer be claimed and are released to the vault (burned from
+     * {_depositShareOrigin} when shares are minted at fulfillment).
      */
     function _consumeClaimableMint(uint256 shares, address controller) internal virtual override returns (uint256) {
         uint256 assets = 0;
@@ -354,19 +351,28 @@ abstract contract ERC7540EpochDeposit is ERC7540 {
             // A ceil-rounded `requested` could exhaust `totalShares` to 0 while `totalAssets`
             // remains > 0, dirtying the Pending sentinel and stranding later controllers.
             uint256 requested = _convertToDepositShares(epochId, requestedAssets, Math.Rounding.Floor);
-            if (requested <= shares) _memberOf[controller].popFront();
 
-            uint256 batchShares = requested.min(shares);
-            uint256 batchAssets = _convertToDepositAssets(epochId, batchShares, Math.Rounding.Floor).min(
-                requestedAssets
-            );
+            // shares < floor(rA*S/A) implies ceil(shares*A/S) <= rA
+            (uint256 batchShares, uint256 batchAssets) = shares < requested
+                ? (shares, _convertToDepositAssets(epochId, shares, Math.Rounding.Ceil))
+                : (requested, requestedAssets);
+
+            // Dequeue once the request is fully consumed (including when a partial claim rounds up to it)
+            if (batchAssets == requestedAssets) _memberOf[controller].popFront();
 
             EpochDepositMetadata storage details = _epochs[epochId];
-            details.requests[controller] -= batchAssets; // batchAssets <= requestedAssets via .min
+            details.requests[controller] -= batchAssets; // batchAssets <= requestedAssets
             details.totalAssets -= batchAssets; // batchAssets <= requestedAssets <= totalAssets (invariant)
             details.totalShares -= batchShares; // batchShares <= floor(rA*S/A) <= totalShares (matches _asyncMaxMint)
-            shares -= batchShares; // batchShares <= shares (via .min)
+            shares -= batchShares; // batchShares <= shares (batchShares = shares, or requested <= shares)
             assets += batchAssets;
+
+            // All requests are consumed but a partial claim rounded up, leaving shares nobody can claim
+            if (details.totalAssets == 0 && details.totalShares > 0) {
+                uint256 residue = details.totalShares;
+                details.totalShares = 0;
+                if (_depositShareOrigin() != address(0)) _burn(_depositShareOrigin(), residue);
+            }
         }
 
         return assets;
