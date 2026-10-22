@@ -384,6 +384,7 @@ abstract contract ERC7540EpochDeposit is ERC7540 {
             if (details.totalAssets == 0 && details.totalShares > 0) {
                 uint256 residue = details.totalShares;
                 details.totalShares = 0;
+                _claimableShares -= residue;
                 if (_depositShareOrigin() != address(0)) _burn(_depositShareOrigin(), residue);
             }
         }

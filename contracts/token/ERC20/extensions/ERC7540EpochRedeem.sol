@@ -343,7 +343,10 @@ abstract contract ERC7540EpochRedeem is ERC7540 {
             shares += batchShares;
 
             // All requests are consumed but a partial claim rounded up, leaving assets nobody can claim
-            if (details.totalShares == 0 && details.totalAssets > 0) details.totalAssets = 0;
+            if (details.totalShares == 0 && details.totalAssets > 0) {
+                _claimableAssets -= details.totalAssets;
+                details.totalAssets = 0;
+            }
         }
 
         _claimableShares -= shares;
