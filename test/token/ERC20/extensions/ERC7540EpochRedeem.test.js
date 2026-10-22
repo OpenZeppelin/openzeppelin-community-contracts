@@ -76,7 +76,7 @@ describe('ERC7540EpochRedeem', function () {
       });
 
       shouldBehaveLikeERC7540Operator();
-      shouldBehaveLikeERC7540Redeem({ supportCustomFulfill: false, gateOnController: true, withTmpHolder });
+      shouldBehaveLikeERC7540Redeem({ supportCustomFulfill: false, gateOnController: true });
       shouldBehaveLikeERC7575();
 
       describe('epoch state and getters', function () {

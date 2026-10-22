@@ -160,7 +160,7 @@ contract ERC7540EpochRedeemFuzzTest is Test {
         uint256 epoch = vault.currentRedeemEpoch();
         vm.warp(block.timestamp + WEEK);
         vault.fulfillRedeem(epoch, 1000);
-        assertEq(vault.totalAssets(), 1000);
+        assertEq(vault.totalAssets(), 0); // fulfilled assets are owed to the claimant
 
         vm.prank(ALICE);
         assertEq(vault.withdraw(999, ALICE, ALICE), 10); // ceil(999 * 10 / 1000) consumes the whole request
@@ -212,6 +212,7 @@ contract ERC7540EpochRedeemFuzzTest is Test {
         assertEq(vault.totalRedeemAssets(epoch), 0, "epoch assets not drained");
         assertEq(vault.totalPendingRedeemShares(), 0, "pending shares not drained");
         assertEq(vault.balanceOf(CUSTODY), 0, "shares left at custody");
+        assertEq(vault.totalAssets(), token.balanceOf(address(vault)), "claimable assets not released");
     }
 
     function _requestAndFulfill(uint256 rA, uint256 rB, uint256 fulfillA) internal returns (uint256 epoch) {

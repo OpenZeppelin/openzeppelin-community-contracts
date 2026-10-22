@@ -43,10 +43,14 @@ import {IERC7575, IERC7575Share} from "../../../interfaces/IERC7575.sol";
  * async side enabled:
  *
  * * Async deposits: {_pendingDepositRequest}, {_claimableDepositRequest}, {_consumeClaimableDeposit},
- * {_consumeClaimableMint}, {_asyncMaxDeposit}, {_asyncMaxMint}.
+ * {_consumeClaimableMint}, {_asyncMaxDeposit}, {_asyncMaxMint}, {_totalClaimableDepositAssets},
+ * {_totalClaimableDepositShares}.
  *
  * * Async redeems: {_pendingRedeemRequest}, {_claimableRedeemRequest}, {_consumeClaimableWithdraw},
- * {_consumeClaimableRedeem}, {_asyncMaxWithdraw}, {_asyncMaxRedeem}.
+ * {_consumeClaimableRedeem}, {_asyncMaxWithdraw}, {_asyncMaxRedeem}, {_totalClaimableRedeemAssets},
+ * {_totalClaimableRedeemShares}.
+ *
+ * The `_totalClaimable*` hooks are also required for synchronous sides, where they return 0.
  * ====
  *
  * [CAUTION]
@@ -229,16 +233,22 @@ abstract contract ERC7540 is ERC165, ERC20, IERC4626, IERC7540, IERC7575Share {
      * @dev See {IERC4626-totalAssets}.
      *
      * Pending deposit assets are subtracted from the vault's token balance, since they have not yet been
-     * converted into shares and must not be treated as yield for outstanding shareholders.
+     * converted into shares and must not be treated as yield for outstanding shareholders. Requests that
+     * were fulfilled at a locked rate but not yet claimed are accounted as settled: the assets of Claimable
+     * deposits ({_totalClaimableDepositAssets}) are added back, and the assets owed to Claimable redeems
+     * ({_totalClaimableRedeemAssets}) are subtracted.
      *
      * NOTE: Internal flows preserve the invariant `balanceOf(asset, vault) >= totalPendingDepositAssets()` for
      * any well-behaved ERC-20. Assets with transfer fees, negative rebases, or externally-mutable balances can
      * violate it and cause this function to revert with an underflow. Strategies that read {totalAssets} on the
-     * claim path become uncallable in that state. Strategies that lock the rate at fulfillment time
-     * are unaffected.
+     * claim path become uncallable in that state. This function also reverts if redeem Requests are fulfilled
+     * for more assets than the vault holds; fulfillers must fund the vault before fulfilling.
      */
     function totalAssets() public view virtual override returns (uint256) {
-        return IERC20(asset()).balanceOf(address(this)) - totalPendingDepositAssets();
+        return
+            IERC20(asset()).balanceOf(address(this)) -
+            (totalPendingDepositAssets() - _totalClaimableDepositAssets()) -
+            _totalClaimableRedeemAssets();
     }
 
     /**
@@ -246,7 +256,10 @@ abstract contract ERC7540 is ERC165, ERC20, IERC4626, IERC7540, IERC7575Share {
      *
      * Adds {totalPendingRedeemShares} to the ERC-20 supply. When shares are burned at request time
      * (i.e. {_redeemShareDestination} returns `address(0)`), pending redeem shares are removed from
-     * the on-chain supply but still logically outstanding until claimed; this override compensates.
+     * the on-chain supply but still logically outstanding until fulfilled; this override compensates.
+     * Requests that were fulfilled at a locked rate but not yet claimed are accounted as settled: shares
+     * owed to Claimable deposits ({_totalClaimableDepositShares}) are added, and shares of Claimable
+     * redeems ({_totalClaimableRedeemShares}) are subtracted.
      *
      * NOTE: As a consequence, two standard ERC-20 assumptions do not hold: (a) `totalSupply()` may
      * exceed the sum of all `balanceOf()` (pending shares are virtual and unowned); (b) `totalSupply()`
@@ -255,7 +268,10 @@ abstract contract ERC7540 is ERC165, ERC20, IERC4626, IERC7540, IERC7575Share {
      * (indexers, bridges), must account for this.
      */
     function totalSupply() public view virtual override(IERC20, ERC20) returns (uint256) {
-        return super.totalSupply() + totalPendingRedeemShares();
+        return
+            super.totalSupply() +
+            _totalClaimableDepositShares() +
+            (totalPendingRedeemShares() - _totalClaimableRedeemShares());
     }
 
     /**
@@ -941,4 +957,46 @@ abstract contract ERC7540 is ERC165, ERC20, IERC4626, IERC7540, IERC7575Share {
 
     /// @dev Returns the maximum shares that can be claimed via {redeem} for an async `owner`.
     function _asyncMaxRedeem(address /*owner*/) internal view virtual returns (uint256);
+
+    /**
+     * @dev Returns the assets of Claimable deposit Requests that are still counted in
+     * {totalPendingDepositAssets}, i.e. assets fulfilled at a locked rate whose shares are minted at
+     * claim time. They are added back to {totalAssets} so that the vault's exchange rate treats these
+     * Requests as settled.
+     *
+     * Returning 0 is correct for synchronous deposits, for strategies that do not lock a rate at fulfillment
+     * (e.g. the rate is computed at claim time), and for the pre-mint custody model (see {_depositShareOrigin}),
+     * where fulfillment already removes the assets from {totalPendingDepositAssets}. Strategies that lock
+     * a rate at fulfillment with mint-on-claim custody must report them, together with
+     * {_totalClaimableDepositShares}.
+     */
+    function _totalClaimableDepositAssets() internal view virtual returns (uint256);
+
+    /**
+     * @dev Returns the shares owed to Claimable deposit Requests that have not been minted yet. They are
+     * added to {totalSupply} so that the vault's exchange rate treats these Requests as settled.
+     *
+     * See {_totalClaimableDepositAssets}.
+     */
+    function _totalClaimableDepositShares() internal view virtual returns (uint256);
+
+    /**
+     * @dev Returns the assets owed to Claimable redeem Requests, still held by the vault until claimed.
+     * They are subtracted from {totalAssets} so that the vault's exchange rate treats these Requests as
+     * settled.
+     *
+     * Returning 0 is correct for synchronous redemptions and for strategies that do not lock a rate at
+     * fulfillment (e.g. the rate is computed at claim time). Strategies that lock a rate at fulfillment
+     * must report them, together with {_totalClaimableRedeemShares}.
+     */
+    function _totalClaimableRedeemAssets() internal view virtual returns (uint256);
+
+    /**
+     * @dev Returns the shares of Claimable redeem Requests, still counted in {totalPendingRedeemShares}
+     * until claimed. They are subtracted from {totalSupply} so that the vault's exchange rate treats
+     * these Requests as settled.
+     *
+     * See {_totalClaimableRedeemAssets}.
+     */
+    function _totalClaimableRedeemShares() internal view virtual returns (uint256);
 }

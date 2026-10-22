@@ -58,8 +58,8 @@ describe('ERC7540Admin', function () {
       });
 
       shouldBehaveLikeERC7540Operator();
-      shouldBehaveLikeERC7540Deposit({ supportCustomFulfill: true, withTmpHolder });
-      shouldBehaveLikeERC7540Redeem({ supportCustomFulfill: true, withTmpHolder });
+      shouldBehaveLikeERC7540Deposit({ supportCustomFulfill: true });
+      shouldBehaveLikeERC7540Redeem({ supportCustomFulfill: true });
       shouldBehaveLikeERC7575();
 
       describe('multiple partial claims', function () {
