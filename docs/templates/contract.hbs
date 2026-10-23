@@ -2,6 +2,10 @@
 :{{name}}: pass:normal[xref:#{{anchor}}[`++{{name}}++`]]
 {{/each}}
 
+{{#each functions}}
+:{{fullname}}: pass:normal[xref:#{{anchor}}[`++{{name}}++`]]
+{{/each}}
+
 [.contract]
 [[{{anchor}}]]
 === `++{{name}}++` link:https://github.com/OpenZeppelin/openzeppelin-community-contracts/blob/master/{{__item_context.file.absolutePath}}[{github-icon},role=heading-link]
@@ -18,29 +22,29 @@ import "@openzeppelin/community-{{__item_context.file.absolutePath}}";
 .Modifiers
 --
 {{#each modifiers}}
-* `++{{name}}({{names params}})++`
+* {xref-{{anchor~}} }[`++{{name}}({{names params}})++`]
 {{/each}}
 --
 {{/if}}
 
-{{#if has-functions}}
+{{#if hasFunctions}}
 [.contract-index]
 .Functions
 --
-{{#each inherited-functions}}
+{{#each inheritedFunctions}}
 {{#unless @first}}
 [.contract-subindex-inherited]
 .{{contract.name}}
 {{/unless}}
 {{#each functions}}
-* `++{{name}}({{names params}})++`
+* {xref-{{anchor~}} }[`++{{name}}({{names params}})++`]
 {{/each}}
 
 {{/each}}
 --
 {{/if}}
 
-{{#if has-events}}
+{{#if hasEvents}}
 [.contract-index]
 .Events
 --
@@ -50,14 +54,14 @@ import "@openzeppelin/community-{{__item_context.file.absolutePath}}";
 .{{name}}
 {{/unless}}
 {{#each events}}
-* `++{{name}}({{names params}})++`
+* {xref-{{anchor~}} }[`++{{name}}({{names params}})++`]
 {{/each}}
 
 {{/each}}
 --
 {{/if}}
 
-{{#if has-errors}}
+{{#if hasErrors}}
 [.contract-index]
 .Errors
 --
@@ -67,14 +71,14 @@ import "@openzeppelin/community-{{__item_context.file.absolutePath}}";
 .{{name}}
 {{/unless}}
 {{#each errors}}
-* `++{{name}}({{names params}})++`
+* {xref-{{anchor~}} }[`++{{name}}({{names params}})++`]
 {{/each}}
 
 {{/each}}
 --
 {{/if}}
 
-{{#if has-internal-variables}}
+{{#if hasInternalVariables}}
 [.contract-index]
 .Internal Variables
 --
@@ -83,8 +87,8 @@ import "@openzeppelin/community-{{__item_context.file.absolutePath}}";
 [.contract-subindex-inherited]
 .{{name}}
 {{/unless}}
-{{#each internal-variables}}
-* `++{{typeDescriptions.typeString}} {{#if constant}}constant{{/if}} {{name}}++`
+{{#each internalVariables}}
+* {xref-{{anchor~}} }[`++{{typeDescriptions.typeString}} {{#if constant}}constant{{/if}} {{name}}++`]
 {{/each}}
 
 {{/each}}
@@ -94,7 +98,7 @@ import "@openzeppelin/community-{{__item_context.file.absolutePath}}";
 {{#each modifiers}}
 [.contract-item]
 [[{{anchor}}]]
-==== `[.contract-item-name]#++{{name}}++#++({{typed-params params}})++` [.item-kind]#modifier#
+==== `[.contract-item-name]#++{{name}}++#++({{typedParams params}})++` [.item-kind]#modifier#
 
 {{{natspec.dev}}}
 
@@ -103,7 +107,7 @@ import "@openzeppelin/community-{{__item_context.file.absolutePath}}";
 {{#each functions}}
 [.contract-item]
 [[{{anchor}}]]
-==== `[.contract-item-name]#++{{name}}++#++({{typed-params params}}){{#if returns2}} → {{typed-params returns2}}{{/if}}++` [.item-kind]#{{visibility}}#
+==== `[.contract-item-name]#++{{name}}++#++({{typedParams params}}){{#if returns2}} → {{typedParams returns2}}{{/if}}++` [.item-kind]#{{visibility}}#
 
 {{{natspec.dev}}}
 
@@ -112,7 +116,7 @@ import "@openzeppelin/community-{{__item_context.file.absolutePath}}";
 {{#each events}}
 [.contract-item]
 [[{{anchor}}]]
-==== `[.contract-item-name]#++{{name}}++#++({{typed-params params}})++` [.item-kind]#event#
+==== `[.contract-item-name]#++{{name}}++#++({{typedParams params}})++` [.item-kind]#event#
 
 {{{natspec.dev}}}
 
@@ -121,13 +125,13 @@ import "@openzeppelin/community-{{__item_context.file.absolutePath}}";
 {{#each errors}}
 [.contract-item]
 [[{{anchor}}]]
-==== `[.contract-item-name]#++{{name}}++#++({{typed-params params}})++` [.item-kind]#error#
+==== `[.contract-item-name]#++{{name}}++#++({{typedParams params}})++` [.item-kind]#error#
 
 {{{natspec.dev}}}
 
 {{/each}}
 
-{{#each internal-variables}}
+{{#each internalVariables}}
 [.contract-item]
 [[{{anchor}}]]
 ==== `{{typeDescriptions.typeString}} [.contract-item-name]#++{{name}}++#` [.item-kind]#internal{{#if constant}} constant{{/if}}#

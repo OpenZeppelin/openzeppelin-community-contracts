@@ -1,18 +1,17 @@
-const { ethers, predeploy } = require('hardhat');
-const { loadFixture } = require('@nomicfoundation/hardhat-network-helpers');
-const { expect } = require('chai');
+import { network } from 'hardhat';
+import { expect } from 'chai';
+import { ERC4337Helper } from '@openzeppelin/contracts/test/helpers/erc4337';
+import { getDomain, PackedUserOperation } from '@openzeppelin/contracts/test/helpers/eip712';
+import { MODULE_TYPE_VALIDATOR } from '@openzeppelin/contracts/test/helpers/erc7579';
+import { NonNativeSigner, P256SigningKey, RSASHA256SigningKey } from '@openzeppelin/contracts/test/helpers/signers';
+import { shouldBehaveLikeERC7579Module, shouldBehaveLikeERC7579Validator } from './ERC7579Module.behavior';
 
-const { impersonate } = require('@openzeppelin/contracts/test/helpers/account');
-const { getDomain, PackedUserOperation } = require('@openzeppelin/contracts/test/helpers/eip712');
-const { ERC4337Helper } = require('@openzeppelin/contracts/test/helpers/erc4337');
-const { MODULE_TYPE_VALIDATOR } = require('@openzeppelin/contracts/test/helpers/erc7579');
+const connection = await network.create();
 const {
-  NonNativeSigner,
-  P256SigningKey,
-  RSASHA256SigningKey,
-} = require('@openzeppelin/contracts/test/helpers/signers');
-
-const { shouldBehaveLikeERC7579Module, shouldBehaveLikeERC7579Validator } = require('./ERC7579Module.behavior');
+  ethers,
+  helpers: { impersonate },
+  networkHelpers: { loadFixture },
+} = connection;
 
 // Prepare signers in advance (RSA are long to initialize)
 const signerECDSA = ethers.Wallet.createRandom();
@@ -30,9 +29,9 @@ async function fixture() {
   const verifierRSA = await ethers.deployContract('ERC7913RSAVerifier');
 
   // ERC-4337 env
-  const helper = new ERC4337Helper();
+  const helper = new ERC4337Helper(connection);
   await helper.wait();
-  const entrypointDomain = await getDomain(predeploy.entrypoint.v09);
+  const entrypointDomain = await getDomain(ethers.predeploy.entrypoint.v09);
 
   // ERC-7579 account
   const mockAccount = await helper.newAccount('$AccountERC7579');
@@ -59,7 +58,7 @@ function prepareSigner(prototype) {
 
 describe('ERC7579Signature', function () {
   beforeEach(async function () {
-    Object.assign(this, await loadFixture(fixture));
+    Object.assign(this, connection, await loadFixture(fixture));
   });
 
   it('reverts with ERC7579SignatureInvalidSignerLength when signer length is less than 20 bytes', async function () {
@@ -73,7 +72,7 @@ describe('ERC7579Signature', function () {
   it('behaves as a noop when the validator is already installed for an account', async function () {
     // First installation should succeed
     const signerData = ethers.solidityPacked(['address'], [signerECDSA.address]);
-    await expect(this.mockFromAccount.onInstall(signerData)).to.not.be.reverted;
+    await expect(this.mockFromAccount.onInstall(signerData)).to.not.revert(ethers);
 
     // Second installation should behave as a no-op
     await this.mockFromAccount.onInstall(ethers.solidityPacked(['address'], [ethers.Wallet.createRandom().address])); // Not revert

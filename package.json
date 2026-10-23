@@ -10,24 +10,26 @@
   ],
   "scripts": {
     "compile": "hardhat compile",
-    "clean": "hardhat clean && rimraf build contracts/build",
     "docs": "npm run prepare-docs && oz-docs",
     "docs:watch": "oz-docs watch contracts docs/templates docs/config.js",
     "prepare": "husky",
     "prepare-docs": "scripts/prepare-docs.sh",
     "lint": "npm run lint:js && npm run lint:sol",
     "lint:fix": "npm run lint:js:fix && npm run lint:sol:fix",
-    "lint:js": "prettier --log-level warn '**/*.{js,ts}' --check && eslint . --ignore-pattern lib/",
-    "lint:js:fix": "prettier --log-level warn '**/*.{js,ts}' --write && eslint . --fix --ignore-pattern lib/",
-    "lint:sol": "prettier --log-level warn '{contracts,test}/**/*.sol' --check && solhint '{contracts,test}/**/*.sol'",
-    "lint:sol:fix": "prettier --log-level warn '{contracts,test}/**/*.sol' --write",
-    "coverage": "scripts/checks/coverage.sh",
+    "lint:js": "npm run prettier -- '**/*.{js,ts}' --check && eslint . --ignore-pattern lib/",
+    "lint:js:fix": "npm run prettier -- '**/*.{js,ts}' --write && eslint . --fix --ignore-pattern lib/",
+    "lint:sol": "npm run prettier -- '{contracts,test}/**/*.sol' --check && npm run solhint -- '{contracts,test}/**/*.sol'",
+    "lint:sol:fix": "npm run prettier -- '{contracts,test}/**/*.sol' --write && npm run solhint -- '{contracts,test}/**/*.sol' --fix",
+    "prettier": "prettier --log-level warn --ignore-path .gitignore --ignore-path .prettierignore",
+    "solhint": "solhint --config solhint.config.cjs --noPoster --noPrompt --disc",
+    "clean": "hardhat clean && rimraf build contracts/build",
     "generate": "scripts/generate/run.js",
     "test": "hardhat test",
     "test:generation": "scripts/checks/generation.sh",
-    "test:inheritance": "scripts/checks/inheritance-ordering.js artifacts/build-info/*",
+    "test:inheritance": "scripts/checks/inheritance-ordering.js artifacts/build-info/*.output.json",
     "test:pragma": "scripts/checks/pragma-validity.js artifacts/build-info/*",
-    "gas-report": "env ENABLE_GAS_REPORT=true npm run test"
+    "coverage": "hardhat test --coverage",
+    "gas-report": "hardhat test --gas-stats"
   },
   "homepage": "https://openzeppelin.com/contracts/",
   "repository": {
@@ -50,13 +52,14 @@
     "husky": "^9.1.7"
   },
   "lint-staged": {
-    "*.{js,ts}": [
-      "prettier --log-level warn --ignore-path .gitignore --check",
+    "**/*.{js,ts}": [
+      "npm run prettier -- --check",
       "eslint"
     ],
-    "*.sol": [
-      "prettier --log-level warn --ignore-path .gitignore --check",
-      "solhint"
+    "{contracts,test}/**/*.sol": [
+      "npm run prettier -- --check",
+      "npm run solhint --"
     ]
-  }
+  },
+  "type": "module"
 }

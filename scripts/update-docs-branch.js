@@ -1,4 +1,7 @@
-const proc = require('child_process');
+import proc from 'child_process';
+import fs from 'fs';
+import path from 'path';
+
 const read = cmd => proc.execSync(cmd, { encoding: 'utf8' }).trim();
 const run = cmd => {
   proc.execSync(cmd, { stdio: 'inherit' });
@@ -11,20 +14,17 @@ const tryRead = cmd => {
   }
 };
 
-// The community contracts currently don't have a defined release process.
-// The master branch is used for development, and the docs are updated from there.
-// Use /^release-v(?<version>(?<major>\d+)\.(?<minor>\d+)(?:\.(?<patch>\d+))?)$/ for a release branch
-const masterBranch = /^master$/;
+const releaseBranchRegex = /^release-v(?<version>(?<major>\d+)\.(?<minor>\d+)(?:\.(?<patch>\d+))?)$/;
 
 const currentBranch = read('git rev-parse --abbrev-ref HEAD');
-const match = currentBranch.match(masterBranch);
+const match = currentBranch.match(releaseBranchRegex);
 
 if (!match) {
-  console.error('Not currently on master branch');
+  console.error('Not currently on a release branch');
   process.exit(1);
 }
 
-const pkgVersion = require('../package.json').version;
+const pkgVersion = JSON.parse(fs.readFileSync(path.resolve(import.meta.dirname, '../package.json'), 'utf8')).version;
 
 if (pkgVersion.includes('-') && !pkgVersion.includes('.0.0-')) {
   console.error('Refusing to update docs: non-major prerelease detected');
@@ -32,9 +32,7 @@ if (pkgVersion.includes('-') && !pkgVersion.includes('.0.0-')) {
 }
 
 const current = match.groups;
-const major = current?.major ?? pkgVersion.split('.')[0];
-const minor = current?.minor ?? pkgVersion.split('.')[1];
-const docsBranch = `docs-v${major}.x`;
+const docsBranch = `docs-v${current.major}.x`;
 
 // Fetch remotes and find the docs branch if it exists
 run('git fetch --all --no-tags');
@@ -54,7 +52,7 @@ if (!matchingDocsBranches) {
   }
   const publishedVersion = JSON.parse(read(`git show ${publishedRef}:package.json`)).version;
   const publishedMinor = publishedVersion.match(/\d+\.(?<minor>\d+)\.\d+/).groups.minor;
-  if (minor < publishedMinor) {
+  if (current.minor < publishedMinor) {
     console.error('Refusing to update docs: newer version is published');
     process.exit(0);
   }
@@ -66,5 +64,5 @@ if (!matchingDocsBranches) {
 
 run('npm run prepare-docs');
 run('git add -f docs'); // --force needed because generated docs files are gitignored
-run('git commit --no-verify -m "Update docs"');
+run('git commit -m "Update docs"');
 run(`git checkout ${currentBranch}`);

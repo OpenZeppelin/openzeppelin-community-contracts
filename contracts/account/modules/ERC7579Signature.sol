@@ -2,7 +2,6 @@
 
 pragma solidity ^0.8.27;
 
-import {IERC7579Module} from "@openzeppelin/contracts/interfaces/draft-IERC7579.sol";
 import {SignatureChecker} from "@openzeppelin/contracts/utils/cryptography/SignatureChecker.sol";
 import {ERC7579Validator} from "./ERC7579Validator.sol";
 
