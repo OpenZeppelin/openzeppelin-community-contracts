@@ -6,39 +6,33 @@ on:
       - master
       - release-v*
 
+concurrency:
+  group: upgradeable-${{ github.ref }}
+
 jobs:
   transpile:
-    environment: push-upgradeable
     permissions:
-      contents: read
-    if: ${{ !endsWith(github.repository, '-upgradeable') }}
+      contents: write
     runs-on: ubuntu-latest
+    env:
+      REF_NAME: ${{ github.ref_name }}
+      TARGET: ${{ github.ref_name }}-upgradeable
     steps:
       - uses: actions/checkout@v4
         with:
-          repository: ${{ github.repository }}-upgradeable
           fetch-depth: 0
-          persist-credentials: false
-      - name: Fetch current non-upgradeable branch
-        run: |
-          git fetch "$REMOTE" master # Fetch default branch first for patch to apply cleanly
-          git fetch "$REMOTE" "$REF"
-          git checkout FETCH_HEAD
-          git submodule update --init --recursive
-        env:
-          REF: ${{ github.ref }}
-          REMOTE: https://github.com/${{ github.repository }}.git
+          submodules: recursive
       - name: Set up environment
         uses: ./.github/actions/setup
       - run: bash scripts/git-user-config.sh
+      - name: Fetch current upgradeable branch
+        run: |
+          if git ls-remote --exit-code --heads origin "$TARGET"; then
+            git fetch origin "refs/heads/${TARGET}:refs/heads/${TARGET}"
+          fi
       - name: Transpile to upgradeable
-        run: bash scripts/upgradeable/transpile-onto.sh "$REF_NAME" "origin/$REF_NAME"
+        run: bash scripts/upgradeable/transpile-onto.sh "$TARGET" "origin/$REF_NAME"
         env:
-          REF_NAME: ${{ github.ref_name }}
           SUBMODULE_REMOTE: https://github.com/${{ github.repository }}.git
       - name: Push to upgradeable
-        run: git push "https://x-access-token:${GH_TOKEN}@github.com/${REPOSITORY}-upgradeable.git" -- "$REF_NAME"
-        env:
-          GH_TOKEN: ${{ secrets.GH_TOKEN_UPGRADEABLE }}
-          REF_NAME: ${{ github.ref_name }}
-          REPOSITORY: ${{ github.repository }}
+        run: git push origin "$TARGET"

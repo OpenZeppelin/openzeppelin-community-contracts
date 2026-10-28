@@ -1,6 +1,6 @@
 The upgradeable variant of OpenZeppelin Community Contracts is automatically generated from the original Solidity code. We call this process "transpilation" and it is implemented by our [Upgradeability Transpiler](https://github.com/OpenZeppelin/openzeppelin-transpiler/).
 
-When the `master` branch or `release-v*` branches are updated, the code is transpiled and pushed to [OpenZeppelin/openzeppelin-community-contracts-upgradeable](https://github.com/OpenZeppelin/openzeppelin-community-contracts-upgradeable) by the `upgradeable.yml` workflow.
+When the `master` branch or `release-v*` branches are updated, the code is transpiled and pushed to the corresponding `<branch>-upgradeable` branch of this repository (e.g. `master-upgradeable`) by the `upgradeable.yml` workflow. Each of these branches includes the original code as a submodule in `lib/openzeppelin-community-contracts`.
 
 ## `transpile.sh`
 
