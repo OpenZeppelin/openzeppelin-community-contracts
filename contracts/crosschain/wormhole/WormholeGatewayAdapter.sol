@@ -33,8 +33,7 @@ contract WormholeGatewayAdapter is IERC7786GatewaySource, IWormholeReceiver, Own
         bytes payload;
     }
 
-    IWormholeRelayer immutable _wormholeRelayer;
-    uint16 immutable _wormholeChainId;
+    IWormholeRelayer private immutable _wormholeRelayer;
     uint24 private constant EVM_ID_FLAG = 1 << 16;
 
     // Remote gateway.
@@ -76,9 +75,8 @@ contract WormholeGatewayAdapter is IERC7786GatewaySource, IWormholeReceiver, Own
     }
 
     /// @dev Initializes the contract with the Wormhole gateway and the initial owner.
-    constructor(IWormholeRelayer wormholeRelayer, uint16 wormholeChainId, address initialOwner) Ownable(initialOwner) {
+    constructor(IWormholeRelayer wormholeRelayer, address initialOwner) Ownable(initialOwner) {
         _wormholeRelayer = wormholeRelayer;
-        _wormholeChainId = wormholeChainId;
     }
 
     /// @dev Returns the local Wormhole relayer
@@ -181,9 +179,6 @@ contract WormholeGatewayAdapter is IERC7786GatewaySource, IWormholeReceiver, Own
             require(supportsAttribute(selector), UnsupportedAttribute(selector));
         }
 
-        // We need a unique message identifier.
-        bytes32 msgId = bytes32(++_lastMsgId);
-
         // Case 1. We don't have a requestRelay attribute.
         // - The message is saved, waiting for a call to requestRelay.
         //
@@ -193,7 +188,7 @@ contract WormholeGatewayAdapter is IERC7786GatewaySource, IWormholeReceiver, Own
         // Case 3. We have multiple duplicated instances of the requestRelay attribute.
         // - revert
         if (attributes.length == 0) {
-            sendId = msgId;
+            sendId = bytes32(++_lastMsgId);
 
             // Note: this reverts with UnsupportedChainId if the recipient is not on a supported chain.
             // No real need to check the return value.
@@ -219,9 +214,18 @@ contract WormholeGatewayAdapter is IERC7786GatewaySource, IWormholeReceiver, Own
             require(success, InvalidAttributeEncoding(attributes[0]));
 
             // Send the message.
-            // msgId is used for uniqueness and replay protection, even if its not an actual sendId (not part of the
+            // A unique message identifier is used for replay protection, even if its not an actual sendId (not part of the
             // `MessageSent` event and not used for relaying)
-            _sendMessage(msgId, recipient, payload, msg.sender, msg.value, recipientValue, gasLimit, refundRecipient);
+            _sendMessage(
+                bytes32(++_lastMsgId),
+                recipient,
+                payload,
+                msg.sender,
+                msg.value,
+                recipientValue,
+                gasLimit,
+                refundRecipient
+            );
 
             emit MessageSent(
                 sendId,
@@ -245,7 +249,11 @@ contract WormholeGatewayAdapter is IERC7786GatewaySource, IWormholeReceiver, Own
         uint256 gasLimit,
         address /*refundRecipient*/
     ) external view returns (uint256) {
-        (uint256 cost, ) = _wormholeRelayer.quoteEVMDeliveryPrice(getWormholeChain(recipient), value, gasLimit);
+        (uint256 cost, ) = IWormholeRelayer(relayer()).quoteEVMDeliveryPrice(
+            getWormholeChain(recipient),
+            value,
+            gasLimit
+        );
         return cost - value;
     }
 
@@ -316,7 +324,7 @@ contract WormholeGatewayAdapter is IERC7786GatewaySource, IWormholeReceiver, Own
     ) private {
         uint16 targetChain = getWormholeChain(recipient);
         address targetAddress = getRemoteGateway(recipient);
-        _wormholeRelayer.sendPayloadToEvm{value: totalValue}(
+        IWormholeRelayer(relayer()).sendPayloadToEvm{value: totalValue}(
             targetChain,
             targetAddress,
             abi.encode(id, InteroperableAddress.formatEvmV1(block.chainid, sender), recipient, payload),

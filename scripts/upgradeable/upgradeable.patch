@@ -1,12 +1,60 @@
-diff --git a/contracts/mocks/import.sol b/contracts/mocks/import.sol
-index 0c388c5..7014e0b 100644
---- a/contracts/mocks/import.sol
-+++ b/contracts/mocks/import.sol
-@@ -2,7 +2,6 @@
+diff --git a/README.md b/README.md
+index dbce31e..074338a 100644
+--- a/README.md
++++ b/README.md
+@@ -8,6 +8,11 @@
+ > This repository includes community-curated and experimental code that has not been audited and may introduce breaking changes at any time. We recommend
+ > reviewing the [Security](#security) section before using any code from this repository.
  
- pragma solidity ^0.8.20;
++> [!NOTE]
++> You are looking at the upgradeable variant of OpenZeppelin Community Contracts. Be sure to review the documentation on [Using OpenZeppelin Contracts with Upgrades](https://docs.openzeppelin.com/contracts/upgradeable).
++>
++> This variant is published to the `master-upgradeable` branch. Install it with `forge install OpenZeppelin/openzeppelin-community-contracts@master-upgradeable`.
++
+ ## Overview
  
--import {ECDSAOwnedDKIMRegistry} from "@zk-email/email-tx-builder/src/utils/ECDSAOwnedDKIMRegistry.sol";
- import {UpgradeableBeacon} from "@openzeppelin/contracts/proxy/beacon/UpgradeableBeacon.sol";
- import {ERC721} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
- import {ERC721Enumerable} from "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
+ This repository contains contracts and libraries in the following categories:
+diff --git a/hardhat.config.js b/hardhat.config.js
+index 5755038..69442a4 100644
+--- a/hardhat.config.js
++++ b/hardhat.config.js
+@@ -34,6 +34,7 @@ require('hardhat-predeploy');
+ require('solidity-coverage');
+ require('solidity-docgen');
+ require('./hardhat/remappings');
++require('./hardhat/upgradeable-artifacts');
+ 
+ module.exports = {
+   solidity: {
+@@ -54,6 +55,7 @@ module.exports = {
+   exposed: {
+     imports: true,
+     initializers: true,
++    exclude: ['**/*WithInit.sol'],
+   },
+   gasReporter: {
+     enabled: argv.gas,
+diff --git a/package.json b/package.json
+index 489f780..923ee3f 100644
+--- a/package.json
++++ b/package.json
+@@ -1,5 +1,5 @@
+ {
+-  "name": "@openzeppelin/community-contracts",
++  "name": "@openzeppelin/community-contracts-upgradeable",
+   "version": "0.0.1",
+   "description": "Solidity library of smart contracts from the OpenZeppelin Community",
+   "author": "OpenZeppelin Community <maintainers@openzeppelin.org>",
+diff --git a/remappings.txt b/remappings.txt
+index 0ffaddd..d03bc78 100644
+--- a/remappings.txt
++++ b/remappings.txt
+@@ -1,6 +1,7 @@
+ @openzeppelin/contracts/=lib/@openzeppelin-contracts/contracts/
+ @openzeppelin/contracts-upgradeable/=lib/@openzeppelin-contracts-upgradeable/contracts/
+-@openzeppelin/community-contracts/=contracts/
++@openzeppelin/community-contracts-upgradeable/=contracts/
++@openzeppelin/community-contracts/=lib/openzeppelin-community-contracts/contracts/
+ @axelar-network/axelar-gmp-sdk-solidity/=lib/axelar-gmp-sdk-solidity/
+ @zk-email/email-tx-builder/=lib/email-tx-builder/packages/contracts/
+ @zk-email/contracts/=lib/zk-email-verify/packages/contracts/

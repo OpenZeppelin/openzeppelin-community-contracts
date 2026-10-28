@@ -40,6 +40,12 @@ function shouldBehaveLikeERC7540Operator() {
 
         await expect(this.mock.isOperator(this.owner, this.operator)).to.eventually.equal(status);
       });
+
+      it(`setOperator to ${status} reverts if the operator is the controller`, async function () {
+        await expect(this.mock.connect(this.owner).setOperator(this.owner, status))
+          .to.be.revertedWithCustomError(this.mock, 'ERC7540InvalidSelfOperator')
+          .withArgs(this.owner);
+      });
     }
   });
 }

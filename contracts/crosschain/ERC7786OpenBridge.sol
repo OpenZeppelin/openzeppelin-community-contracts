@@ -6,6 +6,7 @@ import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {IERC7786GatewaySource, IERC7786Recipient} from "@openzeppelin/contracts/interfaces/draft-IERC7786.sol";
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import {Address} from "@openzeppelin/contracts/utils/Address.sol";
+import {LowLevelCall} from "@openzeppelin/contracts/utils/LowLevelCall.sol";
 import {Pausable} from "@openzeppelin/contracts/utils/Pausable.sol";
 import {InteroperableAddress} from "@openzeppelin/contracts/utils/draft-InteroperableAddress.sol";
 
@@ -39,16 +40,19 @@ contract ERC7786OpenBridge is IERC7786GatewaySource, IERC7786Recipient, Ownable,
     event ExecutionFailed(bytes32 indexed receiveId);
     event GatewayAdded(address indexed gateway);
     event GatewayRemoved(address indexed gateway);
+    event ERC7786OpenBridgeSendMessageFailed(address indexed gateway);
     event ThresholdUpdated(uint8 threshold);
 
     error UnsupportedNativeTransfer();
     error ERC7786OpenBridgeInvalidCrosschainSender();
     error ERC7786OpenBridgeAlreadyExecuted();
     error ERC7786OpenBridgeRemoteNotRegistered(bytes2 chainType, bytes chainReference);
+    error ERC7786OpenBridgeGatewayNotAContract(address gateway);
     error ERC7786OpenBridgeGatewayAlreadyRegistered(address gateway);
     error ERC7786OpenBridgeGatewayNotRegistered(address gateway);
     error ERC7786OpenBridgeThresholdViolation();
     error ERC7786OpenBridgeInvalidExecutionReturnValue();
+    error ERC7786OpenBridgeInsufficientGateways();
 
     /****************************************************************************************************************
      *                                        S T A T E   V A R I A B L E S                                         *
@@ -91,8 +95,15 @@ contract ERC7786OpenBridge is IERC7786GatewaySource, IERC7786Recipient, Ownable,
         return false;
     }
 
-    /// @inheritdoc IERC7786GatewaySource
-    /// @dev Using memory instead of calldata avoids stack too deep errors
+    /**
+     * @inheritdoc IERC7786GatewaySource
+     *
+     * @dev Using memory instead of calldata avoids stack too deep errors.
+     *
+     * NOTE: This function does not enforce a maximum size for `payload` nor validate the address component of a
+     * validly encoded `recipient`; the caller is responsible for supplying values that the destination chain can
+     * decode and that resolve to a live recipient.
+     */
     function sendMessage(
         bytes calldata recipient, // Binary Interoperable Address
         bytes calldata payload,
@@ -111,20 +122,31 @@ contract ERC7786OpenBridge is IERC7786GatewaySource, IERC7786Recipient, Ownable,
         bytes memory wrappedPayload = abi.encode(++_nonce, sender, recipient, payload);
 
         // Post on all gateways
-        Outbox[] memory outbox = new Outbox[](_gateways.length());
-        bool needsId = false;
-        for (uint256 i = 0; i < outbox.length; ++i) {
-            address gateway = _gateways.at(i);
-            // send message
-            bytes32 id = IERC7786GatewaySource(gateway).sendMessage(bridge, wrappedPayload, attributes);
-            // fill outbox
-            outbox[i] = Outbox(gateway, id);
-            needsId = needsId || id != bytes32(0);
-        }
+        {
+            Outbox[] memory outbox = new Outbox[](_gateways.length());
+            bool needsId = false;
+            uint256 sent = 0;
+            for (uint256 i = 0; i < outbox.length; ++i) {
+                address gateway = _gateways.at(i);
+                // The typed try/catch is intentional: delegates to Solidity's canonical decoding to reject a gateway
+                // that returns EVM success with a value that does not conform to the interface it was registered under.
+                try IERC7786GatewaySource(gateway).sendMessage(bridge, wrappedPayload, attributes) returns (
+                    bytes32 id
+                ) {
+                    outbox[i] = Outbox(gateway, id);
+                    needsId = needsId || id != bytes32(0);
+                    ++sent;
+                } catch {
+                    // if one gateway fails, we still want to send the message through the others
+                    emit ERC7786OpenBridgeSendMessageFailed(gateway);
+                }
+            }
+            require(sent >= getThreshold(), ERC7786OpenBridgeInsufficientGateways());
 
-        if (needsId) {
-            sendId = keccak256(abi.encode(outbox));
-            emit OutboxDetails(sendId, outbox);
+            if (needsId) {
+                sendId = keccak256(abi.encode(outbox));
+                emit OutboxDetails(sendId, outbox);
+            }
         }
 
         emit MessageSent(sendId, sender, recipient, payload, 0, attributes);
@@ -143,6 +165,9 @@ contract ERC7786OpenBridge is IERC7786GatewaySource, IERC7786Recipient, Ownable,
      *
      * It can also be called by anyone (including an ERC-7786 gateway) to retry the execution. This can be useful if
      * the automatic execution (that is triggered when the threshold is reached) fails, and someone wants to retry it.
+     * The retry path only performs work when {getThreshold} gateway deliveries have already been recorded for the
+     * message; a caller that is not a registered gateway against a message that has not yet accumulated enough
+     * receipts falls through the counting branch and returns the magic value without executing anything.
      *
      * When a message is forwarded by a known gateway, a {Received} event is emitted. If a known gateway calls this
      * function more than once (for a given message), only the first call is counts toward the threshold and emits an
@@ -155,7 +180,7 @@ contract ERC7786OpenBridge is IERC7786GatewaySource, IERC7786Recipient, Ownable,
      * * someone tries re-execute a message that was already successfully delivered. This includes gateways that call
      *   this function a second time with a message that was already executed.
      * * the execution of the message (on the {IERC7786Recipient} recipient) is successful but fails to return the
-     *   executed value.
+     *   expected magic value (reverts with {ERC7786OpenBridgeInvalidExecutionReturnValue}).
      *
      * This function does not revert if:
      *
@@ -217,13 +242,18 @@ contract ERC7786OpenBridge is IERC7786GatewaySource, IERC7786Recipient, Ownable,
             );
             // slither-disable-next-line reentrancy-no-eth
             (, address target) = recipient.parseEvmV1();
-            (bool success, bytes memory returndata) = target.call(call);
+            // A malicious recipient can pad its return buffer to force the caller to run out of gas copying it back.
+            // Only the first 32 bytes are inspected, so bound the copy to that window.
+            (bool success, bytes32 returndata, ) = LowLevelCall.callReturn64Bytes(target, call);
 
             if (!success) {
                 // rollback to enable retry
                 tracker.executed = false;
                 emit ExecutionFailed(id);
-            } else if (bytes32(returndata) == bytes32(IERC7786Recipient.receiveMessage.selector)) {
+            } else if (
+                LowLevelCall.returnDataSize() >= 0x20 &&
+                returndata == bytes32(IERC7786Recipient.receiveMessage.selector)
+            ) {
                 // call successful and correct value returned
                 emit ExecutionSuccess(id);
             } else {
@@ -289,7 +319,19 @@ contract ERC7786OpenBridge is IERC7786GatewaySource, IERC7786Recipient, Ownable,
 
     // ================================================== Internal ===================================================
 
+    /**
+     * @dev Adds a gateway to the authorized set. A gateway may serve as a source, a destination, or both. Every
+     * registered gateway is called by {sendMessage}: a gateway that does not support sending must revert, and does
+     * not count toward the sends required by {getThreshold}.
+     *
+     * As a source, a gateway is required to implement {IERC7786GatewaySource} and is trusted to return well-formed
+     * data, not consume all forwarded gas, and relay the messages it accepts. As a destination, it is trusted to
+     * deliver only messages properly verified by the underlying protocol, including but not limited to being sent to
+     * the chain they are delivered to. Gateways that break these or any other ERC-7786 requirements are the
+     * operator's responsibility to rotate out via {removeGateway}.
+     */
     function _addGateway(address gateway) internal virtual {
+        require(gateway.code.length > 0, ERC7786OpenBridgeGatewayNotAContract(gateway));
         require(_gateways.add(gateway), ERC7786OpenBridgeGatewayAlreadyRegistered(gateway));
         emit GatewayAdded(gateway);
     }
