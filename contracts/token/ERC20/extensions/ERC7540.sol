@@ -843,9 +843,9 @@ abstract contract ERC7540 is ERC165, ERC20, IERC4626, IERC7540, IERC7575Share {
      * (`address(1)` through `address(0x1ff)`, see EIP-7587).
      *
      * IMPORTANT: The returned address (and whether it is zero) MUST be immutable for the vault's
-     * lifetime. Request, fulfillment, and claim stages read this hook independently, so a value that
-     * changes between stages settles different stages under different custody rules and corrupts
-     * pending-asset / share accounting.
+     * lifetime. Request, fulfillment, and claim stages, as well as the {totalAssets} and {totalSupply}
+     * views, read this hook independently, so a value that changes between stages settles different
+     * stages under different custody rules and corrupts pending-asset / share accounting.
      */
     function _depositShareOrigin() internal view virtual returns (address) {
         return address(0);
