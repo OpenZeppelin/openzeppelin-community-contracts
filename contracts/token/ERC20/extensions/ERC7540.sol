@@ -740,7 +740,7 @@ abstract contract ERC7540 is ERC165, ERC20, IERC4626, IERC7540, IERC7575Share {
      * Share custody depends on {_redeemShareDestination}:
      *
      * * `address(0)` (default): shares are burned immediately and `_totalPendingRedeemShares` is
-     *   incremented to keep {totalSupply} accurate.
+     *   incremented to keep {_totalOutstandingShares} accurate.
      * * Non-zero address: shares are transferred to that address and held until fulfillment.
      *
      * Authorization for a `msg.sender` not equal to `owner` is checked via operator status first;
@@ -869,7 +869,7 @@ abstract contract ERC7540 is ERC165, ERC20, IERC4626, IERC7540, IERC7575Share {
      * (`address(1)` through `address(0x1ff)`, see EIP-7587).
      *
      * IMPORTANT: The returned address (and whether it is zero) MUST be immutable for the vault's
-     * lifetime. Request, fulfillment, and claim stages, as well as the {totalAssets} and {totalSupply}
+     * lifetime. Request, fulfillment, and claim stages, as well as the {totalAssets} and {_totalOutstandingShares}
      * views, read this hook independently, so a value that changes between stages settles different
      * stages under different custody rules and corrupts pending-asset / share accounting.
      */
@@ -881,7 +881,7 @@ abstract contract ERC7540 is ERC165, ERC20, IERC4626, IERC7540, IERC7575Share {
      * @dev Returns the address to which shares are transferred (escrowed) on redeem request.
      *
      * * `address(0)` (default): shares are burned immediately at request time. Pending redeem shares
-     *   are tracked via {totalPendingRedeemShares} so that {totalSupply} remains accurate.
+     *   are tracked via {totalPendingRedeemShares} so that {_totalOutstandingShares} remains accurate.
      * * Non-zero address: shares are transferred to this address on request and burned during
      *   fulfillment (via {_burnSharesOnRedeemFulfill}).
      *
@@ -1000,7 +1000,7 @@ abstract contract ERC7540 is ERC165, ERC20, IERC4626, IERC7540, IERC7575Share {
 
     /**
      * @dev Returns the shares owed to Claimable deposit Requests that have not been minted yet. They are
-     * added to {totalSupply} so that the vault's exchange rate treats these Requests as settled.
+     * added to {_totalOutstandingShares} so that the vault's exchange rate treats these Requests as settled.
      *
      * See {_totalClaimableDepositAssets}.
      */
@@ -1019,8 +1019,8 @@ abstract contract ERC7540 is ERC165, ERC20, IERC4626, IERC7540, IERC7575Share {
 
     /**
      * @dev Returns the shares of Claimable redeem Requests, still counted in {totalPendingRedeemShares}
-     * until claimed. They are subtracted from {totalSupply} so that the vault's exchange rate treats
-     * these Requests as settled.
+     * until claimed. They are subtracted from {_totalOutstandingShares} so that the vault's exchange
+     * rate treats these Requests as settled.
      *
      * See {_totalClaimableRedeemAssets}.
      */
