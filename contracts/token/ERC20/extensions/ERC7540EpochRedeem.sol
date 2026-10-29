@@ -275,6 +275,7 @@ abstract contract ERC7540EpochRedeem is ERC7540 {
      *
      * * `epochId` must be a past epoch (less than {currentRedeemEpoch}).
      * * The epoch must have pending shares and must not have been fulfilled already.
+     * * The vault must hold enough assets to cover pending deposits and Claimable redeems, including this epoch.
      */
     function _fulfillRedeem(uint256 epochId, uint256 totalAssets) internal virtual {
         require(epochId < currentRedeemEpoch(), ERC7540EpochRedeemTooEarly(epochId));
@@ -288,6 +289,7 @@ abstract contract ERC7540EpochRedeem is ERC7540 {
         if (totalAssets > 0) {
             _claimableShares += totalShares;
             _claimableAssets += totalAssets;
+            _checkSolvency();
 
             if (_redeemShareDestination() != address(0)) {
                 _burnSharesOnRedeemFulfill(totalAssets, totalShares);
