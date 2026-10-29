@@ -1,3 +1,7 @@
+## 29-10-2026
+
+- `TimelockControllerEnumerable`: `operations(start, end)` and `operationsBatch(start, end)` return an empty array for an empty range instead of reverting, so `operations()` and `operationsBatch()` no longer revert when nothing is scheduled. An `end` past the number of entries now reverts with `InvalidIndexRange` instead of an array out-of-bounds panic.
+
 ## 30-09-2026
 
 - `ERC7540`: `_setOperator` now reverts with `ERC7540InvalidSelfOperator` when the controller is set as its own operator. A controller always has unrestricted access to its own tokens and requests, and that access cannot be restricted.
