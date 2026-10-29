@@ -605,6 +605,13 @@ function shouldBehaveLikeERC7540Redeem({
               .withArgs(shares + 1n, shares);
           });
 
+          it('reverts when fulfilling more assets than the vault holds', async function () {
+            const vaultBalance = await this.token.balanceOf(this.mock);
+            await expect(
+              this.fulfillRedeem(this.requestId, vaultBalance + 1n, shares, this.controller),
+            ).to.be.revertedWithCustomError(this.mock, 'ERC7540InsufficientAssets');
+          });
+
           it('_burnSharesOnRedeemFulfill is blocked when _redeemShareDestination() is address(0)', async function () {
             const redeemShareDestination = await this.mock.$_redeemShareDestination();
             if (redeemShareDestination == ethers.ZeroAddress) {

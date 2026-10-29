@@ -118,6 +118,9 @@ abstract contract ERC7540 is ERC165, ERC20, IERC4626, IERC7540, IERC7575Share {
     /// @dev Invalid attempt at burning shares on a redeem fulfill when configuration burns them during request.
     error ERC7540UnauthorizedBurnSharesOnRedeemFulfill();
 
+    /// @dev The vault's asset balance does not cover the assets of pending deposits and Claimable redeems.
+    error ERC7540InsufficientAssets();
+
     /**
      * @dev Sets the underlying asset contract. This must be an ERC-20-compatible contract.
      *
@@ -238,17 +241,37 @@ abstract contract ERC7540 is ERC165, ERC20, IERC4626, IERC7540, IERC7575Share {
      * deposits ({_totalClaimableDepositAssets}) are added back, and the assets owed to Claimable redeems
      * ({_totalClaimableRedeemAssets}) are subtracted.
      *
-     * NOTE: Internal flows preserve the invariant `balanceOf(asset, vault) >= totalPendingDepositAssets()` for
-     * any well-behaved ERC-20. Assets with transfer fees, negative rebases, or externally-mutable balances can
-     * violate it and cause this function to revert with an underflow. Strategies that read {totalAssets} on the
-     * claim path become uncallable in that state. This function also reverts if redeem Requests are fulfilled
-     * for more assets than the vault holds; fulfillers must fund the vault before fulfilling.
+     * NOTE: Internal flows preserve the invariant `balanceOf(asset, vault) + _totalClaimableDepositAssets() >=
+     * totalPendingDepositAssets() + _totalClaimableRedeemAssets()` for any well-behaved ERC-20 (see
+     * {_checkSolvency}). Assets with transfer fees, negative rebases, or externally-mutable balances can violate
+     * it and cause this function to revert with an underflow. Strategies that read {totalAssets} on the claim
+     * path become uncallable in that state.
      */
     function totalAssets() public view virtual override returns (uint256) {
         return
-            IERC20(asset()).balanceOf(address(this)) -
-            (totalPendingDepositAssets() - _totalClaimableDepositAssets()) -
+            IERC20(asset()).balanceOf(address(this)) +
+            _totalClaimableDepositAssets() -
+            totalPendingDepositAssets() -
             _totalClaimableRedeemAssets();
+    }
+
+    /**
+     * @dev Reverts with {ERC7540InsufficientAssets} if the vault's asset balance does not cover the assets of
+     * pending deposits and the assets owed to Claimable redeems, i.e. if {totalAssets} would underflow.
+     *
+     * Called by strategies after fulfilling redeem Requests at a locked rate, so that a fulfillment promising
+     * more assets than the vault holds reverts instead of breaking {totalAssets} for the whole vault. Fulfillers
+     * must fund the vault before fulfilling.
+     *
+     * NOTE: Vaults that override {totalAssets} to account for assets held outside the vault (e.g. deployed in a
+     * strategy) should override this function accordingly.
+     */
+    function _checkSolvency() internal view virtual {
+        require(
+            IERC20(asset()).balanceOf(address(this)) + _totalClaimableDepositAssets() >=
+                totalPendingDepositAssets() + _totalClaimableRedeemAssets(),
+            ERC7540InsufficientAssets()
+        );
     }
 
     /**
@@ -846,9 +869,9 @@ abstract contract ERC7540 is ERC165, ERC20, IERC4626, IERC7540, IERC7575Share {
      * (`address(1)` through `address(0x1ff)`, see EIP-7587).
      *
      * IMPORTANT: The returned address (and whether it is zero) MUST be immutable for the vault's
-     * lifetime. Request, fulfillment, and claim stages read this hook independently, so a value that
-     * changes between stages settles different stages under different custody rules and corrupts
-     * pending-asset / share accounting.
+     * lifetime. Request, fulfillment, and claim stages, as well as the {totalAssets} and {totalSupply}
+     * views, read this hook independently, so a value that changes between stages settles different
+     * stages under different custody rules and corrupts pending-asset / share accounting.
      */
     function _depositShareOrigin() internal view virtual returns (address) {
         return address(0);

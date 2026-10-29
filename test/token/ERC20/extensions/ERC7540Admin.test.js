@@ -376,6 +376,52 @@ describe('ERC7540Admin', function () {
           await expect(this.token.balanceOf(user)).to.eventually.equal(100n);
         });
       });
+
+      describe('solvency', function () {
+        it('redeem fulfillment cannot use the assets of pending deposits', async function () {
+          const [, user] = await ethers.getSigners();
+          await this.token.$_mint(this.mock, 1000n);
+          await this.mock.$_mint(user, 1000n);
+          await this.token.$_mint(user, 500n);
+          await this.token.connect(user).approve(this.mock, ethers.MaxUint256);
+
+          await this.mock.connect(user).requestDeposit(500n, user, user);
+          await this.mock.connect(user).requestRedeem(100n, user, user);
+
+          // The vault holds 1500 assets, 500 of which belong to the pending deposit
+          await expect(this.fulfillRedeem(0n, 1001n, 100n, user)).to.be.revertedWithCustomError(
+            this.mock,
+            'ERC7540InsufficientAssets',
+          );
+
+          await this.fulfillRedeem(0n, 1000n, 100n, user);
+          await expect(this.mock.totalAssets()).to.eventually.equal(0n);
+        });
+
+        it('assets of claimable deposits can back redeems claimed before the deposit is claimed', async function () {
+          const [, user, other] = await ethers.getSigners();
+          await this.token.$_mint(user, 500n);
+          await this.token.connect(user).approve(this.mock, ethers.MaxUint256);
+          await this.mock.$_mint(other, 500n);
+
+          await this.mock.connect(user).requestDeposit(500n, user, user);
+          await this.fulfillDeposit(0n, 500n, 500n, user);
+
+          // The fulfilled deposit is settled: its assets back the redeem
+          await this.mock.connect(other).requestRedeem(500n, other, other);
+          await this.fulfillRedeem(0n, 500n, 500n, other);
+          await this.mock.connect(other).redeem(500n, other, other);
+
+          // In mint-on-claim custody, the vault holds no assets while the claimable deposit is still pending
+          await expect(this.token.balanceOf(this.mock)).to.eventually.equal(0n);
+          await expect(this.mock.totalAssets()).to.eventually.equal(0n);
+          await expect(this.mock.$_totalOutstandingShares()).to.eventually.equal(500n);
+
+          await this.mock.connect(user).deposit(500n, user);
+          await expect(this.mock.balanceOf(user)).to.eventually.equal(500n);
+          await expect(this.mock.totalAssets()).to.eventually.equal(0n);
+        });
+      });
     });
   }
 });

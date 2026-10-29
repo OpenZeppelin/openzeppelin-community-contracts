@@ -67,13 +67,14 @@ abstract contract ERC7540AdminRedeem is ERC7540 {
      *
      * The caller provides both `shares` and `assets`, locking the exchange rate at fulfillment time.
      * The fulfiller must ensure the vault holds enough underlying assets to cover the `assets` amount
-     * before calling this function.
+     * before calling this function (see {_checkSolvency}).
      *
      * Emits a {RedeemClaimable} event.
      *
      * Requirements:
      *
      * * `shares` must not exceed the pending redeem amount for the `controller`.
+     * * The vault must hold enough assets to cover pending deposits and Claimable redeems, including this one.
      */
     function _fulfillRedeem(uint256 shares, uint256 assets, address controller) internal virtual {
         uint256 pendingShares = pendingRedeemRequest(0, controller);
@@ -84,6 +85,7 @@ abstract contract ERC7540AdminRedeem is ERC7540 {
         _totalClaimableShares += shares;
         _redeems[controller].claimableAssets += assets;
         _totalClaimableAssets += assets;
+        _checkSolvency();
 
         if (_redeemShareDestination() != address(0)) {
             _burnSharesOnRedeemFulfill(assets, shares);
