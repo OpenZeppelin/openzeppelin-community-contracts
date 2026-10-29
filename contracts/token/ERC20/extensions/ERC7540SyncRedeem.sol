@@ -57,4 +57,14 @@ abstract contract ERC7540SyncRedeem is ERC7540 {
     function _asyncMaxRedeem(address /*owner*/) internal view virtual override returns (uint256) {
         revert();
     }
+
+    /// @dev Synchronous flows have no Claimable requests.
+    function _totalClaimableRedeemAssets() internal view virtual override returns (uint256) {
+        return 0;
+    }
+
+    /// @dev Synchronous flows have no Claimable requests.
+    function _totalClaimableRedeemShares() internal view virtual override returns (uint256) {
+        return 0;
+    }
 }

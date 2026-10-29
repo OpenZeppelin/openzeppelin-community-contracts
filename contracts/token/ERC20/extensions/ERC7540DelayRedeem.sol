@@ -160,4 +160,14 @@ abstract contract ERC7540DelayRedeem is ERC7540, IERC6372 {
     function _readyRedeemAt(address owner, uint48 timepoint) internal view virtual returns (uint256) {
         return Math.saturatingSub(_redeems[owner].upperLookupRecent(timepoint), _claimedRedeems[owner]);
     }
+
+    /// @dev The rate is computed at claim time, so no value is locked in Claimable requests.
+    function _totalClaimableRedeemAssets() internal view virtual override returns (uint256) {
+        return 0;
+    }
+
+    /// @dev The rate is computed at claim time, so no value is locked in Claimable requests.
+    function _totalClaimableRedeemShares() internal view virtual override returns (uint256) {
+        return 0;
+    }
 }

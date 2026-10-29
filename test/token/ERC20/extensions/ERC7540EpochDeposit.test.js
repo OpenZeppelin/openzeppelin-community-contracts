@@ -77,7 +77,7 @@ describe('ERC7540EpochDeposit', function () {
       });
 
       shouldBehaveLikeERC7540Operator();
-      shouldBehaveLikeERC7540Deposit({ supportCustomFulfill: false, gateOnController: true, withTmpHolder });
+      shouldBehaveLikeERC7540Deposit({ supportCustomFulfill: false, gateOnController: true });
       shouldBehaveLikeERC7575();
 
       describe('epoch state and getters', function () {

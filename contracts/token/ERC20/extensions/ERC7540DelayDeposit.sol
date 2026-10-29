@@ -166,4 +166,14 @@ abstract contract ERC7540DelayDeposit is ERC7540, IERC6372 {
     function _readyDepositAt(address owner, uint48 timepoint) internal view virtual returns (uint256) {
         return Math.saturatingSub(_deposits[owner].upperLookupRecent(timepoint), _claimedDeposits[owner]);
     }
+
+    /// @dev The rate is computed at claim time, so no value is locked in Claimable requests.
+    function _totalClaimableDepositAssets() internal view virtual override returns (uint256) {
+        return 0;
+    }
+
+    /// @dev The rate is computed at claim time, so no value is locked in Claimable requests.
+    function _totalClaimableDepositShares() internal view virtual override returns (uint256) {
+        return 0;
+    }
 }

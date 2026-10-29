@@ -72,8 +72,8 @@ describe('ERC7540Delay', function () {
   });
 
   shouldBehaveLikeERC7540Operator();
-  shouldBehaveLikeERC7540Deposit({ supportCustomFulfill: false });
-  shouldBehaveLikeERC7540Redeem({ supportCustomFulfill: false });
+  shouldBehaveLikeERC7540Deposit({ supportCustomFulfill: false, settleOnFulfill: false });
+  shouldBehaveLikeERC7540Redeem({ supportCustomFulfill: false, settleOnFulfill: false });
   shouldBehaveLikeERC7575();
 
   describe('multiple requests and partial claims', function () {

@@ -76,7 +76,7 @@ describe('ERC7540EpochRedeem', function () {
       });
 
       shouldBehaveLikeERC7540Operator();
-      shouldBehaveLikeERC7540Redeem({ supportCustomFulfill: false, gateOnController: true, withTmpHolder });
+      shouldBehaveLikeERC7540Redeem({ supportCustomFulfill: false, gateOnController: true });
       shouldBehaveLikeERC7575();
 
       describe('epoch state and getters', function () {
@@ -248,6 +248,27 @@ describe('ERC7540EpochRedeem', function () {
             .withArgs(epochId, 100n, 42n);
           await expect(this.mock.totalRedeemAssets(epochId)).to.eventually.equal(42n);
           await expect(this.mock.claimableRedeemRequest(epochId, user)).to.eventually.equal(100n);
+        });
+
+        it('reverts `InsufficientAssets` when the vault cannot cover pending deposits', async function () {
+          await this.token.$_mint(user, 500n);
+          await this.token.connect(user).approve(this.mock, ethers.MaxUint256);
+          await this.mock.connect(user).requestDeposit(500n, user, user);
+
+          const tx = await this.mock.connect(user).requestRedeem(100n, user, user);
+          const epochId = await this.getRequestId(tx);
+          await advancePast(epochId);
+
+          // The vault holds 1500 assets, 500 of which belong to the pending deposit
+          await expect(this.mock.$_fulfillRedeem(epochId, 1001n)).to.be.revertedWithCustomError(
+            this.mock,
+            'ERC7540InsufficientAssets',
+          );
+
+          await expect(this.mock.$_fulfillRedeem(epochId, 1000n))
+            .to.emit(this.mock, 'ERC7540EpochRedeemFulfilled')
+            .withArgs(epochId, 100n, 1000n);
+          await expect(this.mock.totalAssets()).to.eventually.equal(0n);
         });
       });
 
