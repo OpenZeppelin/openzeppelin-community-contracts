@@ -146,17 +146,6 @@ describe('ERC7540EpochDeposit', function () {
           await expect(this.mock.$_convertToDepositAssets(epochId, 11n, 1n)).to.eventually.equal(22n);
         });
 
-        it('`_pendingAvailableDepositRequest` masks drained epochs', async function () {
-          const tx = await this.mock.connect(user).requestDeposit(100n, user, user);
-          const epochId = await this.getRequestId(tx);
-
-          // Pending: totalAssets > 0 -> returns requests[c]
-          await expect(this.mock.$_pendingAvailableDepositRequest(epochId, user)).to.eventually.equal(100n);
-
-          // Unknown epoch: totalAssets == 0 -> returns 0
-          await expect(this.mock.$_pendingAvailableDepositRequest(999n, user)).to.eventually.equal(0n);
-        });
-
         it('pending vs. claimable sentinel distinguishes states', async function () {
           const tx = await this.mock.connect(user).requestDeposit(100n, user, user);
           const epochId = await this.getRequestId(tx);
@@ -503,7 +492,7 @@ describe('ERC7540EpochDeposit', function () {
           await expect(this.mock.totalDepositAssets(this.epochA)).to.eventually.equal(100n);
           await expect(this.mock.totalDepositAssets(this.epochB)).to.eventually.equal(50n);
           await expect(this.mock.totalDepositShares(this.epochB)).to.eventually.equal(100n);
-          await expect(this.mock.$_pendingAvailableDepositRequest(this.epochA, user)).to.eventually.equal(100n);
+          await expect(this.mock.pendingDepositRequest(this.epochA, user)).to.eventually.equal(100n);
           await expect(this.mock.depositEpochs(user, 0, ethers.MaxUint256)).to.eventually.deep.equal([
             this.epochA,
             this.epochB,
@@ -518,7 +507,7 @@ describe('ERC7540EpochDeposit', function () {
           await expect(this.mock.totalDepositAssets(this.epochA)).to.eventually.equal(100n);
           await expect(this.mock.totalDepositAssets(this.epochB)).to.eventually.equal(50n);
           await expect(this.mock.totalDepositShares(this.epochB)).to.eventually.equal(100n);
-          await expect(this.mock.$_pendingAvailableDepositRequest(this.epochA, user)).to.eventually.equal(100n);
+          await expect(this.mock.pendingDepositRequest(this.epochA, user)).to.eventually.equal(100n);
           await expect(this.mock.depositEpochs(user, 0, ethers.MaxUint256)).to.eventually.deep.equal([
             this.epochA,
             this.epochB,

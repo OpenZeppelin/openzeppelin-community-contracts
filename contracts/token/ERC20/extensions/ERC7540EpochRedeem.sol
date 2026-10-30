@@ -125,26 +125,12 @@ abstract contract ERC7540EpochRedeem is ERC7540 {
         }
     }
 
-    /**
-     * @dev A request is pending if its epoch has not yet been fulfilled (`totalAssets == 0`) and
-     * still has shares queued (`totalShares > 0`).
-     */
+    /// @dev A request is pending if its epoch has not yet been fulfilled (`totalAssets == 0`).
     function _pendingRedeemRequest(
         uint256 requestId,
         address controller
     ) internal view virtual override returns (uint256) {
-        return totalRedeemAssets(requestId) == 0 ? _pendingAvailableRedeemRequest(requestId, controller) : 0;
-    }
-
-    /**
-     * @dev Returns the controller's stored redeem request for `requestId`, or 0 if the epoch
-     * has been fully claimed (`totalShares == 0`).
-     */
-    function _pendingAvailableRedeemRequest(
-        uint256 requestId,
-        address controller
-    ) internal view virtual returns (uint256) {
-        return totalRedeemShares(requestId) == 0 ? 0 : _epochs[requestId].requests[controller];
+        return totalRedeemAssets(requestId) == 0 ? _epochs[requestId].requests[controller] : 0;
     }
 
     /// @dev A request is claimable if its epoch has been fulfilled (`totalAssets > 0`).
@@ -323,7 +309,7 @@ abstract contract ERC7540EpochRedeem is ERC7540 {
             uint256 epochId = uint256(_memberOf[controller].front());
             if (totalRedeemAssets(epochId) == 0) break; // oldest queued epoch is still Pending
 
-            uint256 requestedShares = _pendingAvailableRedeemRequest(epochId, controller);
+            uint256 requestedShares = _epochs[epochId].requests[controller];
             // Floor here (not ceil) so the per-epoch asset entitlement matches {_asyncMaxWithdraw}.
             // A ceil-rounded `requested` could exhaust `totalAssets` to 0 while `totalShares`
             // remains > 0, dirtying the Pending sentinel and stranding later controllers.
@@ -375,7 +361,7 @@ abstract contract ERC7540EpochRedeem is ERC7540 {
             uint256 epochId = uint256(_memberOf[controller].front());
             if (totalRedeemAssets(epochId) == 0) break; // oldest queued epoch is still Pending
 
-            uint256 requested = _pendingAvailableRedeemRequest(epochId, controller);
+            uint256 requested = _epochs[epochId].requests[controller];
             if (requested <= shares) _memberOf[controller].popFront();
 
             uint256 batchShares = requested.min(shares);

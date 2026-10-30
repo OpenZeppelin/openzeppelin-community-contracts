@@ -125,26 +125,12 @@ abstract contract ERC7540EpochDeposit is ERC7540 {
         }
     }
 
-    /**
-     * @dev A request is pending if its epoch has not yet been fulfilled (`totalShares == 0`) and
-     * still has assets queued (`totalAssets > 0`).
-     */
+    /// @dev A request is pending if its epoch has not yet been fulfilled (`totalShares == 0`).
     function _pendingDepositRequest(
         uint256 requestId,
         address controller
     ) internal view virtual override returns (uint256) {
-        return totalDepositShares(requestId) == 0 ? _pendingAvailableDepositRequest(requestId, controller) : 0;
-    }
-
-    /**
-     * @dev Returns the controller's stored deposit request for `requestId`, or 0 if the epoch
-     * has been fully claimed (`totalAssets == 0`).
-     */
-    function _pendingAvailableDepositRequest(
-        uint256 requestId,
-        address controller
-    ) internal view virtual returns (uint256) {
-        return totalDepositAssets(requestId) == 0 ? 0 : _epochs[requestId].requests[controller];
+        return totalDepositShares(requestId) == 0 ? _epochs[requestId].requests[controller] : 0;
     }
 
     /// @dev A request is claimable if its epoch has been fulfilled (`totalShares > 0`).
@@ -320,7 +306,7 @@ abstract contract ERC7540EpochDeposit is ERC7540 {
             uint256 epochId = uint256(_memberOf[controller].front());
             if (totalDepositShares(epochId) == 0) break; // oldest queued epoch is still Pending
 
-            uint256 requested = _pendingAvailableDepositRequest(epochId, controller);
+            uint256 requested = _epochs[epochId].requests[controller];
             if (requested <= assets) _memberOf[controller].popFront();
 
             uint256 batchAssets = requested.min(assets);
@@ -359,7 +345,7 @@ abstract contract ERC7540EpochDeposit is ERC7540 {
             uint256 epochId = uint256(_memberOf[controller].front());
             if (totalDepositShares(epochId) == 0) break; // oldest queued epoch is still Pending
 
-            uint256 requestedAssets = _pendingAvailableDepositRequest(epochId, controller);
+            uint256 requestedAssets = _epochs[epochId].requests[controller];
             // Floor here (not ceil) so the per-epoch share entitlement matches {_asyncMaxMint}.
             // A ceil-rounded `requested` could exhaust `totalShares` to 0 while `totalAssets`
             // remains > 0, dirtying the Pending sentinel and stranding later controllers.

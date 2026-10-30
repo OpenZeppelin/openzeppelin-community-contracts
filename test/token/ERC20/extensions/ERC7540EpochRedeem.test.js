@@ -144,17 +144,6 @@ describe('ERC7540EpochRedeem', function () {
           await expect(this.mock.$_convertToRedeemShares(epochId, 11n, 1n)).to.eventually.equal(22n);
         });
 
-        it('`_pendingAvailableRedeemRequest` masks drained epochs', async function () {
-          const tx = await this.mock.connect(user).requestRedeem(100n, user, user);
-          const epochId = await this.getRequestId(tx);
-
-          // Pending: totalShares > 0 -> returns requests[c]
-          await expect(this.mock.$_pendingAvailableRedeemRequest(epochId, user)).to.eventually.equal(100n);
-
-          // Unknown epoch: totalShares == 0 -> returns 0
-          await expect(this.mock.$_pendingAvailableRedeemRequest(999n, user)).to.eventually.equal(0n);
-        });
-
         it('pending vs. claimable sentinel distinguishes states', async function () {
           const tx = await this.mock.connect(user).requestRedeem(100n, user, user);
           const epochId = await this.getRequestId(tx);
@@ -503,7 +492,7 @@ describe('ERC7540EpochRedeem', function () {
           await expect(this.mock.totalRedeemShares(this.epochA)).to.eventually.equal(100n);
           await expect(this.mock.totalRedeemShares(this.epochB)).to.eventually.equal(50n);
           await expect(this.mock.totalRedeemAssets(this.epochB)).to.eventually.equal(100n);
-          await expect(this.mock.$_pendingAvailableRedeemRequest(this.epochA, user)).to.eventually.equal(100n);
+          await expect(this.mock.pendingRedeemRequest(this.epochA, user)).to.eventually.equal(100n);
           await expect(this.mock.redeemEpochs(user, 0, ethers.MaxUint256)).to.eventually.deep.equal([
             this.epochA,
             this.epochB,
@@ -518,7 +507,7 @@ describe('ERC7540EpochRedeem', function () {
           await expect(this.mock.totalRedeemShares(this.epochA)).to.eventually.equal(100n);
           await expect(this.mock.totalRedeemShares(this.epochB)).to.eventually.equal(50n);
           await expect(this.mock.totalRedeemAssets(this.epochB)).to.eventually.equal(100n);
-          await expect(this.mock.$_pendingAvailableRedeemRequest(this.epochA, user)).to.eventually.equal(100n);
+          await expect(this.mock.pendingRedeemRequest(this.epochA, user)).to.eventually.equal(100n);
           await expect(this.mock.redeemEpochs(user, 0, ethers.MaxUint256)).to.eventually.deep.equal([
             this.epochA,
             this.epochB,
