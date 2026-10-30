@@ -5,6 +5,7 @@ on:
     branches:
       - master
       - release-v*
+      - '!**-upgradeable'
 
 concurrency:
   group: upgradeable-${{ github.ref }}

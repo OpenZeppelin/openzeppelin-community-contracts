@@ -15,18 +15,10 @@ index dbce31e..074338a 100644
  
  This repository contains contracts and libraries in the following categories:
 diff --git a/hardhat.config.js b/hardhat.config.js
-index 5755038..69442a4 100644
+index 754d915..1766649 100644
 --- a/hardhat.config.js
 +++ b/hardhat.config.js
-@@ -34,6 +34,7 @@ require('hardhat-predeploy');
- require('solidity-coverage');
- require('solidity-docgen');
- require('./hardhat/remappings');
-+require('./hardhat/upgradeable-artifacts');
- 
- module.exports = {
-   solidity: {
-@@ -54,6 +55,7 @@ module.exports = {
+@@ -55,6 +55,7 @@ module.exports = {
    exposed: {
      imports: true,
      initializers: true,
