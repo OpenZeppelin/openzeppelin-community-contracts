@@ -7,6 +7,7 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {ERC7540} from "@openzeppelin/community-contracts/token/ERC20/extensions/ERC7540.sol";
 import {ERC7540AdminMock} from "@openzeppelin/community-contracts/mocks/token/ERC7540AdminMock.sol";
 import {ERC7540DelayMock} from "@openzeppelin/community-contracts/mocks/token/ERC7540DelayMock.sol";
+import {ERC7540EpochMock} from "@openzeppelin/community-contracts/mocks/token/ERC7540EpochMock.sol";
 
 contract ERC7540InvariantAsset is ERC20 {
     constructor() ERC20("ERC7540InvariantAsset", "AST") {}
@@ -32,6 +33,26 @@ contract ERC7540InvariantDelayVault is ERC7540DelayMock {
     constructor(IERC20 asset_) ERC20("Vault", "VLT") ERC7540(asset_) {}
 }
 
+contract ERC7540InvariantEpochVault is ERC7540EpochMock {
+    constructor(IERC20 asset_, address holder) ERC20("Vault", "VLT") ERC7540(asset_) ERC7540EpochMock(holder) {}
+
+    function fulfillDepositEpoch(uint256 epochId, uint256 shares) external {
+        _fulfillDeposit(epochId, shares);
+    }
+
+    function fulfillRedeemEpoch(uint256 epochId, uint256 assets) external {
+        _fulfillRedeem(epochId, assets);
+    }
+
+    function totalClaimableDepositAssets() external view returns (uint256) {
+        return _totalClaimableDepositAssets();
+    }
+
+    function totalClaimableRedeemAssets() external view returns (uint256) {
+        return _totalClaimableRedeemAssets();
+    }
+}
+
 interface IERC7540InvariantVault {
     function requestDeposit(uint256 assets, address controller, address owner) external returns (uint256);
     function deposit(uint256 assets, address receiver, address controller) external returns (uint256);
@@ -52,13 +73,32 @@ interface IERC7540InvariantVault {
     function balanceOf(address) external view returns (uint256);
     function fulfillDeposit(uint256 assets, uint256 shares, address controller) external;
     function fulfillRedeem(uint256 shares, uint256 assets, address controller) external;
+    // Epoch strategy
+    function setOperator(address operator, bool approved) external returns (bool);
+    function claimableDepositRequest(uint256, address) external view returns (uint256);
+    function claimableRedeemRequest(uint256, address) external view returns (uint256);
+    function currentDepositEpoch() external view returns (uint256);
+    function currentRedeemEpoch() external view returns (uint256);
+    function totalDepositAssets(uint256 epochId) external view returns (uint256);
+    function totalDepositShares(uint256 epochId) external view returns (uint256);
+    function totalRedeemShares(uint256 epochId) external view returns (uint256);
+    function totalRedeemAssets(uint256 epochId) external view returns (uint256);
+    function depositEpochs(address controller, uint256 start, uint256 end) external view returns (uint256[] memory);
+    function redeemEpochs(address controller, uint256 start, uint256 end) external view returns (uint256[] memory);
+    function fulfillDepositEpoch(uint256 epochId, uint256 shares) external;
+    function fulfillRedeemEpoch(uint256 epochId, uint256 assets) external;
+    function totalClaimableDepositAssets() external view returns (uint256);
+    function totalClaimableRedeemAssets() external view returns (uint256);
 }
 
 contract ERC7540InvariantHandler is Test {
     IERC7540InvariantVault public immutable vault;
     ERC7540InvariantAsset public immutable asset;
     bool public immutable isAdmin;
+    bool public immutable isEpoch;
     address public immutable holder;
+
+    uint256 internal constant EPOCH_QUEUE_LIMIT = 32;
 
     address[] public actors;
 
@@ -81,14 +121,46 @@ contract ERC7540InvariantHandler is Test {
     mapping(address => uint256) public depPerController; // Delay: requested - claimed (assets)
     mapping(address => uint256) public redPerController; // Delay: requested - claimed (shares)
 
-    constructor(IERC7540InvariantVault vault_, ERC7540InvariantAsset asset_, bool isAdmin_, address holder_) {
+    // Epoch: epochs that received requests, in order, and whether they were fulfilled
+    uint256[] public depEpochs;
+    uint256[] public redEpochs;
+    mapping(uint256 => bool) public depEpochFulfilled;
+    mapping(uint256 => bool) public redEpochFulfilled;
+
+    constructor(
+        IERC7540InvariantVault vault_,
+        ERC7540InvariantAsset asset_,
+        bool isAdmin_,
+        bool isEpoch_,
+        address holder_
+    ) {
         vault = vault_;
         asset = asset_;
         isAdmin = isAdmin_;
+        isEpoch = isEpoch_;
         holder = holder_;
         actors.push(address(0xA11CE));
         actors.push(address(0xB0B));
         actors.push(address(0xCA401));
+
+        // Epoch requests must come from the controller or its operator
+        if (isEpoch_) {
+            for (uint256 i = 0; i < actors.length; ++i) {
+                for (uint256 j = 0; j < actors.length; ++j) {
+                    if (i == j) continue;
+                    vm.prank(actors[i]);
+                    vault_.setOperator(actors[j], true);
+                }
+            }
+        }
+    }
+
+    function depEpochsLength() external view returns (uint256) {
+        return depEpochs.length;
+    }
+
+    function redEpochsLength() external view returns (uint256) {
+        return redEpochs.length;
     }
 
     function actorsLength() external view returns (uint256) {
@@ -107,12 +179,17 @@ contract ERC7540InvariantHandler is Test {
         address owner = _actor(a);
         address controller = _actor(c);
         amount = bound(amount, 1, 1e30);
+        if (
+            isEpoch &&
+            _epochQueueFull(vault.depositEpochs(controller, 0, type(uint256).max), vault.currentDepositEpoch())
+        ) return;
         asset.mint(owner, amount);
         vm.startPrank(owner);
         asset.approve(address(vault), amount);
         try vault.requestDeposit(amount, controller, owner) {
             depRequested += amount;
             depPerController[controller] += amount;
+            if (isEpoch) _recordEpoch(depEpochs, vault.currentDepositEpoch());
         } catch {
             _fail("requestDeposit reverted");
         }
@@ -143,7 +220,8 @@ contract ERC7540InvariantHandler is Test {
         vm.prank(controller);
         try vault.deposit(amount, controller, controller) returns (uint256 shares) {
             // shares received must not exceed the claimable rate, unless the whole claim is drained
-            if (amount != max && shares * max > amount * maxShares) _fail("deposit claim rounded in favor of user");
+            if (!isEpoch && amount != max && shares * max > amount * maxShares)
+                _fail("deposit claim rounded in favor of user");
             depClaimedAssets += amount;
             depClaimedShares += shares;
             depPerController[controller] -= amount;
@@ -161,7 +239,8 @@ contract ERC7540InvariantHandler is Test {
         vm.prank(controller);
         try vault.mint(shares, controller, controller) returns (uint256 assets) {
             // assets consumed must not fall below the claimable rate, unless the whole claim is drained
-            if (shares != max && assets * max < shares * maxAssets) _fail("mint claim rounded in favor of user");
+            if (!isEpoch && shares != max && assets * max < shares * maxAssets)
+                _fail("mint claim rounded in favor of user");
             depClaimedAssets += assets;
             depClaimedShares += shares;
             depPerController[controller] -= assets;
@@ -176,10 +255,14 @@ contract ERC7540InvariantHandler is Test {
         uint256 bal = vault.balanceOf(owner);
         if (bal == 0) return;
         shares = bound(shares, 1, bal);
+        if (
+            isEpoch && _epochQueueFull(vault.redeemEpochs(controller, 0, type(uint256).max), vault.currentRedeemEpoch())
+        ) return;
         vm.prank(owner);
         try vault.requestRedeem(shares, controller, owner) {
             redRequested += shares;
             redPerController[controller] += shares;
+            if (isEpoch) _recordEpoch(redEpochs, vault.currentRedeemEpoch());
         } catch {
             _fail("requestRedeem reverted");
         }
@@ -212,7 +295,8 @@ contract ERC7540InvariantHandler is Test {
         vm.prank(controller);
         try vault.withdraw(assets, controller, controller) returns (uint256 shares) {
             // shares consumed must not fall below the claimable rate, unless the whole claim is drained
-            if (assets != max && shares * max < assets * maxShares) _fail("withdraw claim rounded in favor of user");
+            if (!isEpoch && assets != max && shares * max < assets * maxShares)
+                _fail("withdraw claim rounded in favor of user");
             redClaimedAssets += assets;
             redClaimedShares += shares;
             assetsOut += assets;
@@ -231,7 +315,8 @@ contract ERC7540InvariantHandler is Test {
         vm.prank(controller);
         try vault.redeem(shares, controller, controller) returns (uint256 assets) {
             // assets received must not exceed the claimable rate, unless the whole claim is drained
-            if (shares != max && assets * max > shares * maxAssets) _fail("redeem claim rounded in favor of user");
+            if (!isEpoch && shares != max && assets * max > shares * maxAssets)
+                _fail("redeem claim rounded in favor of user");
             redClaimedAssets += assets;
             redClaimedShares += shares;
             assetsOut += assets;
@@ -270,6 +355,46 @@ contract ERC7540InvariantHandler is Test {
         }
     }
 
+    /// @dev Epoch: fulfills a past, unfulfilled deposit epoch (picked at random, so possibly out of order).
+    function fulfillDepositEpoch(uint256 seed, uint256 rateBps) external {
+        if (!isEpoch) return;
+        (bool found, uint256 epochId) = _pickEpoch(depEpochs, depEpochFulfilled, vault.currentDepositEpoch(), seed);
+        if (!found) return;
+        uint256 assets = vault.totalDepositAssets(epochId);
+        uint256 shares = (assets * bound(rateBps, 1, 30_000)) / 10_000;
+        try vault.fulfillDepositEpoch(epochId, shares) {
+            if (shares == 0) return; // no-op, the epoch stays Pending
+            depEpochFulfilled[epochId] = true;
+            depFulfilledAssets += assets;
+            depFulfilledShares += shares;
+        } catch {
+            _fail("fulfillDepositEpoch reverted");
+        }
+    }
+
+    /// @dev Epoch: fulfills a past, unfulfilled redeem epoch (picked at random, so possibly out of order).
+    function fulfillRedeemEpoch(uint256 seed, uint256 rateBps) external {
+        if (!isEpoch) return;
+        (bool found, uint256 epochId) = _pickEpoch(redEpochs, redEpochFulfilled, vault.currentRedeemEpoch(), seed);
+        if (!found) return;
+        uint256 shares = vault.totalRedeemShares(epochId);
+        // keep the vault solvent: never promise more than the free balance (see {ERC7540-_checkSolvency})
+        uint256 free = asset.balanceOf(address(vault)) +
+            vault.totalClaimableDepositAssets() -
+            vault.totalPendingDepositAssets() -
+            vault.totalClaimableRedeemAssets();
+        uint256 assets = (shares * bound(rateBps, 1, 30_000)) / 10_000;
+        if (assets > free) assets = free;
+        try vault.fulfillRedeemEpoch(epochId, assets) {
+            if (assets == 0) return; // no-op, the epoch stays Pending
+            redEpochFulfilled[epochId] = true;
+            redFulfilledShares += shares;
+            redFulfilledAssets += assets;
+        } catch {
+            _fail("fulfillRedeemEpoch reverted");
+        }
+    }
+
     function donate(uint256 amount) external {
         amount = bound(amount, 1, 1e24);
         asset.mint(address(vault), amount);
@@ -277,11 +402,33 @@ contract ERC7540InvariantHandler is Test {
     }
 
     function warp(uint256 dt) external {
-        vm.warp(block.timestamp + bound(dt, 1, 3 hours));
+        vm.warp(block.timestamp + bound(dt, 1, isEpoch ? 8 days : 3 hours));
     }
 
     function _owedRedeemAssets() internal view returns (uint256 sum) {
         for (uint256 i = 0; i < actors.length; ++i) sum += vault.maxWithdraw(actors[i]);
+    }
+
+    /// @dev A request would revert if it opens a new epoch in a controller's queue that is already at the limit.
+    function _epochQueueFull(uint256[] memory queue, uint256 current) internal pure returns (bool) {
+        return queue.length >= EPOCH_QUEUE_LIMIT && queue[queue.length - 1] != current;
+    }
+
+    function _recordEpoch(uint256[] storage epochs, uint256 epochId) internal {
+        if (epochs.length == 0 || epochs[epochs.length - 1] != epochId) epochs.push(epochId);
+    }
+
+    function _pickEpoch(
+        uint256[] storage epochs,
+        mapping(uint256 => bool) storage fulfilled,
+        uint256 current,
+        uint256 seed
+    ) internal view returns (bool, uint256) {
+        for (uint256 i = 0; i < epochs.length; ++i) {
+            uint256 epochId = epochs[((seed % epochs.length) + i) % epochs.length];
+            if (epochId < current && !fulfilled[epochId]) return (true, epochId);
+        }
+        return (false, 0);
     }
 }
 
@@ -290,9 +437,9 @@ abstract contract ERC7540InvariantBase is Test {
     IERC7540InvariantVault internal vault;
     ERC7540InvariantHandler internal handler;
 
-    function _setUp(IERC7540InvariantVault vault_, bool isAdmin, address holder) internal {
+    function _setUp(IERC7540InvariantVault vault_, bool isAdmin, bool isEpoch, address holder) internal {
         vault = vault_;
-        handler = new ERC7540InvariantHandler(vault_, asset, isAdmin, holder);
+        handler = new ERC7540InvariantHandler(vault_, asset, isAdmin, isEpoch, holder);
         targetContract(address(handler));
     }
 
@@ -320,7 +467,12 @@ abstract contract ERC7540InvariantBase is Test {
 contract ERC7540AdminMintOnClaimInvariant is ERC7540InvariantBase {
     function setUp() public {
         asset = new ERC7540InvariantAsset();
-        _setUp(IERC7540InvariantVault(address(new ERC7540InvariantAdminVault(asset, address(0)))), true, address(0));
+        _setUp(
+            IERC7540InvariantVault(address(new ERC7540InvariantAdminVault(asset, address(0)))),
+            true,
+            false,
+            address(0)
+        );
     }
 
     function invariant_depositAccounting() public view {
@@ -350,7 +502,7 @@ contract ERC7540AdminEscrowInvariant is ERC7540InvariantBase {
 
     function setUp() public {
         asset = new ERC7540InvariantAsset();
-        _setUp(IERC7540InvariantVault(address(new ERC7540InvariantAdminVault(asset, HOLDER))), true, HOLDER);
+        _setUp(IERC7540InvariantVault(address(new ERC7540InvariantAdminVault(asset, HOLDER))), true, false, HOLDER);
     }
 
     function invariant_depositAccounting() public view {
@@ -386,7 +538,7 @@ contract ERC7540AdminEscrowInvariant is ERC7540InvariantBase {
 contract ERC7540DelayInvariant is ERC7540InvariantBase {
     function setUp() public {
         asset = new ERC7540InvariantAsset();
-        _setUp(IERC7540InvariantVault(address(new ERC7540InvariantDelayVault(asset))), false, address(0));
+        _setUp(IERC7540InvariantVault(address(new ERC7540InvariantDelayVault(asset))), false, false, address(0));
     }
 
     function invariant_depositAccounting() public view {
@@ -407,5 +559,118 @@ contract ERC7540DelayInvariant is ERC7540InvariantBase {
 
     function invariant_supply() public view {
         assertEq(vault.totalSupply(), _sumActors(vault.balanceOf));
+    }
+}
+
+abstract contract ERC7540EpochInvariantBase is ERC7540InvariantBase {
+    function invariant_epochTotals() public view {
+        // Each epoch's totals are the sum of its requests, and a fulfilled epoch never regresses to the Pending
+        // sentinel while requests remain.
+        for (uint256 i = 0; i < handler.depEpochsLength(); ++i) {
+            uint256 epochId = handler.depEpochs(i);
+            uint256 sum = 0;
+            for (uint256 j = 0; j < handler.actorsLength(); ++j) {
+                address a = handler.actors(j);
+                sum += vault.pendingDepositRequest(epochId, a) + vault.claimableDepositRequest(epochId, a);
+            }
+            assertEq(sum, vault.totalDepositAssets(epochId));
+            if (handler.depEpochFulfilled(epochId)) {
+                assertTrue(vault.totalDepositShares(epochId) > 0 || vault.totalDepositAssets(epochId) == 0);
+            } else {
+                assertEq(vault.totalDepositShares(epochId), 0);
+            }
+        }
+        for (uint256 i = 0; i < handler.redEpochsLength(); ++i) {
+            uint256 epochId = handler.redEpochs(i);
+            uint256 sum = 0;
+            for (uint256 j = 0; j < handler.actorsLength(); ++j) {
+                address a = handler.actors(j);
+                sum += vault.pendingRedeemRequest(epochId, a) + vault.claimableRedeemRequest(epochId, a);
+            }
+            assertEq(sum, vault.totalRedeemShares(epochId));
+            if (handler.redEpochFulfilled(epochId)) {
+                assertTrue(vault.totalRedeemAssets(epochId) > 0 || vault.totalRedeemShares(epochId) == 0);
+            } else {
+                assertEq(vault.totalRedeemAssets(epochId), 0);
+            }
+        }
+    }
+
+    function invariant_queueLimit() public view {
+        for (uint256 i = 0; i < handler.actorsLength(); ++i) {
+            address a = handler.actors(i);
+            assertLe(vault.depositEpochs(a, 0, type(uint256).max).length, 32);
+            assertLe(vault.redeemEpochs(a, 0, type(uint256).max).length, 32);
+        }
+    }
+}
+
+/// forge-config: default.invariant.runs = 64
+/// forge-config: default.invariant.depth = 200
+/// forge-config: default.invariant.fail_on_revert = true
+contract ERC7540EpochMintOnClaimInvariant is ERC7540EpochInvariantBase {
+    function setUp() public {
+        asset = new ERC7540InvariantAsset();
+        _setUp(
+            IERC7540InvariantVault(address(new ERC7540InvariantEpochVault(asset, address(0)))),
+            false,
+            true,
+            address(0)
+        );
+    }
+
+    function invariant_depositAccounting() public view {
+        // mint-on-claim: pending total covers both pending and claimable (unclaimed) assets
+        assertEq(vault.totalPendingDepositAssets(), handler.depRequested() - handler.depClaimedAssets());
+        assertEq(vault.totalClaimableDepositAssets(), handler.depFulfilledAssets() - handler.depClaimedAssets());
+    }
+
+    function invariant_redeemAccounting() public view {
+        // burn-at-request: pending total covers both pending and claimable (unclaimed) shares
+        assertEq(vault.totalPendingRedeemShares(), handler.redRequested() - handler.redClaimedShares());
+        // residue released by partial claims lowers the claimable assets below the ghost value
+        assertLe(vault.totalClaimableRedeemAssets(), handler.redFulfilledAssets() - handler.redClaimedAssets());
+    }
+
+    function invariant_supply() public view {
+        assertEq(vault.totalSupply(), _sumActors(vault.balanceOf));
+    }
+}
+
+/// forge-config: default.invariant.runs = 64
+/// forge-config: default.invariant.depth = 200
+/// forge-config: default.invariant.fail_on_revert = true
+contract ERC7540EpochEscrowInvariant is ERC7540EpochInvariantBase {
+    address internal constant HOLDER = address(0xC0FFEE);
+
+    function setUp() public {
+        asset = new ERC7540InvariantAsset();
+        _setUp(IERC7540InvariantVault(address(new ERC7540InvariantEpochVault(asset, HOLDER))), false, true, HOLDER);
+    }
+
+    function invariant_depositAccounting() public view {
+        // pre-mint: fulfilled assets leave the pending total at fulfillment
+        assertEq(vault.totalPendingDepositAssets(), handler.depRequested() - handler.depFulfilledAssets());
+        assertEq(vault.totalClaimableDepositAssets(), 0);
+    }
+
+    function invariant_redeemAccounting() public view {
+        // escrow: pending shares sit in the holder, claimable shares are burned and tracked
+        assertEq(vault.totalPendingRedeemShares(), handler.redFulfilledShares() - handler.redClaimedShares());
+        // residue released by partial claims lowers the claimable assets below the ghost value
+        assertLe(vault.totalClaimableRedeemAssets(), handler.redFulfilledAssets() - handler.redClaimedAssets());
+    }
+
+    function invariant_holderCustody() public view {
+        // residue burned by partial claims lowers the holder balance below the ghost value
+        assertLe(
+            vault.balanceOf(HOLDER),
+            (handler.depFulfilledShares() - handler.depClaimedShares()) +
+                (handler.redRequested() - handler.redFulfilledShares())
+        );
+    }
+
+    function invariant_supply() public view {
+        assertEq(vault.totalSupply(), _sumActors(vault.balanceOf) + vault.balanceOf(HOLDER));
     }
 }

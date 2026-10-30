@@ -22,6 +22,10 @@ contract EpochVault is ERC7540EpochMock {
     function mintShares(address to, uint256 amount) external {
         _mint(to, amount);
     }
+
+    function totalOutstandingShares() external view returns (uint256) {
+        return _totalOutstandingShares();
+    }
 }
 
 /// @dev Fuzz regression for the redeem-side rounding findings on the epoch strategy.
@@ -100,7 +104,7 @@ contract ERC7540EpochRedeemFuzzTest is Test {
         assertLe(tS1Before - tS1, rA1, "epoch1 share over-consumption");
 
         // Bob's claim slot on epoch1 stays reachable.
-        assertEq(vault.claimableRedeemRequest(epoch1, BOB), tA1 > 0 ? rB1 : 0);
+        assertEq(vault.claimableRedeemRequest(epoch1, BOB), rB1);
     }
 
     // A withdraw that exhausts a controller's asset entitlement in an epoch dequeues it and must
@@ -212,6 +216,8 @@ contract ERC7540EpochRedeemFuzzTest is Test {
         assertEq(vault.totalRedeemAssets(epoch), 0, "epoch assets not drained");
         assertEq(vault.totalPendingRedeemShares(), 0, "pending shares not drained");
         assertEq(vault.balanceOf(CUSTODY), 0, "shares left at custody");
+        assertEq(vault.totalSupply(), 0, "shares left in supply");
+        assertEq(vault.totalOutstandingShares(), vault.totalSupply(), "claimable shares not released");
         assertEq(vault.totalAssets(), token.balanceOf(address(vault)), "claimable assets not released");
     }
 

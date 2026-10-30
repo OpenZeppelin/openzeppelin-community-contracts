@@ -102,7 +102,7 @@ contract ERC7540EpochDepositFuzzTest is Test {
         assertLe(tA1Before - tA1, rA1, "epoch1 asset over-consumption");
 
         // Bob's claim slot on epoch1 stays reachable (matches `claimableDepositRequest`).
-        assertEq(vault.claimableDepositRequest(epoch1, BOB), tS1 > 0 ? rB1 : 0);
+        assertEq(vault.claimableDepositRequest(epoch1, BOB), rB1);
     }
 
     // A mint that exhausts a controller's share entitlement in an epoch dequeues it and must consume
@@ -219,6 +219,7 @@ contract ERC7540EpochDepositFuzzTest is Test {
         assertEq(vault.balanceOf(CUSTODY), 0, "shares left at custody");
         assertEq(vault.totalSupply(), vault.balanceOf(ALICE) + vault.balanceOf(BOB));
         assertEq(vault.totalOutstandingShares(), vault.totalSupply(), "claimable shares not released");
+        assertEq(vault.totalAssets(), token.balanceOf(address(vault)), "claimable assets not released");
     }
 
     function _requestAndFulfill(uint256 rA, uint256 rB, uint256 fulfillS) internal returns (uint256 epoch) {

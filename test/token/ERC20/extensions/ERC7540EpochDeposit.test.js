@@ -12,14 +12,13 @@ const tokenName = 'Asset Token';
 const tokenSymbol = 'AST';
 const week = 7n * 24n * 3600n;
 // `currentDepositEpoch() = (block.timestamp + 3 days) / week`, so epoch `N` starts at Monday
-// 00:00 UTC of that week (`t = N * week - 3 days`). Epoch `N` is passed when the chain crosses
-// into epoch `N + 1`, i.e. `t >= (N + 1) * week - 3 days`.
+// 00:00 UTC of that week (`t = N * week - 3 days`).
 const MONDAY_OFFSET = 3n * 24n * 3600n;
 
-// Advances time so that `currentDepositEpoch() > epochId`. Idempotent: no-op if already past.
-async function advancePast(epochId) {
+// Advances time to the start of `epochId`, so that `currentDepositEpoch() >= epochId`. No-op if already there.
+async function advanceTo(epochId) {
   const now = await time.clock.timestamp();
-  const target = (BigInt(epochId) + 1n) * week - MONDAY_OFFSET;
+  const target = epochId * week - MONDAY_OFFSET;
   if (now < target) await time.increaseTo.timestamp(target);
 }
 
@@ -45,11 +44,11 @@ describe('ERC7540EpochDeposit', function () {
 
         // Behavior-test plumbing: fulfill the whole epoch at the (assets, shares) rate.
         this.fulfillDeposit = async (requestId, _assets, shares) => {
-          await advancePast(requestId);
+          await advanceTo(requestId + 1n);
           return this.mock.$_fulfillDeposit(requestId, shares);
         };
         this.fulfillRedeem = async (requestId, assets) => {
-          await advancePast(requestId);
+          await advanceTo(requestId + 1n);
           return this.mock.$_fulfillRedeem(requestId, assets);
         };
       });
@@ -96,20 +95,6 @@ describe('ERC7540EpochDeposit', function () {
           await expect(tx).to.emit(this.mock, 'DepositRequest').withArgs(user, user, expected, user, 100n);
         });
 
-        it('`totalDepositAssets` / `totalDepositShares` reflect storage', async function () {
-          const tx = await this.mock.connect(user).requestDeposit(100n, user, user);
-          const epochId = await this.getRequestId(tx);
-
-          await expect(this.mock.totalDepositAssets(epochId)).to.eventually.equal(100n);
-          await expect(this.mock.totalDepositShares(epochId)).to.eventually.equal(0n);
-
-          await advancePast(epochId);
-          await this.mock.$_fulfillDeposit(epochId, 42n);
-
-          await expect(this.mock.totalDepositAssets(epochId)).to.eventually.equal(100n);
-          await expect(this.mock.totalDepositShares(epochId)).to.eventually.equal(42n);
-        });
-
         it('`_convertToDepositShares` returns 0 when `totalAssets == 0`', async function () {
           // unknown epoch -> totalAssets = 0
           await expect(this.mock.$_convertToDepositShares(999n, 100n, 0n)).to.eventually.equal(0n);
@@ -125,7 +110,7 @@ describe('ERC7540EpochDeposit', function () {
         it('`_convertToDepositShares` applies the locked rate', async function () {
           const tx = await this.mock.connect(user).requestDeposit(100n, user, user);
           const epochId = await this.getRequestId(tx);
-          await advancePast(epochId);
+          await advanceTo(epochId + 1n);
           await this.mock.$_fulfillDeposit(epochId, 50n); // rate 1 asset = 0.5 shares
 
           // Floor: floor(40 * 50 / 100) = 20
@@ -137,7 +122,7 @@ describe('ERC7540EpochDeposit', function () {
         it('`_convertToDepositAssets` applies the locked rate', async function () {
           const tx = await this.mock.connect(user).requestDeposit(100n, user, user);
           const epochId = await this.getRequestId(tx);
-          await advancePast(epochId);
+          await advanceTo(epochId + 1n);
           await this.mock.$_fulfillDeposit(epochId, 50n);
 
           // Floor: floor(10 * 100 / 50) = 20
@@ -151,13 +136,17 @@ describe('ERC7540EpochDeposit', function () {
           const epochId = await this.getRequestId(tx);
 
           // Pending state
+          await expect(this.mock.totalDepositAssets(epochId)).to.eventually.equal(100n);
+          await expect(this.mock.totalDepositShares(epochId)).to.eventually.equal(0n);
           await expect(this.mock.pendingDepositRequest(epochId, user)).to.eventually.equal(100n);
           await expect(this.mock.claimableDepositRequest(epochId, user)).to.eventually.equal(0n);
 
-          await advancePast(epochId);
+          await advanceTo(epochId + 1n);
           await this.mock.$_fulfillDeposit(epochId, 42n);
 
           // Claimable state
+          await expect(this.mock.totalDepositAssets(epochId)).to.eventually.equal(100n);
+          await expect(this.mock.totalDepositShares(epochId)).to.eventually.equal(42n);
           await expect(this.mock.pendingDepositRequest(epochId, user)).to.eventually.equal(0n);
           await expect(this.mock.claimableDepositRequest(epochId, user)).to.eventually.equal(100n);
 
@@ -186,7 +175,7 @@ describe('ERC7540EpochDeposit', function () {
         it('emits `ERC7540EpochDepositFulfilled` with the locked rate', async function () {
           const tx = await this.mock.connect(user).requestDeposit(100n, user, user);
           const epochId = await this.getRequestId(tx);
-          await advancePast(epochId);
+          await advanceTo(epochId + 1n);
 
           await expect(this.mock.$_fulfillDeposit(epochId, 42n))
             .to.emit(this.mock, 'ERC7540EpochDepositFulfilled')
@@ -205,7 +194,7 @@ describe('ERC7540EpochDeposit', function () {
 
         it('reverts `EmptyEpoch` for an epoch with no requests', async function () {
           const current = await this.mock.currentDepositEpoch();
-          await advancePast(current);
+          await advanceTo(current + 1n);
 
           await expect(this.mock.$_fulfillDeposit(current, 42n))
             .to.be.revertedWithCustomError(this.mock, 'ERC7540EpochDepositEmptyEpoch')
@@ -215,7 +204,7 @@ describe('ERC7540EpochDeposit', function () {
         it('reverts `AlreadyFulfilled` on a second non-zero fulfill', async function () {
           const tx = await this.mock.connect(user).requestDeposit(100n, user, user);
           const epochId = await this.getRequestId(tx);
-          await advancePast(epochId);
+          await advanceTo(epochId + 1n);
           await this.mock.$_fulfillDeposit(epochId, 42n);
 
           await expect(this.mock.$_fulfillDeposit(epochId, 50n))
@@ -228,9 +217,16 @@ describe('ERC7540EpochDeposit', function () {
         it('a 0-share fulfillment is a no-op and can be recovered by re-fulfilling', async function () {
           const tx = await this.mock.connect(user).requestDeposit(100n, user, user);
           const epochId = await this.getRequestId(tx);
-          await advancePast(epochId);
+          await advanceTo(epochId + 1n);
+
+          const totalAssets = await this.mock.totalAssets();
+          const totalOutstandingShares = await this.mock.$_totalOutstandingShares();
 
           await this.mock.$_fulfillDeposit(epochId, 0n);
+
+          // No side effect on the vault accounting
+          await expect(this.mock.totalAssets()).to.eventually.equal(totalAssets);
+          await expect(this.mock.$_totalOutstandingShares()).to.eventually.equal(totalOutstandingShares);
 
           // State is still "pending" — sentinel hasn't tripped
           await expect(this.mock.totalDepositShares(epochId)).to.eventually.equal(0n);
@@ -243,6 +239,10 @@ describe('ERC7540EpochDeposit', function () {
             .withArgs(epochId, 100n, 42n);
           await expect(this.mock.totalDepositShares(epochId)).to.eventually.equal(42n);
           await expect(this.mock.claimableDepositRequest(epochId, user)).to.eventually.equal(100n);
+
+          // Only the real fulfillment settles the epoch in the vault accounting
+          await expect(this.mock.totalAssets()).to.eventually.equal(totalAssets + 100n);
+          await expect(this.mock.$_totalOutstandingShares()).to.eventually.equal(totalOutstandingShares + 42n);
         });
       });
 
@@ -257,20 +257,20 @@ describe('ERC7540EpochDeposit', function () {
           const epochA = await this.getRequestId(txA);
 
           // Advance one week -> Epoch B
-          await time.increaseTo.timestamp((epochA + 1n) * week - MONDAY_OFFSET);
+          await advanceTo(epochA + 1n);
           const txB = await this.mock.connect(user).requestDeposit(50n, user, user);
           const epochB = await this.getRequestId(txB);
           expect(epochB).to.equal(epochA + 1n);
 
           // Advance and fulfill both
-          await advancePast(epochB);
+          await advanceTo(epochB + 1n);
           await this.mock.$_fulfillDeposit(epochA, 200n); // 100 assets -> 200 shares
           await this.mock.$_fulfillDeposit(epochB, 50n); //  50 assets ->  50 shares
 
           await expect(this.mock.maxDeposit(user)).to.eventually.equal(150n);
           await expect(this.mock.maxMint(user)).to.eventually.equal(250n);
 
-          // Claim a single share - hits epochA (front of queue) only
+          // Claim 50 shares - hits epochA (front of queue) only
           await this.mock.connect(user).mint(50n, user, ethers.Typed.address(user));
           await expect(this.mock.balanceOf(user)).to.eventually.equal(50n);
 
@@ -295,7 +295,7 @@ describe('ERC7540EpochDeposit', function () {
           // Total assets pending in this epoch
           await expect(this.mock.totalDepositAssets(epochId)).to.eventually.equal(100n);
 
-          await advancePast(epochId);
+          await advanceTo(epochId + 1n);
           await this.mock.$_fulfillDeposit(epochId, 200n); // 100 -> 200, exact rate 1:2
 
           // Each controller can mint their pro-rata share
@@ -335,9 +335,9 @@ describe('ERC7540EpochDeposit', function () {
         it('returns each epoch in queue order (oldest first)', async function () {
           const e0 = await this.mock.currentDepositEpoch();
           await this.mock.connect(user).requestDeposit(100n, user, user);
-          await time.increaseTo.timestamp((e0 + 1n) * week - MONDAY_OFFSET);
+          await advanceTo(e0 + 1n);
           await this.mock.connect(user).requestDeposit(100n, user, user);
-          await time.increaseTo.timestamp((e0 + 2n) * week - MONDAY_OFFSET);
+          await advanceTo(e0 + 2n);
           await this.mock.connect(user).requestDeposit(100n, user, user);
 
           await expect(this.mock.depositEpochs(user, 0, ethers.MaxUint256)).to.eventually.deep.equal([
@@ -358,10 +358,10 @@ describe('ERC7540EpochDeposit', function () {
         it('pops fully-claimed epochs from the queue', async function () {
           const e0 = await this.mock.currentDepositEpoch();
           await this.mock.connect(user).requestDeposit(100n, user, user);
-          await time.increaseTo.timestamp((e0 + 1n) * week - MONDAY_OFFSET);
+          await advanceTo(e0 + 1n);
           await this.mock.connect(user).requestDeposit(100n, user, user);
 
-          await advancePast(e0 + 1n);
+          await advanceTo(e0 + 2n);
           await this.mock.$_fulfillDeposit(e0, 50n);
           await this.mock.$_fulfillDeposit(e0 + 1n, 50n);
 
@@ -374,9 +374,9 @@ describe('ERC7540EpochDeposit', function () {
 
         it('paginates with [start, end)', async function () {
           const e0 = await this.mock.currentDepositEpoch();
-          for (let i = 0; i < 4; i++) {
+          for (let i = 0n; i < 4n; i++) {
+            await advanceTo(e0 + i); // no-op for i = 0
             await this.mock.connect(user).requestDeposit(10n, user, user);
-            await time.increaseTo.timestamp((e0 + BigInt(i) + 1n) * week - MONDAY_OFFSET);
           }
           const all = [e0, e0 + 1n, e0 + 2n, e0 + 3n];
 
@@ -405,14 +405,14 @@ describe('ERC7540EpochDeposit', function () {
           await this.token.connect(user).approve(this.mock, ethers.MaxUint256);
 
           // Fill the queue with 32 distinct epochs (default limit)
-          let epoch = await this.mock.currentDepositEpoch();
-          for (let i = 0; i < 32; i++) {
+          const e0 = await this.mock.currentDepositEpoch();
+          for (let i = 0n; i < 32n; i++) {
+            await advanceTo(e0 + i); // no-op for i = 0
             await this.mock.connect(user).requestDeposit(1n, user, user);
-            epoch = epoch + 1n;
-            await time.increaseTo.timestamp(epoch * week - MONDAY_OFFSET);
           }
 
           // The 33rd distinct epoch should revert with the queue-limit error
+          await advanceTo(e0 + 32n);
           await expect(this.mock.connect(user).requestDeposit(1n, user, user))
             .to.be.revertedWithCustomError(this.mock, 'ERC7540EpochDepositQueueLimitExceeded')
             .withArgs(user);
@@ -429,19 +429,72 @@ describe('ERC7540EpochDeposit', function () {
           }
           // Did not hit the queue limit despite > 32 requests
           const epochId = await this.mock.currentDepositEpoch();
+          await expect(this.mock.depositEpochs(user, 0, ethers.MaxUint256)).to.eventually.deep.equal([epochId]);
           await expect(this.mock.totalDepositAssets(epochId)).to.eventually.equal(50n);
         });
 
+        it('a full queue only frees slots once its oldest epoch is fulfilled and claimed', async function () {
+          const [, user] = await ethers.getSigners();
+          await this.token.$_mint(user, 10000n);
+          await this.token.connect(user).approve(this.mock, ethers.MaxUint256);
+
+          // Fill the queue with 32 distinct epochs, the last one being the current epoch
+          const e0 = await this.mock.currentDepositEpoch();
+          for (let i = 0n; i < 32n; i++) {
+            await advanceTo(e0 + i); // no-op for i = 0
+            await this.mock.connect(user).requestDeposit(1n, user, user);
+          }
+
+          // At the limit, the current (tail) epoch still accepts requests
+          await this.mock.connect(user).requestDeposit(1n, user, user);
+          await expect(this.mock.totalDepositAssets(e0 + 31n)).to.eventually.equal(2n);
+
+          // A new epoch is rejected, except for zero-amount requests that don't take a slot
+          await advanceTo(e0 + 32n);
+          await expect(this.mock.connect(user).requestDeposit(1n, user, user))
+            .to.be.revertedWithCustomError(this.mock, 'ERC7540EpochDepositQueueLimitExceeded')
+            .withArgs(user);
+          await this.mock.connect(user).requestDeposit(0n, user, user);
+
+          // Fulfilling a newer epoch while the oldest is Pending frees nothing
+          await this.mock.$_fulfillDeposit(e0 + 1n, 1n);
+          await expect(this.mock.maxDeposit(user)).to.eventually.equal(0n);
+          await expect(this.mock.connect(user).requestDeposit(1n, user, user)).to.be.revertedWithCustomError(
+            this.mock,
+            'ERC7540EpochDepositQueueLimitExceeded',
+          );
+
+          // Once the oldest epoch is fulfilled, claiming pops both fulfilled epochs
+          await this.mock.$_fulfillDeposit(e0, 1n);
+          await this.mock.connect(user).deposit(2n, user, ethers.Typed.address(user));
+          await expect(this.mock.depositEpochs(user, 0, ethers.MaxUint256).then(e => e.length)).to.eventually.equal(30);
+
+          await this.mock.connect(user).requestDeposit(1n, user, user);
+          await expect(this.mock.depositEpochs(user, 0, ethers.MaxUint256).then(e => e.length)).to.eventually.equal(31);
+        });
+      });
+
+      describe('requestDeposit', function () {
         it('zero-amount `requestDeposit` is a no-op at the epoch layer', async function () {
           const [, user] = await ethers.getSigners();
           await this.token.$_mint(user, 1000n);
           await this.token.connect(user).approve(this.mock, ethers.MaxUint256);
 
           const epochId = await this.mock.currentDepositEpoch();
-          await this.mock.connect(user).requestDeposit(0n, user, user);
+          await expect(this.mock.connect(user).requestDeposit(0n, user, user))
+            .to.emit(this.mock, 'DepositRequest')
+            .withArgs(user, user, epochId, user, 0n);
 
           await expect(this.mock.totalDepositAssets(epochId)).to.eventually.equal(0n);
           await expect(this.mock.depositEpochs(user, 0, ethers.MaxUint256)).to.eventually.deep.equal([]);
+        });
+
+        it('zero-amount `requestDeposit` still requires the caller to be the controller or its operator', async function () {
+          const [, attacker, victim] = await ethers.getSigners();
+
+          await expect(this.mock.connect(attacker).requestDeposit(0n, victim, attacker))
+            .to.be.revertedWithCustomError(this.mock, 'ERC7540InvalidOperator')
+            .withArgs(victim, attacker);
         });
 
         it('third-party attribution to a foreign controller reverts', async function () {
@@ -466,12 +519,12 @@ describe('ERC7540EpochDeposit', function () {
             .connect(user)
             .requestDeposit(100n, user, user)
             .then(tx => this.getRequestId(tx));
-          await time.increaseTo.timestamp((this.epochA + 1n) * week - MONDAY_OFFSET);
+          await advanceTo(this.epochA + 1n);
           this.epochB = await this.mock
             .connect(user)
             .requestDeposit(50n, user, user)
             .then(tx => this.getRequestId(tx));
-          await advancePast(this.epochB);
+          await advanceTo(this.epochB + 1n);
         });
 
         it('maxDeposit / maxMint hide a fulfilled epoch when an older one is still Pending', async function () {
@@ -529,24 +582,34 @@ describe('ERC7540EpochDeposit', function () {
       });
 
       describe('edge cases', function () {
-        it('a 1-share fulfillment makes mint(0) a no-op (per-claim rounding edge)', async function () {
-          const [, user] = await ethers.getSigners();
-          await this.token.$_mint(user, 1000n);
-          await this.token.connect(user).approve(this.mock, ethers.MaxUint256);
+        it('asset-driven claims can round to zero shares, to the benefit of later claimants', async function () {
+          const [, alice, bob] = await ethers.getSigners();
+          for (const u of [alice, bob]) {
+            await this.token.$_mint(u, 1000n);
+            await this.token.connect(u).approve(this.mock, ethers.MaxUint256);
+          }
 
-          const tx = await this.mock.connect(user).requestDeposit(100n, user, user);
+          const tx = await this.mock.connect(alice).requestDeposit(100n, alice, alice);
+          await this.mock.connect(bob).requestDeposit(100n, bob, bob);
           const epochId = await this.getRequestId(tx);
-          await advancePast(epochId);
-          await this.mock.$_fulfillDeposit(epochId, 1n); // 100 assets -> 1 share
+          await advanceTo(epochId + 1n);
+          await this.mock.$_fulfillDeposit(epochId, 2n); // 200 assets -> 2 shares
 
-          // mint(0) is a valid no-op call
-          const before = await this.mock.balanceOf(user);
-          await this.mock.connect(user).mint(0n, user, ethers.Typed.address(user));
-          await expect(this.mock.balanceOf(user)).to.eventually.equal(before);
+          // floor(1 * 2 / 200) = 0: the claim consumes 1 asset of Alice's request for no share
+          await this.mock.connect(alice).deposit(1n, alice, ethers.Typed.address(alice));
+          await expect(this.mock.balanceOf(alice)).to.eventually.equal(0n);
+          await expect(this.mock.totalDepositAssets(epochId)).to.eventually.equal(199n);
+          await expect(this.mock.totalDepositShares(epochId)).to.eventually.equal(2n);
 
-          // Asset-driven `deposit` is the path that can absorb the floor-rounding dust
-          await this.mock.connect(user).deposit(100n, user, ethers.Typed.address(user));
-          await expect(this.mock.balanceOf(user)).to.eventually.equal(1n);
+          // floor(99 * 2 / 199) = 0: Alice's remaining request is also worth no share
+          await this.mock.connect(alice).deposit(99n, alice, ethers.Typed.address(alice));
+          await expect(this.mock.balanceOf(alice)).to.eventually.equal(0n);
+
+          // Bob, the last claimant, receives the remainder and drains the epoch
+          await this.mock.connect(bob).deposit(100n, bob, ethers.Typed.address(bob));
+          await expect(this.mock.balanceOf(bob)).to.eventually.equal(2n);
+          await expect(this.mock.totalDepositAssets(epochId)).to.eventually.equal(0n);
+          await expect(this.mock.totalDepositShares(epochId)).to.eventually.equal(0n);
         });
 
         it('share-driven claim cannot exhaust `totalShares` while `totalAssets > 0` (H-02)', async function () {
@@ -563,7 +626,7 @@ describe('ERC7540EpochDeposit', function () {
           const tx = await this.mock.connect(alice).requestDeposit(2n, alice, alice);
           await this.mock.connect(bob).requestDeposit(1n, bob, bob);
           const epochId = await this.getRequestId(tx);
-          await advancePast(epochId);
+          await advanceTo(epochId + 1n);
           await this.mock.$_fulfillDeposit(epochId, 2n);
 
           // Both sides use floor; Alice's per-epoch share entitlement is 1, not 2.
@@ -591,7 +654,7 @@ describe('ERC7540EpochDeposit', function () {
 
           const tx = await this.mock.connect(user).requestDeposit(100n, user, user);
           const epochId = await this.getRequestId(tx);
-          await advancePast(epochId);
+          await advanceTo(epochId + 1n);
           await this.mock.$_fulfillDeposit(epochId, 42n);
           await this.mock.connect(user).deposit(100n, user, ethers.Typed.address(user));
 

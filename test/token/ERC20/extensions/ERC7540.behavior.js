@@ -103,7 +103,7 @@ function shouldBehaveLikeERC7540Deposit({
       const shares = (assets * initialShares) / initialAssets;
 
       describe('requestDeposit', function () {
-        it('transfers tokens, marks as pending, emits DepositRequest with requestId 0', async function () {
+        it('transfers tokens, marks as pending, emits DepositRequest', async function () {
           const assetsBefore = await this.mock.totalAssets();
           const sharesBefore = await this.mock.$_totalOutstandingShares();
           const convertToAssetsBefore = await this.mock.convertToAssets(shares);
@@ -448,7 +448,7 @@ function shouldBehaveLikeERC7540Redeem({
       const assets = (shares * initialAssets) / initialShares;
 
       describe('requestRedeem', function () {
-        it('burns shares, marks as pending, emits RedeemRequest with requestId 0', async function () {
+        it('takes shares from the owner, marks as pending, emits RedeemRequest', async function () {
           const assetsBefore = await this.mock.totalAssets();
           const sharesBefore = await this.mock.$_totalOutstandingShares();
           const convertToAssetsBefore = await this.mock.convertToAssets(shares);
@@ -458,7 +458,7 @@ function shouldBehaveLikeERC7540Redeem({
           const tx = this.mock.connect(this.owner).requestRedeem(shares, this.controller, this.owner);
           const requestId = await this.getRequestId(tx);
 
-          // check event is emitted and shares are burned
+          // check event is emitted and shares are taken from the owner (burned or escrowed)
           await expect(tx)
             .to.emit(this.mock, 'RedeemRequest')
             .withArgs(this.controller, this.owner, requestId, this.owner, shares);

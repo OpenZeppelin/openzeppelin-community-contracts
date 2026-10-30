@@ -398,6 +398,25 @@ describe('ERC7540Admin', function () {
           await expect(this.mock.totalAssets()).to.eventually.equal(0n);
         });
 
+        it('successive fulfillments cannot promise more assets than the vault holds', async function () {
+          const [, user] = await ethers.getSigners();
+          await this.token.$_mint(this.mock, 1000n);
+          await this.mock.$_mint(user, 1000n);
+          await this.mock.connect(user).requestRedeem(100n, user, user);
+
+          // The first fulfillment takes all the vault's assets: nothing is left for the second one
+          await this.fulfillRedeem(0n, 1000n, 50n, user);
+          await expect(this.fulfillRedeem(0n, 1n, 50n, user)).to.be.revertedWithCustomError(
+            this.mock,
+            'ERC7540InsufficientAssets',
+          );
+
+          // Funding the vault allows the fulfillment
+          await this.token.$_mint(this.mock, 1n);
+          await this.fulfillRedeem(0n, 1n, 50n, user);
+          await expect(this.mock.totalAssets()).to.eventually.equal(0n);
+        });
+
         it('assets of claimable deposits can back redeems claimed before the deposit is claimed', async function () {
           const [, user, other] = await ethers.getSigners();
           await this.token.$_mint(user, 500n);
