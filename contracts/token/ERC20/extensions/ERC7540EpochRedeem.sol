@@ -277,7 +277,7 @@ abstract contract ERC7540EpochRedeem is ERC7540 {
         if (totalAssets > 0) {
             _claimableShares += totalShares;
             _claimableAssets += totalAssets;
-            _checkSolvency();
+            require(_isSolvent(), ERC7540InsufficientAssets());
 
             if (_redeemShareDestination() != address(0)) {
                 _burnSharesOnRedeemFulfill(totalAssets, totalShares);

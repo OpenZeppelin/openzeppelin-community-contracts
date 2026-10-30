@@ -243,7 +243,7 @@ abstract contract ERC7540 is ERC165, ERC20, IERC4626, IERC7540, IERC7575Share {
      *
      * NOTE: Internal flows preserve the invariant `balanceOf(asset, vault) + _totalClaimableDepositAssets() >=
      * totalPendingDepositAssets() + _totalClaimableRedeemAssets()` for any well-behaved ERC-20 (see
-     * {_checkSolvency}). Assets with transfer fees, negative rebases, or externally-mutable balances can violate
+     * {_isSolvent}). Assets with transfer fees, negative rebases, or externally-mutable balances can violate
      * it and cause this function to revert with an underflow. Strategies that read {totalAssets} on the claim
      * path become uncallable in that state.
      */
@@ -256,22 +256,21 @@ abstract contract ERC7540 is ERC165, ERC20, IERC4626, IERC7540, IERC7575Share {
     }
 
     /**
-     * @dev Reverts with {ERC7540InsufficientAssets} if the vault's asset balance does not cover the assets of
-     * pending deposits and the assets owed to Claimable redeems, i.e. if {totalAssets} would underflow.
+     * @dev Returns whether the vault's asset balance covers the assets of pending deposits and the assets owed
+     * to Claimable redeems, i.e. whether {totalAssets} does not underflow.
      *
-     * Called by strategies after fulfilling redeem Requests at a locked rate, so that a fulfillment promising
-     * more assets than the vault holds reverts instead of breaking {totalAssets} for the whole vault. Fulfillers
-     * must fund the vault before fulfilling.
+     * Checked by strategies after fulfilling redeem Requests at a locked rate, which revert with
+     * {ERC7540InsufficientAssets} if it returns false, so that a fulfillment promising more assets than the vault
+     * holds reverts instead of breaking {totalAssets} for the whole vault. Fulfillers must fund the vault before
+     * fulfilling.
      *
      * NOTE: Vaults that override {totalAssets} to account for assets held outside the vault (e.g. deployed in a
      * strategy) should override this function accordingly.
      */
-    function _checkSolvency() internal view virtual {
-        require(
+    function _isSolvent() internal view virtual returns (bool) {
+        return
             IERC20(asset()).balanceOf(address(this)) + _totalClaimableDepositAssets() >=
-                totalPendingDepositAssets() + _totalClaimableRedeemAssets(),
-            ERC7540InsufficientAssets()
-        );
+            totalPendingDepositAssets() + _totalClaimableRedeemAssets();
     }
 
     /**
