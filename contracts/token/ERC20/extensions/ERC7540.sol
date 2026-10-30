@@ -291,9 +291,7 @@ abstract contract ERC7540 is ERC165, ERC20, IERC4626, IERC7540, IERC7575Share {
      */
     function _totalOutstandingShares() internal view virtual returns (uint256) {
         return
-            totalSupply() +
-            _totalClaimableDepositShares() +
-            (totalPendingRedeemShares() - _totalClaimableRedeemShares());
+            totalSupply() + totalPendingRedeemShares() + _totalClaimableDepositShares() - _totalClaimableRedeemShares();
     }
 
     /**
