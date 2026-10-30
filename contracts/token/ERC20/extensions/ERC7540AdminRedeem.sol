@@ -82,8 +82,8 @@ abstract contract ERC7540AdminRedeem is ERC7540 {
 
         _redeems[controller].pendingShares -= shares;
         _redeems[controller].claimableShares += shares;
-        _totalClaimableShares += shares;
         _redeems[controller].claimableAssets += assets;
+        _totalClaimableShares += shares;
         _totalClaimableAssets += assets;
         _checkSolvency();
 
@@ -106,8 +106,8 @@ abstract contract ERC7540AdminRedeem is ERC7540 {
             : Math.mulDiv(assets, maxShares, maxAssets, Math.Rounding.Ceil);
 
         _redeems[controller].claimableAssets -= assets;
-        _totalClaimableAssets -= assets;
         _redeems[controller].claimableShares -= shares;
+        _totalClaimableAssets -= assets;
         _totalClaimableShares -= shares;
         return shares;
     }
@@ -124,8 +124,8 @@ abstract contract ERC7540AdminRedeem is ERC7540 {
             : Math.mulDiv(shares, maxAssets, maxShares, Math.Rounding.Floor);
 
         _redeems[controller].claimableAssets -= assets;
-        _totalClaimableAssets -= assets;
         _redeems[controller].claimableShares -= shares;
+        _totalClaimableAssets -= assets;
         _totalClaimableShares -= shares;
         return assets;
     }
