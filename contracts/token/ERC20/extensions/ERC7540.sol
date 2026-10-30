@@ -251,8 +251,8 @@ abstract contract ERC7540 is ERC165, ERC20, IERC4626, IERC7540, IERC7575Share {
         return
             IERC20(asset()).balanceOf(address(this)) +
             _totalClaimableDepositAssets() -
-            totalPendingDepositAssets() -
-            _totalClaimableRedeemAssets();
+            _totalClaimableRedeemAssets() -
+            totalPendingDepositAssets();
     }
 
     /**
