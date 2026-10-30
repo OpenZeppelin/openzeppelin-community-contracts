@@ -1,0 +1,39 @@
+name: Transpile upgradeable
+
+on:
+  push:
+    branches:
+      - master
+      - release-v*
+      - '!**-upgradeable'
+
+concurrency:
+  group: upgradeable-${{ github.ref }}
+
+jobs:
+  transpile:
+    permissions:
+      contents: write
+    runs-on: ubuntu-latest
+    env:
+      REF_NAME: ${{ github.ref_name }}
+      TARGET: ${{ github.ref_name }}-upgradeable
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          submodules: recursive
+      - name: Set up environment
+        uses: ./.github/actions/setup
+      - run: bash scripts/git-user-config.sh
+      - name: Fetch current upgradeable branch
+        run: |
+          if git ls-remote --exit-code --heads origin "$TARGET"; then
+            git fetch origin "refs/heads/${TARGET}:refs/heads/${TARGET}"
+          fi
+      - name: Transpile to upgradeable
+        run: bash scripts/upgradeable/transpile-onto.sh "$TARGET" "origin/$REF_NAME"
+        env:
+          SUBMODULE_REMOTE: https://github.com/${{ github.repository }}.git
+      - name: Push to upgradeable
+        run: git push origin "$TARGET"
