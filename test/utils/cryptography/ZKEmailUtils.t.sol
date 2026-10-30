@@ -274,6 +274,7 @@ contract ZKEmailUtilsTest is Test {
     }
 
     function testInvalidDKIMPublicKeyHash(bytes32 hash, string memory domainName, bytes32 publicKeyHash) public view {
+        vm.assume(publicKeyHash != _publicKeyHash);
         EmailProof memory emailProof = _buildEmailProofMock(string.concat(SIGN_HASH_COMMAND, uint256(hash).toString()));
 
         emailProof.domainName = domainName;
