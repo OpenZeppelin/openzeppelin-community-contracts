@@ -221,6 +221,11 @@ abstract contract ERC7540EpochDeposit is ERC7540 {
     ) internal virtual override returns (uint256) {
         _checkOperatorOrController(_isDepositAsync(), controller, _msgSender());
         uint256 epochId = currentDepositEpoch();
+
+        // Transfer the assets first (see {ERC7540-_requestDeposit}), so that a reentrancy through the asset
+        // observes neither the assets nor the epoch's updated accounting.
+        uint256 requestId = super._requestDeposit(assets, controller, owner, epochId);
+
         if (assets > 0) {
             EpochDeposit storage epoch = _epochs[epochId];
             epoch.totalAssets += assets;
@@ -240,7 +245,7 @@ abstract contract ERC7540EpochDeposit is ERC7540 {
             }
         }
 
-        return super._requestDeposit(assets, controller, owner, epochId);
+        return requestId;
     }
 
     /**

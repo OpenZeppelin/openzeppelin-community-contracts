@@ -76,8 +76,8 @@ abstract contract ERC7540DelayDeposit is ERC7540, IERC6372 {
     }
 
     /**
-     * @dev Pushes a new cumulative checkpoint at the maturity timepoint and delegates to
-     * {ERC7540-_requestDeposit} with the timepoint as `requestId`.
+     * @dev Delegates to {ERC7540-_requestDeposit} with the maturity timepoint as `requestId`, then pushes a new
+     * cumulative checkpoint at that timepoint.
      */
     function _requestDeposit(
         uint256 assets,
@@ -87,12 +87,16 @@ abstract contract ERC7540DelayDeposit is ERC7540, IERC6372 {
     ) internal virtual override returns (uint256) {
         uint48 timepoint = clock() + depositDelay(controller);
 
+        // Transfer the assets first (see {ERC7540-_requestDeposit}), so that a reentrancy through the asset
+        // observes neither the assets nor the controller's updated checkpoints.
+        uint256 requestId = super._requestDeposit(assets, controller, owner, timepoint);
+
         if (assets > 0) {
             uint256 latest = _deposits[controller].latest();
             _deposits[controller].push(timepoint, (assets + latest).toUint208());
         }
 
-        return super._requestDeposit(assets, controller, owner, timepoint);
+        return requestId;
     }
 
     /**

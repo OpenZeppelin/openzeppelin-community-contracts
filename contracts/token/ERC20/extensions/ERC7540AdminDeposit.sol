@@ -50,15 +50,18 @@ abstract contract ERC7540AdminDeposit is ERC7540 {
         return true;
     }
 
-    /// @dev Records per-controller pending state before delegating to {ERC7540-_requestDeposit}.
+    /// @dev Records per-controller pending state after delegating to {ERC7540-_requestDeposit}.
     function _requestDeposit(
         uint256 assets,
         address controller,
         address owner,
         uint256 requestId
     ) internal virtual override returns (uint256) {
+        // Transfer the assets first (see {ERC7540-_requestDeposit}), so that a reentrancy through the asset
+        // observes neither the assets nor the controller's updated pending state.
+        uint256 result = super._requestDeposit(assets, controller, owner, requestId);
         _deposits[controller].pendingAssets += assets;
-        return super._requestDeposit(assets, controller, owner, requestId);
+        return result;
     }
 
     /**

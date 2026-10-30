@@ -441,6 +441,32 @@ describe('ERC7540Admin', function () {
           await expect(this.mock.totalAssets()).to.eventually.equal(0n);
         });
       });
+
+      describe('reentrancy', function () {
+        it('a pre-transfer hook in requestDeposit cannot fulfill the request being made', async function () {
+          const [, user] = await ethers.getSigners();
+          const token = await ethers.deployContract('$ERC20Reentrant');
+          const mock = await ethers.deployContract('$ERC7540AdminMock', [
+            name,
+            symbol,
+            token,
+            withTmpHolder ? '0x000000000000000000000000000000000000dead' : ethers.ZeroAddress,
+          ]);
+
+          await token.$_mint(user, 100n);
+          await token.connect(user).approve(mock, ethers.MaxUint256);
+
+          // the hook runs before the assets are transferred: the request is not recorded yet
+          await token.scheduleReenter(
+            0x01, // Before
+            mock,
+            mock.interface.encodeFunctionData('$_fulfillDeposit', [100n, 100n, user.address]),
+          );
+          await expect(mock.connect(user).requestDeposit(100n, user, user))
+            .to.be.revertedWithCustomError(mock, 'ERC7540DepositInsufficientPendingAssets')
+            .withArgs(100n, 0n);
+        });
+      });
     });
   }
 });
