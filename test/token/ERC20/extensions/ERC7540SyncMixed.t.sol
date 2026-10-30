@@ -50,8 +50,8 @@ contract EpochDepositSyncRedeem is CustodyMock, ERC7540EpochDeposit, ERC7540Sync
         address controller,
         address owner,
         uint256 requestId
-    ) internal virtual override(ERC7540, ERC7540EpochDeposit) returns (uint256) {
-        return super._requestDeposit(assets, controller, owner, requestId);
+    ) internal virtual override(ERC7540, ERC7540EpochDeposit) {
+        super._requestDeposit(assets, controller, owner, requestId);
     }
 
     function _depositShareOrigin() internal view virtual override(ERC7540, CustodyMock) returns (address) {
@@ -75,8 +75,8 @@ contract AdminDepositSyncRedeem is CustodyMock, ERC7540AdminDeposit, ERC7540Sync
         address controller,
         address owner,
         uint256 requestId
-    ) internal virtual override(ERC7540, ERC7540AdminDeposit) returns (uint256) {
-        return super._requestDeposit(assets, controller, owner, requestId);
+    ) internal virtual override(ERC7540, ERC7540AdminDeposit) {
+        super._requestDeposit(assets, controller, owner, requestId);
     }
 
     function _depositShareOrigin() internal view virtual override(ERC7540, CustodyMock) returns (address) {
@@ -100,8 +100,8 @@ contract SyncDepositEpochRedeem is CustodyMock, ERC7540SyncDeposit, ERC7540Epoch
         address controller,
         address owner,
         uint256 requestId
-    ) internal virtual override(ERC7540, ERC7540EpochRedeem) returns (uint256) {
-        return super._requestRedeem(shares, controller, owner, requestId);
+    ) internal virtual override(ERC7540, ERC7540EpochRedeem) {
+        super._requestRedeem(shares, controller, owner, requestId);
     }
 
     function _depositShareOrigin() internal view virtual override(ERC7540, CustodyMock) returns (address) {
@@ -125,8 +125,8 @@ contract SyncDepositAdminRedeem is CustodyMock, ERC7540SyncDeposit, ERC7540Admin
         address controller,
         address owner,
         uint256 requestId
-    ) internal virtual override(ERC7540, ERC7540AdminRedeem) returns (uint256) {
-        return super._requestRedeem(shares, controller, owner, requestId);
+    ) internal virtual override(ERC7540, ERC7540AdminRedeem) {
+        super._requestRedeem(shares, controller, owner, requestId);
     }
 
     function _depositShareOrigin() internal view virtual override(ERC7540, CustodyMock) returns (address) {

@@ -180,14 +180,14 @@ contract RWAVault is ERC7540AdminDeposit, ERC7540AdminRedeem, Ownable {
     // Resolve multiple inheritance for _requestDeposit and _requestRedeem
     function _requestDeposit(
         uint256 assets, address controller, address owner, uint256 requestId
-    ) internal override(ERC7540, ERC7540AdminDeposit) returns (uint256) {
-        return super._requestDeposit(assets, controller, owner, requestId);
+    ) internal override(ERC7540, ERC7540AdminDeposit) {
+        super._requestDeposit(assets, controller, owner, requestId);
     }
 
     function _requestRedeem(
         uint256 shares, address controller, address owner, uint256 requestId
-    ) internal override(ERC7540, ERC7540AdminRedeem) returns (uint256) {
-        return super._requestRedeem(shares, controller, owner, requestId);
+    ) internal override(ERC7540, ERC7540AdminRedeem) {
+        super._requestRedeem(shares, controller, owner, requestId);
     }
 }
 ----
@@ -270,14 +270,14 @@ contract TimeLockVault is ERC7540DelayDeposit, ERC7540DelayRedeem {
 
     function _requestDeposit(
         uint256 assets, address controller, address owner, uint256 requestId
-    ) internal override(ERC7540, ERC7540DelayDeposit) returns (uint256) {
-        return super._requestDeposit(assets, controller, owner, requestId);
+    ) internal override(ERC7540, ERC7540DelayDeposit) {
+        super._requestDeposit(assets, controller, owner, requestId);
     }
 
     function _requestRedeem(
         uint256 shares, address controller, address owner, uint256 requestId
-    ) internal override(ERC7540, ERC7540DelayRedeem) returns (uint256) {
-        return super._requestRedeem(shares, controller, owner, requestId);
+    ) internal override(ERC7540, ERC7540DelayRedeem) {
+        super._requestRedeem(shares, controller, owner, requestId);
     }
 }
 ----
@@ -383,14 +383,14 @@ contract NAVVault is ERC7540EpochDeposit, ERC7540EpochRedeem, Ownable {
     // Resolve multiple inheritance
     function _requestDeposit(
         uint256 assets, address controller, address owner, uint256 requestId
-    ) internal override(ERC7540, ERC7540EpochDeposit) returns (uint256) {
-        return super._requestDeposit(assets, controller, owner, requestId);
+    ) internal override(ERC7540, ERC7540EpochDeposit) {
+        super._requestDeposit(assets, controller, owner, requestId);
     }
 
     function _requestRedeem(
         uint256 shares, address controller, address owner, uint256 requestId
-    ) internal override(ERC7540, ERC7540EpochRedeem) returns (uint256) {
-        return super._requestRedeem(shares, controller, owner, requestId);
+    ) internal override(ERC7540, ERC7540EpochRedeem) {
+        super._requestRedeem(shares, controller, owner, requestId);
     }
 
 }
@@ -422,8 +422,8 @@ contract LiquidStakingVault is ERC7540SyncDeposit, ERC7540DelayRedeem {
 
     function _requestRedeem(
         uint256 shares, address controller, address owner, uint256 requestId
-    ) internal override(ERC7540, ERC7540DelayRedeem) returns (uint256) {
-        return super._requestRedeem(shares, controller, owner, requestId);
+    ) internal override(ERC7540, ERC7540DelayRedeem) {
+        super._requestRedeem(shares, controller, owner, requestId);
     }
 }
 ----

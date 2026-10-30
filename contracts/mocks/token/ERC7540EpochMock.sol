@@ -18,8 +18,8 @@ abstract contract ERC7540EpochMock is ERC7540EpochDeposit, ERC7540EpochRedeem {
         address controller,
         address owner,
         uint256 requestId
-    ) internal virtual override(ERC7540, ERC7540EpochDeposit) returns (uint256) {
-        return super._requestDeposit(assets, controller, owner, requestId);
+    ) internal virtual override(ERC7540, ERC7540EpochDeposit) {
+        super._requestDeposit(assets, controller, owner, requestId);
     }
 
     function _requestRedeem(
@@ -27,8 +27,8 @@ abstract contract ERC7540EpochMock is ERC7540EpochDeposit, ERC7540EpochRedeem {
         address controller,
         address owner,
         uint256 requestId
-    ) internal virtual override(ERC7540, ERC7540EpochRedeem) returns (uint256) {
-        return super._requestRedeem(shares, controller, owner, requestId);
+    ) internal virtual override(ERC7540, ERC7540EpochRedeem) {
+        super._requestRedeem(shares, controller, owner, requestId);
     }
 
     function _depositShareOrigin() internal view virtual override returns (address) {

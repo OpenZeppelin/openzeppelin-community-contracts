@@ -217,7 +217,7 @@ abstract contract ERC7540EpochRedeem is ERC7540 {
         address controller,
         address owner,
         uint256 requestId
-    ) internal virtual override returns (uint256) {
+    ) internal virtual override {
         _checkOperatorOrController(_isRedeemAsync(), controller, _msgSender());
         if (shares > 0) {
             EpochRedeem storage epoch = _epochs[requestId];
@@ -235,7 +235,7 @@ abstract contract ERC7540EpochRedeem is ERC7540 {
             }
         }
 
-        return super._requestRedeem(shares, controller, owner, requestId);
+        super._requestRedeem(shares, controller, owner, requestId);
     }
 
     /// @dev Redeem Requests are identified by the epoch they are submitted in (see {currentRedeemEpoch}).

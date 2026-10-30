@@ -61,12 +61,11 @@ abstract contract ERC7540AdminDeposit is ERC7540 {
         address controller,
         address owner,
         uint256 requestId
-    ) internal virtual override returns (uint256) {
+    ) internal virtual override {
         // Transfer the assets first (see {ERC7540-_requestDeposit}), so that a reentrancy through the asset
         // observes neither the assets nor the controller's updated pending state.
-        uint256 result = super._requestDeposit(assets, controller, owner, requestId);
+        super._requestDeposit(assets, controller, owner, requestId);
         _deposits[controller].pendingAssets += assets;
-        return result;
     }
 
     /**

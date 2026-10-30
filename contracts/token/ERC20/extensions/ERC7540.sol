@@ -462,7 +462,9 @@ abstract contract ERC7540 is ERC165, ERC20, IERC4626, IERC7540, IERC7575Share {
         address controller,
         address owner
     ) public virtual onlyOperatorOrController(_isDepositAsync(), owner, _msgSender()) returns (uint256) {
-        return _requestDeposit(assets, controller, owner, _currentDepositRequestId(controller));
+        uint256 requestId = _currentDepositRequestId(controller);
+        _requestDeposit(assets, controller, owner, requestId);
+        return requestId;
     }
 
     /**
@@ -559,7 +561,9 @@ abstract contract ERC7540 is ERC165, ERC20, IERC4626, IERC7540, IERC7575Share {
      * cancellation path. Callers are responsible for supplying a controller capable of authorizing claims.
      */
     function requestRedeem(uint256 shares, address controller, address owner) public virtual returns (uint256) {
-        return _requestRedeem(shares, controller, owner, _currentRedeemRequestId(controller));
+        uint256 requestId = _currentRedeemRequestId(controller);
+        _requestRedeem(shares, controller, owner, requestId);
+        return requestId;
     }
 
     /**
@@ -659,12 +663,7 @@ abstract contract ERC7540 is ERC165, ERC20, IERC4626, IERC7540, IERC7575Share {
      *
      * * {_isDepositAsync} must return `true`, otherwise reverts with {ERC7540SyncDeposit}.
      */
-    function _requestDeposit(
-        uint256 assets,
-        address controller,
-        address owner,
-        uint256 requestId
-    ) internal virtual returns (uint256) {
+    function _requestDeposit(uint256 assets, address controller, address owner, uint256 requestId) internal virtual {
         require(_isDepositAsync(), ERC7540SyncDeposit());
 
         // If asset() is ERC-777, `transferFrom` can trigger a reentrancy BEFORE the transfer happens through the
@@ -677,7 +676,6 @@ abstract contract ERC7540 is ERC165, ERC20, IERC4626, IERC7540, IERC7575Share {
         _totalPendingDepositAssets += assets;
 
         emit DepositRequest(controller, owner, requestId, _msgSender(), assets);
-        return requestId;
     }
 
     /**
@@ -750,12 +748,7 @@ abstract contract ERC7540 is ERC165, ERC20, IERC4626, IERC7540, IERC7575Share {
      *
      * * {_isRedeemAsync} must return `true`, otherwise reverts with {ERC7540SyncRedeem}.
      */
-    function _requestRedeem(
-        uint256 shares,
-        address controller,
-        address owner,
-        uint256 requestId
-    ) internal virtual returns (uint256) {
+    function _requestRedeem(uint256 shares, address controller, address owner, uint256 requestId) internal virtual {
         require(_isRedeemAsync(), ERC7540SyncRedeem());
 
         address sender = _msgSender();
@@ -770,7 +763,6 @@ abstract contract ERC7540 is ERC165, ERC20, IERC4626, IERC7540, IERC7575Share {
         }
 
         emit RedeemRequest(controller, owner, requestId, _msgSender(), shares);
-        return requestId;
     }
 
     /**

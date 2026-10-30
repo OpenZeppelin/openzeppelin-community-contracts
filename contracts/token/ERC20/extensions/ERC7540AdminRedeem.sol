@@ -62,9 +62,9 @@ abstract contract ERC7540AdminRedeem is ERC7540 {
         address controller,
         address owner,
         uint256 requestId
-    ) internal virtual override returns (uint256) {
+    ) internal virtual override {
         _redeems[controller].pendingShares += shares;
-        return super._requestRedeem(shares, controller, owner, requestId);
+        super._requestRedeem(shares, controller, owner, requestId);
     }
 
     /**
