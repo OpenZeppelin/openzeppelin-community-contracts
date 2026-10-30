@@ -86,8 +86,8 @@ abstract contract ERC7540AdminDeposit is ERC7540 {
 
         _deposits[controller].pendingAssets -= assets;
         _deposits[controller].claimableAssets += assets;
-        _totalClaimableAssets += assets;
         _deposits[controller].claimableShares += shares;
+        _totalClaimableAssets += assets;
         _totalClaimableShares += shares;
 
         if (_depositShareOrigin() != address(0)) {
@@ -109,8 +109,8 @@ abstract contract ERC7540AdminDeposit is ERC7540 {
             : Math.mulDiv(assets, maxShares, maxAssets, Math.Rounding.Floor);
 
         _deposits[controller].claimableAssets -= assets;
-        _totalClaimableAssets -= assets;
         _deposits[controller].claimableShares -= shares;
+        _totalClaimableAssets -= assets;
         _totalClaimableShares -= shares;
         return shares;
     }
@@ -127,8 +127,8 @@ abstract contract ERC7540AdminDeposit is ERC7540 {
             : Math.mulDiv(shares, maxAssets, maxShares, Math.Rounding.Ceil);
 
         _deposits[controller].claimableAssets -= assets;
-        _totalClaimableAssets -= assets;
         _deposits[controller].claimableShares -= shares;
+        _totalClaimableAssets -= assets;
         _totalClaimableShares -= shares;
         return assets;
     }
