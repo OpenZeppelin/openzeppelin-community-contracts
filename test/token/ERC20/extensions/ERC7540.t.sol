@@ -47,6 +47,7 @@ interface IERC7540InvariantVault {
     function pendingRedeemRequest(uint256, address) external view returns (uint256);
     function totalPendingDepositAssets() external view returns (uint256);
     function totalPendingRedeemShares() external view returns (uint256);
+    function totalAssets() external view returns (uint256);
     function totalSupply() external view returns (uint256);
     function balanceOf(address) external view returns (uint256);
     function fulfillDeposit(uint256 assets, uint256 shares, address controller) external;
@@ -303,8 +304,9 @@ abstract contract ERC7540InvariantBase is Test {
         assertEq(handler.failure(), "");
     }
 
-    function invariant_assetsCoverPendingDeposits() public view {
-        assertGe(asset.balanceOf(address(vault)), vault.totalPendingDepositAssets());
+    function invariant_solvency() public view {
+        // reverts if the balance plus claimable deposit assets no longer covers pending deposits and claimable redeems
+        vault.totalAssets();
     }
 
     function invariant_assetConservation() public view {
@@ -336,7 +338,7 @@ contract ERC7540AdminMintOnClaimInvariant is ERC7540InvariantBase {
     }
 
     function invariant_supply() public view {
-        assertEq(vault.totalSupply(), _sumActors(vault.balanceOf) + vault.totalPendingRedeemShares());
+        assertEq(vault.totalSupply(), _sumActors(vault.balanceOf));
     }
 }
 
@@ -374,10 +376,7 @@ contract ERC7540AdminEscrowInvariant is ERC7540InvariantBase {
     }
 
     function invariant_supply() public view {
-        assertEq(
-            vault.totalSupply(),
-            _sumActors(vault.balanceOf) + vault.balanceOf(HOLDER) + vault.totalPendingRedeemShares()
-        );
+        assertEq(vault.totalSupply(), _sumActors(vault.balanceOf) + vault.balanceOf(HOLDER));
     }
 }
 
@@ -407,6 +406,6 @@ contract ERC7540DelayInvariant is ERC7540InvariantBase {
     }
 
     function invariant_supply() public view {
-        assertEq(vault.totalSupply(), _sumActors(vault.balanceOf) + vault.totalPendingRedeemShares());
+        assertEq(vault.totalSupply(), _sumActors(vault.balanceOf));
     }
 }
