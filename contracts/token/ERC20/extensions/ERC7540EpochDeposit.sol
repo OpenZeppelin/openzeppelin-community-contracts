@@ -278,10 +278,10 @@ abstract contract ERC7540EpochDeposit is ERC7540 {
         _epochs[epochId].totalShares = totalShares;
 
         if (totalShares > 0) {
-            _claimableAssets += totalAssets;
-            _claimableShares += totalShares;
-
-            if (_depositShareOrigin() != address(0)) {
+            if (_depositShareOrigin() == address(0)) {
+                _claimableAssets += totalAssets;
+                _claimableShares += totalShares;
+            } else {
                 _mintSharesOnDepositFulfill(totalAssets, totalShares);
             }
 
@@ -328,8 +328,10 @@ abstract contract ERC7540EpochDeposit is ERC7540 {
             shares += batchShares;
         }
 
-        _claimableAssets -= consumed;
-        _claimableShares -= shares;
+        if (_depositShareOrigin() == address(0)) {
+            _claimableAssets -= consumed;
+            _claimableShares -= shares;
+        }
 
         return shares;
     }
@@ -379,19 +381,24 @@ abstract contract ERC7540EpochDeposit is ERC7540 {
             if (epoch.totalAssets == 0 && epoch.totalShares > 0) {
                 uint256 residue = epoch.totalShares;
                 epoch.totalShares = 0;
-                _claimableShares -= residue;
-                if (_depositShareOrigin() != address(0)) _burn(_depositShareOrigin(), residue);
+                if (_depositShareOrigin() == address(0)) {
+                    _claimableShares -= residue;
+                } else {
+                    _burn(_depositShareOrigin(), residue);
+                }
             }
         }
 
-        _claimableAssets -= assets;
-        _claimableShares -= consumed;
+        if (_depositShareOrigin() == address(0)) {
+            _claimableAssets -= assets;
+            _claimableShares -= consumed;
+        }
 
         return assets;
     }
 
     /**
-     * @dev Assets of fulfilled but unclaimed epochs. Only reported in mint-on-claim custody: with pre-mint
+     * @dev Assets of fulfilled but unclaimed epochs. Only tracked in mint-on-claim custody: with pre-mint
      * custody, fulfillment already settles them in {totalPendingDepositAssets} and {_totalOutstandingShares}.
      */
     function _totalClaimableDepositAssets() internal view virtual override returns (uint256) {

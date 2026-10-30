@@ -87,10 +87,11 @@ abstract contract ERC7540AdminDeposit is ERC7540 {
         _deposits[controller].pendingAssets -= assets;
         _deposits[controller].claimableAssets += assets;
         _deposits[controller].claimableShares += shares;
-        _totalClaimableAssets += assets;
-        _totalClaimableShares += shares;
 
-        if (_depositShareOrigin() != address(0)) {
+        if (_depositShareOrigin() == address(0)) {
+            _totalClaimableAssets += assets;
+            _totalClaimableShares += shares;
+        } else {
             _mintSharesOnDepositFulfill(assets, shares);
         }
 
@@ -110,8 +111,10 @@ abstract contract ERC7540AdminDeposit is ERC7540 {
 
         _deposits[controller].claimableAssets -= assets;
         _deposits[controller].claimableShares -= shares;
-        _totalClaimableAssets -= assets;
-        _totalClaimableShares -= shares;
+        if (_depositShareOrigin() == address(0)) {
+            _totalClaimableAssets -= assets;
+            _totalClaimableShares -= shares;
+        }
         return shares;
     }
 
@@ -128,8 +131,10 @@ abstract contract ERC7540AdminDeposit is ERC7540 {
 
         _deposits[controller].claimableAssets -= assets;
         _deposits[controller].claimableShares -= shares;
-        _totalClaimableAssets -= assets;
-        _totalClaimableShares -= shares;
+        if (_depositShareOrigin() == address(0)) {
+            _totalClaimableAssets -= assets;
+            _totalClaimableShares -= shares;
+        }
         return assets;
     }
 
@@ -160,7 +165,7 @@ abstract contract ERC7540AdminDeposit is ERC7540 {
     }
 
     /**
-     * @dev Assets of fulfilled but unclaimed deposits. Only reported in mint-on-claim custody: with pre-mint
+     * @dev Assets of fulfilled but unclaimed deposits. Only tracked in mint-on-claim custody: with pre-mint
      * custody, fulfillment already settles them in {totalPendingDepositAssets} and {_totalOutstandingShares}.
      */
     function _totalClaimableDepositAssets() internal view virtual override returns (uint256) {
