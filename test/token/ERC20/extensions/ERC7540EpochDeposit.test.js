@@ -222,7 +222,7 @@ describe('ERC7540EpochDeposit', function () {
           const totalAssets = await this.mock.totalAssets();
           const totalOutstandingShares = await this.mock.$_totalOutstandingShares();
 
-          await this.mock.$_fulfillDeposit(epochId, 0n);
+          await expect(this.mock.$_fulfillDeposit(epochId, 0n)).to.not.emit(this.mock, 'ERC7540EpochDepositFulfilled');
 
           // No side effect on the vault accounting
           await expect(this.mock.totalAssets()).to.eventually.equal(totalAssets);

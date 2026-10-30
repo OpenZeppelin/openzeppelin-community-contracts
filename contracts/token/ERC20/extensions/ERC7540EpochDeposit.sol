@@ -249,13 +249,13 @@ abstract contract ERC7540EpochDeposit is ERC7540 {
      *
      * NOTE: When epoch transition is manual, the caller should bump the epoch before calling this.
      *
-     * NOTE: Pending vs. fulfilled is distinguished by `totalShares == 0`. Admins are assumed not
-     * to fulfill at zero (a confiscation event with no economic purpose); if 0 is passed by
-     * accident, the call is a no-op and the admin can re-fulfill. This recovery only holds as
+     * NOTE: Pending vs. fulfilled is distinguished by `totalShares == 0`. Admins are assumed not to
+     * fulfill at zero (a confiscation event with no economic purpose); if 0 is passed by accident, the
+     * call is a no-op (no event is emitted) and the admin can re-fulfill. This recovery only holds as
      * long as derived contracts preserve the no-side-effect semantics of this function — if not,
-     * derived contracts should restrict `totalShares != 0`. A genuine total-loss settlement is
-     * not representable in this encoding; deployers needing that SHOULD override to encode the
-     * fulfilled state separately (e.g. an explicit boolean).
+     * derived contracts should restrict `totalShares != 0`. A genuine total-loss settlement is not
+     * representable in this encoding; deployers needing that SHOULD override to encode the fulfilled
+     * state separately (e.g. an explicit boolean).
      *
      * NOTE: Out-of-order fulfillment is permitted, but each controller's claims and queue
      * cleanup stay gated on their oldest Pending epoch (see {_consumeClaimableDeposit}). Funds
@@ -284,9 +284,9 @@ abstract contract ERC7540EpochDeposit is ERC7540 {
             if (_depositShareOrigin() != address(0)) {
                 _mintSharesOnDepositFulfill(totalAssets, totalShares);
             }
-        }
 
-        emit ERC7540EpochDepositFulfilled(epochId, totalAssets, totalShares);
+            emit ERC7540EpochDepositFulfilled(epochId, totalAssets, totalShares);
+        }
     }
 
     /**
