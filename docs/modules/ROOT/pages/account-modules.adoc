@@ -1,5 +1,7 @@
 = Account Modules
 
+IMPORTANT: The xref:api:account.adoc#ERC7579Executor[`ERC7579Executor`], xref:api:account.adoc#ERC7579Validator[`ERC7579Validator`], xref:api:account.adoc#ERC7579DelayedExecutor[`ERC7579DelayedExecutor`], xref:api:account.adoc#ERC7579Multisig[`ERC7579Multisig`] and xref:api:account.adoc#ERC7579MultisigWeighted[`ERC7579MultisigWeighted`] modules are deprecated in favor of https://docs.openzeppelin.com/accounts/contracts[OpenZeppelin Accounts], which provides maintained ERC-7579 validators, executors and guides. xref:api:account.adoc#ERC7579SelectorExecutor[`ERC7579SelectorExecutor`], xref:api:account.adoc#ERC7579Signature[`ERC7579Signature`], xref:api:account.adoc#ERC7579MultisigConfirmation[`ERC7579MultisigConfirmation`] and xref:api:account.adoc#ERC7579MultisigStorage[`ERC7579MultisigStorage`] remain available here.
+
 Smart accounts built with https://eips.ethereum.org/EIPS/eip-7579[ERC-7579] provide a standardized way to extend account functionality through modules (i.e. smart contract instances). This architecture allows accounts to support various features that are compatible with a wide variety of account implementations. See https://erc7579.com/modules[compatible modules].
 
 == ERC-7579

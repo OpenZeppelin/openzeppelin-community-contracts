@@ -18,6 +18,10 @@ import {ERC7579Validator} from "./ERC7579Validator.sol";
  * A smart account with this module installed can require multiple signers to approve
  * operations before they are executed, such as requiring 3-of-5 guardians to approve
  * a social recovery operation.
+ *
+ * IMPORTANT: Deprecated. Use `ERC7579MultisigValidator` from
+ * https://docs.openzeppelin.com/accounts/api/modules#ERC7579MultisigValidator[OpenZeppelin Accounts]
+ * instead. It remains here as the base of {ERC7579MultisigConfirmation} and {ERC7579MultisigStorage}.
  */
 abstract contract ERC7579Multisig is ERC7579Validator {
     using EnumerableSet for EnumerableSet.BytesSet;
