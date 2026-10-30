@@ -18,6 +18,10 @@ contract EpochVault is ERC7540EpochMock {
     function fulfillDeposit(uint256 epochId, uint256 shares) external {
         _fulfillDeposit(epochId, shares);
     }
+
+    function totalOutstandingShares() external view returns (uint256) {
+        return _totalOutstandingShares();
+    }
 }
 
 /// @dev Fuzz regression for the deposit-side rounding findings on the epoch strategy.
@@ -171,6 +175,7 @@ contract ERC7540EpochDepositFuzzTest is Test {
         assertEq(vault.balanceOf(ALICE), 999);
         assertEq(vault.balanceOf(CUSTODY), 0);
         assertEq(vault.totalSupply(), 999);
+        assertEq(vault.totalOutstandingShares(), 999);
     }
 
     // Whatever the claim order and custody model, once every controller has claimed, the epoch is
@@ -213,6 +218,7 @@ contract ERC7540EpochDepositFuzzTest is Test {
         assertEq(vault.totalPendingDepositAssets(), 0, "pending assets not drained");
         assertEq(vault.balanceOf(CUSTODY), 0, "shares left at custody");
         assertEq(vault.totalSupply(), vault.balanceOf(ALICE) + vault.balanceOf(BOB));
+        assertEq(vault.totalOutstandingShares(), vault.totalSupply(), "claimable shares not released");
     }
 
     function _requestAndFulfill(uint256 rA, uint256 rB, uint256 fulfillS) internal returns (uint256 epoch) {

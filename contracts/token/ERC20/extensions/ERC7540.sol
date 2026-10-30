@@ -275,24 +275,23 @@ abstract contract ERC7540 is ERC165, ERC20, IERC4626, IERC7540, IERC7575Share {
     }
 
     /**
-     * @dev See {IERC20-totalSupply}.
+     * @dev Total number of shares backing {totalAssets}, used by the vault's conversions in place of
+     * {totalSupply}.
      *
      * Adds {totalPendingRedeemShares} to the ERC-20 supply. When shares are burned at request time
      * (i.e. {_redeemShareDestination} returns `address(0)`), pending redeem shares are removed from
-     * the on-chain supply but still logically outstanding until fulfilled; this override compensates.
+     * the on-chain supply but still logically outstanding until fulfilled; this function compensates.
      * Requests that were fulfilled at a locked rate but not yet claimed are accounted as settled: shares
      * owed to Claimable deposits ({_totalClaimableDepositShares}) are added, and shares of Claimable
      * redeems ({_totalClaimableRedeemShares}) are subtracted.
      *
-     * NOTE: As a consequence, two standard ERC-20 assumptions do not hold: (a) `totalSupply()` may
-     * exceed the sum of all `balanceOf()` (pending shares are virtual and unowned); (b) `totalSupply()`
-     * can change without a matching `Transfer` event when {totalPendingRedeemShares} changes. Integrators
-     * that snapshot supply for governance or reward weighting, or reconstruct supply from event logs
-     * (indexers, bridges), must account for this.
+     * NOTE: {totalSupply} is left unchanged and always equals the sum of all ERC-20 balances, so it can
+     * differ from this value while requests are in flight. Integrators pricing shares should use
+     * {convertToAssets} rather than `totalAssets() / totalSupply()`.
      */
-    function totalSupply() public view virtual override(IERC20, ERC20) returns (uint256) {
+    function _totalOutstandingShares() internal view virtual returns (uint256) {
         return
-            super.totalSupply() +
+            totalSupply() +
             _totalClaimableDepositShares() +
             (totalPendingRedeemShares() - _totalClaimableRedeemShares());
     }
@@ -636,14 +635,14 @@ abstract contract ERC7540 is ERC165, ERC20, IERC4626, IERC7540, IERC7575Share {
      * The offset is configurable via {_decimalsOffset}.
      */
     function _convertToShares(uint256 assets, Math.Rounding rounding) internal view virtual returns (uint256) {
-        return assets.mulDiv(totalSupply() + 10 ** _decimalsOffset(), totalAssets() + 1, rounding);
+        return assets.mulDiv(_totalOutstandingShares() + 10 ** _decimalsOffset(), totalAssets() + 1, rounding);
     }
 
     /**
      * @dev Internal conversion function (from shares to assets) with support for rounding direction.
      */
     function _convertToAssets(uint256 shares, Math.Rounding rounding) internal view virtual returns (uint256) {
-        return shares.mulDiv(totalAssets() + 1, totalSupply() + 10 ** _decimalsOffset(), rounding);
+        return shares.mulDiv(totalAssets() + 1, _totalOutstandingShares() + 10 ** _decimalsOffset(), rounding);
     }
 
     /**
@@ -741,7 +740,7 @@ abstract contract ERC7540 is ERC165, ERC20, IERC4626, IERC7540, IERC7575Share {
      * Share custody depends on {_redeemShareDestination}:
      *
      * * `address(0)` (default): shares are burned immediately and `_totalPendingRedeemShares` is
-     *   incremented to keep {totalSupply} accurate.
+     *   incremented to keep {_totalOutstandingShares} accurate.
      * * Non-zero address: shares are transferred to that address and held until fulfillment.
      *
      * Authorization for a `msg.sender` not equal to `owner` is checked via operator status first;
@@ -870,7 +869,7 @@ abstract contract ERC7540 is ERC165, ERC20, IERC4626, IERC7540, IERC7575Share {
      * (`address(1)` through `address(0x1ff)`, see EIP-7587).
      *
      * IMPORTANT: The returned address (and whether it is zero) MUST be immutable for the vault's
-     * lifetime. Request, fulfillment, and claim stages, as well as the {totalAssets} and {totalSupply}
+     * lifetime. Request, fulfillment, and claim stages, as well as the {totalAssets} and {_totalOutstandingShares}
      * views, read this hook independently, so a value that changes between stages settles different
      * stages under different custody rules and corrupts pending-asset / share accounting.
      */
@@ -882,7 +881,7 @@ abstract contract ERC7540 is ERC165, ERC20, IERC4626, IERC7540, IERC7575Share {
      * @dev Returns the address to which shares are transferred (escrowed) on redeem request.
      *
      * * `address(0)` (default): shares are burned immediately at request time. Pending redeem shares
-     *   are tracked via {totalPendingRedeemShares} so that {totalSupply} remains accurate.
+     *   are tracked via {totalPendingRedeemShares} so that {_totalOutstandingShares} remains accurate.
      * * Non-zero address: shares are transferred to this address on request and burned during
      *   fulfillment (via {_burnSharesOnRedeemFulfill}).
      *
@@ -1001,7 +1000,7 @@ abstract contract ERC7540 is ERC165, ERC20, IERC4626, IERC7540, IERC7575Share {
 
     /**
      * @dev Returns the shares owed to Claimable deposit Requests that have not been minted yet. They are
-     * added to {totalSupply} so that the vault's exchange rate treats these Requests as settled.
+     * added to {_totalOutstandingShares} so that the vault's exchange rate treats these Requests as settled.
      *
      * See {_totalClaimableDepositAssets}.
      */
@@ -1020,8 +1019,8 @@ abstract contract ERC7540 is ERC165, ERC20, IERC4626, IERC7540, IERC7575Share {
 
     /**
      * @dev Returns the shares of Claimable redeem Requests, still counted in {totalPendingRedeemShares}
-     * until claimed. They are subtracted from {totalSupply} so that the vault's exchange rate treats
-     * these Requests as settled.
+     * until claimed. They are subtracted from {_totalOutstandingShares} so that the vault's exchange
+     * rate treats these Requests as settled.
      *
      * See {_totalClaimableRedeemAssets}.
      */
