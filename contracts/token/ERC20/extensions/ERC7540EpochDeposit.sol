@@ -29,14 +29,15 @@ import {ERC7540} from "./ERC7540.sol";
  * queue: they stop at the oldest Pending epoch, so a controller at the limit cannot submit new requests
  * until that epoch is fulfilled (see {_fulfillDeposit}).
  *
- * NOTE: Claims pay each controller's pro-rata share floor-rounded against the remaining epoch
- * totals. With very small fulfillment values (e.g. an epoch settling 3 assets for 2 shares
- * across 3 equal claimants), rounding can leave one controller with up to 1 "wei" of
- * unclaimable residue. At realistic ERC-20 token decimals this is sub-unit and economically
- * immaterial. Unlike ERC-4626's inflation-attack surface, the per-epoch `totalAssets` and
- * `totalShares` cannot be inflated by donation (they only change via {requestDeposit} and
- * {_fulfillDeposit}); deployers wanting finer per-claim granularity can set {_decimalsOffset}
- * to scale share precision relative to assets.
+ * NOTE: Each claim converts at the epoch's remaining `totalShares / totalAssets` ratio and rounds
+ * down, against the claimant. The rounding loss (less than 1 share unit per claim) stays in the
+ * epoch and goes to the controllers who claim later; the last claimant receives the exact remainder.
+ * With very small amounts the loss can be the whole claim: if an epoch settles 3 assets for 2 shares
+ * across 3 controllers who requested 1 asset each, the first to claim receives 0 shares and the other
+ * two receive 1 share each. With realistic token decimals the loss is negligible. Unlike the ERC-4626
+ * inflation attack, these totals cannot be manipulated by donation: they only grow through
+ * {requestDeposit} and {_fulfillDeposit}. To reduce the loss further, override {_decimalsOffset} so
+ * that shares have more decimals than assets.
  */
 abstract contract ERC7540EpochDeposit is ERC7540 {
     using Math for uint256;
