@@ -51,7 +51,7 @@ abstract contract ERC7540AdminDeposit is ERC7540 {
     }
 
     /// @dev All the Requests of a controller are aggregated under `requestId = 0`.
-    function _currentDepositRequestId(address /* controller */) internal view virtual override returns (uint256) {
+    function _getDepositRequestId(address /* controller */) internal virtual override returns (uint256) {
         return 0;
     }
 

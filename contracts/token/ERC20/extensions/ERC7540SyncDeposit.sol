@@ -59,7 +59,7 @@ abstract contract ERC7540SyncDeposit is ERC7540 {
     }
 
     /// @dev Synchronous flows have no Requests: {_requestDeposit} reverts before using this value.
-    function _currentDepositRequestId(address /* controller */) internal view virtual override returns (uint256) {
+    function _getDepositRequestId(address /* controller */) internal virtual override returns (uint256) {
         return 0;
     }
 

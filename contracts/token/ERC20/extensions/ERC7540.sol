@@ -42,15 +42,15 @@ import {IERC7575, IERC7575Share} from "../../../interfaces/IERC7575.sol";
  * When implementing a custom fulfillment strategy, the following virtual hooks MUST be overridden for each
  * async side enabled:
  *
- * * Async deposits: {_currentDepositRequestId}, {_pendingDepositRequest}, {_claimableDepositRequest},
+ * * Async deposits: {_getDepositRequestId}, {_pendingDepositRequest}, {_claimableDepositRequest},
  * {_consumeClaimableDeposit}, {_consumeClaimableMint}, {_asyncMaxDeposit}, {_asyncMaxMint},
  * {_totalClaimableDepositAssets}, {_totalClaimableDepositShares}.
  *
- * * Async redeems: {_currentRedeemRequestId}, {_pendingRedeemRequest}, {_claimableRedeemRequest},
+ * * Async redeems: {_getRedeemRequestId}, {_pendingRedeemRequest}, {_claimableRedeemRequest},
  * {_consumeClaimableWithdraw}, {_consumeClaimableRedeem}, {_asyncMaxWithdraw}, {_asyncMaxRedeem},
  * {_totalClaimableRedeemAssets}, {_totalClaimableRedeemShares}.
  *
- * The `_current*RequestId` and `_totalClaimable*` hooks are also required for synchronous sides, where they
+ * The `_get*RequestId` and `_totalClaimable*` hooks are also required for synchronous sides, where they
  * return 0.
  * ====
  *
@@ -443,7 +443,7 @@ abstract contract ERC7540 is ERC165, ERC20, IERC4626, IERC7540, IERC7575Share {
      * @dev See {IERC7540Deposit-requestDeposit}.
      *
      * Transfers `assets` from `owner` into the vault and submits a deposit Request for `controller`.
-     * The Request enters Pending state, with the `requestId` returned by {_currentDepositRequestId}.
+     * The Request enters Pending state, with the `requestId` returned by {_getDepositRequestId}.
      *
      * Requirements:
      *
@@ -462,7 +462,7 @@ abstract contract ERC7540 is ERC165, ERC20, IERC4626, IERC7540, IERC7575Share {
         address controller,
         address owner
     ) public virtual onlyOperatorOrController(_isDepositAsync(), owner, _msgSender()) returns (uint256) {
-        uint256 requestId = _currentDepositRequestId(controller);
+        uint256 requestId = _getDepositRequestId(controller);
         _requestDeposit(assets, controller, owner, requestId);
         return requestId;
     }
@@ -544,7 +544,7 @@ abstract contract ERC7540 is ERC165, ERC20, IERC4626, IERC7540, IERC7575Share {
      * @dev See {IERC7540Redeem-requestRedeem}.
      *
      * Assumes control of `shares` from `owner` and submits a redeem Request for `controller`.
-     * The Request enters Pending state, with the `requestId` returned by {_currentRedeemRequestId}.
+     * The Request enters Pending state, with the `requestId` returned by {_getRedeemRequestId}.
      *
      * Authorization for a `msg.sender` not equal to `owner` may come from either ERC-20 approval
      * over the shares of `owner` or from operator approval (see {IERC7540Operator}). This is
@@ -561,7 +561,7 @@ abstract contract ERC7540 is ERC165, ERC20, IERC4626, IERC7540, IERC7575Share {
      * cancellation path. Callers are responsible for supplying a controller capable of authorizing claims.
      */
     function requestRedeem(uint256 shares, address controller, address owner) public virtual returns (uint256) {
-        uint256 requestId = _currentRedeemRequestId(controller);
+        uint256 requestId = _getRedeemRequestId(controller);
         _requestRedeem(shares, controller, owner, requestId);
         return requestId;
     }
@@ -649,7 +649,7 @@ abstract contract ERC7540 is ERC165, ERC20, IERC4626, IERC7540, IERC7575Share {
     /**
      * @dev Internal handler for deposit Requests. Increments {totalPendingDepositAssets}, transfers
      * assets from `owner` into the vault, and emits {IERC7540Deposit-DepositRequest}. {requestDeposit} uses
-     * the `requestId` returned by {_currentDepositRequestId}.
+     * the `requestId` returned by {_getDepositRequestId}.
      *
      * Strategy extensions (e.g. {ERC7540AdminDeposit}) should override this to record per-controller
      * pending state after calling `super._requestDeposit(...)`.
@@ -732,7 +732,7 @@ abstract contract ERC7540 is ERC165, ERC20, IERC4626, IERC7540, IERC7575Share {
     /**
      * @dev Internal handler for redeem Requests. Assumes control of `shares` from `owner` and
      * emits {IERC7540Redeem-RedeemRequest}. {requestRedeem} uses the `requestId` returned by
-     * {_currentRedeemRequestId}.
+     * {_getRedeemRequestId}.
      *
      * Share custody depends on {_redeemShareDestination}:
      *
@@ -913,16 +913,18 @@ abstract contract ERC7540 is ERC165, ERC20, IERC4626, IERC7540, IERC7575Share {
     /**
      * @dev Returns the `requestId` of a deposit Request submitted now for `controller`. Strategies that aggregate
      * all the deposit Requests of a controller return 0; others track Requests separately (e.g. by epoch or by
-     * maturity timepoint).
+     * maturity timepoint). Not `view`, so that strategies can update their state when assigning an id (e.g. a
+     * counter incremented on each Request).
      */
-    function _currentDepositRequestId(address /* controller */) internal view virtual returns (uint256);
+    function _getDepositRequestId(address /* controller */) internal virtual returns (uint256);
 
     /**
      * @dev Returns the `requestId` of a redeem Request submitted now for `controller`. Strategies that aggregate
      * all the redeem Requests of a controller return 0; others track Requests separately (e.g. by epoch or by
-     * maturity timepoint).
+     * maturity timepoint). Not `view`, so that strategies can update their state when assigning an id (e.g. a
+     * counter incremented on each Request).
      */
-    function _currentRedeemRequestId(address /* controller */) internal view virtual returns (uint256);
+    function _getRedeemRequestId(address /* controller */) internal virtual returns (uint256);
 
     /// @dev Returns the amount of assets in Pending state for `controller` with the given `requestId`.
     function _pendingDepositRequest(

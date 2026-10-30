@@ -239,7 +239,7 @@ abstract contract ERC7540EpochRedeem is ERC7540 {
     }
 
     /// @dev Redeem Requests are identified by the epoch they are submitted in (see {currentRedeemEpoch}).
-    function _currentRedeemRequestId(address /* controller */) internal view virtual override returns (uint256) {
+    function _getRedeemRequestId(address /* controller */) internal virtual override returns (uint256) {
         return currentRedeemEpoch();
     }
 

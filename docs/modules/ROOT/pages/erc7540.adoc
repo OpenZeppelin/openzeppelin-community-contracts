@@ -543,7 +543,7 @@ Each async side (deposit or redeem) requires 10 hooks:
 | `_isDepositAsync()` / `_isRedeemAsync()`
 | Return `true` to enable the async path for that side
 
-| `_currentDepositRequestId()` / `_currentRedeemRequestId()`
+| `_getDepositRequestId()` / `_getRedeemRequestId()`
 | Return the `requestId` assigned to a new request for `controller` (0 to aggregate all the requests of a controller, as the admin strategy does; the epoch strategy returns the current epoch, the delay strategy the maturity timepoint)
 
 | `_pendingDepositRequest()` / `_pendingRedeemRequest()`

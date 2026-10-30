@@ -246,7 +246,7 @@ abstract contract ERC7540EpochDeposit is ERC7540 {
     }
 
     /// @dev Deposit Requests are identified by the epoch they are submitted in (see {currentDepositEpoch}).
-    function _currentDepositRequestId(address /* controller */) internal view virtual override returns (uint256) {
+    function _getDepositRequestId(address /* controller */) internal virtual override returns (uint256) {
         return currentDepositEpoch();
     }
 

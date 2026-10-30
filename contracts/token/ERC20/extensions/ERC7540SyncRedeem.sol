@@ -59,7 +59,7 @@ abstract contract ERC7540SyncRedeem is ERC7540 {
     }
 
     /// @dev Synchronous flows have no Requests: {_requestRedeem} reverts before using this value.
-    function _currentRedeemRequestId(address /* controller */) internal view virtual override returns (uint256) {
+    function _getRedeemRequestId(address /* controller */) internal virtual override returns (uint256) {
         return 0;
     }
 
