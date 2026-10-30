@@ -217,23 +217,22 @@ abstract contract ERC7540EpochDeposit is ERC7540 {
         uint256 assets,
         address controller,
         address owner,
-        uint256 /* requestId */
+        uint256 requestId
     ) internal virtual override returns (uint256) {
         _checkOperatorOrController(_isDepositAsync(), controller, _msgSender());
-        uint256 epochId = currentDepositEpoch();
 
         // Transfer the assets first (see {ERC7540-_requestDeposit}), so that a reentrancy through the asset
         // observes neither the assets nor the epoch's updated accounting.
-        uint256 requestId = super._requestDeposit(assets, controller, owner, epochId);
+        uint256 result = super._requestDeposit(assets, controller, owner, requestId);
 
         if (assets > 0) {
-            EpochDeposit storage epoch = _epochs[epochId];
+            EpochDeposit storage epoch = _epochs[requestId];
             epoch.totalAssets += assets;
             epoch.requests[controller] += assets;
 
             DoubleEndedQueue.Bytes32Deque storage queue = _memberOf[controller];
             (bool success, bytes32 lastEpochId) = queue.tryBack();
-            if (!success || lastEpochId != bytes32(epochId)) {
+            if (!success || lastEpochId != bytes32(requestId)) {
                 // Bound the queue to keep the O(n) loops in _asyncMaxDeposit and _asyncMaxMint cheap.
                 // Claims free slots from the front, but only once the oldest queued epoch is fulfilled.
                 require(
@@ -241,11 +240,16 @@ abstract contract ERC7540EpochDeposit is ERC7540 {
                     ERC7540EpochDepositQueueLimitExceeded(controller)
                 );
 
-                queue.pushBack(bytes32(epochId));
+                queue.pushBack(bytes32(requestId));
             }
         }
 
-        return requestId;
+        return result;
+    }
+
+    /// @dev Deposit Requests are identified by the epoch they are submitted in (see {currentDepositEpoch}).
+    function _currentDepositRequestId(address /* controller */) internal view virtual override returns (uint256) {
+        return currentDepositEpoch();
     }
 
     /**

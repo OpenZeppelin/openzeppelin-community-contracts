@@ -76,23 +76,26 @@ abstract contract ERC7540DelayRedeem is ERC7540, IERC6372 {
     }
 
     /**
-     * @dev Pushes a new cumulative checkpoint at the maturity timepoint and delegates to
-     * {ERC7540-_requestRedeem} with the timepoint as `requestId`.
+     * @dev Pushes a new cumulative checkpoint at the maturity timepoint `requestId` (see
+     * {_currentRedeemRequestId}) and delegates to {ERC7540-_requestRedeem}.
      */
     function _requestRedeem(
         uint256 shares,
         address controller,
         address owner,
-        uint256 /* requestId */
+        uint256 requestId
     ) internal virtual override returns (uint256) {
-        uint48 timepoint = clock() + redeemDelay(controller);
-
         if (shares > 0) {
             uint256 latest = _redeems[controller].latest();
-            _redeems[controller].push(timepoint, (shares + latest).toUint208());
+            _redeems[controller].push(requestId.toUint48(), (shares + latest).toUint208());
         }
 
-        return super._requestRedeem(shares, controller, owner, timepoint);
+        return super._requestRedeem(shares, controller, owner, requestId);
+    }
+
+    /// @dev Redeem Requests are identified by their maturity timepoint: the current {clock} plus {redeemDelay}.
+    function _currentRedeemRequestId(address controller) internal view virtual override returns (uint256) {
+        return clock() + redeemDelay(controller);
     }
 
     /// @dev Consumes `assets` from claimable redeems, returns proportional shares (rounded up).

@@ -216,27 +216,31 @@ abstract contract ERC7540EpochRedeem is ERC7540 {
         uint256 shares,
         address controller,
         address owner,
-        uint256 /* requestId */
+        uint256 requestId
     ) internal virtual override returns (uint256) {
         _checkOperatorOrController(_isRedeemAsync(), controller, _msgSender());
-        uint256 epochId = currentRedeemEpoch();
         if (shares > 0) {
-            EpochRedeem storage epoch = _epochs[epochId];
+            EpochRedeem storage epoch = _epochs[requestId];
             epoch.totalShares += shares;
             epoch.requests[controller] += shares;
 
             DoubleEndedQueue.Bytes32Deque storage queue = _memberOf[controller];
             (bool success, bytes32 lastEpochId) = queue.tryBack();
-            if (!success || lastEpochId != bytes32(epochId)) {
+            if (!success || lastEpochId != bytes32(requestId)) {
                 // Bound the queue to keep the O(n) loops in _asyncMaxWithdraw and _asyncMaxRedeem cheap.
                 // Claims free slots from the front, but only once the oldest queued epoch is fulfilled.
                 require(queue.length() < _redeemRequestQueueLimit(), ERC7540EpochRedeemQueueLimitExceeded(controller));
 
-                queue.pushBack(bytes32(epochId));
+                queue.pushBack(bytes32(requestId));
             }
         }
 
-        return super._requestRedeem(shares, controller, owner, epochId);
+        return super._requestRedeem(shares, controller, owner, requestId);
+    }
+
+    /// @dev Redeem Requests are identified by the epoch they are submitted in (see {currentRedeemEpoch}).
+    function _currentRedeemRequestId(address /* controller */) internal view virtual override returns (uint256) {
+        return currentRedeemEpoch();
     }
 
     /**
