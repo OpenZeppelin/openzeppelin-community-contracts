@@ -47,13 +47,13 @@ abstract contract ERC7540EpochDeposit is ERC7540 {
      * @dev Per-epoch deposit metadata. `totalShares` is zero while the epoch is Pending and
      * set to the minted share total when the admin calls {_fulfillDeposit}.
      */
-    struct EpochDepositMetadata {
+    struct EpochDeposit {
         uint256 totalAssets;
         uint256 totalShares;
         mapping(address account => uint256) requests;
     }
 
-    mapping(uint256 epochId => EpochDepositMetadata) private _epochs;
+    mapping(uint256 epochId => EpochDeposit) private _epochs;
     mapping(address account => DoubleEndedQueue.Bytes32Deque) private _memberOf;
     uint256 private _claimableAssets;
     uint256 private _claimableShares;
@@ -153,10 +153,11 @@ abstract contract ERC7540EpochDeposit is ERC7540 {
      * other users'. Cross-controller DoS is not possible because epoch fulfillment via
      * {_fulfillDeposit} is O(1) (it sets `totalShares` for the entire epoch in a single write).
      */
-    function _asyncMaxDeposit(address owner) internal view virtual override returns (uint256 assets) {
+    function _asyncMaxDeposit(address owner) internal view virtual override returns (uint256 /* assets */) {
+        DoubleEndedQueue.Bytes32Deque storage queue = _memberOf[owner];
         uint256 result = 0;
-        for (uint256 i = 0; i < _memberOf[owner].length(); ++i) {
-            uint256 epochId = uint256(_memberOf[owner].at(i));
+        for (uint256 i = 0; i < queue.length(); ++i) {
+            uint256 epochId = uint256(queue.at(i));
             if (totalDepositShares(epochId) == 0) break; // stop at the oldest Pending epoch
             result += _claimableDepositRequest(epochId, owner);
         }
@@ -164,10 +165,11 @@ abstract contract ERC7540EpochDeposit is ERC7540 {
     }
 
     /// @dev Sums claimable shares across all fulfilled epochs the `owner` participates in. Same as {_asyncMaxDeposit}.
-    function _asyncMaxMint(address owner) internal view virtual override returns (uint256 shares) {
+    function _asyncMaxMint(address owner) internal view virtual override returns (uint256 /* shares */) {
+        DoubleEndedQueue.Bytes32Deque storage queue = _memberOf[owner];
         uint256 result = 0;
-        for (uint256 i = 0; i < _memberOf[owner].length(); ++i) {
-            uint256 epochId = uint256(_memberOf[owner].at(i));
+        for (uint256 i = 0; i < queue.length(); ++i) {
+            uint256 epochId = uint256(queue.at(i));
             if (totalDepositShares(epochId) == 0) break; // stop at the oldest Pending epoch
             result += _convertToDepositShares(epochId, _claimableDepositRequest(epochId, owner), Math.Rounding.Floor);
         }
@@ -219,19 +221,21 @@ abstract contract ERC7540EpochDeposit is ERC7540 {
         _checkOperatorOrController(_isDepositAsync(), controller, _msgSender());
         uint256 epochId = currentDepositEpoch();
         if (assets > 0) {
-            _epochs[epochId].totalAssets += assets;
-            _epochs[epochId].requests[controller] += assets;
+            EpochDeposit storage epoch = _epochs[epochId];
+            epoch.totalAssets += assets;
+            epoch.requests[controller] += assets;
 
-            (bool success, bytes32 lastEpochId) = _memberOf[controller].tryBack();
+            DoubleEndedQueue.Bytes32Deque storage queue = _memberOf[controller];
+            (bool success, bytes32 lastEpochId) = queue.tryBack();
             if (!success || lastEpochId != bytes32(epochId)) {
                 // Bound the queue to keep the O(n) loops in _asyncMaxDeposit and _asyncMaxMint cheap.
                 // Claims free slots from the front, but only once the oldest queued epoch is fulfilled.
                 require(
-                    _memberOf[controller].length() < _depositRequestQueueLimit(),
+                    queue.length() < _depositRequestQueueLimit(),
                     ERC7540EpochDepositQueueLimitExceeded(controller)
                 );
 
-                _memberOf[controller].pushBack(bytes32(epochId));
+                queue.pushBack(bytes32(epochId));
             }
         }
 
@@ -300,23 +304,24 @@ abstract contract ERC7540EpochDeposit is ERC7540 {
      * to revert when `batchAssets > 0 && batchShares == 0`.
      */
     function _consumeClaimableDeposit(uint256 assets, address controller) internal virtual override returns (uint256) {
+        DoubleEndedQueue.Bytes32Deque storage queue = _memberOf[controller];
         uint256 consumed = 0;
         uint256 shares = 0;
 
         while (assets > 0) {
-            uint256 epochId = uint256(_memberOf[controller].front());
+            uint256 epochId = uint256(queue.front());
             if (totalDepositShares(epochId) == 0) break; // oldest queued epoch is still Pending
 
-            uint256 requested = _epochs[epochId].requests[controller];
-            if (requested <= assets) _memberOf[controller].popFront();
+            EpochDeposit storage epoch = _epochs[epochId];
+            uint256 requested = epoch.requests[controller];
+            if (requested <= assets) queue.popFront();
 
             uint256 batchAssets = requested.min(assets);
             uint256 batchShares = _convertToDepositShares(epochId, batchAssets, Math.Rounding.Floor);
 
-            EpochDepositMetadata storage details = _epochs[epochId];
-            details.requests[controller] -= batchAssets; // batchAssets <= requested via .min
-            details.totalAssets -= batchAssets; // batchAssets <= details.totalAssets (invariant: requests[c] <= totalAssets)
-            details.totalShares -= batchShares; // batchShares = floor(batchAssets * S/A) <= details.totalShares (since batchAssets <= totalAssets)
+            epoch.requests[controller] -= batchAssets; // batchAssets <= requested via .min
+            epoch.totalAssets -= batchAssets; // batchAssets <= epoch.totalAssets (invariant: requests[c] <= totalAssets)
+            epoch.totalShares -= batchShares; // batchShares = floor(batchAssets * S/A) <= epoch.totalShares (since batchAssets <= totalAssets)
             assets -= batchAssets; // batchAssets <= assets (via .min)
             consumed += batchAssets;
             shares += batchShares;
@@ -339,14 +344,16 @@ abstract contract ERC7540EpochDeposit is ERC7540 {
      * {_depositShareOrigin} when shares are minted at fulfillment).
      */
     function _consumeClaimableMint(uint256 shares, address controller) internal virtual override returns (uint256) {
+        DoubleEndedQueue.Bytes32Deque storage queue = _memberOf[controller];
         uint256 consumed = 0;
         uint256 assets = 0;
 
         while (shares > 0) {
-            uint256 epochId = uint256(_memberOf[controller].front());
+            uint256 epochId = uint256(queue.front());
             if (totalDepositShares(epochId) == 0) break; // oldest queued epoch is still Pending
 
-            uint256 requestedAssets = _epochs[epochId].requests[controller];
+            EpochDeposit storage epoch = _epochs[epochId];
+            uint256 requestedAssets = epoch.requests[controller];
             // Floor here (not ceil) so the per-epoch share entitlement matches {_asyncMaxMint}.
             // A ceil-rounded `requested` could exhaust `totalShares` to 0 while `totalAssets`
             // remains > 0, dirtying the Pending sentinel and stranding later controllers.
@@ -358,20 +365,19 @@ abstract contract ERC7540EpochDeposit is ERC7540 {
                 : (requested, requestedAssets);
 
             // Dequeue once the request is fully consumed (including when a partial claim rounds up to it)
-            if (batchAssets == requestedAssets) _memberOf[controller].popFront();
+            if (batchAssets == requestedAssets) queue.popFront();
 
-            EpochDepositMetadata storage details = _epochs[epochId];
-            details.requests[controller] -= batchAssets; // batchAssets <= requestedAssets
-            details.totalAssets -= batchAssets; // batchAssets <= requestedAssets <= totalAssets (invariant)
-            details.totalShares -= batchShares; // batchShares <= floor(rA*S/A) <= totalShares (matches _asyncMaxMint)
+            epoch.requests[controller] -= batchAssets; // batchAssets <= requestedAssets
+            epoch.totalAssets -= batchAssets; // batchAssets <= requestedAssets <= totalAssets (invariant)
+            epoch.totalShares -= batchShares; // batchShares <= floor(rA*S/A) <= totalShares (matches _asyncMaxMint)
             shares -= batchShares; // batchShares <= shares (batchShares = shares, or requested <= shares)
             consumed += batchShares;
             assets += batchAssets;
 
             // All requests are consumed but a partial claim rounded up, leaving shares nobody can claim
-            if (details.totalAssets == 0 && details.totalShares > 0) {
-                uint256 residue = details.totalShares;
-                details.totalShares = 0;
+            if (epoch.totalAssets == 0 && epoch.totalShares > 0) {
+                uint256 residue = epoch.totalShares;
+                epoch.totalShares = 0;
                 _claimableShares -= residue;
                 if (_depositShareOrigin() != address(0)) _burn(_depositShareOrigin(), residue);
             }

@@ -47,13 +47,13 @@ abstract contract ERC7540EpochRedeem is ERC7540 {
      * @dev Per-epoch redeem metadata. `totalAssets` is zero while the epoch is Pending and
      * set to the distributed asset total when the admin calls {_fulfillRedeem}.
      */
-    struct EpochRedeemMetadata {
+    struct EpochRedeem {
         uint256 totalShares;
         uint256 totalAssets;
         mapping(address account => uint256) requests;
     }
 
-    mapping(uint256 epochId => EpochRedeemMetadata) private _epochs;
+    mapping(uint256 epochId => EpochRedeem) private _epochs;
     mapping(address account => DoubleEndedQueue.Bytes32Deque) private _memberOf;
     uint256 private _claimableShares;
     uint256 private _claimableAssets;
@@ -153,10 +153,11 @@ abstract contract ERC7540EpochRedeem is ERC7540 {
      * other users'. Cross-controller DoS is not possible because epoch fulfillment via
      * {_fulfillRedeem} is O(1) (it sets `totalAssets` for the entire epoch in a single write).
      */
-    function _asyncMaxWithdraw(address owner) internal view virtual override returns (uint256 assets) {
+    function _asyncMaxWithdraw(address owner) internal view virtual override returns (uint256 /* assets */) {
+        DoubleEndedQueue.Bytes32Deque storage queue = _memberOf[owner];
         uint256 result = 0;
-        for (uint256 i = 0; i < _memberOf[owner].length(); ++i) {
-            uint256 epochId = uint256(_memberOf[owner].at(i));
+        for (uint256 i = 0; i < queue.length(); ++i) {
+            uint256 epochId = uint256(queue.at(i));
             if (totalRedeemAssets(epochId) == 0) break; // stop at the oldest Pending epoch
             result += _convertToRedeemAssets(epochId, _claimableRedeemRequest(epochId, owner), Math.Rounding.Floor);
         }
@@ -164,10 +165,11 @@ abstract contract ERC7540EpochRedeem is ERC7540 {
     }
 
     /// @dev Sums claimable shares across all fulfilled epochs the `owner` participates in. Same as {_asyncMaxWithdraw}.
-    function _asyncMaxRedeem(address owner) internal view virtual override returns (uint256 shares) {
+    function _asyncMaxRedeem(address owner) internal view virtual override returns (uint256 /* shares */) {
+        DoubleEndedQueue.Bytes32Deque storage queue = _memberOf[owner];
         uint256 result = 0;
-        for (uint256 i = 0; i < _memberOf[owner].length(); ++i) {
-            uint256 epochId = uint256(_memberOf[owner].at(i));
+        for (uint256 i = 0; i < queue.length(); ++i) {
+            uint256 epochId = uint256(queue.at(i));
             if (totalRedeemAssets(epochId) == 0) break; // stop at the oldest Pending epoch
             result += _claimableRedeemRequest(epochId, owner);
         }
@@ -219,19 +221,18 @@ abstract contract ERC7540EpochRedeem is ERC7540 {
         _checkOperatorOrController(_isRedeemAsync(), controller, _msgSender());
         uint256 epochId = currentRedeemEpoch();
         if (shares > 0) {
-            _epochs[epochId].totalShares += shares;
-            _epochs[epochId].requests[controller] += shares;
+            EpochRedeem storage epoch = _epochs[epochId];
+            epoch.totalShares += shares;
+            epoch.requests[controller] += shares;
 
-            (bool success, bytes32 lastEpochId) = _memberOf[controller].tryBack();
+            DoubleEndedQueue.Bytes32Deque storage queue = _memberOf[controller];
+            (bool success, bytes32 lastEpochId) = queue.tryBack();
             if (!success || lastEpochId != bytes32(epochId)) {
                 // Bound the queue to keep the O(n) loops in _asyncMaxWithdraw and _asyncMaxRedeem cheap.
                 // Claims free slots from the front, but only once the oldest queued epoch is fulfilled.
-                require(
-                    _memberOf[controller].length() < _redeemRequestQueueLimit(),
-                    ERC7540EpochRedeemQueueLimitExceeded(controller)
-                );
+                require(queue.length() < _redeemRequestQueueLimit(), ERC7540EpochRedeemQueueLimitExceeded(controller));
 
-                _memberOf[controller].pushBack(bytes32(epochId));
+                queue.pushBack(bytes32(epochId));
             }
         }
 
@@ -303,14 +304,16 @@ abstract contract ERC7540EpochRedeem is ERC7540 {
      * remaining shareholders.
      */
     function _consumeClaimableWithdraw(uint256 assets, address controller) internal virtual override returns (uint256) {
+        DoubleEndedQueue.Bytes32Deque storage queue = _memberOf[controller];
         uint256 consumed = 0;
         uint256 shares = 0;
 
         while (assets > 0) {
-            uint256 epochId = uint256(_memberOf[controller].front());
+            uint256 epochId = uint256(queue.front());
             if (totalRedeemAssets(epochId) == 0) break; // oldest queued epoch is still Pending
 
-            uint256 requestedShares = _epochs[epochId].requests[controller];
+            EpochRedeem storage epoch = _epochs[epochId];
+            uint256 requestedShares = epoch.requests[controller];
             // Floor here (not ceil) so the per-epoch asset entitlement matches {_asyncMaxWithdraw}.
             // A ceil-rounded `requested` could exhaust `totalAssets` to 0 while `totalShares`
             // remains > 0, dirtying the Pending sentinel and stranding later controllers.
@@ -322,20 +325,19 @@ abstract contract ERC7540EpochRedeem is ERC7540 {
                 : (requested, requestedShares);
 
             // Dequeue once the request is fully consumed (including when a partial claim rounds up to it)
-            if (batchShares == requestedShares) _memberOf[controller].popFront();
+            if (batchShares == requestedShares) queue.popFront();
 
-            EpochRedeemMetadata storage details = _epochs[epochId];
-            details.requests[controller] -= batchShares; // batchShares <= requestedShares
-            details.totalAssets -= batchAssets; // batchAssets <= floor(rS*A/S) <= totalAssets (matches _asyncMaxWithdraw)
-            details.totalShares -= batchShares; // batchShares <= requestedShares <= totalShares (invariant)
+            epoch.requests[controller] -= batchShares; // batchShares <= requestedShares
+            epoch.totalAssets -= batchAssets; // batchAssets <= floor(rS*A/S) <= totalAssets (matches _asyncMaxWithdraw)
+            epoch.totalShares -= batchShares; // batchShares <= requestedShares <= totalShares (invariant)
             assets -= batchAssets; // batchAssets <= assets (batchAssets = assets, or requested <= assets)
             consumed += batchAssets;
             shares += batchShares;
 
             // All requests are consumed but a partial claim rounded up, leaving assets nobody can claim
-            if (details.totalShares == 0 && details.totalAssets > 0) {
-                _claimableAssets -= details.totalAssets;
-                details.totalAssets = 0;
+            if (epoch.totalShares == 0 && epoch.totalAssets > 0) {
+                _claimableAssets -= epoch.totalAssets;
+                epoch.totalAssets = 0;
             }
         }
 
@@ -355,23 +357,24 @@ abstract contract ERC7540EpochRedeem is ERC7540 {
      * to revert when `batchShares > 0 && batchAssets == 0`.
      */
     function _consumeClaimableRedeem(uint256 shares, address controller) internal virtual override returns (uint256) {
+        DoubleEndedQueue.Bytes32Deque storage queue = _memberOf[controller];
         uint256 consumed = 0;
         uint256 assets = 0;
 
         while (shares > 0) {
-            uint256 epochId = uint256(_memberOf[controller].front());
+            uint256 epochId = uint256(queue.front());
             if (totalRedeemAssets(epochId) == 0) break; // oldest queued epoch is still Pending
 
-            uint256 requested = _epochs[epochId].requests[controller];
-            if (requested <= shares) _memberOf[controller].popFront();
+            EpochRedeem storage epoch = _epochs[epochId];
+            uint256 requested = epoch.requests[controller];
+            if (requested <= shares) queue.popFront();
 
             uint256 batchShares = requested.min(shares);
             uint256 batchAssets = _convertToRedeemAssets(epochId, batchShares, Math.Rounding.Floor);
 
-            EpochRedeemMetadata storage details = _epochs[epochId];
-            details.requests[controller] -= batchShares; // batchShares <= requested via .min
-            details.totalShares -= batchShares; // batchShares <= details.totalShares (invariant: requests[c] <= totalShares)
-            details.totalAssets -= batchAssets; // batchAssets = floor(batchShares * A/S) <= details.totalAssets (since batchShares <= totalShares)
+            epoch.requests[controller] -= batchShares; // batchShares <= requested via .min
+            epoch.totalShares -= batchShares; // batchShares <= epoch.totalShares (invariant: requests[c] <= totalShares)
+            epoch.totalAssets -= batchAssets; // batchAssets = floor(batchShares * A/S) <= epoch.totalAssets (since batchShares <= totalShares)
             shares -= batchShares; // batchShares <= shares (via .min)
             consumed += batchShares;
             assets += batchAssets;
