@@ -20,12 +20,14 @@ import {ERC7540} from "./ERC7540.sol";
  * https://github.com/hopperlabsxyz/lagoon-v0/blob/main/src/v0.5.0/ERC7540.sol[Lagoon].
  *
  * The `requestId` returned by {requestDeposit} is the epoch ID. By default, epochs are weekly
- * (`block.timestamp / 1 weeks`); override {currentDepositEpoch} to change the cadence or use
- * manually-bumped epoch counters.
+ * and start on Mondays (`(block.timestamp + 3 days) / 1 weeks`); override {currentDepositEpoch} to change
+ * the cadence or use manually-bumped epoch counters.
  *
  * Each account tracks its epoch memberships via a {DoubleEndedQueue} capped at
  * {_depositRequestQueueLimit} entries (default: 32) to bound the O(n) loops in {_asyncMaxDeposit}
- * and {_asyncMaxMint}. Users that hit the limit should claim fulfilled epochs to free up space.
+ * and {_asyncMaxMint}. Claims free the slots of fully claimed epochs, but only from the front of the
+ * queue: they stop at the oldest Pending epoch, so a controller at the limit cannot submit new requests
+ * until that epoch is fulfilled (see {_fulfillDeposit}).
  *
  * NOTE: Claims pay each controller's pro-rata share floor-rounded against the remaining epoch
  * totals. With very small fulfillment values (e.g. an epoch settling 3 assets for 2 shares
@@ -222,9 +224,8 @@ abstract contract ERC7540EpochDeposit is ERC7540 {
 
             (bool success, bytes32 lastEpochId) = _memberOf[controller].tryBack();
             if (!success || lastEpochId != bytes32(epochId)) {
-                // Limit the number of pending epochs per account to avoid O(n) loop in
-                // _asyncMaxDeposit and _asyncMaxMint being a concern. Users that have reached
-                // the limit should claim fulfilled requests to clean up the queue.
+                // Bound the queue to keep the O(n) loops in _asyncMaxDeposit and _asyncMaxMint cheap.
+                // Claims free slots from the front, but only once the oldest queued epoch is fulfilled.
                 require(
                     _memberOf[controller].length() < _depositRequestQueueLimit(),
                     ERC7540EpochDepositQueueLimitExceeded(controller)
