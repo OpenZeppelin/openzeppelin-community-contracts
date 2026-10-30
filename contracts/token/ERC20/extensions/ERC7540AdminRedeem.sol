@@ -51,6 +51,11 @@ abstract contract ERC7540AdminRedeem is ERC7540 {
         return true;
     }
 
+    /// @dev All the Requests of a controller are aggregated under `requestId = 0`.
+    function _currentRedeemRequestId(address /* controller */) internal view virtual override returns (uint256) {
+        return 0;
+    }
+
     /// @dev Records per-controller pending state before delegating to {ERC7540-_requestRedeem}.
     function _requestRedeem(
         uint256 shares,

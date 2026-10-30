@@ -42,15 +42,16 @@ import {IERC7575, IERC7575Share} from "../../../interfaces/IERC7575.sol";
  * When implementing a custom fulfillment strategy, the following virtual hooks MUST be overridden for each
  * async side enabled:
  *
- * * Async deposits: {_pendingDepositRequest}, {_claimableDepositRequest}, {_consumeClaimableDeposit},
- * {_consumeClaimableMint}, {_asyncMaxDeposit}, {_asyncMaxMint}, {_totalClaimableDepositAssets},
- * {_totalClaimableDepositShares}.
+ * * Async deposits: {_currentDepositRequestId}, {_pendingDepositRequest}, {_claimableDepositRequest},
+ * {_consumeClaimableDeposit}, {_consumeClaimableMint}, {_asyncMaxDeposit}, {_asyncMaxMint},
+ * {_totalClaimableDepositAssets}, {_totalClaimableDepositShares}.
  *
- * * Async redeems: {_pendingRedeemRequest}, {_claimableRedeemRequest}, {_consumeClaimableWithdraw},
- * {_consumeClaimableRedeem}, {_asyncMaxWithdraw}, {_asyncMaxRedeem}, {_totalClaimableRedeemAssets},
- * {_totalClaimableRedeemShares}.
+ * * Async redeems: {_currentRedeemRequestId}, {_pendingRedeemRequest}, {_claimableRedeemRequest},
+ * {_consumeClaimableWithdraw}, {_consumeClaimableRedeem}, {_asyncMaxWithdraw}, {_asyncMaxRedeem},
+ * {_totalClaimableRedeemAssets}, {_totalClaimableRedeemShares}.
  *
- * The `_totalClaimable*` hooks are also required for synchronous sides, where they return 0.
+ * The `_current*RequestId` and `_totalClaimable*` hooks are also required for synchronous sides, where they
+ * return 0.
  * ====
  *
  * [CAUTION]
@@ -918,24 +919,18 @@ abstract contract ERC7540 is ERC165, ERC20, IERC4626, IERC7540, IERC7575Share {
     function _isRedeemAsync() internal pure virtual returns (bool);
 
     /**
-     * @dev Returns the `requestId` of a deposit Request submitted now for `controller`. Defaults to 0, which
-     * aggregates all the deposit Requests of a controller.
-     *
-     * Override in strategies that track Requests separately (e.g. by epoch or by maturity timepoint).
+     * @dev Returns the `requestId` of a deposit Request submitted now for `controller`. Strategies that aggregate
+     * all the deposit Requests of a controller return 0; others track Requests separately (e.g. by epoch or by
+     * maturity timepoint).
      */
-    function _currentDepositRequestId(address /* controller */) internal view virtual returns (uint256) {
-        return 0;
-    }
+    function _currentDepositRequestId(address /* controller */) internal view virtual returns (uint256);
 
     /**
-     * @dev Returns the `requestId` of a redeem Request submitted now for `controller`. Defaults to 0, which
-     * aggregates all the redeem Requests of a controller.
-     *
-     * Override in strategies that track Requests separately (e.g. by epoch or by maturity timepoint).
+     * @dev Returns the `requestId` of a redeem Request submitted now for `controller`. Strategies that aggregate
+     * all the redeem Requests of a controller return 0; others track Requests separately (e.g. by epoch or by
+     * maturity timepoint).
      */
-    function _currentRedeemRequestId(address /* controller */) internal view virtual returns (uint256) {
-        return 0;
-    }
+    function _currentRedeemRequestId(address /* controller */) internal view virtual returns (uint256);
 
     /// @dev Returns the amount of assets in Pending state for `controller` with the given `requestId`.
     function _pendingDepositRequest(

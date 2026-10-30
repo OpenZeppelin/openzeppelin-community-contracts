@@ -58,7 +58,7 @@ The implementation is split into a base contract and strategy extensions:
 
 ```mermaid
 flowchart TD
-    Base["<b>ERC7540 (base)</b><br/>Routing logic (sync vs async)<br/>Operator management<br/>ERC-4626 interface<br/>totalAssets / _totalOutstandingShares adjustments<br/>18 virtual hooks for strategies to implement"]
+    Base["<b>ERC7540 (base)</b><br/>Routing logic (sync vs async)<br/>Operator management<br/>ERC-4626 interface<br/>totalAssets / _totalOutstandingShares adjustments<br/>20 virtual hooks for strategies to implement"]
     Base --> Admin["<b>Admin strategy</b><br/>Privileged caller fulfills<br/>per request with explicit rate"]
     Base --> Delay["<b>Delay strategy</b><br/>Time-based, no<br/>privileged caller needed"]
     Base --> Epoch["<b>Epoch strategy</b><br/>Privileged caller batches<br/>requests per time window"]
@@ -279,18 +279,6 @@ contract TimeLockVault is ERC7540DelayDeposit, ERC7540DelayRedeem {
     ) internal override(ERC7540, ERC7540DelayRedeem) returns (uint256) {
         return super._requestRedeem(shares, controller, owner, requestId);
     }
-
-    function _currentDepositRequestId(
-        address controller
-    ) internal view override(ERC7540, ERC7540DelayDeposit) returns (uint256) {
-        return super._currentDepositRequestId(controller);
-    }
-
-    function _currentRedeemRequestId(
-        address controller
-    ) internal view override(ERC7540, ERC7540DelayRedeem) returns (uint256) {
-        return super._currentRedeemRequestId(controller);
-    }
 }
 ----
 
@@ -405,18 +393,6 @@ contract NAVVault is ERC7540EpochDeposit, ERC7540EpochRedeem, Ownable {
         return super._requestRedeem(shares, controller, owner, requestId);
     }
 
-    function _currentDepositRequestId(
-        address controller
-    ) internal view override(ERC7540, ERC7540EpochDeposit) returns (uint256) {
-        return super._currentDepositRequestId(controller);
-    }
-
-    function _currentRedeemRequestId(
-        address controller
-    ) internal view override(ERC7540, ERC7540EpochRedeem) returns (uint256) {
-        return super._currentRedeemRequestId(controller);
-    }
-
 }
 ----
 
@@ -448,12 +424,6 @@ contract LiquidStakingVault is ERC7540SyncDeposit, ERC7540DelayRedeem {
         uint256 shares, address controller, address owner, uint256 requestId
     ) internal override(ERC7540, ERC7540DelayRedeem) returns (uint256) {
         return super._requestRedeem(shares, controller, owner, requestId);
-    }
-
-    function _currentRedeemRequestId(
-        address controller
-    ) internal view override(ERC7540, ERC7540DelayRedeem) returns (uint256) {
-        return super._currentRedeemRequestId(controller);
     }
 }
 ----
@@ -562,9 +532,9 @@ A request fulfilled at a locked rate (admin and epoch strategies) is settled fro
 [[custom-strategy]]
 == Building a custom strategy
 
-If none of the bundled strategies (admin, delay, epoch) fit your use case, you can build a custom fulfillment strategy by extending `ERC7540` directly and implementing the 18 virtual hooks.
+If none of the bundled strategies (admin, delay, epoch) fit your use case, you can build a custom fulfillment strategy by extending `ERC7540` directly and implementing the 20 virtual hooks.
 
-Each async side (deposit or redeem) requires 9 hooks:
+Each async side (deposit or redeem) requires 10 hooks:
 
 [%header,cols="1,3"]
 |===
@@ -572,6 +542,9 @@ Each async side (deposit or redeem) requires 9 hooks:
 
 | `_isDepositAsync()` / `_isRedeemAsync()`
 | Return `true` to enable the async path for that side
+
+| `_currentDepositRequestId()` / `_currentRedeemRequestId()`
+| Return the `requestId` assigned to a new request for `controller` (0 to aggregate all the requests of a controller, as the admin strategy does; the epoch strategy returns the current epoch, the delay strategy the maturity timepoint)
 
 | `_pendingDepositRequest()` / `_pendingRedeemRequest()`
 | Return the amount in Pending state for a given `requestId` and `controller`
@@ -597,8 +570,6 @@ Each async side (deposit or redeem) requires 9 hooks:
 | `_totalClaimableDepositShares()` / `_totalClaimableRedeemShares()`
 | Return the shares locked in fulfilled but unclaimed requests (0 if the rate is computed at claim time)
 |===
-
-Strategies that track requests separately can also override `_currentDepositRequestId(controller)` / `_currentRedeemRequestId(controller)`, which return the `requestId` assigned to a new request and passed to `_requestDeposit` / `_requestRedeem` (0 by default, aggregating all the requests of a controller). The epoch strategy returns the current epoch and the delay strategy returns the maturity timepoint.
 
 For example, an oracle-driven strategy could mark requests claimable when an external price feed crosses a threshold; or a per-request strategy could give each request its own settlement timeline driven by off-chain compliance checks.
 

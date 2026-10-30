@@ -54,12 +54,6 @@ contract EpochDepositSyncRedeem is CustodyMock, ERC7540EpochDeposit, ERC7540Sync
         return super._requestDeposit(assets, controller, owner, requestId);
     }
 
-    function _currentDepositRequestId(
-        address controller
-    ) internal view virtual override(ERC7540, ERC7540EpochDeposit) returns (uint256) {
-        return super._currentDepositRequestId(controller);
-    }
-
     function _depositShareOrigin() internal view virtual override(ERC7540, CustodyMock) returns (address) {
         return super._depositShareOrigin();
     }
@@ -108,12 +102,6 @@ contract SyncDepositEpochRedeem is CustodyMock, ERC7540SyncDeposit, ERC7540Epoch
         uint256 requestId
     ) internal virtual override(ERC7540, ERC7540EpochRedeem) returns (uint256) {
         return super._requestRedeem(shares, controller, owner, requestId);
-    }
-
-    function _currentRedeemRequestId(
-        address controller
-    ) internal view virtual override(ERC7540, ERC7540EpochRedeem) returns (uint256) {
-        return super._currentRedeemRequestId(controller);
     }
 
     function _depositShareOrigin() internal view virtual override(ERC7540, CustodyMock) returns (address) {
