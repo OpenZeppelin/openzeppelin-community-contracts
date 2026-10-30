@@ -320,7 +320,7 @@ abstract contract ERC7540EpochDeposit is ERC7540 {
             uint256 batchAssets = requested.min(assets);
             uint256 batchShares = _convertToDepositShares(epochId, batchAssets, Math.Rounding.Floor);
 
-            epoch.requests[controller] -= batchAssets; // batchAssets <= requested via .min
+            epoch.requests[controller] = requested - batchAssets; // batchAssets <= requested via .min
             epoch.totalAssets -= batchAssets; // batchAssets <= epoch.totalAssets (invariant: requests[c] <= totalAssets)
             epoch.totalShares -= batchShares; // batchShares = floor(batchAssets * S/A) <= epoch.totalShares (since batchAssets <= totalAssets)
             assets -= batchAssets; // batchAssets <= assets (via .min)
@@ -368,7 +368,7 @@ abstract contract ERC7540EpochDeposit is ERC7540 {
             // Dequeue once the request is fully consumed (including when a partial claim rounds up to it)
             if (batchAssets == requestedAssets) queue.popFront();
 
-            epoch.requests[controller] -= batchAssets; // batchAssets <= requestedAssets
+            epoch.requests[controller] = requestedAssets - batchAssets; // batchAssets <= requestedAssets
             epoch.totalAssets -= batchAssets; // batchAssets <= requestedAssets <= totalAssets (invariant)
             epoch.totalShares -= batchShares; // batchShares <= floor(rA*S/A) <= totalShares (matches _asyncMaxMint)
             shares -= batchShares; // batchShares <= shares (batchShares = shares, or requested <= shares)

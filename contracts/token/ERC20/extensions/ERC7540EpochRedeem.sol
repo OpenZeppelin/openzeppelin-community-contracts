@@ -327,7 +327,7 @@ abstract contract ERC7540EpochRedeem is ERC7540 {
             // Dequeue once the request is fully consumed (including when a partial claim rounds up to it)
             if (batchShares == requestedShares) queue.popFront();
 
-            epoch.requests[controller] -= batchShares; // batchShares <= requestedShares
+            epoch.requests[controller] = requestedShares - batchShares; // batchShares <= requestedShares
             epoch.totalAssets -= batchAssets; // batchAssets <= floor(rS*A/S) <= totalAssets (matches _asyncMaxWithdraw)
             epoch.totalShares -= batchShares; // batchShares <= requestedShares <= totalShares (invariant)
             assets -= batchAssets; // batchAssets <= assets (batchAssets = assets, or requested <= assets)
@@ -372,7 +372,7 @@ abstract contract ERC7540EpochRedeem is ERC7540 {
             uint256 batchShares = requested.min(shares);
             uint256 batchAssets = _convertToRedeemAssets(epochId, batchShares, Math.Rounding.Floor);
 
-            epoch.requests[controller] -= batchShares; // batchShares <= requested via .min
+            epoch.requests[controller] = requested - batchShares; // batchShares <= requested via .min
             epoch.totalShares -= batchShares; // batchShares <= epoch.totalShares (invariant: requests[c] <= totalShares)
             epoch.totalAssets -= batchAssets; // batchAssets = floor(batchShares * A/S) <= epoch.totalAssets (since batchShares <= totalShares)
             shares -= batchShares; // batchShares <= shares (via .min)
