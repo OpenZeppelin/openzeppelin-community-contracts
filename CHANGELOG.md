@@ -1,3 +1,7 @@
+## 31-10-2026
+
+- Remove `ERC7540`, `ERC7540AdminDeposit`, `ERC7540AdminRedeem`, `ERC7540DelayDeposit`, `ERC7540DelayRedeem`, `ERC7540EpochDeposit`, `ERC7540EpochRedeem`, `ERC7540SyncDeposit`, `ERC7540SyncRedeem`, `IERC7540` and `IERC7575`. These contracts were migrated to `@openzeppelin/contracts>=5.8.0`.
+
 ## 01-10-2026
 
 - `ERC7540EpochDeposit`, `ERC7540EpochRedeem`: Add epoch-based batch fulfillment strategies for ERC-7540 vaults. Requests submitted in the same epoch share a single queue slot per controller and are settled together at one locked exchange rate when the admin closes the epoch via `_fulfillDeposit` / `_fulfillRedeem`.
