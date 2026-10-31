@@ -1,3 +1,14 @@
+## 01-10-2026
+
+- `ERC7540EpochDeposit`, `ERC7540EpochRedeem`: Add epoch-based batch fulfillment strategies for ERC-7540 vaults. Requests submitted in the same epoch share a single queue slot per controller and are settled together at one locked exchange rate when the admin closes the epoch via `_fulfillDeposit` / `_fulfillRedeem`.
+- `ERC7540`: Add the `_totalClaimableDepositAssets`, `_totalClaimableDepositShares`, `_totalClaimableRedeemAssets` and `_totalClaimableRedeemShares` hooks. `totalAssets` and the share count used by conversions now account requests fulfilled at a locked rate as settled, even before they are claimed, so that the exchange rate seen by a synchronous side is not skewed by in-flight requests. Custom strategies must implement these hooks (returning 0 if the rate is computed at claim time).
+- `ERC7540AdminDeposit`, `ERC7540AdminRedeem`: Report fulfilled but unclaimed requests through the `_totalClaimable*` hooks. `totalAssets` and the share count used by conversions now change at fulfillment instead of at claim time.
+- `ERC7540`: `_requestDeposit` now increments `totalPendingDepositAssets` after the asset transfer, so that a pre-transfer hook (e.g. ERC-777 `tokensToSend`) cannot claim against a transiently understated `totalAssets`.
+- `ERC7540AdminDeposit`, `ERC7540DelayDeposit`: Record deposit requests after the asset transfer, so that a pre-transfer hook (e.g. ERC-777 `tokensToSend`) cannot observe or fulfill a request whose assets have not been received.
+- `ERC7540`: Add the `_getDepositRequestId` and `_getRedeemRequestId` hooks, which return the `requestId` assigned to a new request. `requestDeposit` and `requestRedeem` pass it to `_requestDeposit` / `_requestRedeem`, which no longer return a value. Custom strategies must implement these hooks (returning 0 to aggregate all the requests of a controller). `ERC7540AdminDeposit`, `ERC7540AdminRedeem`, `ERC7540SyncDeposit` and `ERC7540SyncRedeem` return 0, and `ERC7540DelayDeposit`, `ERC7540DelayRedeem` return the maturity timepoint.
+- `ERC7540`: Add the internal `_isSolvent` function and the `ERC7540InsufficientAssets` error. `ERC7540AdminRedeem._fulfillRedeem` now reverts when the vault's balance does not cover pending deposits and the assets owed to Claimable redeems.
+- `ERC7540`: `totalSupply` is no longer overridden and always equals the sum of ERC-20 balances. The share count used by conversions, which includes pending redeem shares and unminted claimable deposit shares, is now computed by the new internal `_totalOutstandingShares` function. Integrators computing a share price from `totalAssets() / totalSupply()` should use `convertToAssets` instead.
+
 ## 30-09-2026
 
 - `ERC7540`: `_setOperator` now reverts with `ERC7540InvalidSelfOperator` when the controller is set as its own operator. A controller always has unrestricted access to its own tokens and requests, and that access cannot be restricted.
