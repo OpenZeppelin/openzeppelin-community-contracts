@@ -76,23 +76,28 @@ abstract contract ERC7540DelayDeposit is ERC7540, IERC6372 {
     }
 
     /**
-     * @dev Pushes a new cumulative checkpoint at the maturity timepoint and delegates to
-     * {ERC7540-_requestDeposit} with the timepoint as `requestId`.
+     * @dev Delegates to {ERC7540-_requestDeposit}, then pushes a new cumulative checkpoint at the maturity
+     * timepoint `requestId` (see {_getDepositRequestId}).
      */
     function _requestDeposit(
         uint256 assets,
         address controller,
         address owner,
-        uint256 /* requestId */
-    ) internal virtual override returns (uint256) {
-        uint48 timepoint = clock() + depositDelay(controller);
+        uint256 requestId
+    ) internal virtual override {
+        // Transfer the assets first (see {ERC7540-_requestDeposit}), so that a reentrancy through the asset
+        // observes neither the assets nor the controller's updated checkpoints.
+        super._requestDeposit(assets, controller, owner, requestId);
 
         if (assets > 0) {
             uint256 latest = _deposits[controller].latest();
-            _deposits[controller].push(timepoint, (assets + latest).toUint208());
+            _deposits[controller].push(requestId.toUint48(), (assets + latest).toUint208());
         }
+    }
 
-        return super._requestDeposit(assets, controller, owner, timepoint);
+    /// @dev Deposit Requests are identified by their maturity timepoint: the current {clock} plus {depositDelay}.
+    function _getDepositRequestId(address controller) internal virtual override returns (uint256) {
+        return clock() + depositDelay(controller);
     }
 
     /**
@@ -165,5 +170,15 @@ abstract contract ERC7540DelayDeposit is ERC7540, IERC6372 {
      */
     function _readyDepositAt(address owner, uint48 timepoint) internal view virtual returns (uint256) {
         return Math.saturatingSub(_deposits[owner].upperLookupRecent(timepoint), _claimedDeposits[owner]);
+    }
+
+    /// @dev The rate is computed at claim time, so no value is locked in Claimable requests.
+    function _totalClaimableDepositAssets() internal view virtual override returns (uint256) {
+        return 0;
+    }
+
+    /// @dev The rate is computed at claim time, so no value is locked in Claimable requests.
+    function _totalClaimableDepositShares() internal view virtual override returns (uint256) {
+        return 0;
     }
 }
