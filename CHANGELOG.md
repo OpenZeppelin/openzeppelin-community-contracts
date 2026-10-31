@@ -1,4 +1,4 @@
-## 01-10-2026
+## 31-10-2026
 
 - `ERC7540EpochDeposit`, `ERC7540EpochRedeem`: Add epoch-based batch fulfillment strategies for ERC-7540 vaults. Requests submitted in the same epoch share a single queue slot per controller and are settled together at one locked exchange rate when the admin closes the epoch via `_fulfillDeposit` / `_fulfillRedeem`.
 - `ERC7540`: Add the `_totalClaimableDepositAssets`, `_totalClaimableDepositShares`, `_totalClaimableRedeemAssets` and `_totalClaimableRedeemShares` hooks. `totalAssets` and the share count used by conversions now account requests fulfilled at a locked rate as settled, even before they are claimed, so that the exchange rate seen by a synchronous side is not skewed by in-flight requests. Custom strategies must implement these hooks (returning 0 if the rate is computed at claim time).
