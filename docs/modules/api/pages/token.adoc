@@ -1401,6 +1401,8 @@ Bypasses the {canSend} and {ERC20Restricted} checks for the `from` address and a
 frozen balance to the new balance after the transfer. The recipient is still required to
 pass the {canReceive} check, as recommended by EIP-7943.
 
+Reverts if `from` or `to` is the zero address, so a forced transfer can't mint or burn.
+
 NOTE: This function uses {_update} to perform the transfer, ensuring all standard ERC20
 side effects (such as balance updates and events) are preserved. If you override {_update}
 to add additional restrictions or logic, those changes will also apply here.
