@@ -1,6 +1,6 @@
 ## 02-11-2026
 
-- `ERC20uRWA`: `forcedTransfer` now reverts with `ERC20InvalidSender` or `ERC20InvalidReceiver` when `from` or `to` is the zero address.
+- `ERC20uRWA`: `forcedTransfer` now reverts with `ERC20InvalidSender` or `ERC20InvalidReceiver` when `from` or `to` is the zero address. Reported by [@doblev55](https://github.com/doblev55).
 
 ## 31-10-2026
 
