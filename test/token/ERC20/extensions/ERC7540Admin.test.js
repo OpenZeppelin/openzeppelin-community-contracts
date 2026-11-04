@@ -58,9 +58,46 @@ describe('ERC7540Admin', function () {
       });
 
       shouldBehaveLikeERC7540Operator();
-      shouldBehaveLikeERC7540Deposit({ supportCustomFulfill: true, withTmpHolder });
-      shouldBehaveLikeERC7540Redeem({ supportCustomFulfill: true, withTmpHolder });
+      shouldBehaveLikeERC7540Deposit({ supportCustomFulfill: true });
+      shouldBehaveLikeERC7540Redeem({ supportCustomFulfill: true });
       shouldBehaveLikeERC7575();
+
+      it('totalSupply matches ERC-20 balances while requests are in flight', async function () {
+        const [, alice, bob] = await ethers.getSigners();
+        const tmpHolder = withTmpHolder ? '0x000000000000000000000000000000000000dead' : ethers.ZeroAddress;
+        const sumOfBalances = () =>
+          Promise.all([alice, bob, tmpHolder].map(account => this.mock.balanceOf(account))).then(balances =>
+            balances.reduce((a, b) => a + b, 0n),
+          );
+        const expectSupply = async (supply, outstanding) => {
+          await expect(this.mock.totalSupply()).to.eventually.equal(supply);
+          await expect(this.mock.totalSupply()).to.eventually.equal(await sumOfBalances());
+          await expect(this.mock.$_totalOutstandingShares()).to.eventually.equal(outstanding);
+        };
+
+        // alice and bob each hold 100 shares
+        for (const user of [alice, bob]) {
+          await this.token.$_mint(user, 200n);
+          await this.token.connect(user).approve(this.mock, ethers.MaxUint256);
+          await this.mock.connect(user).requestDeposit(100n, user, user);
+          await this.mock.$_fulfillDeposit(100n, 100n, user);
+          await this.mock.connect(user).getFunction('deposit(uint256,address,address)')(100n, user, user);
+        }
+        await expectSupply(200n, 200n);
+
+        // bob's redeem request takes his shares out of circulation (burned or escrowed)
+        await this.mock.connect(bob).requestRedeem(100n, bob, bob);
+        await expectSupply(withTmpHolder ? 200n : 100n, 200n);
+
+        // fulfilling the redeem settles it: the shares are no longer outstanding
+        await this.mock.$_fulfillRedeem(100n, 100n, bob);
+        await expectSupply(100n, 100n);
+
+        // fulfilling a deposit settles it: the shares are outstanding, but only minted if pre-minted
+        await this.mock.connect(alice).requestDeposit(100n, alice, alice);
+        await this.mock.$_fulfillDeposit(100n, 100n, alice);
+        await expectSupply(withTmpHolder ? 200n : 100n, 200n);
+      });
 
       describe('multiple partial claims', function () {
         it('deposit flow - finish with a deposit', async function () {
@@ -337,6 +374,97 @@ describe('ERC7540Admin', function () {
           await expect(this.mock.maxRedeem(user)).to.eventually.equal(0n);
           await expect(this.mock.maxWithdraw(user)).to.eventually.equal(0n);
           await expect(this.token.balanceOf(user)).to.eventually.equal(100n);
+        });
+      });
+
+      describe('solvency', function () {
+        it('redeem fulfillment cannot use the assets of pending deposits', async function () {
+          const [, user] = await ethers.getSigners();
+          await this.token.$_mint(this.mock, 1000n);
+          await this.mock.$_mint(user, 1000n);
+          await this.token.$_mint(user, 500n);
+          await this.token.connect(user).approve(this.mock, ethers.MaxUint256);
+
+          await this.mock.connect(user).requestDeposit(500n, user, user);
+          await this.mock.connect(user).requestRedeem(100n, user, user);
+
+          // The vault holds 1500 assets, 500 of which belong to the pending deposit
+          await expect(this.fulfillRedeem(0n, 1001n, 100n, user)).to.be.revertedWithCustomError(
+            this.mock,
+            'ERC7540InsufficientAssets',
+          );
+
+          await this.fulfillRedeem(0n, 1000n, 100n, user);
+          await expect(this.mock.totalAssets()).to.eventually.equal(0n);
+        });
+
+        it('successive fulfillments cannot promise more assets than the vault holds', async function () {
+          const [, user] = await ethers.getSigners();
+          await this.token.$_mint(this.mock, 1000n);
+          await this.mock.$_mint(user, 1000n);
+          await this.mock.connect(user).requestRedeem(100n, user, user);
+
+          // The first fulfillment takes all the vault's assets: nothing is left for the second one
+          await this.fulfillRedeem(0n, 1000n, 50n, user);
+          await expect(this.fulfillRedeem(0n, 1n, 50n, user)).to.be.revertedWithCustomError(
+            this.mock,
+            'ERC7540InsufficientAssets',
+          );
+
+          // Funding the vault allows the fulfillment
+          await this.token.$_mint(this.mock, 1n);
+          await this.fulfillRedeem(0n, 1n, 50n, user);
+          await expect(this.mock.totalAssets()).to.eventually.equal(0n);
+        });
+
+        it('assets of claimable deposits can back redeems claimed before the deposit is claimed', async function () {
+          const [, user, other] = await ethers.getSigners();
+          await this.token.$_mint(user, 500n);
+          await this.token.connect(user).approve(this.mock, ethers.MaxUint256);
+          await this.mock.$_mint(other, 500n);
+
+          await this.mock.connect(user).requestDeposit(500n, user, user);
+          await this.fulfillDeposit(0n, 500n, 500n, user);
+
+          // The fulfilled deposit is settled: its assets back the redeem
+          await this.mock.connect(other).requestRedeem(500n, other, other);
+          await this.fulfillRedeem(0n, 500n, 500n, other);
+          await this.mock.connect(other).redeem(500n, other, other);
+
+          // In mint-on-claim custody, the vault holds no assets while the claimable deposit is still pending
+          await expect(this.token.balanceOf(this.mock)).to.eventually.equal(0n);
+          await expect(this.mock.totalAssets()).to.eventually.equal(0n);
+          await expect(this.mock.$_totalOutstandingShares()).to.eventually.equal(500n);
+
+          await this.mock.connect(user).deposit(500n, user);
+          await expect(this.mock.balanceOf(user)).to.eventually.equal(500n);
+          await expect(this.mock.totalAssets()).to.eventually.equal(0n);
+        });
+      });
+
+      describe('reentrancy', function () {
+        it('a pre-transfer hook in requestDeposit cannot fulfill the request being made', async function () {
+          const [, user] = await ethers.getSigners();
+          const token = await ethers.deployContract('$ERC20Reentrant');
+          const mock = await ethers.deployContract('$ERC7540AdminMock', [
+            name,
+            symbol,
+            token,
+            withTmpHolder ? '0x000000000000000000000000000000000000dead' : ethers.ZeroAddress,
+          ]);
+
+          await token.$_mint(user, 100n);
+          await token.connect(user).approve(mock, ethers.MaxUint256);
+
+          // the hook runs before the assets are transferred: the request is not recorded yet
+          await token.scheduleReenter(
+            0x01, // Before
+            mock,
+            mock.interface.encodeFunctionData('$_fulfillDeposit', [100n, 100n, user.address]),
+          );
+          await expect(mock.connect(user).requestDeposit(100n, user, user))
+            .to.be.revertedWithCustomError(mock, 'ERC7540DepositInsufficientPendingAssets')
+            .withArgs(100n, 0n);
         });
       });
     });

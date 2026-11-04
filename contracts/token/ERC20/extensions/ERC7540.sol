@@ -42,11 +42,16 @@ import {IERC7575, IERC7575Share} from "../../../interfaces/IERC7575.sol";
  * When implementing a custom fulfillment strategy, the following virtual hooks MUST be overridden for each
  * async side enabled:
  *
- * * Async deposits: {_pendingDepositRequest}, {_claimableDepositRequest}, {_consumeClaimableDeposit},
- * {_consumeClaimableMint}, {_asyncMaxDeposit}, {_asyncMaxMint}.
+ * * Async deposits: {_getDepositRequestId}, {_pendingDepositRequest}, {_claimableDepositRequest},
+ * {_consumeClaimableDeposit}, {_consumeClaimableMint}, {_asyncMaxDeposit}, {_asyncMaxMint},
+ * {_totalClaimableDepositAssets}, {_totalClaimableDepositShares}.
  *
- * * Async redeems: {_pendingRedeemRequest}, {_claimableRedeemRequest}, {_consumeClaimableWithdraw},
- * {_consumeClaimableRedeem}, {_asyncMaxWithdraw}, {_asyncMaxRedeem}.
+ * * Async redeems: {_getRedeemRequestId}, {_pendingRedeemRequest}, {_claimableRedeemRequest},
+ * {_consumeClaimableWithdraw}, {_consumeClaimableRedeem}, {_asyncMaxWithdraw}, {_asyncMaxRedeem},
+ * {_totalClaimableRedeemAssets}, {_totalClaimableRedeemShares}.
+ *
+ * The `_get*RequestId` and `_totalClaimable*` hooks are also required for synchronous sides, where they
+ * return 0.
  * ====
  *
  * [CAUTION]
@@ -113,6 +118,9 @@ abstract contract ERC7540 is ERC165, ERC20, IERC4626, IERC7540, IERC7575Share {
 
     /// @dev Invalid attempt at burning shares on a redeem fulfill when configuration burns them during request.
     error ERC7540UnauthorizedBurnSharesOnRedeemFulfill();
+
+    /// @dev The vault's asset balance does not cover the assets of pending deposits and Claimable redeems.
+    error ERC7540InsufficientAssets();
 
     /**
      * @dev Sets the underlying asset contract. This must be an ERC-20-compatible contract.
@@ -229,33 +237,61 @@ abstract contract ERC7540 is ERC165, ERC20, IERC4626, IERC7540, IERC7575Share {
      * @dev See {IERC4626-totalAssets}.
      *
      * Pending deposit assets are subtracted from the vault's token balance, since they have not yet been
-     * converted into shares and must not be treated as yield for outstanding shareholders.
+     * converted into shares and must not be treated as yield for outstanding shareholders. Requests that
+     * were fulfilled at a locked rate but not yet claimed are accounted as settled: the assets of Claimable
+     * deposits ({_totalClaimableDepositAssets}) are added back, and the assets owed to Claimable redeems
+     * ({_totalClaimableRedeemAssets}) are subtracted.
      *
-     * NOTE: Internal flows preserve the invariant `balanceOf(asset, vault) >= totalPendingDepositAssets()` for
-     * any well-behaved ERC-20. Assets with transfer fees, negative rebases, or externally-mutable balances can
-     * violate it and cause this function to revert with an underflow. Strategies that read {totalAssets} on the
-     * claim path become uncallable in that state. Strategies that lock the rate at fulfillment time
-     * are unaffected.
+     * NOTE: Internal flows preserve the invariant `balanceOf(asset, vault) + _totalClaimableDepositAssets() >=
+     * totalPendingDepositAssets() + _totalClaimableRedeemAssets()` for any well-behaved ERC-20 (see
+     * {_isSolvent}). Assets with transfer fees, negative rebases, or externally-mutable balances can violate
+     * it and cause this function to revert with an underflow. Strategies that read {totalAssets} on the claim
+     * path become uncallable in that state.
      */
     function totalAssets() public view virtual override returns (uint256) {
-        return IERC20(asset()).balanceOf(address(this)) - totalPendingDepositAssets();
+        return
+            IERC20(asset()).balanceOf(address(this)) +
+            _totalClaimableDepositAssets() -
+            _totalClaimableRedeemAssets() -
+            totalPendingDepositAssets();
     }
 
     /**
-     * @dev See {IERC20-totalSupply}.
+     * @dev Returns whether the vault's asset balance covers the assets of pending deposits and the assets owed
+     * to Claimable redeems, i.e. whether {totalAssets} does not underflow.
+     *
+     * Checked by strategies after fulfilling redeem Requests at a locked rate, which revert with
+     * {ERC7540InsufficientAssets} if it returns false, so that a fulfillment promising more assets than the vault
+     * holds reverts instead of breaking {totalAssets} for the whole vault. Fulfillers must fund the vault before
+     * fulfilling.
+     *
+     * NOTE: Vaults that override {totalAssets} to account for assets held outside the vault (e.g. deployed in a
+     * strategy) should override this function accordingly.
+     */
+    function _isSolvent() internal view virtual returns (bool) {
+        return
+            IERC20(asset()).balanceOf(address(this)) + _totalClaimableDepositAssets() >=
+            totalPendingDepositAssets() + _totalClaimableRedeemAssets();
+    }
+
+    /**
+     * @dev Total number of shares backing {totalAssets}, used by the vault's conversions in place of
+     * {totalSupply}.
      *
      * Adds {totalPendingRedeemShares} to the ERC-20 supply. When shares are burned at request time
      * (i.e. {_redeemShareDestination} returns `address(0)`), pending redeem shares are removed from
-     * the on-chain supply but still logically outstanding until claimed; this override compensates.
+     * the on-chain supply but still logically outstanding until fulfilled; this function compensates.
+     * Requests that were fulfilled at a locked rate but not yet claimed are accounted as settled: shares
+     * owed to Claimable deposits ({_totalClaimableDepositShares}) are added, and shares of Claimable
+     * redeems ({_totalClaimableRedeemShares}) are subtracted.
      *
-     * NOTE: As a consequence, two standard ERC-20 assumptions do not hold: (a) `totalSupply()` may
-     * exceed the sum of all `balanceOf()` (pending shares are virtual and unowned); (b) `totalSupply()`
-     * can change without a matching `Transfer` event when {totalPendingRedeemShares} changes. Integrators
-     * that snapshot supply for governance or reward weighting, or reconstruct supply from event logs
-     * (indexers, bridges), must account for this.
+     * NOTE: {totalSupply} is left unchanged and always equals the sum of all ERC-20 balances, so it can
+     * differ from this value while requests are in flight. Integrators pricing shares should use
+     * {convertToAssets} rather than `totalAssets() / totalSupply()`.
      */
-    function totalSupply() public view virtual override(IERC20, ERC20) returns (uint256) {
-        return super.totalSupply() + totalPendingRedeemShares();
+    function _totalOutstandingShares() internal view virtual returns (uint256) {
+        return
+            totalSupply() + totalPendingRedeemShares() + _totalClaimableDepositShares() - _totalClaimableRedeemShares();
     }
 
     /**
@@ -407,8 +443,7 @@ abstract contract ERC7540 is ERC165, ERC20, IERC4626, IERC7540, IERC7575Share {
      * @dev See {IERC7540Deposit-requestDeposit}.
      *
      * Transfers `assets` from `owner` into the vault and submits a deposit Request for `controller`.
-     * The Request enters Pending state. Uses `requestId = 0` by default; override {_requestDeposit}
-     * to use non-zero request IDs.
+     * The Request enters Pending state, with the `requestId` returned by {_getDepositRequestId}.
      *
      * Requirements:
      *
@@ -427,7 +462,9 @@ abstract contract ERC7540 is ERC165, ERC20, IERC4626, IERC7540, IERC7575Share {
         address controller,
         address owner
     ) public virtual onlyOperatorOrController(_isDepositAsync(), owner, _msgSender()) returns (uint256) {
-        return _requestDeposit(assets, controller, owner, 0);
+        uint256 requestId = _getDepositRequestId(controller);
+        _requestDeposit(assets, controller, owner, requestId);
+        return requestId;
     }
 
     /**
@@ -507,7 +544,7 @@ abstract contract ERC7540 is ERC165, ERC20, IERC4626, IERC7540, IERC7575Share {
      * @dev See {IERC7540Redeem-requestRedeem}.
      *
      * Assumes control of `shares` from `owner` and submits a redeem Request for `controller`.
-     * The Request enters Pending state. Uses `requestId = 0` by default.
+     * The Request enters Pending state, with the `requestId` returned by {_getRedeemRequestId}.
      *
      * Authorization for a `msg.sender` not equal to `owner` may come from either ERC-20 approval
      * over the shares of `owner` or from operator approval (see {IERC7540Operator}). This is
@@ -524,7 +561,9 @@ abstract contract ERC7540 is ERC165, ERC20, IERC4626, IERC7540, IERC7575Share {
      * cancellation path. Callers are responsible for supplying a controller capable of authorizing claims.
      */
     function requestRedeem(uint256 shares, address controller, address owner) public virtual returns (uint256) {
-        return _requestRedeem(shares, controller, owner, 0);
+        uint256 requestId = _getRedeemRequestId(controller);
+        _requestRedeem(shares, controller, owner, requestId);
+        return requestId;
     }
 
     /**
@@ -597,47 +636,46 @@ abstract contract ERC7540 is ERC165, ERC20, IERC4626, IERC7540, IERC7575Share {
      * The offset is configurable via {_decimalsOffset}.
      */
     function _convertToShares(uint256 assets, Math.Rounding rounding) internal view virtual returns (uint256) {
-        return assets.mulDiv(totalSupply() + 10 ** _decimalsOffset(), totalAssets() + 1, rounding);
+        return assets.mulDiv(_totalOutstandingShares() + 10 ** _decimalsOffset(), totalAssets() + 1, rounding);
     }
 
     /**
      * @dev Internal conversion function (from shares to assets) with support for rounding direction.
      */
     function _convertToAssets(uint256 shares, Math.Rounding rounding) internal view virtual returns (uint256) {
-        return shares.mulDiv(totalAssets() + 1, totalSupply() + 10 ** _decimalsOffset(), rounding);
+        return shares.mulDiv(totalAssets() + 1, _totalOutstandingShares() + 10 ** _decimalsOffset(), rounding);
     }
 
     /**
      * @dev Internal handler for deposit Requests. Increments {totalPendingDepositAssets}, transfers
-     * assets from `owner` into the vault, and emits {IERC7540Deposit-DepositRequest}.
+     * assets from `owner` into the vault, and emits {IERC7540Deposit-DepositRequest}. {requestDeposit} uses
+     * the `requestId` returned by {_getDepositRequestId}.
      *
      * Strategy extensions (e.g. {ERC7540AdminDeposit}) should override this to record per-controller
-     * pending state before calling `super._requestDeposit(...)`.
+     * pending state after calling `super._requestDeposit(...)`.
      *
-     * NOTE: Pending accounting is updated before {_transferIn} to follow Checks-Effects-Interactions.
-     * Assets with transfer hooks (e.g. ERC-777) may observe {totalAssets} temporarily understated
-     * during the transfer, since `_totalPendingDepositAssets` is already incremented while the
-     * token balance has not yet increased.
+     * NOTE: {totalPendingDepositAssets} is incremented after {_transferIn} so that {totalAssets} stays
+     * consistent if the asset has a pre-transfer hook (e.g. ERC-777 `tokensToSend`). Incrementing it before
+     * the transfer would let such a hook observe the new liability without the matching balance, and claim
+     * against a depressed {totalAssets} at an inflated rate.
      *
      * Requirements:
      *
      * * {_isDepositAsync} must return `true`, otherwise reverts with {ERC7540SyncDeposit}.
      */
-    function _requestDeposit(
-        uint256 assets,
-        address controller,
-        address owner,
-        uint256 requestId
-    ) internal virtual returns (uint256) {
+    function _requestDeposit(uint256 assets, address controller, address owner, uint256 requestId) internal virtual {
         require(_isDepositAsync(), ERC7540SyncDeposit());
 
+        // If asset() is ERC-777, `transferFrom` can trigger a reentrancy BEFORE the transfer happens through the
+        // `tokensToSend` hook. Pending accounting must therefore be updated after the transfer, so that any
+        // reentrancy observes neither the assets nor the corresponding liability, which is a valid state.
+        //
+        // Must revert with ERC20InsufficientBalance or equivalent error if there's not enough balance.
+        // slither-disable-next-line reentrancy-no-eth
+        _transferIn(owner, assets);
         _totalPendingDepositAssets += assets;
 
-        // Must revert with ERC20InsufficientBalance or equivalent error if there's not enough balance.
-        _transferIn(owner, assets);
-
         emit DepositRequest(controller, owner, requestId, _msgSender(), assets);
-        return requestId;
     }
 
     /**
@@ -693,12 +731,13 @@ abstract contract ERC7540 is ERC165, ERC20, IERC4626, IERC7540, IERC7575Share {
 
     /**
      * @dev Internal handler for redeem Requests. Assumes control of `shares` from `owner` and
-     * emits {IERC7540Redeem-RedeemRequest}.
+     * emits {IERC7540Redeem-RedeemRequest}. {requestRedeem} uses the `requestId` returned by
+     * {_getRedeemRequestId}.
      *
      * Share custody depends on {_redeemShareDestination}:
      *
      * * `address(0)` (default): shares are burned immediately and `_totalPendingRedeemShares` is
-     *   incremented to keep {totalSupply} accurate.
+     *   incremented to keep {_totalOutstandingShares} accurate.
      * * Non-zero address: shares are transferred to that address and held until fulfillment.
      *
      * Authorization for a `msg.sender` not equal to `owner` is checked via operator status first;
@@ -709,12 +748,7 @@ abstract contract ERC7540 is ERC165, ERC20, IERC4626, IERC7540, IERC7575Share {
      *
      * * {_isRedeemAsync} must return `true`, otherwise reverts with {ERC7540SyncRedeem}.
      */
-    function _requestRedeem(
-        uint256 shares,
-        address controller,
-        address owner,
-        uint256 requestId
-    ) internal virtual returns (uint256) {
+    function _requestRedeem(uint256 shares, address controller, address owner, uint256 requestId) internal virtual {
         require(_isRedeemAsync(), ERC7540SyncRedeem());
 
         address sender = _msgSender();
@@ -729,7 +763,6 @@ abstract contract ERC7540 is ERC165, ERC20, IERC4626, IERC7540, IERC7575Share {
         }
 
         emit RedeemRequest(controller, owner, requestId, _msgSender(), shares);
-        return requestId;
     }
 
     /**
@@ -825,6 +858,11 @@ abstract contract ERC7540 is ERC165, ERC20, IERC4626, IERC7540, IERC7575Share {
      * shares (otherwise pre-minted shares could be moved before they are claimed). Use an unowned
      * address such as `address(0xdead)`. Avoid addresses in the precompile reserved range
      * (`address(1)` through `address(0x1ff)`, see EIP-7587).
+     *
+     * IMPORTANT: The returned address (and whether it is zero) MUST be immutable for the vault's
+     * lifetime. Request, fulfillment, and claim stages, as well as the {totalAssets} and {_totalOutstandingShares}
+     * views, read this hook independently, so a value that changes between stages settles different
+     * stages under different custody rules and corrupts pending-asset / share accounting.
      */
     function _depositShareOrigin() internal view virtual returns (address) {
         return address(0);
@@ -834,7 +872,7 @@ abstract contract ERC7540 is ERC165, ERC20, IERC4626, IERC7540, IERC7575Share {
      * @dev Returns the address to which shares are transferred (escrowed) on redeem request.
      *
      * * `address(0)` (default): shares are burned immediately at request time. Pending redeem shares
-     *   are tracked via {totalPendingRedeemShares} so that {totalSupply} remains accurate.
+     *   are tracked via {totalPendingRedeemShares} so that {_totalOutstandingShares} remains accurate.
      * * Non-zero address: shares are transferred to this address on request and burned during
      *   fulfillment (via {_burnSharesOnRedeemFulfill}).
      *
@@ -842,6 +880,11 @@ abstract contract ERC7540 is ERC165, ERC20, IERC4626, IERC7540, IERC7575Share {
      * shares (otherwise escrowed shares could be moved before they are burned). Use an unowned
      * address such as `address(0xdead)`. Avoid addresses in the precompile reserved range
      * (`address(1)` through `address(0x1ff)`, see EIP-7587).
+     *
+     * IMPORTANT: The returned address (and whether it is zero) MUST be immutable for the vault's
+     * lifetime. Request, fulfillment, and claim stages read this hook independently, so a value that
+     * changes between stages settles different stages under different custody rules and corrupts
+     * pending-share / asset accounting.
      */
     function _redeemShareDestination() internal view virtual returns (address) {
         return address(0);
@@ -866,6 +909,22 @@ abstract contract ERC7540 is ERC165, ERC20, IERC4626, IERC7540, IERC7575Share {
      * Override to return `true` in extensions that provide an async redeem fulfillment strategy.
      */
     function _isRedeemAsync() internal pure virtual returns (bool);
+
+    /**
+     * @dev Returns the `requestId` of a deposit Request submitted now for `controller`. Strategies that aggregate
+     * all the deposit Requests of a controller return 0; others track Requests separately (e.g. by epoch or by
+     * maturity timepoint). Not `view`, so that strategies can update their state when assigning an id (e.g. a
+     * counter incremented on each Request).
+     */
+    function _getDepositRequestId(address /* controller */) internal virtual returns (uint256);
+
+    /**
+     * @dev Returns the `requestId` of a redeem Request submitted now for `controller`. Strategies that aggregate
+     * all the redeem Requests of a controller return 0; others track Requests separately (e.g. by epoch or by
+     * maturity timepoint). Not `view`, so that strategies can update their state when assigning an id (e.g. a
+     * counter incremented on each Request).
+     */
+    function _getRedeemRequestId(address /* controller */) internal virtual returns (uint256);
 
     /// @dev Returns the amount of assets in Pending state for `controller` with the given `requestId`.
     function _pendingDepositRequest(
@@ -931,4 +990,46 @@ abstract contract ERC7540 is ERC165, ERC20, IERC4626, IERC7540, IERC7575Share {
 
     /// @dev Returns the maximum shares that can be claimed via {redeem} for an async `owner`.
     function _asyncMaxRedeem(address /*owner*/) internal view virtual returns (uint256);
+
+    /**
+     * @dev Returns the assets of Claimable deposit Requests that are still counted in
+     * {totalPendingDepositAssets}, i.e. assets fulfilled at a locked rate whose shares are minted at
+     * claim time. They are added back to {totalAssets} so that the vault's exchange rate treats these
+     * Requests as settled.
+     *
+     * Returning 0 is correct for synchronous deposits, for strategies that do not lock a rate at fulfillment
+     * (e.g. the rate is computed at claim time), and for the pre-mint custody model (see {_depositShareOrigin}),
+     * where fulfillment already removes the assets from {totalPendingDepositAssets}. Strategies that lock
+     * a rate at fulfillment with mint-on-claim custody must report them, together with
+     * {_totalClaimableDepositShares}.
+     */
+    function _totalClaimableDepositAssets() internal view virtual returns (uint256);
+
+    /**
+     * @dev Returns the shares owed to Claimable deposit Requests that have not been minted yet. They are
+     * added to {_totalOutstandingShares} so that the vault's exchange rate treats these Requests as settled.
+     *
+     * See {_totalClaimableDepositAssets}.
+     */
+    function _totalClaimableDepositShares() internal view virtual returns (uint256);
+
+    /**
+     * @dev Returns the assets owed to Claimable redeem Requests, still held by the vault until claimed.
+     * They are subtracted from {totalAssets} so that the vault's exchange rate treats these Requests as
+     * settled.
+     *
+     * Returning 0 is correct for synchronous redemptions and for strategies that do not lock a rate at
+     * fulfillment (e.g. the rate is computed at claim time). Strategies that lock a rate at fulfillment
+     * must report them, together with {_totalClaimableRedeemShares}.
+     */
+    function _totalClaimableRedeemAssets() internal view virtual returns (uint256);
+
+    /**
+     * @dev Returns the shares of Claimable redeem Requests, still counted in {totalPendingRedeemShares}
+     * until claimed. They are subtracted from {_totalOutstandingShares} so that the vault's exchange
+     * rate treats these Requests as settled.
+     *
+     * See {_totalClaimableRedeemAssets}.
+     */
+    function _totalClaimableRedeemShares() internal view virtual returns (uint256);
 }

@@ -37,6 +37,8 @@ abstract contract ERC7540AdminRedeem is ERC7540 {
     }
 
     mapping(address controller => PendingRedeem) private _redeems;
+    uint256 private _totalClaimableAssets;
+    uint256 private _totalClaimableShares;
 
     /// @dev Emitted when a redeem request transitions from Pending to Claimable.
     event RedeemClaimable(address indexed controller, uint256 indexed requestId, uint256 assets, uint256 shares);
@@ -49,15 +51,20 @@ abstract contract ERC7540AdminRedeem is ERC7540 {
         return true;
     }
 
+    /// @dev All the Requests of a controller are aggregated under `requestId = 0`.
+    function _getRedeemRequestId(address /* controller */) internal virtual override returns (uint256) {
+        return 0;
+    }
+
     /// @dev Records per-controller pending state before delegating to {ERC7540-_requestRedeem}.
     function _requestRedeem(
         uint256 shares,
         address controller,
         address owner,
         uint256 requestId
-    ) internal virtual override returns (uint256) {
+    ) internal virtual override {
         _redeems[controller].pendingShares += shares;
-        return super._requestRedeem(shares, controller, owner, requestId);
+        super._requestRedeem(shares, controller, owner, requestId);
     }
 
     /**
@@ -65,13 +72,14 @@ abstract contract ERC7540AdminRedeem is ERC7540 {
      *
      * The caller provides both `shares` and `assets`, locking the exchange rate at fulfillment time.
      * The fulfiller must ensure the vault holds enough underlying assets to cover the `assets` amount
-     * before calling this function.
+     * before calling this function (see {_isSolvent}).
      *
      * Emits a {RedeemClaimable} event.
      *
      * Requirements:
      *
      * * `shares` must not exceed the pending redeem amount for the `controller`.
+     * * The vault must hold enough assets to cover pending deposits and Claimable redeems, including this one.
      */
     function _fulfillRedeem(uint256 shares, uint256 assets, address controller) internal virtual {
         uint256 pendingShares = pendingRedeemRequest(0, controller);
@@ -80,6 +88,9 @@ abstract contract ERC7540AdminRedeem is ERC7540 {
         _redeems[controller].pendingShares -= shares;
         _redeems[controller].claimableShares += shares;
         _redeems[controller].claimableAssets += assets;
+        _totalClaimableShares += shares;
+        _totalClaimableAssets += assets;
+        require(_isSolvent(), ERC7540InsufficientAssets());
 
         if (_redeemShareDestination() != address(0)) {
             _burnSharesOnRedeemFulfill(assets, shares);
@@ -101,6 +112,8 @@ abstract contract ERC7540AdminRedeem is ERC7540 {
 
         _redeems[controller].claimableAssets -= assets;
         _redeems[controller].claimableShares -= shares;
+        _totalClaimableAssets -= assets;
+        _totalClaimableShares -= shares;
         return shares;
     }
 
@@ -117,6 +130,8 @@ abstract contract ERC7540AdminRedeem is ERC7540 {
 
         _redeems[controller].claimableAssets -= assets;
         _redeems[controller].claimableShares -= shares;
+        _totalClaimableAssets -= assets;
+        _totalClaimableShares -= shares;
         return assets;
     }
 
@@ -144,5 +159,15 @@ abstract contract ERC7540AdminRedeem is ERC7540 {
     /// @inheritdoc ERC7540
     function _asyncMaxRedeem(address owner) internal view virtual override returns (uint256) {
         return _redeems[owner].claimableShares;
+    }
+
+    /// @dev Assets owed to fulfilled but unclaimed redeems.
+    function _totalClaimableRedeemAssets() internal view virtual override returns (uint256) {
+        return _totalClaimableAssets;
+    }
+
+    /// @dev Shares of fulfilled but unclaimed redeems.
+    function _totalClaimableRedeemShares() internal view virtual override returns (uint256) {
+        return _totalClaimableShares;
     }
 }
