@@ -1,3 +1,8 @@
+## 06-11-2026
+
+- `ERC20ScaledUIAmount`: Add an ERC-20 extension implementing ERC-8056 (Scaled UI Amount).
+- `IERC8056`: Add the `IScaledUIAmount`, `IScaledUIAmountNewUIMultiplier`, `IScaledUIAmountConversion` and `IScaledUIAmountBalances` interfaces.
+
 ## 02-11-2026
 
 - `ERC20uRWA`: `forcedTransfer` now reverts with `ERC20InvalidSender` or `ERC20InvalidReceiver` when `from` or `to` is the zero address. Reported by [@doblev55](https://github.com/doblev55).

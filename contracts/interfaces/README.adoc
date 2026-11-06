@@ -13,6 +13,7 @@ These interfaces are available as `.sol` files. These are useful to interact wit
 - {IERC7913SignatureVerifier}
 - {IERC7943}: ERC-20 based interface for RWA tokens with account restrictions, asset freezing, and forced transfers.
 - {IERC7969} (`IDKIMRegistry`): Onchain DKIM public key registry interface for email-based authentication.
+- {IERC8056} (`IScaledUIAmount`, `IScaledUIAmountNewUIMultiplier`, `IScaledUIAmountConversion`, `IScaledUIAmountBalances`): Scaled UI amount extension for ERC-20 tokens.
 
 == Detailed ABI
 
@@ -27,3 +28,5 @@ These interfaces are available as `.sol` files. These are useful to interact wit
 {{IERC7943}}
 
 {{IERC7969}}
+
+{{IERC8056}}
