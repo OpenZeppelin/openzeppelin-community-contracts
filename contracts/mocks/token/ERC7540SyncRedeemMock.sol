@@ -12,7 +12,7 @@ abstract contract ERC7540SyncRedeemMock is ERC7540SyncRedeem, ERC7540AdminDeposi
         address controller,
         address owner,
         uint256 requestId
-    ) internal virtual override(ERC7540, ERC7540AdminDeposit) returns (uint256) {
-        return super._requestDeposit(assets, controller, owner, requestId);
+    ) internal virtual override(ERC7540, ERC7540AdminDeposit) {
+        super._requestDeposit(assets, controller, owner, requestId);
     }
 }
