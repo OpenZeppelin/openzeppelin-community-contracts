@@ -222,4 +222,23 @@ contract TimelockControllerEnumerableTest is Test {
         vm.expectRevert(abi.encodeWithSelector(TimelockControllerEnumerable.OperationBatchIndexNotFound.selector, 0));
         timelockControllerEnumerable.operationBatch(uint256(0));
     }
+
+    function test_operations_empty() public view {
+        assertEq(timelockControllerEnumerable.operations().length, 0);
+        assertEq(timelockControllerEnumerable.operations(0, 0).length, 0);
+        assertEq(timelockControllerEnumerable.operationsBatch().length, 0);
+        assertEq(timelockControllerEnumerable.operationsBatch(0, 0).length, 0);
+    }
+
+    function test_operations_endOutOfBounds() public {
+        test_schedule();
+        vm.expectRevert(abi.encodeWithSelector(TimelockControllerEnumerable.InvalidIndexRange.selector, 0, 2));
+        timelockControllerEnumerable.operations(0, 2);
+    }
+
+    function test_operationsBatch_endOutOfBounds() public {
+        test_scheduleBatch();
+        vm.expectRevert(abi.encodeWithSelector(TimelockControllerEnumerable.InvalidIndexRange.selector, 0, 2));
+        timelockControllerEnumerable.operationsBatch(0, 2);
+    }
 }

@@ -120,7 +120,7 @@ abstract contract TimelockControllerEnumerable is TimelockController {
     /// WARNING: This is designed for view accessors queried without gas fees. Using it in state-changing
     /// functions may become uncallable if the list grows too large.
     function operations(uint256 start, uint256 end) public view returns (Operation[] memory operations_) {
-        if (start > end || start >= _operationsIdSet.length()) {
+        if (start > end || end > _operationsIdSet.length()) {
             revert InvalidIndexRange(start, end);
         }
         operations_ = new Operation[](end - start);
@@ -171,7 +171,7 @@ abstract contract TimelockControllerEnumerable is TimelockController {
         uint256 start,
         uint256 end
     ) public view returns (OperationBatch[] memory operationsBatch_) {
-        if (start > end || start >= _operationsBatchIdSet.length()) {
+        if (start > end || end > _operationsBatchIdSet.length()) {
             revert InvalidIndexRange(start, end);
         }
         operationsBatch_ = new OperationBatch[](end - start);
