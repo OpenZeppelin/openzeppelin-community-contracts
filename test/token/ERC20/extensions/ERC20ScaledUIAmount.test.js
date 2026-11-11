@@ -75,6 +75,7 @@ describe('ERC20ScaledUIAmount', function () {
 
       await time.increaseTo(effectiveAt);
       await expect(this.token.uiMultiplier()).to.eventually.equal(2n * UNIT);
+      await expect(this.token.effectiveAt()).to.eventually.equal(0n);
       await expect(this.token.balanceOfUI(this.holder)).to.eventually.equal(2n * initialSupply);
       await expect(this.token.totalSupplyUI()).to.eventually.equal(2n * initialSupply);
       await expect(this.token.balanceOf(this.holder)).to.eventually.equal(initialSupply);

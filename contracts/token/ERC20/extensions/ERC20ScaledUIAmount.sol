@@ -70,12 +70,12 @@ abstract contract ERC20ScaledUIAmount is
         return _newUIMultiplier;
     }
 
-    /// @inheritdoc IScaledUIAmountNewUIMultiplier
+    /// @dev See {IScaledUIAmountNewUIMultiplier-effectiveAt}. Returns 0 if no update is pending.
     function effectiveAt() public view virtual returns (uint256) {
-        return _effectiveAt;
+        return Time.timestamp() < _effectiveAt ? _effectiveAt : 0;
     }
 
-    /// @inheritdoc IScaledUIAmountConversion
+    /// @dev See {IScaledUIAmountConversion-toUIAmount}. Rounds down.
     function toUIAmount(uint256 rawAmount) public view virtual returns (uint256) {
         return Math.mulDiv(rawAmount, uiMultiplier(), MULTIPLIER_UNIT);
     }
