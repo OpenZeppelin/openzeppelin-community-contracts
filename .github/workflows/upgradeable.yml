@@ -6,12 +6,15 @@ on:
       - master
       - release-v*
       - '!**-upgradeable'
+  workflow_dispatch: {}
 
 concurrency:
   group: upgradeable-${{ github.ref }}
 
 jobs:
   transpile:
+    # Skip on transpiled branches, which are already upgradeable
+    if: ${{ !endsWith(github.ref_name, '-upgradeable') }}
     permissions:
       contents: write
     runs-on: ubuntu-latest
