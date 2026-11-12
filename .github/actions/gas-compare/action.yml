@@ -1,3 +1,5 @@
+# This file is an exact copy of lib/@openzeppelin-contracts/.github/actions/gas-compare/action.yml.
+
 name: Compare gas costs
 description: Compare gas costs between branches
 inputs:
