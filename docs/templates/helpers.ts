@@ -1,3 +1,5 @@
+// This file is an exact copy of lib/@openzeppelin-contracts/docs/templates/helpers.ts.
+
 import { version } from '../../package.json';
 
 export const ozVersion = () => version;
