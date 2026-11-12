@@ -90,6 +90,9 @@ abstract contract ERC7540 is ERC20, IERC4626, ERC165, IERC7540, IERC7575Share {
     /// @dev Attempted to redeem more shares than the max amount for `owner`.
     error ERC4626ExceededMaxRedeem(address owner, uint256 shares, uint256 max);
 
+    /// @dev Attempted to {deposit} or {mint} with a native value (`msg.value`), which this vault does not accept.
+    error ERC4626UnexpectedNativeValue(uint256 value);
+
     /// @dev The `operator` is not the caller or an approved operator of the `controller`.
     error ERC7540InvalidOperator(address controller, address operator);
 
@@ -467,8 +470,11 @@ abstract contract ERC7540 is ERC20, IERC4626, ERC165, IERC7540, IERC7575Share {
 
     /**
      * @dev See {IERC4626-deposit}. Calls the three-argument overload with `msg.sender` as `controller`.
+     *
+     * NOTE: This function is `payable` to match {IERC4626}, but reverts if any native value is sent.
      */
-    function deposit(uint256 assets, address receiver) public virtual override returns (uint256) {
+    function deposit(uint256 assets, address receiver) public payable virtual override returns (uint256) {
+        require(msg.value == 0, ERC4626UnexpectedNativeValue(msg.value));
         return deposit(assets, receiver, _msgSender());
     }
 
@@ -504,8 +510,11 @@ abstract contract ERC7540 is ERC20, IERC4626, ERC165, IERC7540, IERC7575Share {
 
     /**
      * @dev See {IERC4626-mint}. Calls the three-argument overload with `msg.sender` as `controller`.
+     *
+     * NOTE: This function is `payable` to match {IERC4626}, but reverts if any native value is sent.
      */
-    function mint(uint256 shares, address receiver) public virtual override returns (uint256 assets) {
+    function mint(uint256 shares, address receiver) public payable virtual override returns (uint256 assets) {
+        require(msg.value == 0, ERC4626UnexpectedNativeValue(msg.value));
         return mint(shares, receiver, _msgSender());
     }
 
