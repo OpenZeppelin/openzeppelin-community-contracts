@@ -8,6 +8,11 @@
 > This repository includes community-curated and experimental code that has not been audited and may introduce breaking changes at any time. We recommend
 > reviewing the [Security](#security) section before using any code from this repository.
 
+> [!NOTE]
+> You are looking at the upgradeable variant of OpenZeppelin Community Contracts. Be sure to review the documentation on [Using OpenZeppelin Contracts with Upgrades](https://docs.openzeppelin.com/contracts/upgradeable).
+>
+> This variant is published to the `master-upgradeable` branch. Install it with `forge install OpenZeppelin/openzeppelin-community-contracts@master-upgradeable`.
+
 ## Overview
 
 This repository contains contracts and libraries in the following categories:

@@ -47,7 +47,7 @@ export default defineConfig({
     // remappings.txt entry, so it is a project file that no compilation root imports by name: `npmFilesToBuild` cannot
     // reach it (HHE901), and being imported is not enough for Hardhat 3 to emit an artifact. Building its directory as
     // a source directory is what makes those artifacts appear.
-    sources: [argv.src, 'lib/email-tx-builder/packages/contracts/src/utils'],
+    sources: [argv.src, 'lib/openzeppelin-community-contracts/contracts', 'lib/email-tx-builder/packages/contracts/src/utils'],
   },
   solidity: {
     version: argv.compiler,
@@ -114,7 +114,7 @@ export default defineConfig({
   exposed: {
     imports: true,
     initializers: true,
-    include: ['contracts/**/*.sol'],
+    include: ['{,lib/openzeppelin-community-contracts/}contracts/**/*.sol'],
     exclude: ['**/*WithInit.sol'],
   },
   docgen: await import('./docs/config.mjs').then(m => m.default),

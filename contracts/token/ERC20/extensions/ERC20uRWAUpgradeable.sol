@@ -1,0 +1,199 @@
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.31;
+
+import {ERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
+import {ERC165Upgradeable} from "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165Upgradeable.sol";
+import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
+import {TransientSlot} from "@openzeppelin/contracts/utils/TransientSlot.sol";
+import {IERC7943Fungible} from "@openzeppelin/community-contracts/interfaces/IERC7943.sol";
+import {ERC20FreezableUpgradeable} from "./ERC20FreezableUpgradeable.sol";
+import {ERC20RestrictedUpgradeable} from "./ERC20RestrictedUpgradeable.sol";
+import {Initializable} from "@openzeppelin/contracts/proxy/utils/Initializable.sol";
+
+/**
+ * @dev Extension of {ERC20} according to https://eips.ethereum.org/EIPS/eip-7943[EIP-7943].
+ *
+ * Combines standard ERC-20 functionality with RWA-specific features like account restrictions,
+ * asset freezing, and forced asset transfers. This contract doesn't expose minting or burning
+ * capabilities; if implemented in derived contracts as needed, they must include 7943-specific
+ * logic.
+ *
+ * NOTE: {canSend} and {canReceive} default to {ERC20Restricted-canTransact}. Overriding them to
+ * be more permissive than `canTransact` requires overriding `canTransact` (or the restriction
+ * setup) accordingly, otherwise {ERC20Restricted-_update} will still block the transfer.
+ */
+abstract contract ERC20uRWAUpgradeable is Initializable, ERC20Upgradeable, ERC165Upgradeable, ERC20FreezableUpgradeable, ERC20RestrictedUpgradeable, IERC7943Fungible {
+    using TransientSlot for *;
+
+    // keccak256(abi.encode(uint256(keccak256("openzeppelin.storage.ERC20uRWA")) - 1)) & ~bytes32(uint256(0xff))
+    bytes32 private constant ERC20_URWA_FORCED_TRANSFER_SLOT =
+        0x2f15ed3f796dcc08760ea3f28d5fdea0e800838283141b1cb98a3bdd04ef5400;
+
+    function __ERC20uRWA_init() internal onlyInitializing {
+    }
+
+    function __ERC20uRWA_init_unchained() internal onlyInitializing {
+    }
+    /// @inheritdoc ERC165Upgradeable
+    function supportsInterface(bytes4 interfaceId) public view virtual override(ERC165Upgradeable, IERC165) returns (bool) {
+        return interfaceId == type(IERC7943Fungible).interfaceId || super.supportsInterface(interfaceId);
+    }
+
+    /**
+     * @dev See {IERC7943Fungible-canSend}. Returns whether `account` is allowed to send tokens. Defaults to {ERC20Restricted-canTransact}.
+     *
+     * Override to implement sender-specific restrictions distinct from {canReceive}.
+     */
+    function canSend(address account) public view virtual returns (bool) {
+        return canTransact(account);
+    }
+
+    /**
+     * @dev See {IERC7943Fungible-canReceive}. Returns whether `account` is allowed to receive tokens. Defaults to {ERC20Restricted-canTransact}.
+     *
+     * Override to implement recipient-specific restrictions distinct from {canSend}.
+     */
+    function canReceive(address account) public view virtual returns (bool) {
+        return canTransact(account);
+    }
+
+    /**
+     * @dev See {IERC7943Fungible-canTransfer}.
+     *
+     * Returns false when the transfer is prevented by a permissioned rule: an `amount` exceeding
+     * the unfrozen balance (only while covered by the current balance), or {canSend} / {canReceive}
+     * restrictions. Plain balance insufficiency (`amount > balanceOf(from)`) does not return false
+     * here, as those validations belong to the base ERC-20 standard per EIP-7943.
+     *
+     * CAUTION: This function is only meant for external use. Overriding it will not apply the new
+     * checks to the internal {_update} function, which enforces {canSend}, {canReceive} and the
+     * unfrozen balance directly. Consider overriding {_update} accordingly to keep both in sync.
+     */
+    function canTransfer(address from, address to, uint256 amount) public view virtual returns (bool) {
+        return canSend(from) && canReceive(to) && (amount > balanceOf(from) || amount <= available(from));
+    }
+
+    /// @inheritdoc IERC7943Fungible
+    function getFrozenTokens(address account) public view virtual returns (uint256 amount) {
+        return frozen(account);
+    }
+
+    /**
+     * @dev See {IERC7943Fungible-setFrozenTokens}. Always returns true if successful. Reverts otherwise.
+     *
+     * NOTE: The `amount` is allowed to exceed the current balance to support future balances withholding,
+     * as required by the EIP-7943 spec.
+     */
+    function setFrozenTokens(address account, uint256 amount) public virtual returns (bool result) {
+        _checkFreezer(account, amount);
+        _setFrozen(account, amount);
+        return true;
+    }
+
+    /**
+     * @dev See {IERC7943Fungible-forcedTransfer}. Always returns true if successful. Reverts otherwise.
+     *
+     * Bypasses the {canSend} and {ERC20Restricted} checks for the `from` address and adjusts the
+     * frozen balance to the new balance after the transfer. The recipient is still required to
+     * pass the {canReceive} check, as recommended by EIP-7943.
+     *
+     * Reverts if `from` or `to` is the zero address, so a forced transfer can't mint or burn.
+     *
+     * NOTE: This function uses {_update} to perform the transfer, ensuring all standard ERC20
+     * side effects (such as balance updates and events) are preserved. If you override {_update}
+     * to add additional restrictions or logic, those changes will also apply here.
+     * Consider overriding this function to bypass newer restrictions if needed.
+     *
+     * NOTE: A forced transfer to self moves no tokens, so it performs no frozen balance adjustment
+     * (otherwise it would act as an unauthorized unfreeze bypassing the freezer role). It behaves
+     * as a regular ERC-20 self-transfer, reverting if `amount` exceeds the unfrozen balance.
+     *
+     * CAUTION: The sender-side and recipient-side checks are suppressed for the duration of the
+     * internal {_update} call. If an override of {_update} performs external calls, a reentering
+     * transfer will skip those checks as well. Consider adding reentrancy protection when
+     * extending {_update} with external calls.
+     */
+    function forcedTransfer(address from, address to, uint256 amount) public virtual returns (bool result) {
+        _checkEnforcer(from, to, amount);
+        require(from != address(0), ERC20InvalidSender(address(0)));
+        require(to != address(0), ERC20InvalidReceiver(address(0)));
+        require(canReceive(to), ERC7943CannotReceive(to));
+
+        // Update frozen balance if needed. ERC-7943 requires that balance is unfrozen first (emitting
+        // the corresponding Frozen event via _setFrozen) and then send the tokens. Skipped for
+        // self-transfers, where the balance does not change and no unfreeze is warranted.
+        if (from != to) {
+            uint256 currentFrozen = frozen(from);
+            uint256 newBalance;
+            unchecked {
+                // Safe because ERC20._update will check that balanceOf(from) >= amount (from is non-zero)
+                newBalance = balanceOf(from) - amount;
+            }
+            if (currentFrozen > newBalance) {
+                _setFrozen(from, newBalance);
+            }
+        }
+
+        // Temporarily flag the transfer as forced rather than calling ERC20._update directly.
+        // This preserves any side effects from future overrides to _update while letting
+        // _update and _checkRestriction skip the sender-side and recipient-side checks.
+        ERC20_URWA_FORCED_TRANSFER_SLOT.asBoolean().tstore(true);
+        _update(from, to, amount);
+        ERC20_URWA_FORCED_TRANSFER_SLOT.asBoolean().tstore(false);
+        emit ForcedTransfer(from, to, amount);
+        return true;
+    }
+
+    /**
+     * @dev See {ERC20-_update}. Enforces the {canSend} and {canReceive} checks on top of the
+     * inherited freezing ({ERC20Freezable}) and restriction ({ERC20Restricted}) checks, so that
+     * public transfers cannot succeed in cases where {canTransfer} would return false. Skipped
+     * during a {forcedTransfer}.
+     */
+    function _update(
+        address from,
+        address to,
+        uint256 amount
+    ) internal virtual override(ERC20Upgradeable, ERC20FreezableUpgradeable, ERC20RestrictedUpgradeable) {
+        if (!_isForcedTransfer()) {
+            if (from != address(0)) require(canSend(from), ERC20UserRestricted(from)); // Not minting
+            if (to != address(0)) require(canReceive(to), ERC20UserRestricted(to)); // Not burning
+        }
+        super._update(from, to, amount);
+    }
+
+    /**
+     * @dev See {ERC20Restricted-_checkRestriction}. Skipped during a {forcedTransfer} so that
+     * enforcement transfers can move tokens out of restricted accounts.
+     */
+    function _checkRestriction(address account) internal view virtual override {
+        if (!_isForcedTransfer()) super._checkRestriction(account);
+    }
+
+    /// @dev Whether the current transfer is being performed by {forcedTransfer}.
+    function _isForcedTransfer() internal view virtual returns (bool) {
+        return ERC20_URWA_FORCED_TRANSFER_SLOT.asBoolean().tload();
+    }
+
+    /**
+     * @dev Internal function to check if the `enforcer` is allowed to forcibly transfer the `amount` of `tokens`.
+     *
+     * Example usage with {AccessControl-onlyRole}:
+     *
+     * ```solidity
+     * function _checkEnforcer(address from, address to, uint256 amount) internal view override onlyRole(ENFORCER_ROLE) {}
+     * ```
+     */
+    function _checkEnforcer(address from, address to, uint256 amount) internal view virtual;
+
+    /**
+     * @dev Internal function to check if the `freezer` is allowed to freeze the `amount` of `tokens`.
+     *
+     * Example usage with {AccessControl-onlyRole}:
+     *
+     * ```solidity
+     * function _checkFreezer(address account, uint256 amount) internal view override onlyRole(FREEZER_ROLE) {}
+     * ```
+     */
+    function _checkFreezer(address account, uint256 amount) internal view virtual;
+}
