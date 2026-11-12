@@ -705,7 +705,6 @@ A chain equivalence has been registered.
 
 === Wormhole
 
-:_wormholeRelayer: pass:normal[xref:#WormholeGatewayAdapter-_wormholeRelayer-contract-IWormholeRelayer[`++_wormholeRelayer++`]]
 :PendingMessage: pass:normal[xref:#WormholeGatewayAdapter-PendingMessage[`++PendingMessage++`]]
 :MessageRelayed: pass:normal[xref:#WormholeGatewayAdapter-MessageRelayed-bytes32-[`++MessageRelayed++`]]
 :RegisteredRemoteGateway: pass:normal[xref:#WormholeGatewayAdapter-RegisteredRemoteGateway-uint256-address-[`++RegisteredRemoteGateway++`]]
@@ -846,22 +845,6 @@ Note: only EVM chains are currently supported
 [.contract-subindex-inherited]
 .IERC7786GatewaySource
 * `++UnsupportedAttribute(selector)++`
-
---
-
-[.contract-index]
-.Internal Variables
---
-* `++contract IWormholeRelayer  _wormholeRelayer++`
-
-[.contract-subindex-inherited]
-.Ownable
-
-[.contract-subindex-inherited]
-.IWormholeReceiver
-
-[.contract-subindex-inherited]
-.IERC7786GatewaySource
 
 --
 
@@ -1047,8 +1030,4 @@ A chain equivalence has been registered.
 [.contract-item]
 [[WormholeGatewayAdapter-MessageAlreadyExecuted-uint256-bytes32-]]
 ==== `[.contract-item-name]#++MessageAlreadyExecuted++#++(uint256 chainId, bytes32 outboxId)++` [.item-kind]#error#
-
-[.contract-item]
-[[WormholeGatewayAdapter-_wormholeRelayer-contract-IWormholeRelayer]]
-==== `contract IWormholeRelayer [.contract-item-name]#++_wormholeRelayer++#` [.item-kind]#internal#
 
