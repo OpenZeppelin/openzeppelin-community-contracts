@@ -24,10 +24,10 @@
     "solhint": "solhint --config solhint.config.cjs --noPoster --noPrompt --disc",
     "clean": "hardhat clean && rimraf build contracts/build",
     "generate": "scripts/generate/run.js",
+    "pragma": "hardhat build --noExpose && scripts/minimize-pragma.js artifacts/build-info/*",
     "test": "hardhat test",
     "test:generation": "scripts/checks/generation.sh",
     "test:inheritance": "scripts/checks/inheritance-ordering.js artifacts/build-info/*.output.json",
-    "pragma": "hardhat build --noExpose && scripts/minimize-pragma.js artifacts/build-info/*",
     "test:pragma": "scripts/checks/pragma-validity.js artifacts/build-info/*",
     "coverage": "hardhat test --coverage",
     "gas-report": "hardhat test --gas-stats"
