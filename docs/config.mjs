@@ -1,3 +1,5 @@
+// This file is an exact copy of lib/@openzeppelin-contracts/docs/config.mjs.
+
 import path from 'path';
 import fs from 'fs';
 

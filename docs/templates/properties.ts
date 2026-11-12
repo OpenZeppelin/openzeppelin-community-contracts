@@ -1,3 +1,5 @@
+// This file is an exact copy of lib/@openzeppelin-contracts/docs/templates/properties.ts.
+
 import { isNodeType, findAll } from 'solidity-ast/utils.js';
 import { slug } from './helpers';
 

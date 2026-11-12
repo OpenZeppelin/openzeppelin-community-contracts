@@ -1,3 +1,5 @@
+<!-- This file is an exact copy of lib/@openzeppelin-contracts/docs/README.md. -->
+
 Documentation is hosted at https://docs.openzeppelin.com/contracts.
 
 All of the content for the site is in this repository. The guides are in the
