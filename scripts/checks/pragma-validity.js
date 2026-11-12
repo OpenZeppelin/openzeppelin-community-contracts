@@ -1,5 +1,7 @@
 #!/usr/bin/env node
 
+// This file is an exact copy of lib/@openzeppelin-contracts/scripts/checks/pragma-validity.js.
+
 import semver from 'semver';
 import pLimit from 'p-limit';
 import yargs from 'yargs';

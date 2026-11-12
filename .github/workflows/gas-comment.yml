@@ -1,3 +1,5 @@
+# This file is an exact copy of lib/@openzeppelin-contracts/.github/workflows/gas-comment.yml.
+
 name: gas-comment
 
 # Posts the gas comparison produced by the `checks` workflow as a sticky PR comment.

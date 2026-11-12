@@ -1,3 +1,5 @@
+// This file is an exact copy of lib/@openzeppelin-contracts/scripts/get-contracts-metadata.js.
+
 import fs from 'fs';
 import path from 'path';
 import { glob } from 'glob';

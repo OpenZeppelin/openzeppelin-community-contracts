@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+# This file is an exact copy of lib/@openzeppelin-contracts/scripts/upgradeable/patch-save.sh.
+
 set -euo pipefail
 
 DIRNAME="$(dirname -- "${BASH_SOURCE[0]}")"

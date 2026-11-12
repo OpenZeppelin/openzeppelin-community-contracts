@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.27;
+pragma solidity ^0.8.31;
 
 import {Clones} from "@openzeppelin/contracts/proxy/Clones.sol";
 import {RoleAccount} from "./RoleAccount.sol";

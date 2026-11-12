@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.27;
+pragma solidity ^0.8.20;
 
 import {IERC7786Attributes} from "../../interfaces/IERC7786Attributes.sol";
 

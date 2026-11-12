@@ -2,7 +2,7 @@ import format from '../format-lines.js';
 import { SET_TYPES } from './Enumerable.opts.js';
 
 const header = `\
-pragma solidity ^0.8.24;
+pragma solidity ^0.8.31;
 
 import {Hashes} from "@openzeppelin/contracts/utils/cryptography/Hashes.sol";
 import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";

@@ -1,3 +1,5 @@
+// This file is an exact copy of lib/@openzeppelin-contracts/scripts/solc-versions.js.
+
 import { execFile } from 'child_process';
 import semver from 'semver';
 import { range } from './helpers.js';

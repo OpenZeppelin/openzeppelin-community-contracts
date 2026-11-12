@@ -1,3 +1,5 @@
+# This file is an exact copy of lib/@openzeppelin-contracts/.github/workflows/actionlint.yml.
+
 name: lint workflows
 
 on:

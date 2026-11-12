@@ -1,5 +1,7 @@
 #!/usr/bin/env node
 
+// This file is an exact copy of lib/@openzeppelin-contracts/scripts/checks/compare-gas-reports.js.
+
 import fs from 'fs';
 import chalk from 'chalk';
 

@@ -2,7 +2,7 @@ import format from '../format-lines.js';
 import { SET_TYPES, MAP_TYPES } from './Enumerable.opts.js';
 
 const header = `\
-pragma solidity ^0.8.24;
+pragma solidity ^0.8.31;
 
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import {EnumerableSetExtended} from "./EnumerableSetExtended.sol";

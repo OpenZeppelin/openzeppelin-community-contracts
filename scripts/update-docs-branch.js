@@ -1,3 +1,5 @@
+// This file is an exact copy of lib/@openzeppelin-contracts/scripts/update-docs-branch.js.
+
 import proc from 'child_process';
 import fs from 'fs';
 import path from 'path';
