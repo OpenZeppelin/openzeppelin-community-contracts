@@ -29,6 +29,7 @@ import {SignerAccessManaged} from "../utils/cryptography/signers/SignerAccessMan
  * arguments, so calling the getters on the implementation directly (outside a clone) reverts.
  */
 contract RoleAccount is ERC7821, ERC7739, SignerAccessManaged {
+    /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
     address private immutable _self = address(this);
 
     error RoleAccountDirectCallNotAllowed();

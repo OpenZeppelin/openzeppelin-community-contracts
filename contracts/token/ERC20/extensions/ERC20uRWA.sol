@@ -90,6 +90,8 @@ abstract contract ERC20uRWA is ERC20, ERC165, ERC20Freezable, ERC20Restricted, I
      * frozen balance to the new balance after the transfer. The recipient is still required to
      * pass the {canReceive} check, as recommended by EIP-7943.
      *
+     * Reverts if `from` or `to` is the zero address, so a forced transfer can't mint or burn.
+     *
      * NOTE: This function uses {_update} to perform the transfer, ensuring all standard ERC20
      * side effects (such as balance updates and events) are preserved. If you override {_update}
      * to add additional restrictions or logic, those changes will also apply here.
@@ -106,6 +108,8 @@ abstract contract ERC20uRWA is ERC20, ERC165, ERC20Freezable, ERC20Restricted, I
      */
     function forcedTransfer(address from, address to, uint256 amount) public virtual returns (bool result) {
         _checkEnforcer(from, to, amount);
+        require(from != address(0), ERC20InvalidSender(address(0)));
+        require(to != address(0), ERC20InvalidReceiver(address(0)));
         require(canReceive(to), ERC7943CannotReceive(to));
 
         // Update frozen balance if needed. ERC-7943 requires that balance is unfrozen first (emitting
@@ -115,7 +119,7 @@ abstract contract ERC20uRWA is ERC20, ERC165, ERC20Freezable, ERC20Restricted, I
             uint256 currentFrozen = frozen(from);
             uint256 newBalance;
             unchecked {
-                // Safe because ERC20._update will check that balanceOf(from) >= amount
+                // Safe because ERC20._update will check that balanceOf(from) >= amount (from is non-zero)
                 newBalance = balanceOf(from) - amount;
             }
             if (currentFrozen > newBalance) {

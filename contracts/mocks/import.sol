@@ -14,5 +14,6 @@ import {
     AccountERC7913Mock
 } from "@openzeppelin/contracts/mocks/account/AccountMock.sol";
 import {ERC1271WalletMock} from "@openzeppelin/contracts/mocks/ERC1271WalletMock.sol";
+import {ERC20Reentrant} from "@openzeppelin/contracts/mocks/token/ERC20Reentrant.sol";
 import {Create2} from "@openzeppelin/contracts/utils/Create2.sol";
 // forge-lint: disable-end(unused-import)
