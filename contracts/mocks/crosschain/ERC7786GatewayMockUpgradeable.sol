@@ -1,0 +1,61 @@
+// SPDX-License-Identifier: MIT
+
+pragma solidity ^0.8.24;
+
+import {IERC7786GatewaySource, IERC7786Recipient} from "@openzeppelin/contracts/interfaces/draft-IERC7786.sol";
+import {BitMaps} from "@openzeppelin/contracts/utils/structs/BitMaps.sol";
+import {InteroperableAddress} from "@openzeppelin/contracts/utils/draft-InteroperableAddress.sol";
+import {Initializable} from "@openzeppelin/contracts/proxy/utils/Initializable.sol";
+
+contract ERC7786GatewayMockUpgradeable is Initializable, IERC7786GatewaySource {
+    using BitMaps for BitMaps.BitMap;
+    using InteroperableAddress for *;
+
+    bool public revertOnSent;
+    bytes32 public sendId;
+
+    function __ERC7786GatewayMock_init() internal onlyInitializing {
+        __ERC7786GatewayMock_init_unchained();
+    }
+
+    function __ERC7786GatewayMock_init_unchained() internal onlyInitializing {
+        revertOnSent = false;
+        sendId = bytes32(0);
+    }
+    function supportsAttribute(bytes4 /*selector*/) public pure returns (bool) {
+        return false;
+    }
+
+    function sendMessage(
+        bytes calldata recipient, // Binary Interoperable Address
+        bytes calldata payload,
+        bytes[] calldata attributes
+    ) public payable returns (bytes32) {
+        require(!revertOnSent, "Reverting on send");
+
+        require(msg.value == 0, "Value not supported");
+        // Use of `if () revert` syntax to avoid accessing attributes[0] if it's empty
+        if (attributes.length > 0) revert UnsupportedAttribute(bytes4(attributes[0][0:4]));
+
+        (bool success, uint256 chainid, address target) = recipient.tryParseEvmV1Calldata();
+        require(success && chainid == block.chainid, "This mock only supports local messages");
+
+        bytes memory sender = InteroperableAddress.formatEvmV1(block.chainid, msg.sender);
+        require(
+            IERC7786Recipient(target).receiveMessage(bytes32(0), sender, payload) ==
+                IERC7786Recipient.receiveMessage.selector,
+            "Receiver error"
+        );
+
+        emit MessageSent(sendId, sender, recipient, payload, 0, attributes);
+        return sendId;
+    }
+
+    function setRevertOnSent(bool value) external {
+        revertOnSent = value;
+    }
+
+    function setSendId(bytes32 value) public {
+        sendId = value;
+    }
+}

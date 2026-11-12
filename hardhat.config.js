@@ -55,6 +55,7 @@ module.exports = {
   exposed: {
     imports: true,
     initializers: true,
+    exclude: ['**/*WithInit.sol'],
   },
   gasReporter: {
     enabled: argv.gas,

@@ -1,0 +1,25 @@
+// SPDX-License-Identifier: MIT
+
+pragma solidity ^0.8.27;
+
+import {IERC7786Recipient} from "@openzeppelin/contracts/interfaces/draft-IERC7786.sol";
+import {Initializable} from "@openzeppelin/contracts/proxy/utils/Initializable.sol";
+
+/// @dev Returns the correct ERC-7786 magic value followed by a large amount of padding, so a caller that copies
+/// the full return buffer runs out of gas on the copy.
+contract ERC7786RecipientReturnBombMockUpgradeable is Initializable, IERC7786Recipient {
+    function __ERC7786RecipientReturnBombMock_init() internal onlyInitializing {
+    }
+
+    function __ERC7786RecipientReturnBombMock_init_unchained() internal onlyInitializing {
+    }
+    function receiveMessage(bytes32, bytes calldata, bytes calldata) external payable returns (bytes4) {
+        assembly ("memory-safe") {
+            // First 32 bytes: ABI-encoded `IERC7786Recipient.receiveMessage.selector`.
+            mstore(0x00, shl(224, 0x2432ef26))
+            // Pay for a 1 MiB return buffer.
+            mstore(0x0ffffc, 0)
+            return(0x00, 0x100000)
+        }
+    }
+}

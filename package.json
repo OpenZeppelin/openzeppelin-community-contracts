@@ -1,5 +1,5 @@
 {
-  "name": "@openzeppelin/community-contracts",
+  "name": "@openzeppelin/community-contracts-upgradeable",
   "version": "0.0.1",
   "description": "Solidity library of smart contracts from the OpenZeppelin Community",
   "author": "OpenZeppelin Community <maintainers@openzeppelin.org>",

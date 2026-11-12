@@ -1,0 +1,397 @@
+// SPDX-License-Identifier: MIT
+
+pragma solidity ^0.8.27;
+
+import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import {IERC7786GatewaySource, IERC7786Recipient} from "@openzeppelin/contracts/interfaces/draft-IERC7786.sol";
+import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
+import {Address} from "@openzeppelin/contracts/utils/Address.sol";
+import {LowLevelCall} from "@openzeppelin/contracts/utils/LowLevelCall.sol";
+import {PausableUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
+import {InteroperableAddress} from "@openzeppelin/contracts/utils/draft-InteroperableAddress.sol";
+import {Initializable} from "@openzeppelin/contracts/proxy/utils/Initializable.sol";
+
+/**
+ * @dev N of M gateway: Sends your message through M independent gateways. It will be delivered to the recipient by an
+ * equivalent bridge on the destination chain if N of the M gateways agree.
+ */
+contract ERC7786OpenBridgeUpgradeable is Initializable, IERC7786GatewaySource, IERC7786Recipient, OwnableUpgradeable, PausableUpgradeable {
+    using EnumerableSet for EnumerableSet.AddressSet;
+    using InteroperableAddress for bytes;
+
+    struct Outbox {
+        address gateway;
+        bytes32 id;
+    }
+
+    struct Tracker {
+        mapping(address => bool) receivedBy;
+        uint8 countReceived;
+        bool executed;
+    }
+
+    event OutboxDetails(bytes32 indexed sendId, Outbox[] outbox);
+    event Received(bytes32 indexed receiveId, address gateway);
+    event ExecutionSuccess(bytes32 indexed receiveId);
+    /**
+     * @dev Emitted when the recipient call fails on a threshold-crossing delivery. The `(sender, payload)` preimage
+     * needed to retry {receiveMessage} is not included here to keep the failure path gas-lean; it can be reconstructed
+     * from the gateway-level events (or the transaction trace) that carried the message.
+     */
+    event ExecutionFailed(bytes32 indexed receiveId);
+    event GatewayAdded(address indexed gateway);
+    event GatewayRemoved(address indexed gateway);
+    event ERC7786OpenBridgeSendMessageFailed(address indexed gateway);
+    event ThresholdUpdated(uint8 threshold);
+
+    error UnsupportedNativeTransfer();
+    error ERC7786OpenBridgeInvalidCrosschainSender();
+    error ERC7786OpenBridgeAlreadyExecuted();
+    error ERC7786OpenBridgeRemoteNotRegistered(bytes2 chainType, bytes chainReference);
+    error ERC7786OpenBridgeGatewayNotAContract(address gateway);
+    error ERC7786OpenBridgeGatewayAlreadyRegistered(address gateway);
+    error ERC7786OpenBridgeGatewayNotRegistered(address gateway);
+    error ERC7786OpenBridgeThresholdViolation();
+    error ERC7786OpenBridgeInvalidExecutionReturnValue();
+    error ERC7786OpenBridgeInsufficientGateways();
+
+    /// @custom:storage-location erc7201:openzeppelin.storage.ERC7786OpenBridge
+    struct ERC7786OpenBridgeStorage {
+        /****************************************************************************************************************
+         *                                        S T A T E   V A R I A B L E S                                         *
+         ****************************************************************************************************************/
+
+        /// @dev address of the matching bridge for a given CAIP2 chain
+        mapping(bytes2 chainType => mapping(bytes chainReference => bytes addr)) _remotes;
+
+        /// @dev Tracking of the received message pending final delivery
+        mapping(bytes32 id => Tracker) _trackers;
+
+        /// @dev List of authorized IERC7786 gateways (M is the length of this set)
+        EnumerableSet.AddressSet _gateways;
+
+        /// @dev Threshold for message reception
+        uint8 _threshold;
+
+        /// @dev Nonce for message deduplication (internal)
+        uint256 _nonce;
+    }
+
+    // keccak256(abi.encode(uint256(keccak256("openzeppelin.storage.ERC7786OpenBridge")) - 1)) & ~bytes32(uint256(0xff))
+    bytes32 private constant ERC7786OpenBridgeStorageLocation = 0xd93d5bbcea2cbe1b1ae4cab942768168f8ed3f7305f25e0da1b4d92c11ef1a00;
+
+    function _getERC7786OpenBridgeStorage() private pure returns (ERC7786OpenBridgeStorage storage $) {
+        assembly {
+            $.slot := ERC7786OpenBridgeStorageLocation
+        }
+    }
+
+    /****************************************************************************************************************
+     *                                        E V E N T S   &   E R R O R S                                         *
+     ****************************************************************************************************************/
+    event RemoteRegistered(bytes remote);
+
+    function initialize(address owner_, address[] memory gateways_, uint8 threshold_) public virtual initializer {
+        __ERC7786OpenBridge_init(owner_, gateways_, threshold_);
+    }
+    /****************************************************************************************************************
+     *                                              F U N C T I O N S                                               *
+     ****************************************************************************************************************/
+    function __ERC7786OpenBridge_init(address owner_, address[] memory gateways_, uint8 threshold_) internal onlyInitializing {
+        __Ownable_init_unchained(owner_);
+        __ERC7786OpenBridge_init_unchained(owner_, gateways_, threshold_);
+    }
+
+    function __ERC7786OpenBridge_init_unchained(address, address[] memory gateways_, uint8 threshold_) internal onlyInitializing {
+        for (uint256 i = 0; i < gateways_.length; ++i) {
+            _addGateway(gateways_[i]);
+        }
+        _setThreshold(threshold_);
+    }
+
+    // ============================================ IERC7786GatewaySource ============================================
+
+    /// @inheritdoc IERC7786GatewaySource
+    function supportsAttribute(bytes4 /*selector*/) public view virtual returns (bool) {
+        return false;
+    }
+
+    /**
+     * @inheritdoc IERC7786GatewaySource
+     *
+     * @dev Using memory instead of calldata avoids stack too deep errors.
+     *
+     * NOTE: This function does not enforce a maximum size for `payload` nor validate the address component of a
+     * validly encoded `recipient`; the caller is responsible for supplying values that the destination chain can
+     * decode and that resolve to a live recipient.
+     */
+    function sendMessage(
+        bytes calldata recipient, // Binary Interoperable Address
+        bytes calldata payload,
+        bytes[] calldata attributes
+    ) public payable virtual whenNotPaused returns (bytes32 sendId) {
+        ERC7786OpenBridgeStorage storage $ = _getERC7786OpenBridgeStorage();
+        require(msg.value == 0, UnsupportedNativeTransfer());
+        // Use of `if () revert` syntax to avoid accessing attributes[0] if it's empty
+        if (attributes.length > 0)
+            revert UnsupportedAttribute(attributes[0].length < 0x04 ? bytes4(0) : bytes4(attributes[0][0:4]));
+
+        // address of the remote bridge, revert if not registered
+        bytes memory bridge = getRemoteBridge(recipient);
+        bytes memory sender = InteroperableAddress.formatEvmV1(block.chainid, msg.sender);
+
+        // wrapping the payload
+        bytes memory wrappedPayload = abi.encode(++$._nonce, sender, recipient, payload);
+
+        // Post on all gateways
+        {
+            Outbox[] memory outbox = new Outbox[]($._gateways.length());
+            bool needsId = false;
+            uint256 sent = 0;
+            for (uint256 i = 0; i < outbox.length; ++i) {
+                address gateway = $._gateways.at(i);
+                // The typed try/catch is intentional: delegates to Solidity's canonical decoding to reject a gateway
+                // that returns EVM success with a value that does not conform to the interface it was registered under.
+                try IERC7786GatewaySource(gateway).sendMessage(bridge, wrappedPayload, attributes) returns (
+                    bytes32 id
+                ) {
+                    outbox[i] = Outbox(gateway, id);
+                    needsId = needsId || id != bytes32(0);
+                    ++sent;
+                } catch {
+                    // if one gateway fails, we still want to send the message through the others
+                    emit ERC7786OpenBridgeSendMessageFailed(gateway);
+                }
+            }
+            require(sent >= getThreshold(), ERC7786OpenBridgeInsufficientGateways());
+
+            if (needsId) {
+                sendId = keccak256(abi.encode(outbox));
+                emit OutboxDetails(sendId, outbox);
+            }
+        }
+
+        emit MessageSent(sendId, sender, recipient, payload, 0, attributes);
+    }
+
+    // ============================================== IERC7786Recipient ==============================================
+
+    /**
+     * @inheritdoc IERC7786Recipient
+     *
+     * @dev This function serves a dual purpose:
+     *
+     * It will be called by ERC-7786 gateways with message coming from the the corresponding bridge on the source
+     * chain. These "signals" are tracked until the threshold is reached. At that point the message is sent to the
+     * destination.
+     *
+     * It can also be called by anyone (including an ERC-7786 gateway) to retry the execution. This can be useful if
+     * the automatic execution (that is triggered when the threshold is reached) fails, and someone wants to retry it.
+     * The retry path only performs work when {getThreshold} gateway deliveries have already been recorded for the
+     * message; a caller that is not a registered gateway against a message that has not yet accumulated enough
+     * receipts falls through the counting branch and returns the magic value without executing anything.
+     *
+     * When a message is forwarded by a known gateway, a {Received} event is emitted. If a known gateway calls this
+     * function more than once (for a given message), only the first call is counts toward the threshold and emits an
+     * {Received} event.
+     *
+     * This function revert if:
+     *
+     * * the message is not properly formatted or does not originate from the registered bridge on the source
+     *   chain.
+     * * someone tries re-execute a message that was already successfully delivered. This includes gateways that call
+     *   this function a second time with a message that was already executed.
+     * * the execution of the message (on the {IERC7786Recipient} recipient) is successful but fails to return the
+     *   expected magic value (reverts with {ERC7786OpenBridgeInvalidExecutionReturnValue}).
+     *
+     * This function does not revert if:
+     *
+     * * A known gateway delivers a message for the first time, and that message was already executed. In that case
+     *   the message is NOT re-executed, and the correct "magic value" is returned.
+     * * The execution of the message (on the {IERC7786Recipient} recipient) reverts. In that case a {ExecutionFailed}
+     *   event is emitted.
+     *
+     * This function emits:
+     *
+     * * {Received} when a known ERC-7786 gateway delivers a message for the first time.
+     * * {ExecutionSuccess} when a message is successfully delivered to the recipient.
+     * * {ExecutionFailed} when a message delivery to the recipient reverted (for example because of OOG error).
+     *
+     * NOTE: interface requires this function to be payable. Even if we don't expect any value, a gateway may pass
+     * some value for unknown reason. In that case we want to register this gateway having delivered the message and
+     * not revert. Any value accrued that way can be recovered by the admin using the {sweep} function.
+     */
+    // slither-disable-next-line reentrancy-no-eth
+    function receiveMessage(
+        bytes32 /*receiveId*/,
+        bytes calldata sender, // Binary Interoperable Address
+        bytes calldata payload
+    ) public payable virtual whenNotPaused returns (bytes4) {
+        ERC7786OpenBridgeStorage storage $ = _getERC7786OpenBridgeStorage();
+        // Check sender is a trusted bridge
+        require(keccak256(getRemoteBridge(sender)) == keccak256(sender), ERC7786OpenBridgeInvalidCrosschainSender());
+
+        // Message reception tracker
+        bytes32 id = keccak256(abi.encode(sender, payload));
+        Tracker storage tracker = $._trackers[id];
+
+        // If call is first from a trusted gateway
+        if ($._gateways.contains(msg.sender) && !tracker.receivedBy[msg.sender]) {
+            // Count number of time received
+            tracker.receivedBy[msg.sender] = true;
+            ++tracker.countReceived;
+            emit Received(id, msg.sender);
+
+            // if already executed, leave gracefully
+            if (tracker.executed) return IERC7786Recipient.receiveMessage.selector;
+        } else if (tracker.executed) {
+            revert ERC7786OpenBridgeAlreadyExecuted();
+        }
+
+        // Parse payload
+        (, bytes memory originalSender, bytes memory recipient, bytes memory unwrappedPayload) = abi.decode(
+            payload,
+            (uint256, bytes, bytes, bytes)
+        );
+
+        // If ready to execute, and not yet executed
+        if (tracker.countReceived >= getThreshold()) {
+            // prevent re-entry
+            tracker.executed = true;
+
+            bytes memory call = abi.encodeCall(
+                IERC7786Recipient.receiveMessage,
+                (id, originalSender, unwrappedPayload)
+            );
+            // slither-disable-next-line reentrancy-no-eth
+            (, address target) = recipient.parseEvmV1();
+            // A malicious recipient can pad its return buffer to force the caller to run out of gas copying it back.
+            // Only the first 32 bytes are inspected, so bound the copy to that window.
+            (bool success, bytes32 returndata, ) = LowLevelCall.callReturn64Bytes(target, call);
+
+            if (!success) {
+                // rollback to enable retry
+                tracker.executed = false;
+                emit ExecutionFailed(id);
+            } else if (
+                LowLevelCall.returnDataSize() >= 0x20 &&
+                returndata == bytes32(IERC7786Recipient.receiveMessage.selector)
+            ) {
+                // call successful and correct value returned
+                emit ExecutionSuccess(id);
+            } else {
+                // call successful but invalid value returned, we need to revert the subcall
+                revert ERC7786OpenBridgeInvalidExecutionReturnValue();
+            }
+        }
+
+        return IERC7786Recipient.receiveMessage.selector;
+    }
+
+    // =================================================== Getters ===================================================
+
+    function getGateways() public view virtual returns (address[] memory) {
+        ERC7786OpenBridgeStorage storage $ = _getERC7786OpenBridgeStorage();
+        return $._gateways.values();
+    }
+
+    function getThreshold() public view virtual returns (uint8) {
+        ERC7786OpenBridgeStorage storage $ = _getERC7786OpenBridgeStorage();
+        return $._threshold;
+    }
+
+    function getRemoteBridge(bytes memory chain) public view virtual returns (bytes memory) {
+        (bytes2 chainType, bytes memory chainReference, ) = chain.parseV1();
+        return getRemoteBridge(chainType, chainReference);
+    }
+
+    function getRemoteBridge(bytes2 chainType, bytes memory chainReference) public view virtual returns (bytes memory) {
+        ERC7786OpenBridgeStorage storage $ = _getERC7786OpenBridgeStorage();
+        bytes memory addr = $._remotes[chainType][chainReference];
+        require(bytes(addr).length != 0, ERC7786OpenBridgeRemoteNotRegistered(chainType, chainReference));
+        return InteroperableAddress.formatV1(chainType, chainReference, addr);
+    }
+
+    // =================================================== Setters ===================================================
+
+    function addGateway(address gateway) public virtual onlyOwner {
+        _addGateway(gateway);
+    }
+
+    function removeGateway(address gateway) public virtual onlyOwner {
+        _removeGateway(gateway);
+    }
+
+    function setThreshold(uint8 newThreshold) public virtual onlyOwner {
+        _setThreshold(newThreshold);
+    }
+
+    function registerRemoteBridge(bytes calldata bridge) public virtual onlyOwner {
+        _registerRemoteBridge(bridge);
+    }
+
+    function pause() public virtual onlyOwner {
+        _pause();
+    }
+
+    function unpause() public virtual onlyOwner {
+        _unpause();
+    }
+
+    /// @dev Recovery method in case value is ever received through {receiveMessage}
+    function sweep(address payable to) public virtual onlyOwner {
+        Address.sendValue(to, address(this).balance);
+    }
+
+    // ================================================== Internal ===================================================
+
+    /**
+     * @dev Adds a gateway to the authorized set. A gateway may serve as a source, a destination, or both. Every
+     * registered gateway is called by {sendMessage}: a gateway that does not support sending must revert, and does
+     * not count toward the sends required by {getThreshold}.
+     *
+     * As a source, a gateway is required to implement {IERC7786GatewaySource} and is trusted to return well-formed
+     * data, not consume all forwarded gas, and relay the messages it accepts. As a destination, it is trusted to
+     * deliver only messages properly verified by the underlying protocol, including but not limited to being sent to
+     * the chain they are delivered to. Gateways that break these or any other ERC-7786 requirements are the
+     * operator's responsibility to rotate out via {removeGateway}.
+     */
+    function _addGateway(address gateway) internal virtual {
+        ERC7786OpenBridgeStorage storage $ = _getERC7786OpenBridgeStorage();
+        require(gateway.code.length > 0, ERC7786OpenBridgeGatewayNotAContract(gateway));
+        require($._gateways.add(gateway), ERC7786OpenBridgeGatewayAlreadyRegistered(gateway));
+        emit GatewayAdded(gateway);
+    }
+
+    /**
+     * @dev Removes a gateway from the authorized set. Receipts previously recorded by the removed gateway remain
+     * counted toward the threshold of not-yet-executed messages; there is no on-chain mechanism to invalidate them.
+     * Pausing the bridge before removal blocks concurrent {receiveMessage} deliveries during the rotation but does
+     * not clear existing {Tracker} state, which remains eligible once the bridge is unpaused.
+     */
+    function _removeGateway(address gateway) internal virtual {
+        ERC7786OpenBridgeStorage storage $ = _getERC7786OpenBridgeStorage();
+        require($._gateways.remove(gateway), ERC7786OpenBridgeGatewayNotRegistered(gateway));
+        require($._threshold <= $._gateways.length(), ERC7786OpenBridgeThresholdViolation());
+        emit GatewayRemoved(gateway);
+    }
+
+    function _setThreshold(uint8 newThreshold) internal virtual {
+        ERC7786OpenBridgeStorage storage $ = _getERC7786OpenBridgeStorage();
+        require(newThreshold > 0 && newThreshold <= $._gateways.length(), ERC7786OpenBridgeThresholdViolation());
+        $._threshold = newThreshold;
+        emit ThresholdUpdated(newThreshold);
+    }
+
+    /**
+     * @dev Registers or rotates the trusted remote bridge for the (chainType, chainReference) encoded in `bridge`.
+     * If a remote is already registered for that chain, it is overwritten. This is intentional to support remote
+     * bridge rotation; messages in flight from the previous remote will fail sender authentication after rotation.
+     */
+    function _registerRemoteBridge(bytes calldata bridge) internal virtual {
+        ERC7786OpenBridgeStorage storage $ = _getERC7786OpenBridgeStorage();
+        (bytes2 chainType, bytes calldata chainReference, bytes calldata addr) = bridge.parseV1Calldata();
+        $._remotes[chainType][chainReference] = addr;
+        emit RemoteRegistered(bridge);
+    }
+}
