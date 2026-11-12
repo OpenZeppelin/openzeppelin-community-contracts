@@ -1,6 +1,6 @@
 // contracts/MyERC7786GatewaySource.sol
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.24;
+pragma solidity ^0.8.31;
 
 import {IERC7786GatewaySource} from "@openzeppelin/contracts/interfaces/IERC7786.sol";
 import {InteroperableAddress} from "@openzeppelin/contracts/utils/draft-InteroperableAddress.sol";

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.26;
+pragma solidity ^0.8.31;
 
 import {ERC20uRWA} from "../../token/ERC20/extensions/ERC20uRWA.sol";
 import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";

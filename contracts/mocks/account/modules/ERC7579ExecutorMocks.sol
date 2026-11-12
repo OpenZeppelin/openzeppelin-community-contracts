@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.27;
+pragma solidity ^0.8.31;
 
 import {ERC7579Executor} from "../../../account/modules/ERC7579Executor.sol";
 import {ERC7579DelayedExecutor} from "../../../account/modules/ERC7579DelayedExecutor.sol";
