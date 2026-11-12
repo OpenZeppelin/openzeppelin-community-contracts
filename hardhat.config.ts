@@ -51,6 +51,11 @@ export default defineConfig({
   },
   solidity: {
     version: argv.compiler,
+    // Remappings are defined in `remappings.txt`. Hardhat 3 also applies the `remappings.txt` of the
+    // `lib/@openzeppelin-contracts-upgradeable` submodule to its files, which points `@openzeppelin/contracts` to a nested
+    // copy. The last entry of `remappings.txt` uses a more specific context so that the submodule uses the same copy as
+    // the rest of the project. (Comments are not allowed in `remappings.txt` as Foundry rejects them.)
+    //
     // Dependencies that the tests deploy directly. Hardhat 3 only emits artifacts for compilation roots, so importing
     // them from a solidity file (the old `contracts/mocks/import.sol` trick) is not enough anymore.
     npmFilesToBuild: [

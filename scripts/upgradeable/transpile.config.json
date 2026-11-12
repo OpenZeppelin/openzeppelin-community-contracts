@@ -10,5 +10,9 @@
   ],
   "publicInitializers": ["!contracts/mocks/**/*"],
   "namespaced": true,
-  "namespaceExclude": ["contracts/mocks/**/*"]
+  "namespaceExclude": ["contracts/mocks/**/*"],
+  "peerProject": "@openzeppelin/community-",
+  "upgradeablePackages": {
+    "@openzeppelin/contracts/": "@openzeppelin/contracts-upgradeable/"
+  }
 }

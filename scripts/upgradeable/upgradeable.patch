@@ -1,5 +1,5 @@
 diff --git a/README.md b/README.md
-index dbce31e..074338a 100644
+index dbce31e2..074338a3 100644
 --- a/README.md
 +++ b/README.md
 @@ -8,6 +8,11 @@
@@ -14,20 +14,30 @@ index dbce31e..074338a 100644
  ## Overview
  
  This repository contains contracts and libraries in the following categories:
-diff --git a/hardhat.config.js b/hardhat.config.js
-index 754d915..1766649 100644
---- a/hardhat.config.js
-+++ b/hardhat.config.js
-@@ -55,6 +55,7 @@ module.exports = {
+diff --git a/hardhat.config.ts b/hardhat.config.ts
+index 367c2c9c..8b86a042 100644
+--- a/hardhat.config.ts
++++ b/hardhat.config.ts
+@@ -47,7 +47,7 @@ export default defineConfig({
+     // remappings.txt entry, so it is a project file that no compilation root imports by name: `npmFilesToBuild` cannot
+     // reach it (HHE901), and being imported is not enough for Hardhat 3 to emit an artifact. Building its directory as
+     // a source directory is what makes those artifacts appear.
+-    sources: [argv.src, 'lib/email-tx-builder/packages/contracts/src/utils'],
++    sources: [argv.src, 'lib/openzeppelin-community-contracts/contracts', 'lib/email-tx-builder/packages/contracts/src/utils'],
+   },
+   solidity: {
+     version: argv.compiler,
+@@ -114,7 +114,7 @@ export default defineConfig({
    exposed: {
      imports: true,
      initializers: true,
-+    exclude: ['**/*WithInit.sol'],
+-    include: ['contracts/**/*.sol'],
++    include: ['{,lib/openzeppelin-community-contracts/}contracts/**/*.sol'],
+     exclude: ['**/*WithInit.sol'],
    },
-   gasReporter: {
-     enabled: argv.gas,
+   docgen: await import('./docs/config.mjs').then(m => m.default),
 diff --git a/package.json b/package.json
-index 489f780..923ee3f 100644
+index 3d5173a5..0e85483f 100644
 --- a/package.json
 +++ b/package.json
 @@ -1,5 +1,5 @@
@@ -38,11 +48,11 @@ index 489f780..923ee3f 100644
    "description": "Solidity library of smart contracts from the OpenZeppelin Community",
    "author": "OpenZeppelin Community <maintainers@openzeppelin.org>",
 diff --git a/remappings.txt b/remappings.txt
-index 0ffaddd..d03bc78 100644
+index ed847262..ac65d26f 100644
 --- a/remappings.txt
 +++ b/remappings.txt
 @@ -1,6 +1,7 @@
- @openzeppelin/contracts/=lib/@openzeppelin-contracts/contracts/
+ @openzeppelin/contracts/=node_modules/@openzeppelin/contracts/contracts/
  @openzeppelin/contracts-upgradeable/=lib/@openzeppelin-contracts-upgradeable/contracts/
 -@openzeppelin/community-contracts/=contracts/
 +@openzeppelin/community-contracts-upgradeable/=contracts/
