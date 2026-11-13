@@ -12,6 +12,7 @@ import hardhatExposed from '@openzeppelin/contracts/hardhat/hardhat-exposed/plug
 import hardhatTranspiler from '@openzeppelin/contracts/hardhat/hardhat-transpiler/plugin.ts';
 import hardhatOzContractsHelpers from '@openzeppelin/contracts/hardhat/hardhat-oz-contracts-helpers/plugin.ts';
 import '@openzeppelin/contracts/hardhat/async-test-sanity.ts';
+import hardhatRemappingsPlugin from './hardhat/hardhat-remappings.ts';
 
 // Parameters
 import yargs from 'yargs/yargs';
@@ -25,6 +26,16 @@ const argv = await yargs()
     evm: { type: 'string', default: 'osaka' },
   })
   .parse();
+
+// `remappings.txt` points `@openzeppelin/contracts` to the submodule, which is what Foundry (and projects that install
+// this repository with `forge install`) need. Hardhat must instead resolve it through `node_modules`, as an npm
+// package, for `npmFilesToBuild` to accept its files and for every dependency to share a single copy (the
+// `zk-email-verify` submodule resolves `@openzeppelin/contracts` through npm). These remappings take precedence over
+// the ones of `remappings.txt` for Hardhat only.
+const hardhatRemappings = [
+  '@openzeppelin/contracts/=node_modules/@openzeppelin/contracts/contracts/',
+  'lib/@openzeppelin-contracts-upgradeable/contracts/:@openzeppelin/contracts/=node_modules/@openzeppelin/contracts/contracts/',
+];
 
 // Configuration
 export default defineConfig({
@@ -41,6 +52,7 @@ export default defineConfig({
     hardhatExposed,
     hardhatTranspiler,
     hardhatOzContractsHelpers,
+    hardhatRemappingsPlugin(hardhatRemappings),
   ],
   paths: {
     // `ECDSAOwnedDKIMRegistry` is needed (as-is, not exposed) by the tests. It lives in a submodule reached through a
@@ -51,10 +63,11 @@ export default defineConfig({
   },
   solidity: {
     version: argv.compiler,
-    // Remappings are defined in `remappings.txt`. Hardhat 3 also applies the `remappings.txt` of the
-    // `lib/@openzeppelin-contracts-upgradeable` submodule to its files, which points `@openzeppelin/contracts` to a nested
-    // copy. The last entry of `remappings.txt` uses a more specific context so that the submodule uses the same copy as
-    // the rest of the project. (Comments are not allowed in `remappings.txt` as Foundry rejects them.)
+    // Remappings are defined in `remappings.txt`, and overridden for Hardhat by `hardhatRemappings` (see above).
+    // Hardhat 3 also applies the `remappings.txt` of the `lib/@openzeppelin-contracts-upgradeable` submodule to its
+    // files, which points `@openzeppelin/contracts` to a nested copy. The last entry of `remappings.txt` (and of
+    // `hardhatRemappings`) uses a more specific context so that the submodule uses the same copy as the rest of the
+    // project. (Comments are not allowed in `remappings.txt` as Foundry rejects them.)
     //
     // Dependencies that the tests deploy directly. Hardhat 3 only emits artifacts for compilation roots, so importing
     // them from a solidity file (the old `contracts/mocks/import.sol` trick) is not enough anymore.

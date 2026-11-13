@@ -15,10 +15,18 @@ index dbce31e2..074338a3 100644
  
  This repository contains contracts and libraries in the following categories:
 diff --git a/hardhat.config.ts b/hardhat.config.ts
-index 367c2c9c..8b86a042 100644
+index 04f89f0c..bb081161 100644
 --- a/hardhat.config.ts
 +++ b/hardhat.config.ts
-@@ -47,7 +47,7 @@ export default defineConfig({
+@@ -35,6 +35,7 @@ const argv = await yargs()
+ const hardhatRemappings = [
+   '@openzeppelin/contracts/=node_modules/@openzeppelin/contracts/contracts/',
+   'lib/@openzeppelin-contracts-upgradeable/contracts/:@openzeppelin/contracts/=node_modules/@openzeppelin/contracts/contracts/',
++  'lib/openzeppelin-community-contracts/:@openzeppelin/contracts/=node_modules/@openzeppelin/contracts/contracts/',
+ ];
+ 
+ // Configuration
+@@ -59,7 +60,7 @@ export default defineConfig({
      // remappings.txt entry, so it is a project file that no compilation root imports by name: `npmFilesToBuild` cannot
      // reach it (HHE901), and being imported is not enough for Hardhat 3 to emit an artifact. Building its directory as
      // a source directory is what makes those artifacts appear.
@@ -27,7 +35,7 @@ index 367c2c9c..8b86a042 100644
    },
    solidity: {
      version: argv.compiler,
-@@ -114,7 +114,7 @@ export default defineConfig({
+@@ -127,7 +128,7 @@ export default defineConfig({
    exposed: {
      imports: true,
      initializers: true,
@@ -37,7 +45,7 @@ index 367c2c9c..8b86a042 100644
    },
    docgen: await import('./docs/config.mjs').then(m => m.default),
 diff --git a/package.json b/package.json
-index 3d5173a5..0e85483f 100644
+index 641ec406..e02d949e 100644
 --- a/package.json
 +++ b/package.json
 @@ -1,5 +1,5 @@
@@ -48,11 +56,11 @@ index 3d5173a5..0e85483f 100644
    "description": "Solidity library of smart contracts from the OpenZeppelin Community",
    "author": "OpenZeppelin Community <maintainers@openzeppelin.org>",
 diff --git a/remappings.txt b/remappings.txt
-index ed847262..ac65d26f 100644
+index 6e72639e..d9088320 100644
 --- a/remappings.txt
 +++ b/remappings.txt
 @@ -1,6 +1,7 @@
- @openzeppelin/contracts/=node_modules/@openzeppelin/contracts/contracts/
+ @openzeppelin/contracts/=lib/@openzeppelin-contracts/contracts/
  @openzeppelin/contracts-upgradeable/=lib/@openzeppelin-contracts-upgradeable/contracts/
 -@openzeppelin/community-contracts/=contracts/
 +@openzeppelin/community-contracts-upgradeable/=contracts/
