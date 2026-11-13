@@ -1,14 +1,12 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.27;
+pragma solidity ^0.8.31;
 
+import {IERC4626} from "@openzeppelin/contracts/interfaces/IERC4626.sol";
 import {IERC20, IERC20Metadata, ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {IERC4626} from "@openzeppelin/contracts/interfaces/IERC4626.sol";
 import {IERC165, ERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
-import {LowLevelCall} from "@openzeppelin/contracts/utils/LowLevelCall.sol";
-import {Memory} from "@openzeppelin/contracts/utils/Memory.sol";
 import {IERC7540, IERC7540Operator, IERC7540Deposit, IERC7540Redeem} from "../../../interfaces/IERC7540.sol";
 import {IERC7575, IERC7575Share} from "../../../interfaces/IERC7575.sol";
 
@@ -70,7 +68,7 @@ import {IERC7575, IERC7575Share} from "../../../interfaces/IERC7575.sol";
  * accounting (notably {totalAssets}) can revert and freeze claim paths that depend on live conversions.
  * ====
  */
-abstract contract ERC7540 is ERC165, ERC20, IERC4626, IERC7540, IERC7575Share {
+abstract contract ERC7540 is ERC20, IERC4626, ERC165, IERC7540, IERC7575Share {
     using Math for uint256;
 
     IERC20 private immutable _asset;
@@ -91,6 +89,9 @@ abstract contract ERC7540 is ERC165, ERC20, IERC4626, IERC7540, IERC7575Share {
 
     /// @dev Attempted to redeem more shares than the max amount for `owner`.
     error ERC4626ExceededMaxRedeem(address owner, uint256 shares, uint256 max);
+
+    /// @dev Attempted to {deposit} or {mint} with a native value (`msg.value`), which this vault does not accept.
+    error ERC4626UnexpectedNativeValue(uint256 value);
 
     /// @dev The `operator` is not the caller or an approved operator of the `controller`.
     error ERC7540InvalidOperator(address controller, address operator);
@@ -469,8 +470,11 @@ abstract contract ERC7540 is ERC165, ERC20, IERC4626, IERC7540, IERC7575Share {
 
     /**
      * @dev See {IERC4626-deposit}. Calls the three-argument overload with `msg.sender` as `controller`.
+     *
+     * NOTE: This function is `payable` to match {IERC4626}, but reverts if any native value is sent.
      */
-    function deposit(uint256 assets, address receiver) public virtual override returns (uint256) {
+    function deposit(uint256 assets, address receiver) public payable virtual override returns (uint256) {
+        require(msg.value == 0, ERC4626UnexpectedNativeValue(msg.value));
         return deposit(assets, receiver, _msgSender());
     }
 
@@ -506,8 +510,11 @@ abstract contract ERC7540 is ERC165, ERC20, IERC4626, IERC7540, IERC7575Share {
 
     /**
      * @dev See {IERC4626-mint}. Calls the three-argument overload with `msg.sender` as `controller`.
+     *
+     * NOTE: This function is `payable` to match {IERC4626}, but reverts if any native value is sent.
      */
-    function mint(uint256 shares, address receiver) public virtual override returns (uint256 assets) {
+    function mint(uint256 shares, address receiver) public payable virtual override returns (uint256 assets) {
+        require(msg.value == 0, ERC4626UnexpectedNativeValue(msg.value));
         return mint(shares, receiver, _msgSender());
     }
 
@@ -591,9 +598,8 @@ abstract contract ERC7540 is ERC165, ERC20, IERC4626, IERC7540, IERC7575Share {
             revert ERC4626ExceededMaxWithdraw(ownerOrController, assets, maxAssets);
         }
 
-        uint256 shares = _isRedeemAsync()
-            ? _consumeClaimableWithdraw(assets, ownerOrController)
-            : previewWithdraw(assets);
+        uint256 shares =
+            _isRedeemAsync() ? _consumeClaimableWithdraw(assets, ownerOrController) : previewWithdraw(assets);
         _withdraw(_msgSender(), receiver, ownerOrController, assets, shares);
         return shares;
     }

@@ -1,6 +1,6 @@
 // contracts/MyERC7579DelayedSocialRecovery.sol
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.27;
+pragma solidity ^0.8.31;
 
 import {EIP712} from "@openzeppelin/contracts/utils/cryptography/EIP712.sol";
 import {ERC7579Executor} from "../../../../account/modules/ERC7579Executor.sol";
@@ -10,8 +10,9 @@ import {ERC7579DelayedExecutor} from "../../../../account/modules/ERC7579Delayed
 import {ERC7579Multisig} from "../../../../account/modules/ERC7579Multisig.sol";
 
 abstract contract MyERC7579DelayedSocialRecovery is EIP712, ERC7579DelayedExecutor, ERC7579Multisig {
-    bytes32 private constant RECOVER_TYPEHASH =
-        keccak256("Recover(address account,bytes32 salt,bytes32 mode,bytes executionCalldata)");
+    bytes32 private constant RECOVER_TYPEHASH = keccak256(
+        "Recover(address account,bytes32 salt,bytes32 mode,bytes executionCalldata)"
+    );
 
     function isModuleType(uint256 moduleTypeId) public pure override(ERC7579Executor, ERC7579Validator) returns (bool) {
         return ERC7579Executor.isModuleType(moduleTypeId) || ERC7579Executor.isModuleType(moduleTypeId);

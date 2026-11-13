@@ -1,17 +1,21 @@
-const { ethers, predeploy } = require('hardhat');
-const { loadFixture } = require('@nomicfoundation/hardhat-network-helpers');
-
-const { getDomain, PackedUserOperation } = require('@openzeppelin/contracts/test/helpers/eip712');
-const { ERC4337Helper } = require('@openzeppelin/contracts/test/helpers/erc4337');
-const { NonNativeSigner } = require('@openzeppelin/contracts/test/helpers/signers');
-const { ZKEmailSigningKey } = require('../helpers/signers');
-
-const {
+import { network } from 'hardhat';
+import { getDomain } from '@openzeppelin/contracts/test/helpers/eip712';
+import { ERC4337Helper } from '@openzeppelin/contracts/test/helpers/erc4337';
+import { PackedUserOperation } from '@openzeppelin/contracts/test/helpers/eip712-types';
+import { NonNativeSigner } from '@openzeppelin/contracts/test/helpers/signers';
+import {
   shouldBehaveLikeAccountCore,
   shouldBehaveLikeAccountHolder,
-} = require('@openzeppelin/contracts/test/account/Account.behavior');
-const { shouldBehaveLikeERC1271 } = require('@openzeppelin/contracts/test/utils/cryptography/ERC1271.behavior');
-const { shouldBehaveLikeERC7821 } = require('@openzeppelin/contracts/test/account/extensions/ERC7821.behavior');
+} from '@openzeppelin/contracts/test/account/Account.behavior';
+import { shouldBehaveLikeERC1271 } from '@openzeppelin/contracts/test/utils/cryptography/ERC1271.behavior';
+import { shouldBehaveLikeERC7821 } from '@openzeppelin/contracts/test/account/extensions/ERC7821.behavior';
+import { ZKEmailSigningKey } from '../helpers/signers';
+
+const connection = await network.create();
+const {
+  ethers,
+  networkHelpers: { loadFixture },
+} = connection;
 
 // Constants for ZKEmail
 const accountSalt = '0x046582bce36cdd0a8953b9d40b8f20d58302bacf3bcecffeb6741c98a52725e2'; // keccak256("test@example.com")
@@ -47,9 +51,9 @@ async function fixture() {
   const verifierZKEmail = await ethers.deployContract('$ERC7913ZKEmailVerifier');
 
   // ERC-4337 env
-  const helper = new ERC4337Helper();
+  const helper = new ERC4337Helper(connection);
   await helper.wait();
-  const entrypointDomain = await getDomain(predeploy.entrypoint.v09);
+  const entrypointDomain = await getDomain(ethers.predeploy.entrypoint.v09);
   const domain = { name: 'AccountERC7913', version: '1', chainId: entrypointDomain.chainId }; // Missing verifyingContract
 
   const makeMock = signer =>
@@ -80,7 +84,7 @@ async function fixture() {
 
 describe('AccountERC7913', function () {
   beforeEach(async function () {
-    Object.assign(this, await loadFixture(fixture));
+    Object.assign(this, connection, await loadFixture(fixture));
   });
 
   // Using ZKEmail with an ERC-7913 verifier

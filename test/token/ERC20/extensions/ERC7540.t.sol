@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
+// solhint-disable func-name-mixedcase
+
 import {Test} from "forge-std/Test.sol";
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
@@ -91,6 +93,7 @@ interface IERC7540InvariantVault {
     function totalClaimableRedeemAssets() external view returns (uint256);
 }
 
+// solhint-disable-next-line max-states-count
 contract ERC7540InvariantHandler is Test {
     IERC7540InvariantVault public immutable vault;
     ERC7540InvariantAsset public immutable asset;
@@ -379,10 +382,11 @@ contract ERC7540InvariantHandler is Test {
         if (!found) return;
         uint256 shares = vault.totalRedeemShares(epochId);
         // keep the vault solvent: never promise more than the free balance (see {ERC7540-_isSolvent})
-        uint256 free = asset.balanceOf(address(vault)) +
-            vault.totalClaimableDepositAssets() -
-            vault.totalPendingDepositAssets() -
-            vault.totalClaimableRedeemAssets();
+        uint256 free =
+            asset.balanceOf(address(vault)) +
+                vault.totalClaimableDepositAssets() -
+                vault.totalPendingDepositAssets() -
+                vault.totalClaimableRedeemAssets();
         uint256 assets = (shares * bound(rateBps, 1, 30_000)) / 10_000;
         if (assets > free) assets = free;
         try vault.fulfillRedeemEpoch(epochId, assets) {

@@ -1,10 +1,14 @@
-const { ethers } = require('hardhat');
-const { expect } = require('chai');
-const { loadFixture } = require('@nomicfoundation/hardhat-network-helpers');
-const { getDomain } = require('@openzeppelin/contracts/test/helpers/eip712');
-const { ERC7739Signer } = require('@openzeppelin/contracts/test/helpers/erc7739');
-const { encodeMode, encodeBatch, CALL_TYPE_BATCH } = require('@openzeppelin/contracts/test/helpers/erc7579');
-const { shouldBehaveLikeERC1271 } = require('@openzeppelin/contracts/test/utils/cryptography/ERC1271.behavior');
+import { network } from 'hardhat';
+import { expect } from 'chai';
+import { getDomain } from '@openzeppelin/contracts/test/helpers/eip712';
+import { ERC7739Signer } from '@openzeppelin/contracts/test/helpers/erc7739';
+import { encodeMode, encodeBatch, CALL_TYPE_BATCH } from '@openzeppelin/contracts/test/helpers/erc7579';
+import { shouldBehaveLikeERC1271 } from '@openzeppelin/contracts/test/utils/cryptography/ERC1271.behavior';
+
+const {
+  ethers,
+  networkHelpers: { loadFixture },
+} = await network.create();
 
 const ERC1271_MAGIC_VALUE = '0x1626ba7e';
 const ROLE = 42n;
@@ -123,7 +127,7 @@ describe('RoleAccountFactory', function () {
     });
 
     it('reverts when deploying the same role twice', async function () {
-      await expect(this.factory.deployRoleAccount(this.manager, ROLE)).to.be.reverted;
+      await expect(this.factory.deployRoleAccount(this.manager, ROLE)).to.revert(ethers);
     });
   });
 

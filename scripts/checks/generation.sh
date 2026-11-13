@@ -1,6 +1,1 @@
-#!/usr/bin/env bash
-
-set -euo pipefail
-
-npm run generate
-git diff -R --exit-code
+../../lib/@openzeppelin-contracts/scripts/checks/generation.sh

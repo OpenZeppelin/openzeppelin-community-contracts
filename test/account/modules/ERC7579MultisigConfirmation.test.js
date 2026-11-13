@@ -1,14 +1,17 @@
-const { ethers, predeploy } = require('hardhat');
-const { expect } = require('chai');
-const { loadFixture, time } = require('@nomicfoundation/hardhat-network-helpers');
+import { network } from 'hardhat';
+import { expect } from 'chai';
+import { getDomain } from '@openzeppelin/contracts/test/helpers/eip712';
+import { ERC4337Helper } from '@openzeppelin/contracts/test/helpers/erc4337';
+import { MODULE_TYPE_EXECUTOR } from '@openzeppelin/contracts/test/helpers/erc7579';
+import { shouldBehaveLikeERC7579Module } from './ERC7579Module.behavior';
+import { MultisigConfirmation } from '../../helpers/eip712-types';
 
-const { impersonate } = require('@openzeppelin/contracts/test/helpers/account');
-const { getDomain } = require('@openzeppelin/contracts/test/helpers/eip712');
-const { ERC4337Helper } = require('@openzeppelin/contracts/test/helpers/erc4337');
-const { MODULE_TYPE_EXECUTOR } = require('@openzeppelin/contracts/test/helpers/erc7579');
-const { MultisigConfirmation } = require('../../helpers/eip712-types');
-
-const { shouldBehaveLikeERC7579Module } = require('./ERC7579Module.behavior');
+const connection = await network.create();
+const {
+  ethers,
+  helpers: { time, impersonate },
+  networkHelpers: { loadFixture },
+} = connection;
 
 // Prepare signers in advance
 const initialSigner = ethers.Wallet.createRandom();
@@ -22,13 +25,13 @@ async function fixture() {
   ]);
 
   // ERC-4337 env
-  const helper = new ERC4337Helper();
+  const helper = new ERC4337Helper(connection);
   await helper.wait();
 
   // ERC-7579 account
   const mockAccount = await helper.newAccount('$AccountERC7579');
   const mockFromAccount = await impersonate(mockAccount.address).then(asAccount => mock.connect(asAccount));
-  const mockAccountFromEntrypoint = await impersonate(predeploy.entrypoint.v09.target).then(asEntrypoint =>
+  const mockAccountFromEntrypoint = await impersonate(ethers.predeploy.entrypoint.v09.target).then(asEntrypoint =>
     mockAccount.connect(asEntrypoint),
   );
 
@@ -40,7 +43,7 @@ async function fixture() {
   const signers = abiCoder.encode(
     ['uint256', 'bytes', 'bytes'],
     [
-      (await time.latest()) + time.duration.days(1),
+      (await time.clock.timestamp()) + time.duration.days(1),
       initialSigner.address,
       await initialSigner.signTypedData(
         domain,
@@ -48,7 +51,7 @@ async function fixture() {
         {
           account: mockAccount.address,
           module: mock.target,
-          deadline: (await time.latest()) + time.duration.days(1),
+          deadline: (await time.clock.timestamp()) + time.duration.days(1),
         },
       ),
     ],
@@ -71,7 +74,7 @@ async function fixture() {
 
 describe('ERC7579MultisigConfirmation', function () {
   beforeEach(async function () {
-    Object.assign(this, await loadFixture(fixture));
+    Object.assign(this, connection, await loadFixture(fixture));
   });
 
   shouldBehaveLikeERC7579Module();
@@ -79,7 +82,7 @@ describe('ERC7579MultisigConfirmation', function () {
   describe('signer confirmation', function () {
     it('can add a signer with valid confirmation signature', async function () {
       // Create future deadline for signature validity
-      const deadline = (await time.latest()) + time.duration.days(1);
+      const deadline = (await time.clock.timestamp()) + time.duration.days(1);
 
       // Generate the typed data hash for confirmation
       const typedData = {
@@ -108,7 +111,7 @@ describe('ERC7579MultisigConfirmation', function () {
 
     it('rejects adding a signer with expired deadline', async function () {
       // Create expired deadline
-      const deadline = (await time.latest()) - 1;
+      const deadline = (await time.clock.timestamp()) - 1n;
 
       // Generate the typed data hash for confirmation
       const typedData = {
@@ -134,7 +137,7 @@ describe('ERC7579MultisigConfirmation', function () {
 
     it('rejects adding a signer with invalid signature', async function () {
       // Create future deadline for signature validity
-      const deadline = (await time.latest()) + time.duration.days(1);
+      const deadline = (await time.clock.timestamp()) + time.duration.days(1);
 
       // Generate typed data for a different account (invalid for our target)
       const typedData = {
@@ -160,7 +163,7 @@ describe('ERC7579MultisigConfirmation', function () {
 
     it('can add multiple signers with valid confirmation signatures', async function () {
       // Create future deadline for signature validity
-      const deadline = (await time.latest()) + time.duration.days(1);
+      const deadline = (await time.clock.timestamp()) + time.duration.days(1);
 
       // Create another signer to add
       const anotherSigner = ethers.Wallet.createRandom();
@@ -201,7 +204,7 @@ describe('ERC7579MultisigConfirmation', function () {
 
     it('fails to add multiple signers if any signature is invalid', async function () {
       // Create future deadline for signature validity
-      const deadline = (await time.latest()) + time.duration.days(1);
+      const deadline = (await time.clock.timestamp()) + time.duration.days(1);
 
       // Create another signer to add
       const anotherSigner = ethers.Wallet.createRandom();
@@ -251,7 +254,7 @@ describe('ERC7579MultisigConfirmation', function () {
 
     it('still allows removing signers without confirmation', async function () {
       // First, add a signer with valid confirmation
-      const deadline = (await time.latest()) + time.duration.days(1);
+      const deadline = (await time.clock.timestamp()) + time.duration.days(1);
       const typedData = {
         account: this.mockAccount.address,
         module: this.mock.target,

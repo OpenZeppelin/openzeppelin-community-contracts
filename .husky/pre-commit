@@ -1,1 +1,4 @@
+# This file is an exact copy of lib/@openzeppelin-contracts/.husky/pre-commit.
+
+npm run test:generation
 npx lint-staged

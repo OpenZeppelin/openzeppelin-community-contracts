@@ -1,0 +1,150 @@
+#!/usr/bin/env node
+
+// This file is an exact copy of lib/@openzeppelin-contracts/scripts/minimize-pragma.js.
+
+import fs from 'fs';
+import graphlib from 'graphlib';
+import semver from 'semver';
+import pLimit from 'p-limit';
+import { hideBin } from 'yargs/helpers';
+import yargs from 'yargs/yargs';
+
+import { getContractsMetadata } from './get-contracts-metadata.js';
+import { versions as allSolcVersions, compile } from './solc-versions.js';
+
+const {
+  argv: { pattern, skipPatterns, minVersionForContracts, minVersionForInterfaces, concurrency, _: artifacts },
+} = yargs(hideBin(process.argv))
+  .env('')
+  .options({
+    pattern: { alias: 'p', type: 'string', default: 'contracts/**/*.sol' },
+    skipPatterns: { alias: 's', type: 'string', default: 'contracts/mocks/**/*.sol' },
+    minVersionForContracts: { type: 'string', default: '0.8.20' },
+    minVersionForInterfaces: { type: 'string', default: '0.0.0' },
+    concurrency: { alias: 'c', type: 'number', default: 8 },
+  });
+
+// limit concurrency
+const limit = pLimit(concurrency);
+
+/********************************************************************************************************************
+ *                                                     HELPERS                                                      *
+ ********************************************************************************************************************/
+
+const setPragma = (file, pragma) =>
+  fs.writeFileSync(
+    file,
+    fs
+      .readFileSync(file, 'utf8')
+      .replace(/pragma solidity [><=^]*[0-9]+\.[0-9]+\.[0-9]+;/, `pragma solidity ${pragma};`),
+    'utf8',
+  );
+
+/**
+ * Updates the pragma in the given file to the newPragma version. If the file was procedurally
+ * generated, the same update is applied to its `.eta` template, so the change survives the next
+ * `npm run generate` and keeps the generated file in sync with its source.
+ * @param {*} file Path to the file to update (relative to the repo root).
+ * @param {*} pragma New pragma version to set. (ex: '>=0.8.4')
+ */
+const updatePragma = (file, pragma) => {
+  setPragma(file, pragma);
+  const template = fs.readFileSync(file, 'utf8').match(/procedurally generated from (\S+\.eta)/)?.[1];
+  if (template && fs.existsSync(template)) setPragma(template, pragma);
+};
+
+/**
+ * Get the applicable pragmas for a given file by compiling it with all solc versions.
+ * @param {*} file Absolute path to the file to compile.
+ * @param {*} candidates List of solc version to test. (ex: ['0.8.4','0.8.5'])
+ * @returns {Promise<string[]>} List of applicable pragmas.
+ */
+const getApplicablePragmas = (file, candidates = allSolcVersions) =>
+  Promise.all(
+    candidates.map(version =>
+      limit(() =>
+        compile(file, version).then(
+          () => version,
+          () => null,
+        ),
+      ),
+    ),
+  ).then(versions => versions.filter(Boolean));
+
+/**
+ * Get the minimum applicable pragmas for a given file.
+ * @param {*} file Absolute path to the file to compile.
+ * @param {*} candidates List of solc version to test. (ex: ['0.8.4','0.8.5'])
+ * @returns {Promise<string>} Smallest applicable pragma out of the list.
+ */
+const getMinimalApplicablePragma = (file, candidates = allSolcVersions) =>
+  getApplicablePragmas(file, candidates).then(valid => {
+    if (valid.length == 0) {
+      throw new Error(`No valid pragma found for ${file}`);
+    } else {
+      return valid.sort(semver.compare).at(0);
+    }
+  });
+
+/**
+ * Get the minimum applicable pragmas for a given file, and update the file to use it.
+ * @param {*} file Absolute path to the file to compile.
+ * @param {*} candidates List of solc version to test. (ex: ['0.8.4','0.8.5'])
+ * @param {*} prefix Prefix to use when building the pragma (ex: '^')
+ * @returns {Promise<string>} Version that was used and set in the file
+ */
+const setMinimalApplicablePragma = (file, candidates = allSolcVersions, prefix = '>=') =>
+  getMinimalApplicablePragma(file, candidates)
+    .then(version => `${prefix}${version}`)
+    .then(pragma => {
+      updatePragma(file, pragma);
+      return pragma;
+    });
+
+/********************************************************************************************************************
+ *                                                       MAIN                                                       *
+ ********************************************************************************************************************/
+
+// Build metadata from artifact files (hardhat compilation)
+const metadata = getContractsMetadata(pattern, skipPatterns, artifacts);
+
+// Build dependency graph
+const graph = new graphlib.Graph({ directed: true });
+Object.keys(metadata).forEach(file => {
+  graph.setNode(file);
+  metadata[file].sources.forEach(dep => graph.setEdge(dep, file));
+});
+
+// Weaken all pragma to allow exploration
+Object.keys(metadata).forEach(file => setPragma(file, '>=0.0.0'));
+
+// Do a topological traversal of the dependency graph, minimizing pragma for each file we encounter
+(async () => {
+  const queue = graph.sources();
+  const pragmas = {};
+  while (queue.length) {
+    const file = queue.shift();
+    if (!Object.hasOwn(pragmas, file)) {
+      if (Object.hasOwn(metadata, file)) {
+        const minVersion = metadata[file].interface ? minVersionForInterfaces : minVersionForContracts;
+        const parentsPragmas = graph
+          .predecessors(file)
+          .map(file => pragmas[file])
+          .filter(Boolean);
+        const candidates = allSolcVersions.filter(
+          v => semver.gte(v, minVersion) && parentsPragmas.every(p => semver.satisfies(v, p)),
+        );
+        const pragmaPrefix = metadata[file].interface ? '>=' : '^';
+
+        process.stdout.write(
+          `[${Object.keys(pragmas).length + 1}/${Object.keys(metadata).length}] Searching minimal version for ${file} ... `,
+        );
+        const pragma = await setMinimalApplicablePragma(file, candidates, pragmaPrefix);
+        console.log(pragma);
+
+        pragmas[file] = pragma;
+      }
+      queue.push(...graph.successors(file));
+    }
+  }
+})();

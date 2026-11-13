@@ -6,12 +6,15 @@ on:
       - master
       - release-v*
       - '!**-upgradeable'
+  workflow_dispatch: {}
 
 concurrency:
   group: upgradeable-${{ github.ref }}
 
 jobs:
   transpile:
+    # Skip on transpiled branches, which are already upgradeable
+    if: ${{ !endsWith(github.ref_name, '-upgradeable') }}
     permissions:
       contents: write
     runs-on: ubuntu-latest
@@ -19,7 +22,7 @@ jobs:
       REF_NAME: ${{ github.ref_name }}
       TARGET: ${{ github.ref_name }}-upgradeable
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
           submodules: recursive

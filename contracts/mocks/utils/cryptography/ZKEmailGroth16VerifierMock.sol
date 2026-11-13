@@ -6,10 +6,10 @@ import {IGroth16Verifier} from "@zk-email/email-tx-builder/src/interfaces/IGroth
 
 contract ZKEmailGroth16VerifierMock is IGroth16Verifier {
     function verifyProof(
-        uint[2] calldata _pA,
-        uint[2][2] calldata _pB,
-        uint[2] calldata _pC,
-        uint[34] calldata /* _pubSignals */
+        uint256[2] calldata _pA,
+        uint256[2][2] calldata _pB,
+        uint256[2] calldata _pC,
+        uint256[34] calldata /* _pubSignals */
     ) public pure returns (bool) {
         return
             _pA[0] == 1 &&

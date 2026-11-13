@@ -1,8 +1,6 @@
-const { expect } = require('chai');
-const { interfaceId } = require('@openzeppelin/contracts/test/helpers/methods');
-const {
-  shouldSupportInterfaces,
-} = require('@openzeppelin/contracts/test/utils/introspection/SupportsInterface.behavior');
+import { expect } from 'chai';
+import { interfaceId } from '@openzeppelin/contracts/test/helpers/methods';
+import { shouldSupportInterfaces } from '@openzeppelin/contracts/test/utils/introspection/SupportsInterface.behavior';
 
 const ERC7575 = [
   'asset()',
@@ -25,7 +23,7 @@ const ERC7575 = [
 ];
 const ERC7575Share = ['vault(address)'];
 
-function shouldBehaveLikeERC7575({ selfAsset } = {}) {
+export function shouldBehaveLikeERC7575({ selfAsset } = {}) {
   selfAsset ??= true;
 
   describe('Should behave like ERC7575', function () {
@@ -45,7 +43,3 @@ function shouldBehaveLikeERC7575({ selfAsset } = {}) {
     });
   });
 }
-
-module.exports = {
-  shouldBehaveLikeERC7575,
-};

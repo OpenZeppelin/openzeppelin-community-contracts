@@ -78,7 +78,7 @@ abstract contract ERC20Custodian is ERC20 {
      *
      * - The user must have sufficient unfrozen balance.
      */
-    function freeze(address user, uint256 amount) external virtual onlyCustodian {
+    function freeze(address user, uint256 amount) public virtual onlyCustodian {
         if (availableBalance(user) < amount) revert ERC20InsufficientUnfrozenBalance(user);
         _frozen[user] = amount;
         emit TokensFrozen(user, amount);

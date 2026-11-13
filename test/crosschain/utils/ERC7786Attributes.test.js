@@ -1,8 +1,11 @@
-const { ethers } = require('hardhat');
-const { expect } = require('chai');
-const { loadFixture } = require('@nomicfoundation/hardhat-network-helpers');
+import { network } from 'hardhat';
+import { expect } from 'chai';
+import ERC7786Attributes from '../../helpers/erc7786attributes';
 
-const ERC7786Attributes = require('../../helpers/erc7786attributes');
+const {
+  ethers,
+  networkHelpers: { loadFixture },
+} = await network.create();
 
 async function fixture() {
   const mock = await ethers.deployContract('$ERC7786Attributes');
