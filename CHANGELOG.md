@@ -1,3 +1,7 @@
+## 16-11-2026
+
+- `HybridProxy`: Detect a beacon with a low-level `staticcall` instead of `try`/`catch`. An implementation with a non-reverting fallback that returns less than 32 bytes no longer makes every call to the proxy revert.
+
 ## 04-11-2026
 
 - `WormholeGatewayAdapter`: `_wormholeRelayer` is now `private`. Use `relayer()` to read it.

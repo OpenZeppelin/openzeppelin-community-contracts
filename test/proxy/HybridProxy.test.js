@@ -49,4 +49,14 @@ describe('HybridProxy', function () {
     await this.proxy.upgradeToAndCall(this.beacon, '0x');
     await expect(this.implementation1.attach(this.proxy).version()).to.eventually.equal(2);
   });
+
+  it('implementation with a non-reverting fallback', async function () {
+    const implementation = await ethers.deployContract('UpgradeableImplementationWithFallbackMock', [4]);
+    await this.proxy.upgradeToAndCall(implementation, '0x');
+    await expect(implementation.attach(this.proxy).version()).to.eventually.equal(4);
+
+    // proxy can still be upgraded back to the beacon
+    await implementation.attach(this.proxy).upgradeToAndCall(this.beacon, '0x');
+    await expect(this.implementation1.attach(this.proxy).version()).to.eventually.equal(1);
+  });
 });

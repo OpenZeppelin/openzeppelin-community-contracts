@@ -40,10 +40,14 @@ contract HybridProxy is Proxy {
      */
     function _implementation() internal view override returns (address) {
         address implementation = ERC1967Utils.getImplementation();
-        try IBeacon(implementation).implementation() returns (address result) {
-            return result;
-        } catch {
-            return implementation;
+        // A low-level call is used instead of try/catch because try/catch does not catch failures to decode the
+        // return data. An implementation with a non-reverting fallback that returns less than 32 bytes would
+        // otherwise make every call to the proxy revert.
+        (bool success, bytes memory returndata) = implementation.staticcall(abi.encodeCall(IBeacon.implementation, ()));
+        if (success && returndata.length >= 32) {
+            uint256 result = abi.decode(returndata, (uint256));
+            if (result <= type(uint160).max) return address(uint160(result));
         }
+        return implementation;
     }
 }
