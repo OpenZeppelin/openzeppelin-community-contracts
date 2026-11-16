@@ -1,3 +1,7 @@
+## 16-11-2026
+
+- `WormholeGatewayAdapter`: Pass the local chain's Wormhole id as `refundChain` to `sendPayloadToEvm` instead of the destination chain's id. Refunds are now sent to `refundRecipient` on the source chain. The local chain must be registered with `registerChainEquivalence`.
+
 ## 04-11-2026
 
 - `WormholeGatewayAdapter`: `_wormholeRelayer` is now `private`. Use `relayer()` to read it.

@@ -330,7 +330,7 @@ contract WormholeGatewayAdapter is IERC7786GatewaySource, IWormholeReceiver, Own
             abi.encode(id, InteroperableAddress.formatEvmV1(block.chainid, sender), recipient, payload),
             recipientValue,
             gasLimit,
-            targetChain,
+            getWormholeChain(block.chainid),
             refundRecipient
         );
     }
