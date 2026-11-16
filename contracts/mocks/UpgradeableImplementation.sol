@@ -30,3 +30,17 @@ contract UpgradeableImplementationMock {
         revert UnexpectedCall(msg.sender, msg.value, msg.data);
     }
 }
+
+contract UpgradeableImplementationWithFallbackMock {
+    uint256 public immutable version;
+
+    constructor(uint256 _version) {
+        version = _version;
+    }
+
+    function upgradeToAndCall(address newImplementation, bytes memory data) public payable virtual {
+        ERC1967Utils.upgradeToAndCall(newImplementation, data);
+    }
+
+    fallback() external payable {}
+}
