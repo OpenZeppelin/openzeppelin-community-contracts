@@ -173,7 +173,7 @@ describe('RoleAccountFactory', function () {
 
   describe('ERC-7821 execution', function () {
     beforeEach(async function () {
-      this.target = await ethers.deployContract('CallReceiverMock');
+      this.target = await ethers.deployContract('$CallReceiverMock');
       this.mode = encodeMode({ callType: CALL_TYPE_BATCH });
       this.data = encodeBatch([this.target, 0n, this.target.interface.encodeFunctionData('mockFunction')]);
     });

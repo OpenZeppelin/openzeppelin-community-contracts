@@ -26,7 +26,7 @@ const SIGN_HASH_COMMAND = 'signHash';
 async function fixture() {
   // EOAs and environment
   const [admin, beneficiary, other] = await ethers.getSigners();
-  const target = await ethers.deployContract('CallReceiverMock');
+  const target = await ethers.deployContract('$CallReceiverMock');
 
   // Registry
   const dkim = await ethers.deployContract('ECDSAOwnedDKIMRegistry');
