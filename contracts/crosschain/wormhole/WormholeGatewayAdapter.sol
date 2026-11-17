@@ -194,6 +194,10 @@ contract WormholeGatewayAdapter is IERC7786GatewaySource, IWormholeReceiver, Own
             // No real need to check the return value.
             getRemoteGateway(recipient);
 
+            // Note: this reverts with UnsupportedChainId if the local chain is not registered. {requestRelay}
+            // needs it as the refund chain, so a message stored without it could never be relayed.
+            getWormholeChain(block.chainid);
+
             // Store the message for future execution in {requestRelay}
             _pending[sendId] = PendingMessage(true, msg.sender, msg.value, recipient, payload);
 
@@ -330,7 +334,7 @@ contract WormholeGatewayAdapter is IERC7786GatewaySource, IWormholeReceiver, Own
             abi.encode(id, InteroperableAddress.formatEvmV1(block.chainid, sender), recipient, payload),
             recipientValue,
             gasLimit,
-            targetChain,
+            getWormholeChain(block.chainid),
             refundRecipient
         );
     }
