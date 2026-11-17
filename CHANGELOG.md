@@ -1,6 +1,6 @@
 ## 16-11-2026
 
-- `WormholeGatewayAdapter`: Pass the local chain's Wormhole id as `refundChain` to `sendPayloadToEvm` instead of the destination chain's id. Refunds are now sent to `refundRecipient` on the source chain. The local chain must be registered with `registerChainEquivalence`.
+- `WormholeGatewayAdapter`: Pass the local chain's Wormhole id as `refundChain` to `sendPayloadToEvm` instead of the destination chain's id. Refunds are now requested to `refundRecipient` on the source chain. As with any cross-chain refund, the Wormhole relayer may still fail to deliver it (e.g. if the refund amount is too small to cover delivery). The local chain must be registered with `registerChainEquivalence`, and `sendMessage` now reverts with `UnsupportedChainId` when it is not.
 
 ## 04-11-2026
 
