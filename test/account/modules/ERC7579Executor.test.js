@@ -1,18 +1,21 @@
-const { ethers, predeploy } = require('hardhat');
-const { expect } = require('chai');
-const { loadFixture } = require('@nomicfoundation/hardhat-network-helpers');
-
-const { impersonate } = require('@openzeppelin/contracts/test/helpers/account');
-const { ERC4337Helper } = require('@openzeppelin/contracts/test/helpers/erc4337');
-const {
+import { network } from 'hardhat';
+import { expect } from 'chai';
+import { ERC4337Helper } from '@openzeppelin/contracts/test/helpers/erc4337';
+import {
   MODULE_TYPE_EXECUTOR,
-  encodeSingle,
-  encodeMode,
   CALL_TYPE_CALL,
   EXEC_TYPE_DEFAULT,
-} = require('@openzeppelin/contracts/test/helpers/erc7579');
+  encodeMode,
+  encodeSingle,
+} from '@openzeppelin/contracts/test/helpers/erc7579';
+import { shouldBehaveLikeERC7579Module } from './ERC7579Module.behavior';
 
-const { shouldBehaveLikeERC7579Module } = require('./ERC7579Module.behavior');
+const connection = await network.create();
+const {
+  ethers,
+  helpers: { impersonate },
+  networkHelpers: { loadFixture },
+} = connection;
 
 async function fixture() {
   // Deploy ERC-7579 validator module
@@ -20,7 +23,7 @@ async function fixture() {
   const target = await ethers.deployContract('CallReceiverMock');
 
   // ERC-4337 env
-  const helper = new ERC4337Helper();
+  const helper = new ERC4337Helper(connection);
   await helper.wait();
 
   // Prepare module installation data
@@ -33,7 +36,7 @@ async function fixture() {
   const moduleType = MODULE_TYPE_EXECUTOR;
 
   await mockAccount.deploy();
-  await impersonate(predeploy.entrypoint.v09.target).then(asEntrypoint =>
+  await impersonate(ethers.predeploy.entrypoint.v09.target).then(asEntrypoint =>
     mockAccount.connect(asEntrypoint).installModule(moduleType, mock.target, installData),
   );
 
@@ -58,7 +61,7 @@ async function fixture() {
 
 describe('ERC7579Executor', function () {
   beforeEach(async function () {
-    Object.assign(this, await loadFixture(fixture));
+    Object.assign(this, connection, await loadFixture(fixture));
   });
 
   describe('execute', function () {

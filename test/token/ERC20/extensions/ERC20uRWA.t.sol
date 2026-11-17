@@ -2,6 +2,8 @@
 
 pragma solidity ^0.8.26;
 
+// solhint-disable func-name-mixedcase
+
 import {Test} from "forge-std/Test.sol";
 import {IERC7943Fungible} from "@openzeppelin/community-contracts/interfaces/IERC7943.sol";
 import {ERC20uRWAMock} from "./ERC20uRWAMock.t.sol";

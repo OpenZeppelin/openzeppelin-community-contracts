@@ -1,8 +1,10 @@
-const path = require('path');
-const fs = require('fs');
+// This file is an exact copy of lib/@openzeppelin-contracts/docs/config.mjs.
 
-/** @type import('solidity-docgen/dist/config').UserConfig */
-module.exports = {
+import path from 'path';
+import fs from 'fs';
+
+/** @type import('../hardhat/hardhat-solidity-docgen/internal/config.ts').UserConfig */
+export default {
   outputDir: 'docs/modules/api/pages',
   templates: 'docs/templates',
   exclude: ['mocks'],

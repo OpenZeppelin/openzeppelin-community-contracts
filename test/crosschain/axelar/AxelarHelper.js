@@ -1,8 +1,8 @@
-const { ethers } = require('hardhat');
-const { getLocalChain } = require('@openzeppelin/contracts/test/helpers/chains');
-
-async function deploy(owner) {
-  const chain = await getLocalChain();
+export async function deploy(connection, owner) {
+  const {
+    ethers,
+    helpers: { chain },
+  } = connection;
 
   const axelar = await ethers.deployContract('AxelarGatewayMock');
   const gatewayA = await ethers.deployContract('AxelarGatewayAdapter', [axelar, owner]);
@@ -15,9 +15,5 @@ async function deploy(owner) {
     gatewayB.connect(owner).registerRemoteGateway(chain.toErc7930(gatewayA)),
   ]);
 
-  return { chain, axelar, gatewayA, gatewayB };
+  return { axelar, gatewayA, gatewayB };
 }
-
-module.exports = {
-  deploy,
-};

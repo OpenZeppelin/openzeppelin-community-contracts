@@ -2,7 +2,6 @@
 
 pragma solidity ^0.8.27;
 
-import {IWormholeRelayer} from "wormhole-solidity-sdk/interfaces/IWormholeRelayer.sol";
 import {IWormholeReceiver} from "wormhole-solidity-sdk/interfaces/IWormholeReceiver.sol";
 import {toUniversalAddress} from "wormhole-solidity-sdk/utils/UniversalAddress.sol";
 import {Address} from "@openzeppelin/contracts/utils/Address.sol";

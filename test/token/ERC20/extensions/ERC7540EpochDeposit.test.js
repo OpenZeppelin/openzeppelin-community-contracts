@@ -1,10 +1,13 @@
-const { ethers } = require('hardhat');
-const { expect } = require('chai');
-const { loadFixture } = require('@nomicfoundation/hardhat-network-helpers');
+import { network } from 'hardhat';
+import { expect } from 'chai';
+import { shouldBehaveLikeERC7540Operator, shouldBehaveLikeERC7540Deposit } from './ERC7540.behavior';
+import { shouldBehaveLikeERC7575 } from './ERC7575.behavior';
 
-const time = require('@openzeppelin/contracts/test/helpers/time');
-const { shouldBehaveLikeERC7540Operator, shouldBehaveLikeERC7540Deposit } = require('./ERC7540.behavior');
-const { shouldBehaveLikeERC7575 } = require('./ERC7575.behavior');
+const {
+  ethers,
+  helpers: { time },
+  networkHelpers: { loadFixture },
+} = await network.create();
 
 const name = 'Vault Shares';
 const symbol = 'vSHR';
@@ -23,6 +26,10 @@ async function advanceTo(epochId) {
 }
 
 describe('ERC7540EpochDeposit', function () {
+  before(async function () {
+    Object.assign(this, { ethers });
+  });
+
   for (const withTmpHolder of [false, true]) {
     describe(withTmpHolder ? 'With a temporary share holder' : 'With direct share operations', function () {
       async function fixture() {

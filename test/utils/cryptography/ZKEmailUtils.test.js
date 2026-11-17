@@ -1,7 +1,11 @@
-const { ethers } = require('hardhat');
-const { expect } = require('chai');
-const { loadFixture } = require('@nomicfoundation/hardhat-network-helpers');
-const { EmailProofError, Case } = require('../../helpers/enums');
+import { network } from 'hardhat';
+import { expect } from 'chai';
+import { EmailProofError, Case } from '../../helpers/enums';
+
+const {
+  ethers,
+  networkHelpers: { loadFixture },
+} = await network.create();
 
 const accountSalt = '0x046582bce36cdd0a8953b9d40b8f20d58302bacf3bcecffeb6741c98a52725e2'; // keccak256("test@example.com")
 
