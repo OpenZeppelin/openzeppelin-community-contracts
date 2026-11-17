@@ -33,10 +33,10 @@ const signerZKEmail = new NonNativeSigner(
 async function fixture() {
   // EOAs and environment
   const [admin, beneficiary, other] = await ethers.getSigners();
-  const target = await ethers.deployContract('CallReceiverMock');
+  const target = await ethers.deployContract('$CallReceiverMock');
 
   // DKIM Registry for ZKEmail
-  const dkim = await ethers.deployContract('ECDSAOwnedDKIMRegistry');
+  const dkim = await ethers.deployContract('ECDSAOwnedDKIMRegistryMock');
   await dkim.initialize(admin, admin);
   await dkim
     .SET_PREFIX()

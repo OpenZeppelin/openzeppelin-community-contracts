@@ -12,7 +12,7 @@ async function fixture() {
   const implementation1 = await ethers.deployContract('UpgradeableImplementationMock', [1]);
   const implementation2 = await ethers.deployContract('UpgradeableImplementationMock', [2]);
   const implementation3 = await ethers.deployContract('UpgradeableImplementationMock', [3]);
-  const beacon = await ethers.deployContract('UpgradeableBeacon', [implementation1, admin]);
+  const beacon = await ethers.deployContract('$UpgradeableBeacon', [implementation1, admin]);
   const proxy = await ethers
     .deployContract('HybridProxy', [beacon, '0x'])
     .then(({ target }) => implementation1.attach(target));
