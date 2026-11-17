@@ -37,6 +37,24 @@ const hardhatRemappings = [
   'lib/@openzeppelin-contracts-upgradeable/contracts/:@openzeppelin/contracts/=node_modules/@openzeppelin/contracts/contracts/',
 ];
 
+// Dependencies that the tests deploy. Hardhat 3 only emits artifacts for compilation roots, so importing them from a
+// solidity file is not enough: they are built as `npmFilesToBuild`. The tests deploy the first ones as-is, and the
+// exposed (`$`-prefixed) version of the others, which are therefore also included in `exposed`.
+const testDependencies = [
+  '@openzeppelin/contracts/mocks/CallReceiverMock.sol',
+  '@openzeppelin/contracts/proxy/beacon/UpgradeableBeacon.sol',
+  '@openzeppelin/contracts/utils/cryptography/verifiers/ERC7913P256Verifier.sol',
+  '@openzeppelin/contracts/utils/cryptography/verifiers/ERC7913RSAVerifier.sol',
+];
+const exposedTestDependencies = [
+  '@openzeppelin/contracts/access/manager/AccessManager.sol',
+  '@openzeppelin/contracts/mocks/account/AccountMock.sol',
+  '@openzeppelin/contracts/mocks/token/ERC20Reentrant.sol',
+  '@openzeppelin/contracts/token/ERC1155/ERC1155.sol',
+  '@openzeppelin/contracts/token/ERC721/ERC721.sol',
+  '@openzeppelin/contracts/utils/Create2.sol',
+];
+
 // Configuration
 export default defineConfig({
   plugins: [
@@ -68,15 +86,7 @@ export default defineConfig({
     // files, which points `@openzeppelin/contracts` to a nested copy. The last entry of `remappings.txt` (and of
     // `hardhatRemappings`) uses a more specific context so that the submodule uses the same copy as the rest of the
     // project. (Comments are not allowed in `remappings.txt` as Foundry rejects them.)
-    //
-    // Dependencies that the tests deploy directly. Hardhat 3 only emits artifacts for compilation roots, so importing
-    // them from a solidity file (the old `contracts/mocks/import.sol` trick) is not enough anymore.
-    npmFilesToBuild: [
-      '@openzeppelin/contracts/mocks/CallReceiverMock.sol',
-      '@openzeppelin/contracts/proxy/beacon/UpgradeableBeacon.sol',
-      '@openzeppelin/contracts/utils/cryptography/verifiers/ERC7913P256Verifier.sol',
-      '@openzeppelin/contracts/utils/cryptography/verifiers/ERC7913RSAVerifier.sol',
-    ],
+    npmFilesToBuild: [...testDependencies, ...exposedTestDependencies],
     settings: {
       optimizer: {
         enabled: true,
@@ -127,7 +137,7 @@ export default defineConfig({
   exposed: {
     imports: true,
     initializers: true,
-    include: ['contracts/**/*.sol'],
+    include: ['contracts/**/*.sol', ...exposedTestDependencies.map(file => `npm:${file}`)],
     exclude: ['**/*WithInit.sol'],
   },
   docgen: await import('./docs/config.mjs').then(m => m.default),
