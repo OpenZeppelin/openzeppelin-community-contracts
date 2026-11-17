@@ -1,3 +1,7 @@
+## 17-11-2026
+
+- Remove `IERC7540`, `IERC7575`, `ERC7540`, `ERC7540AdminDeposit`, `ERC7540AdminRedeem`, `ERC7540DelayDeposit`, `ERC7540DelayRedeem`, `ERC7540EpochDeposit`, `ERC7540EpochRedeem`, `ERC7540SyncDeposit` and `ERC7540SyncRedeem`. These contracts were migrated to `@openzeppelin/contracts` (OpenZeppelin/openzeppelin-contracts#6847).
+
 ## 04-11-2026
 
 - `WormholeGatewayAdapter`: `_wormholeRelayer` is now `private`. Use `relayer()` to read it.
