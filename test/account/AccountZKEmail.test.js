@@ -29,7 +29,7 @@ async function fixture() {
   const target = await ethers.deployContract('$CallReceiverMock');
 
   // Registry
-  const dkim = await ethers.deployContract('ECDSAOwnedDKIMRegistry');
+  const dkim = await ethers.deployContract('ECDSAOwnedDKIMRegistryMock');
   await dkim.initialize(admin, admin);
   await dkim
     .SET_PREFIX()

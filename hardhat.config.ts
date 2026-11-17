@@ -55,11 +55,7 @@ export default defineConfig({
     hardhatRemappingsPlugin(hardhatRemappings),
   ],
   paths: {
-    // `ECDSAOwnedDKIMRegistry` is needed (as-is, not exposed) by the tests. It lives in a submodule reached through a
-    // remappings.txt entry, so it is a project file that no compilation root imports by name: `npmFilesToBuild` cannot
-    // reach it (HHE901), and being imported is not enough for Hardhat 3 to emit an artifact. Building its directory as
-    // a source directory is what makes those artifacts appear.
-    sources: [argv.src, 'lib/email-tx-builder/packages/contracts/src/utils'],
+    sources: argv.src,
   },
   solidity: {
     version: argv.compiler,
