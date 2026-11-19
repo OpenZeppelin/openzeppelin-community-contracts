@@ -84,6 +84,9 @@ class Report {
     const methods = Object.keys(updateInfo.methods)
       .filter(key => refInfo.methods[key])
       .filter(key => updateInfo.methods[key].numberOfCalls > 0)
+      .filter(key =>
+        updateInfo.methods[key].gasData?.length > 0 && refInfo.methods[key].gasData?.length > 0,
+      )
       .filter(
         key => !opts.strictTesting || updateInfo.methods[key].numberOfCalls === refInfo.methods[key].numberOfCalls,
       )
