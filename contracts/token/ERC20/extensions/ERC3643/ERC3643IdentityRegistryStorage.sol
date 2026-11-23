@@ -4,7 +4,7 @@ pragma solidity ^0.8.27;
 
 import {Context} from "@openzeppelin/contracts/utils/Context.sol";
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
-import {IIdentity, IIdentityRegistryStorage} from "../../../../interfaces/IERC3643.sol";
+import {IERC3643Identity, IERC3643IdentityRegistryStorage} from "@openzeppelin/contracts/interfaces/IERC3643.sol";
 
 /**
  * @dev Implementation of the ERC-3643 Identity Registry Storage: the identity contract and country of each
@@ -24,11 +24,11 @@ import {IIdentity, IIdentityRegistryStorage} from "../../../../interfaces/IERC36
  * A wallet is stored while it has a non-zero identity contract. Its country is kept alongside and cleared when
  * the wallet is removed.
  */
-abstract contract ERC3643IdentityRegistryStorage is Context, IIdentityRegistryStorage {
+abstract contract ERC3643IdentityRegistryStorage is Context, IERC3643IdentityRegistryStorage {
     using EnumerableSet for EnumerableSet.AddressSet;
 
     struct StoredIdentity {
-        IIdentity identity;
+        IERC3643Identity identity;
         uint16 country;
     }
 
@@ -39,7 +39,7 @@ abstract contract ERC3643IdentityRegistryStorage is Context, IIdentityRegistrySt
     error ERC3643InvalidAccount(address account);
 
     /// @dev The identity contract is not a valid address.
-    error ERC3643InvalidIdentity(IIdentity identity);
+    error ERC3643InvalidIdentity(IERC3643Identity identity);
 
     /// @dev The wallet already has a stored identity.
     error ERC3643IdentityAlreadyStored(address account);
@@ -59,52 +59,52 @@ abstract contract ERC3643IdentityRegistryStorage is Context, IIdentityRegistrySt
     /// @dev The caller is not a bound identity registry.
     error ERC3643UnauthorizedIdentityRegistry(address caller);
 
-    /// @inheritdoc IIdentityRegistryStorage
-    function storedIdentity(address account) public view virtual returns (IIdentity) {
+    /// @inheritdoc IERC3643IdentityRegistryStorage
+    function storedIdentity(address account) public view virtual returns (IERC3643Identity) {
         return _identities[account].identity;
     }
 
-    /// @inheritdoc IIdentityRegistryStorage
+    /// @inheritdoc IERC3643IdentityRegistryStorage
     function storedInvestorCountry(address account) public view virtual returns (uint16) {
         return _identities[account].country;
     }
 
-    /// @inheritdoc IIdentityRegistryStorage
+    /// @inheritdoc IERC3643IdentityRegistryStorage
     function linkedIdentityRegistries() public view virtual returns (address[] memory) {
         return _identityRegistries.values();
     }
 
-    /// @inheritdoc IIdentityRegistryStorage
-    function addIdentityToStorage(address account, IIdentity identity, uint16 country) public virtual {
+    /// @inheritdoc IERC3643IdentityRegistryStorage
+    function addIdentityToStorage(address account, IERC3643Identity identity, uint16 country) public virtual {
         _authorizeIdentityWrite();
         require(_addIdentityToStorage(account, identity, country), ERC3643IdentityAlreadyStored(account));
     }
 
-    /// @inheritdoc IIdentityRegistryStorage
+    /// @inheritdoc IERC3643IdentityRegistryStorage
     function removeIdentityFromStorage(address account) public virtual {
         _authorizeIdentityWrite();
         require(_removeIdentityFromStorage(account), ERC3643IdentityNotStored(account));
     }
 
-    /// @inheritdoc IIdentityRegistryStorage
+    /// @inheritdoc IERC3643IdentityRegistryStorage
     function modifyStoredInvestorCountry(address account, uint16 country) public virtual {
         _authorizeIdentityWrite();
         require(_modifyStoredInvestorCountry(account, country), ERC3643IdentityNotStored(account));
     }
 
-    /// @inheritdoc IIdentityRegistryStorage
-    function modifyStoredIdentity(address account, IIdentity identity) public virtual {
+    /// @inheritdoc IERC3643IdentityRegistryStorage
+    function modifyStoredIdentity(address account, IERC3643Identity identity) public virtual {
         _authorizeIdentityWrite();
         require(_modifyStoredIdentity(account, identity), ERC3643IdentityNotStored(account));
     }
 
-    /// @inheritdoc IIdentityRegistryStorage
+    /// @inheritdoc IERC3643IdentityRegistryStorage
     function bindIdentityRegistry(address identityRegistry) public virtual {
         _authorizeRegistryBinding();
         require(_bindIdentityRegistry(identityRegistry), ERC3643IdentityRegistryAlreadyBound(identityRegistry));
     }
 
-    /// @inheritdoc IIdentityRegistryStorage
+    /// @inheritdoc IERC3643IdentityRegistryStorage
     function unbindIdentityRegistry(address identityRegistry) public virtual {
         _authorizeRegistryBinding();
         require(_unbindIdentityRegistry(identityRegistry), ERC3643IdentityRegistryNotBound(identityRegistry));
@@ -134,7 +134,7 @@ abstract contract ERC3643IdentityRegistryStorage is Context, IIdentityRegistrySt
      */
     function _addIdentityToStorage(
         address account,
-        IIdentity identity,
+        IERC3643Identity identity,
         uint16 country
     ) internal virtual returns (bool) {
         require(account != address(0), ERC3643InvalidAccount(address(0)));
@@ -153,7 +153,7 @@ abstract contract ERC3643IdentityRegistryStorage is Context, IIdentityRegistrySt
      * Emits an {IdentityUnstored} event when the identity is removed.
      */
     function _removeIdentityFromStorage(address account) internal virtual returns (bool) {
-        IIdentity identity = _identities[account].identity;
+        IERC3643Identity identity = _identities[account].identity;
         if (address(identity) == address(0)) return false;
         delete _identities[account];
         emit IdentityUnstored(account, identity);
@@ -182,10 +182,10 @@ abstract contract ERC3643IdentityRegistryStorage is Context, IIdentityRegistrySt
      *
      * Emits an {IdentityModified} event when the identity is replaced.
      */
-    function _modifyStoredIdentity(address account, IIdentity identity) internal virtual returns (bool) {
+    function _modifyStoredIdentity(address account, IERC3643Identity identity) internal virtual returns (bool) {
         require(address(identity) != address(0), ERC3643InvalidIdentity(identity));
         StoredIdentity storage stored = _identities[account];
-        IIdentity oldIdentity = stored.identity;
+        IERC3643Identity oldIdentity = stored.identity;
         if (address(oldIdentity) == address(0)) return false;
         stored.identity = identity;
         emit IdentityModified(oldIdentity, identity);

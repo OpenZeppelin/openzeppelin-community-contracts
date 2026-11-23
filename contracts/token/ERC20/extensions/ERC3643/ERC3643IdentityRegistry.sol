@@ -4,22 +4,22 @@ pragma solidity ^0.8.27;
 
 import {LowLevelCall} from "@openzeppelin/contracts/utils/LowLevelCall.sol";
 import {
-    IClaimIssuer,
-    IClaimTopicsRegistry,
-    IIdentity,
-    IIdentityRegistry,
-    IIdentityRegistryStorage,
-    ITrustedIssuersRegistry
-} from "../../../../interfaces/IERC3643.sol";
+    IERC3643ClaimIssuer,
+    IERC3643ClaimTopicsRegistry,
+    IERC3643Identity,
+    IERC3643IdentityRegistry,
+    IERC3643IdentityRegistryStorage,
+    IERC3643TrustedIssuersRegistry
+} from "@openzeppelin/contracts/interfaces/IERC3643.sol";
 import {IERC735, IERC735ClaimIssuer} from "../../../../interfaces/IERC735.sol";
 
 /**
  * @dev Implementation of the ERC-3643 Identity Registry: the registry an ERC-3643 token asks whether a wallet
  * may hold its tokens.
  *
- * Identities are kept in an {IIdentityRegistryStorage} (e.g. {ERC3643IdentityRegistryStorage}) that must bind
+ * Identities are kept in an {IERC3643IdentityRegistryStorage} (e.g. {ERC3643IdentityRegistryStorage}) that must bind
  * this registry before it can register identities. A wallet is verified when its identity holds, for every
- * topic of the {IClaimTopicsRegistry}, a valid claim from an issuer the {ITrustedIssuersRegistry} trusts for
+ * topic of the {IERC3643ClaimTopicsRegistry}, a valid claim from an issuer the {IERC3643TrustedIssuersRegistry} trusts for
  * that topic.
  *
  * Claims are checked by {_isClaimValid}, which follows the ERC-735 claim holder model by default. Derived
@@ -47,10 +47,10 @@ import {IERC735, IERC735ClaimIssuer} from "../../../../interfaces/IERC735.sol";
  * }
  * ```
  */
-abstract contract ERC3643IdentityRegistry is IIdentityRegistry {
-    IIdentityRegistryStorage private _identityStorage;
-    ITrustedIssuersRegistry private _issuersRegistry;
-    IClaimTopicsRegistry private _topicsRegistry;
+abstract contract ERC3643IdentityRegistry is IERC3643IdentityRegistry {
+    IERC3643IdentityRegistryStorage private _identityStorage;
+    IERC3643TrustedIssuersRegistry private _issuersRegistry;
+    IERC3643ClaimTopicsRegistry private _topicsRegistry;
 
     /// @dev The identity registry storage is the zero address.
     error ERC3643MissingIdentityRegistryStorage();
@@ -71,32 +71,32 @@ abstract contract ERC3643IdentityRegistry is IIdentityRegistry {
         _setClaimTopicsRegistry(claimTopicsRegistry_);
     }
 
-    /// @inheritdoc IIdentityRegistry
-    function identityStorage() public view virtual returns (IIdentityRegistryStorage) {
+    /// @inheritdoc IERC3643IdentityRegistry
+    function identityStorage() public view virtual returns (IERC3643IdentityRegistryStorage) {
         return _identityStorage;
     }
 
-    /// @inheritdoc IIdentityRegistry
-    function issuersRegistry() public view virtual returns (ITrustedIssuersRegistry) {
+    /// @inheritdoc IERC3643IdentityRegistry
+    function issuersRegistry() public view virtual returns (IERC3643TrustedIssuersRegistry) {
         return _issuersRegistry;
     }
 
-    /// @inheritdoc IIdentityRegistry
-    function topicsRegistry() public view virtual returns (IClaimTopicsRegistry) {
+    /// @inheritdoc IERC3643IdentityRegistry
+    function topicsRegistry() public view virtual returns (IERC3643ClaimTopicsRegistry) {
         return _topicsRegistry;
     }
 
-    /// @inheritdoc IIdentityRegistry
+    /// @inheritdoc IERC3643IdentityRegistry
     function contains(address account) public view virtual returns (bool) {
         return address(identity(account)) != address(0);
     }
 
-    /// @inheritdoc IIdentityRegistry
-    function identity(address account) public view virtual returns (IIdentity) {
+    /// @inheritdoc IERC3643IdentityRegistry
+    function identity(address account) public view virtual returns (IERC3643Identity) {
         return identityStorage().storedIdentity(account);
     }
 
-    /// @inheritdoc IIdentityRegistry
+    /// @inheritdoc IERC3643IdentityRegistry
     function investorCountry(address account) public view virtual returns (uint16) {
         return identityStorage().storedInvestorCountry(account);
     }
@@ -109,11 +109,11 @@ abstract contract ERC3643IdentityRegistry is IIdentityRegistry {
      * satisfied.
      */
     function isVerified(address account) public view virtual returns (bool) {
-        IIdentity userIdentity = identity(account);
+        IERC3643Identity userIdentity = identity(account);
         if (address(userIdentity) == address(0)) return false;
 
         uint256[] memory claimTopics = topicsRegistry().getClaimTopics();
-        ITrustedIssuersRegistry trustedIssuers = issuersRegistry();
+        IERC3643TrustedIssuersRegistry trustedIssuers = issuersRegistry();
         for (uint256 i = 0; i < claimTopics.length; ++i) {
             if (
                 !_hasValidClaim(
@@ -128,34 +128,34 @@ abstract contract ERC3643IdentityRegistry is IIdentityRegistry {
         return true;
     }
 
-    /// @inheritdoc IIdentityRegistry
+    /// @inheritdoc IERC3643IdentityRegistry
     function setIdentityRegistryStorage(address identityRegistryStorage) public virtual {
         _authorizeRegistryUpdate();
         _setIdentityRegistryStorage(identityRegistryStorage);
     }
 
-    /// @inheritdoc IIdentityRegistry
+    /// @inheritdoc IERC3643IdentityRegistry
     function setTrustedIssuersRegistry(address trustedIssuersRegistry) public virtual {
         _authorizeRegistryUpdate();
         _setTrustedIssuersRegistry(trustedIssuersRegistry);
     }
 
-    /// @inheritdoc IIdentityRegistry
+    /// @inheritdoc IERC3643IdentityRegistry
     function setClaimTopicsRegistry(address claimTopicsRegistry) public virtual {
         _authorizeRegistryUpdate();
         _setClaimTopicsRegistry(claimTopicsRegistry);
     }
 
-    /// @inheritdoc IIdentityRegistry
-    function registerIdentity(address account, IIdentity userIdentity, uint16 country) public virtual {
+    /// @inheritdoc IERC3643IdentityRegistry
+    function registerIdentity(address account, IERC3643Identity userIdentity, uint16 country) public virtual {
         _authorizeIdentityUpdate();
         _registerIdentity(account, userIdentity, country);
     }
 
-    /// @inheritdoc IIdentityRegistry
+    /// @inheritdoc IERC3643IdentityRegistry
     function batchRegisterIdentity(
         address[] calldata accounts,
-        IIdentity[] calldata identities,
+        IERC3643Identity[] calldata identities,
         uint16[] calldata countries
     ) public virtual {
         _authorizeIdentityUpdate();
@@ -168,20 +168,20 @@ abstract contract ERC3643IdentityRegistry is IIdentityRegistry {
         }
     }
 
-    /// @inheritdoc IIdentityRegistry
+    /// @inheritdoc IERC3643IdentityRegistry
     function deleteIdentity(address account) public virtual {
         _authorizeIdentityUpdate();
         _deleteIdentity(account);
     }
 
-    /// @inheritdoc IIdentityRegistry
+    /// @inheritdoc IERC3643IdentityRegistry
     function updateCountry(address account, uint16 country) public virtual {
         _authorizeIdentityUpdate();
         _updateCountry(account, country);
     }
 
-    /// @inheritdoc IIdentityRegistry
-    function updateIdentity(address account, IIdentity userIdentity) public virtual {
+    /// @inheritdoc IERC3643IdentityRegistry
+    function updateIdentity(address account, IERC3643Identity userIdentity) public virtual {
         _authorizeIdentityUpdate();
         _updateIdentity(account, userIdentity);
     }
@@ -199,7 +199,7 @@ abstract contract ERC3643IdentityRegistry is IIdentityRegistry {
      */
     function _setIdentityRegistryStorage(address identityRegistryStorage) internal virtual {
         require(identityRegistryStorage != address(0), ERC3643MissingIdentityRegistryStorage());
-        _identityStorage = IIdentityRegistryStorage(identityRegistryStorage);
+        _identityStorage = IERC3643IdentityRegistryStorage(identityRegistryStorage);
         emit IdentityStorageSet(identityRegistryStorage);
     }
 
@@ -210,7 +210,7 @@ abstract contract ERC3643IdentityRegistry is IIdentityRegistry {
      */
     function _setTrustedIssuersRegistry(address trustedIssuersRegistry) internal virtual {
         require(trustedIssuersRegistry != address(0), ERC3643MissingTrustedIssuersRegistry());
-        _issuersRegistry = ITrustedIssuersRegistry(trustedIssuersRegistry);
+        _issuersRegistry = IERC3643TrustedIssuersRegistry(trustedIssuersRegistry);
         emit TrustedIssuersRegistrySet(trustedIssuersRegistry);
     }
 
@@ -221,7 +221,7 @@ abstract contract ERC3643IdentityRegistry is IIdentityRegistry {
      */
     function _setClaimTopicsRegistry(address claimTopicsRegistry) internal virtual {
         require(claimTopicsRegistry != address(0), ERC3643MissingClaimTopicsRegistry());
-        _topicsRegistry = IClaimTopicsRegistry(claimTopicsRegistry);
+        _topicsRegistry = IERC3643ClaimTopicsRegistry(claimTopicsRegistry);
         emit ClaimTopicsRegistrySet(claimTopicsRegistry);
     }
 
@@ -230,7 +230,7 @@ abstract contract ERC3643IdentityRegistry is IIdentityRegistry {
      *
      * Emits an {IdentityRegistered} event.
      */
-    function _registerIdentity(address account, IIdentity userIdentity, uint16 country) internal virtual {
+    function _registerIdentity(address account, IERC3643Identity userIdentity, uint16 country) internal virtual {
         identityStorage().addIdentityToStorage(account, userIdentity, country);
         emit IdentityRegistered(account, userIdentity);
     }
@@ -241,7 +241,7 @@ abstract contract ERC3643IdentityRegistry is IIdentityRegistry {
      * Emits an {IdentityRemoved} event.
      */
     function _deleteIdentity(address account) internal virtual {
-        IIdentity oldIdentity = identity(account);
+        IERC3643Identity oldIdentity = identity(account);
         identityStorage().removeIdentityFromStorage(account);
         emit IdentityRemoved(account, oldIdentity);
     }
@@ -261,8 +261,8 @@ abstract contract ERC3643IdentityRegistry is IIdentityRegistry {
      *
      * Emits an {IdentityUpdated} event.
      */
-    function _updateIdentity(address account, IIdentity userIdentity) internal virtual {
-        IIdentity oldIdentity = identity(account);
+    function _updateIdentity(address account, IERC3643Identity userIdentity) internal virtual {
+        IERC3643Identity oldIdentity = identity(account);
         identityStorage().modifyStoredIdentity(account, userIdentity);
         emit IdentityUpdated(oldIdentity, userIdentity);
     }
@@ -272,9 +272,9 @@ abstract contract ERC3643IdentityRegistry is IIdentityRegistry {
      * `trustedIssuers`.
      */
     function _hasValidClaim(
-        IIdentity userIdentity,
+        IERC3643Identity userIdentity,
         uint256 claimTopic,
-        IClaimIssuer[] memory trustedIssuers
+        IERC3643ClaimIssuer[] memory trustedIssuers
     ) private view returns (bool) {
         for (uint256 i = 0; i < trustedIssuers.length; ++i) {
             if (_isClaimValid(userIdentity, trustedIssuers[i], claimTopic)) return true;
@@ -293,8 +293,8 @@ abstract contract ERC3643IdentityRegistry is IIdentityRegistry {
      * Override to support identities or claims in another format.
      */
     function _isClaimValid(
-        IIdentity userIdentity,
-        IClaimIssuer issuer,
+        IERC3643Identity userIdentity,
+        IERC3643ClaimIssuer issuer,
         uint256 claimTopic
     ) internal view virtual returns (bool) {
         try IERC735(address(userIdentity)).getClaim(keccak256(abi.encode(issuer, claimTopic))) returns (

@@ -3,7 +3,7 @@
 pragma solidity ^0.8.27;
 
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
-import {IClaimIssuer, ITrustedIssuersRegistry} from "../../../../interfaces/IERC3643.sol";
+import {IERC3643ClaimIssuer, IERC3643TrustedIssuersRegistry} from "@openzeppelin/contracts/interfaces/IERC3643.sol";
 
 /**
  * @dev Implementation of the ERC-3643 Trusted Issuers Registry: the claim issuers an {ERC3643IdentityRegistry}
@@ -27,7 +27,7 @@ import {IClaimIssuer, ITrustedIssuersRegistry} from "../../../../interfaces/IERC
  * the number of issuers. Neither the number of issuers nor the number of topics per issuer is capped. Derived
  * contracts that need a bound can override {_addTrustedIssuer} and {_updateIssuerClaimTopics}.
  */
-abstract contract ERC3643TrustedIssuersRegistry is ITrustedIssuersRegistry {
+abstract contract ERC3643TrustedIssuersRegistry is IERC3643TrustedIssuersRegistry {
     using EnumerableSet for EnumerableSet.AddressSet;
     using EnumerableSet for EnumerableSet.UintSet;
 
@@ -47,12 +47,12 @@ abstract contract ERC3643TrustedIssuersRegistry is ITrustedIssuersRegistry {
     /// @dev The trusted issuer would be trusted for no claim topic.
     error ERC3643EmptyClaimTopics(address issuer);
 
-    /// @inheritdoc ITrustedIssuersRegistry
-    function getTrustedIssuers() public view virtual returns (IClaimIssuer[] memory) {
+    /// @inheritdoc IERC3643TrustedIssuersRegistry
+    function getTrustedIssuers() public view virtual returns (IERC3643ClaimIssuer[] memory) {
         return _asClaimIssuers(_trustedIssuers.values());
     }
 
-    /// @inheritdoc ITrustedIssuersRegistry
+    /// @inheritdoc IERC3643TrustedIssuersRegistry
     function isTrustedIssuer(address issuer) public view virtual returns (bool) {
         return _trustedIssuers.contains(issuer);
     }
@@ -62,22 +62,26 @@ abstract contract ERC3643TrustedIssuersRegistry is ITrustedIssuersRegistry {
      *
      * NOTE: Returns an empty array if `trustedIssuer` is not registered.
      */
-    function getTrustedIssuerClaimTopics(IClaimIssuer trustedIssuer) public view virtual returns (uint256[] memory) {
+    function getTrustedIssuerClaimTopics(
+        IERC3643ClaimIssuer trustedIssuer
+    ) public view virtual returns (uint256[] memory) {
         return _issuerClaimTopics[address(trustedIssuer)].values();
     }
 
-    /// @inheritdoc ITrustedIssuersRegistry
-    function getTrustedIssuersForClaimTopic(uint256 claimTopic) public view virtual returns (IClaimIssuer[] memory) {
+    /// @inheritdoc IERC3643TrustedIssuersRegistry
+    function getTrustedIssuersForClaimTopic(
+        uint256 claimTopic
+    ) public view virtual returns (IERC3643ClaimIssuer[] memory) {
         return _asClaimIssuers(_claimTopicIssuers[claimTopic].values());
     }
 
-    /// @inheritdoc ITrustedIssuersRegistry
+    /// @inheritdoc IERC3643TrustedIssuersRegistry
     function hasClaimTopic(address issuer, uint256 claimTopic) public view virtual returns (bool) {
         return _issuerClaimTopics[issuer].contains(claimTopic);
     }
 
-    /// @inheritdoc ITrustedIssuersRegistry
-    function addTrustedIssuer(IClaimIssuer trustedIssuer, uint256[] calldata claimTopics) public virtual {
+    /// @inheritdoc IERC3643TrustedIssuersRegistry
+    function addTrustedIssuer(IERC3643ClaimIssuer trustedIssuer, uint256[] calldata claimTopics) public virtual {
         _authorizeIssuersUpdate();
         require(
             _addTrustedIssuer(trustedIssuer, claimTopics),
@@ -85,14 +89,14 @@ abstract contract ERC3643TrustedIssuersRegistry is ITrustedIssuersRegistry {
         );
     }
 
-    /// @inheritdoc ITrustedIssuersRegistry
-    function removeTrustedIssuer(IClaimIssuer trustedIssuer) public virtual {
+    /// @inheritdoc IERC3643TrustedIssuersRegistry
+    function removeTrustedIssuer(IERC3643ClaimIssuer trustedIssuer) public virtual {
         _authorizeIssuersUpdate();
         require(_removeTrustedIssuer(trustedIssuer), ERC3643TrustedIssuerNotRegistered(address(trustedIssuer)));
     }
 
-    /// @inheritdoc ITrustedIssuersRegistry
-    function updateIssuerClaimTopics(IClaimIssuer trustedIssuer, uint256[] calldata claimTopics) public virtual {
+    /// @inheritdoc IERC3643TrustedIssuersRegistry
+    function updateIssuerClaimTopics(IERC3643ClaimIssuer trustedIssuer, uint256[] calldata claimTopics) public virtual {
         _authorizeIssuersUpdate();
         require(
             _updateIssuerClaimTopics(trustedIssuer, claimTopics),
@@ -114,7 +118,7 @@ abstract contract ERC3643TrustedIssuersRegistry is ITrustedIssuersRegistry {
      * Emits a {TrustedIssuerAdded} event when the issuer is registered. Duplicated topics are stored once.
      */
     function _addTrustedIssuer(
-        IClaimIssuer trustedIssuer,
+        IERC3643ClaimIssuer trustedIssuer,
         uint256[] memory claimTopics
     ) internal virtual returns (bool) {
         address issuer = address(trustedIssuer);
@@ -131,7 +135,7 @@ abstract contract ERC3643TrustedIssuersRegistry is ITrustedIssuersRegistry {
      *
      * Emits a {TrustedIssuerRemoved} event when the issuer is removed.
      */
-    function _removeTrustedIssuer(IClaimIssuer trustedIssuer) internal virtual returns (bool) {
+    function _removeTrustedIssuer(IERC3643ClaimIssuer trustedIssuer) internal virtual returns (bool) {
         address issuer = address(trustedIssuer);
         if (!_trustedIssuers.remove(issuer)) return false;
         _clearIssuerClaimTopics(issuer);
@@ -150,7 +154,7 @@ abstract contract ERC3643TrustedIssuersRegistry is ITrustedIssuersRegistry {
      * Emits a {ClaimTopicsUpdated} event when the topics are replaced. Duplicated topics are stored once.
      */
     function _updateIssuerClaimTopics(
-        IClaimIssuer trustedIssuer,
+        IERC3643ClaimIssuer trustedIssuer,
         uint256[] memory claimTopics
     ) internal virtual returns (bool) {
         address issuer = address(trustedIssuer);
@@ -180,8 +184,8 @@ abstract contract ERC3643TrustedIssuersRegistry is ITrustedIssuersRegistry {
         issuerTopics.clear();
     }
 
-    /// @dev Reinterprets a list of addresses as a list of {IClaimIssuer}. Both have the same memory layout.
-    function _asClaimIssuers(address[] memory issuers) private pure returns (IClaimIssuer[] memory result) {
+    /// @dev Reinterprets a list of addresses as a list of {IERC3643ClaimIssuer}. Both have the same memory layout.
+    function _asClaimIssuers(address[] memory issuers) private pure returns (IERC3643ClaimIssuer[] memory result) {
         assembly ("memory-safe") {
             result := issuers
         }

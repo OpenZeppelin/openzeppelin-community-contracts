@@ -3,7 +3,7 @@
 pragma solidity ^0.8.27;
 
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
-import {IClaimTopicsRegistry} from "../../../../interfaces/IERC3643.sol";
+import {IERC3643ClaimTopicsRegistry} from "@openzeppelin/contracts/interfaces/IERC3643.sol";
 
 /**
  * @dev Implementation of the ERC-3643 Claim Topics Registry: the claim topics an identity must hold a valid
@@ -23,7 +23,7 @@ import {IClaimTopicsRegistry} from "../../../../interfaces/IERC3643.sol";
  * NOTE: {ERC3643IdentityRegistry-isVerified} checks every registered topic, so its cost grows with the number of
  * topics. The number is not capped. Derived contracts that need a bound can override {_addClaimTopic}.
  */
-abstract contract ERC3643ClaimTopicsRegistry is IClaimTopicsRegistry {
+abstract contract ERC3643ClaimTopicsRegistry is IERC3643ClaimTopicsRegistry {
     using EnumerableSet for EnumerableSet.UintSet;
 
     EnumerableSet.UintSet private _claimTopics;
@@ -34,18 +34,18 @@ abstract contract ERC3643ClaimTopicsRegistry is IClaimTopicsRegistry {
     /// @dev The claim topic is not registered.
     error ERC3643ClaimTopicNotRegistered(uint256 claimTopic);
 
-    /// @inheritdoc IClaimTopicsRegistry
+    /// @inheritdoc IERC3643ClaimTopicsRegistry
     function getClaimTopics() public view virtual returns (uint256[] memory) {
         return _claimTopics.values();
     }
 
-    /// @inheritdoc IClaimTopicsRegistry
+    /// @inheritdoc IERC3643ClaimTopicsRegistry
     function addClaimTopic(uint256 claimTopic) public virtual {
         _authorizeClaimTopicsUpdate();
         require(_addClaimTopic(claimTopic), ERC3643ClaimTopicAlreadyRegistered(claimTopic));
     }
 
-    /// @inheritdoc IClaimTopicsRegistry
+    /// @inheritdoc IERC3643ClaimTopicsRegistry
     function removeClaimTopic(uint256 claimTopic) public virtual {
         _authorizeClaimTopicsUpdate();
         require(_removeClaimTopic(claimTopic), ERC3643ClaimTopicNotRegistered(claimTopic));
