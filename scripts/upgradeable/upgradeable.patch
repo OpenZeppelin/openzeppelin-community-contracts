@@ -15,7 +15,7 @@ index dbce31e2..074338a3 100644
  
  This repository contains contracts and libraries in the following categories:
 diff --git a/hardhat.config.ts b/hardhat.config.ts
-index 04f89f0c..bb081161 100644
+index f30ef084..dd373ea1 100644
 --- a/hardhat.config.ts
 +++ b/hardhat.config.ts
 @@ -35,6 +35,7 @@ const argv = await yargs()
@@ -26,21 +26,25 @@ index 04f89f0c..bb081161 100644
  ];
  
  // Configuration
-@@ -59,7 +60,7 @@ export default defineConfig({
+@@ -59,7 +60,11 @@ export default defineConfig({
      // remappings.txt entry, so it is a project file that no compilation root imports by name: `npmFilesToBuild` cannot
      // reach it (HHE901), and being imported is not enough for Hardhat 3 to emit an artifact. Building its directory as
      // a source directory is what makes those artifacts appear.
 -    sources: [argv.src, 'lib/email-tx-builder/packages/contracts/src/utils'],
-+    sources: [argv.src, 'lib/openzeppelin-community-contracts/contracts', 'lib/email-tx-builder/packages/contracts/src/utils'],
++    sources: [
++      argv.src,
++      'lib/openzeppelin-community-contracts/contracts',
++      'lib/email-tx-builder/packages/contracts/src/utils',
++    ],
    },
    solidity: {
      version: argv.compiler,
-@@ -127,7 +128,7 @@ export default defineConfig({
+@@ -134,7 +139,7 @@ export default defineConfig({
    exposed: {
      imports: true,
      initializers: true,
--    include: ['contracts/**/*.sol'],
-+    include: ['{,lib/openzeppelin-community-contracts/}contracts/**/*.sol'],
+-    include: ['contracts/**/*.sol', 'npm:@openzeppelin/contracts/**/*.sol'],
++    include: ['{,lib/openzeppelin-community-contracts/}contracts/**/*.sol', 'npm:@openzeppelin/contracts/**/*.sol'],
      exclude: ['**/*WithInit.sol'],
    },
    docgen: await import('./docs/config.mjs').then(m => m.default),
