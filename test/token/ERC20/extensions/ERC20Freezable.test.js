@@ -1,6 +1,10 @@
-const { ethers } = require('hardhat');
-const { expect } = require('chai');
-const { loadFixture } = require('@nomicfoundation/hardhat-network-helpers');
+import { network } from 'hardhat';
+import { expect } from 'chai';
+
+const {
+  ethers,
+  networkHelpers: { loadFixture },
+} = await network.create();
 
 const name = 'My Token';
 const symbol = 'MTKN';
@@ -70,6 +74,7 @@ describe('ERC20Freezable', function () {
     describe('transfer', function () {
       it('allows transfer when no tokens are frozen', async function () {
         await expect(this.token.connect(this.holder).transfer(this.recipient, initialSupply)).to.changeTokenBalances(
+          ethers,
           this.token,
           [this.holder, this.recipient],
           [-initialSupply, initialSupply],
@@ -82,6 +87,7 @@ describe('ERC20Freezable', function () {
         await this.token.$_setFrozen(this.holder, frozenAmount);
 
         await expect(this.token.connect(this.holder).transfer(this.recipient, transferAmount)).to.changeTokenBalances(
+          ethers,
           this.token,
           [this.holder, this.recipient],
           [-transferAmount, transferAmount],
@@ -114,6 +120,7 @@ describe('ERC20Freezable', function () {
         await this.token.$_setFrozen(this.holder, 0n); // Unfreeze
 
         await expect(this.token.connect(this.holder).transfer(this.recipient, initialSupply)).to.changeTokenBalances(
+          ethers,
           this.token,
           [this.holder, this.recipient],
           [-initialSupply, initialSupply],
@@ -134,7 +141,7 @@ describe('ERC20Freezable', function () {
 
         await expect(
           this.token.connect(this.approved).transferFrom(this.holder, this.recipient, allowance),
-        ).to.changeTokenBalances(this.token, [this.holder, this.recipient], [-allowance, allowance]);
+        ).to.changeTokenBalances(ethers, this.token, [this.holder, this.recipient], [-allowance, allowance]);
       });
 
       it('reverts when trying to transferFrom more than available unfrozen balance', async function () {
@@ -153,7 +160,7 @@ describe('ERC20Freezable', function () {
 
         await expect(
           this.token.connect(this.approved).transferFrom(this.holder, this.recipient, allowance),
-        ).to.changeTokenBalances(this.token, [this.holder, this.recipient], [-allowance, allowance]);
+        ).to.changeTokenBalances(ethers, this.token, [this.holder, this.recipient], [-allowance, allowance]);
       });
     });
 
@@ -164,7 +171,12 @@ describe('ERC20Freezable', function () {
         const frozenAmount = 50n;
         await this.token.$_setFrozen(this.recipient, frozenAmount);
 
-        await expect(this.token.$_mint(this.recipient, value)).to.changeTokenBalance(this.token, this.recipient, value);
+        await expect(this.token.$_mint(this.recipient, value)).to.changeTokenBalance(
+          ethers,
+          this.token,
+          this.recipient,
+          value,
+        );
       });
 
       it('updates available balance correctly after minting to frozen account', async function () {
@@ -184,7 +196,12 @@ describe('ERC20Freezable', function () {
         const frozenAmount = 20n;
         await this.token.$_setFrozen(this.holder, frozenAmount);
 
-        await expect(this.token.$_burn(this.holder, value)).to.changeTokenBalance(this.token, this.holder, -value);
+        await expect(this.token.$_burn(this.holder, value)).to.changeTokenBalance(
+          ethers,
+          this.token,
+          this.holder,
+          -value,
+        );
       });
 
       it('reverts when trying to burn more than available unfrozen balance', async function () {
@@ -202,6 +219,7 @@ describe('ERC20Freezable', function () {
         await this.token.$_setFrozen(this.holder, frozenAmount);
 
         await expect(this.token.$_burn(this.holder, availableBalance)).to.changeTokenBalance(
+          ethers,
           this.token,
           this.holder,
           -availableBalance,

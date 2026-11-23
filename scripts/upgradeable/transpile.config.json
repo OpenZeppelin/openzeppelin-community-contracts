@@ -3,12 +3,15 @@
   "deleteOriginals": true,
   "exclude": [
     "contracts-exposed/**/*",
-    "contracts/mocks/import.sol",
     "contracts/mocks/UpgradeableImplementation.sol",
     "contracts/proxy/**/*Proxy*.sol",
     "contracts/crosschain/axelar/AxelarGatewayAdapter.sol"
   ],
   "publicInitializers": ["!contracts/mocks/**/*"],
   "namespaced": true,
-  "namespaceExclude": ["contracts/mocks/**/*"]
+  "namespaceExclude": ["contracts/mocks/**/*"],
+  "peerProject": "@openzeppelin/community-",
+  "upgradeablePackages": {
+    "@openzeppelin/contracts/": "@openzeppelin/contracts-upgradeable/"
+  }
 }

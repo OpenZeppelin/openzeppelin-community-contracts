@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.27;
+pragma solidity ^0.8.31;
 
 import {ERC7540} from "../../token/ERC20/extensions/ERC7540.sol";
 import {ERC7540DelayDeposit} from "../../token/ERC20/extensions/ERC7540DelayDeposit.sol";
@@ -11,6 +11,7 @@ abstract contract ERC7540DelayMock is ERC7540DelayDeposit, ERC7540DelayRedeem {
         return super.clock();
     }
 
+    // solhint-disable-next-line func-name-mixedcase
     function CLOCK_MODE()
         public
         view

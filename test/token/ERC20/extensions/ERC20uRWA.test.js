@@ -1,9 +1,11 @@
-const { ethers } = require('hardhat');
-const { expect } = require('chai');
-const { loadFixture } = require('@nomicfoundation/hardhat-network-helpers');
+import { network } from 'hardhat';
+import { expect } from 'chai';
+import { shouldSupportInterfaces } from '@openzeppelin/contracts/test/utils/introspection/SupportsInterface.behavior';
+
 const {
-  shouldSupportInterfaces,
-} = require('@openzeppelin/contracts/test/utils/introspection/SupportsInterface.behavior');
+  ethers,
+  networkHelpers: { loadFixture },
+} = await network.create();
 
 const name = 'My uRWA Token';
 const symbol = 'uRWA';
@@ -41,6 +43,7 @@ describe('ERC20uRWA', function () {
       const transferAmount = 30n;
 
       await expect(this.token.connect(this.holder).transfer(this.recipient, transferAmount)).to.changeTokenBalances(
+        ethers,
         this.token,
         [this.holder, this.recipient],
         [-transferAmount, transferAmount],
@@ -83,6 +86,7 @@ describe('ERC20uRWA', function () {
       await this.token.$_allowUser(this.recipient); // Sets to ALLOWED
 
       await expect(this.token.connect(this.holder).transfer(this.recipient, transferAmount)).to.changeTokenBalances(
+        ethers,
         this.token,
         [this.holder, this.recipient],
         [-transferAmount, transferAmount],
@@ -160,6 +164,7 @@ describe('ERC20uRWA', function () {
 
       // recipient can still receive
       await expect(this.token.connect(this.holder).transfer(this.recipient, 10n)).to.changeTokenBalances(
+        ethers,
         this.token,
         [this.holder, this.recipient],
         [-10n, 10n],
@@ -250,6 +255,7 @@ describe('ERC20uRWA', function () {
         const tx = this.token.connect(this.enforcer).forcedTransfer(this.holder, this.recipient, transferAmount);
         await expect(tx).to.emit(this.token, 'ForcedTransfer').withArgs(this.holder, this.recipient, transferAmount);
         await expect(tx).to.changeTokenBalances(
+          ethers,
           this.token,
           [this.holder, this.recipient],
           [-transferAmount, transferAmount],
@@ -296,7 +302,7 @@ describe('ERC20uRWA', function () {
 
         await expect(
           this.token.connect(this.enforcer).forcedTransfer(this.holder, this.recipient, transferAmount),
-        ).to.changeTokenBalances(this.token, [this.holder, this.recipient], [-transferAmount, transferAmount]);
+        ).to.changeTokenBalances(ethers, this.token, [this.holder, this.recipient], [-transferAmount, transferAmount]);
       });
 
       it('allows force transfer from restricted sender', async function () {
@@ -306,6 +312,7 @@ describe('ERC20uRWA', function () {
         const tx = this.token.connect(this.enforcer).forcedTransfer(this.holder, this.recipient, transferAmount);
         await expect(tx).to.emit(this.token, 'ForcedTransfer').withArgs(this.holder, this.recipient, transferAmount);
         await expect(tx).to.changeTokenBalances(
+          ethers,
           this.token,
           [this.holder, this.recipient],
           [-transferAmount, transferAmount],
@@ -321,6 +328,7 @@ describe('ERC20uRWA', function () {
         const tx = this.token.connect(this.enforcer).forcedTransfer(this.holder, this.recipient, transferAmount);
         await expect(tx).to.emit(this.token, 'ForcedTransfer').withArgs(this.holder, this.recipient, transferAmount);
         await expect(tx).to.changeTokenBalances(
+          ethers,
           this.token,
           [this.holder, this.recipient],
           [-transferAmount, transferAmount],
@@ -388,7 +396,7 @@ describe('ERC20uRWA', function () {
 
         const tx = this.token.connect(this.enforcer).forcedTransfer(this.holder, this.holder, transferAmount);
         await expect(tx).to.emit(this.token, 'ForcedTransfer').withArgs(this.holder, this.holder, transferAmount);
-        await expect(tx).to.changeTokenBalance(this.token, this.holder, 0n);
+        await expect(tx).to.changeTokenBalance(ethers, this.token, this.holder, 0n);
         await expect(this.token.frozen(this.holder)).to.eventually.equal(frozenAmount);
       });
     });
@@ -399,7 +407,12 @@ describe('ERC20uRWA', function () {
       const value = 42n;
 
       it('allows minting to allowed users', async function () {
-        await expect(this.token.$_mint(this.recipient, value)).to.changeTokenBalance(this.token, this.recipient, value);
+        await expect(this.token.$_mint(this.recipient, value)).to.changeTokenBalance(
+          ethers,
+          this.token,
+          this.recipient,
+          value,
+        );
       });
 
       it('reverts when minting to restricted user', async function () {
@@ -414,7 +427,12 @@ describe('ERC20uRWA', function () {
         await this.token.$_mint(this.recipient, 20n);
         await this.token.connect(this.freezer).setFrozenTokens(this.recipient, 20n);
 
-        await expect(this.token.$_mint(this.recipient, value)).to.changeTokenBalance(this.token, this.recipient, value);
+        await expect(this.token.$_mint(this.recipient, value)).to.changeTokenBalance(
+          ethers,
+          this.token,
+          this.recipient,
+          value,
+        );
       });
     });
 
@@ -422,7 +440,12 @@ describe('ERC20uRWA', function () {
       const value = 42n;
 
       it('allows burning from users with sufficient unfrozen balance', async function () {
-        await expect(this.token.$_burn(this.holder, value)).to.changeTokenBalance(this.token, this.holder, -value);
+        await expect(this.token.$_burn(this.holder, value)).to.changeTokenBalance(
+          ethers,
+          this.token,
+          this.holder,
+          -value,
+        );
       });
 
       it('reverts when burning from restricted user', async function () {
@@ -463,7 +486,7 @@ describe('ERC20uRWA', function () {
       it('allows transferFrom when all conditions are met', async function () {
         await expect(
           this.token.connect(this.approved).transferFrom(this.holder, this.recipient, allowance),
-        ).to.changeTokenBalances(this.token, [this.holder, this.recipient], [-allowance, allowance]);
+        ).to.changeTokenBalances(ethers, this.token, [this.holder, this.recipient], [-allowance, allowance]);
       });
 
       it('reverts transferFrom when sender is restricted', async function () {

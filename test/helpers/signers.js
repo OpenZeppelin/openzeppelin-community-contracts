@@ -1,6 +1,6 @@
-const { assertArgument, dataLength, toBigInt, AbiCoder } = require('ethers');
+import { assertArgument, dataLength, toBigInt, AbiCoder } from 'ethers';
 
-class ZKEmailSigningKey {
+export class ZKEmailSigningKey {
   #domainName;
   #publicKeyHash;
   #emailNullifier;
@@ -64,7 +64,3 @@ class ZKEmailSigningKey {
     };
   }
 }
-
-module.exports = {
-  ZKEmailSigningKey,
-};
