@@ -12,6 +12,7 @@ import hardhatExposed from '@openzeppelin/contracts/hardhat/hardhat-exposed/plug
 import hardhatTranspiler from '@openzeppelin/contracts/hardhat/hardhat-transpiler/plugin.ts';
 import hardhatOzContractsHelpers from '@openzeppelin/contracts/hardhat/hardhat-oz-contracts-helpers/plugin.ts';
 import '@openzeppelin/contracts/hardhat/async-test-sanity.ts';
+import hardhatRemappingsPlugin from './hardhat/hardhat-remappings.ts';
 
 // Parameters
 import yargs from 'yargs/yargs';
@@ -25,6 +26,17 @@ const argv = await yargs()
     evm: { type: 'string', default: 'osaka' },
   })
   .parse();
+
+// `remappings.txt` points `@openzeppelin/contracts` to the submodule, which is what Foundry (and projects that install
+// this repository with `forge install`) need. Hardhat must instead resolve it through `node_modules`, as an npm
+// package, for `npmFilesToBuild` to accept its files and for every dependency to share a single copy (the
+// `zk-email-verify` submodule resolves `@openzeppelin/contracts` through npm). These remappings take precedence over
+// the ones of `remappings.txt` for Hardhat only.
+const hardhatRemappings = [
+  '@openzeppelin/contracts/=node_modules/@openzeppelin/contracts/contracts/',
+  'lib/@openzeppelin-contracts-upgradeable/contracts/:@openzeppelin/contracts/=node_modules/@openzeppelin/contracts/contracts/',
+  'lib/openzeppelin-community-contracts/:@openzeppelin/contracts/=node_modules/@openzeppelin/contracts/contracts/',
+];
 
 // Configuration
 export default defineConfig({
@@ -41,26 +53,39 @@ export default defineConfig({
     hardhatExposed,
     hardhatTranspiler,
     hardhatOzContractsHelpers,
+    hardhatRemappingsPlugin(hardhatRemappings),
   ],
   paths: {
     // `ECDSAOwnedDKIMRegistry` is needed (as-is, not exposed) by the tests. It lives in a submodule reached through a
     // remappings.txt entry, so it is a project file that no compilation root imports by name: `npmFilesToBuild` cannot
     // reach it (HHE901), and being imported is not enough for Hardhat 3 to emit an artifact. Building its directory as
     // a source directory is what makes those artifacts appear.
-    sources: [argv.src, 'lib/openzeppelin-community-contracts/contracts', 'lib/email-tx-builder/packages/contracts/src/utils'],
+    sources: [
+      argv.src,
+      'lib/openzeppelin-community-contracts/contracts',
+      'lib/email-tx-builder/packages/contracts/src/utils',
+    ],
   },
   solidity: {
     version: argv.compiler,
-    // Remappings are defined in `remappings.txt`. Hardhat 3 also applies the `remappings.txt` of the
-    // `lib/@openzeppelin-contracts-upgradeable` submodule to its files, which points `@openzeppelin/contracts` to a nested
-    // copy. The last entry of `remappings.txt` uses a more specific context so that the submodule uses the same copy as
-    // the rest of the project. (Comments are not allowed in `remappings.txt` as Foundry rejects them.)
+    // Remappings are defined in `remappings.txt`, and overridden for Hardhat by `hardhatRemappings` (see above).
+    // Hardhat 3 also applies the `remappings.txt` of the `lib/@openzeppelin-contracts-upgradeable` submodule to its
+    // files, which points `@openzeppelin/contracts` to a nested copy. The last entry of `remappings.txt` (and of
+    // `hardhatRemappings`) uses a more specific context so that the submodule uses the same copy as the rest of the
+    // project. (Comments are not allowed in `remappings.txt` as Foundry rejects them.)
     //
-    // Dependencies that the tests deploy directly. Hardhat 3 only emits artifacts for compilation roots, so importing
-    // them from a solidity file (the old `contracts/mocks/import.sol` trick) is not enough anymore.
+    // Dependencies that the tests deploy. Hardhat 3 only emits artifacts for compilation roots, so importing them from a
+    // solidity file is not enough: they are built as `npmFilesToBuild`. They are also exposed (see `exposed.include`),
+    // as most tests deploy their `$`-prefixed version.
     npmFilesToBuild: [
+      '@openzeppelin/contracts/access/manager/AccessManager.sol',
       '@openzeppelin/contracts/mocks/CallReceiverMock.sol',
+      '@openzeppelin/contracts/mocks/account/AccountMock.sol',
+      '@openzeppelin/contracts/mocks/token/ERC20Reentrant.sol',
       '@openzeppelin/contracts/proxy/beacon/UpgradeableBeacon.sol',
+      '@openzeppelin/contracts/token/ERC1155/ERC1155.sol',
+      '@openzeppelin/contracts/token/ERC721/ERC721.sol',
+      '@openzeppelin/contracts/utils/Create2.sol',
       '@openzeppelin/contracts/utils/cryptography/verifiers/ERC7913P256Verifier.sol',
       '@openzeppelin/contracts/utils/cryptography/verifiers/ERC7913RSAVerifier.sol',
     ],
@@ -114,7 +139,7 @@ export default defineConfig({
   exposed: {
     imports: true,
     initializers: true,
-    include: ['{,lib/openzeppelin-community-contracts/}contracts/**/*.sol'],
+    include: ['{,lib/openzeppelin-community-contracts/}contracts/**/*.sol', 'npm:@openzeppelin/contracts/**/*.sol'],
     exclude: ['**/*WithInit.sol'],
   },
   docgen: await import('./docs/config.mjs').then(m => m.default),
