@@ -55,12 +55,15 @@ function shouldBehaveLikeERC7540Deposit({
   initialShares,
   balance,
   supportCustomFulfill,
-  withTmpHolder,
+  settleOnFulfill,
+  gateOnController,
 } = {}) {
   initialAssets ??= ethers.parseEther('17000000');
   initialShares ??= ethers.parseEther('42000000');
   balance ??= ethers.parseEther('1000');
   supportCustomFulfill ??= true;
+  settleOnFulfill ??= true; // whether the strategy locks the rate at fulfillment (vs. at claim time)
+  gateOnController ??= false;
 
   describe('Should behave like ERC7540Deposit', function () {
     before(async function () {
@@ -75,6 +78,9 @@ function shouldBehaveLikeERC7540Deposit({
       await this.token.connect(this.owner).approve(this.mock, ethers.MaxUint256);
       await this.mock.connect(this.owner).setOperator(this.operator, true);
       await this.mock.connect(this.controller).setOperator(this.operator, true);
+      if (gateOnController) {
+        await this.mock.connect(this.controller).setOperator(this.owner, true);
+      }
     });
 
     describe('supports ERC-7540 operator interface', function () {
@@ -97,9 +103,9 @@ function shouldBehaveLikeERC7540Deposit({
       const shares = (assets * initialShares) / initialAssets;
 
       describe('requestDeposit', function () {
-        it('transfers tokens, marks as pending, emits DepositRequest with requestId 0', async function () {
+        it('transfers tokens, marks as pending, emits DepositRequest', async function () {
           const assetsBefore = await this.mock.totalAssets();
-          const supplyBefore = await this.mock.totalSupply();
+          const sharesBefore = await this.mock.$_totalOutstandingShares();
           const convertToAssetsBefore = await this.mock.convertToAssets(shares);
           const convertToSharesBefore = await this.mock.convertToShares(assets);
 
@@ -113,7 +119,7 @@ function shouldBehaveLikeERC7540Deposit({
           await expect(tx).to.changeTokenBalances(this.mock, [this.controller], [0n]);
 
           await expect(this.mock.totalAssets()).to.eventually.equal(assetsBefore);
-          await expect(this.mock.totalSupply()).to.eventually.equal(supplyBefore);
+          await expect(this.mock.$_totalOutstandingShares()).to.eventually.equal(sharesBefore);
           await expect(this.mock.convertToAssets(shares)).to.eventually.equal(convertToAssetsBefore);
           await expect(this.mock.convertToShares(assets)).to.eventually.equal(convertToSharesBefore);
 
@@ -177,7 +183,7 @@ function shouldBehaveLikeERC7540Deposit({
 
           it('transitions pending to claimable and emits DepositClaimable', async function () {
             const assetsBefore = await this.mock.totalAssets();
-            const supplyBefore = await this.mock.totalSupply();
+            const sharesBefore = await this.mock.$_totalOutstandingShares();
 
             await expect(this.mock.pendingDepositRequest(this.requestId, this.controller)).to.eventually.equal(assets);
             await expect(this.mock.claimableDepositRequest(this.requestId, this.controller)).to.eventually.equal(0n);
@@ -186,12 +192,9 @@ function shouldBehaveLikeERC7540Deposit({
 
             await this.fulfillDeposit(this.requestId, assets, shares, this.controller);
 
-            await expect(this.mock.totalAssets()).to.eventually.equal(
-              withTmpHolder ? assetsBefore + assets : assetsBefore,
-            );
-            await expect(this.mock.totalSupply()).to.eventually.equal(
-              withTmpHolder ? supplyBefore + shares : supplyBefore,
-            );
+            // Fulfilled requests are settled at the locked rate, regardless of the share custody model
+            await expect(this.mock.totalAssets()).to.eventually.equal(assetsBefore + assets);
+            await expect(this.mock.$_totalOutstandingShares()).to.eventually.equal(sharesBefore + shares);
 
             await expect(this.mock.pendingDepositRequest(this.requestId, this.controller)).to.eventually.equal(0n);
             await expect(this.mock.claimableDepositRequest(this.requestId, this.controller)).to.eventually.equal(
@@ -266,7 +269,7 @@ function shouldBehaveLikeERC7540Deposit({
             await expect(this.mock.maxDeposit(this.controller)).to.eventually.equal(assets);
 
             const assetsBefore = await this.mock.totalAssets();
-            const supplyBefore = await this.mock.totalSupply();
+            const sharesBefore = await this.mock.$_totalOutstandingShares();
 
             const tx = this.mock
               .connect(this.controller)
@@ -279,10 +282,10 @@ function shouldBehaveLikeERC7540Deposit({
             await expect(this.mock.claimableDepositRequest(this.requestId, this.controller)).to.eventually.equal(0n);
             await expect(this.mock.maxDeposit(this.controller)).to.eventually.equal(0n);
             await expect(this.mock.totalAssets()).to.eventually.equal(
-              withTmpHolder ? assetsBefore : assetsBefore + assets,
+              settleOnFulfill ? assetsBefore : assetsBefore + assets,
             );
-            await expect(this.mock.totalSupply()).to.eventually.equal(
-              withTmpHolder ? supplyBefore : supplyBefore + shares,
+            await expect(this.mock.$_totalOutstandingShares()).to.eventually.equal(
+              settleOnFulfill ? sharesBefore : sharesBefore + shares,
             );
           });
 
@@ -331,7 +334,7 @@ function shouldBehaveLikeERC7540Deposit({
             await expect(this.mock.maxMint(this.controller)).to.eventually.equal(shares);
 
             const assetsBefore = await this.mock.totalAssets();
-            const supplyBefore = await this.mock.totalSupply();
+            const sharesBefore = await this.mock.$_totalOutstandingShares();
 
             const tx = this.mock
               .connect(this.controller)
@@ -345,10 +348,10 @@ function shouldBehaveLikeERC7540Deposit({
             await expect(this.mock.claimableDepositRequest(this.requestId, this.controller)).to.eventually.equal(0n);
             await expect(this.mock.maxMint(this.controller)).to.eventually.equal(0n);
             await expect(this.mock.totalAssets()).to.eventually.equal(
-              withTmpHolder ? assetsBefore : assetsBefore + assets,
+              settleOnFulfill ? assetsBefore : assetsBefore + assets,
             );
-            await expect(this.mock.totalSupply()).to.eventually.equal(
-              withTmpHolder ? supplyBefore : supplyBefore + shares,
+            await expect(this.mock.$_totalOutstandingShares()).to.eventually.equal(
+              settleOnFulfill ? sharesBefore : sharesBefore + shares,
             );
           });
 
@@ -392,11 +395,20 @@ function shouldBehaveLikeERC7540Deposit({
   });
 }
 
-function shouldBehaveLikeERC7540Redeem({ initialAssets, initialShares, balance, supportCustomFulfill } = {}) {
+function shouldBehaveLikeERC7540Redeem({
+  initialAssets,
+  initialShares,
+  balance,
+  supportCustomFulfill,
+  settleOnFulfill,
+  gateOnController,
+} = {}) {
   initialAssets ??= ethers.parseEther('17000000');
   initialShares ??= ethers.parseEther('42000000');
   balance ??= ethers.parseEther('1000');
   supportCustomFulfill ??= true;
+  settleOnFulfill ??= true; // whether the strategy locks the rate at fulfillment (vs. at claim time)
+  gateOnController ??= false;
 
   describe('Should behave like ERC7540Redeem', function () {
     before(async function () {
@@ -411,6 +423,9 @@ function shouldBehaveLikeERC7540Redeem({ initialAssets, initialShares, balance, 
       await this.token.connect(this.owner).approve(this.mock, ethers.MaxUint256);
       await this.mock.connect(this.owner).setOperator(this.operator, true);
       await this.mock.connect(this.controller).setOperator(this.operator, true);
+      if (gateOnController) {
+        await this.mock.connect(this.controller).setOperator(this.owner, true);
+      }
     });
 
     describe('supports ERC-7540 operator interface', function () {
@@ -433,9 +448,9 @@ function shouldBehaveLikeERC7540Redeem({ initialAssets, initialShares, balance, 
       const assets = (shares * initialAssets) / initialShares;
 
       describe('requestRedeem', function () {
-        it('burns shares, marks as pending, emits RedeemRequest with requestId 0', async function () {
+        it('takes shares from the owner, marks as pending, emits RedeemRequest', async function () {
           const assetsBefore = await this.mock.totalAssets();
-          const supplyBefore = await this.mock.totalSupply();
+          const sharesBefore = await this.mock.$_totalOutstandingShares();
           const convertToAssetsBefore = await this.mock.convertToAssets(shares);
           const convertToSharesBefore = await this.mock.convertToShares(assets);
 
@@ -443,16 +458,16 @@ function shouldBehaveLikeERC7540Redeem({ initialAssets, initialShares, balance, 
           const tx = this.mock.connect(this.owner).requestRedeem(shares, this.controller, this.owner);
           const requestId = await this.getRequestId(tx);
 
-          // check event is emitted and shares are burned
+          // check event is emitted and shares are taken from the owner (burned or escrowed)
           await expect(tx)
             .to.emit(this.mock, 'RedeemRequest')
             .withArgs(this.controller, this.owner, requestId, this.owner, shares);
           await expect(tx).to.changeTokenBalances(this.token, [this.controller, this.mock], [0n, 0n]);
           await expect(tx).to.changeTokenBalances(this.mock, [this.owner], [-shares]);
 
-          // totalSupply includes shares for in-flight redeem
+          // _totalOutstandingShares includes shares for in-flight redeem
           await expect(this.mock.totalAssets()).to.eventually.equal(assetsBefore);
-          await expect(this.mock.totalSupply()).to.eventually.equal(supplyBefore);
+          await expect(this.mock.$_totalOutstandingShares()).to.eventually.equal(sharesBefore);
           await expect(this.mock.convertToAssets(shares)).to.eventually.equal(convertToAssetsBefore);
           await expect(this.mock.convertToShares(assets)).to.eventually.equal(convertToSharesBefore);
 
@@ -482,6 +497,9 @@ function shouldBehaveLikeERC7540Redeem({ initialAssets, initialShares, balance, 
 
         it('spends allowance when caller is neither owner nor operator', async function () {
           await this.mock.connect(this.owner).approve(this.other, shares);
+          if (gateOnController) {
+            await this.mock.connect(this.controller).setOperator(this.other, true);
+          }
 
           const tx = this.mock.connect(this.other).requestRedeem(shares, this.controller, this.owner);
           const requestId = await this.getRequestId(tx);
@@ -494,6 +512,10 @@ function shouldBehaveLikeERC7540Redeem({ initialAssets, initialShares, balance, 
         });
 
         it('revert of caller is neither owner nor operator and has no allowance', async function () {
+          if (gateOnController) {
+            await this.mock.connect(this.controller).setOperator(this.other, true);
+          }
+
           await expect(this.mock.connect(this.other).requestRedeem(shares, this.controller, this.owner))
             .to.be.revertedWithCustomError(this.mock, 'ERC20InsufficientAllowance')
             .withArgs(this.other, 0n, shares);
@@ -530,7 +552,7 @@ function shouldBehaveLikeERC7540Redeem({ initialAssets, initialShares, balance, 
 
           it('transitions pending to claimable and emits RedeemClaimable', async function () {
             const assetsBefore = await this.mock.totalAssets();
-            const supplyBefore = await this.mock.totalSupply();
+            const sharesBefore = await this.mock.$_totalOutstandingShares();
 
             await expect(this.mock.pendingRedeemRequest(this.requestId, this.controller)).to.eventually.equal(shares);
             await expect(this.mock.claimableRedeemRequest(this.requestId, this.controller)).to.eventually.equal(0n);
@@ -539,8 +561,9 @@ function shouldBehaveLikeERC7540Redeem({ initialAssets, initialShares, balance, 
 
             await this.fulfillRedeem(this.requestId, assets, shares, this.controller);
 
-            await expect(this.mock.totalAssets()).to.eventually.equal(assetsBefore);
-            await expect(this.mock.totalSupply()).to.eventually.equal(supplyBefore);
+            // Fulfilled requests are settled at the locked rate
+            await expect(this.mock.totalAssets()).to.eventually.equal(assetsBefore - assets);
+            await expect(this.mock.$_totalOutstandingShares()).to.eventually.equal(sharesBefore - shares);
 
             await expect(this.mock.pendingRedeemRequest(0n, this.controller)).to.eventually.equal(0n);
             await expect(this.mock.claimableRedeemRequest(0n, this.controller)).to.eventually.equal(shares);
@@ -582,6 +605,13 @@ function shouldBehaveLikeERC7540Redeem({ initialAssets, initialShares, balance, 
               .withArgs(shares + 1n, shares);
           });
 
+          it('reverts when fulfilling more assets than the vault holds', async function () {
+            const vaultBalance = await this.token.balanceOf(this.mock);
+            await expect(
+              this.fulfillRedeem(this.requestId, vaultBalance + 1n, shares, this.controller),
+            ).to.be.revertedWithCustomError(this.mock, 'ERC7540InsufficientAssets');
+          });
+
           it('_burnSharesOnRedeemFulfill is blocked when _redeemShareDestination() is address(0)', async function () {
             const redeemShareDestination = await this.mock.$_redeemShareDestination();
             if (redeemShareDestination == ethers.ZeroAddress) {
@@ -611,7 +641,7 @@ function shouldBehaveLikeERC7540Redeem({ initialAssets, initialShares, balance, 
             await expect(this.mock.maxRedeem(this.controller)).to.eventually.equal(shares);
 
             const assetsBefore = await this.mock.totalAssets();
-            const supplyBefore = await this.mock.totalSupply();
+            const sharesBefore = await this.mock.$_totalOutstandingShares();
 
             const tx = this.mock.connect(this.controller).redeem(shares, this.receiver, this.controller);
 
@@ -623,8 +653,12 @@ function shouldBehaveLikeERC7540Redeem({ initialAssets, initialShares, balance, 
             await expect(this.mock.pendingRedeemRequest(this.requestId, this.controller)).to.eventually.equal(0n);
             await expect(this.mock.claimableRedeemRequest(this.requestId, this.controller)).to.eventually.equal(0n);
             await expect(this.mock.maxRedeem(this.controller)).to.eventually.equal(0n);
-            await expect(this.mock.totalAssets()).to.eventually.equal(assetsBefore - assets);
-            await expect(this.mock.totalSupply()).to.eventually.equal(supplyBefore - shares);
+            await expect(this.mock.totalAssets()).to.eventually.equal(
+              settleOnFulfill ? assetsBefore : assetsBefore - assets,
+            );
+            await expect(this.mock.$_totalOutstandingShares()).to.eventually.equal(
+              settleOnFulfill ? sharesBefore : sharesBefore - shares,
+            );
           });
 
           it('operator can trigger redeem on behalf of controller', async function () {
@@ -664,7 +698,7 @@ function shouldBehaveLikeERC7540Redeem({ initialAssets, initialShares, balance, 
             await expect(this.mock.maxWithdraw(this.controller)).to.eventually.equal(assets);
 
             const assetsBefore = await this.mock.totalAssets();
-            const supplyBefore = await this.mock.totalSupply();
+            const sharesBefore = await this.mock.$_totalOutstandingShares();
 
             const tx = this.mock.connect(this.controller).withdraw(assets, this.receiver, this.controller);
 
@@ -676,8 +710,12 @@ function shouldBehaveLikeERC7540Redeem({ initialAssets, initialShares, balance, 
             await expect(this.mock.pendingRedeemRequest(this.requestId, this.controller)).to.eventually.equal(0n);
             await expect(this.mock.claimableRedeemRequest(this.requestId, this.controller)).to.eventually.equal(0n);
             await expect(this.mock.maxWithdraw(this.controller)).to.eventually.equal(0n);
-            await expect(this.mock.totalAssets()).to.eventually.equal(assetsBefore - assets);
-            await expect(this.mock.totalSupply()).to.eventually.equal(supplyBefore - shares);
+            await expect(this.mock.totalAssets()).to.eventually.equal(
+              settleOnFulfill ? assetsBefore : assetsBefore - assets,
+            );
+            await expect(this.mock.$_totalOutstandingShares()).to.eventually.equal(
+              settleOnFulfill ? sharesBefore : sharesBefore - shares,
+            );
           });
 
           it('operator can trigger withdraw on behalf of controller', async function () {

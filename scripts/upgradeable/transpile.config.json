@@ -1,0 +1,14 @@
+{
+  "initializablePath": "@openzeppelin/contracts/proxy/utils/Initializable.sol",
+  "deleteOriginals": true,
+  "exclude": [
+    "contracts-exposed/**/*",
+    "contracts/mocks/import.sol",
+    "contracts/mocks/UpgradeableImplementation.sol",
+    "contracts/proxy/**/*Proxy*.sol",
+    "contracts/crosschain/axelar/AxelarGatewayAdapter.sol"
+  ],
+  "publicInitializers": ["!contracts/mocks/**/*"],
+  "namespaced": true,
+  "namespaceExclude": ["contracts/mocks/**/*"]
+}

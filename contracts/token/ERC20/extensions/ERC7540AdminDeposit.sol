@@ -36,6 +36,8 @@ abstract contract ERC7540AdminDeposit is ERC7540 {
     }
 
     mapping(address controller => PendingDeposit) private _deposits;
+    uint256 private _totalClaimableAssets;
+    uint256 private _totalClaimableShares;
 
     /// @dev Emitted when a deposit request transitions from Pending to Claimable.
     event DepositClaimable(address indexed controller, uint256 indexed requestId, uint256 assets, uint256 shares);
@@ -48,15 +50,22 @@ abstract contract ERC7540AdminDeposit is ERC7540 {
         return true;
     }
 
-    /// @dev Records per-controller pending state before delegating to {ERC7540-_requestDeposit}.
+    /// @dev All the Requests of a controller are aggregated under `requestId = 0`.
+    function _getDepositRequestId(address /* controller */) internal virtual override returns (uint256) {
+        return 0;
+    }
+
+    /// @dev Records per-controller pending state after delegating to {ERC7540-_requestDeposit}.
     function _requestDeposit(
         uint256 assets,
         address controller,
         address owner,
         uint256 requestId
-    ) internal virtual override returns (uint256) {
+    ) internal virtual override {
+        // Transfer the assets first (see {ERC7540-_requestDeposit}), so that a reentrancy through the asset
+        // observes neither the assets nor the controller's updated pending state.
+        super._requestDeposit(assets, controller, owner, requestId);
         _deposits[controller].pendingAssets += assets;
-        return super._requestDeposit(assets, controller, owner, requestId);
     }
 
     /**
@@ -86,7 +95,10 @@ abstract contract ERC7540AdminDeposit is ERC7540 {
         _deposits[controller].claimableAssets += assets;
         _deposits[controller].claimableShares += shares;
 
-        if (_depositShareOrigin() != address(0)) {
+        if (_depositShareOrigin() == address(0)) {
+            _totalClaimableAssets += assets;
+            _totalClaimableShares += shares;
+        } else {
             _mintSharesOnDepositFulfill(assets, shares);
         }
 
@@ -106,6 +118,10 @@ abstract contract ERC7540AdminDeposit is ERC7540 {
 
         _deposits[controller].claimableAssets -= assets;
         _deposits[controller].claimableShares -= shares;
+        if (_depositShareOrigin() == address(0)) {
+            _totalClaimableAssets -= assets;
+            _totalClaimableShares -= shares;
+        }
         return shares;
     }
 
@@ -122,6 +138,10 @@ abstract contract ERC7540AdminDeposit is ERC7540 {
 
         _deposits[controller].claimableAssets -= assets;
         _deposits[controller].claimableShares -= shares;
+        if (_depositShareOrigin() == address(0)) {
+            _totalClaimableAssets -= assets;
+            _totalClaimableShares -= shares;
+        }
         return assets;
     }
 
@@ -149,5 +169,18 @@ abstract contract ERC7540AdminDeposit is ERC7540 {
     /// @inheritdoc ERC7540
     function _asyncMaxMint(address owner) internal view virtual override returns (uint256) {
         return _deposits[owner].claimableShares;
+    }
+
+    /**
+     * @dev Assets of fulfilled but unclaimed deposits. Only tracked in mint-on-claim custody: with pre-mint
+     * custody, fulfillment already settles them in {totalPendingDepositAssets} and {_totalOutstandingShares}.
+     */
+    function _totalClaimableDepositAssets() internal view virtual override returns (uint256) {
+        return _depositShareOrigin() == address(0) ? _totalClaimableAssets : 0;
+    }
+
+    /// @dev Shares owed to fulfilled but unclaimed deposits. See {_totalClaimableDepositAssets}.
+    function _totalClaimableDepositShares() internal view virtual override returns (uint256) {
+        return _depositShareOrigin() == address(0) ? _totalClaimableShares : 0;
     }
 }

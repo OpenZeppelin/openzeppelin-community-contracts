@@ -262,6 +262,18 @@ describe('ERC20uRWA', function () {
         ).to.be.revertedWithCustomError(this.token, 'AccessControlUnauthorizedAccount');
       });
 
+      it('reverts when forcing transfer from the zero address', async function () {
+        await expect(this.token.connect(this.enforcer).forcedTransfer(ethers.ZeroAddress, this.recipient, 40n))
+          .to.be.revertedWithCustomError(this.token, 'ERC20InvalidSender')
+          .withArgs(ethers.ZeroAddress);
+      });
+
+      it('reverts when forcing transfer to the zero address', async function () {
+        await expect(this.token.connect(this.enforcer).forcedTransfer(this.holder, ethers.ZeroAddress, 40n))
+          .to.be.revertedWithCustomError(this.token, 'ERC20InvalidReceiver')
+          .withArgs(ethers.ZeroAddress);
+      });
+
       it('reverts when forcing transfer to restricted recipient', async function () {
         await this.token.$_blockUser(this.recipient); // Sets to BLOCKED
 

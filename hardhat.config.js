@@ -33,6 +33,7 @@ require('hardhat-gas-reporter');
 require('hardhat-predeploy');
 require('solidity-coverage');
 require('solidity-docgen');
+require('./hardhat/env-artifacts');
 require('./hardhat/remappings');
 
 module.exports = {
