@@ -1,0 +1,70 @@
+= ERC-3643 Registries
+
+https://eips.ethereum.org/EIPS/eip-3643[ERC-3643] defines a permissioned token whose holders must be verified by an identity registry. The standard specifies the interfaces of that registry and of the contracts it relies on, but not their implementation. This library provides one implementation of each:
+
+* xref:api:token.adoc#ERC3643IdentityRegistry[`ERC3643IdentityRegistry`]: answers `isVerified(wallet)`, the question an ERC-3643 token asks before letting a wallet receive tokens.
+* xref:api:token.adoc#ERC3643IdentityRegistryStorage[`ERC3643IdentityRegistryStorage`]: keeps the identity contract and country of each wallet. Several identity registries can share one storage, so several tokens can share one investor list.
+* xref:api:token.adoc#ERC3643TrustedIssuersRegistry[`ERC3643TrustedIssuersRegistry`]: lists the claim issuers the registry accepts claims from, and the claim topics each of them is trusted for.
+* xref:api:token.adoc#ERC3643ClaimTopicsRegistry[`ERC3643ClaimTopicsRegistry`]: lists the claim topics (e.g. KYC, accreditation) every identity must hold a claim for.
+
+== Verification
+
+A wallet is verified when its identity holds, for every topic of the claim topics registry, a valid claim from an issuer that the trusted issuers registry trusts for that topic. If no topic is required, every registered wallet is verified. A topic with no trusted issuer cannot be satisfied.
+
+By default, identities are https://github.com/ethereum/EIPs/issues/735[ERC-735] claim holders. For each required topic and trusted issuer, the registry reads the claim with identifier `keccak256(abi.encode(issuer, topic))`, checks it reports that topic and issuer, and asks the issuer to confirm it through `isClaimValid`. Identity systems that store claims differently override `_isClaimValid`.
+
+== Access control
+
+The standard defines no access model, so each contract leaves its authorization hooks for the developer to implement:
+
+[%header,cols="1,1,2"]
+|===
+| Contract | Hook | Restricts
+
+| `ERC3643IdentityRegistry`
+| `_authorizeIdentityUpdate`
+| Registering, deleting and updating identities
+
+| `ERC3643IdentityRegistry`
+| `_authorizeRegistryUpdate`
+| Replacing the identity storage and the registries
+
+| `ERC3643IdentityRegistryStorage`
+| `_authorizeRegistryBinding`
+| Binding and unbinding identity registries
+
+| `ERC3643TrustedIssuersRegistry`
+| `_authorizeIssuersUpdate`
+| Adding, removing and updating trusted issuers
+
+| `ERC3643ClaimTopicsRegistry`
+| `_authorizeClaimTopicsUpdate`
+| Adding and removing claim topics
+|===
+
+The identity storage accepts identity writes from bound identity registries only, as the standard requires. Override `_authorizeIdentityWrite` to change that rule.
+
+== Deployment
+
+The registries reference each other by address, and the storage must bind an identity registry before that registry can register identities:
+
+```solidity
+MyIdentityRegistryStorage identityStorage = new MyIdentityRegistryStorage(admin);
+MyTrustedIssuersRegistry trustedIssuers = new MyTrustedIssuersRegistry(admin);
+MyClaimTopicsRegistry claimTopics = new MyClaimTopicsRegistry(admin);
+MyIdentityRegistry identityRegistry = new MyIdentityRegistry(
+    address(identityStorage),
+    address(trustedIssuers),
+    address(claimTopics),
+    admin
+);
+
+// As `admin`
+identityStorage.bindIdentityRegistry(address(identityRegistry));
+claimTopics.addClaimTopic(KYC_TOPIC);
+trustedIssuers.addTrustedIssuer(kycProvider, [KYC_TOPIC]);
+```
+
+The identity registry is then passed to the ERC-3643 token, which calls `isVerified` on every transfer, mint and forced transfer.
+
+NOTE: `isVerified` iterates over every required topic and the issuers trusted for it, so its cost grows with both. None of the registries caps them. Deployments that need a bound can override `_addClaimTopic`, `_addTrustedIssuer` and `_updateIssuerClaimTopics`.

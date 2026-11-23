@@ -1,8 +1,7 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.27;
+pragma solidity ^0.8.31;
 
-import {ERC7540} from "../../token/ERC20/extensions/ERC7540.sol";
 import {ERC7540SyncDeposit} from "../../token/ERC20/extensions/ERC7540SyncDeposit.sol";
 import {ERC7540SyncRedeem} from "../../token/ERC20/extensions/ERC7540SyncRedeem.sol";
 

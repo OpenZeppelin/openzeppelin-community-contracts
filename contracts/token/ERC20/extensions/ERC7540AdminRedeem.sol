@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.27;
+pragma solidity ^0.8.31;
 
 import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 import {ERC7540} from "./ERC7540.sol";
@@ -106,9 +106,8 @@ abstract contract ERC7540AdminRedeem is ERC7540 {
         // residue left after a partial claim was rounded against the share side.
         uint256 maxAssets = maxWithdraw(controller);
         uint256 maxShares = maxRedeem(controller);
-        uint256 shares = assets == maxAssets
-            ? maxShares
-            : Math.mulDiv(assets, maxShares, maxAssets, Math.Rounding.Ceil);
+        uint256 shares =
+            assets == maxAssets ? maxShares : Math.mulDiv(assets, maxShares, maxAssets, Math.Rounding.Ceil);
 
         _redeems[controller].claimableAssets -= assets;
         _redeems[controller].claimableShares -= shares;
@@ -124,9 +123,8 @@ abstract contract ERC7540AdminRedeem is ERC7540 {
         // residue left after a partial claim was rounded against the asset side.
         uint256 maxShares = maxRedeem(controller);
         uint256 maxAssets = maxWithdraw(controller);
-        uint256 assets = shares == maxShares
-            ? maxAssets
-            : Math.mulDiv(shares, maxAssets, maxShares, Math.Rounding.Floor);
+        uint256 assets =
+            shares == maxShares ? maxAssets : Math.mulDiv(shares, maxAssets, maxShares, Math.Rounding.Floor);
 
         _redeems[controller].claimableAssets -= assets;
         _redeems[controller].claimableShares -= shares;

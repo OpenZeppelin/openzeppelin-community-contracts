@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.4;
+pragma solidity >=0.4.11;
 
 /**
  * @dev Standard attributes for ERC-7786. These attributes may be standardized in different ERCs.

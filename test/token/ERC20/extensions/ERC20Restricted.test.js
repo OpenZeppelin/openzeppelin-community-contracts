@@ -1,6 +1,10 @@
-const { ethers } = require('hardhat');
-const { expect } = require('chai');
-const { loadFixture } = require('@nomicfoundation/hardhat-network-helpers');
+import { network } from 'hardhat';
+import { expect } from 'chai';
+
+const {
+  ethers,
+  networkHelpers: { loadFixture },
+} = await network.create();
 
 const name = 'My Token';
 const symbol = 'MTKN';
@@ -72,6 +76,7 @@ describe('ERC20Restricted', function () {
     describe('transfer', function () {
       it('allows transfer when sender and recipient have DEFAULT restriction', async function () {
         await expect(this.token.connect(this.holder).transfer(this.recipient, initialSupply)).to.changeTokenBalances(
+          ethers,
           this.token,
           [this.holder, this.recipient],
           [-initialSupply, initialSupply],
@@ -83,6 +88,7 @@ describe('ERC20Restricted', function () {
         await this.token.$_allowUser(this.recipient); // Sets to ALLOWED
 
         await expect(this.token.connect(this.holder).transfer(this.recipient, initialSupply)).to.changeTokenBalances(
+          ethers,
           this.token,
           [this.holder, this.recipient],
           [-initialSupply, initialSupply],
@@ -110,6 +116,7 @@ describe('ERC20Restricted', function () {
         await this.token.$_resetUser(this.holder); // Sets back to DEFAULT
 
         await expect(this.token.connect(this.holder).transfer(this.recipient, initialSupply)).to.changeTokenBalances(
+          ethers,
           this.token,
           [this.holder, this.recipient],
           [-initialSupply, initialSupply],
@@ -127,7 +134,7 @@ describe('ERC20Restricted', function () {
       it('allows transferFrom when sender and recipient are allowed', async function () {
         await expect(
           this.token.connect(this.approved).transferFrom(this.holder, this.recipient, allowance),
-        ).to.changeTokenBalances(this.token, [this.holder, this.recipient], [-allowance, allowance]);
+        ).to.changeTokenBalances(ethers, this.token, [this.holder, this.recipient], [-allowance, allowance]);
       });
 
       it('reverts when sender is BLOCKED', async function () {
@@ -152,7 +159,7 @@ describe('ERC20Restricted', function () {
 
         await expect(
           this.token.connect(this.approved).transferFrom(this.holder, this.recipient, allowance),
-        ).to.changeTokenBalances(this.token, [this.holder, this.recipient], [-allowance, allowance]);
+        ).to.changeTokenBalances(ethers, this.token, [this.holder, this.recipient], [-allowance, allowance]);
       });
     });
 
@@ -160,13 +167,23 @@ describe('ERC20Restricted', function () {
       const value = 42n;
 
       it('allows minting to DEFAULT users', async function () {
-        await expect(this.token.$_mint(this.recipient, value)).to.changeTokenBalance(this.token, this.recipient, value);
+        await expect(this.token.$_mint(this.recipient, value)).to.changeTokenBalance(
+          ethers,
+          this.token,
+          this.recipient,
+          value,
+        );
       });
 
       it('allows minting to ALLOWED users', async function () {
         await this.token.$_allowUser(this.recipient); // Sets to ALLOWED
 
-        await expect(this.token.$_mint(this.recipient, value)).to.changeTokenBalance(this.token, this.recipient, value);
+        await expect(this.token.$_mint(this.recipient, value)).to.changeTokenBalance(
+          ethers,
+          this.token,
+          this.recipient,
+          value,
+        );
       });
 
       it('reverts when trying to mint to BLOCKED user', async function () {
@@ -181,7 +198,12 @@ describe('ERC20Restricted', function () {
         await this.token.$_blockUser(this.recipient); // Sets to BLOCKED
         await this.token.$_resetUser(this.recipient); // Sets back to DEFAULT
 
-        await expect(this.token.$_mint(this.recipient, value)).to.changeTokenBalance(this.token, this.recipient, value);
+        await expect(this.token.$_mint(this.recipient, value)).to.changeTokenBalance(
+          ethers,
+          this.token,
+          this.recipient,
+          value,
+        );
       });
     });
 
@@ -189,13 +211,23 @@ describe('ERC20Restricted', function () {
       const value = 42n;
 
       it('allows burning from DEFAULT users', async function () {
-        await expect(this.token.$_burn(this.holder, value)).to.changeTokenBalance(this.token, this.holder, -value);
+        await expect(this.token.$_burn(this.holder, value)).to.changeTokenBalance(
+          ethers,
+          this.token,
+          this.holder,
+          -value,
+        );
       });
 
       it('allows burning from ALLOWED users', async function () {
         await this.token.$_allowUser(this.holder); // Sets to ALLOWED
 
-        await expect(this.token.$_burn(this.holder, value)).to.changeTokenBalance(this.token, this.holder, -value);
+        await expect(this.token.$_burn(this.holder, value)).to.changeTokenBalance(
+          ethers,
+          this.token,
+          this.holder,
+          -value,
+        );
       });
 
       it('reverts when trying to burn from BLOCKED user', async function () {
@@ -210,7 +242,12 @@ describe('ERC20Restricted', function () {
         await this.token.$_blockUser(this.holder); // Sets to BLOCKED
         await this.token.$_allowUser(this.holder); // Sets to ALLOWED
 
-        await expect(this.token.$_burn(this.holder, value)).to.changeTokenBalance(this.token, this.holder, -value);
+        await expect(this.token.$_burn(this.holder, value)).to.changeTokenBalance(
+          ethers,
+          this.token,
+          this.holder,
+          -value,
+        );
       });
     });
 

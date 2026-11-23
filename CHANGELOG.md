@@ -1,3 +1,11 @@
+## 23-11-2026
+
+- `ERC3643IdentityRegistry`: Add an ERC-3643 identity registry that verifies a wallet against the required claim topics and trusted issuers, checking ERC-735 claims by default.
+- `ERC3643IdentityRegistryStorage`: Add an ERC-3643 identity registry storage writable by the identity registries bound to it.
+- `ERC3643TrustedIssuersRegistry`: Add an ERC-3643 trusted issuers registry indexing the issuers of each claim topic.
+- `ERC3643ClaimTopicsRegistry`: Add an ERC-3643 claim topics registry.
+- `IERC735`: Add the ERC-735 claim holder getter and the `IERC735ClaimIssuer` claim validity interface.
+
 ## 04-11-2026
 
 - `WormholeGatewayAdapter`: `_wormholeRelayer` is now `private`. Use `relayer()` to read it.

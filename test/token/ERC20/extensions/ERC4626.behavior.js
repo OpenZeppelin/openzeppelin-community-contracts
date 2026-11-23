@@ -1,7 +1,7 @@
-const { ethers } = require('hardhat');
-const { expect } = require('chai');
+import { ethers } from 'ethers';
+import { expect } from 'chai';
 
-function shouldBehaveLikeERC4626Deposit({ initialAssets, initialShares, balance, isERC7540 } = {}) {
+export function shouldBehaveLikeERC4626Deposit({ initialAssets, initialShares, balance, isERC7540 } = {}) {
   initialAssets ??= ethers.parseEther('17000000');
   initialShares ??= ethers.parseEther('42000000');
   balance ??= ethers.parseEther('1000');
@@ -9,7 +9,7 @@ function shouldBehaveLikeERC4626Deposit({ initialAssets, initialShares, balance,
 
   describe('Should behave like ERC4626 deposit', function () {
     before(async function () {
-      [this.owner, this.controller, this.receiver, this.operator, this.other] = await ethers.getSigners();
+      [this.owner, this.controller, this.receiver, this.operator, this.other] = await this.ethers.getSigners();
     });
 
     beforeEach(async function () {
@@ -38,27 +38,27 @@ function shouldBehaveLikeERC4626Deposit({ initialAssets, initialShares, balance,
 
         describe('Internal async deposit hooks revert', function () {
           it('_pendingDepositRequest', async function () {
-            await expect(this.mock.$_pendingDepositRequest(0n, this.owner)).to.be.reverted;
+            await expect(this.mock.$_pendingDepositRequest(0n, this.owner)).to.revert(this.ethers);
           });
 
           it('_claimableDepositRequest', async function () {
-            await expect(this.mock.$_claimableDepositRequest(0n, this.owner)).to.be.reverted;
+            await expect(this.mock.$_claimableDepositRequest(0n, this.owner)).to.revert(this.ethers);
           });
 
           it('_consumeClaimableDeposit', async function () {
-            await expect(this.mock.$_consumeClaimableDeposit(0n, this.owner)).to.be.reverted;
+            await expect(this.mock.$_consumeClaimableDeposit(0n, this.owner)).to.revert(this.ethers);
           });
 
           it('_consumeClaimableMint', async function () {
-            await expect(this.mock.$_consumeClaimableMint(0n, this.owner)).to.be.reverted;
+            await expect(this.mock.$_consumeClaimableMint(0n, this.owner)).to.revert(this.ethers);
           });
 
           it('_asyncMaxDeposit', async function () {
-            await expect(this.mock.$_asyncMaxDeposit(this.owner)).to.be.reverted;
+            await expect(this.mock.$_asyncMaxDeposit(this.owner)).to.revert(this.ethers);
           });
 
           it('_asyncMaxMint', async function () {
-            await expect(this.mock.$_asyncMaxMint(this.owner)).to.be.reverted;
+            await expect(this.mock.$_asyncMaxMint(this.owner)).to.revert(this.ethers);
           });
         });
       });
@@ -67,11 +67,11 @@ function shouldBehaveLikeERC4626Deposit({ initialAssets, initialShares, balance,
       const assets = ethers.parseEther('100');
 
       it('previewDeposit', async function () {
-        await expect(this.mock.previewDeposit(0n)).to.not.be.reverted;
+        await expect(this.mock.previewDeposit(0n)).to.not.revert(this.ethers);
       });
 
       it('previewMint', async function () {
-        await expect(this.mock.previewMint(0n)).to.not.be.reverted;
+        await expect(this.mock.previewMint(0n)).to.not.revert(this.ethers);
       });
 
       describe('deposit', function () {
@@ -81,8 +81,8 @@ function shouldBehaveLikeERC4626Deposit({ initialAssets, initialShares, balance,
           const tx = this.mock.connect(this.owner).deposit(assets, this.receiver);
 
           await expect(tx).to.emit(this.mock, 'Deposit').withArgs(this.owner, this.receiver, assets, shares);
-          await expect(tx).to.changeTokenBalances(this.token, [this.owner, this.mock], [-assets, assets]);
-          await expect(tx).to.changeTokenBalance(this.mock, this.receiver, shares);
+          await expect(tx).to.changeTokenBalances(this.ethers, this.token, [this.owner, this.mock], [-assets, assets]);
+          await expect(tx).to.changeTokenBalance(this.ethers, this.mock, this.receiver, shares);
         });
 
         it('maxDeposit returns unlimited', async function () {
@@ -99,11 +99,12 @@ function shouldBehaveLikeERC4626Deposit({ initialAssets, initialShares, balance,
 
           await expect(tx).to.emit(this.mock, 'Deposit').withArgs(this.owner, this.receiver, requiredAssets, shares);
           await expect(tx).to.changeTokenBalances(
+            this.ethers,
             this.token,
             [this.owner, this.mock],
             [-requiredAssets, requiredAssets],
           );
-          await expect(tx).to.changeTokenBalance(this.mock, this.receiver, shares);
+          await expect(tx).to.changeTokenBalance(this.ethers, this.mock, this.receiver, shares);
         });
 
         it('maxMint returns unlimited', async function () {
@@ -114,7 +115,7 @@ function shouldBehaveLikeERC4626Deposit({ initialAssets, initialShares, balance,
   });
 }
 
-function shouldBehaveLikeERC4626Redeem({ initialAssets, initialShares, balance, isERC7540 } = {}) {
+export function shouldBehaveLikeERC4626Redeem({ initialAssets, initialShares, balance, isERC7540 } = {}) {
   initialAssets ??= ethers.parseEther('17000000');
   initialShares ??= ethers.parseEther('42000000');
   balance ??= ethers.parseEther('1000');
@@ -122,7 +123,7 @@ function shouldBehaveLikeERC4626Redeem({ initialAssets, initialShares, balance, 
 
   describe('Should behave like ERC4626 redeem', function () {
     before(async function () {
-      [this.owner, this.controller, this.receiver, this.operator, this.other] = await ethers.getSigners();
+      [this.owner, this.controller, this.receiver, this.operator, this.other] = await this.ethers.getSigners();
     });
 
     beforeEach(async function () {
@@ -151,27 +152,27 @@ function shouldBehaveLikeERC4626Redeem({ initialAssets, initialShares, balance, 
 
         describe('Internal async redeem hooks revert', function () {
           it('_pendingRedeemRequest', async function () {
-            await expect(this.mock.$_pendingRedeemRequest(0n, this.owner)).to.be.reverted;
+            await expect(this.mock.$_pendingRedeemRequest(0n, this.owner)).to.revert(this.ethers);
           });
 
           it('_claimableRedeemRequest', async function () {
-            await expect(this.mock.$_claimableRedeemRequest(0n, this.owner)).to.be.reverted;
+            await expect(this.mock.$_claimableRedeemRequest(0n, this.owner)).to.revert(this.ethers);
           });
 
           it('_consumeClaimableWithdraw', async function () {
-            await expect(this.mock.$_consumeClaimableWithdraw(0n, this.owner)).to.be.reverted;
+            await expect(this.mock.$_consumeClaimableWithdraw(0n, this.owner)).to.revert(this.ethers);
           });
 
           it('_consumeClaimableRedeem', async function () {
-            await expect(this.mock.$_consumeClaimableRedeem(0n, this.owner)).to.be.reverted;
+            await expect(this.mock.$_consumeClaimableRedeem(0n, this.owner)).to.revert(this.ethers);
           });
 
           it('_asyncMaxWithdraw', async function () {
-            await expect(this.mock.$_asyncMaxWithdraw(this.owner)).to.be.reverted;
+            await expect(this.mock.$_asyncMaxWithdraw(this.owner)).to.revert(this.ethers);
           });
 
           it('_asyncMaxRedeem', async function () {
-            await expect(this.mock.$_asyncMaxRedeem(this.owner)).to.be.reverted;
+            await expect(this.mock.$_asyncMaxRedeem(this.owner)).to.revert(this.ethers);
           });
         });
       });
@@ -180,11 +181,11 @@ function shouldBehaveLikeERC4626Redeem({ initialAssets, initialShares, balance, 
       const shares = ethers.parseEther('100');
 
       it('previewWithdraw', async function () {
-        await expect(this.mock.previewWithdraw(0n)).to.not.be.reverted;
+        await expect(this.mock.previewWithdraw(0n)).to.not.revert(this.ethers);
       });
 
       it('previewRedeem', async function () {
-        await expect(this.mock.previewRedeem(0n)).to.not.be.reverted;
+        await expect(this.mock.previewRedeem(0n)).to.not.revert(this.ethers);
       });
 
       describe('redeem', function () {
@@ -196,8 +197,13 @@ function shouldBehaveLikeERC4626Redeem({ initialAssets, initialShares, balance, 
           await expect(tx)
             .to.emit(this.mock, 'Withdraw')
             .withArgs(this.owner, this.receiver, this.owner, assets, shares);
-          await expect(tx).to.changeTokenBalances(this.token, [this.mock, this.receiver], [-assets, assets]);
-          await expect(tx).to.changeTokenBalance(this.mock, this.owner, -shares);
+          await expect(tx).to.changeTokenBalances(
+            this.ethers,
+            this.token,
+            [this.mock, this.receiver],
+            [-assets, assets],
+          );
+          await expect(tx).to.changeTokenBalance(this.ethers, this.mock, this.owner, -shares);
         });
 
         it('allows spending allowance', async function () {
@@ -209,7 +215,12 @@ function shouldBehaveLikeERC4626Redeem({ initialAssets, initialShares, balance, 
           await expect(tx)
             .to.emit(this.mock, 'Withdraw')
             .withArgs(this.other, this.receiver, this.owner, assets, shares);
-          await expect(tx).to.changeTokenBalances(this.token, [this.mock, this.receiver], [-assets, assets]);
+          await expect(tx).to.changeTokenBalances(
+            this.ethers,
+            this.token,
+            [this.mock, this.receiver],
+            [-assets, assets],
+          );
           await expect(this.mock.allowance(this.owner, this.other)).to.eventually.equal(0n);
         });
 
@@ -243,8 +254,13 @@ function shouldBehaveLikeERC4626Redeem({ initialAssets, initialShares, balance, 
           await expect(tx)
             .to.emit(this.mock, 'Withdraw')
             .withArgs(this.owner, this.receiver, this.owner, assets, expectedShares);
-          await expect(tx).to.changeTokenBalances(this.token, [this.mock, this.receiver], [-assets, assets]);
-          await expect(tx).to.changeTokenBalance(this.mock, this.owner, -expectedShares);
+          await expect(tx).to.changeTokenBalances(
+            this.ethers,
+            this.token,
+            [this.mock, this.receiver],
+            [-assets, assets],
+          );
+          await expect(tx).to.changeTokenBalance(this.ethers, this.mock, this.owner, -expectedShares);
         });
 
         it('allows spending allowance', async function () {
@@ -257,7 +273,12 @@ function shouldBehaveLikeERC4626Redeem({ initialAssets, initialShares, balance, 
           await expect(tx)
             .to.emit(this.mock, 'Withdraw')
             .withArgs(this.other, this.receiver, this.owner, assets, expectedShares);
-          await expect(tx).to.changeTokenBalances(this.token, [this.mock, this.receiver], [-assets, assets]);
+          await expect(tx).to.changeTokenBalances(
+            this.ethers,
+            this.token,
+            [this.mock, this.receiver],
+            [-assets, assets],
+          );
         });
 
         it('reverts when caller has no allowance', async function () {
@@ -277,8 +298,3 @@ function shouldBehaveLikeERC4626Redeem({ initialAssets, initialShares, balance, 
     });
   });
 }
-
-module.exports = {
-  shouldBehaveLikeERC4626Deposit,
-  shouldBehaveLikeERC4626Redeem,
-};
