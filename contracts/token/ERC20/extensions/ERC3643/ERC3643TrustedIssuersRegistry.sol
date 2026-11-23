@@ -2,8 +2,8 @@
 
 pragma solidity ^0.8.27;
 
-import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import {IERC3643ClaimIssuer, IERC3643TrustedIssuersRegistry} from "@openzeppelin/contracts/interfaces/IERC3643.sol";
+import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 
 /**
  * @dev Implementation of the ERC-3643 Trusted Issuers Registry: the claim issuers an {ERC3643IdentityRegistry}

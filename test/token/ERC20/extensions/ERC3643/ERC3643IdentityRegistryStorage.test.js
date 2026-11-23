@@ -1,6 +1,10 @@
-const { ethers } = require('hardhat');
-const { expect } = require('chai');
-const { loadFixture } = require('@nomicfoundation/hardhat-network-helpers');
+import { network } from 'hardhat';
+import { expect } from 'chai';
+
+const {
+  ethers,
+  networkHelpers: { loadFixture },
+} = await network.create();
 
 async function fixture() {
   const [owner, registry, other, account] = await ethers.getSigners();
@@ -141,11 +145,11 @@ describe('ERC3643IdentityRegistryStorage', function () {
 
     it('reverts when the caller is not a bound registry', async function () {
       for (const call of [
-        this.storage.connect(this.other).removeIdentityFromStorage(this.account),
-        this.storage.connect(this.other).modifyStoredInvestorCountry(this.account, 7n),
-        this.storage.connect(this.other).modifyStoredIdentity(this.account, this.otherIdentity),
+        () => this.storage.connect(this.other).removeIdentityFromStorage(this.account),
+        () => this.storage.connect(this.other).modifyStoredInvestorCountry(this.account, 7n),
+        () => this.storage.connect(this.other).modifyStoredIdentity(this.account, this.otherIdentity),
       ]) {
-        await expect(call)
+        await expect(call())
           .to.be.revertedWithCustomError(this.storage, 'ERC3643UnauthorizedIdentityRegistry')
           .withArgs(this.other);
       }
@@ -155,11 +159,11 @@ describe('ERC3643IdentityRegistryStorage', function () {
   describe('without a stored identity', function () {
     it('reverts on removal and modifications', async function () {
       for (const call of [
-        this.storage.connect(this.registry).removeIdentityFromStorage(this.account),
-        this.storage.connect(this.registry).modifyStoredInvestorCountry(this.account, 7n),
-        this.storage.connect(this.registry).modifyStoredIdentity(this.account, this.otherIdentity),
+        () => this.storage.connect(this.registry).removeIdentityFromStorage(this.account),
+        () => this.storage.connect(this.registry).modifyStoredInvestorCountry(this.account, 7n),
+        () => this.storage.connect(this.registry).modifyStoredIdentity(this.account, this.otherIdentity),
       ]) {
-        await expect(call)
+        await expect(call())
           .to.be.revertedWithCustomError(this.storage, 'ERC3643IdentityNotStored')
           .withArgs(this.account);
       }

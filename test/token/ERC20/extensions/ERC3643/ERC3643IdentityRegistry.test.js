@@ -1,6 +1,10 @@
-const { ethers } = require('hardhat');
-const { expect } = require('chai');
-const { loadFixture } = require('@nomicfoundation/hardhat-network-helpers');
+import { network } from 'hardhat';
+import { expect } from 'chai';
+
+const {
+  ethers,
+  networkHelpers: { loadFixture },
+} = await network.create();
 
 const Answer = { Valid: 0n, Invalid: 1n, Revert: 2n, NonBoolean: 3n, Oversized: 4n };
 
@@ -196,11 +200,11 @@ describe('ERC3643IdentityRegistry', function () {
 
     it('reverts when updating an unregistered account', async function () {
       for (const call of [
-        this.registry.connect(this.owner).deleteIdentity(this.account),
-        this.registry.connect(this.owner).updateCountry(this.account, 7n),
-        this.registry.connect(this.owner).updateIdentity(this.account, this.otherIdentity),
+        () => this.registry.connect(this.owner).deleteIdentity(this.account),
+        () => this.registry.connect(this.owner).updateCountry(this.account, 7n),
+        () => this.registry.connect(this.owner).updateIdentity(this.account, this.otherIdentity),
       ]) {
-        await expect(call)
+        await expect(call())
           .to.be.revertedWithCustomError(this.storage, 'ERC3643IdentityNotStored')
           .withArgs(this.account);
       }
@@ -208,13 +212,13 @@ describe('ERC3643IdentityRegistry', function () {
 
     it('reverts when the caller is not authorized', async function () {
       for (const call of [
-        this.registry.connect(this.other).registerIdentity(this.account, this.identity, 42n),
-        this.registry.connect(this.other).batchRegisterIdentity([], [], []),
-        this.registry.connect(this.other).deleteIdentity(this.account),
-        this.registry.connect(this.other).updateCountry(this.account, 7n),
-        this.registry.connect(this.other).updateIdentity(this.account, this.otherIdentity),
+        () => this.registry.connect(this.other).registerIdentity(this.account, this.identity, 42n),
+        () => this.registry.connect(this.other).batchRegisterIdentity([], [], []),
+        () => this.registry.connect(this.other).deleteIdentity(this.account),
+        () => this.registry.connect(this.other).updateCountry(this.account, 7n),
+        () => this.registry.connect(this.other).updateIdentity(this.account, this.otherIdentity),
       ]) {
-        await expect(call)
+        await expect(call())
           .to.be.revertedWithCustomError(this.registry, 'OwnableUnauthorizedAccount')
           .withArgs(this.other);
       }

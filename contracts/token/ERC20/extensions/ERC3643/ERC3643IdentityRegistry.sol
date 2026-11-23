@@ -2,7 +2,6 @@
 
 pragma solidity ^0.8.27;
 
-import {LowLevelCall} from "@openzeppelin/contracts/utils/LowLevelCall.sol";
 import {
     IERC3643ClaimIssuer,
     IERC3643ClaimTopicsRegistry,
@@ -11,6 +10,7 @@ import {
     IERC3643IdentityRegistryStorage,
     IERC3643TrustedIssuersRegistry
 } from "@openzeppelin/contracts/interfaces/IERC3643.sol";
+import {LowLevelCall} from "@openzeppelin/contracts/utils/LowLevelCall.sol";
 import {IERC735, IERC735ClaimIssuer} from "../../../../interfaces/IERC735.sol";
 
 /**

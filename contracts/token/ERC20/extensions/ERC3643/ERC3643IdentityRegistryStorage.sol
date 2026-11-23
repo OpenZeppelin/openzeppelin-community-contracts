@@ -2,9 +2,9 @@
 
 pragma solidity ^0.8.27;
 
+import {IERC3643Identity, IERC3643IdentityRegistryStorage} from "@openzeppelin/contracts/interfaces/IERC3643.sol";
 import {Context} from "@openzeppelin/contracts/utils/Context.sol";
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
-import {IERC3643Identity, IERC3643IdentityRegistryStorage} from "@openzeppelin/contracts/interfaces/IERC3643.sol";
 
 /**
  * @dev Implementation of the ERC-3643 Identity Registry Storage: the identity contract and country of each
