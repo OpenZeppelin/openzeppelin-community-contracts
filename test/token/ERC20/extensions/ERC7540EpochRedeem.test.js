@@ -1,10 +1,13 @@
-const { ethers } = require('hardhat');
-const { expect } = require('chai');
-const { loadFixture } = require('@nomicfoundation/hardhat-network-helpers');
+import { network } from 'hardhat';
+import { expect } from 'chai';
+import { shouldBehaveLikeERC7540Operator, shouldBehaveLikeERC7540Redeem } from './ERC7540.behavior';
+import { shouldBehaveLikeERC7575 } from './ERC7575.behavior';
 
-const time = require('@openzeppelin/contracts/test/helpers/time');
-const { shouldBehaveLikeERC7540Operator, shouldBehaveLikeERC7540Redeem } = require('./ERC7540.behavior');
-const { shouldBehaveLikeERC7575 } = require('./ERC7575.behavior');
+const {
+  ethers,
+  helpers: { time },
+  networkHelpers: { loadFixture },
+} = await network.create();
 
 const name = 'Vault Shares';
 const symbol = 'vSHR';
@@ -23,6 +26,10 @@ async function advanceTo(epochId) {
 }
 
 describe('ERC7540EpochRedeem', function () {
+  before(async function () {
+    Object.assign(this, { ethers });
+  });
+
   for (const withTmpHolder of [false, true]) {
     describe(withTmpHolder ? 'With a temporary share holder' : 'With direct share operations', function () {
       async function fixture() {
@@ -251,7 +258,7 @@ describe('ERC7540EpochRedeem', function () {
           await this.mock.$_fulfillRedeem(epochA, 1000n);
           await this.token.$_burn(this.mock, 1n);
 
-          await expect(this.mock.$_fulfillRedeem(epochB, 0n)).to.not.be.reverted;
+          await expect(this.mock.$_fulfillRedeem(epochB, 0n)).to.not.revert(ethers);
           await expect(this.mock.$_fulfillRedeem(epochB, 1n)).to.be.revertedWithCustomError(
             this.mock,
             'ERC7540InsufficientAssets',

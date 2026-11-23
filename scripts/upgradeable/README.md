@@ -4,16 +4,14 @@ When the `master` branch or `release-v*` branches are updated, the code is trans
 
 ## `transpile.sh`
 
-Applies patches and invokes the transpiler with the settings in `transpile.config.json` (for example, excluding certain files).
+Applies patches and invokes the transpiler (the `transpile` task of the `hardhat-transpiler` plugin from OpenZeppelin Contracts) with the settings in `transpile.config.json` (for example, excluding certain files).
 
-## `transpile.js`
-
-Unlike OpenZeppelin Contracts, this library builds on contracts it doesn't own. This script runs the transpiler on the compiled sources, keeps the output for `contracts/` only, and rewrites its imports:
+Unlike OpenZeppelin Contracts, this library builds on contracts it doesn't own. The `upgradeablePackages` setting makes the transpiler keep the dependency sources so that their symbols can be resolved, discard their transpiled output, and rewrite the imports of the transpiled files:
 
 - Stateful contracts from `@openzeppelin/contracts` are imported from `@openzeppelin/contracts-upgradeable`.
-- Stateless declarations (interfaces, libraries, etc.) are imported from their original package, including `@openzeppelin/community-contracts` for the ones in this repository.
+- Stateless declarations (interfaces, libraries, etc.) are imported from their original package, including `@openzeppelin/community-contracts` for the ones in this repository (`peerProject` is prepended to their path).
 
-A stateful contract from any other package has no upgradeable variant, so the files that use it must be excluded in `transpile.config.json`. Files that are excluded or not transpiled are imported in `contracts/mocks/PeerImports.sol` so they remain available to the tests.
+A stateful contract from any other package has no upgradeable variant, so the files that use it must be excluded in `transpile.config.json`. Files that are excluded or not transpiled remain available to the tests through the original code in `lib/openzeppelin-community-contracts`, which the patch adds as a source folder.
 
 ## `transpile-onto.sh`
 

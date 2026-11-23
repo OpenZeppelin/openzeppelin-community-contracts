@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.27;
+pragma solidity ^0.8.31;
 
 import {IERC6372} from "@openzeppelin/contracts/interfaces/IERC6372.sol";
+import {ERC6372Utils} from "@openzeppelin/contracts/utils/ERC6372Utils.sol";
 import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 import {SafeCast} from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import {Checkpoints} from "@openzeppelin/contracts/utils/structs/Checkpoints.sol";
 import {Time} from "@openzeppelin/contracts/utils/types/Time.sol";
-import {ERC6372Utils} from "@openzeppelin/contracts/utils/ERC6372Utils.sol";
 import {ERC7540} from "./ERC7540.sol";
 
 /**
