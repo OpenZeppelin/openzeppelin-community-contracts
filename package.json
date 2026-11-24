@@ -47,6 +47,7 @@
   ],
   "devDependencies": {
     "@openzeppelin/contracts": "file:lib/@openzeppelin-contracts",
+    "@openzeppelin/upgrade-safe-transpiler": "^0.4.2",
     "husky": "^9.1.7"
   },
   "lint-staged": {

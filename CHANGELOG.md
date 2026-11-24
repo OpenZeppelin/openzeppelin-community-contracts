@@ -2,6 +2,10 @@
 
 - `TimelockControllerEnumerable`: `operations(start, end)` and `operationsBatch(start, end)` return an empty array for an empty range instead of reverting, so `operations()` and `operationsBatch()` no longer revert when nothing is scheduled. An `end` past the number of entries now reverts with `InvalidIndexRange` instead of an array out-of-bounds panic.
 
+## 04-11-2026
+
+- `WormholeGatewayAdapter`: `_wormholeRelayer` is now `private`. Use `relayer()` to read it.
+
 ## 02-11-2026
 
 - `ERC20uRWA`: `forcedTransfer` now reverts with `ERC20InvalidSender` or `ERC20InvalidReceiver` when `from` or `to` is the zero address. Reported by [@doblev55](https://github.com/doblev55).
