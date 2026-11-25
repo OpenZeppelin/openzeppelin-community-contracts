@@ -36,8 +36,8 @@ abstract contract ERC7579Executor is IERC7579Module {
 
     /**
      * @dev Executes an operation and returns the result data from the executed operation.
-     * Restricted to the account itself by default. See {_execute} for requirements and
-     * {_validateExecution} for authorization checks.
+     * The base imposes no caller restriction; authorization is delegated to {_validateExecution}.
+     * See {_execute} for requirements.
      */
     function execute(
         address account,
